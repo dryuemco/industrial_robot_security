@@ -40,7 +40,7 @@ While the project runs in Docker, having ROS2 Humble installed on the host is us
 
 ---
 
-## 🚀 Installation & Setup
+## Installation & Setup
 
 Follow these steps to get the development environment running.
 
