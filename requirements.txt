@@ -1,0 +1,15 @@
+# LLM & AI Libraries
+torch
+transformers
+accelerate
+numpy
+pandas
+
+# Attack Simulation (GCG)
+# Note: llm-attacks will be cloned separately
+fschat
+fastapi
+uvicorn
+
+# ROS2 Interaction
+lark-parser  # For parsing RAPID code (AST)
