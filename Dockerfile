@@ -5,6 +5,7 @@ FROM ros:humble as builder
 RUN apt-get update && apt-get install -y \
     python3-colcon-common-extensions \
     git \
+    libacl1-dev \  
     && rm -rf /var/lib/apt/lists/*
 
 # Çalışma alanını oluştur
