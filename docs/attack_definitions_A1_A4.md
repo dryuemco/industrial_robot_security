@@ -139,7 +139,7 @@ An adversary crafts waypoints or modifies existing trajectories so that the TCP 
 The safe workspace $\mathcal{W}$ is a convex polytope defined as the intersection of $k$ halfspaces:
 
 $$
-\mathcal{W} = \left\{ \mathbf{x} \in \mathbb{R}^3 \;\middle|\; \mathbf{n}_i^{\top} \mathbf{x} \leq d_i, \quad i = 1, \dots, k \right\}
+\mathcal{W} = \{ \mathbf{x} \in \mathbb{R}^3 \;\middle|\; \mathbf{n}_i^{\top} \mathbf{x} \leq d_i, \quad i = 1, \dots, k \}
 $$
 
 $$
