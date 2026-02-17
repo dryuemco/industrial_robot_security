@@ -30,6 +30,13 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /ros2_ws
 COPY --from=builder /ros2_ws/install /ros2_ws/install
 
+# --- YENİ EKLENEN KISIM BAŞLANGICI ---
+# Pip'i güncelle ve kütüphaneleri kur
+COPY requirements.txt /ros2_ws/
+RUN pip3 install --upgrade pip
+RUN pip3 install -r /ros2_ws/requirements.txt
+# --- YENİ EKLENEN KISIM BİTİŞİ ---
+
 # Environment setup
 RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 RUN echo "source /ros2_ws/install/setup.bash" >> ~/.bashrc
