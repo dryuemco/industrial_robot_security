@@ -143,8 +143,9 @@ $$
 $$
 
 $$
-\mathcal{W} = \left\{ \mathbf{x} \in \mathbb{R}^3 \,\middle|\, \mathbf{n}_i^{\top}\mathbf{x} \le d_i,\quad i = 1, \dots, k \right\}
+\mathcal{W}=\{\mathbf{x}\in\mathbb{R}^3 \mid \mathbf{n}_i^{\top}\mathbf{x}\le d_i,\ i=1,\dots,k\}
 $$
+
 
 
 **Safety Invariant $\Phi_{A2}$:**
