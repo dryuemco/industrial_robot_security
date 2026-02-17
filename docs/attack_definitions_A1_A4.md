@@ -142,6 +142,11 @@ $$
 \mathcal{W} = \left\{ \mathbf{x} \in \mathbb{R}^3 \;\middle|\; \mathbf{n}_i^{\top} \mathbf{x} \leq d_i, \quad i = 1, \dots, k \right\}
 $$
 
+$$
+\mathcal{W} = \left\{ \mathbf{x} \in \mathbb{R}^3 \,\middle|\, \mathbf{n}_i^{\top}\mathbf{x} \le d_i,\quad i = 1, \dots, k \right\}
+$$
+
+
 **Safety Invariant $\Phi_{A2}$:**
 
 $$
