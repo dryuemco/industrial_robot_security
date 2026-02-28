@@ -1,0 +1,92 @@
+# =============================================================================
+# ENFIELD Project .gitignore
+# Python / ROS2 Humble / Docker / IDE
+# =============================================================================
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+eggs/
+*.whl
+pip-log.txt
+pip-delete-this-directory.txt
+.Python
+develop-eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# mypy
+.mypy_cache/
+
+# --- ROS2 / colcon ---
+build/
+install/
+log/
+ros2_ws/build/
+ros2_ws/install/
+ros2_ws/log/
+
+# --- Docker ---
+docker-compose.override.yml
+.docker/
+
+# --- IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.cproject
+.settings/
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak
+*.orig
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- SBOM / Security Scan Artifacts (generated, not committed) ---
+sbom.json
+trivy-report.json
+grype-report.json
+
+# --- Data outputs (experiments generate these, not committed) ---
+results/*.csv
+results/*.json
+!results/.gitkeep
+
+# --- Large model files ---
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.onnx
