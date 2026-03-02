@@ -1,0 +1,67 @@
+<?xml version="1.0"?>
+<!--
+  ENFIELD UR5e Wrapper URDF/Xacro
+  
+  Includes the official ur_description UR5e macro and configures:
+  - ros2_control hardware interface (gz_ros2_control for Ignition Gazebo)
+  - Gazebo Ignition plugin
+  - Safety-relevant joint limits from ISO 10218 mapping
+  
+  Dependencies:
+    apt: ros-humble-ur-description ros-humble-gz-ros2-control
+  
+  Copyright 2026 Yunus Emre Cogurcu - Apache-2.0
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="ur5e_enfield">
+
+  <!-- ============================================================ -->
+  <!-- Arguments                                                     -->
+  <!-- ============================================================ -->
+  <xacro:arg name="name" default="ur5e"/>
+  <xacro:arg name="ur_type" default="ur5e"/>
+  <xacro:arg name="prefix" default=""/>
+  <xacro:arg name="use_fake_hardware" default="false"/>
+  <xacro:arg name="sim_ignition" default="true"/>
+  <xacro:arg name="safety_limits" default="true"/>
+  <xacro:arg name="safety_pos_margin" default="0.15"/>
+  <xacro:arg name="safety_k_position" default="20"/>
+  <xacro:arg name="initial_positions_file" default="$(find enfield_robots_ur5e)/config/initial_positions.yaml"/>
+
+  <!-- ============================================================ -->
+  <!-- Include upstream UR description macro                         -->
+  <!-- ============================================================ -->
+  <xacro:include filename="$(find ur_description)/urdf/ur_macro.xacro"/>
+
+  <!-- ============================================================ -->
+  <!-- Instantiate the UR5e robot                                    -->
+  <!-- ============================================================ -->
+  <xacro:ur_robot
+    name="$(arg name)"
+    tf_prefix="$(arg prefix)"
+    parent="world"
+    joint_limits_parameters_file="$(find ur_description)/config/$(arg ur_type)/joint_limits.yaml"
+    kinematics_parameters_file="$(find ur_description)/config/$(arg ur_type)/default_kinematics.yaml"
+    physical_parameters_file="$(find ur_description)/config/$(arg ur_type)/physical_parameters.yaml"
+    visual_parameters_file="$(find ur_description)/config/$(arg ur_type)/visual_parameters.yaml"
+    safety_limits="$(arg safety_limits)"
+    safety_pos_margin="$(arg safety_pos_margin)"
+    safety_k_position="$(arg safety_k_position)"
+    use_fake_hardware="$(arg use_fake_hardware)"
+    sim_ignition="$(arg sim_ignition)"
+  >
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </xacro:ur_robot>
+
+  <!-- ============================================================ -->
+  <!-- Gazebo Ignition ros2_control plugin                           -->
+  <!-- ============================================================ -->
+  <xacro:if value="$(arg sim_ignition)">
+    <gazebo>
+      <plugin filename="gz_ros2_control-system"
+              name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+        <parameters>$(find enfield_robots_ur5e)/config/ur5e_controllers.yaml</parameters>
+      </plugin>
+    </gazebo>
+  </xacro:if>
+
+</robot>

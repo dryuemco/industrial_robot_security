@@ -1,0 +1,56 @@
+# MoveIt2 Joint Limits for UR5e — ENFIELD Safety Constraints
+# These limits are MORE RESTRICTIVE than hardware limits.
+# Collaborative mode defaults: max_velocity scaled to keep TCP ≤ 250 mm/s.
+#
+# ISO 10218 Reference: Clause 5.6 (speed limiting)
+# See also: config/kinematic_limits.yaml for ISO clause mapping.
+
+joint_limits:
+  shoulder_pan_joint:
+    has_velocity_limits: true
+    max_velocity: 1.57       # rad/s — reduced from 3.14 for collab mode
+    has_acceleration_limits: true
+    max_acceleration: 5.0    # rad/s² — conservative for safety
+    has_position_limits: true
+    min_position: -6.2832
+    max_position: 6.2832
+  shoulder_lift_joint:
+    has_velocity_limits: true
+    max_velocity: 1.57
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+    has_position_limits: true
+    min_position: -6.2832
+    max_position: 6.2832
+  elbow_joint:
+    has_velocity_limits: true
+    max_velocity: 1.57
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+    has_position_limits: true
+    min_position: -6.2832
+    max_position: 6.2832
+  wrist_1_joint:
+    has_velocity_limits: true
+    max_velocity: 3.14       # rad/s — wrist joints can be faster
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+    has_position_limits: true
+    min_position: -6.2832
+    max_position: 6.2832
+  wrist_2_joint:
+    has_velocity_limits: true
+    max_velocity: 3.14
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+    has_position_limits: true
+    min_position: -6.2832
+    max_position: 6.2832
+  wrist_3_joint:
+    has_velocity_limits: true
+    max_velocity: 3.14
+    has_acceleration_limits: true
+    max_acceleration: 5.0
+    has_position_limits: true
+    min_position: -6.2832
+    max_position: 6.2832
