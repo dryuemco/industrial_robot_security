@@ -1,0 +1,21 @@
+# Runtime safety monitor parameters
+# Loaded by watchdog nodes via ROS2 parameter server
+
+velocity_monitor:
+  ros__parameters:
+    operating_mode: "collaborative"
+    max_tcp_speed_mm_s: 250.0
+    check_rate_hz: 100.0
+    violation_topic: "/enfield/violations"
+
+zone_monitor:
+  ros__parameters:
+    check_rate_hz: 50.0
+    interpolation_step_mm: 10.0
+    violation_topic: "/enfield/violations"
+
+safety_aggregator:
+  ros__parameters:
+    violation_topic: "/enfield/violations"
+    log_to_file: true
+    log_path: "results/verdicts/"

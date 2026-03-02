@@ -1,10 +1,10 @@
 from setuptools import find_packages, setup
 
-package_name = 'robot_security_core'
+package_name = 'enfield_attacks'
 
 setup(
     name=package_name,
-    version='0.0.0',
+    version='0.1.0',
     packages=find_packages(exclude=['test']),
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -13,18 +13,10 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='root',
-    maintainer_email='root@todo.todo',
-    description='TODO: Package description',
+    maintainer='Yunus Emre Cogurcu',
+    maintainer_email='yunusemrecogurcu@gmail.com',
+    description='Adversarial attack generators A1-A8 (Phase 2). Simulation-only.',
     license='Apache-2.0',
-    extras_require={
-        'test': [
-            'pytest',
-        ],
-    },
-    entry_points={
-        'console_scripts': [
-            'watchdog_node = robot_security_core.watchdog_node:main'
-        ],
-    },
+    extras_require={'test': ['pytest']},
+    entry_points={'console_scripts': []},
 )

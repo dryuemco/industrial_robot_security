@@ -1,45 +1,48 @@
-# STAGE 1: Build Stage (Derleme Ortamı)
-FROM ros:humble as builder
+# =============================================================================
+# ENFIELD Project - Multi-Stage Dockerfile
+# ROS2 Humble + Multi-Package Workspace
+# =============================================================================
 
-# Gerekli derleme araçlarını kur
+# STAGE 1: Build (compile all ROS2 packages)
+FROM ros:humble AS builder
+
 RUN apt-get update && apt-get install -y \
     python3-colcon-common-extensions \
+    python3-pip \
     git \
-    libacl1-dev \  
     && rm -rf /var/lib/apt/lists/*
 
-# Çalışma alanını oluştur
 WORKDIR /ros2_ws
 
-# Proje dosyalarını kopyala
-COPY . src/industrial_robot_security
+# Copy entire project as source
+COPY . src/enfield
 
-# Bağımlılıkları yükle ve build et
+# Install Python dependencies
+COPY requirements.txt /tmp/requirements.txt
+RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
+
+# Build all packages
 RUN . /opt/ros/humble/setup.sh && \
     colcon build --symlink-install
 
-# STAGE 2: Runtime Stage (Çalışma Ortamı - Daha hafif)
-FROM ros:humble-ros-base
+# STAGE 2: Runtime (minimal image)
+FROM ros:humble-ros-base AS runtime
 
-# Sadece gerekli çalışma zamanı araçlarını al
 RUN apt-get update && apt-get install -y \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-# Build aşamasından derlenmiş dosyaları kopyala
 WORKDIR /ros2_ws
+
+# Copy built workspace from builder
 COPY --from=builder /ros2_ws/install /ros2_ws/install
 
-# --- YENİ EKLENEN KISIM BAŞLANGICI ---
-# Pip'i güncelle ve kütüphaneleri kur
-COPY requirements.txt /ros2_ws/
-RUN pip3 install --upgrade pip
-RUN pip3 install -r /ros2_ws/requirements.txt
-# --- YENİ EKLENEN KISIM BİTİŞİ ---
+# Install Python runtime deps
+COPY requirements.txt /tmp/requirements.txt
+RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
 
-# Environment setup
-RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
-RUN echo "source /ros2_ws/install/setup.bash" >> ~/.bashrc
+# Source workspace on shell entry
+RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc && \
+    echo "source /ros2_ws/install/setup.bash" >> ~/.bashrc
 
-# Default komut
 CMD ["/bin/bash"]
