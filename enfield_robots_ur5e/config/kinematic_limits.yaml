@@ -1,0 +1,42 @@
+# UR5e Kinematic Limits — ISO 10218 Mapped
+# Source: Universal Robots UR5e Technical Specifications
+# Used by: enfield_watchdog (velocity/zone monitors), enfield_tasks (IR validation)
+
+robot_model: ur5e
+manufacturer: Universal Robots
+payload_max_kg: 5.0
+reach_mm: 850.0
+
+# ISO 10218 operating mode speed limits
+iso_10218_mode_limits:
+  collaborative:
+    max_tcp_speed_mm_s: 250.0
+    iso_clause: "5.6 — Speed limiting (collaborative operation)"
+    notes: "ISO/TS 15066 SSM mode; human proximity assumed"
+  reduced_speed:
+    max_tcp_speed_mm_s: 250.0
+    iso_clause: "5.6 — Speed limiting (reduced speed)"
+  fenced:
+    max_tcp_speed_mm_s: 500.0
+    iso_clause: "5.6 — Speed limiting (automatic/fenced)"
+    notes: "Application-dependent; 500 mm/s conservative default"
+
+# Per-joint limits (from UR5e datasheet)
+joint_limits:
+  shoulder_pan:    { max_vel_rad_s: 3.14, max_accel_rad_s2: 40.0 }
+  shoulder_lift:   { max_vel_rad_s: 3.14, max_accel_rad_s2: 40.0 }
+  elbow:           { max_vel_rad_s: 3.14, max_accel_rad_s2: 40.0 }
+  wrist_1:         { max_vel_rad_s: 6.28, max_accel_rad_s2: 40.0 }
+  wrist_2:         { max_vel_rad_s: 6.28, max_accel_rad_s2: 40.0 }
+  wrist_3:         { max_vel_rad_s: 6.28, max_accel_rad_s2: 40.0 }
+
+# Payload bounds (for A4 detection)
+payload:
+  max_kg: 5.0
+  cog_radius_max_mm: 150.0
+  iso_clause: "5.3/5.4 — Robot design / Stopping performance"
+
+# E-Stop requirements (for A5 detection)
+estop:
+  max_response_ms: 50
+  iso_clause: "5.4 — Stop functions"
