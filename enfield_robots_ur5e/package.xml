@@ -2,17 +2,52 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>enfield_robots_ur5e</name>
-  <version>0.1.0</version>
-  <description>UR5e robot adapter: URDF, MoveIt2 config, Gazebo launch, kinematic limits.</description>
+  <version>0.2.0</version>
+  <description>
+    ENFIELD UR5e robot adapter: URDF wrapper, MoveIt2 config,
+    Gazebo Ignition launch, ros2_control controllers, and
+    ISO 10218 kinematic limits.
+  </description>
   <maintainer email="yunusemrecogurcu@gmail.com">Yunus Emre Cogurcu</maintainer>
   <license>Apache-2.0</license>
 
-    <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <exec_depend>robot_state_publisher</exec_depend>
-  <exec_depend>joint_state_publisher</exec_depend>
-  <exec_depend>xacro</exec_depend>
+  <!-- Upstream UR description (URDF, meshes, kinematics) -->
+  <depend>ur_description</depend>
 
+  <!-- Robot state publishing -->
+  <depend>robot_state_publisher</depend>
+  <depend>joint_state_publisher</depend>
+
+  <!-- ros2_control -->
+  <depend>controller_manager</depend>
+  <depend>joint_trajectory_controller</depend>
+  <depend>joint_state_broadcaster</depend>
+
+  <!-- Gazebo Ignition simulation -->
+  <exec_depend>ros_gz_sim</exec_depend>
+  <exec_depend>ros_gz_bridge</exec_depend>
+  <exec_depend>gz_ros2_control</exec_depend>
+
+  <!-- MoveIt2 -->
+  <exec_depend>moveit_ros_move_group</exec_depend>
+  <exec_depend>moveit_planners_ompl</exec_depend>
+  <exec_depend>moveit_ros_visualization</exec_depend>
+  <exec_depend>moveit_simple_controller_manager</exec_depend>
+  <exec_depend>moveit_kinematics</exec_depend>
+
+  <!-- Xacro processing -->
+  <depend>xacro</depend>
+
+  <!-- Launch -->
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+
+  <!-- Visualization -->
+  <exec_depend>rviz2</exec_depend>
+
+  <!-- Testing -->
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 

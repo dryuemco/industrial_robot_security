@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ENFIELD UR5e Semantic Robot Description (SRDF)
+  MoveIt2 planning group, disabled collisions, named states.
+  
+  Copyright 2026 Yunus Emre Cogurcu - Apache-2.0
+-->
+<robot name="ur5e_enfield">
+
+  <!-- ============================================================ -->
+  <!-- Planning group: kinematic chain from base to tool flange      -->
+  <!-- ============================================================ -->
+  <group name="manipulator">
+    <chain base_link="base_link" tip_link="tool0"/>
+  </group>
+
+  <!-- ============================================================ -->
+  <!-- Named states                                                  -->
+  <!-- ============================================================ -->
+  <group_state name="home" group="manipulator">
+    <joint name="shoulder_pan_joint"  value="0.0"/>
+    <joint name="shoulder_lift_joint" value="-1.5708"/>
+    <joint name="elbow_joint"         value="1.5708"/>
+    <joint name="wrist_1_joint"       value="-1.5708"/>
+    <joint name="wrist_2_joint"       value="-1.5708"/>
+    <joint name="wrist_3_joint"       value="0.0"/>
+  </group_state>
+
+  <group_state name="up" group="manipulator">
+    <joint name="shoulder_pan_joint"  value="0.0"/>
+    <joint name="shoulder_lift_joint" value="-1.5708"/>
+    <joint name="elbow_joint"         value="0.0"/>
+    <joint name="wrist_1_joint"       value="-1.5708"/>
+    <joint name="wrist_2_joint"       value="0.0"/>
+    <joint name="wrist_3_joint"       value="0.0"/>
+  </group_state>
+
+  <!-- ============================================================ -->
+  <!-- Disable collision pairs (adjacent links, always colliding)    -->
+  <!-- ============================================================ -->
+  <disable_collisions link1="base_link"       link2="shoulder_link"   reason="Adjacent"/>
+  <disable_collisions link1="shoulder_link"   link2="upper_arm_link"  reason="Adjacent"/>
+  <disable_collisions link1="upper_arm_link"  link2="forearm_link"    reason="Adjacent"/>
+  <disable_collisions link1="forearm_link"    link2="wrist_1_link"    reason="Adjacent"/>
+  <disable_collisions link1="wrist_1_link"    link2="wrist_2_link"    reason="Adjacent"/>
+  <disable_collisions link1="wrist_2_link"    link2="wrist_3_link"    reason="Adjacent"/>
+  <disable_collisions link1="base_link"       link2="upper_arm_link"  reason="Never"/>
+  <disable_collisions link1="shoulder_link"   link2="forearm_link"    reason="Never"/>
+
+</robot>
