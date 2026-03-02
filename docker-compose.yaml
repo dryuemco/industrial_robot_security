@@ -1,0 +1,32 @@
+# =============================================================================
+# ENFIELD Project - Docker Compose
+# Development environment for ROS2 Humble multi-package workspace
+# =============================================================================
+
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    image: enfield:dev
+    container_name: enfield_dev
+    stdin_open: true
+    tty: true
+    working_dir: /ros2_ws
+    volumes:
+      # Mount source for live editing (rebuilds required for C++ packages)
+      - .:/ros2_ws/src/enfield:rw
+      # Persist build artifacts between runs
+      - enfield_build:/ros2_ws/build
+      - enfield_install:/ros2_ws/install
+      - enfield_log:/ros2_ws/log
+    environment:
+      - ROS_DOMAIN_ID=42
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+    command: /bin/bash
+
+volumes:
+  enfield_build:
+  enfield_install:
+  enfield_log:

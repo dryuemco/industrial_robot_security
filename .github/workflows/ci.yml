@@ -1,0 +1,98 @@
+# =============================================================================
+# ENFIELD CI Pipeline
+# Build → Test → SBOM → Vulnerability Scan
+# =============================================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  ROS_DISTRO: humble
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-22.04
+    container:
+      image: ros:humble
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          apt-get update && apt-get install -y \
+            python3-colcon-common-extensions \
+            python3-pip \
+            python3-pytest
+          pip3 install --no-cache-dir -r requirements.txt
+
+      - name: Build workspace
+        run: |
+          source /opt/ros/$ROS_DISTRO/setup.bash
+          colcon build --symlink-install
+        shell: bash
+
+      - name: Run tests
+        run: |
+          source /opt/ros/$ROS_DISTRO/setup.bash
+          source install/setup.bash
+          colcon test --return-code-on-test-failure
+        shell: bash
+
+      - name: Test results
+        if: always()
+        run: |
+          source /opt/ros/$ROS_DISTRO/setup.bash
+          colcon test-result --verbose
+        shell: bash
+
+  docker-build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build --target builder -t enfield:ci .
+
+  sbom-and-scan:
+    runs-on: ubuntu-22.04
+    needs: docker-build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build --target runtime -t enfield:scan .
+
+      - name: Generate SBOM (CycloneDX)
+        uses: CycloneDX/gh-python-generate-sbom@v2
+        with:
+          input: requirements.txt
+          output: sbom.json
+          format: json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.json
+
+      - name: Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: enfield:scan
+          format: json
+          output: trivy-report.json
+          severity: CRITICAL,HIGH
+
+      - name: Upload Trivy report
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report
+          path: trivy-report.json

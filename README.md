@@ -50,7 +50,7 @@ See [`docs/attack_definitions_A1_A4.md`](docs/attack_definitions_A1_A4.md) and [
 ## Prerequisites
 
 - **Host OS:** Ubuntu 22.04 LTS
-- **Docker Engine** and **Docker Compose** ([install guide](https://docs.docker.com/engine/install/ubuntu/))
+- **Docker Engine** ([install guide](https://docs.docker.com/engine/install/ubuntu/))
 - **Git** for version control
 - *Optional:* ROS2 Humble on host for native debugging/Rviz2
 
@@ -68,11 +68,12 @@ docker compose build
 docker compose run --rm dev
 
 # Inside container: build ROS2 workspace
-cd /ros2_ws
 colcon build --symlink-install
 source install/setup.bash
 
 # Run PoC parser test
+python3 -m enfield_core.parsers.rapid_parser
+# Or legacy script:
 python3 scripts/rapid_parser.py
 ```
 
@@ -80,34 +81,78 @@ python3 scripts/rapid_parser.py
 
 ```
 industrial_robot_security/
-├── LICENSE                          # Apache-2.0
-├── CITATION.cff                     # Citation metadata (DOI placeholders)
-├── CONTRIBUTING.md                  # Contribution guidelines
+├── LICENSE                            # Apache-2.0
+├── CITATION.cff                       # Citation metadata (DOI placeholders)
+├── CONTRIBUTING.md                    # Contribution guidelines
 ├── README.md
-├── Dockerfile                       # Multi-stage build
-├── docker-compose.yaml
-├── requirements.txt
+├── Dockerfile                         # Multi-stage build (builder + runtime)
+├── docker-compose.yaml                # Dev container orchestration
+├── requirements.txt                   # Python dependencies
 ├── .gitignore
 ├── .github/
 │   └── workflows/
-│       └── ci.yml                   # Build → Test → Docker → SBOM → Scan
+│       └── ci.yml                     # Build → Test → SBOM → Scan
+│
 ├── docs/
-│   ├── THREAT_MODEL.md              # Formal threat model (v1.0)
-│   ├── attack_definitions_A1_A4.md  # Parametric attacks (formal)
-│   ├── attack_definitions_A5_A8.md  # Structural + meta attacks (formal)
-│   ├── iso_clause_mapping.md        # ISO 10218 traceability matrix
-│   ├── literature_notes.md          # Paper analysis (Zou 2023, Kumar 2024)
-│   ├── OSF_DRAFT.md                 # OSF preregistration draft
-│   └── open_science_release.md      # Release checklist (M2/M6 milestones)
-├── robot_security_core/             # Core ROS2 package (ament_python)
+│   ├── THREAT_MODEL.md                # Formal threat model (v1.1)
+│   ├── attack_definitions_A1_A4.md    # Parametric attacks (formal)
+│   ├── attack_definitions_A5_A8.md    # Structural + meta attacks (formal)
+│   ├── iso_clause_mapping.md          # ISO 10218 traceability matrix
+│   ├── literature_notes.md            # Paper analysis (Zou 2023, Kumar 2024)
+│   ├── OSF_DRAFT.md                   # OSF preregistration draft
+│   └── open_science_release.md        # Release checklist (M2/M6 milestones)
+│
+├── enfield_core/                      # Core library (ament_python)
 │   ├── package.xml
-│   ├── setup.py
-│   ├── robot_security_core/
-│   │   ├── __init__.py
-│   │   └── watchdog_node.py
-│   └── test/
-└── scripts/
-    └── rapid_parser.py              # PoC Lark parser (A1 speed detection)
+│   ├── setup.py / setup.cfg
+│   └── enfield_core/
+│       ├── watchdog_node.py           # Legacy entry point
+│       ├── parsers/
+│       │   └── rapid_parser.py        # Lark-based RAPID parser (A1 PoC)
+│       └── validators/                # IR validators (placeholder)
+│
+├── enfield_msgs/                      # Custom ROS2 messages (ament_cmake)
+│   ├── package.xml / CMakeLists.txt
+│   └── msg/
+│       └── SafetyViolation.msg        # Attack type, ISO clause, severity
+│
+├── enfield_robots_ur5e/               # UR5e adapter (ament_cmake)
+│   ├── package.xml / CMakeLists.txt
+│   ├── config/
+│   │   └── kinematic_limits.yaml      # ISO 10218 mapped speed/payload limits
+│   ├── urdf/ srdf/ meshes/ launch/    # To be populated (PR-D)
+│   └── README.md                      # Robot Adapter Contract
+│
+├── enfield_tasks/                     # Task IR definitions (ament_python)
+│   ├── package.xml / setup.py
+│   ├── ir/schema/                     # JSON schema (placeholder)
+│   ├── ir/tasks/                      # Sample tasks (placeholder)
+│   └── enfield_tasks/validators/      # IR validators (placeholder)
+│
+├── enfield_watchdog/                  # Runtime safety monitors (ament_python)
+│   ├── package.xml / setup.py
+│   ├── config/safety_params.yaml      # Monitor parameters
+│   └── enfield_watchdog/
+│       ├── velocity_monitor_node.py   # TCP speed vs ISO mode limits
+│       ├── zone_monitor_node.py       # TCP position vs safeguarded space
+│       └── safety_aggregator_node.py  # Verdict collection and export
+│
+├── enfield_bringup/                   # Launch orchestration (ament_cmake)
+│   ├── package.xml / CMakeLists.txt
+│   └── launch/simulation.launch.py    # Top-level simulation launch
+│
+├── enfield_attacks/                   # Attack generators (ament_python, Phase 2)
+│   ├── package.xml / setup.py
+│   └── enfield_attacks/               # A1–A8 generators (placeholder)
+│
+├── enfield_robots_abb_gofa/           # ABB GoFa adapter (placeholder)
+├── enfield_robots_kuka_kr3/           # KUKA KR3 adapter (placeholder)
+│
+├── scripts/
+│   └── rapid_parser.py                # Original PoC parser (kept for compat)
+│
+└── results/                           # Experiment outputs (gitignored)
+    └── .gitkeep
 ```
 
 ## Open Science
@@ -120,6 +165,8 @@ This project complies with ENFIELD Open Science requirements:
 | OSF Pre-registration + DOI | Month 2 (March 2026) | 🔄 In progress |
 | GitHub Public Release v1.0 | Month 6 (July 2026) | ⏳ Planned |
 | OSF Replication Package | Month 6 (July 2026) | ⏳ Planned |
+
+See [`docs/open_science_release.md`](docs/open_science_release.md) for the full release checklist.
 
 <!-- TODO: Replace with actual DOI after OSF submission
 [![DOI](https://img.shields.io/badge/DOI-10.17605%2FOSF.IO%2FXXXXX-blue)](https://doi.org/10.17605/OSF.IO/XXXXX)
