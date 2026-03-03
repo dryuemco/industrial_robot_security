@@ -8,6 +8,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def load_yaml(package_name: str, file_path: str) -> dict:
@@ -33,12 +34,14 @@ def generate_launch_description():
         ' sim_ignition:=true',
         ' use_fake_hardware:=false',
     ])
-    robot_description = {'robot_description': robot_description_content}
+    robot_description = {'robot_description': ParameterValue(robot_description_content, value_type=str)}
 
     # ----- SRDF -----
     srdf_path = os.path.join(pkg_ur5e, 'srdf', 'ur5e.srdf')
     with open(srdf_path, 'r') as f:
-        robot_description_semantic = {'robot_description_semantic': f.read()}
+        robot_description_semantic = {
+            'robot_description_semantic': ParameterValue(f.read(), value_type=str)
+        }
 
     # ----- MoveIt2 config files -----
     joint_limits = {

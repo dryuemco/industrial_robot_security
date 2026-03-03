@@ -7,19 +7,16 @@ from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
     ExecuteProcess,
-    IncludeLaunchDescription,
     RegisterEventHandler,
 )
 from launch.event_handlers import OnProcessExit
-from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import (
     Command,
     FindExecutable,
     LaunchConfiguration,
-    PathJoinSubstitution,
 )
 from launch_ros.actions import Node
-from launch_ros.substitutions import FindPackageShare
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
@@ -43,7 +40,7 @@ def generate_launch_description():
         ' sim_ignition:=true',
         ' use_fake_hardware:=false',
     ])
-    robot_description = {'robot_description': robot_description_content}
+    robot_description = {'robot_description': ParameterValue(robot_description_content, value_type=str)}
 
     # ----- Nodes -----
     robot_state_publisher = Node(
@@ -79,10 +76,10 @@ def generate_launch_description():
         package='ros_gz_bridge',
         executable='parameter_bridge',
         output='screen',
-        parameters=[{
-            'config_file': os.path.join(pkg_ur5e, 'config', 'gz_bridge.yaml'),
-            'use_sim_time': True,
-        }],
+        arguments=[
+            '/clock@rosgraph_msgs/msg/Clock[ignition.msgs.Clock',
+        ],
+        parameters=[{'use_sim_time': True}],
     )
 
     # ----- Controller spawners (after robot is spawned) -----

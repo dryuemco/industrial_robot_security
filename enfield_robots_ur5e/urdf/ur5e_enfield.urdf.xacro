@@ -31,7 +31,10 @@
   <!-- Include upstream UR description macro                         -->
   <!-- ============================================================ -->
   <xacro:include filename="$(find ur_description)/urdf/ur_macro.xacro"/>
-
+  
+  <!-- World link required by ur_description base_joint -->
+  <link name="world"/>
+  
   <!-- ============================================================ -->
   <!-- Instantiate the UR5e robot                                    -->
   <!-- ============================================================ -->
@@ -57,8 +60,8 @@
   <!-- ============================================================ -->
   <xacro:if value="$(arg sim_ignition)">
     <gazebo>
-      <plugin filename="gz_ros2_control-system"
-              name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+      <plugin filename="ign_ros2_control-system"
+              name="ign_ros2_control::IgnitionROS2ControlPlugin">
         <parameters>$(find enfield_robots_ur5e)/config/ur5e_controllers.yaml</parameters>
       </plugin>
     </gazebo>
