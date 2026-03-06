@@ -12,7 +12,7 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name + '/ir/schema', glob('ir/schema/*.json')),
-        ('share/' + package_name + '/ir/tasks', glob('ir/tasks/*.yaml')),
+        ('share/' + package_name + '/ir/tasks', glob('ir/tasks/*.json')),
     ],
     install_requires=['setuptools', 'jsonschema', 'pyyaml'],
     zip_safe=True,
