@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/ENFIELD/schemas/task_ir_v1.schema.json",
   "title": "ENFIELD Task IR v1",
-  "description": "Vendor-neutral intermediate representation for industrial robot tasks. Designed for adversarial testing: every field that an A1-A8 attack could target is explicitly modelled so the watchdog can validate it.",
+  "description": "Vendor-neutral intermediate representation for industrial robot tasks. Every field that an A1-A8 attack could target is explicitly modelled so the watchdog can validate it. Aligned with attack_definitions_A1_A4.md and attack_definitions_A5_A8.md.",
   "type": "object",
   "required": ["schema_version", "task", "robot", "environment", "motion_sequence"],
   "additionalProperties": false,
@@ -72,7 +72,7 @@
         "payload_kg": {
           "type": "number",
           "minimum": 0,
-          "description": "Declared payload mass in kg. Watchdog checks against robot max (A1/A2 relevance)."
+          "description": "Declared payload mass in kg. Watchdog checks against robot max."
         }
       }
     },
@@ -94,20 +94,24 @@
         "safety_zones": {
           "type": "array",
           "items": { "$ref": "#/$defs/safety_zone" },
-          "description": "SAFEZONE geometries for A3 (Zone Penetration) detection."
+          "description": "Primitive-based safety zones (box/sphere/cylinder)."
         }
       }
     },
 
     "tool": {
       "type": "object",
-      "description": "End-effector / tool configuration. Relevant for A5 (Tool Misuse).",
+      "description": "End-effector / tool configuration. Relevant for A7 (Tool Misuse).",
       "required": ["type"],
       "additionalProperties": false,
       "properties": {
         "type": {
-          "enum": ["gripper", "welder", "suction", "screwdriver", "none"],
+          "enum": ["gripper", "welder", "suction", "screwdriver", "laser", "none"],
           "description": "Tool category."
+        },
+        "name": {
+          "type": "string",
+          "description": "Tool name identifier (e.g. 'tGripper', 'tWeldGun')."
         },
         "parameters": {
           "type": "object",
@@ -119,29 +123,33 @@
         "tcp_offset": {
           "$ref": "#/$defs/pose",
           "description": "Tool Center Point offset from flange."
+        },
+        "activation_constraints": {
+          "$ref": "#/$defs/tool_activation_constraints",
+          "description": "A7: Tool context interlock constraints."
         }
       }
     },
 
     "safety_requirements": {
       "type": "object",
-      "description": "Explicit safety constraints. Watchdog validates these against kinematic_limits.yaml.",
+      "description": "Explicit safety constraints. Watchdog validates against kinematic_limits.yaml.",
       "additionalProperties": false,
       "properties": {
         "max_tcp_speed_mm_s": {
           "type": "number",
           "exclusiveMinimum": 0,
-          "description": "Maximum allowed TCP speed in mm/s (A1 detection)."
+          "description": "A1: Maximum allowed TCP speed in mm/s."
         },
         "max_tcp_accel_mm_s2": {
           "type": "number",
           "exclusiveMinimum": 0,
-          "description": "Maximum allowed TCP acceleration in mm/s² (A2 detection)."
+          "description": "Maximum allowed TCP acceleration in mm/s²."
         },
         "estop_required": {
           "type": "boolean",
           "default": true,
-          "description": "Whether an E-Stop check is mandatory (A4 detection)."
+          "description": "A5: Whether an E-Stop check is mandatory."
         },
         "estop_max_latency_ms": {
           "type": "number",
@@ -157,7 +165,113 @@
         "iso_clauses": {
           "type": "array",
           "items": { "type": "string" },
-          "description": "Applicable ISO 10218 clause references, e.g. ['5.4.2', '5.5.3']."
+          "description": "Applicable ISO 10218 clause references."
+        },
+        "safeguarded_space": {
+          "$ref": "#/$defs/safeguarded_space",
+          "description": "A2: Convex polytope defining permitted workspace (halfspace representation)."
+        },
+        "forbidden_orientation_cones": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/orientation_cone" },
+          "description": "A3: Forbidden tool orientation directions."
+        },
+        "tool_payload": {
+          "$ref": "#/$defs/tool_payload",
+          "description": "A4: Payload mass/CoG bounds and tolerances."
+        }
+      }
+    },
+
+    "safety_logic_requirements": {
+      "type": "object",
+      "description": "A5: Required safety node patterns for AST-based detection.",
+      "additionalProperties": false,
+      "properties": {
+        "required_nodes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/required_safety_node" },
+          "description": "AST patterns that must be present and reachable in every motion procedure."
+        },
+        "dead_code_check": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to flag always-false guard conditions."
+        },
+        "cfg_reachability_check": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to verify safety nodes are reachable in CFG."
+        }
+      }
+    },
+
+    "work_object_specification": {
+      "type": "object",
+      "description": "A6: Expected work object frame for frame confusion detection.",
+      "additionalProperties": false,
+      "properties": {
+        "wobj_name": {
+          "type": "string",
+          "description": "Expected wobjdata variable name (e.g. 'wobjConveyor')."
+        },
+        "uframe_translation_mm": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 3,
+          "maxItems": 3,
+          "description": "Expected uframe translation [x, y, z] in mm."
+        },
+        "uframe_quaternion": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 4,
+          "maxItems": 4,
+          "description": "Expected uframe rotation as quaternion [q1, q2, q3, q4]."
+        },
+        "translation_tolerance_mm": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Translational tolerance epsilon_t in mm."
+        },
+        "rotation_tolerance_deg": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Rotational tolerance epsilon_r in degrees."
+        }
+      }
+    },
+
+    "prompt_security": {
+      "type": "object",
+      "description": "A8: LLM prompt monitoring parameters.",
+      "additionalProperties": false,
+      "properties": {
+        "perplexity_threshold": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "A8.1: Maximum perplexity for user prompt (above = adversarial suffix suspected)."
+        },
+        "min_safety_token_ratio": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "A8.2: Minimum ratio of safety tokens to total context length."
+        },
+        "blocked_patterns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "A8.3/A8.4: Jailbreak and override phrases to detect."
+        },
+        "encoding_scan": {
+          "type": "boolean",
+          "default": true,
+          "description": "A8.5: Whether to scan for Base64/ROT13 encoded payloads."
+        },
+        "multi_turn_budget": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "A8.6: Maximum conversation turns allowed."
         }
       }
     },
@@ -247,7 +361,7 @@
 
     "safety_zone": {
       "type": "object",
-      "description": "A protected spatial region. Robot TCP must not enter (or must stay inside).",
+      "description": "A protected spatial region (primitive-based).",
       "required": ["id", "type", "geometry", "frame_id"],
       "additionalProperties": false,
       "properties": {
@@ -281,7 +395,177 @@
         },
         "frame_id": {
           "type": "string",
-          "description": "Coordinate frame in which the zone is defined (A7 relevance)."
+          "description": "Coordinate frame in which the zone is defined."
+        }
+      }
+    },
+
+    "safeguarded_space": {
+      "type": "object",
+      "description": "A2: Convex polytope W = { x in R^3 | n_i^T x <= d_i }. See attack_definitions_A1_A4.md.",
+      "required": ["halfspaces"],
+      "additionalProperties": false,
+      "properties": {
+        "halfspaces": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/halfspace" },
+          "description": "Set of halfspace constraints defining the permitted workspace."
+        },
+        "frame_id": {
+          "type": "string",
+          "default": "world",
+          "description": "Coordinate frame in which halfspaces are defined."
+        }
+      }
+    },
+
+    "halfspace": {
+      "type": "object",
+      "description": "A single halfspace constraint: n^T x <= d.",
+      "required": ["normal", "offset"],
+      "additionalProperties": false,
+      "properties": {
+        "normal": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 3,
+          "maxItems": 3,
+          "description": "Outward normal vector n_i (3D)."
+        },
+        "offset": {
+          "type": "number",
+          "description": "Offset d_i such that n_i^T x <= d_i defines the halfspace."
+        }
+      }
+    },
+
+    "orientation_cone": {
+      "type": "object",
+      "description": "A3: Forbidden direction cone. Tool Z-axis must not fall inside.",
+      "required": ["axis", "half_angle_deg"],
+      "additionalProperties": false,
+      "properties": {
+        "axis": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 3,
+          "maxItems": 3,
+          "description": "Unit direction vector d_hat of the cone axis (world frame)."
+        },
+        "half_angle_deg": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 180,
+          "description": "Half-angle alpha in degrees."
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable label (e.g. 'upward', 'toward_operator')."
+        }
+      }
+    },
+
+    "tool_payload": {
+      "type": "object",
+      "description": "A4: Payload mass and CoG bounds for tooldata validation.",
+      "required": ["mass_min_kg", "mass_max_kg", "cog_radius_max_mm"],
+      "additionalProperties": false,
+      "properties": {
+        "mass_true_kg": {
+          "type": "number",
+          "minimum": 0,
+          "description": "True (expected) tool mass in kg."
+        },
+        "mass_min_kg": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Minimum acceptable declared mass."
+        },
+        "mass_max_kg": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Maximum acceptable declared mass."
+        },
+        "cog_true_mm": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 3,
+          "maxItems": 3,
+          "description": "True (expected) CoG position [x, y, z] in mm."
+        },
+        "cog_radius_max_mm": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Maximum allowed ||c_decl|| in mm."
+        },
+        "mass_tolerance_kg": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Tolerance epsilon_m for mass drift detection."
+        },
+        "cog_tolerance_mm": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Tolerance epsilon_c for CoG drift detection."
+        }
+      }
+    },
+
+    "required_safety_node": {
+      "type": "object",
+      "description": "A5: A required AST pattern that must be present in motion procedures.",
+      "required": ["pattern", "mandatory"],
+      "additionalProperties": false,
+      "properties": {
+        "pattern": {
+          "type": "string",
+          "description": "Pattern identifier (e.g. 'estop_check', 'collision_monitor', 'error_handler')."
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description of what this pattern checks."
+        },
+        "mandatory": {
+          "type": "boolean",
+          "description": "True = absence is a violation; false = absence is a warning."
+        }
+      }
+    },
+
+    "tool_activation_constraints": {
+      "type": "object",
+      "description": "A7: Constraints on when/where the tool may be active.",
+      "additionalProperties": false,
+      "properties": {
+        "tool_type": {
+          "type": "string",
+          "description": "Expected tool type for identity check (e.g. 'welding_arc', 'gripper')."
+        },
+        "active_zone": {
+          "type": "object",
+          "description": "Axis-aligned bounding box where tool activation is permitted (mm).",
+          "additionalProperties": false,
+          "properties": {
+            "x_range": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 },
+            "y_range": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 },
+            "z_range": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 }
+          }
+        },
+        "max_speed_during_active_mm_s": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Maximum TCP speed while tool is ON."
+        },
+        "allowed_modes": {
+          "type": "array",
+          "items": { "enum": ["collaborative", "fenced", "hybrid"] },
+          "description": "Operating modes in which tool activation is permitted."
+        },
+        "required_sequence": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Expected ordered phases (e.g. ['approach','activate','process','deactivate','retract'])."
         }
       }
     },
@@ -324,7 +608,7 @@
         },
         "frame_id": {
           "type": "string",
-          "description": "Coordinate frame for target_pose (A7: Frame Confusion detection)."
+          "description": "Coordinate frame for target_pose (A6: Frame Confusion detection)."
         },
         "via_pose": {
           "$ref": "#/$defs/pose",
@@ -338,16 +622,16 @@
         "accel_mm_s2": {
           "type": "number",
           "exclusiveMinimum": 0,
-          "description": "Desired TCP acceleration in mm/s² (A2: Acceleration Manipulation detection)."
+          "description": "Desired TCP acceleration in mm/s²."
         },
         "blend_radius_mm": {
           "type": "number",
           "minimum": 0,
-          "description": "Zone/blend radius in mm. 0 = fine positioning (stop at point)."
+          "description": "Zone/blend radius in mm. 0 = fine positioning."
         },
         "tool_parameters": {
           "type": "object",
-          "description": "Tool command parameters for set_tool (A5: Tool Misuse detection).",
+          "description": "Tool command parameters for set_tool (A7: Tool Misuse detection).",
           "additionalProperties": { "type": "number" }
         },
         "io_signal": {
