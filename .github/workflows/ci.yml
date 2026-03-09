@@ -15,6 +15,9 @@ env:
   ROS_DISTRO: humble
 
 jobs:
+  # ---------------------------------------------------------------------------
+  # Job 1: ROS2 workspace build + colcon tests
+  # ---------------------------------------------------------------------------
   build-and-test:
     runs-on: ubuntu-22.04
     container:
@@ -37,7 +40,7 @@ jobs:
           colcon build --symlink-install
         shell: bash
 
-      - name: Run tests
+      - name: Run colcon tests
         run: |
           source /opt/ros/$ROS_DISTRO/setup.bash
           source install/setup.bash
@@ -51,6 +54,60 @@ jobs:
           colcon test-result --verbose
         shell: bash
 
+  # ---------------------------------------------------------------------------
+  # Job 2: Task IR schema validation tests (75 tests)
+  # ---------------------------------------------------------------------------
+  test-task-ir:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install jsonschema pyyaml pytest
+
+      - name: Run Task IR tests (PR-E + PR-F)
+        run: |
+          cd $GITHUB_WORKSPACE
+          PYTHONPATH=enfield_tasks python3 -m pytest \
+            enfield_tasks/test/test_schema_validation.py -v \
+            --tb=short
+
+  # ---------------------------------------------------------------------------
+  # Job 3: Attack variant generator tests (69 tests)
+  # ---------------------------------------------------------------------------
+  test-attacks:
+    runs-on: ubuntu-22.04
+    needs: test-task-ir
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install jsonschema pyyaml pytest
+
+      - name: Run attack variant tests (PR-G)
+        run: |
+          cd $GITHUB_WORKSPACE
+          PYTHONPATH=enfield_attacks:enfield_tasks python3 -m pytest \
+            enfield_attacks/test/test_variant_generator.py -v \
+            --tb=short
+
+  # ---------------------------------------------------------------------------
+  # Job 4: Docker build
+  # ---------------------------------------------------------------------------
   docker-build:
     runs-on: ubuntu-22.04
     steps:
@@ -60,6 +117,9 @@ jobs:
       - name: Build Docker image
         run: docker build --target builder -t enfield:ci .
 
+  # ---------------------------------------------------------------------------
+  # Job 5: SBOM generation + vulnerability scan
+  # ---------------------------------------------------------------------------
   sbom-and-scan:
     runs-on: ubuntu-22.04
     needs: docker-build
