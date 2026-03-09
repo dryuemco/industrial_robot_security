@@ -106,7 +106,59 @@ jobs:
             --tb=short
 
   # ---------------------------------------------------------------------------
-  # Job 4: Docker build
+  # Job 4: IR → URScript translator tests (51 tests)
+  # ---------------------------------------------------------------------------
+  test-translators:
+    runs-on: ubuntu-22.04
+    needs: test-task-ir
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install pytest
+
+      - name: Run translator tests (PR-H)
+        run: |
+          cd $GITHUB_WORKSPACE
+          PYTHONPATH=enfield_translators:enfield_tasks python3 -m pytest \
+            enfield_translators/test/test_urscript_translator.py -v \
+            --tb=short
+
+  # ---------------------------------------------------------------------------
+  # Job 5: Static watchdog tests (60 tests)
+  # ---------------------------------------------------------------------------
+  test-watchdog-static:
+    runs-on: ubuntu-22.04
+    needs: [test-task-ir, test-attacks]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install pytest
+
+      - name: Run static watchdog tests (PR-I)
+        run: |
+          cd $GITHUB_WORKSPACE
+          PYTHONPATH=enfield_watchdog_static:enfield_tasks python3 -m pytest \
+            enfield_watchdog_static/test/test_watchdog.py -v \
+            --tb=short
+
+  # ---------------------------------------------------------------------------
+  # Job 6: Docker build
   # ---------------------------------------------------------------------------
   docker-build:
     runs-on: ubuntu-22.04
@@ -118,7 +170,7 @@ jobs:
         run: docker build --target builder -t enfield:ci .
 
   # ---------------------------------------------------------------------------
-  # Job 5: SBOM generation + vulnerability scan
+  # Job 7: SBOM generation + vulnerability scan
   # ---------------------------------------------------------------------------
   sbom-and-scan:
     runs-on: ubuntu-22.04
