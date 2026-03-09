@@ -1,3 +1,4 @@
+"""ENFIELD core package setup."""
 from setuptools import find_packages, setup
 
 package_name = 'enfield_core'
