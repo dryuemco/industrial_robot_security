@@ -5,6 +5,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-green)](LICENSE)
 [![OSF Prereg](https://img.shields.io/badge/OSF-Preregistered-lightblue)](https://osf.io/)
 [![ENFIELD](https://img.shields.io/badge/ENFIELD-Exchange%20Scheme-orange)](https://www.enfield-project.eu/)
+[![Tests](https://img.shields.io/badge/Tests-255%20passing-brightgreen)]()
 [![Status](https://img.shields.io/badge/Status-Phase%202%20(Weeks%209--14)-yellow)]()
 
 > **ENFIELD Exchange Scheme** | Challenge T-AI.7: LLM Safety and Security
@@ -17,8 +18,9 @@ This repository contains a formal adversarial testing framework for detecting sa
 - **Formal threat model** with 8 attack types (A1–A8) covering parametric, structural, and LLM-specific vulnerabilities
 - **Vendor-neutral Task IR** (Intermediate Representation) for robot-agnostic task specification — 5 baseline tasks, JSON Schema validated
 - **Attack variant generator** producing 40 adversarial variants (5 tasks × 8 attacks) with deterministic seeds
-- **AST-based watchdog** for static code analysis and safety violation detection
-- **Runtime safety monitors** as ROS2 nodes for real-time velocity/zone monitoring
+- **IR → URScript translator** converting Task IR to UR5e-executable URScript with automatic unit conversions
+- **Static watchdog** with 8 detection rules (DM-1 through DM-7) for IR-level A1–A8 violation detection
+- **Runtime safety monitors** as ROS2 nodes for real-time velocity/zone monitoring (placeholder)
 - **Reproducibility pipeline** with Docker, SBOM (CycloneDX), and CI/CD
 
 **Scope:** Simulation-only — no physical robot deployment.
@@ -72,11 +74,19 @@ docker compose run --rm dev
 colcon build --symlink-install
 source install/setup.bash
 
-# Run Task IR tests (75 tests)
+# Run all tests (255 total)
 PYTHONPATH=enfield_tasks python3 -m pytest enfield_tasks/test/ -v
-
-# Run attack variant generator tests (69 tests)
 PYTHONPATH=enfield_attacks:enfield_tasks python3 -m pytest enfield_attacks/test/ -v
+PYTHONPATH=enfield_translators:enfield_tasks python3 -m pytest enfield_translators/test/ -v
+PYTHONPATH=enfield_watchdog_static:enfield_tasks python3 -m pytest enfield_watchdog_static/test/ -v
+
+# Run static watchdog on adversarial variants
+PYTHONPATH=enfield_watchdog_static:enfield_tasks python3 -m enfield_watchdog_static.watchdog \
+  enfield_attacks/generated/variants/ --output results/watchdog_report.json
+
+# Translate Task IR to URScript
+PYTHONPATH=enfield_translators:enfield_tasks python3 -m enfield_translators.urscript_translator \
+  --tasks-dir enfield_tasks/ir/tasks --output-dir enfield_translators/generated/urscript
 ```
 
 ## Project Structure
@@ -93,7 +103,7 @@ industrial_robot_security/
 ├── .gitignore
 ├── .github/
 │   └── workflows/
-│       └── ci.yml                     # Build → Test → SBOM → Scan
+│       └── ci.yml                     # Build → Test (×4) → SBOM → Scan
 │
 ├── docs/
 │   ├── THREAT_MODEL.md                # Formal threat model (v1.1)
@@ -163,6 +173,36 @@ industrial_robot_security/
 │   └── test/
 │       └── test_variant_generator.py  # 69 tests (PR-G)
 │
+├── enfield_translators/               # Vendor translators (ament_python)
+│   ├── enfield_translators/
+│   │   ├── __init__.py                # Exports: IRToURScriptTranslator
+│   │   ├── urscript_translator.py     # IR → URScript: movel/movej/movec + CLI
+│   │   └── urscript_utils.py          # mm→m, quaternion→axis-angle conversions
+│   ├── generated/
+│   │   └── urscript/
+│   │       ├── manifest.json          # 5-entry translation manifest
+│   │       └── T001–T005.script       # 5 URScript output files
+│   └── test/
+│       └── test_urscript_translator.py # 51 tests (PR-H)
+│
+├── enfield_watchdog_static/           # Static watchdog (ament_python)
+│   ├── enfield_watchdog_static/
+│   │   ├── __init__.py                # Exports: StaticWatchdog, Violation, WatchdogReport
+│   │   ├── watchdog.py                # Orchestrator: analyze, batch, CLI
+│   │   ├── violation.py               # Violation + WatchdogReport data models
+│   │   └── rules/
+│   │       ├── __init__.py            # ALL_RULES registry (A1–A8)
+│   │       ├── a1_speed.py            # DM-1: speed vs mode limit
+│   │       ├── a2_zone.py             # DM-2: halfspace boundary test
+│   │       ├── a3_orientation.py      # DM-3: quaternion → cone intersection
+│   │       ├── a4_payload.py          # DM-1: payload mass bounds
+│   │       ├── a5_logic.py            # DM-4: estop + required nodes
+│   │       ├── a6_frame.py            # DM-5: wos sanity + frame refs
+│   │       ├── a7_tool.py             # DM-6: tool identity + mode
+│   │       └── a8_prompt.py           # DM-7: prompt_security bypass
+│   └── test/
+│       └── test_watchdog.py           # 60 tests (PR-I)
+│
 ├── enfield_watchdog/                  # Runtime safety monitors (ament_python)
 │   ├── config/safety_params.yaml      # Monitor parameters
 │   └── enfield_watchdog/
@@ -189,7 +229,47 @@ industrial_robot_security/
 |---------|-------|----|---------|
 | enfield_tasks | 75 | PR-E, PR-F | `PYTHONPATH=enfield_tasks pytest enfield_tasks/test/ -v` |
 | enfield_attacks | 69 | PR-G | `PYTHONPATH=enfield_attacks:enfield_tasks pytest enfield_attacks/test/ -v` |
-| **Total** | **144** | | |
+| enfield_translators | 51 | PR-H | `PYTHONPATH=enfield_translators:enfield_tasks pytest enfield_translators/test/ -v` |
+| enfield_watchdog_static | 60 | PR-I | `PYTHONPATH=enfield_watchdog_static:enfield_tasks pytest enfield_watchdog_static/test/ -v` |
+| **Total** | **255** | | |
+
+## CI Pipeline
+
+The GitHub Actions pipeline runs 7 jobs:
+
+```
+build-and-test ──────────────────────────────── (colcon build + test)
+test-task-ir ─────┬── test-attacks ──┬── test-watchdog-static
+                  └── test-translators│
+docker-build ──── sbom-and-scan
+```
+
+## Static Watchdog
+
+The static watchdog analyzes Task IR files against all 8 attack types without running a simulation:
+
+```bash
+# Single file
+PYTHONPATH=enfield_watchdog_static:enfield_tasks python3 -m enfield_watchdog_static.watchdog \
+  enfield_attacks/generated/variants/T001_A1_pick_place_collab.json
+
+# Batch analysis with JSON report
+PYTHONPATH=enfield_watchdog_static:enfield_tasks python3 -m enfield_watchdog_static.watchdog \
+  enfield_attacks/generated/variants/ --output results/watchdog_report.json
+```
+
+Detection matrix:
+
+| Rule | Attack | Mechanism | ISO Clause |
+|------|--------|-----------|-----------|
+| DM-1 | A1 Speed | speed_mm_s vs mode limit | 5.6 |
+| DM-2 | A2 Zone | halfspace n·p > d | 5.12.3 |
+| DM-3 | A3 Orientation | quat → tool_z → cone test | 5.3 |
+| DM-1 | A4 Payload | mass vs [min, max] bounds | 5.3/5.4 |
+| DM-4 | A5 Logic | estop presence + required nodes | 5.4/5.5 |
+| DM-5 | A6 Frame | wos sanity + undefined frame_ids | 5.12.3/5.3 |
+| DM-6 | A7 Tool | type identity + mode exclusion | 5.1.14/5.1.15 |
+| DM-7 | A8 Prompt | perplexity + patterns + encoding | 5.3 + EU AI Act |
 
 ## Open Science
 
