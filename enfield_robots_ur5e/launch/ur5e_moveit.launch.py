@@ -1,5 +1,18 @@
+# Copyright 2026 Yunus Emre Cogurcu
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 """Launch MoveIt2 move_group for UR5e planning and execution."""
-# Copyright 2026 Yunus Emre Cogurcu - Apache-2.0
 
 import os
 import yaml
@@ -21,6 +34,7 @@ def load_yaml(package_name: str, file_path: str) -> dict:
 
 
 def generate_launch_description():
+    """Generate MoveIt2 launch description."""
     pkg_ur5e = get_package_share_directory('enfield_robots_ur5e')
 
     use_sim_time_arg = DeclareLaunchArgument(
@@ -34,13 +48,19 @@ def generate_launch_description():
         ' sim_ignition:=true',
         ' use_fake_hardware:=false',
     ])
-    robot_description = {'robot_description': ParameterValue(robot_description_content, value_type=str)}
+    robot_description = {
+        'robot_description': ParameterValue(
+            robot_description_content, value_type=str
+        )
+    }
 
     # ----- SRDF -----
     srdf_path = os.path.join(pkg_ur5e, 'srdf', 'ur5e.srdf')
     with open(srdf_path, 'r') as f:
         robot_description_semantic = {
-            'robot_description_semantic': ParameterValue(f.read(), value_type=str)
+            'robot_description_semantic': ParameterValue(
+                f.read(), value_type=str
+            )
         }
 
     # ----- MoveIt2 config files -----
@@ -81,24 +101,7 @@ def generate_launch_description():
         ],
     )
 
-    # ----- RViz (optional, for debugging) -----
-    rviz_node = Node(
-        package='rviz2',
-        executable='rviz2',
-        output='screen',
-        arguments=['-d', os.path.join(pkg_ur5e, 'config', 'moveit.rviz')],
-        parameters=[
-            robot_description,
-            robot_description_semantic,
-            kinematics,
-            {'use_sim_time': LaunchConfiguration('use_sim_time')},
-        ],
-        # Disabled by default — uncomment condition to auto-launch
-        # condition=IfCondition(LaunchConfiguration('launch_rviz')),
-    )
-
     return LaunchDescription([
         use_sim_time_arg,
         move_group_node,
-        # rviz_node,  # Uncomment for visual debugging
     ])
