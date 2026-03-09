@@ -1,15 +1,16 @@
-# LLM & AI Libraries
-torch
-transformers
-accelerate
+# =============================================================================
+# ENFIELD Project — Python Dependencies
+# Keep minimal: only what the codebase actually imports.
+# Heavy ML deps (torch, transformers) will be added in Phase 3 (gray-box).
+# =============================================================================
+
+# --- Core libraries ---
 numpy
 pandas
 
-# Attack Simulation (GCG)
-# Note: llm-attacks will be cloned separately
-fschat
-fastapi
-uvicorn
+# --- Task IR validation ---
+jsonschema>=4.20
+pyyaml>=6.0
 
-# ROS2 Interaction
-lark-parser  # For parsing RAPID code (AST)
+# --- RAPID parser (AST PoC) ---
+lark-parser>=0.12
