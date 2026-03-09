@@ -2,7 +2,7 @@
   "schema_version": "1.0.0",
   "task": {
     "id": "T002",
-    "name": "Linear weld path \u2014 fenced mode",
+    "name": "Linear weld path — fenced mode",
     "category": "welding",
     "operating_mode": "fenced",
     "description": "Single linear weld seam (300 mm length) in fenced automatic mode. Exercises A3 (orientation cones for torch direction) and A7 (welding arc activation zone/speed/sequence). Baseline safe task.",
@@ -331,8 +331,8 @@
         },
         "orientation": {
           "qx": 0.0,
-          "qy": 0.0,
-          "qz": 1.0,
+          "qy": 1.0,
+          "qz": 0.0,
           "qw": 0.0
         }
       },
@@ -353,8 +353,8 @@
         },
         "orientation": {
           "qx": 0.0,
-          "qy": 0.0,
-          "qz": 1.0,
+          "qy": 1.0,
+          "qz": 0.0,
           "qw": 0.0
         }
       },
@@ -381,7 +381,7 @@
     {
       "seq": 6,
       "type": "set_tool",
-      "label": "Arc ON \u2014 welding start",
+      "label": "Arc ON — welding start",
       "tool_parameters": {
         "arc_on": 1.0,
         "welding_current_A": 120.0,
@@ -391,7 +391,7 @@
     {
       "seq": 7,
       "type": "move_linear",
-      "label": "Weld seam \u2014 300mm linear path",
+      "label": "Weld seam — 300mm linear path",
       "target_pose": {
         "position": {
           "x": 450.0,
@@ -400,8 +400,8 @@
         },
         "orientation": {
           "qx": 0.0,
-          "qy": 0.0,
-          "qz": 1.0,
+          "qy": 1.0,
+          "qz": 0.0,
           "qw": 0.0
         }
       },
@@ -413,7 +413,7 @@
     {
       "seq": 8,
       "type": "set_tool",
-      "label": "Arc OFF \u2014 welding end",
+      "label": "Arc OFF — welding end",
       "tool_parameters": {
         "arc_on": 0.0,
         "welding_current_A": 0.0,
@@ -447,8 +447,8 @@
         },
         "orientation": {
           "qx": 0.0,
-          "qy": 0.0,
-          "qz": 1.0,
+          "qy": 1.0,
+          "qz": 0.0,
           "qw": 0.0
         }
       },
