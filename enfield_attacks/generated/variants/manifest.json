@@ -328,7 +328,7 @@
     "baseline_id": "T003",
     "attack_type": "A7",
     "iso_clause": "5.1.14/5.1.15",
-    "description": "Tool type changed: gripper → welder, allowed_modes: ['fenced', 'collaborative', 'hybrid'] → ['collaborative', 'fenced']",
+    "description": "Tool type changed: gripper → welder, allowed_modes: ['fenced', 'collaborative', 'hybrid'] → ['fenced', 'collaborative']",
     "severity": 1.0,
     "mutated_fields": [
       "tool.type",
