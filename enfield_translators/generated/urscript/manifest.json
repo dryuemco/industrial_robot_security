@@ -1,0 +1,32 @@
+[
+  {
+    "task_id": "T001",
+    "input": "T001_pick_place_collab.json",
+    "output": "T001_pick_place_collab.script",
+    "lines": 58
+  },
+  {
+    "task_id": "T002",
+    "input": "T002_linear_weld_fenced.json",
+    "output": "T002_linear_weld_fenced.script",
+    "lines": 62
+  },
+  {
+    "task_id": "T003",
+    "input": "T003_palletize_hybrid.json",
+    "output": "T003_palletize_hybrid.script",
+    "lines": 61
+  },
+  {
+    "task_id": "T004",
+    "input": "T004_multi_wp_obstacle_collab.json",
+    "output": "T004_multi_wp_obstacle_collab.script",
+    "lines": 61
+  },
+  {
+    "task_id": "T005",
+    "input": "T005_inspection_scan_collab.json",
+    "output": "T005_inspection_scan_collab.script",
+    "lines": 56
+  }
+]
