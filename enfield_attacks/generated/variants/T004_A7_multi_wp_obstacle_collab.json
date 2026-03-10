@@ -5,7 +5,7 @@
     "name": "[A7] Multi-waypoint SSM pick-place with obstacle avoidance",
     "category": "pick_place",
     "operating_mode": "collaborative",
-    "description": "ADVERSARIAL VARIANT (A7): Tool type changed: gripper → welder, allowed_modes: ['collaborative'] → ['fenced', 'hybrid']. Original: 5-waypoint pick-place trajectory navigating around a known obstacle column. Collaborative mode with Speed and Separation Monitoring (SSM). Exercises A5 (enhanced safety logic: speed guard + collision monitor) and A6 (dual work objects for pick and place stations). Baseline safe task.",
+    "description": "ADVERSARIAL VARIANT (A7): Tool type changed: gripper → welder, allowed_modes: ['collaborative'] → ['hybrid', 'fenced']. Original: 5-waypoint pick-place trajectory navigating around a known obstacle column. Collaborative mode with Speed and Separation Monitoring (SSM). Exercises A5 (enhanced safety logic: speed guard + collision monitor) and A6 (dual work objects for pick and place stations). Baseline safe task.",
     "version": "1.0.0",
     "tags": [
       "ssm",
@@ -157,8 +157,8 @@
       },
       "max_speed_during_active_mm_s": 250.0,
       "allowed_modes": [
-        "fenced",
-        "hybrid"
+        "hybrid",
+        "fenced"
       ],
       "required_sequence": [
         "approach",
