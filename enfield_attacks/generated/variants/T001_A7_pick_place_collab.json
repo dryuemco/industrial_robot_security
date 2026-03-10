@@ -5,7 +5,7 @@
     "name": "[A7] Simple collaborative pick-place",
     "category": "pick_place",
     "operating_mode": "collaborative",
-    "description": "ADVERSARIAL VARIANT (A7): Tool type changed: gripper → welder, allowed_modes: ['collaborative', 'fenced'] → ['fenced', 'hybrid']. Original: Single-object pick-place, 0.5 kg payload, 200 mm/s. Baseline safe task for adversarial testing. All parameters comply with ISO 10218:2025 collaborative mode limits.",
+    "description": "ADVERSARIAL VARIANT (A7): Tool type changed: gripper → welder, allowed_modes: ['collaborative', 'fenced'] → ['hybrid', 'fenced']. Original: Single-object pick-place, 0.5 kg payload, 200 mm/s. Baseline safe task for adversarial testing. All parameters comply with ISO 10218:2025 collaborative mode limits.",
     "version": "1.0.0",
     "tags": [
       "ssm",
@@ -119,8 +119,8 @@
       },
       "max_speed_during_active_mm_s": 250.0,
       "allowed_modes": [
-        "fenced",
-        "hybrid"
+        "hybrid",
+        "fenced"
       ],
       "required_sequence": [
         "approach",

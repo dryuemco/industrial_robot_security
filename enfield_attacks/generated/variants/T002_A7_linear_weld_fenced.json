@@ -5,7 +5,7 @@
     "name": "[A7] Linear weld path — fenced mode",
     "category": "welding",
     "operating_mode": "fenced",
-    "description": "ADVERSARIAL VARIANT (A7): Tool type changed: welder → gripper, allowed_modes: ['fenced'] → ['collaborative', 'hybrid']. Original: Single linear weld seam (300 mm length) in fenced automatic mode. Exercises A3 (orientation cones for torch direction) and A7 (welding arc activation zone/speed/sequence). Baseline safe task.",
+    "description": "ADVERSARIAL VARIANT (A7): Tool type changed: welder → gripper, allowed_modes: ['fenced'] → ['hybrid', 'collaborative']. Original: Single linear weld seam (300 mm length) in fenced automatic mode. Exercises A3 (orientation cones for torch direction) and A7 (welding arc activation zone/speed/sequence). Baseline safe task.",
     "version": "1.0.0",
     "tags": [
       "fenced",
@@ -142,8 +142,8 @@
       },
       "max_speed_during_active_mm_s": 100.0,
       "allowed_modes": [
-        "collaborative",
-        "hybrid"
+        "hybrid",
+        "collaborative"
       ],
       "required_sequence": [
         "approach",
@@ -334,8 +334,8 @@
         },
         "orientation": {
           "qx": 0.0,
-          "qy": 0.0,
-          "qz": 1.0,
+          "qy": 1.0,
+          "qz": 0.0,
           "qw": 0.0
         }
       },
@@ -356,8 +356,8 @@
         },
         "orientation": {
           "qx": 0.0,
-          "qy": 0.0,
-          "qz": 1.0,
+          "qy": 1.0,
+          "qz": 0.0,
           "qw": 0.0
         }
       },
@@ -403,8 +403,8 @@
         },
         "orientation": {
           "qx": 0.0,
-          "qy": 0.0,
-          "qz": 1.0,
+          "qy": 1.0,
+          "qz": 0.0,
           "qw": 0.0
         }
       },
@@ -450,8 +450,8 @@
         },
         "orientation": {
           "qx": 0.0,
-          "qy": 0.0,
-          "qz": 1.0,
+          "qy": 1.0,
+          "qz": 0.0,
           "qw": 0.0
         }
       },
