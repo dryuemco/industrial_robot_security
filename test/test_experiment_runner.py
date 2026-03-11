@@ -25,6 +25,15 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 TASKS_DIR = REPO_ROOT / "enfield_tasks" / "ir" / "tasks"
 VARIANTS_DIR = REPO_ROOT / "enfield_attacks" / "generated" / "variants"
 
+# Dynamic counts based on actual files
+BASELINE_COUNT = len(list(TASKS_DIR.glob("T[0-9][0-9][0-9]_*.json")))
+VARIANT_COUNT = len([
+    f for f in VARIANTS_DIR.glob("T*_A*_*.json")
+    if f.name != "manifest.json"
+]) if VARIANTS_DIR.exists() else 0
+TOTAL_COUNT = BASELINE_COUNT + VARIANT_COUNT
+ATTACK_COUNT = 8
+
 
 # ---------------------------------------------------------------------------
 # File classifier tests
@@ -81,8 +90,7 @@ class TestRunExperiment:
         with open(csv_path) as f:
             reader = csv.DictReader(f)
             rows = list(reader)
-        # 5 baselines + 40 variants = 45
-        assert len(rows) == 45
+        assert len(rows) == TOTAL_COUNT
 
     def test_csv_has_expected_columns(self, experiment):
         csv_path = experiment["output_dir"] / "verdicts.csv"
@@ -101,6 +109,7 @@ class TestRunExperiment:
         with open(csv_path) as f:
             reader = csv.DictReader(f)
             baselines = [r for r in reader if r["role"] == "baseline"]
+        assert len(baselines) == BASELINE_COUNT
         assert all(r["safe"] == "True" for r in baselines)
 
     def test_csv_variants_mostly_flagged(self, experiment):
@@ -109,7 +118,10 @@ class TestRunExperiment:
             reader = csv.DictReader(f)
             variants = [r for r in reader if r["role"] == "variant"]
         flagged = sum(1 for r in variants if r["safe"] == "False")
-        assert flagged >= 30, f"Only {flagged}/40 variants flagged"
+        min_expected = int(VARIANT_COUNT * 0.75)
+        assert flagged >= min_expected, (
+            f"Only {flagged}/{VARIANT_COUNT} flagged (expected >= {min_expected})"
+        )
 
     def test_summary_json_created(self, experiment):
         json_path = experiment["output_dir"] / "summary.json"
@@ -117,14 +129,15 @@ class TestRunExperiment:
 
     def test_summary_baseline_stats(self, experiment):
         s = experiment["summary"]
-        assert s["baselines"]["total"] == 5
-        assert s["baselines"]["safe"] == 5
+        assert s["baselines"]["total"] == BASELINE_COUNT
+        assert s["baselines"]["safe"] == BASELINE_COUNT
         assert s["baselines"]["false_positive_rate"] == 0.0
 
     def test_summary_variant_stats(self, experiment):
         s = experiment["summary"]
-        assert s["variants"]["total"] == 40
-        assert s["variants"]["flagged"] >= 30
+        assert s["variants"]["total"] == VARIANT_COUNT
+        min_flagged = int(VARIANT_COUNT * 0.75)
+        assert s["variants"]["flagged"] >= min_flagged
         assert s["variants"]["overall_detection_rate"] >= 0.75
 
     def test_summary_per_attack_keys(self, experiment):
@@ -151,8 +164,8 @@ class TestRunExperiment:
         s = experiment["summary"]
         assert "metadata" in s
         assert "timestamp" in s["metadata"]
-        assert s["metadata"]["baseline_count"] == 5
-        assert s["metadata"]["variant_count"] == 40
+        assert s["metadata"]["baseline_count"] == BASELINE_COUNT
+        assert s["metadata"]["variant_count"] == VARIANT_COUNT
 
     def test_detection_matrix_created(self, experiment):
         matrix_path = experiment["output_dir"] / "detection_matrix.csv"
@@ -164,9 +177,9 @@ class TestRunExperiment:
             reader = csv.reader(f)
             rows = list(reader)
         # Header + 8 attack rows
-        assert len(rows) == 9
-        # attack + 5 tasks + detection_rate = 7 columns
-        assert len(rows[0]) == 7
+        assert len(rows) == ATTACK_COUNT + 1
+        # attack + N tasks + detection_rate
+        assert len(rows[0]) == BASELINE_COUNT + 2
 
     def test_detection_matrix_header(self, experiment):
         matrix_path = experiment["output_dir"] / "detection_matrix.csv"
