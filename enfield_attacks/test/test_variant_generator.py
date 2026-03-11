@@ -364,10 +364,10 @@ class TestBatchGenerate:
             output_dir=str(output),
             seed=42,
         )
-        assert len(manifest) == 40
+        assert len(manifest) == len(list(Path(str(TASKS_DIR)).glob("T[0-9][0-9][0-9]_*.json"))) * 8
         # Check files exist
         json_files = list(output.glob("T*_A*_*.json"))
-        assert len(json_files) == 40
+        assert len(json_files) == len(manifest)
 
     def test_manifest_written(self, tmp_path):
         output = tmp_path / "variants"
@@ -376,7 +376,7 @@ class TestBatchGenerate:
         assert manifest_file.exists()
         with open(manifest_file) as f:
             data = json.load(f)
-        assert len(data) == 40
+        assert len(data) == len(list(Path(str(TASKS_DIR)).glob("T[0-9][0-9][0-9]_*.json"))) * 8
 
     def test_each_variant_is_valid_json(self, tmp_path):
         output = tmp_path / "variants"
