@@ -295,7 +295,7 @@ class TestFileIO:
             tasks_dir=str(TASKS_DIR),
             output_dir=str(out_dir),
         )
-        assert len(manifest) == 5
+        assert len(manifest) == len(list(TASKS_DIR.glob("T[0-9][0-9][0-9]_*.json")))
         for entry in manifest:
             assert entry["output"].endswith(".script")
             assert (out_dir / entry["output"]).exists()
@@ -307,7 +307,7 @@ class TestFileIO:
         assert manifest_file.exists()
         with open(manifest_file) as f:
             data = json.load(f)
-        assert len(data) == 5
+        assert len(data) == len(list(TASKS_DIR.glob("T[0-9][0-9][0-9]_*.json")))
 
 
 # ---------------------------------------------------------------------------
@@ -342,7 +342,7 @@ class TestAdversarialTranslation:
     def test_adversarial_variant_count(self, variant_files):
         if len(variant_files) == 0:
             pytest.skip("Adversarial variants not found")
-        assert len(variant_files) == 40
+        assert len(variant_files) == len(list(TASKS_DIR.glob("T[0-9][0-9][0-9]_*.json"))) * 8
 
 
 # ---------------------------------------------------------------------------
