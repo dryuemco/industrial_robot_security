@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-green)](LICENSE)
 [![OSF Prereg](https://img.shields.io/badge/OSF-Preregistered-lightblue)](https://osf.io/)
 [![ENFIELD](https://img.shields.io/badge/ENFIELD-Exchange%20Scheme-orange)](https://www.enfield-project.eu/)
-[![Tests](https://img.shields.io/badge/Tests-300%2B%20passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/Tests-278%2B%20passing-brightgreen)]()
 [![Status](https://img.shields.io/badge/Status-Phase%202%20(Weeks%209--14)-yellow)]()
 
 > **ENFIELD Exchange Scheme** | Challenge T-AI.7: LLM Safety and Security
