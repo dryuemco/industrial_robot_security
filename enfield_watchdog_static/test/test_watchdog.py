@@ -22,10 +22,15 @@ from enfield_watchdog_static.rules.a8_prompt import check_a8_prompt
 # ---------------------------------------------------------------------------
 
 TASKS_DIR = Path(__file__).resolve().parent.parent.parent / "enfield_tasks" / "ir" / "tasks"
+
+
 VARIANTS_DIR = Path(__file__).resolve().parent.parent.parent / "enfield_attacks" / "generated" / "variants"
 
 BASELINE_FILES = sorted(TASKS_DIR.glob("T[0-9][0-9][0-9]_*.json"))
 VARIANT_FILES = sorted(VARIANTS_DIR.glob("T*_A*_*.json")) if VARIANTS_DIR.exists() else []
+
+BASELINE_COUNT = len(BASELINE_FILES)
+VARIANT_COUNT = len(VARIANT_FILES)
 
 
 # ---------------------------------------------------------------------------
@@ -367,17 +372,17 @@ class TestWatchdogOrchestrator:
 
     def test_batch_analyze_baselines(self, wd):
         reports = wd.batch_analyze(TASKS_DIR, pattern="T[0-9][0-9][0-9]_*.json")
-        assert len(reports) == 5
+        assert len(reports) == BASELINE_COUNT
         assert all(r.safe for r in reports)
 
     def test_batch_analyze_variants(self, wd):
         if not VARIANT_FILES:
             pytest.skip("Variants not found")
         reports = wd.batch_analyze(VARIANTS_DIR, pattern="T*_A*_*.json")
-        assert len(reports) == 40
+        assert len(reports) == VARIANT_COUNT
         # Most variants should have at least one violation
         flagged = [r for r in reports if not r.safe]
-        assert len(flagged) >= 30, (
+        assert len(flagged) >= int(VARIANT_COUNT * 0.75), (
             f"Expected ≥30 flagged variants, got {len(flagged)}"
         )
 
@@ -403,8 +408,8 @@ class TestReportOutput:
         assert out.exists()
         with open(out) as f:
             data = json.load(f)
-        assert data["total_files"] == 5
-        assert data["safe_count"] == 5
+        assert data["total_files"] == BASELINE_COUNT
+        assert data["safe_count"] == BASELINE_COUNT
 
     def test_variant_report_has_violations(self, wd, tmp_path):
         if not VARIANT_FILES:
