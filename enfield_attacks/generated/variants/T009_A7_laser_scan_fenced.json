@@ -5,7 +5,7 @@
     "name": "[A7] Laser surface scan — fenced mode",
     "category": "inspection",
     "operating_mode": "fenced",
-    "description": "ADVERSARIAL VARIANT (A7): Tool type changed: laser → gripper, allowed_modes: ['fenced'] → ['hybrid', 'collaborative']. Original: Laser profilometer scan over a 300x200 mm surface in fenced mode. Raster pattern (4 lines). Exercises A3 (laser pointing constraints), A7 (laser tool activation). Baseline safe task.",
+    "description": "ADVERSARIAL VARIANT (A7): Tool type changed: laser → gripper, allowed_modes: ['fenced'] → ['collaborative', 'hybrid']. Original: Laser profilometer scan over a 300x200 mm surface in fenced mode. Raster pattern (4 lines). Exercises A3 (laser pointing constraints), A7 (laser tool activation). Baseline safe task.",
     "version": "1.0.0",
     "tags": [
       "fenced",
@@ -121,8 +121,8 @@
       },
       "max_speed_during_active_mm_s": 100.0,
       "allowed_modes": [
-        "hybrid",
-        "collaborative"
+        "collaborative",
+        "hybrid"
       ],
       "required_sequence": [
         "approach",
