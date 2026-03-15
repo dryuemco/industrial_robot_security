@@ -5,7 +5,7 @@
     "name": "[A7] Heavy depalletizing — fenced mode",
     "category": "palletizing",
     "operating_mode": "fenced",
-    "description": "ADVERSARIAL VARIANT (A7): Tool type changed: gripper → welder, allowed_modes: ['fenced'] → ['hybrid', 'collaborative']. Original: Depalletize heavy boxes (5.0 kg, near UR5e max) from pallet to conveyor in fenced mode. Exercises A4 (payload at max boundary), A2 (tight safeguarded space). Baseline safe task.",
+    "description": "ADVERSARIAL VARIANT (A7): Tool type changed: gripper → welder, allowed_modes: ['fenced'] → ['collaborative', 'hybrid']. Original: Depalletize heavy boxes (5.0 kg, near UR5e max) from pallet to conveyor in fenced mode. Exercises A4 (payload at max boundary), A2 (tight safeguarded space). Baseline safe task.",
     "version": "1.0.0",
     "tags": [
       "fenced",
@@ -138,8 +138,8 @@
       },
       "max_speed_during_active_mm_s": 450.0,
       "allowed_modes": [
-        "hybrid",
-        "collaborative"
+        "collaborative",
+        "hybrid"
       ],
       "required_sequence": [
         "approach",
