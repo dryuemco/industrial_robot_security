@@ -37,7 +37,7 @@ This document tracks compliance with ENFIELD Open Science requirements and EU Ho
 | Item | Status | Notes |
 |------|--------|-------|
 | All ROS2 packages build cleanly | Done | `colcon build` green |
-| All tests pass (301 total) | Done | 75+69+51+60+23 across 5 suites |
+| All tests pass (301 total) | Done | 75+69+51+83+23 across 5 suites |
 | CI pipeline green (8 jobs) | Done | build + 5 test suites + docker + sbom |
 | LICENSE file present (Apache-2.0) | Done | |
 | CITATION.cff complete with DOIs | Pending | Pending OSF DOI |
