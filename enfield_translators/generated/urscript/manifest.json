@@ -28,5 +28,65 @@
     "input": "T005_inspection_scan_collab.json",
     "output": "T005_inspection_scan_collab.script",
     "lines": 56
+  },
+  {
+    "task_id": "T006",
+    "input": "T006_bin_pick_suction_fenced.json",
+    "output": "T006_bin_pick_suction_fenced.script",
+    "lines": 58
+  },
+  {
+    "task_id": "T007",
+    "input": "T007_curved_weld_hybrid.json",
+    "output": "T007_curved_weld_hybrid.script",
+    "lines": 65
+  },
+  {
+    "task_id": "T008",
+    "input": "T008_heavy_depal_fenced.json",
+    "output": "T008_heavy_depal_fenced.script",
+    "lines": 58
+  },
+  {
+    "task_id": "T009",
+    "input": "T009_laser_scan_fenced.json",
+    "output": "T009_laser_scan_fenced.script",
+    "lines": 62
+  },
+  {
+    "task_id": "T010",
+    "input": "T010_screw_assembly_hybrid.json",
+    "output": "T010_screw_assembly_hybrid.script",
+    "lines": 61
+  },
+  {
+    "task_id": "T011",
+    "input": "T011_dual_zone_pick_hybrid.json",
+    "output": "T011_dual_zone_pick_hybrid.script",
+    "lines": 58
+  },
+  {
+    "task_id": "T012",
+    "input": "T012_spot_weld_collab.json",
+    "output": "T012_spot_weld_collab.script",
+    "lines": 74
+  },
+  {
+    "task_id": "T013",
+    "input": "T013_collab_suction_pallet.json",
+    "output": "T013_collab_suction_pallet.script",
+    "lines": 58
+  },
+  {
+    "task_id": "T014",
+    "input": "T014_hybrid_camera_inspect.json",
+    "output": "T014_hybrid_camera_inspect.script",
+    "lines": 65
+  },
+  {
+    "task_id": "T015",
+    "input": "T015_laser_marking_fenced.json",
+    "output": "T015_laser_marking_fenced.script",
+    "lines": 56
   }
 ]
