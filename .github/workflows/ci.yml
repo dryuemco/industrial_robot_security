@@ -132,7 +132,7 @@ jobs:
             --tb=short
 
   # ---------------------------------------------------------------------------
-  # Job 5: Static watchdog tests (60 tests)
+  # Job 5: Static watchdog tests (83 tests)
   # ---------------------------------------------------------------------------
   test-watchdog-static:
     runs-on: ubuntu-22.04

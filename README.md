@@ -116,9 +116,9 @@ PYTHONPATH=enfield_watchdog_static:enfield_tasks python3 scripts/run_experiment.
 | enfield_tasks | 75 | `PYTHONPATH=enfield_tasks pytest enfield_tasks/test/ -v` |
 | enfield_attacks | 69 | `PYTHONPATH=enfield_attacks:enfield_tasks pytest enfield_attacks/test/ -v` |
 | enfield_translators | 51 | `PYTHONPATH=enfield_translators:enfield_tasks pytest enfield_translators/test/ -v` |
-| enfield_watchdog_static | 60 | `PYTHONPATH=enfield_watchdog_static:enfield_tasks pytest enfield_watchdog_static/test/ -v` |
+| enfield_watchdog_static | 83 | `PYTHONPATH=enfield_watchdog_static:enfield_tasks pytest enfield_watchdog_static/test/ -v` |
 | experiment runner | 23 | `PYTHONPATH=enfield_watchdog_static:enfield_tasks pytest test/ -v` |
-| **Total** | **278** | |
+| **Total** | **301** | |
 
 ## CI Pipeline
 
