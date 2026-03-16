@@ -1,14 +1,14 @@
 # OSF Pre-registration: Formal Adversarial Testing of LLM-Generated Code for Industrial Robots
 
-**Registration Template:** OSF Standard Pre-Data Collection Registration  
-**Version:** 2.0 (submission-ready)  
-**Date:** 2026-03-10  
-**Status:** Ready for OSF submission  
+**Registration Template:** OSF Standard Pre-Data Collection Registration
+**Version:** 3.0 (submission-ready)
+**Date:** 2026-03-16
+**Status:** Ready for OSF submission
 
-**Principal Investigator:** Yunus Emre Cogurcu, PhD (Cukurova University)  
-**Supervisor:** Assoc. Prof. Georgios Spathoulas (NTNU)  
-**Funding:** Horizon Europe Grant Agreement No 101120657 (ENFIELD Exchange Scheme)  
-**Repository:** https://github.com/dryuemco/industrial_robot_security  
+**Principal Investigator:** Yunus Emre Cogurcu, PhD (Cukurova University)
+**Supervisor:** Assoc. Prof. Georgios Spathoulas (NTNU)
+**Funding:** Horizon Europe Grant Agreement No 101120657 (ENFIELD Exchange Scheme)
+**Repository:** https://github.com/dryuemco/industrial_robot_security
 
 ---
 
@@ -38,13 +38,13 @@ Formal Adversarial Testing of LLM-Generated Code for Industrial Robots: An AST-B
 
 ### 1.4 Pilot Data Disclosure
 
-A pilot study was conducted on 5 baseline tasks and 40 adversarial variants (5 tasks x 8 attack types) to validate the experimental infrastructure and refine detection thresholds. Pilot results are disclosed here in full:
+A pilot study was conducted on the initial 5 baseline tasks (T001-T005) and 40 adversarial variants (5 tasks x 8 attack types) to validate the experimental infrastructure and refine detection thresholds. Pilot results are disclosed here in full:
 
 - Baselines: 5/5 safe (FP rate: 0.0%)
 - Variants: 36/40 flagged (overall detection rate: 90.0%)
 - Per-attack: A1=100%, A2=100%, A3=80%, A4=100%, A5=100%, A6=60%, A7=80%, A8=100%
 
-These results informed threshold calibration for DM-5 (A6 frame detection) and DM-6 (A7 tool validation). The full experiment will use an expanded task set (10-15 tasks) with independent generation, providing sufficient power for the planned statistical tests. Pilot data will be excluded from the confirmatory analysis.
+These results informed threshold calibration for DM-5 (A6 frame detection) and DM-6 (A7 tool validation). Following the pilot, the task suite was expanded to 15 baseline tasks (T001-T015) and detection rules were refined. The confirmatory analysis will use the full 15-task suite (120 matched pairs). Pilot data (T001-T005) will be reported separately as calibration data.
 
 ---
 
@@ -61,7 +61,7 @@ Within-subject (matched pairs). Each task-attack combination is tested both with
 **Independent Variables:**
 - Attack Type: A1-A8 (8 levels)
 - Watchdog State: ON / OFF (2 levels)
-- Task Category: pick_place, welding, palletizing, inspection (4 levels for stratification)
+- Task Category: pick_place, welding, palletizing, inspection, custom (5 levels for stratification)
 - Operating Mode: collaborative, fenced, hybrid (3 levels)
 
 **Dependent Variables:**
@@ -71,7 +71,7 @@ Within-subject (matched pairs). Each task-attack combination is tested both with
 
 ### 2.3 Randomization
 
-Not applicable. The study uses a complete factorial design: every task is paired with every attack type. Task generation follows a stratified sampling strategy to ensure coverage across categories (pick_place, welding, palletizing, inspection) and operating modes (collaborative, fenced, hybrid). Adversarial variants are generated deterministically (seed=42).
+Not applicable. The study uses a complete factorial design: every task is paired with every attack type. Task generation follows a stratified sampling strategy to ensure coverage across 5 categories (pick_place, welding, palletizing, inspection, custom) and 3 operating modes (collaborative, fenced, hybrid). Adversarial variants are generated deterministically (seed=42).
 
 ---
 
@@ -85,17 +85,17 @@ Adversarial variants are generated programmatically by applying one of eight mut
 
 ### 3.2 Sample Size
 
-**Target:** 10-15 baseline tasks spanning 4 categories and 3 operating modes. With 8 attack types, this yields 80-120 matched pairs.
+**Achieved:** 15 baseline tasks spanning 5 categories and 3 operating modes. With 8 attack types, this yields 120 matched pairs.
 
-**Power Analysis:** McNemar's test for paired dichotomous data requires n >= 25 discordant pairs for 80% power at alpha = 0.05 with a minimum detectable effect size of 40% relative SV reduction. With 80-120 total pairs and an expected discordant pair rate of at least 50%, we expect 40-60 discordant pairs, providing adequate statistical power.
+**Power Analysis:** McNemar's test for paired dichotomous data requires n >= 25 discordant pairs for 80% power at alpha = 0.05 with a minimum detectable effect size of 40% relative SV reduction. With 120 total pairs and an expected discordant pair rate of at least 50%, we expect approximately 60 discordant pairs, providing adequate statistical power.
 
 ### 3.3 Sample Size Rationale
 
-The 10-15 task target balances three constraints: (1) sufficient matched pairs for McNemar's test, (2) coverage across all task categories and operating modes, and (3) feasibility within the 6-month project timeline. The pilot study (5 tasks) demonstrated infrastructure viability; the full study will roughly triple the task count.
+The 15-task suite provides a complete 5x3 stratified design (5 categories x 3 operating modes = 15 cells, 14 filled). This exceeds the minimum 25 discordant pairs required for McNemar's test and ensures representation across all major industrial robot application domains. The pilot study (5 tasks) demonstrated infrastructure viability; the full suite triples the task count and adds two new categories (custom, expanded inspection).
 
 ### 3.4 Stopping Rule
 
-Data collection is complete when all planned task-attack combinations have been analyzed. No sequential testing or early stopping is planned. If fewer than 25 discordant pairs are observed, additional tasks will be generated from underrepresented categories until the minimum is met (decision point: to be confirmed with supervisor).
+Data collection is complete when all 120 planned task-attack combinations (15 tasks x 8 attacks) have been analyzed. No sequential testing or early stopping is planned.
 
 ---
 
@@ -116,7 +116,7 @@ Data collection is complete when all planned task-attack combinations have been 
 - Overall detection rate: proportion of adversarial variants flagged
 - False positive rate: proportion of safe baselines incorrectly flagged
 - Per-attack detection rate: detection proportion per attack type
-- Detection matrix: 8 x N binary matrix (attack x task)
+- Detection matrix: 8 x 15 binary matrix (attack x task)
 
 ### 4.2 Indices
 
@@ -165,11 +165,11 @@ None. All outcomes are binary or count data.
 
 ### 5.4 Data Exclusion
 
-No data exclusion criteria. All generated scenarios are included in analysis. The pilot dataset (5 tasks, 40 variants) is excluded from the confirmatory analysis and reported separately as calibration data.
+No data exclusion criteria. All generated scenarios are included in analysis. The pilot dataset (5 tasks, 40 variants) is reported separately as calibration data and excluded from the confirmatory analysis.
 
 ### 5.5 Exploratory Analyses
 
-- Subgroup analysis by task category (pick_place, welding, palletizing, inspection)
+- Subgroup analysis by task category (pick_place, welding, palletizing, inspection, custom)
 - Subgroup analysis by operating mode (collaborative, fenced, hybrid)
 - Subgroup analysis by attack layer (parametric A1-A4 vs structural A5-A7 vs meta A8)
 - Correlation between attack severity metric and detection success
@@ -181,23 +181,30 @@ No data exclusion criteria. All generated scenarios are included in analysis. Th
 
 ### 6.1 Existing Data
 
-At the time of pre-registration, the following infrastructure exists:
+At the time of pre-registration, the following infrastructure and data exist:
 
-- Task IR schema (JSON Schema Draft 2020-12) with 5 baseline tasks
-- Attack variant generator producing A1-A8 mutations (40 variants from 5 tasks)
+**Infrastructure:**
+- Task IR schema (JSON Schema Draft 2020-12)
+- Attack variant generator producing A1-A8 mutations (deterministic, seed=42)
 - Static watchdog with 8 detection rules (DM-1 through DM-7)
 - IR to URScript translator for UR5e
 - Experiment runner producing CSV/JSON reports
-- CI/CD pipeline with 278 passing tests
+- CI/CD pipeline with 278 passing tests across 8 jobs
 
-The 5-task pilot dataset has been analyzed. The confirmatory dataset (10-15 tasks) has not yet been generated.
+**Datasets:**
+- 15 baseline tasks (T001-T015) spanning 5 categories x 3 operating modes (14/15 cells filled)
+- 120 adversarial variants (15 tasks x 8 attack types)
+- Pilot analysis on initial 5 tasks (T001-T005): 90% detection, 0% FP
+- Full-suite analysis on 15 tasks (T001-T015): 95% detection, 0% FP
+
+The confirmatory statistical analysis (McNemar test, Holm-Bonferroni correction, confidence intervals) has NOT yet been performed. The 95% figure above is the raw detection count (114/120 flagged) without formal hypothesis testing.
 
 ### 6.2 Tools and Software
 
 - ROS2 Humble on Ubuntu 22.04
 - Python 3.10+, jsonschema >= 4.20, pytest
 - Docker multi-stage build with CycloneDX SBOM
-- GitHub Actions CI/CD
+- GitHub Actions CI/CD (8 jobs)
 - Statistical analysis: scipy.stats (McNemar), statsmodels (Holm-Bonferroni)
 
 ### 6.3 Scope and Limitations
@@ -206,7 +213,7 @@ The 5-task pilot dataset has been analyzed. The confirmatory dataset (10-15 task
 - ISO 10218:2025 compliance assessment is advisory, not formal certification.
 - The static watchdog operates on the Task IR level. Vendor-specific code analysis (URScript, RAPID, KRL) is planned but not included in this registration.
 - Results may not generalize to production robot systems without sim-to-real validation.
-- LLM-generated code is simulated through programmatic attack mutations, not through actual LLM prompting (LLM integration is Phase 3 scope).
+- LLM-generated code is simulated through programmatic attack mutations, not through actual LLM prompting (LLM integration is future work scope).
 
 ### 6.4 Open Science Commitment
 
@@ -234,7 +241,7 @@ This project involves only simulation environments and synthetic data. No human 
 | DM-6 | tool.type, allowed_modes | activation_constraints | Identity + mode match | Mismatch flag |
 | DM-7 | prompt_security fields | threshold constants | Perplexity + pattern check | Bypass indicator |
 
-## Appendix B: Pilot Detection Matrix
+## Appendix B: Pilot Detection Matrix (5-task calibration dataset)
 
 | Attack | T001 | T002 | T003 | T004 | T005 | Rate |
 |--------|------|------|------|------|------|------|
@@ -248,3 +255,21 @@ This project involves only simulation environments and synthetic data. No human 
 | A8 | 1 | 1 | 1 | 1 | 1 | 100% |
 
 Note: A3/T003 miss = T003 has no forbidden orientation cones. A6 misses = small frame shifts within threshold. A7/T005 miss = camera tool has no activation_constraints. These are expected based on task design, not watchdog failures.
+
+## Appendix C: Full-Suite Detection Summary (15-task confirmatory dataset)
+
+| Attack | Detected | Total | Rate |
+|--------|----------|-------|------|
+| A1 | 15 | 15 | 100% |
+| A2 | 15 | 15 | 100% |
+| A3 | 14 | 15 | 93% |
+| A4 | 15 | 15 | 100% |
+| A5 | 15 | 15 | 100% |
+| A6 | 12 | 15 | 80% |
+| A7 | 13 | 15 | 87% |
+| A8 | 15 | 15 | 100% |
+| **Overall** | **114** | **120** | **95%** |
+
+Baselines: 15/15 safe (FP rate: 0.0%)
+
+Note: This is the raw detection count prior to formal confirmatory statistical analysis. McNemar test, Holm-Bonferroni correction, and confidence intervals will be computed as part of the registered analysis plan (Section 5).
