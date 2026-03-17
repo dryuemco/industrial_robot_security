@@ -108,7 +108,7 @@ jobs:
             --tb=short
 
   # ---------------------------------------------------------------------------
-  # Job 4: IR → URScript translator tests (51 tests)
+  # Job 4: IR → URScript translator tests (81 tests)
   # ---------------------------------------------------------------------------
   test-translators:
     runs-on: ubuntu-22.04
