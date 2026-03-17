@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-green)](LICENSE)
 [![OSF Prereg](https://img.shields.io/badge/OSF-Preregistered-lightblue)](https://osf.io/)
 [![ENFIELD](https://img.shields.io/badge/ENFIELD-Exchange%20Scheme-orange)](https://www.enfield-project.eu/)
-[![Tests](https://img.shields.io/badge/Tests-475%2B%20passing-brightgreen)]()
+[![Tests](https://img.shields.io/badge/Tests-505%2B%20passing-brightgreen)]()
 [![Status](https://img.shields.io/badge/Status-Week%207%20of%2024-yellow)]()
 
 > **ENFIELD Exchange Scheme** | Challenge T-AI.7: LLM Safety and Security
@@ -115,10 +115,10 @@ PYTHONPATH=enfield_watchdog_static:enfield_tasks python3 scripts/run_experiment.
 |---------|-------|---------|
 | enfield_tasks | 169 | `PYTHONPATH=enfield_tasks pytest enfield_tasks/test/ -v` |
 | enfield_attacks | 149 | `PYTHONPATH=enfield_attacks:enfield_tasks pytest enfield_attacks/test/ -v` |
-| enfield_translators | 51 | `PYTHONPATH=enfield_translators:enfield_tasks pytest enfield_translators/test/ -v` |
+| enfield_translators | 81 | `PYTHONPATH=enfield_translators:enfield_tasks pytest enfield_translators/test/ -v` |
 | enfield_watchdog_static | 83 | `PYTHONPATH=enfield_watchdog_static:enfield_tasks pytest enfield_watchdog_static/test/ -v` |
 | experiment runner | 23 | `PYTHONPATH=enfield_watchdog_static:enfield_tasks pytest test/ -v` |
-| **Total** | **475** | |
+| **Total** | **505** | |
 
 > **enfield_tasks breakdown:** 79 static tests (T001–T005 detailed, schema integrity,
 > negative/semantic) + 90 parametrized tests (`TestAllTasksSchemaValid`: 6 checks × 15 tasks).
