@@ -38,7 +38,7 @@ enfield_tasks/
 │       ├── __init__.py
 │       └── schema_validator.py       ← JSON Schema + semantic checks
 └── test/
-    └── test_schema_validation.py     ← 165 tests (75 original + 90 parametrized)
+    └── test_schema_validation.py     ← 169 tests (79 static + 90 parametrized)
 ```
 
 ## Schema Design
@@ -151,10 +151,39 @@ All units are explicit and consistent:
 | inspection | T005 | T009 | T014 |
 | custom | — | T015 | T010 |
 
+## Test Structure (169 tests)
+
+The test file uses **dynamic glob** — no task IDs are hardcoded. Adding T016 requires zero
+changes to any test file.
+
+| Class | Tests | Scope |
+|-------|-------|-------|
+| `TestSchemaIntegrity` | 5 | Schema file self-validation |
+| `TestT001Validation` | 11 | T001 detailed checks |
+| `TestSchemaRejection` | 12 | Negative tests (invalid IR rejected) |
+| `TestSemanticWarnings` | 5 | Semantic checker triggers |
+| `TestFileValidation` | 1 | File I/O edge cases |
+| `TestT002Validation` | 9 | T002 welding-specific checks |
+| `TestT003Validation` | 8 | T003 palletizing-specific checks |
+| `TestT004Validation` | 8 | T004 obstacle avoidance checks |
+| `TestT005Validation` | 7 | T005 inspection-specific checks |
+| `TestAllTasksSchemaValid` | **90** | 6 checks × 15 tasks (parametrized) |
+| `TestTaskSuiteCoverage` | 13 | Suite-level coverage matrix |
+| **Total** | **169** | |
+
+```bash
+# Run all enfield_tasks tests
+PYTHONPATH=enfield_tasks python3 -m pytest enfield_tasks/test/ -v
+
+# Run only the parametrized 15-task coverage
+PYTHONPATH=enfield_tasks python3 -m pytest \
+  enfield_tasks/test/test_schema_validation.py::TestAllTasksSchemaValid -v
+```
+
 ## Roadmap
 
 - **PR-E** ✅ JSON Schema definition (34 tests)
 - **PR-F** ✅ 5 baseline tasks + Python validator (75 tests)
 - **PR-G** ✅ Attack variant generator — 120 adversarial variants (69 tests)
 - **PR-H** ✅ Vendor translators (IR → URScript, 15 tasks)
-- **PR-K** ✅ 10 additional tasks (T006–T015), 15-task schema test coverage (165 tests)
+- **PR-K** ✅ T006–T015 baseline tasks + dynamic schema tests (169 tests total)

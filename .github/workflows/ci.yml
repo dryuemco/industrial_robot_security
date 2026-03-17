@@ -55,7 +55,9 @@ jobs:
         shell: bash
 
   # ---------------------------------------------------------------------------
-  # Job 2: Task IR schema validation tests (75+ tests)
+  # Job 2: Task IR schema validation tests (169+ tests)
+  # 79 static tests (T001-T005 detailed, schema integrity, negative/semantic)
+  # + 90 parametrized tests (TestAllTasksSchemaValid: 6 checks x 15 tasks)
   # ---------------------------------------------------------------------------
   test-task-ir:
     runs-on: ubuntu-22.04
