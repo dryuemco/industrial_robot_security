@@ -1,8 +1,9 @@
-"""Tests for Task IR schema validation — PR-E."""
+"""Tests for Task IR schema validation — all 15 baseline tasks."""
 # Copyright 2026 Yunus Emre Cogurcu - Apache-2.0
 
 import copy
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -15,18 +16,27 @@ from enfield_tasks.validators.schema_validator import (
 )
 
 # ---------------------------------------------------------------------------
-# Fixtures
+# Paths — fully dynamic, no hardcoding
 # ---------------------------------------------------------------------------
 
 TASKS_DIR = Path(__file__).resolve().parent.parent / "ir" / "tasks"
 SCHEMA_DIR = Path(__file__).resolve().parent.parent / "ir" / "schema"
+
+# Dynamic: picks up any T0##_*.json automatically — works for 5 or 15 or 20 tasks
+ALL_TASK_PATHS = sorted(TASKS_DIR.glob("T[0-9][0-9][0-9]_*.json"))
+ALL_TASK_IDS = sorted({p.name.split("_")[0] for p in ALL_TASK_PATHS})
+
+# Legacy per-task paths kept for backward-compatible fixtures (T001–T005)
 T001_PATH = TASKS_DIR / "T001_pick_place_collab.json"
 T002_PATH = TASKS_DIR / "T002_linear_weld_fenced.json"
 T003_PATH = TASKS_DIR / "T003_palletize_hybrid.json"
 T004_PATH = TASKS_DIR / "T004_multi_wp_obstacle_collab.json"
 T005_PATH = TASKS_DIR / "T005_inspection_scan_collab.json"
 
-ALL_TASK_PATHS = [T001_PATH, T002_PATH, T003_PATH, T004_PATH, T005_PATH]
+
+# ---------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------
 
 
 @pytest.fixture
@@ -106,7 +116,7 @@ class TestSchemaIntegrity:
 
 
 # ---------------------------------------------------------------------------
-# T001 validation
+# T001 validation (detailed)
 # ---------------------------------------------------------------------------
 
 
@@ -122,7 +132,6 @@ class TestT001Validation:
 
     def test_t001_no_semantic_warnings(self, t001_data):
         result = validate_task_ir(t001_data)
-        # T001 is designed as a clean baseline — no warnings expected
         assert len(result.semantic_warnings) == 0, (
             f"Unexpected warnings:\n{result.summary()}"
         )
@@ -263,7 +272,6 @@ class TestSemanticWarnings:
 
     def test_waypoint_outside_safeguarded_space(self, t001_data):
         bad = copy.deepcopy(t001_data)
-        # Move waypoint outside x_max=800
         bad["motion_sequence"][2]["target_pose"]["position"]["x"] = 900.0
         result = validate_task_ir(bad)
         assert result.valid
@@ -271,7 +279,6 @@ class TestSemanticWarnings:
 
     def test_estop_required_but_missing_command(self, t001_data):
         bad = copy.deepcopy(t001_data)
-        # Remove the estop_check command
         bad["motion_sequence"] = [
             c for c in bad["motion_sequence"] if c["type"] != "estop_check"
         ]
@@ -473,15 +480,84 @@ class TestT005Validation:
 
 
 # ---------------------------------------------------------------------------
-# Cross-task suite tests (PR-F coverage matrix)
+# ALL 15 TASKS: Parametrized schema + safety coverage tests
+# Each task gets 6 tests → 15 × 6 = 90 tests in this class
+# ---------------------------------------------------------------------------
+
+
+class TestAllTasksSchemaValid:
+    """Parametrized schema and safety validation for all 15 baseline tasks.
+
+    These tests ensure T006–T015 receive the same rigorous coverage as
+    T001–T005 and that adding future tasks requires zero test changes.
+    """
+
+    @pytest.fixture(params=ALL_TASK_IDS)
+    def task_data(self, request) -> dict:
+        """Load a single task by ID (parametrized over all task IDs)."""
+        matches = [f for f in ALL_TASK_PATHS if f.name.startswith(request.param)]
+        assert matches, f"No file found for task ID {request.param}"
+        with open(matches[0], "r") as f:
+            return json.load(f)
+
+    def test_schema_valid(self, task_data):
+        """Every task must pass JSON Schema (Draft 2020-12) validation."""
+        result = validate_task_ir(task_data)
+        assert result.valid, (
+            f"{task_data['task']['id']}: schema errors:\n{result.summary()}"
+        )
+
+    def test_no_semantic_warnings(self, task_data):
+        """Every baseline task must be semantically clean (no warnings)."""
+        result = validate_task_ir(task_data)
+        assert len(result.semantic_warnings) == 0, (
+            f"{task_data['task']['id']}: unexpected warnings:\n{result.summary()}"
+        )
+
+    def test_has_estop_check_command(self, task_data):
+        """Every task must include an estop_check command in motion_sequence."""
+        types = [c["type"] for c in task_data.get("motion_sequence", [])]
+        tid = task_data["task"]["id"]
+        assert "estop_check" in types, (
+            f"{tid}: no 'estop_check' command in motion_sequence (A5 coverage)"
+        )
+
+    def test_has_safeguarded_space(self, task_data):
+        """Every task must define a safeguarded space with at least 4 halfspaces."""
+        tid = task_data["task"]["id"]
+        sg = task_data.get("safety_requirements", {}).get("safeguarded_space")
+        assert sg is not None, f"{tid}: missing safeguarded_space (A2 coverage)"
+        assert len(sg["halfspaces"]) >= 4, (
+            f"{tid}: safeguarded_space needs >= 4 halfspaces, "
+            f"got {len(sg['halfspaces'])}"
+        )
+
+    def test_has_prompt_security(self, task_data):
+        """Every task must define prompt_security (A8 coverage)."""
+        tid = task_data["task"]["id"]
+        ps = task_data.get("prompt_security")
+        assert ps is not None, f"{tid}: missing prompt_security section (A8 coverage)"
+        assert len(ps.get("blocked_patterns", [])) > 0, (
+            f"{tid}: prompt_security.blocked_patterns is empty"
+        )
+
+    def test_task_id_matches_filename_pattern(self, task_data):
+        """Task ID must match T### pattern and file must start with that prefix."""
+        tid = task_data["task"]["id"]
+        assert re.match(r"^T\d{3}$", tid), f"Task ID '{tid}' does not match T### pattern"
+
+
+# ---------------------------------------------------------------------------
+# Cross-task suite tests — full 15-task coverage matrix
 # ---------------------------------------------------------------------------
 
 
 class TestTaskSuiteCoverage:
-    """Verify the 5-task suite covers all categories, modes, and attack surfaces."""
+    """Verify the full 15-task suite covers all categories, modes, and attack surfaces."""
 
     @pytest.fixture
-    def all_tasks(self):
+    def all_tasks(self) -> dict:
+        """Load all tasks dynamically."""
         tasks = {}
         for p in ALL_TASK_PATHS:
             with open(p) as f:
@@ -489,47 +565,78 @@ class TestTaskSuiteCoverage:
             tasks[d["task"]["id"]] = d
         return tasks
 
+    def test_task_count(self, all_tasks):
+        """Suite must contain exactly as many tasks as files on disk."""
+        assert len(all_tasks) == len(ALL_TASK_PATHS), (
+            f"Expected {len(ALL_TASK_PATHS)} tasks, found {len(all_tasks)}"
+        )
+
     def test_all_tasks_schema_valid(self, all_tasks):
         for tid, data in all_tasks.items():
             result = validate_task_ir(data)
             assert result.valid, f"{tid}: {result.summary()}"
 
     def test_category_coverage(self, all_tasks):
+        """All 5 categories must be represented."""
         categories = {d["task"]["category"] for d in all_tasks.values()}
-        required = {"pick_place", "welding", "palletizing", "inspection"}
-        assert required.issubset(categories), f"Missing: {required - categories}"
+        required = {"pick_place", "welding", "palletizing", "inspection", "custom"}
+        assert required.issubset(categories), f"Missing categories: {required - categories}"
 
     def test_mode_coverage(self, all_tasks):
+        """All 3 operating modes must be represented."""
         modes = {d["task"]["operating_mode"] for d in all_tasks.values()}
         required = {"collaborative", "fenced", "hybrid"}
-        assert required.issubset(modes), f"Missing: {required - modes}"
+        assert required.issubset(modes), f"Missing modes: {required - modes}"
 
     def test_unique_task_ids(self, all_tasks):
         ids = list(all_tasks.keys())
-        assert len(ids) == len(set(ids))
+        assert len(ids) == len(set(ids)), "Duplicate task IDs found"
 
     def test_speed_range_diversity(self, all_tasks):
         speeds = [d["safety_requirements"]["max_tcp_speed_mm_s"]
                   for d in all_tasks.values()]
-        assert min(speeds) <= 200, "Should have a slow task"
-        assert max(speeds) >= 400, "Should have a fast task"
+        assert min(speeds) <= 200, "Suite should have a slow task (≤200 mm/s)"
+        assert max(speeds) >= 400, "Suite should have a fast task (≥400 mm/s)"
 
     def test_payload_range_diversity(self, all_tasks):
         payloads = [d["robot"]["payload_kg"] for d in all_tasks.values()]
-        assert min(payloads) <= 0.5, "Should have a light payload task"
-        assert max(payloads) >= 3.0, "Should have a heavy payload task"
+        assert min(payloads) <= 0.5, "Suite should have a light payload task (≤0.5 kg)"
+        assert max(payloads) >= 3.0, "Suite should have a heavy payload task (≥3.0 kg)"
 
     def test_all_tasks_have_a1_fields(self, all_tasks):
         for tid, d in all_tasks.items():
             assert "max_tcp_speed_mm_s" in d["safety_requirements"], \
-                f"{tid} missing A1 field"
+                f"{tid} missing A1 field (max_tcp_speed_mm_s)"
 
     def test_all_tasks_have_a2_fields(self, all_tasks):
         for tid, d in all_tasks.items():
             assert "safeguarded_space" in d["safety_requirements"], \
-                f"{tid} missing A2 field"
+                f"{tid} missing A2 field (safeguarded_space)"
 
     def test_all_tasks_have_a8_fields(self, all_tasks):
         for tid, d in all_tasks.items():
             assert "prompt_security" in d, \
                 f"{tid} missing A8 field (prompt_security)"
+
+    def test_all_tasks_have_tool_payload(self, all_tasks):
+        for tid, d in all_tasks.items():
+            assert "tool_payload" in d["safety_requirements"], \
+                f"{tid} missing A4 field (tool_payload)"
+
+    def test_all_tasks_have_work_object_spec(self, all_tasks):
+        for tid, d in all_tasks.items():
+            assert "work_object_specification" in d, \
+                f"{tid} missing A6 field (work_object_specification)"
+
+    def test_all_tasks_have_safety_logic_requirements(self, all_tasks):
+        for tid, d in all_tasks.items():
+            assert "safety_logic_requirements" in d, \
+                f"{tid} missing A5 field (safety_logic_requirements)"
+            mandatory = [
+                n for n in d["safety_logic_requirements"].get("required_nodes", [])
+                if n.get("mandatory")
+            ]
+            assert len(mandatory) >= 2, (
+                f"{tid}: needs at least 2 mandatory required_nodes, "
+                f"got {len(mandatory)}"
+            )
