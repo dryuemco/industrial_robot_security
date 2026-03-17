@@ -82,7 +82,7 @@ jobs:
             --tb=short
 
   # ---------------------------------------------------------------------------
-  # Job 3: Attack variant generator tests (69+ tests)
+  # Job 3: Attack variant generator tests (149+ tests)
   # ---------------------------------------------------------------------------
   test-attacks:
     runs-on: ubuntu-22.04

@@ -37,7 +37,7 @@ This document tracks compliance with ENFIELD Open Science requirements and EU Ho
 | Item | Status | Notes |
 |------|--------|-------|
 | All ROS2 packages build cleanly | Done | `colcon build` green |
-| All tests pass (395 total) | Done | 169+69+51+83+23 across 5 suites |
+| All tests pass (475 total) | Done | 169+149+51+83+23 across 5 suites |
 | CI pipeline green (8 jobs) | Done | build + 5 test suites + docker + sbom |
 | LICENSE file present (Apache-2.0) | Done | |
 | CITATION.cff complete with DOIs | Pending | Pending OSF DOI |
@@ -65,11 +65,11 @@ This document tracks compliance with ENFIELD Open Science requirements and EU Ho
 | Package | Tests | Status |
 |---------|-------|--------|
 | enfield_tasks | 169 | Done |
-| enfield_attacks | 69 | Done |
+| enfield_attacks | 149 | Done |
 | enfield_translators | 51 | Done |
 | enfield_watchdog_static | 83 | Done |
 | experiment runner | 23 | Done |
-| **Total** | **395** | Done |
+| **Total** | **475** | Done |
 
 > enfield_tasks breakdown: 79 static + 90 parametrized (TestAllTasksSchemaValid: 6 × 15 tasks).
 > All test suites use dynamic glob — future task additions require zero test changes.

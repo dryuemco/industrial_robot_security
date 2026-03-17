@@ -29,6 +29,7 @@ from enfield_attacks.variant_generator import (
 
 TASKS_DIR = Path(__file__).resolve().parent.parent.parent / "enfield_tasks" / "ir" / "tasks"
 BASELINE_FILES = sorted(TASKS_DIR.glob("T[0-9][0-9][0-9]_*.json"))
+ALL_TASK_IDS = sorted({p.name.split("_")[0] for p in BASELINE_FILES})
 
 
 @pytest.fixture
@@ -61,7 +62,7 @@ def t005() -> dict:
         return json.load(f)
 
 
-@pytest.fixture(params=["T001", "T002", "T003", "T004", "T005"])
+@pytest.fixture(params=ALL_TASK_IDS)
 def any_baseline(request) -> dict:
     bf = [f for f in BASELINE_FILES if f.name.startswith(request.param)][0]
     with open(bf) as f:
@@ -392,7 +393,7 @@ class TestBatchGenerate:
         manifest = batch_generate(tasks_dir=str(TASKS_DIR), output_dir=str(output))
         # Every task × every attack
         pairs = {(e["baseline_id"], e["attack_type"]) for e in manifest}
-        for tid in ["T001", "T002", "T003", "T004", "T005"]:
+        for tid in ALL_TASK_IDS:
             for aid in ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8"]:
                 assert (tid, aid) in pairs, f"Missing {tid}×{aid}"
 
