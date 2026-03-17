@@ -21,23 +21,33 @@ enfield_tasks/
 │       ├── T002_linear_weld_fenced.json
 │       ├── T003_palletize_hybrid.json
 │       ├── T004_multi_wp_obstacle_collab.json
-│       └── T005_inspection_scan_collab.json
+│       ├── T005_inspection_scan_collab.json
+│       ├── T006_bin_pick_suction_fenced.json
+│       ├── T007_curved_weld_hybrid.json
+│       ├── T008_heavy_depal_fenced.json
+│       ├── T009_laser_scan_fenced.json
+│       ├── T010_screw_assembly_hybrid.json
+│       ├── T011_dual_zone_pick_hybrid.json
+│       ├── T012_spot_weld_collab.json
+│       ├── T013_collab_suction_pallet.json
+│       ├── T014_hybrid_camera_inspect.json
+│       └── T015_laser_marking_fenced.json
 ├── enfield_tasks/
 │   ├── __init__.py
 │   └── validators/
 │       ├── __init__.py
 │       └── schema_validator.py       ← JSON Schema + semantic checks
 └── test/
-    └── test_schema_validation.py     ← 75 tests
+    └── test_schema_validation.py     ← 165 tests (75 original + 90 parametrized)
 ```
 
 ## Schema Design
 
 The schema has five top-level required sections plus four optional safety sections:
 
-**`task`** — Metadata: unique ID (`T001`–`T999`), category (pick_place / welding / palletizing / inspection),
-and operating mode (collaborative / fenced / hybrid). The operating mode maps directly to
-ISO 10218 speed limits.
+**`task`** — Metadata: unique ID (`T001`–`T999`), category (pick_place / welding / palletizing /
+inspection / custom), and operating mode (collaborative / fenced / hybrid). The operating mode
+maps directly to ISO 10218 speed limits.
 
 **`robot`** — Which adapter package and model this task targets. Watchdog cross-references
 this with `kinematic_limits.yaml` from the robot adapter.
@@ -111,7 +121,7 @@ All units are explicit and consistent:
 | Time | s | Wait durations |
 | Latency | ms | E-Stop response |
 
-## Baseline Tasks (PR-F)
+## Baseline Tasks (15)
 
 | ID | Category | Mode | Speed Limit | Payload | Key A-fields |
 |----|----------|------|-------------|---------|-------------|
@@ -120,10 +130,31 @@ All units are explicit and consistent:
 | T003 | palletizing | hybrid | 300 mm/s | 4.5 kg | A2 (tight space), A4 (heavy payload) |
 | T004 | pick_place | collaborative | 250 mm/s | 1.5 kg | A5 (4 required nodes), A6 (dual frames) |
 | T005 | inspection | collaborative | 150 mm/s | 0.3 kg | A1 (tight limit), A3 (2 cones) |
+| T006 | pick_place | fenced | 400 mm/s | 2.0 kg | A1 (higher fenced limit), A7 (suction) |
+| T007 | welding | hybrid | 300 mm/s | 3.5 kg | A3 (strict torch-down), A7 (arc sequence) |
+| T008 | palletizing | fenced | 450 mm/s | 5.0 kg | A4 (max payload boundary), A2 (tight space) |
+| T009 | inspection | fenced | 200 mm/s | 0.5 kg | A3 (3 laser cones), A7 (laser activation) |
+| T010 | custom | hybrid | 250 mm/s | 1.0 kg | A7 (screwdriver), A5 (torque monitor) |
+| T011 | pick_place | hybrid | 300 mm/s | 1.2 kg | A6 (dual-zone frame), mode transition |
+| T012 | welding | collaborative | 250 mm/s | 2.5 kg | A1 (collab+weld), A3 (3 cones) |
+| T013 | palletizing | collaborative | 250 mm/s | 0.8 kg | A4 (light payload near min), A7 (suction) |
+| T014 | inspection | hybrid | 200 mm/s | 0.4 kg | A3 (varied orientations), A6 (fixture frame) |
+| T015 | custom | fenced | 400 mm/s | 0.6 kg | A7 (laser), A3 (4 cones), A6 (marking fixture) |
+
+### Task Coverage Matrix (Category × Mode)
+
+|  | collaborative | fenced | hybrid |
+|--|--------------|--------|--------|
+| pick_place | T001, T004 | T006 | T011 |
+| welding | T012 | T002 | T007 |
+| palletizing | T013 | T008 | T003 |
+| inspection | T005 | T009 | T014 |
+| custom | — | T015 | T010 |
 
 ## Roadmap
 
 - **PR-E** ✅ JSON Schema definition (34 tests)
 - **PR-F** ✅ 5 baseline tasks + Python validator (75 tests)
-- **PR-G** ✅ Attack variant generator — 40 adversarial variants (69 tests)
-- **PR-H**: Vendor translators (IR → URScript)
+- **PR-G** ✅ Attack variant generator — 120 adversarial variants (69 tests)
+- **PR-H** ✅ Vendor translators (IR → URScript, 15 tasks)
+- **PR-K** ✅ 10 additional tasks (T006–T015), 15-task schema test coverage (165 tests)
