@@ -3,7 +3,7 @@
 [![ROS2](https://img.shields.io/badge/ROS2-Humble-blue)](https://docs.ros.org/en/humble/index.html)
 [![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green)](LICENSE)
-[![OSF Prereg](https://img.shields.io/badge/OSF-Preregistered-lightblue)](https://osf.io/)
+[![OSF Prereg](https://img.shields.io/badge/OSF-10.17605%2FOSF.IO%2FVE5M2-lightblue)](https://doi.org/10.17605/OSF.IO/VE5M2)
 [![ENFIELD](https://img.shields.io/badge/ENFIELD-Exchange%20Scheme-orange)](https://www.enfield-project.eu/)
 [![Tests](https://img.shields.io/badge/Tests-505%2B%20passing-brightgreen)]()
 [![Status](https://img.shields.io/badge/Status-Week%207%20of%2024-yellow)]()
@@ -153,7 +153,7 @@ Per-attack:
 | Milestone | Target | Status |
 |-----------|--------|--------|
 | OSI License | Apache-2.0 | ✅ Done |
-| OSF Pre-registration + DOI | Month 2 (March 2026) | In review |
+| OSF Pre-registration + DOI | Month 2 (March 2026) | ✅ Done — [10.17605/OSF.IO/VE5M2](https://doi.org/10.17605/OSF.IO/VE5M2) |
 | GitHub Public Release v1.0 | Month 6 (July 2026) | Planned |
 | OSF Replication Package | Month 6 (July 2026) | Planned |
 
@@ -169,7 +169,8 @@ See [`docs/open_science_release.md`](docs/open_science_release.md) for the full 
   year         = {2026},
   publisher    = {GitHub},
   url          = {https://github.com/dryuemco/industrial_robot_security},
-  license      = {Apache-2.0}
+  license      = {Apache-2.0},
+  note         = {OSF Pre-registration: \url{https://doi.org/10.17605/OSF.IO/VE5M2}}
 }
 ```
 

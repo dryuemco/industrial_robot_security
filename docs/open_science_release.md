@@ -1,14 +1,19 @@
 # Open Science Release Checklist
 
 **Project:** ENFIELD — Formal Adversarial Testing of LLM-Generated Code for Industrial Robots
-**Version:** 3.0
-**Date:** 2026-03-16
+**Version:** 4.0
+**Date:** 2026-03-22
 
 This document tracks compliance with ENFIELD Open Science requirements and EU Horizon Europe open access obligations.
 
 ---
 
-## Month 2 Milestone (March 2026): OSF Pre-registration
+## Month 2 Milestone (March 2026): OSF Pre-registration ✅
+
+**DOI:** [10.17605/OSF.IO/VE5M2](https://doi.org/10.17605/OSF.IO/VE5M2)
+**Template:** OSF Standard Pre-Data Collection Registration
+**Submitted:** 2026-03-22
+**Approved by:** Assoc. Prof. Georgios Spathoulas (NTNU)
 
 | Item | Status | Notes |
 |------|--------|-------|
@@ -20,13 +25,10 @@ This document tracks compliance with ENFIELD Open Science requirements and EU Ho
 | Secondary outcomes defined (per-attack rate, FP rate) | Done | |
 | Pilot data disclosed (5 tasks, 40 variants) | Done | 90% detection, 0% FP |
 | Full suite data generated (15 tasks, 120 variants) | Done | 95% detection, 0% FP |
-| Pre-registration submitted | Pending | Target: end of March 2026 |
-| DOI obtained | Pending | Will be added to CITATION.cff and README |
-
-**After DOI is obtained:**
-- Update `CITATION.cff` with DOI
-- Update `README.md` OSF badge with DOI link
-- Replace `docs/OSF_DRAFT.md` with final `docs/OSF_PREREGISTRATION.md`
+| Pre-registration submitted | Done | 2026-03-22 |
+| DOI obtained | Done | 10.17605/OSF.IO/VE5M2 |
+| CITATION.cff updated with DOI | Done | 2026-03-22 |
+| README.md badge updated with DOI link | Done | 2026-03-22 |
 
 ---
 
@@ -40,7 +42,7 @@ This document tracks compliance with ENFIELD Open Science requirements and EU Ho
 | All tests pass (505 total) | Done | 169+149+81+83+23 across 5 suites |
 | CI pipeline green (8 jobs) | Done | build + 5 test suites + docker + sbom |
 | LICENSE file present (Apache-2.0) | Done | |
-| CITATION.cff complete with DOIs | Pending | Pending OSF DOI |
+| CITATION.cff complete with DOIs | Done | OSF DOI added 2026-03-22 |
 | README installation instructions verified | Done | Docker + native |
 | No proprietary dependencies | Done | All OSI-licensed |
 | Git tag `v1.0` created | Pending | |
@@ -57,7 +59,7 @@ This document tracks compliance with ENFIELD Open Science requirements and EU Ho
 | Attack variant files (120 variants) | Done | `enfield_attacks/generated/variants/` |
 | Static watchdog (8 rules) | Done | `enfield_watchdog_static/` |
 | Experiment runner + reports | Done | `scripts/run_experiment.py` |
-| Statistical analysis scripts | Pending | |
+| Statistical analysis scripts | Pending | McNemar + Holm-Bonferroni |
 | Run instructions | Pending | `REPLICATE.md` needed |
 
 ### Current Test Summary
@@ -125,8 +127,11 @@ Month 2 (March 2026):
   [x] OSF pre-registration document finalized (v3.0)
   [x] Pilot data generated and disclosed (5 tasks, 40 variants)
   [x] Full task suite generated (15 tasks, 120 variants)
-  [ ] OSF pre-registration submitted
-  [ ] DOI obtained and added to CITATION.cff + README
+  [x] Supervisor approval obtained (Georgios Spathoulas)
+  [x] OSF pre-registration submitted (2026-03-22)
+  [x] DOI obtained: 10.17605/OSF.IO/VE5M2
+  [x] CITATION.cff updated with DOI
+  [x] README.md badge updated with DOI link
 
 Month 6 (July 2026):
   [x] Task suite complete (15 tasks)
