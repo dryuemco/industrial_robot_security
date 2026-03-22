@@ -1,7 +1,7 @@
 # Open Science Release Checklist
 
 **Project:** ENFIELD — Formal Adversarial Testing of LLM-Generated Code for Industrial Robots
-**Version:** 4.0
+**Version:** 5.0
 **Date:** 2026-03-22
 
 This document tracks compliance with ENFIELD Open Science requirements and EU Horizon Europe open access obligations.
@@ -30,6 +30,21 @@ This document tracks compliance with ENFIELD Open Science requirements and EU Ho
 | CITATION.cff updated with DOI | Done | 2026-03-22 |
 | README.md badge updated with DOI link | Done | 2026-03-22 |
 
+### Post-Approval Amendment (Week 8)
+
+Georgios approved the pre-registration and provided feedback requiring two extensions:
+
+1. **Security dimension:** Add CWE-based security analysis (SM-1..7) alongside existing safety rules (DM-1..7)
+2. **LLM integration:** Add actual LLM code generation (Claude Sonnet, GPT-4o, Grok) with adversarial prompt testing (A6.1–A6.8)
+
+New hypotheses (H2–H4) and the Refusal Rate (RR) metric will be added as an OSF pre-registration amendment, clearly marked as post-initial exploratory additions per OSF guidelines.
+
+| New Hypothesis | Description |
+|----------------|-------------|
+| H2 | ≥30% of LLM-generated robot code contains safety/security violations without safety prompting |
+| H3 | Adversarial prompts increase violation rate by ≥50% relative to baseline |
+| H4 | Watchdog-in-the-loop reduces violation rate by ≥40% relative to single-pass generation |
+
 ---
 
 ## Month 6 Milestone (July 2026): Public Release
@@ -39,12 +54,15 @@ This document tracks compliance with ENFIELD Open Science requirements and EU Ho
 | Item | Status | Notes |
 |------|--------|-------|
 | All ROS2 packages build cleanly | Done | `colcon build` green |
-| All tests pass (505 total) | Done | 169+149+81+83+23 across 5 suites |
-| CI pipeline green (8 jobs) | Done | build + 5 test suites + docker + sbom |
+| All tests pass (543 total) | Done | 169+149+81+83+38+23 across 6 suites |
+| CI pipeline green (9 jobs) | Done | build + 6 test suites + docker + sbom |
 | LICENSE file present (Apache-2.0) | Done | |
-| CITATION.cff complete with DOIs | Done | OSF DOI added 2026-03-22 |
+| CITATION.cff complete with DOIs | Done | OSF DOI added 2026-03-22, v0.2.0 |
 | README installation instructions verified | Done | Docker + native |
 | No proprietary dependencies | Done | All OSI-licensed |
+| LLM client package (enfield_llm) | Done | Claude, GPT-4o, Grok backends |
+| Security rules (SM-1..7) | Pending | CWE-based detection in watchdog |
+| LLM experiment runner | Pending | Orchestrate E1/E2/E3 experiments |
 | Git tag `v1.0` created | Pending | |
 | GitHub Release created with changelog | Pending | |
 
@@ -57,9 +75,12 @@ This document tracks compliance with ENFIELD Open Science requirements and EU Ho
 | Dockerfile + docker-compose.yaml | Done | Multi-stage build |
 | Task IR files (15 baselines) | Done | `enfield_tasks/ir/tasks/` T001-T015 |
 | Attack variant files (120 variants) | Done | `enfield_attacks/generated/variants/` |
-| Static watchdog (8 rules) | Done | `enfield_watchdog_static/` |
+| Static watchdog (safety: DM-1..7) | Done | `enfield_watchdog_static/` |
+| Static watchdog (security: SM-1..7) | Pending | CWE-mapped rules |
+| LLM client + prompt templates | Done | `enfield_llm/` |
+| LLM experiment logs (JSONL) | Pending | Full request/response logs |
 | Experiment runner + reports | Done | `scripts/run_experiment.py` |
-| Statistical analysis scripts | Pending | McNemar + Holm-Bonferroni |
+| Statistical analysis scripts | Pending | McNemar + Holm-Bonferroni + Cochran's Q |
 | Run instructions | Pending | `REPLICATE.md` needed |
 
 ### Current Test Summary
@@ -70,30 +91,17 @@ This document tracks compliance with ENFIELD Open Science requirements and EU Ho
 | enfield_attacks | 149 | Done |
 | enfield_translators | 81 | Done |
 | enfield_watchdog_static | 83 | Done |
+| enfield_llm | 38 | Done |
 | experiment runner | 23 | Done |
-| **Total** | **505** | Done |
+| **Total** | **543** | Done |
 
 > enfield_tasks breakdown: 79 static + 90 parametrized (TestAllTasksSchemaValid: 6 × 15 tasks).
+> enfield_llm breakdown: 5 base client + 14 prompt builder + 12 code parser + 7 factory tests.
 > All test suites use dynamic glob — future task additions require zero test changes.
 
 ### Experiment Results
 
-**Pilot (5-task calibration, T001-T005):**
-
-| Metric | Value |
-|--------|-------|
-| Baselines safe | 5/5 (FP: 0%) |
-| Variants flagged | 36/40 (90%) |
-| A1 Speed | 5/5 (100%) |
-| A2 Zone | 5/5 (100%) |
-| A3 Orientation | 4/5 (80%) |
-| A4 Payload | 5/5 (100%) |
-| A5 Logic | 5/5 (100%) |
-| A6 Frame | 3/5 (60%) |
-| A7 Tool | 4/5 (80%) |
-| A8 Prompt | 5/5 (100%) |
-
-**Full Suite (15-task confirmatory, T001-T015):**
+**Phase A — Deterministic Testing (15-task, 120 variants):**
 
 | Metric | Value |
 |--------|-------|
@@ -108,6 +116,14 @@ This document tracks compliance with ENFIELD Open Science requirements and EU Ho
 | A7 Tool | 13/15 (87%) |
 | A8 Prompt | 15/15 (100%) |
 
+**Phase B–D — LLM Code Generation Testing (planned):**
+
+| Experiment | Description | Status |
+|-----------|-------------|--------|
+| E1: Baseline LLM | 3 LLMs × 15 tasks × 2 conditions × 3 reps | Pending |
+| E2: Adversarial | 3 LLMs × 15 tasks × 8 attacks (A6.1–A6.8) | Pending |
+| E3: Watchdog-in-loop | 3 LLMs × 15 tasks × 3 reps with retry | Pending |
+
 ---
 
 ## Responsible Disclosure (3-Tier Access)
@@ -115,8 +131,8 @@ This document tracks compliance with ENFIELD Open Science requirements and EU Ho
 | Tier | Content | Access | Timeline |
 |------|---------|--------|----------|
 | **Tier 1 (Public)** | Methods, aggregated results, detection mechanisms, Task IR schema | GitHub public | Month 6 |
-| **Tier 2 (Verified Researchers)** | Full attack specifications, per-scenario results | OSF restricted | After verification |
-| **Tier 3 (Vendors)** | Critical vulnerability details | Direct communication | 90 days before release |
+| **Tier 2 (Verified Researchers)** | Full attack specifications, per-scenario results, LLM logs | OSF restricted | After verification |
+| **Tier 3 (Vendors)** | Critical vulnerability details, adversarial prompt templates | Direct communication | 90 days before release |
 
 ---
 
@@ -132,10 +148,16 @@ Month 2 (March 2026):
   [x] DOI obtained: 10.17605/OSF.IO/VE5M2
   [x] CITATION.cff updated with DOI
   [x] README.md badge updated with DOI link
+  [x] Georgios feedback: add Security dimension + LLM integration
+  [x] enfield_llm package created (38 tests passing)
 
 Month 6 (July 2026):
   [x] Task suite complete (15 tasks)
-  [ ] Confirmatory statistical analysis (McNemar, Holm-Bonferroni)
+  [x] LLM client package (Claude, GPT-4o, Grok)
+  [ ] Security rules (SM-1..7) implemented in watchdog
+  [ ] LLM experiments E1/E2/E3 executed
+  [ ] OSF pre-registration amendment (H2-H4, RR metric)
+  [ ] Confirmatory statistical analysis (McNemar, Holm-Bonferroni, Cochran's Q)
   [ ] Git tag v1.0
   [ ] GitHub Release with changelog
   [ ] OSF replication package uploaded
