@@ -160,11 +160,36 @@ jobs:
             --tb=short
 
   # ---------------------------------------------------------------------------
-  # Job 6: Experiment runner tests (23 tests)
+  # Job 6: LLM client, prompt builder, code parser tests (38 tests)
+  # ---------------------------------------------------------------------------
+  test-llm:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install pytest httpx
+
+      - name: Run LLM package tests
+        run: |
+          cd $GITHUB_WORKSPACE
+          PYTHONPATH=enfield_llm:enfield_tasks python3 -m pytest \
+            enfield_llm/test/ -v \
+            --tb=short
+
+  # ---------------------------------------------------------------------------
+  # Job 7: Experiment runner tests (23 tests)
   # ---------------------------------------------------------------------------
   test-experiment-runner:
     runs-on: ubuntu-22.04
-    needs: [test-task-ir, test-attacks, test-watchdog-static]
+    needs: [test-task-ir, test-attacks, test-watchdog-static, test-llm]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -186,7 +211,7 @@ jobs:
             --tb=short
 
   # ---------------------------------------------------------------------------
-  # Job 7: Docker build
+  # Job 8: Docker build
   # ---------------------------------------------------------------------------
   docker-build:
     runs-on: ubuntu-22.04
@@ -198,7 +223,7 @@ jobs:
         run: docker build --target builder -t enfield:ci .
 
   # ---------------------------------------------------------------------------
-  # Job 8: SBOM generation + vulnerability scan
+  # Job 9: SBOM generation + vulnerability scan
   # ---------------------------------------------------------------------------
   sbom-and-scan:
     runs-on: ubuntu-22.04

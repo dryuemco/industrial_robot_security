@@ -14,3 +14,6 @@ pyyaml>=6.0
 
 # --- RAPID parser (AST PoC) ---
 lark-parser>=0.12
+
+# --- LLM API clients ---
+httpx>=0.25.0
