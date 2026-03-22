@@ -1,14 +1,18 @@
 # OSF Pre-registration: Formal Adversarial Testing of LLM-Generated Code for Industrial Robots
 
 **Registration Template:** OSF Standard Pre-Data Collection Registration
-**Version:** 3.0 (submission-ready)
-**Date:** 2026-03-16
-**Status:** Ready for OSF submission
+**Version:** 3.1 (submitted)
+**Date:** 2026-03-22
+**Status:** Submitted — DOI: [10.17605/OSF.IO/VE5M2](https://doi.org/10.17605/OSF.IO/VE5M2)
 
 **Principal Investigator:** Yunus Emre Cogurcu, PhD (Cukurova University)
 **Supervisor:** Assoc. Prof. Georgios Spathoulas (NTNU)
 **Funding:** Horizon Europe Grant Agreement No 101120657 (ENFIELD Exchange Scheme)
 **Repository:** https://github.com/dryuemco/industrial_robot_security
+
+> **Note:** This document mirrors the content submitted to OSF on 2026-03-22.
+> The authoritative version is the OSF registration at the DOI above.
+> Any post-registration amendments will be documented in the manuscript.
 
 ---
 

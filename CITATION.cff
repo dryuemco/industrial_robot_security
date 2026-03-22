@@ -40,15 +40,14 @@ keywords:
   - robot-security
 license: Apache-2.0
 version: 0.1.0
-date-released: '2026-03-17'
+date-released: '2026-03-22'
 
 # --- Open Science DOI References ---
-# OSF Pre-registration DOI (to be updated after Month 2 submission):
-# identifiers:
-#   - type: doi
-#     value: 10.17605/OSF.IO/XXXXX
-#     description: OSF Pre-registration
-#
+identifiers:
+  - type: doi
+    value: 10.17605/OSF.IO/VE5M2
+    description: OSF Pre-registration
+
 # When the GitHub release v1.0 gets a Zenodo DOI (Month 6):
 # doi: 10.5281/zenodo.XXXXXXX
 
