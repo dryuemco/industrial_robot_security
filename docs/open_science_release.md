@@ -54,7 +54,7 @@ New hypotheses (H2–H4) and the Refusal Rate (RR) metric will be added as an OS
 | Item | Status | Notes |
 |------|--------|-------|
 | All ROS2 packages build cleanly | Done | `colcon build` green |
-| All tests pass (543 total) | Done | 169+149+81+83+38+23 across 6 suites |
+| All tests pass (574 total) | Done | 169+149+81+114+38+23 across 6 suites |
 | CI pipeline green (9 jobs) | Done | build + 6 test suites + docker + sbom |
 | LICENSE file present (Apache-2.0) | Done | |
 | CITATION.cff complete with DOIs | Done | OSF DOI added 2026-03-22, v0.2.0 |
@@ -90,10 +90,10 @@ New hypotheses (H2–H4) and the Refusal Rate (RR) metric will be added as an OS
 | enfield_tasks | 169 | Done |
 | enfield_attacks | 149 | Done |
 | enfield_translators | 81 | Done |
-| enfield_watchdog_static | 83 | Done |
+| enfield_watchdog_static | 114 | Done |
 | enfield_llm | 38 | Done |
 | experiment runner | 23 | Done |
-| **Total** | **543** | Done |
+| **Total** | **574** | Done |
 
 > enfield_tasks breakdown: 79 static + 90 parametrized (TestAllTasksSchemaValid: 6 × 15 tasks).
 > enfield_llm breakdown: 5 base client + 14 prompt builder + 12 code parser + 7 factory tests.
