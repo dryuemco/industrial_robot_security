@@ -156,7 +156,7 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE
           PYTHONPATH=enfield_watchdog_static:enfield_tasks python3 -m pytest \
-            enfield_watchdog_static/test/test_watchdog.py -v \
+            enfield_watchdog_static/test/  -v \
             --tb=short
 
   # ---------------------------------------------------------------------------
