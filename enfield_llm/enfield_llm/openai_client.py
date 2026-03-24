@@ -1,7 +1,8 @@
-"""OpenAI-compatible LLM client — used by both GPT-4o and Grok.
+"""OpenAI-compatible LLM client — used by GPT-4o, Grok, and Ollama.
 
-Grok's API is OpenAI-compatible, so both providers share this
-implementation with different base URLs and model identifiers.
+Ollama, Grok, and OpenAI all expose the same /chat/completions
+endpoint format, differing only in base URL and auth requirements.
+Ollama does not require authentication.
 """
 
 from __future__ import annotations
@@ -20,13 +21,14 @@ logger = logging.getLogger(__name__)
 # Provider configurations
 OPENAI_BASE_URL = "https://api.openai.com/v1"
 XAI_BASE_URL = "https://api.x.ai/v1"
+OLLAMA_BASE_URL = "http://localhost:11434/v1"
 
 
 class OpenAICompatibleClient(LLMClient):
-    """Client for OpenAI-compatible APIs (GPT-4o, Grok).
+    """Client for OpenAI-compatible APIs (GPT-4o, Grok, Ollama).
 
-    Both OpenAI and xAI expose the same /chat/completions endpoint
-    format, differing only in base URL and auth.
+    OpenAI, xAI, and Ollama all expose the same /chat/completions
+    endpoint format, differing only in base URL and auth.
     """
 
     def __init__(
@@ -62,19 +64,26 @@ class OpenAICompatibleClient(LLMClient):
     ) -> LLMResponse:
         """Call the OpenAI-compatible /chat/completions endpoint."""
         headers = {
-            "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
         }
+
+        # Ollama doesn't need auth header
+        if self._provider != "ollama":
+            headers["Authorization"] = f"Bearer {self.api_key}"
 
         payload = {
             "model": self.model,
             "temperature": self.temperature,
-            "max_tokens": self.max_tokens,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
         }
+
+        # Only include max_tokens for non-Ollama providers
+        # (Ollama uses num_predict in options, but works without it)
+        if self._provider != "ollama":
+            payload["max_tokens"] = self.max_tokens
 
         try:
             with httpx.Client(timeout=self.timeout) as client:
@@ -92,6 +101,13 @@ class OpenAICompatibleClient(LLMClient):
                 model=self.model,
                 status=ResponseStatus.ERROR,
                 raw_response=f"HTTP {e.response.status_code}: {e.response.text[:500]}",
+            )
+        except httpx.ConnectError as e:
+            logger.error("Connection failed for %s: %s", self._provider, e)
+            return LLMResponse(
+                model=self.model,
+                status=ResponseStatus.ERROR,
+                raw_response=f"Connection failed: {e}. Is Ollama running?",
             )
         except httpx.RequestError as e:
             logger.error("Request error for %s: %s", self._provider, e)
@@ -144,5 +160,20 @@ def create_grok_client(
         model=model,
         base_url=XAI_BASE_URL,
         provider="xai",
+        **kwargs,
+    )
+
+
+def create_ollama_client(
+    model: str = "qwen2.5-coder:32b",
+    base_url: str = OLLAMA_BASE_URL,
+    **kwargs,
+) -> OpenAICompatibleClient:
+    """Factory for Ollama client (local, no API key needed)."""
+    return OpenAICompatibleClient(
+        api_key="ollama",
+        model=model,
+        base_url=base_url,
+        provider="ollama",
         **kwargs,
     )
