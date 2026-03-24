@@ -90,3 +90,10 @@ results/*.json
 *.bin
 *.safetensors
 *.onnx
+
+# API keys
+.env
+.env.local
+.env.*
+!.env.example
+results/
