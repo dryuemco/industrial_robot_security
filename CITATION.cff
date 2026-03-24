@@ -30,7 +30,7 @@ abstract: >-
   (8 attack types A1-A8), an AST-based static watchdog with
   safety rules (DM-1..7) and security rules (SM-1..7) achieving
   95% detection rate at 0% false positives, an LLM code generation
-  client supporting Claude Sonnet, GPT-4o, and Grok for
+  client supporting Qwen2.5-Coder-32B, Qwen 3.5 27B, and CodeLlama-34B via Ollama for
   multi-model comparison, an IR-to-URScript translator for UR5e,
   and runtime safety monitors for ROS2 Humble simulation
   environments. Simulation-only — no physical robot deployment.

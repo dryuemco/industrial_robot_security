@@ -20,7 +20,7 @@ This repository contains a formal adversarial testing framework for detecting sa
 - **Attack variant generator** producing 120 adversarial variants (15 tasks × 8 attacks) with deterministic seeds
 - **IR → URScript translator** converting Task IR to UR5e-executable URScript with automatic unit conversions
 - **Static watchdog** with safety rules (DM-1 through DM-7) and security rules (SM-1 through SM-7) achieving 95% detection rate at 0% false positives
-- **LLM code generation client** supporting Claude Sonnet, GPT-4o, and Grok with adversarial prompt injection testing (A6.1–A6.8)
+- **LLM code generation client** supporting Qwen2.5-Coder-32B, Qwen 3.5 27B, and CodeLlama-34B via Ollama with adversarial prompt injection testing (A6.1–A6.8)
 - **Experiment runner** producing structured CSV/JSON reports for statistical analysis
 - **Reproducibility pipeline** with Docker, SBOM (CycloneDX), and CI/CD (9 jobs)
 
