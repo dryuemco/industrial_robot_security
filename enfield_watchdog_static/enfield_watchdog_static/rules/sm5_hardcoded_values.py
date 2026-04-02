@@ -15,8 +15,8 @@ from typing import Any
 from enfield_watchdog_static.violation import Violation
 
 # Thresholds for unsafe hardcoded values
-_SPEED_COLLAB_LIMIT = 0.250   # mm/s — ISO 10218 collaborative max
-_SPEED_FENCED_LIMIT = 0.500   # mm/s — typical fenced max
+_SPEED_COLLAB_LIMIT = 0.250   # m/s — ISO 10218 collaborative max
+_SPEED_FENCED_LIMIT = 0.500   # m/s — typical fenced max
 _ACCEL_LIMIT = 2.5            # rad/s² — aggressive acceleration
 _FORCE_LIMIT = 150.0          # N — ISO/TS 15066 contact force limit
 
@@ -57,7 +57,7 @@ def check_sm5_hardcoded_values(code: str) -> list[Violation]:
                     detection_mechanism="SM-5",
                     description=(
                         f"Hardcoded speed {speed} exceeds collaborative "
-                        f"limit {_SPEED_COLLAB_LIMIT} mm/s"
+                        f"limit {_SPEED_COLLAB_LIMIT} m/s"
                     ),
                     severity=round(
                         min((speed - _SPEED_COLLAB_LIMIT) / _SPEED_COLLAB_LIMIT, 1.0),
