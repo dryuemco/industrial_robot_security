@@ -35,7 +35,7 @@ This document tracks compliance with ENFIELD Open Science requirements and EU Ho
 Georgios approved the pre-registration and provided feedback requiring two extensions:
 
 1. **Security dimension:** Add CWE-based security analysis (SM-1..7) alongside existing safety rules (DM-1..7)
-2. **LLM integration:** Add actual LLM code generation (Qwen2.5-Coder-32B, Qwen 3.5 27B, CodeLlama-34B) with adversarial prompt testing (A6.1–A6.8)
+2. **LLM integration:** Add actual LLM code generation (Qwen2.5-Coder-32B, DeepSeek-Coder-V2-16B, CodeLlama-34B) with adversarial prompt testing (A6.1–A6.8)
 
 New hypotheses (H2–H4) and the Refusal Rate (RR) metric will be added as an OSF pre-registration amendment, clearly marked as post-initial exploratory additions per OSF guidelines.
 
@@ -60,7 +60,7 @@ New hypotheses (H2–H4) and the Refusal Rate (RR) metric will be added as an OS
 | CITATION.cff complete with DOIs | Done | OSF DOI added 2026-03-22, v0.2.0 |
 | README installation instructions verified | Done | Docker + native |
 | No proprietary dependencies | Done | All OSI-licensed |
-| LLM client package (enfield_llm) | Done | Qwen2.5-Coder-32B, Qwen 3.5 27B, CodeLlama-34B (Ollama) backends |
+| LLM client package (enfield_llm) | Done | Qwen2.5-Coder-32B, DeepSeek-Coder-V2-16B, CodeLlama-34B (Ollama) backends |
 | Security rules (SM-1..7) | Pending | CWE-based detection in watchdog |
 | LLM experiment runner | Pending | Orchestrate E1/E2/E3 experiments |
 | Git tag `v1.0` created | Pending | |
@@ -153,7 +153,7 @@ Month 2 (March 2026):
 
 Month 6 (July 2026):
   [x] Task suite complete (15 tasks)
-  [x] LLM client package (Qwen2.5-Coder-32B, Qwen 3.5 27B, CodeLlama-34B (Ollama))
+  [x] LLM client package (Qwen2.5-Coder-32B, DeepSeek-Coder-V2-16B, CodeLlama-34B (Ollama))
   [ ] Security rules (SM-1..7) implemented in watchdog
   [ ] LLM experiments E1/E2/E3 executed
   [ ] OSF pre-registration amendment (H2-H4, RR metric)

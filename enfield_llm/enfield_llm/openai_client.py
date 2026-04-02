@@ -38,9 +38,9 @@ class OpenAICompatibleClient(LLMClient):
         base_url: str = OPENAI_BASE_URL,
         provider: str = "openai",
         temperature: float = 0.0,
-        max_tokens: int = 4096,
+        max_tokens: int = 1024,
         log_dir: Optional[Path] = None,
-        timeout: float = 120.0,
+        timeout: float = 300.0,
     ) -> None:
         super().__init__(
             api_key=api_key,
@@ -80,9 +80,10 @@ class OpenAICompatibleClient(LLMClient):
             ],
         }
 
-        # Only include max_tokens for non-Ollama providers
-        # (Ollama uses num_predict in options, but works without it)
-        if self._provider != "ollama":
+        # Include max_tokens / num_predict for all providers
+        if self._provider == "ollama":
+            payload["options"] = {"num_predict": self.max_tokens}
+        else:
             payload["max_tokens"] = self.max_tokens
 
         try:
