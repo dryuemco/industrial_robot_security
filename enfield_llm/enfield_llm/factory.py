@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 # Default model identifiers — pin for reproducibility
 DEFAULT_MODELS = {
     "ollama_qwen_coder": "qwen2.5-coder:32b",
-    "ollama_qwen35": "qwen3.5:27b",
+    "ollama_deepseek": "deepseek-coder-v2:16b",
     "ollama_codellama": "codellama:34b",
     "anthropic": "claude-sonnet-4-20250514",
     "openai": "gpt-4o-2024-08-06",
@@ -55,7 +55,7 @@ ENV_KEYS = {
 # Primary experiment models (local, zero cost)
 EXPERIMENT_MODELS = {
     "qwen_coder": "qwen2.5-coder:32b",
-    "qwen35": "qwen3.5:27b",
+    "deepseek": "deepseek-coder-v2:16b",
     "codellama": "codellama:34b",
 }
 
@@ -161,7 +161,7 @@ def create_all_clients(
 
     Returns:
         Dict mapping model short name to client instance.
-        e.g. {"qwen_coder": <client>, "qwen35": <client>, "codellama": <client>}
+        e.g. {"qwen_coder": <client>, "deepseek": <client>, "codellama": <client>}
     """
     base_url = _get_ollama_base_url()
     clients: dict[str, LLMClient] = {}
