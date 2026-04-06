@@ -277,3 +277,71 @@ Note: A3/T003 miss = T003 has no forbidden orientation cones. A6 misses = small 
 Baselines: 15/15 safe (FP rate: 0.0%)
 
 Note: This is the raw detection count prior to formal confirmatory statistical analysis. McNemar test, Holm-Bonferroni correction, and confidence intervals will be computed as part of the registered analysis plan (Section 5).
+
+---
+
+## Amendment 1 — 2026-04-06 (Week 10 of 24)
+
+**Title:** Add security dimension (SM-1..7), LLM hypotheses (H2–H4),
+Refusal Rate metric, and model substitution (Qwen3.5-27B → DeepSeek-Coder-V2-16B)
+
+**Filed before E1/E2/E3 data collection:** ✅ Yes
+
+### Changes
+
+#### 1. Security dimension and new hypotheses (planned since Week 8)
+
+Following supervisor feedback (Assoc. Prof. Georgios Spathoulas, NTNU),
+the scope was extended to include:
+
+- CWE-based security analysis layer: SM-1 (CWE-20), SM-2 (CWE-252),
+  SM-3 (CWE-693), SM-4 (CWE-754), SM-5 (CWE-798), SM-6 (Missing Safety
+  Preamble), SM-7 (Prompt Injection Marker)
+- Three new hypotheses H2–H4 (see updated hypothesis table below)
+- Refusal Rate (RR) metric: fraction of LLM calls returning no executable
+  code, reported as a descriptive secondary outcome alongside H2/H3/H4
+- `analyze_combined()` method: applies both DM-1..7 (safety) and SM-1..7
+  (security) rules; `has_violation=1` if either layer flags a violation
+  (fix committed 2026-04-06, before any experimental runs)
+
+#### 2. Model substitution and LLM configuration (Week 10)
+
+| Field | Previous (v2.1) | Updated (Amendment 1) |
+|---|---|---|
+| Model 2 | `qwen3.5:27b` (Alibaba, 27B, Apache 2.0) | `deepseek-coder-v2:16b` (DeepSeek AI, 16B, DeepSeek License) |
+| Reason | — | Thinking-mode timeout >300 s during smoke testing |
+| `max_tokens` | unspecified | `1024` (all models) |
+| `timeout` | unspecified | `300 s` (all models) |
+| Ollama host | `192.168.1.4:11434` | `192.168.1.6:11434` |
+
+#### 3. Updated model table
+
+| Model | Provider | Params | Quantization | License |
+|---|---|---|---|---|
+| `qwen2.5-coder:32b` | Alibaba Cloud | 32B | Q4_K_M | Apache 2.0 |
+| `deepseek-coder-v2:16b` | DeepSeek AI | 16B | Q4_K_M | DeepSeek License |
+| `codellama:34b` | Meta AI | 34B | Q4_K_M | Meta Llama 2 License |
+
+Fixed inference parameters (all models): temperature=0.0, max_tokens=1024, timeout=300s.
+
+#### 4. Updated hypothesis table
+
+| ID | Hypothesis | Test | Status |
+|---|---|---|---|
+| H1 | AST watchdog detects ≥90% of A1–A8 violations, ≤5% FPR | McNemar + exact binomial 95% CI | Original registration |
+| H2 | ≥30% of baseline LLM-generated code contains ≥1 safety or security violation | One-sided exact binomial; Wilson 95% CI; α=0.05 | Added: Amendment 1 |
+| H3 | Adversarial prompts (A6.1–A6.8) increase combined violation rate by ≥50 pp vs baseline | McNemar per attack; Holm-Bonferroni; family-wise α=0.05 | Added: Amendment 1 |
+| H4 | Watchdog-in-loop reduces violation rate by ≥40% relative vs single-pass | McNemar; Holm-Bonferroni; Newcombe 95% CI; α=0.05 | Added: Amendment 1 |
+
+### Related commits
+
+| Commit | Description |
+|---|---|
+| `1d6d10f` | feat(analysis): add experiment runner and McNemar statistical analysis |
+| *(latest)* | fix(runner): use analyze_combined() for combined safety+security violations |
+
+### OSF platform note
+
+This amendment has been filed on the OSF pre-registration page
+(DOI: [10.17605/OSF.IO/VE5M2](https://doi.org/10.17605/OSF.IO/VE5M2))
+under the "Amendments" tab with the title and justification text above.
