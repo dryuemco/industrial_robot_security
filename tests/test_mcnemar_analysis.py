@@ -2,7 +2,7 @@
 Pytest tests for scripts/mcnemar_analysis.py
 =============================================
 Tests cover: contingency table building, McNemar statistic,
-Wilson CI, H2/H3/H4 hypothesis tests, demo data, and edge cases.
+Wilson CI, H4/H5/H6 hypothesis tests, demo data, and edge cases.
 
 Run:
   pytest tests/test_mcnemar_analysis.py -v
@@ -20,18 +20,18 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 from mcnemar_analysis import (
     ALPHA,
-    H2_THRESHOLD,
-    H3_THRESHOLD,
     H4_THRESHOLD,
+    H5_THRESHOLD,
+    H6_THRESHOLD,
     ContingencyTable,
     McNemarResult,
     build_contingency,
     delta_ci_newcombe,
     generate_demo_data,
     run_mcnemar,
-    run_h2,
-    run_h3,
     run_h4,
+    run_h5,
+    run_h6,
     wilson_ci,
 )
 
@@ -195,10 +195,10 @@ class TestBuildContingency:
 
 
 # ---------------------------------------------------------------------------
-# H2 test
+# H4 test
 # ---------------------------------------------------------------------------
 
-class TestH2:
+class TestH4:
     def _make_df(self, n_viol: int, n_total: int) -> pd.DataFrame:
         rows = []
         for i in range(n_total):
@@ -211,38 +211,38 @@ class TestH2:
 
     def test_high_violation_rate_supported(self):
         df = self._make_df(40, 50)  # 80% >> 30%
-        results = run_h2(df)
+        results = run_h4(df)
         pooled = next(r for r in results if r.model == "all_models")
         assert bool(pooled.significant) is True
-        assert pooled.rate_a > H2_THRESHOLD
+        assert pooled.rate_a > H4_THRESHOLD
 
     def test_low_violation_rate_not_supported(self):
         df = self._make_df(5, 50)  # 10% < 30%
-        results = run_h2(df)
+        results = run_h4(df)
         pooled = next(r for r in results if r.model == "all_models")
-        assert pooled.rate_a < H2_THRESHOLD
+        assert pooled.rate_a < H4_THRESHOLD
 
     def test_returns_result_for_each_model(self):
         df = self._make_df(20, 50)
-        results = run_h2(df)
+        results = run_h4(df)
         models = {r.model for r in results}
         assert "all_models" in models
 
     def test_ci_bounds_valid(self):
         df = self._make_df(20, 50)
-        results = run_h2(df)
+        results = run_h4(df)
         for r in results:
             if not math.isnan(r.ci_low):
                 assert 0 <= r.ci_low <= r.ci_high <= 1
 
 
 # ---------------------------------------------------------------------------
-# H3 test
+# H5 test
 # ---------------------------------------------------------------------------
 
-class TestH3:
+class TestH5:
     @pytest.fixture
-    def h3_df(self):
+    def h5_df(self):
         """Baseline + A6.6 with large attack effect."""
         rng = np.random.default_rng(0)
         rows = []
@@ -265,33 +265,33 @@ class TestH3:
             })
         return pd.DataFrame(rows)
 
-    def test_returns_list(self, h3_df):
-        results = run_h3(h3_df)
+    def test_returns_list(self, h5_df):
+        results = run_h5(h5_df)
         assert isinstance(results, list)
 
-    def test_each_attack_has_result(self, h3_df):
-        results = run_h3(h3_df)
+    def test_each_attack_has_result(self, h5_df):
+        results = run_h5(h5_df)
         attacks_covered = {r.condition_b for r in results}
         # At least A6.6 should be present
         assert "A6.6" in attacks_covered
 
-    def test_p_adjusted_set(self, h3_df):
-        results = run_h3(h3_df)
+    def test_p_adjusted_set(self, h5_df):
+        results = run_h5(h5_df)
         for r in results:
             assert not math.isnan(r.p_adjusted)
 
-    def test_large_effect_significant(self, h3_df):
-        results = run_h3(h3_df)
+    def test_large_effect_significant(self, h5_df):
+        results = run_h5(h5_df)
         a66 = next((r for r in results if r.condition_b == "A6.6" and r.model == "all"), None)
         if a66:
             assert a66.delta > 0.5  # 90% - 10% = 80pp delta in demo
 
 
 # ---------------------------------------------------------------------------
-# H4 test
+# H6 test
 # ---------------------------------------------------------------------------
 
-class TestH4:
+class TestH6:
     @pytest.fixture
     def h4_df(self):
         """Baseline 80% → watchdog 20% (strong reduction)."""
@@ -310,27 +310,27 @@ class TestH4:
         return pd.DataFrame(rows)
 
     def test_returns_list(self, h4_df):
-        results = run_h4(h4_df)
+        results = run_h6(h4_df)
         assert isinstance(results, list)
 
     def test_strong_reduction_supported(self, h4_df):
-        results = run_h4(h4_df)
+        results = run_h6(h4_df)
         pooled = next(
             (r for r in results if r.model == "all" and r.condition_b == "watchdog"),
             None
         )
         assert pooled is not None
-        assert pooled.relative_change < -H4_THRESHOLD
+        assert pooled.relative_change < -H6_THRESHOLD
 
     def test_relative_change_negative_means_reduction(self, h4_df):
-        results = run_h4(h4_df)
+        results = run_h6(h4_df)
         for r in results:
             if not math.isnan(r.relative_change):
                 # All our fixture pairs have baseline > watchdog
                 assert r.relative_change < 0
 
     def test_p_adjusted_present(self, h4_df):
-        results = run_h4(h4_df)
+        results = run_h6(h4_df)
         for r in results:
             assert not math.isnan(r.p_adjusted)
 
@@ -374,11 +374,11 @@ class TestDemoData:
     def test_full_pipeline_runs(self, tmp_path):
         """End-to-end: demo data → all three tests → outputs written."""
         df = generate_demo_data()
-        h2 = run_h2(df)
-        h3 = run_h3(df)
         h4 = run_h4(df)
-        assert len(h2) > 0
-        assert len(h3) > 0
+        h5 = run_h5(df)
+        h6 = run_h6(df)
+        assert len(h4) > 0
+        assert len(h5) > 0
         # H4 may be empty if watchdog condition absent in filtered df
         # (demo has it, so should be non-empty)
         assert len(h4) > 0
@@ -391,7 +391,7 @@ class TestDemoData:
 class TestEdgeCases:
     def test_empty_dataframe_h2(self):
         df = pd.DataFrame(columns=["model", "task_id", "condition", "rep", "has_violation"])
-        results = run_h2(df)
+        results = run_h4(df)
         assert results == []
 
     def test_single_pair(self):
@@ -411,7 +411,7 @@ class TestEdgeCases:
             for i in range(30)
         ]
         df = pd.DataFrame(rows)
-        results = run_h2(df)
+        results = run_h4(df)
         pooled = next(r for r in results if r.model == "all_models")
         assert math.isclose(pooled.rate_a, 1.0)
 
@@ -421,7 +421,7 @@ class TestEdgeCases:
             for i in range(30)
         ]
         df = pd.DataFrame(rows)
-        results = run_h2(df)
+        results = run_h4(df)
         pooled = next(r for r in results if r.model == "all_models")
         assert pooled.rate_a == 0.0
         assert bool(pooled.significant) is False
