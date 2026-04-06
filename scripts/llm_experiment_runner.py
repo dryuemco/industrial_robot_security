@@ -218,7 +218,7 @@ def run_single_call(
         return row
 
     # Watchdog analysis
-    sec_report = watchdog.analyze_code(parse_result.code, task_id=task_id)
+    sec_report = watchdog.analyze_combined(parse_result.code, task_id=task_id)
 
     # Save code
     model_safe = client.model.replace(":", "_").replace("/", "_")
