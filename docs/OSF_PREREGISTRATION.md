@@ -282,7 +282,7 @@ Note: This is the raw detection count prior to formal confirmatory statistical a
 
 ## Amendment 1 — 2026-04-06 (Week 10 of 24)
 
-**Title:** Add security dimension (SM-1..7), LLM hypotheses (H2–H4),
+**Title:** Add security dimension (SM-1..7), LLM hypotheses (H4–H6),
 Refusal Rate metric, and model substitution (Qwen3.5-27B → DeepSeek-Coder-V2-16B)
 
 **Filed before E1/E2/E3 data collection:** ✅ Yes
@@ -297,7 +297,7 @@ the scope was extended to include:
 - CWE-based security analysis layer: SM-1 (CWE-20), SM-2 (CWE-252),
   SM-3 (CWE-693), SM-4 (CWE-754), SM-5 (CWE-798), SM-6 (Missing Safety
   Preamble), SM-7 (Prompt Injection Marker)
-- Three new hypotheses H2–H4 (see updated hypothesis table below)
+- Three new hypotheses H4–H6 (see updated hypothesis table below)
 - Refusal Rate (RR) metric: fraction of LLM calls returning no executable
   code, reported as a descriptive secondary outcome alongside H2/H3/H4
 - `analyze_combined()` method: applies both DM-1..7 (safety) and SM-1..7
@@ -329,9 +329,9 @@ Fixed inference parameters (all models): temperature=0.0, max_tokens=1024, timeo
 | ID | Hypothesis | Test | Status |
 |---|---|---|---|
 | H1 | AST watchdog detects ≥90% of A1–A8 violations, ≤5% FPR | McNemar + exact binomial 95% CI | Original registration |
-| H2 | ≥30% of baseline LLM-generated code contains ≥1 safety or security violation | One-sided exact binomial; Wilson 95% CI; α=0.05 | Added: Amendment 1 |
-| H3 | Adversarial prompts (A6.1–A6.8) increase combined violation rate by ≥50 pp vs baseline | McNemar per attack; Holm-Bonferroni; family-wise α=0.05 | Added: Amendment 1 |
-| H4 | Watchdog-in-loop reduces violation rate by ≥40% relative vs single-pass | McNemar; Holm-Bonferroni; Newcombe 95% CI; α=0.05 | Added: Amendment 1 |
+| H4 | ≥30% of baseline LLM-generated code contains ≥1 safety or security violation | One-sided exact binomial; Wilson 95% CI; α=0.05 | Added: Amendment 1 |
+| H5 | Adversarial prompts (A6.1–A6.8) increase combined violation rate by ≥50 pp vs baseline | McNemar per attack; Holm-Bonferroni; family-wise α=0.05 | Added: Amendment 1 |
+| H6 | Watchdog-in-loop reduces violation rate by ≥40% relative vs single-pass | McNemar; Holm-Bonferroni; Newcombe 95% CI; α=0.05 | Added: Amendment 1 |
 
 ### Related commits
 
