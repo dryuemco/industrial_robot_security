@@ -59,6 +59,21 @@ URSCRIPT_FUNC_PATTERN = re.compile(
     re.DOTALL,
 )
 
+# Pattern for URScript function-call syntax (validity gate).
+# A response only counts as valid URScript if at least one motion or
+# control command appears as an actual function call (keyword followed
+# by an opening parenthesis), not merely as a substring inside prose
+# or pseudo-code. This eliminates false negatives where a model emits
+# natural-language descriptions ("use movej to position the arm")
+# which would otherwise pass the substring-based has_motion_command
+# check.
+URSCRIPT_CALL_PATTERN = re.compile(
+    r"\b(?:movej|movel|movec|movep|speedl|speedj|servoj|servoc|"
+    r"stopl|stopj|set_tcp|set_payload|sleep|popup|textmsg|halt|"
+    r"set_digital_out|force_mode|freedrive_mode|socket_open)\s*\(",
+    re.IGNORECASE,
+)
+
 
 @dataclass
 class ParseResult:
@@ -80,6 +95,7 @@ class ParseResult:
     line_count: int = 0
     has_motion_command: bool = False
     has_safety_check: bool = False
+    is_valid_urscript: bool = False
 
 
 class CodeParser:
@@ -241,4 +257,5 @@ class CodeParser:
             line_count=len(non_empty),
             has_motion_command=any(mc in code_lower for mc in motion_commands),
             has_safety_check=any(sk in code_lower for sk in safety_keywords),
+            is_valid_urscript=bool(URSCRIPT_CALL_PATTERN.search(code)),
         )
