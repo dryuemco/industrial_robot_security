@@ -210,10 +210,18 @@ Communication: HTTP API over local network (PC1 → PC2:11434).
 
 ### E. Statistical Analysis
 
-- McNemar test for matched pairs (baseline vs. safety, baseline vs. adversarial)
-- Holm-Bonferroni correction (family-wise α=0.05)
-- Cochran's Q for cross-model comparison
-- Power analysis: n≥25 matched pairs, α=0.05, β=0.20
+**Hypotheses.** Three confirmatory hypotheses, formalized in OSF Amendment 1 (filed 2026-04-06, see Appendix A):
+
+- **H4 (watchdog-in-loop reduction).** Iterative feedback from the static watchdog into the LLM generation loop reduces the combined (safety ∪ security) violation rate by ≥30% relative to single-shot generation, on matched task–model pairs. Tested via McNemar's exact test on paired binary outcomes (violation present / absent). *Status: analysis plan frozen; E3 data collection pending.*
+- **H5 (adversarial uplift).** Adversarial prompts A6.1–A6.8 increase the combined violation rate by ≥50% relative to the baseline condition, on matched task–model pairs. Tested via McNemar's exact test, per attack subtype.
+- **H6 (cross-model heterogeneity).** Combined violation rates differ across the three models (Qwen2.5-Coder-32B, DeepSeek-Coder-V2-16B, CodeLlama-34B) under matched conditions. Tested via Cochran's Q across the three paired proportions, with post-hoc pairwise McNemar tests.
+
+**Tests and corrections.**
+
+- McNemar's exact test for matched pairs (baseline vs. safety, baseline vs. adversarial, single-shot vs. watchdog-in-loop).
+- Cochran's Q for cross-model comparison under matched conditions.
+- Holm–Bonferroni correction across the H4–H6 family (family-wise α=0.05).
+- Power analysis: n≥25 matched pairs per contrast, α=0.05, β=0.20, target effect δ=30% absolute reduction (H4) / 50% relative uplift (H5).
 
 ---
 
