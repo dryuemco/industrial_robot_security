@@ -1,3 +1,5 @@
+> **NOTE (Week 10):** This is plan v2.0. Superseded by `ENFIELD_Revised_Plan_v2_1.md` (local LLMs via Ollama, no commercial APIs). Kept for historical traceability.
+
 # ENFIELD Revised Plan v2.0 — Post-Georgios Feedback
 
 **Date:** 2026-03-22 (Week 8)  
