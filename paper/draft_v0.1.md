@@ -212,7 +212,7 @@ Communication: HTTP API over local network (PC1 → PC2:11434).
 
 ### E. Statistical Analysis
 
-**Hypotheses.** Three confirmatory hypotheses, formalized in OSF Amendment 1 (filed 2026-04-06, see Appendix A):
+**Hypotheses.** Three confirmatory hypotheses, formalized in OSF Amendment 1 (approved 2026-04-07, see Appendix A):
 
 - **H4 (watchdog-in-loop reduction).** Iterative feedback from the static watchdog into the LLM generation loop reduces the combined (safety ∪ security) violation rate by ≥30% relative to single-shot generation, on matched task–model pairs. Tested via McNemar's exact test on paired binary outcomes (violation present / absent). *Status: analysis plan frozen; E3 data collection pending.*
 - **H5 (adversarial uplift).** Adversarial prompts A6.1–A6.8 increase the combined violation rate by ≥50% relative to the baseline condition, on matched task–model pairs. Tested via McNemar's exact test, per attack subtype.

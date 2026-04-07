@@ -37,7 +37,7 @@ Georgios approved the pre-registration and provided feedback requiring two exten
 1. **Security dimension:** Add CWE-based security analysis (SM-1..7) alongside existing safety rules (DM-1..7)
 2. **LLM integration:** Add actual LLM code generation (Qwen2.5-Coder-32B, DeepSeek-Coder-V2-16B, CodeLlama-34B) with adversarial prompt testing (A6.1–A6.8)
 
-New hypotheses (H4–H6) and the Refusal Rate (RR) metric were filed as OSF Amendment 1 on 2026-04-06, formalising changes made between Week 8 and Week 10. See `docs/OSF_PREREGISTRATION.md` Amendment 1 section.
+New hypotheses (H4–H6) and the Refusal Rate (RR) metric were registered via OSF Amendment 1 (filed 2026-04-06, **approved by OSF admin 2026-04-07**), formalising changes made between Week 8 and Week 10. See `docs/OSF_PREREGISTRATION.md` Amendment 1 section.
 
 | New Hypothesis | Description |
 |----------------|-------------|
@@ -156,7 +156,7 @@ Month 6 (July 2026):
   [x] LLM client package (Qwen2.5-Coder-32B, DeepSeek-Coder-V2-16B, CodeLlama-34B (Ollama))
   [ ] Security rules (SM-1..7) implemented in watchdog
   [ ] LLM experiments E1/E2/E3 executed
-  [x] OSF pre-registration Amendment 1 (H4–H6, RR metric, security layer, LLM infrastructure migration) — filed 2026-04-06
+  [x] OSF pre-registration Amendment 1 (H4–H6, RR metric, security layer, LLM infrastructure migration) — filed 2026-04-06, **approved 2026-04-07**
   [ ] Confirmatory statistical analysis (McNemar, Holm-Bonferroni, Cochran's Q)
   [ ] Git tag v1.0
   [ ] GitHub Release with changelog
