@@ -362,7 +362,10 @@ ollama pull qwen2.5-coder:32b
 ollama pull deepseek-coder-v2:16b
 ollama pull codellama:34b
 OLLAMA_HOST=http://<your-ollama-ip>:11434 python3 scripts/smoke_test_llm.py
+./scripts/run_tests.sh   # 619 tests, including 45 McNemar paired-design tests
 ```
+
+The full test suite (619 tests across `tests/`, including 45 McNemar paired-design tests for H4–H6) is executed by `./scripts/run_tests.sh` and gated by GitHub Actions CI on every push to `main`.
 
 ### C. Smoke Test Raw Data
 
