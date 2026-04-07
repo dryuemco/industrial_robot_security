@@ -750,7 +750,7 @@ def main() -> int:
 
     # H4
     h4_all = next((r for r in h4_results if r.model == "all_models"), None)
-    if h6_all:
+    if h4_all:
         sup = h4_all.rate_a >= H4_THRESHOLD and h4_all.significant
         print(f"\n  H4 (Baseline ≥30% violation rate)")
         print(f"     Rate: {h4_all.rate_a:.1%}  p={format_pval(h4_all.p_value)}")
