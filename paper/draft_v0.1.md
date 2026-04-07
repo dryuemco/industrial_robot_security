@@ -223,6 +223,13 @@ Communication: HTTP API over local network (PC1 → PC2:11434).
 - Holm–Bonferroni correction across the H4–H6 family (family-wise α=0.05).
 - Power analysis: n≥25 matched pairs per contrast, α=0.05, β=0.20, target effect δ=30% absolute reduction (H4) / 50% relative uplift (H5).
 
+**Sensitivity analyses (pre-specified, exploratory).**
+
+- *Per-attack subgroup (H5).* McNemar test repeated for each adversarial subtype A6.1–A6.8 separately, to localize which attack vectors drive the aggregate uplift. Reported with Holm–Bonferroni correction within the 8-subtype family.
+- *Per-model subgroup (H5, H6).* H5 contrast computed separately for each of the three models, to characterize model-specific adversarial vulnerability. Motivated by the smoke-test observation that DeepSeek-Coder-V2-16B exhibited a 1→22 violation spike under A6.6 while the other two models were unaffected.
+- *URScript validity gate.* Before any violation is counted toward H4–H6, generated code must pass a syntactic validity check against the URScript grammar (see §IV.C). Outputs failing the gate are reported separately as *invalid generations* rather than counted as zero-violation, to prevent pseudo-code outputs (observed in CodeLlama-34B) from inflating apparent safety. Sensitivity analysis re-runs all H5/H6 contrasts on the gate-passing subset only.
+- *Effect-size estimation.* For each McNemar contrast, we report the odds ratio with 95% mid-p confidence interval alongside the p-value, so that readers can assess practical significance independently of the binary hypothesis decision.
+
 ---
 
 ## VI. Results
