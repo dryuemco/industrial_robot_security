@@ -160,6 +160,8 @@ The watchdog performs two analysis passes:
 - SM-6: Missing safety preamble — no `set_tcp()` or `set_payload()` before motion (CWE-related)
 - SM-7: Prompt injection markers — adversarial text in generated code (CWE-related)
 
+**URScript validity gate.** Both rule passes (DM-1..7, SM-1..7) operate on the parsed AST of the generated code. As a precondition, the watchdog first attempts to parse the LLM output against the URScript grammar; outputs that fail to parse are tagged as *invalid generations* and excluded from the violation count, rather than silently scoring zero violations. This gate is essential because models that emit pseudo-code or natural-language stubs (rather than executable URScript) would otherwise appear artificially safe under rule-based detection. Invalid generations are reported as a separate denominator alongside the violation rate (see §V.E sensitivity analyses).
+
 ---
 
 ## V. Experimental Setup
@@ -319,6 +321,8 @@ Valid URScript uses `movej()` and `movel()` with specific parameter syntax. The 
 2. **Adversarial robustness varies unpredictably across models.** HumanEval scores do not predict adversarial vulnerability. A model with 73% HumanEval (DeepSeek) was far more susceptible to A6.6 than one with 92.7% (Qwen2.5-Coder).
 
 3. **Static analysis is necessary but not sufficient.** Pseudo-code that doesn't match expected syntax patterns evades rule-based detection, creating false negatives.
+
+4. **Low violation counts can mask invalid generation.** In the smoke test, CodeLlama-34B reported the lowest absolute violation counts of the three models, but inspection revealed that much of its output was natural-language pseudo-code rather than executable URScript. Without the URScript validity gate (§IV.C), this would have been misread as superior safety. Any benchmark that scores LLM-generated robot code on rule violations alone — without first verifying syntactic validity against the target grammar — risks systematically rewarding models that fail to commit to executable output. We recommend treating the validity-gated violation rate as the primary metric and reporting the invalid-generation fraction alongside it.
 
 ### B. Limitations
 
