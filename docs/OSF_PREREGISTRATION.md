@@ -342,6 +342,6 @@ Fixed inference parameters (all models): temperature=0.0, max_tokens=1024, timeo
 
 ### OSF platform note
 
-This amendment has been filed on the OSF pre-registration page
+This amendment was filed on the OSF pre-registration page on 2026-04-06 and **approved by OSF admin on 2026-04-07**. H4–H6 are now confirmatory under the registered protocol.
 (DOI: [10.17605/OSF.IO/VE5M2](https://doi.org/10.17605/OSF.IO/VE5M2))
 under the "Amendments" tab with the title and justification text above.
