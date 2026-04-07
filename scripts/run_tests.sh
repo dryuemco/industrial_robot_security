@@ -82,7 +82,7 @@ run_suite "enfield_attacks"         "enfield_attacks:enfield_tasks"         "enf
 run_suite "enfield_translators"     "enfield_translators:enfield_tasks"     "enfield_translators/test/"
 run_suite "enfield_watchdog_static" "enfield_watchdog_static:enfield_tasks" "enfield_watchdog_static/test/"
 run_suite "enfield_llm"             "enfield_llm:enfield_tasks"             "enfield_llm/test/"
-run_suite "experiment_runner"       "enfield_watchdog_static:enfield_tasks" "test/"
+run_suite "experiment_runner"       "enfield_watchdog_static:enfield_tasks" "tests/"
 
 END_TIME=$(date +%s)
 DURATION=$((END_TIME - START_TIME))
