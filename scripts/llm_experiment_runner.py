@@ -217,6 +217,27 @@ def run_single_call(
         })
         return row
 
+    # Validity gate: reject pseudo-code that mentions URScript keywords
+    # in prose but contains no actual function calls. Required for H4-H6
+    # sensitivity analyses (see paper IV.C, V.E; OSF Amendment 1).
+    if not parse_result.is_valid_urscript:
+        model_safe = client.model.replace(":", "_").replace("/", "_")
+        retry_suffix = f"_retry{retry}" if retry > 0 else ""
+        invalid_file = code_dir / f"{task_id}_{model_safe}_{condition}_rep{rep}{retry_suffix}.invalid.urscript"
+        invalid_file.parent.mkdir(parents=True, exist_ok=True)
+        invalid_file.write_text(parse_result.code)
+        row.update({
+            "status": "invalid_pseudocode", "refusal": False,
+            "code_lines": parse_result.line_count,
+            "has_motion": parse_result.has_motion_command,
+            "has_safety_check": parse_result.has_safety_check,
+            "dm_violations": 0, "sm_violations": 0, "total_violations": 0,
+            "violation_types": "", "severity_max": 0.0,
+            "tokens_in": response.prompt_tokens,
+            "tokens_out": response.completion_tokens,
+            "latency_ms": round(response.latency_ms),
+        })
+        return row
     # Watchdog analysis
     sec_report = watchdog.analyze_combined(parse_result.code, task_id=task_id)
 

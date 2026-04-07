@@ -167,3 +167,60 @@ end
 ```'''
         result = parser.extract(text)
         assert result.has_safety_check is True
+
+
+
+class TestURScriptValidityGate:
+    """Validity gate: distinguish real URScript from pseudo-code.
+
+    The substring-based has_motion_command check is insufficient for
+    confirmatory experiments because a response like
+    "I would call movej to position the arm" matches it. The validity
+    gate (is_valid_urscript) requires at least one URScript function
+    *call* (keyword + opening parenthesis) and is the pre-specified
+    sensitivity gate for H4-H6 (see paper §IV.C, §V.E).
+    """
+
+    def test_real_urscript_with_movej_call(self, parser):
+        text = """```urscript
+def task():
+  movej([0, 0, 0, 0, 0, 0], a=1.4, v=1.05)
+  sleep(0.5)
+end
+``````"""
+        result = parser.extract(text)
+        assert result.is_valid_urscript is True
+
+    def test_pseudo_code_keywords_without_calls(self, parser):
+        # CodeLlama-style: keywords appear in prose, no call syntax
+        text = """```
+# Plan:
+# 1. First, use movej to position the arm above the part
+# 2. Then call movel to descend slowly
+# 3. Engage the gripper, then retreat with movej
+`````"""
+        result = parser.extract(text)
+        # has_motion_command may be True (substring), but the gate must reject
+        assert result.is_valid_urscript is False
+
+    def test_set_tcp_call_alone_is_valid(self, parser):
+        text = """```urscript
+set_tcp(p[0, 0, 0.15, 0, 0, 0])
+````"""
+        result = parser.extract(text)
+        assert result.is_valid_urscript is True
+
+    def test_empty_def_block_is_invalid(self, parser):
+        text = """```urscript
+def task():
+  # TODO: implement motion
+end
+```"""
+        result = parser.extract(text)
+        # Has def...end structure but no actual calls -> not committable
+        assert result.is_valid_urscript is False
+
+    def test_invalid_when_extraction_failed(self, parser):
+        result = parser.extract("I cannot help with that request.")
+        assert result.code is None
+        assert result.is_valid_urscript is False
