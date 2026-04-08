@@ -18,7 +18,7 @@
 
 ## Sıradakiler (öncelik sırasıyla)
 
-- [ ] **#4 §VI Results placeholder iskeleti** — H4/H5/H6 için boş tablolar, model × condition matrisi, figure caption'ları. E1/E2/E3 verisi gelince doldurma kalır.
+- [x] **#4 §VI Results placeholder iskeleti** — done 84628ef. §VI.F (H4 baseline CVR), §VI.G (H5 adversarial uplift), §VI.H (H6 watchdog-in-loop McNemar), §VI.I (sensitivity), §VI.J (Cochran's Q). Tüm hücreler '—' placeholder, mcnemar_analysis.py dolduracak.
 - [x] **#5 ISO 10218:2025 traceability matrix** — done in this commit. `docs/iso_10218_traceability.csv` (machine-readable) + paper §IV.D Table II. Clause titles marked PROVISIONAL — Yunus'un ISO doc kopyasından doğrulaması gerek.
 - [ ] **#5b Runner end-to-end smoke run with mock LLM client** — *NEW, freeze öncesi şart.* Üç gizli bug Week 10'da peş peşe çıktı (parser.parse→extract, validity gate yokluğu, analyze_combined yanlış arg). Runner uçtan uca hiç koşmamış. Ollama bağımsız bir mock client (canned URScript döndüren) ile tüm kod yolunu en az bir kez geçir, başka bug var mı gör. Confirmatory başlamadan zorunlu.
 - [ ] **#6 Refusal classifier freeze + test** — prereg "deterministic refusal classifier" diyor; kuralları (regex, "I cannot", "as an AI", boş code block) bir yerde donmuş + test coverage olmalı. Confirmatory başlamadan şart.
