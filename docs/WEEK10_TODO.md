@@ -13,11 +13,14 @@
 - [x] **URScript validity gate (kod + 5 test + runner branch)** — 068bb0a, cascade 5dead70
 - [x] **mcnemar_analysis.py synthetic-data testleri** — already existed (TestH4/H5/H6 + TestEdgeCases, 45 test)
 - [x] **mcnemar markdown auto-fill** — already existed (`generate_markdown_report`)
+- [x] **Runner `analyze_combined` arg bug fix** — 92c0d5c. Runner kodu URScript'i `task` arg olarak geçiyordu + var olmayan `task_id=` kwarg. Üçüncü gizli runner bug'ı (önceki ikisi: parser.parse→extract a4fdacd, validity gate yokluğu 068bb0a).
+- [x] **Paper §IV.C DM list + validity-gate scope düzeltmesi** — dd754dc. 6/7 DM yanlış etiketlenmiş; validity gate yanlışlıkla DM+SM diyordu, gerçekte sadece SM.
 
 ## Sıradakiler (öncelik sırasıyla)
 
 - [ ] **#4 §VI Results placeholder iskeleti** — H4/H5/H6 için boş tablolar, model × condition matrisi, figure caption'ları. E1/E2/E3 verisi gelince doldurma kalır.
-- [ ] **#5 ISO 10218:2025 traceability matrix** — DM-1..7 + SM-1..7 → clause mapping. §IV.D yeni subsection + OSF deposit için ayrı CSV. RA-L reviewer'ları için kritik.
+- [x] **#5 ISO 10218:2025 traceability matrix** — done in this commit. `docs/iso_10218_traceability.csv` (machine-readable) + paper §IV.D Table II. Clause titles marked PROVISIONAL — Yunus'un ISO doc kopyasından doğrulaması gerek.
+- [ ] **#5b Runner end-to-end smoke run with mock LLM client** — *NEW, freeze öncesi şart.* Üç gizli bug Week 10'da peş peşe çıktı (parser.parse→extract, validity gate yokluğu, analyze_combined yanlış arg). Runner uçtan uca hiç koşmamış. Ollama bağımsız bir mock client (canned URScript döndüren) ile tüm kod yolunu en az bir kez geçir, başka bug var mı gör. Confirmatory başlamadan zorunlu.
 - [ ] **#6 Refusal classifier freeze + test** — prereg "deterministic refusal classifier" diyor; kuralları (regex, "I cannot", "as an AI", boş code block) bir yerde donmuş + test coverage olmalı. Confirmatory başlamadan şart.
 - [ ] **#7 Cochran's Q implementation** — H6 cross-model exploratory için. mcnemar_analysis.py içine küçük fonksiyon + test.
 - [ ] **#8 §VII Threats to Validity subsection** — Q4 quantization, single-robot (UR5e), simulation-only, temperature=0 non-determinism, validity-gate sınırları. Reviewer'ı önden silahsızlandırır.
