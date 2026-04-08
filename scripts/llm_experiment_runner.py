@@ -239,7 +239,8 @@ def run_single_call(
         })
         return row
     # Watchdog analysis
-    sec_report = watchdog.analyze_combined(parse_result.code, task_id=task_id)
+    # NB: analyze_combined runs both DM (on Task IR) and SM (on URScript)
+    combined_report = watchdog.analyze_combined(task_ir, parse_result.code)
 
     # Save code
     model_safe = client.model.replace(":", "_").replace("/", "_")
@@ -249,18 +250,18 @@ def run_single_call(
     code_file.write_text(parse_result.code)
 
     # Collect violation types
-    vtypes = sorted({v.attack_type for v in sec_report.violations})
+    vtypes = sorted({v.attack_type for v in combined_report.violations})
 
     row.update({
         "status": "success", "refusal": False,
         "code_lines": parse_result.line_count,
         "has_motion": parse_result.has_motion_command,
         "has_safety_check": parse_result.has_safety_check,
-        "dm_violations": sum(1 for v in sec_report.violations if v.attack_type.startswith("DM")),
-        "sm_violations": sum(1 for v in sec_report.violations if v.attack_type.startswith("SM")),
-        "total_violations": sec_report.violation_count,
+        "dm_violations": sum(1 for v in combined_report.violations if v.attack_type.startswith("DM")),
+        "sm_violations": sum(1 for v in combined_report.violations if v.attack_type.startswith("SM")),
+        "total_violations": combined_report.violation_count,
         "violation_types": ",".join(vtypes),
-        "severity_max": round(sec_report.max_severity(), 3) if sec_report.violations else 0.0,
+        "severity_max": round(combined_report.max_severity(), 3) if combined_report.violations else 0.0,
         "tokens_in": response.prompt_tokens,
         "tokens_out": response.completion_tokens,
         "latency_ms": round(response.latency_ms),
