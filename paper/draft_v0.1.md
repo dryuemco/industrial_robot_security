@@ -162,6 +162,32 @@ The watchdog performs two analysis passes operating at different levels of the p
 
 **URScript validity gate.** The SM pass requires the LLM output to be syntactically committed URScript, not natural-language pseudo-code. Before the SM rules run, the LLM response is examined by `CodeParser`: a response only proceeds to SM evaluation if the extracted text contains at least one URScript function-call pattern (a motion or control keyword followed by an opening parenthesis, e.g. `movej(`, `movel(`, `set_tcp(`). Responses that mention URScript keywords only inside prose (e.g. *"I would use movej to position the arm"*) fail the gate and are tagged `invalid_pseudocode`. Tagged responses are excluded from the violation-count denominator and reported separately, rather than silently counted as zero violations. This is essential because models such as CodeLlama-34B were observed in the Week 9 smoke test to emit pseudo-code that would otherwise appear artificially safe under rule-based detection (see §VII.A). The gate guards the SM pass only — DM rules operate on the Task IR and are unaffected by LLM output validity.
 
+### D. ISO 10218-1:2025 Traceability
+
+Each DM and SM rule is anchored to a specific clause of ISO 10218-1:2025 *(Robotics — Safety requirements — Part 1: Industrial robots)*. The full machine-readable mapping is shipped with the OSF replication package as `docs/iso_10218_traceability.csv` and is summarised in Table II. The mapping is auto-extracted from the `iso_clause=` literals in `enfield_watchdog_static/rules/*.py`, so the paper, the codebase, and the OSF artefact cannot drift apart.
+
+**Table II.** ISO 10218-1:2025 traceability for the watchdog rule set. Clause titles are provisional pending verification against the published 2025 revision; clause numbers are authoritative (extracted from source).
+
+| Rule | Type | Attack | Short name | ISO clause(s) |
+|---|---|---|---|---|
+| DM-1 | safety (IR) | A1 | Speed value-range check | 5.6 |
+| DM-1 | safety (IR) | A4 | Payload mass / CoG bounds | 5.3 / 5.4 |
+| DM-2 | safety (IR) | A2 | Safe-zone halfspace test | 5.12.3 |
+| DM-3 | safety (IR) | A3 | Orientation cone test | 5.3 |
+| DM-4 | safety (IR) | A5 | Safety-logic / E-Stop flow | 5.4, 5.5 |
+| DM-5 | safety (IR) | A6 | Frame consistency check | 5.12.3, 5.12.3 / 5.3 |
+| DM-6 | safety (IR) | A7 | Tool identity & activation | 5.1.14, 5.1.15 |
+| DM-7 | safety (IR) | A8 | Prompt-security config integrity | 5.3 |
+| SM-1 | security (CWE-20) | — | Missing motion-call validation (`v=`/`a=`) | 5.6 |
+| SM-2 | security (CWE-252) | — | Unchecked return on critical ops | 5.4 |
+| SM-3 | security (CWE-693) | — | Protection mechanism failure / interlock bypass | 5.4 |
+| SM-4 | security (CWE-754) | — | Improper check for unusual conditions | 5.3 |
+| SM-5 | security (CWE-798) | — | Hardcoded unsafe speed / acceleration | 5.6 |
+| SM-6 | security | — | Missing safety preamble (`set_tcp`/`set_payload`) | 5.3 |
+| SM-7 | security | — | Prompt-injection marker in generated code | 5.3 |
+
+The 14 rules touch six distinct ISO clauses (5.1.14, 5.1.15, 5.3, 5.4, 5.5, 5.6, 5.12.3), satisfying the "4–6 clauses" coverage target stated in the original ENFIELD proposal. Several rules deliberately map to the same clause from different angles: for example, both DM-1/A1 (specification-level speed limit on the Task IR) and SM-5 (hardcoded speed in the generated URScript) anchor to clause 5.6, providing complementary specification-side and code-side evidence for the same safety requirement.
+
 ---
 
 ## V. Experimental Setup

@@ -1,0 +1,19 @@
+rule_id,rule_type,attack_id,short_name,iso_clause,clause_title_provisional,source_file,test_file
+DM-1,safety,A1,Speed value-range check,5.6,Speed and motion limits (PROVISIONAL — verify against ISO 10218-1:2025),enfield_watchdog_static/rules/a1_speed.py,enfield_watchdog_static/test/test_a1_speed.py
+DM-1,safety,A4,Payload mass/CoG bounds,5.3/5.4,General requirements / Actuating controls (PROVISIONAL),enfield_watchdog_static/rules/a4_payload.py,enfield_watchdog_static/test/test_a4_payload.py
+DM-2,safety,A2,Safe-zone halfspace test,5.12.3,Safeguarded space / monitored zones (PROVISIONAL),enfield_watchdog_static/rules/a2_zone.py,enfield_watchdog_static/test/test_a2_zone.py
+DM-3,safety,A3,Orientation cone test,5.3,General safety requirements (PROVISIONAL),enfield_watchdog_static/rules/a3_orientation.py,enfield_watchdog_static/test/test_a3_orientation.py
+DM-4,safety,A5,Safety-logic / E-Stop control flow,5.4,Stop functions / actuating controls (PROVISIONAL),enfield_watchdog_static/rules/a5_logic.py,enfield_watchdog_static/test/test_a5_logic.py
+DM-4,safety,A5,Safety-logic interlock check,5.5,Operational modes (PROVISIONAL),enfield_watchdog_static/rules/a5_logic.py,enfield_watchdog_static/test/test_a5_logic.py
+DM-5,safety,A6,Frame consistency check,5.12.3,Safeguarded space / monitored zones (PROVISIONAL),enfield_watchdog_static/rules/a6_frame.py,enfield_watchdog_static/test/test_a6_frame.py
+DM-5,safety,A6,Frame consistency (cross-frame deviation),5.12.3/5.3,Safeguarded space + general requirements (PROVISIONAL),enfield_watchdog_static/rules/a6_frame.py,enfield_watchdog_static/test/test_a6_frame.py
+DM-6,safety,A7,Tool identity check,5.1.14,End-effector requirements (PROVISIONAL),enfield_watchdog_static/rules/a7_tool.py,enfield_watchdog_static/test/test_a7_tool.py
+DM-6,safety,A7,Tool activation context,5.1.15,End-effector activation (PROVISIONAL),enfield_watchdog_static/rules/a7_tool.py,enfield_watchdog_static/test/test_a7_tool.py
+DM-7,safety,A8,Prompt-security config integrity,5.3,General safety requirements (PROVISIONAL),enfield_watchdog_static/rules/a8_prompt.py,enfield_watchdog_static/test/test_a8_prompt.py
+SM-1,security (CWE-20),—,Improper input validation — missing v=/a= on motion calls,5.6,Speed and motion limits (PROVISIONAL),enfield_watchdog_static/rules/sm1_input_validation.py,enfield_watchdog_static/test/test_sm1_input_validation.py
+SM-2,security (CWE-252),—,Unchecked return — no error handling near critical ops,5.4,Stop functions / actuating controls (PROVISIONAL),enfield_watchdog_static/rules/sm2_unchecked_return.py,enfield_watchdog_static/test/test_sm2_unchecked_return.py
+SM-3,security (CWE-693),—,Protection mechanism failure — interlock bypass,5.4,Stop functions / actuating controls (PROVISIONAL),enfield_watchdog_static/rules/sm3_protection_failure.py,enfield_watchdog_static/test/test_sm3_protection_failure.py
+SM-4,security (CWE-754),—,Improper check for unusual conditions,5.3,General safety requirements (PROVISIONAL),enfield_watchdog_static/rules/sm4_unusual_conditions.py,enfield_watchdog_static/test/test_sm4_unusual_conditions.py
+SM-5,security (CWE-798),—,Hardcoded unsafe parameters (speed/accel),5.6,Speed and motion limits (PROVISIONAL),enfield_watchdog_static/rules/sm5_hardcoded_values.py,enfield_watchdog_static/test/test_sm5_hardcoded_values.py
+SM-6,security,—,Missing safety preamble (set_tcp/set_payload before motion),5.3,General safety requirements (PROVISIONAL),enfield_watchdog_static/rules/sm6_missing_preamble.py,enfield_watchdog_static/test/test_sm6_missing_preamble.py
+SM-7,security,—,Prompt injection marker leaked into generated code,5.3,General safety requirements (PROVISIONAL),enfield_watchdog_static/rules/sm7_prompt_marker.py,enfield_watchdog_static/test/test_sm7_prompt_marker.py
