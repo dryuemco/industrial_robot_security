@@ -212,7 +212,7 @@ All experiments use open-source models via Ollama for full reproducibility at ze
 | DeepSeek-Coder-V2-16B | DeepSeek AI | 16B | Q4_K_M | ~73% | DeepSeek License |
 | CodeLlama-34B | Meta | 34B | Q4_0 | ~42% | Llama License |
 
-Configuration: temperature=0.0, max_tokens=1024, deterministic seed.
+Configuration: temperature=0.0, max_tokens=4096, deterministic sampling (greedy decoding; no explicit seed, as Ollama with temperature=0.0 is deterministic by construction).
 
 ### B. Infrastructure
 
