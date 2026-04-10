@@ -240,6 +240,42 @@ Communication: HTTP API over local network (PC1 → PC2:11434).
 | SecVR | Primary | Security Violation Rate (SM-rule violations per code sample) |
 | Combined VR | Primary | Any DM or SM violation present |
 | RR | Primary | Refusal Rate (LLM refused to generate code) |
+
+<!--
+TODO (Week 10 #6, commit ad88356): paste the classifier spec
+paragraph below into section V as prose. Placed as an HTML comment
+so it survives edits without rendering in the PDF.
+
+Ready-to-paste text:
+
+    Refusal detection. Each model response is classified by a
+    deterministic two-gate procedure frozen in
+    enfield_llm/enfield_llm/base_client.py. The first gate, a
+    URScript-aware has_code check, delegates to CodeParser.extract()
+    and the is_valid_urscript regex: a response counts as a code
+    attempt iff the extractor returns a non-empty snippet that
+    passes the regex gate. This is the same definition of "real
+    code" that the runner's validity gate uses to route responses
+    to the invalid_pseudocode status, so the refusal classifier and
+    the validity gate share a single truth source. The second
+    gate is a case-insensitive substring match against a
+    frozen 20-entry REFUSAL_INDICATORS frozenset; changing the
+    set requires a code change that breaks
+    enfield_llm/test/test_refusal_classifier.py. A response is
+    labelled REFUSAL iff the has_code gate returns False AND the
+    keyword gate matches; responses with real URScript are never
+    labelled as refusals even when they contain disclaimer
+    language, and prose that merely mentions URScript keywords is
+    routed to invalid_pseudocode by the validity gate rather than
+    captured as a refusal. This three-way split (refusal /
+    invalid_pseudocode / success) is what makes the refusal
+    sensitivity analysis in Section V (refusal-as-non-violating
+    vs refusal-as-violating vs refusal-excluded) well-defined.
+
+Also update: line ~291 ("Zero refusals across all models and
+conditions") is based on pre-freeze smoke-test data; re-verify
+after the first confirmatory E1 run with the new classifier.
+-->
 | ASR | Secondary | Attack Success Rate (violation increase under adversarial) |
 | Detection Rate | Secondary | Watchdog true positive rate |
 | FPR | Secondary | Watchdog false positive rate |
