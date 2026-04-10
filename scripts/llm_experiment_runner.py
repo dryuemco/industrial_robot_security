@@ -222,7 +222,7 @@ def run_single_call(
         return row
 
     # Parse code
-    parse_result = parser.extract(response.content)
+    parse_result = parser.extract(response.raw_response)
     if not parse_result.code:
         row.update({
             "status": "parse_failure", "refusal": False,
