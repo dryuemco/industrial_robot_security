@@ -33,6 +33,10 @@ from mcnemar_analysis import (
     run_h5,
     run_h6,
     wilson_ci,
+    CochranResult,
+    run_cross_model_cochran_q,
+    _task_model_matrix,
+    _cochran_from_matrix,
 )
 
 
@@ -425,3 +429,196 @@ class TestEdgeCases:
         pooled = next(r for r in results if r.model == "all_models")
         assert pooled.rate_a == 0.0
         assert bool(pooled.significant) is False
+
+# ---------------------------------------------------------------------------
+# TestCrossModelCochranQ — paper-level H6 (cross-model heterogeneity)
+# ---------------------------------------------------------------------------
+
+
+class TestCrossModelCochranQ:
+    """Tests for the Cochran's Q omnibus test across k=3 models."""
+
+    # ---- fixtures ----
+
+    @pytest.fixture
+    def homogeneous_df(self):
+        """All three models have the same ~50% violation rate per
+        condition. Cochran's Q should fail to reject H0."""
+        rows = []
+        models = ["qwen", "deepseek", "codellama"]
+        # 10 tasks, same violation pattern across models, rep=1.
+        for t in range(10):
+            v = 1 if t % 2 == 0 else 0
+            for m in models:
+                rows.append({
+                    "task_id": f"T{t:03d}",
+                    "model": m,
+                    "condition": "baseline",
+                    "rep": 1,
+                    "has_violation": v,
+                })
+        return pd.DataFrame(rows)
+
+    @pytest.fixture
+    def divergent_df(self):
+        """One model violates on every task, the other two never do.
+        Cochran's Q should strongly reject H0."""
+        rows = []
+        for t in range(10):
+            rows.append({"task_id": f"T{t:03d}", "model": "qwen",
+                         "condition": "baseline", "rep": 1,
+                         "has_violation": 1})
+            rows.append({"task_id": f"T{t:03d}", "model": "deepseek",
+                         "condition": "baseline", "rep": 1,
+                         "has_violation": 0})
+            rows.append({"task_id": f"T{t:03d}", "model": "codellama",
+                         "condition": "baseline", "rep": 1,
+                         "has_violation": 0})
+        return pd.DataFrame(rows)
+
+    @pytest.fixture
+    def full_condition_df(self):
+        """DataFrame with baseline / safety / adversarial_A8.1 rows so
+        the three per-condition Cochran tests can all fire."""
+        rows = []
+        models = ["qwen", "deepseek", "codellama"]
+        conditions = ["baseline", "safety", "adversarial_A8.1"]
+        for cond in conditions:
+            for t in range(6):
+                # Make qwen the outlier under each condition so all
+                # three omnibus tests have a real effect to find.
+                for m in models:
+                    v = 1 if m == "qwen" else 0
+                    rows.append({
+                        "task_id": f"T{t:03d}",
+                        "model": m,
+                        "condition": cond,
+                        "rep": 1,
+                        "has_violation": v,
+                    })
+        return pd.DataFrame(rows)
+
+    # ---- matrix helper ----
+
+    def test_task_model_matrix_shape(self, homogeneous_df):
+        matrix, models, tasks = _task_model_matrix(homogeneous_df)
+        assert matrix.shape == (10, 3)
+        assert set(models) == {"qwen", "deepseek", "codellama"}
+        assert len(tasks) == 10
+
+    def test_task_model_matrix_empty_df(self):
+        empty = pd.DataFrame(
+            columns=["task_id", "model", "condition", "rep", "has_violation"]
+        )
+        matrix, models, tasks = _task_model_matrix(empty)
+        assert matrix.shape == (0, 0)
+        assert models == []
+
+    # ---- _cochran_from_matrix direct tests ----
+
+    def test_cochran_from_matrix_insufficient_data_returns_nan(self):
+        import numpy as _np
+        empty = _np.zeros((0, 0), dtype=int)
+        r = _cochran_from_matrix(empty, [], [], condition_label="x")
+        assert math.isnan(r.q_statistic)
+        assert math.isnan(r.p_value)
+        assert r.n_subjects == 0
+
+    def test_cochran_from_matrix_homogeneous_data_nonsignificant(
+        self, homogeneous_df
+    ):
+        matrix, models, tasks = _task_model_matrix(homogeneous_df)
+        r = _cochran_from_matrix(
+            matrix, models, tasks, condition_label="baseline"
+        )
+        assert r.k == 3
+        assert r.df == 2
+        assert r.n_subjects == 10
+        assert r.p_value > 0.05
+
+    def test_cochran_from_matrix_all_rows_identical_reports_q0_p1(self):
+        """Degenerate perfect-agreement case: every task has the
+        same 0/1 answer on every model. Cochran's Q is formally
+        undefined (zero denominator) but the null hypothesis of
+        equal proportions is trivially consistent with the data,
+        so the wrapper reports Q=0 and p=1.0 rather than NaN."""
+        import numpy as _np
+        # Five all-1 rows and five all-0 rows: perfect agreement.
+        matrix = _np.array(
+            [[1, 1, 1]] * 5 + [[0, 0, 0]] * 5,
+            dtype=int,
+        )
+        r = _cochran_from_matrix(
+            matrix,
+            ["codellama", "deepseek", "qwen"],
+            [f"T{i:03d}" for i in range(10)],
+            condition_label="baseline",
+        )
+        assert r.q_statistic == 0.0
+        assert r.p_value == 1.0
+        assert r.n_subjects == 10
+        assert "degenerate" in r.note
+        # And it must be safe to Holm-Bonferroni through this value.
+        from statsmodels.stats.multitest import multipletests
+        reject, p_adj, _, _ = multipletests(
+            [r.p_value], alpha=0.05, method="holm"
+        )
+        assert not reject[0]
+        assert p_adj[0] == 1.0
+
+    def test_cochran_from_matrix_divergent_data_significant(
+        self, divergent_df
+    ):
+        matrix, models, tasks = _task_model_matrix(divergent_df)
+        r = _cochran_from_matrix(
+            matrix, models, tasks, condition_label="baseline"
+        )
+        assert r.k == 3
+        assert r.df == 2
+        assert r.p_value < 0.01
+        # qwen is at index corresponding to its alphabetical position;
+        # rates for deepseek and codellama must be zero.
+        qwen_idx = r.per_condition_labels.index("qwen")
+        assert r.per_condition_rates[qwen_idx] == 1.0
+
+    # ---- public entry point tests ----
+
+    def test_run_returns_result_per_condition(self, full_condition_df):
+        results = run_cross_model_cochran_q(full_condition_df)
+        # Exactly three results: baseline, safety, adversarial_any.
+        assert len(results) == 3
+        conds = {r.condition for r in results}
+        assert conds == {"baseline", "safety", "adversarial_any"}
+
+    def test_run_applies_holm_bonferroni(self, full_condition_df):
+        results = run_cross_model_cochran_q(full_condition_df)
+        # All three conditions are strongly divergent in the fixture,
+        # so every adjusted p-value must be set (not NaN).
+        for r in results:
+            assert not math.isnan(r.p_adjusted)
+            assert 0.0 <= r.p_adjusted <= 1.0
+
+    def test_run_significant_when_models_diverge(self, full_condition_df):
+        results = run_cross_model_cochran_q(full_condition_df)
+        assert all(r.significant for r in results)
+
+    def test_run_handles_empty_dataframe(self):
+        empty = pd.DataFrame(
+            columns=["task_id", "model", "condition", "rep", "has_violation"]
+        )
+        results = run_cross_model_cochran_q(empty)
+        # Should return three 'insufficient data' placeholders,
+        # never raise.
+        assert len(results) == 3
+        for r in results:
+            assert r.n_subjects == 0
+            assert "insufficient" in r.note
+
+    def test_cochran_result_serializable(self, full_condition_df):
+        from dataclasses import asdict
+        results = run_cross_model_cochran_q(full_condition_df)
+        for r in results:
+            d = asdict(r)
+            assert "q_statistic" in d
+            assert "per_condition_rates" in d
+

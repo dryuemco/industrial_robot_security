@@ -44,6 +44,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import binomtest, chi2_contingency
 
+from statsmodels.stats.contingency_tables import cochrans_q
 from statsmodels.stats.multitest import multipletests
 
 # ---------------------------------------------------------------------------
@@ -124,6 +125,33 @@ class McNemarResult:
     significant: bool = False
     ci_low: float = float("nan")   # 95% CI for delta (Newcombe)
     ci_high: float = float("nan")
+    note: str = ""
+
+
+@dataclass
+class CochranResult:
+    """Cochran's Q omnibus test across k matched conditions.
+
+    Used for paper-level H6 (cross-model heterogeneity): given N
+    tasks and k=3 models, test whether the probability of a
+    violation differs across the three models under a fixed
+    experimental condition (baseline / safety / adversarial-OR).
+    Cochran's Q reduces to McNemar when k==2 and is the natural
+    omnibus extension for k>=3 matched binary proportions. When
+    Q is significant, the preregistered post-hoc is the pairwise
+    McNemar family already produced by run_h5 and run_h6.
+    """
+
+    condition: str           # e.g. 'baseline', 'safety', 'adversarial_any'
+    k: int                   # number of matched conditions (models)
+    n_subjects: int          # number of matched subjects (tasks)
+    q_statistic: float       # Cochran's Q test statistic
+    df: int                  # k - 1
+    p_value: float
+    p_adjusted: float = float("nan")
+    significant: bool = False
+    per_condition_rates: list[float] = field(default_factory=list)
+    per_condition_labels: list[str] = field(default_factory=list)
     note: str = ""
 
 
@@ -426,6 +454,181 @@ def run_h6(df: pd.DataFrame) -> list[McNemarResult]:
         r.note += f" | {'SUPPORTED' if supported else 'NOT SUPPORTED'}"
 
     return raw_results
+
+
+def _task_model_matrix(
+    sub: pd.DataFrame,
+) -> tuple[np.ndarray, list[str], list[str]]:
+    """Build an (N_tasks, K_models) 0/1 matrix for Cochran's Q.
+
+    Aggregates reps per (task, model) cell with OR: a cell is 1 if
+    at least one repetition has has_violation==1. Tasks with
+    missing cells (e.g. a model refused) are dropped so that the
+    matrix is complete-case, matching the preregistered matched-
+    pair analysis convention.
+    """
+    if sub.empty:
+        return np.zeros((0, 0), dtype=int), [], []
+    pivot = (
+        sub.groupby(["task_id", "model"])["has_violation"]
+        .max()
+        .unstack("model")
+    )
+    # Complete-case: drop tasks where any model is missing.
+    pivot = pivot.dropna(axis=0, how="any")
+    models = sorted(pivot.columns.tolist())
+    tasks = pivot.index.tolist()
+    if not models or not tasks:
+        return np.zeros((0, 0), dtype=int), [], tasks
+    matrix = pivot[models].to_numpy(dtype=int)
+    return matrix, models, tasks
+
+
+def run_cross_model_cochran_q(df: pd.DataFrame) -> list[CochranResult]:
+    """Paper-level H6: are violation rates equal across the k models?
+
+    Runs one Cochran's Q test per experimental condition:
+
+        - 'baseline'         : df.condition == 'baseline'
+        - 'safety'           : df.condition == 'safety'
+        - 'adversarial_any'  : OR-aggregate of rows whose condition
+                               label starts with 'adversarial_'
+                               (i.e. the eight A8.* subtypes)
+
+    For each condition the function builds a complete-case
+    (N_tasks, K_models) binary matrix, calls
+    statsmodels.stats.contingency_tables.cochrans_q, and wraps
+    the result in a CochranResult. Holm-Bonferroni correction is
+    applied across the (up to three) conditions as a single
+    family at alpha=ALPHA.
+
+    Note: kodda mevcut run_h4/run_h5/run_h6 fonksiyonları paper-
+    level H4/H5/H6 hipotezleri ile **aynı numarayı kullanmıyor**
+    olabilir (kod-level run_h6 aslında watchdog-in-loop testidir,
+    paper-level H4 ile örtüşür). Bu fonksiyon paper-level H6
+    semantiğinde (cross-model heterogeneity) çalışır; mevcut
+    run_h* fonksiyonlarına dokunulmuyor. Kod <-> paper
+    isimlendirme çakışması ayrı bir audit item olarak
+    docs/WEEK10_TODO.md'de kayıt altındadır.
+    """
+    raw_results: list[CochranResult] = []
+
+    # --- baseline ---
+    baseline = df[df["condition"] == "baseline"]
+    matrix, models, tasks = _task_model_matrix(baseline)
+    raw_results.append(_cochran_from_matrix(
+        matrix, models, tasks, condition_label="baseline",
+    ))
+
+    # --- safety ---
+    safety = df[df["condition"] == "safety"]
+    matrix, models, tasks = _task_model_matrix(safety)
+    raw_results.append(_cochran_from_matrix(
+        matrix, models, tasks, condition_label="safety",
+    ))
+
+    # --- adversarial (OR across all A8.* subtypes) ---
+    adv = df[df["condition"].str.startswith("adversarial_", na=False)]
+    matrix, models, tasks = _task_model_matrix(adv)
+    raw_results.append(_cochran_from_matrix(
+        matrix, models, tasks, condition_label="adversarial_any",
+    ))
+
+    # Drop results that could not be computed (n_subjects == 0 or k < 2).
+    testable = [r for r in raw_results if r.n_subjects >= 2 and r.k >= 2]
+    if not testable:
+        return raw_results
+
+    pvals = [r.p_value for r in testable]
+    reject, p_adj, _, _ = multipletests(pvals, alpha=ALPHA, method="holm")
+    for r, padj, sig in zip(testable, p_adj, reject):
+        r.p_adjusted = float(padj)
+        r.significant = bool(sig)
+        r.note += (
+            " | "
+            + ("REJECT H0 (models differ)" if sig else "fail to reject H0")
+        )
+
+    return raw_results
+
+
+def _cochran_from_matrix(
+    matrix: np.ndarray,
+    models: list[str],
+    tasks: list[str],
+    condition_label: str,
+) -> CochranResult:
+    """Wrap cochrans_q on a single (N, k) binary matrix.
+
+    Handles two edge cases that statsmodels cochrans_q does not
+    guard against:
+
+    (i) n_subjects < 2 or k < 2: no test is possible; return a
+        NaN CochranResult with an "insufficient data" note.
+    (ii) all row sums identical (typically all-zero or all-k):
+        Cochran's Q denominator k*sum(L_i) - sum(L_i^2) is 0 and
+        statsmodels returns NaN with a RuntimeWarning. This is
+        the degenerate case of perfect agreement across
+        conditions, where Q is formally undefined but the null
+        hypothesis of equal proportions is trivially consistent
+        with the data, so we report Q=0 and p=1.0 by convention.
+        Downstream Holm-Bonferroni correction is unaffected
+        because a p-value of 1.0 can never be rejected.
+    """
+    n_subjects, k = matrix.shape if matrix.size else (0, 0)
+
+    # Guard (i): Cochran's Q needs at least 2 conditions and
+    # 2 subjects.
+    if n_subjects < 2 or k < 2:
+        return CochranResult(
+            condition=condition_label,
+            k=k,
+            n_subjects=n_subjects,
+            q_statistic=float("nan"),
+            df=max(k - 1, 0),
+            p_value=float("nan"),
+            per_condition_rates=[],
+            per_condition_labels=models,
+            note="insufficient data for Cochran's Q",
+        )
+
+    per_rates = matrix.mean(axis=0).tolist()
+
+    # Guard (ii): degenerate perfect-agreement case. The Cochran Q
+    # denominator is k * sum(row_sums) - sum(row_sums**2). It is
+    # zero iff every row sum is either 0 or k, i.e. every subject
+    # produces the same 0/1 answer on every condition. We detect
+    # this directly and short-circuit to Q=0, p=1.0.
+    row_sums = matrix.sum(axis=1)
+    denom = k * int(row_sums.sum()) - int((row_sums ** 2).sum())
+    if denom == 0:
+        return CochranResult(
+            condition=condition_label,
+            k=k,
+            n_subjects=n_subjects,
+            q_statistic=0.0,
+            df=k - 1,
+            p_value=1.0,
+            per_condition_rates=[float(r) for r in per_rates],
+            per_condition_labels=models,
+            note=(
+                f"Cochran's Q, k={k}, N={n_subjects} "
+                f"(degenerate: perfect cross-condition agreement)"
+            ),
+        )
+
+    bunch = cochrans_q(matrix, return_object=True)
+    return CochranResult(
+        condition=condition_label,
+        k=k,
+        n_subjects=n_subjects,
+        q_statistic=float(bunch.statistic),
+        df=k - 1,
+        p_value=float(bunch.pvalue),
+        per_condition_rates=[float(r) for r in per_rates],
+        per_condition_labels=models,
+        note=f"Cochran's Q, k={k}, N={n_subjects}",
+    )
 
 
 # ---------------------------------------------------------------------------
