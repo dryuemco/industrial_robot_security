@@ -5,6 +5,7 @@ Provides a single entry point for creating any supported client.
 
 Supported providers:
   - ollama: Local LLM via Ollama (default, zero cost)
+  - mock:   Deterministic offline client for smoke testing
   - anthropic: Claude API
   - openai: GPT-4o API
   - xai: Grok API
@@ -25,6 +26,7 @@ from typing import Optional
 
 from enfield_llm.base_client import LLMClient
 from enfield_llm.claude_client import ClaudeClient
+from enfield_llm.mock_client import MockLLMClient
 from enfield_llm.openai_client import (
     OpenAICompatibleClient,
     OPENAI_BASE_URL,
@@ -81,8 +83,10 @@ def create_client(
     """Create an LLM client for the given provider.
 
     Args:
-        provider: One of 'ollama', 'anthropic', 'openai', 'xai'.
+        provider: One of 'ollama', 'mock', 'anthropic', 'openai', 'xai'.
             For Ollama with specific model: 'ollama' + model param.
+            'mock' returns a deterministic offline MockLLMClient
+            suitable for end-to-end runner smoke testing.
         api_key: API key. Not needed for Ollama. If None for cloud
             providers, reads from environment variable.
         model: Model identifier. If None, uses pinned default.
@@ -113,6 +117,13 @@ def create_client(
             model=model,
             base_url=base_url,
             provider="ollama",
+            **kwargs,
+        )
+
+    # --- Mock (deterministic offline; runner smoke test) ---
+    if provider == "mock":
+        return MockLLMClient(
+            model=model or "mock-model-v1",
             **kwargs,
         )
 
@@ -149,7 +160,7 @@ def create_client(
 
     raise ValueError(
         f"Unknown provider '{provider}'. "
-        f"Supported: ollama, anthropic, openai, xai"
+        f"Supported: ollama, mock, anthropic, openai, xai"
     )
 
 
