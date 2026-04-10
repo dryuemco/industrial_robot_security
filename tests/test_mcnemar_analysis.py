@@ -37,6 +37,8 @@ from mcnemar_analysis import (
     run_cross_model_cochran_q,
     _task_model_matrix,
     _cochran_from_matrix,
+    cochran_results_to_df,
+    generate_markdown_report,
 )
 
 
@@ -613,6 +615,42 @@ class TestCrossModelCochranQ:
         for r in results:
             assert r.n_subjects == 0
             assert "insufficient" in r.note
+
+    def test_cochran_results_to_df_shape_and_columns(self, full_condition_df):
+        results = run_cross_model_cochran_q(full_condition_df)
+        df = cochran_results_to_df(results)
+        assert len(df) == 3
+        for col in (
+            "condition", "k", "n_subjects",
+            "q_statistic", "df", "p_value",
+            "p_adjusted", "significant",
+            "per_condition_rates", "per_condition_labels",
+        ):
+            assert col in df.columns, f"missing column: {col}"
+        # List fields must be serialised as semicolon-joined strings.
+        for v in df["per_condition_labels"]:
+            assert isinstance(v, str)
+            assert ";" in v
+
+    def test_markdown_report_includes_cochran_section(self, full_condition_df):
+        results = run_cross_model_cochran_q(full_condition_df)
+        # Pass through the real runner entry point.
+        md = generate_markdown_report(
+            h4_list=[], h5_list=[], h6_list=[],
+            cochran_results=results,
+        )
+        assert "## H6 Omnibus: Cross-Model Cochran's Q" in md
+        assert "baseline" in md
+        assert "safety" in md
+        assert "adversarial_any" in md
+
+    def test_markdown_report_handles_no_cochran(self):
+        md = generate_markdown_report(h4_list=[], h5_list=[], h6_list=[])
+        # When cochran_results is None, the section header is still
+        # rendered and a 'not computed' placeholder row is emitted
+        # so the reader knows the test was deliberately skipped.
+        assert "## H6 Omnibus: Cross-Model Cochran's Q" in md
+        assert "not computed" in md
 
     def test_cochran_result_serializable(self, full_condition_df):
         from dataclasses import asdict

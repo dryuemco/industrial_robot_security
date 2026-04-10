@@ -646,6 +646,28 @@ def results_to_df(results: list[McNemarResult]) -> pd.DataFrame:
     return df
 
 
+
+def cochran_results_to_df(results: list[CochranResult]) -> pd.DataFrame:
+    """Flatten Cochran's Q results into a CSV-friendly DataFrame.
+
+    CochranResult carries two list fields (per_condition_rates,
+    per_condition_labels) that pandas stores as object columns by
+    default. We serialise both as semicolon-joined strings so the
+    CSV round-trips cleanly and is grep-friendly. Scalar fields
+    are preserved unchanged.
+    """
+    rows = []
+    for r in results:
+        d = asdict(r)
+        labels = d.pop("per_condition_labels", []) or []
+        rates = d.pop("per_condition_rates", []) or []
+        d["per_condition_labels"] = ";".join(labels)
+        d["per_condition_rates"] = ";".join(
+            f"{x:.4f}" for x in rates
+        )
+        rows.append(d)
+    return pd.DataFrame(rows)
+
 def format_pval(p: float) -> str:
     if np.isnan(p):
         return "—"
@@ -659,9 +681,10 @@ def format_pct(v: float) -> str:
 
 
 def generate_markdown_report(
-    h2: list[McNemarResult],
-    h3: list[McNemarResult],
-    h4: list[McNemarResult],
+    h4_list: list[McNemarResult],
+    h5_list: list[McNemarResult],
+    h6_list: list[McNemarResult],
+    cochran_results: Optional[list[CochranResult]] = None,
 ) -> str:
     lines = [
         "# ENFIELD Statistical Analysis Report",
@@ -679,7 +702,7 @@ def generate_markdown_report(
         "| Model | N | Violation Rate | 95% CI | p-value | Result |",
         "|-------|---|---------------|--------|---------|--------|",
     ]
-    for r in h2:
+    for r in h4_list:
         ci = f"[{format_pct(r.ci_low)}, {format_pct(r.ci_high)}]"
         result = "✅ SUPPORTED" if r.significant and r.rate_a >= H4_THRESHOLD else "❌ NOT SUPPORTED"
         lines.append(
@@ -698,7 +721,7 @@ def generate_markdown_report(
         "| Attack | Model | N | Baseline Rate | Attack Rate | Δ | p (adj) | Result |",
         "|--------|-------|---|--------------|-------------|---|---------|--------|",
     ]
-    for r in h3:
+    for r in h5_list:
         if r.model != "all":
             continue  # Show only pooled in report; full data in CSV
         result = "✅" if r.significant and r.delta >= H5_THRESHOLD else "❌"
@@ -719,7 +742,7 @@ def generate_markdown_report(
         "| Comparison | Model | N | Before Rate | After Rate | Rel. Change | 95% CI | p (adj) | Result |",
         "|-----------|-------|---|------------|-----------|------------|--------|---------|--------|",
     ]
-    for r in h4:
+    for r in h6_list:
         ci = f"[{format_pct(r.ci_low)}, {format_pct(r.ci_high)}]"
         result = "✅" if r.significant and r.relative_change <= -H6_THRESHOLD else "❌"
         lines.append(
@@ -728,6 +751,46 @@ def generate_markdown_report(
             f"| {format_pct(r.relative_change)} | {ci} "
             f"| {format_pval(r.p_adjusted)} | {result} |"
         )
+
+    lines += [
+        "",
+        "---",
+        "",
+        "---",
+        "",
+        "## H6 Omnibus: Cross-Model Cochran's Q",
+        "",
+        "Cochran's Q test for equality of violation proportions across "
+        "the k models under each fixed experimental condition. This is "
+        "the preregistered omnibus companion to the pairwise McNemar "
+        "contrasts reported above; a significant Q motivates the "
+        "pairwise post-hocs, a non-significant Q suggests the models "
+        "are indistinguishable under that condition.",
+        "",
+        "| Condition | k | N | Q | df | p | p (adj) | Result |",
+        "|-----------|---|---|---|----|---|---------|--------|",
+    ]
+    if cochran_results:
+        for r in cochran_results:
+            if r.n_subjects < 2 or r.k < 2:
+                lines.append(
+                    f"| {r.condition} | {r.k} | {r.n_subjects} | "
+                    f"— | — | — | — | insufficient data |"
+                )
+                continue
+            result = (
+                "✅ REJECT H0 (models differ)"
+                if r.significant
+                else "❌ fail to reject H0"
+            )
+            lines.append(
+                f"| {r.condition} | {r.k} | {r.n_subjects} | "
+                f"{r.q_statistic:.3f} | {r.df} | "
+                f"{format_pval(r.p_value)} | "
+                f"{format_pval(r.p_adjusted)} | {result} |"
+            )
+    else:
+        lines.append("| — | — | — | — | — | — | — | not computed |")
 
     lines += [
         "",
@@ -917,20 +980,35 @@ def main() -> int:
     log.info("Testing H6 (watchdog effectiveness)…")
     h6_results = run_h6(df)
 
+    log.info("Testing cross-model Cochran's Q (paper H6 omnibus)…")
+    cochran_results = run_cross_model_cochran_q(df)
+
     all_results = h4_results + h5_results + h6_results
 
     # ---- Output ----
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
-    # 1. CSV
+    # 1. CSV (McNemar + Cochran; separate files because the schemas
+    #    differ).
     csv_path = args.output_dir / "mcnemar_results.csv"
     results_to_df(all_results).to_csv(csv_path, index=False)
-    log.info("Results saved → %s", csv_path)
+    log.info("McNemar results saved → %s", csv_path)
+
+    cochran_csv_path = args.output_dir / "cochran_results.csv"
+    cochran_results_to_df(cochran_results).to_csv(
+        cochran_csv_path, index=False,
+    )
+    log.info("Cochran results saved → %s", cochran_csv_path)
 
     # 2. Markdown report
     md_path = args.output_dir / "hypothesis_report.md"
     md_path.write_text(
-        generate_markdown_report(h4_results, h5_results, h6_results),
+        generate_markdown_report(
+            h4_results,
+            h5_results,
+            h6_results,
+            cochran_results=cochran_results,
+        ),
         encoding="utf-8",
     )
     log.info("Report saved → %s", md_path)
@@ -980,9 +1058,26 @@ def main() -> int:
                 f"rel={format_pct(r.relative_change)}  p_adj={format_pval(r.p_adjusted)}"
             )
 
+    # Cochran's Q cross-model omnibus
+    if cochran_results:
+        print(f"\n  H6 omnibus (Cochran's Q, cross-model)")
+        for r in cochran_results:
+            if r.n_subjects < 2 or r.k < 2:
+                print(
+                    f"     — {r.condition}: insufficient data "
+                    f"(N={r.n_subjects}, k={r.k})"
+                )
+                continue
+            sym = "✅" if r.significant else "❌"
+            print(
+                f"     {sym} {r.condition}: Q={r.q_statistic:.3f} "
+                f"df={r.df} p_adj={format_pval(r.p_adjusted)}"
+            )
+
     print("\n" + "═" * 60)
-    print(f"  Full results: {csv_path}")
-    print(f"  Report:       {md_path}")
+    print(f"  McNemar results: {csv_path}")
+    print(f"  Cochran results: {cochran_csv_path}")
+    print(f"  Report:          {md_path}")
     print("═" * 60 + "\n")
 
     return 0
