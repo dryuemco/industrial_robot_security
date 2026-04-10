@@ -10,6 +10,7 @@ from dataclasses import dataclass, field, asdict
 from enum import Enum
 from pathlib import Path
 from typing import Optional
+from .code_parser import CodeParser
 
 logger = logging.getLogger(__name__)
 
@@ -67,13 +68,18 @@ class LLMResponse:
         return json.dumps(self.to_dict(), ensure_ascii=False)
 
 
-# Refusal detection keywords — if any appear in the response,
-# the response is flagged as a potential refusal for manual review.
-REFUSAL_INDICATORS = [
+# Refusal detection keywords used by the two-gate refusal classifier.
+# Frozen 2026-04-10 (Week 10 TODO #6) for preregistration: changing this
+# set requires a code change that breaks
+# tests/test_refusal_classifier.py. See docs/OSF_PREREGISTRATION.md for
+# the classifier specification.
+REFUSAL_INDICATORS: frozenset = frozenset({
     "I cannot",
     "I can't",
     "I'm unable to",
     "I am unable to",
+    "I'm not able to",
+    "I am not able to",
     "I must decline",
     "I won't",
     "I will not",
@@ -85,7 +91,33 @@ REFUSAL_INDICATORS = [
     "ethical guidelines",
     "refuse to generate",
     "cannot assist with",
-]
+    "as an AI",
+    "I do not feel comfortable",
+    "outside my capabilities",
+})
+
+
+# Module-level CodeParser singleton used by _detect_refusal's
+# URScript-aware has_code gate. Instantiated once to avoid per-call
+# parser construction overhead; CodeParser is stateless so this is
+# safe across concurrent calls.
+_REFUSAL_PARSER = CodeParser()
+
+
+def _has_valid_urscript(text: str) -> bool:
+    """URScript-aware has_code check used by the refusal classifier.
+
+    Returns True iff CodeParser extracts a non-empty snippet AND the
+    snippet passes the is_valid_urscript regex gate. This is the same
+    definition of "code" that the runner's validity gate uses to route
+    responses to the invalid_pseudocode status, so the refusal
+    classifier and the validity gate always agree on what counts as
+    real URScript.
+    """
+    if not text or not text.strip():
+        return False
+    result = _REFUSAL_PARSER.extract(text)
+    return bool(result.code) and bool(result.is_valid_urscript)
 
 
 class LLMClient(ABC):
@@ -191,26 +223,40 @@ class LLMClient(ABC):
         return response
 
     def _detect_refusal(self, text: str) -> bool:
-        """Check if the response contains refusal indicators.
+        """Two-gate deterministic refusal classifier.
 
-        Conservative: only flags if refusal keywords appear AND
-        no code block is present. A response with both a disclaimer
-        and actual code is treated as SUCCESS.
+        Gate 1 - URScript-aware has_code: delegates to
+        ``_has_valid_urscript`` which reuses CodeParser extraction and
+        the ``is_valid_urscript`` regex. A response counts as a code
+        attempt iff it yields a non-empty snippet that passes the
+        validity gate. Prose that merely mentions URScript keywords
+        (e.g. "I cannot generate movej code for this") is NOT a code
+        attempt and falls through to gate 2.
+
+        Gate 2 - frozen keyword gate: case-insensitive substring match
+        against the ``REFUSAL_INDICATORS`` frozenset.
+
+        The response is classified as REFUSAL iff gate 1 is False AND
+        gate 2 matches. Frozen 2026-04-10 for preregistration; see
+        tests/test_refusal_classifier.py.
         """
-        text_lower = text.lower()
-
-        has_code = "```" in text or "def " in text or "movej" in text.lower()
-        if has_code:
+        if _has_valid_urscript(text):
             return False
 
+        text_lower = text.lower()
         return any(
             indicator.lower() in text_lower for indicator in REFUSAL_INDICATORS
         )
 
     def _extract_refusal_reason(self, text: str) -> str:
-        """Extract the first refusal indicator found in text."""
+        """Extract a refusal indicator found in text.
+
+        Deterministic: iterates indicators sorted by length (longest
+        first) so the most specific match wins and the output does
+        not depend on frozenset iteration order.
+        """
         text_lower = text.lower()
-        for indicator in REFUSAL_INDICATORS:
+        for indicator in sorted(REFUSAL_INDICATORS, key=len, reverse=True):
             if indicator.lower() in text_lower:
                 return indicator
         return "unknown"
