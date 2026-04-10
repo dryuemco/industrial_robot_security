@@ -43,7 +43,7 @@ def check_sm3_protection_failure(code: str) -> list[Violation]:
             if re.search(pattern, line, re.IGNORECASE):
                 violations.append(Violation(
                     attack_type="SM-3",
-                    iso_clause="5.4",
+                    iso_clause="5.1.16",
                     detection_mechanism="SM-3",
                     description=f"Safety bypass: {desc}",
                     severity=0.9,

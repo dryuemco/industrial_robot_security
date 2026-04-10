@@ -56,7 +56,7 @@ def check_sm6_missing_preamble(code: str) -> list[Violation]:
     if not has_tcp:
         violations.append(Violation(
             attack_type="SM-6",
-            iso_clause="5.3",
+            iso_clause="5.1.14",
             detection_mechanism="SM-6",
             description=(
                 "No set_tcp() call before first motion command. "
@@ -74,7 +74,7 @@ def check_sm6_missing_preamble(code: str) -> list[Violation]:
     if not has_payload:
         violations.append(Violation(
             attack_type="SM-6",
-            iso_clause="5.3",
+            iso_clause="5.1.15",
             detection_mechanism="SM-6",
             description=(
                 "No set_payload() call before first motion command. "

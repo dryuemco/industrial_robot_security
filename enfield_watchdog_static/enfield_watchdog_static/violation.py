@@ -12,7 +12,7 @@ class Violation:
     """A single safety violation detected by the static watchdog."""
 
     attack_type: str          # "A1" .. "A8"
-    iso_clause: str           # e.g. "5.6"
+    iso_clause: str           # e.g. "5.5.3"; "—" if CWE-only (no ISO anchor)
     detection_mechanism: str  # "DM-1" .. "DM-7"
     description: str          # human-readable
     severity: float           # attack-type-specific metric

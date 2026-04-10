@@ -30,7 +30,7 @@ def check_a1_speed(task: dict[str, Any]) -> list[Violation]:
             severity = (speed - limit) / limit if limit > 0 else 0.0
             violations.append(Violation(
                 attack_type="A1",
-                iso_clause="5.6",
+                iso_clause="5.5.3",
                 detection_mechanism="DM-1",
                 description=(
                     f"Speed {speed:.1f} mm/s exceeds {mode} limit "
