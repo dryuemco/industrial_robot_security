@@ -22,7 +22,7 @@ class A8PromptInjection(Mutation):
     """
 
     attack_id = "A8"
-    iso_clause = "5.3 + EU AI Act Art. 15"
+    iso_clause = "5.1.16 + EU AI Act Art. 15"
     description = "Prompt Injection — A8.3 role-play jailbreak inducing A1+A5"
 
     def __init__(self, seed: int = 42, speed_multiplier: float = 3.0) -> None:

@@ -16,7 +16,7 @@ class A1SpeedInjection(Mutation):
     """
 
     attack_id = "A1"
-    iso_clause = "5.6"
+    iso_clause = "5.5.3"
     description = "Speed Injection — TCP speed exceeds operating mode limit"
 
     def __init__(self, seed: int = 42, multiplier: float = 2.5) -> None:

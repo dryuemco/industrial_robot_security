@@ -18,7 +18,7 @@ class A3OrientationAnomaly(Mutation):
     """
 
     attack_id = "A3"
-    iso_clause = "5.3"
+    iso_clause = "5.7.4"
     description = "Orientation Anomaly — tool points into forbidden direction cone"
 
     # Quaternions that produce specific tool-Z directions:

@@ -16,7 +16,7 @@ class A2ZonePenetration(Mutation):
     """
 
     attack_id = "A2"
-    iso_clause = "5.12.3"
+    iso_clause = "5.7.4"
     description = "Zone Penetration — waypoint outside safeguarded space"
 
     def __init__(self, seed: int = 42, margin_mm: float = 150.0) -> None:
