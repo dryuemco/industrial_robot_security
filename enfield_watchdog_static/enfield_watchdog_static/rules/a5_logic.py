@@ -25,7 +25,7 @@ def check_a5_logic(task: dict[str, Any]) -> list[Violation]:
     if estop_required and "estop_check" not in seq_types:
         violations.append(Violation(
             attack_type="A5",
-            iso_clause="5.4",
+            iso_clause="5.4.2",
             detection_mechanism="DM-4",
             description=(
                 "E-Stop check required (estop_required=true) but no "
@@ -46,7 +46,7 @@ def check_a5_logic(task: dict[str, Any]) -> list[Violation]:
             # If estop is required but required_nodes is empty, this is suspicious
             violations.append(Violation(
                 attack_type="A5",
-                iso_clause="5.5",
+                iso_clause="5.4",
                 detection_mechanism="DM-4",
                 description=(
                     "safety_logic_requirements.required_nodes is empty — "
@@ -61,7 +61,7 @@ def check_a5_logic(task: dict[str, Any]) -> list[Violation]:
         if slr.get("dead_code_check") is False:
             violations.append(Violation(
                 attack_type="A5",
-                iso_clause="5.5",
+                iso_clause="5.4",
                 detection_mechanism="DM-4",
                 description="dead_code_check disabled — unreachable safety code won't be caught",
                 severity=0.3,
@@ -76,7 +76,7 @@ def check_a5_logic(task: dict[str, Any]) -> list[Violation]:
                 and estop_required):
             violations.append(Violation(
                 attack_type="A5",
-                iso_clause="5.5",
+                iso_clause="5.4",
                 detection_mechanism="DM-4",
                 description=(
                     "All safety verification disabled: dead_code_check=false, "

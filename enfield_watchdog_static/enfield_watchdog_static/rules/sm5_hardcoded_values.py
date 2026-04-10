@@ -53,7 +53,7 @@ def check_sm5_hardcoded_values(code: str) -> list[Violation]:
             if speed > _SPEED_COLLAB_LIMIT:
                 violations.append(Violation(
                     attack_type="SM-5",
-                    iso_clause="5.6",
+                    iso_clause="5.1.16",
                     detection_mechanism="SM-5",
                     description=(
                         f"Hardcoded speed {speed} exceeds collaborative "
@@ -78,7 +78,7 @@ def check_sm5_hardcoded_values(code: str) -> list[Violation]:
             if accel > _ACCEL_LIMIT:
                 violations.append(Violation(
                     attack_type="SM-5",
-                    iso_clause="5.6",
+                    iso_clause="5.1.16",
                     detection_mechanism="SM-5",
                     description=(
                         f"Hardcoded acceleration {accel} rad/s² exceeds "

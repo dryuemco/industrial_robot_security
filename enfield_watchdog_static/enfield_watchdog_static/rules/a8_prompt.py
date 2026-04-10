@@ -30,7 +30,7 @@ def check_a8_prompt(task: dict[str, Any]) -> list[Violation]:
     if ppl >= _PERPLEXITY_SUSPECT:
         violations.append(Violation(
             attack_type="A8",
-            iso_clause="5.3",
+            iso_clause="5.1.16",
             detection_mechanism="DM-7",
             description=(
                 f"perplexity_threshold={ppl:.0f} — suspiciously high, "
@@ -46,7 +46,7 @@ def check_a8_prompt(task: dict[str, Any]) -> list[Violation]:
     if isinstance(patterns, list) and len(patterns) == 0:
         violations.append(Violation(
             attack_type="A8",
-            iso_clause="5.3",
+            iso_clause="5.1.16",
             detection_mechanism="DM-7",
             description="blocked_patterns is empty — jailbreak pattern detection disabled",
             severity=0.7,
@@ -58,7 +58,7 @@ def check_a8_prompt(task: dict[str, Any]) -> list[Violation]:
     if ps.get("encoding_scan") is False:
         violations.append(Violation(
             attack_type="A8",
-            iso_clause="5.3",
+            iso_clause="5.1.16",
             detection_mechanism="DM-7",
             description="encoding_scan=false — Base64/ROT13 payload detection disabled",
             severity=0.5,
@@ -70,7 +70,7 @@ def check_a8_prompt(task: dict[str, Any]) -> list[Violation]:
     if ratio < _SAFETY_RATIO_SUSPECT:
         violations.append(Violation(
             attack_type="A8",
-            iso_clause="5.3",
+            iso_clause="5.1.16",
             detection_mechanism="DM-7",
             description=(
                 f"min_safety_token_ratio={ratio} — context overflow "

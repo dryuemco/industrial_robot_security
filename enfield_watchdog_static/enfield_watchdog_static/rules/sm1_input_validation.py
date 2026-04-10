@@ -48,7 +48,7 @@ def check_sm1_input_validation(code: str) -> list[Violation]:
             if not has_speed:
                 violations.append(Violation(
                     attack_type="SM-1",
-                    iso_clause="5.6",
+                    iso_clause="5.1.16",
                     detection_mechanism="SM-1",
                     description=(
                         f"{cmd_name}() without explicit speed parameter (v=). "
@@ -67,7 +67,7 @@ def check_sm1_input_validation(code: str) -> list[Violation]:
             if not has_accel:
                 violations.append(Violation(
                     attack_type="SM-1",
-                    iso_clause="5.6",
+                    iso_clause="5.1.16",
                     detection_mechanism="SM-1",
                     description=(
                         f"{cmd_name}() without explicit acceleration parameter (a=). "

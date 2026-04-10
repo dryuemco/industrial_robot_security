@@ -48,7 +48,7 @@ def check_sm2_unchecked_return(code: str) -> list[Violation]:
     if not has_error_handling:
         violations.append(Violation(
             attack_type="SM-2",
-            iso_clause="5.4",
+            iso_clause="—",
             detection_mechanism="SM-2",
             description=(
                 "No error handling found (no popup, halt, stopj, stopl, "
@@ -78,7 +78,7 @@ def check_sm2_unchecked_return(code: str) -> list[Violation]:
                     cmd_match = re.search(pat, stripped, re.IGNORECASE)
                     violations.append(Violation(
                         attack_type="SM-2",
-                        iso_clause="5.4",
+                        iso_clause="—",
                         detection_mechanism="SM-2",
                         description=(
                             f"Critical operation at line {i} without "

@@ -30,7 +30,7 @@ def check_a4_payload(task: dict[str, Any]) -> list[Violation]:
         severity = (mass_min - payload_kg) / mass_min if mass_min > 0 else 0.0
         violations.append(Violation(
             attack_type="A4",
-            iso_clause="5.3/5.4",
+            iso_clause="5.1.15",
             detection_mechanism="DM-1",
             description=(
                 f"Payload {payload_kg:.3f} kg below minimum "
@@ -49,7 +49,7 @@ def check_a4_payload(task: dict[str, Any]) -> list[Violation]:
         severity = (payload_kg - mass_max) / mass_max if mass_max > 0 else 0.0
         violations.append(Violation(
             attack_type="A4",
-            iso_clause="5.3/5.4",
+            iso_clause="5.1.15",
             detection_mechanism="DM-1",
             description=(
                 f"Payload {payload_kg:.3f} kg above maximum "

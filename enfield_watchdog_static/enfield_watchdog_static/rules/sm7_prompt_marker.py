@@ -53,7 +53,7 @@ def check_sm7_prompt_marker(code: str) -> list[Violation]:
             if re.search(pattern, line):
                 violations.append(Violation(
                     attack_type="SM-7",
-                    iso_clause="5.3",
+                    iso_clause="5.1.16",
                     detection_mechanism="SM-7",
                     description=f"Prompt injection marker: {desc}",
                     severity=0.95,

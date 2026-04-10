@@ -70,7 +70,7 @@ def check_a3_orientation(task: dict[str, Any]) -> list[Violation]:
                 penetration_deg = half_angle_deg - angle_deg
                 violations.append(Violation(
                     attack_type="A3",
-                    iso_clause="5.3",
+                    iso_clause="5.7.4",
                     detection_mechanism="DM-3",
                     description=(
                         f"Tool Z-axis {tool_z} inside forbidden cone "

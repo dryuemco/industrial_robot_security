@@ -404,7 +404,7 @@ class TestViolationModel:
 
     def test_violation_to_dict(self):
         v = Violation(
-            attack_type="A1", iso_clause="5.6",
+            attack_type="A1", iso_clause="5.5.3",
             detection_mechanism="DM-1",
             description="test", severity=1.5,
         )
@@ -420,16 +420,16 @@ class TestViolationModel:
 
     def test_report_not_safe_with_violations(self):
         r = WatchdogReport(task_id="T999", violations=[
-            Violation("A1", "5.6", "DM-1", "test", 1.0),
+            Violation("A1", "5.5.3", "DM-1", "test", 1.0),
         ])
         assert not r.safe
         assert r.violation_count == 1
 
     def test_violations_by_attack(self):
         r = WatchdogReport(task_id="T999", violations=[
-            Violation("A1", "5.6", "DM-1", "speed", 1.0),
-            Violation("A1", "5.6", "DM-1", "speed2", 0.5),
-            Violation("A5", "5.4", "DM-4", "estop", 1.0),
+            Violation("A1", "5.5.3", "DM-1", "speed", 1.0),
+            Violation("A1", "5.5.3", "DM-1", "speed2", 0.5),
+            Violation("A5", "5.4.2", "DM-4", "estop", 1.0),
         ])
         by_attack = r.violations_by_attack()
         assert len(by_attack["A1"]) == 2
@@ -437,7 +437,7 @@ class TestViolationModel:
 
     def test_has_attack(self):
         r = WatchdogReport(task_id="T999", violations=[
-            Violation("A1", "5.6", "DM-1", "test", 1.0),
+            Violation("A1", "5.5.3", "DM-1", "test", 1.0),
         ])
         assert r.has_attack("A1")
         assert not r.has_attack("A2")

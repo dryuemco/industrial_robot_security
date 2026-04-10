@@ -27,7 +27,7 @@ def check_a6_frame(task: dict[str, Any]) -> list[Violation]:
         if fid is not None and fid not in defined_frames:
             violations.append(Violation(
                 attack_type="A6",
-                iso_clause="5.12.3",
+                iso_clause="5.7.4",
                 detection_mechanism="DM-5",
                 description=(
                     f"Motion seq={cmd['seq']} references undefined frame "
@@ -48,7 +48,7 @@ def check_a6_frame(task: dict[str, Any]) -> list[Violation]:
                 if val >= _MAX_REASONABLE_WOS_COMPONENT_MM:
                     violations.append(Violation(
                         attack_type="A6",
-                        iso_clause="5.12.3/5.3",
+                        iso_clause="5.7.4",
                         detection_mechanism="DM-5",
                         description=(
                             f"Work object frame {axis_name}={wos_trans[axis_i]:.1f} mm "

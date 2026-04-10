@@ -39,7 +39,7 @@ def check_a2_zone(task: dict[str, Any]) -> list[Violation]:
                 penetration = dot - d
                 violations.append(Violation(
                     attack_type="A2",
-                    iso_clause="5.12.3",
+                    iso_clause="5.7.4",
                     detection_mechanism="DM-2",
                     description=(
                         f"Waypoint {p} violates halfspace #{i}: "

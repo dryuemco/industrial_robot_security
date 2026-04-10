@@ -64,7 +64,7 @@ def check_a7_tool(task: dict[str, Any]) -> list[Violation]:
     if allowed_modes and op_mode not in allowed_modes:
         violations.append(Violation(
             attack_type="A7",
-            iso_clause="5.1.15",
+            iso_clause="5.1.14",
             detection_mechanism="DM-6",
             description=(
                 f"Operating mode '{op_mode}' not in tool's "
