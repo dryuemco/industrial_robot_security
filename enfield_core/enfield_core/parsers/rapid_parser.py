@@ -12,7 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""ABB RAPID parser — Lark-based PoC for speed violation detection (A1)."""
+"""ABB RAPID parser — Lark-based PoC for speed violation detection (A1).
+
+Retained for future RAPID backend and real-robot validation against ABB
+controllers. Not currently imported by the URScript-focused pipeline
+(Week 9 pivot), but kept functional so that clause references stay
+consistent with the watchdog and mutation layers.
+"""
 
 from lark import Lark
 
@@ -45,7 +51,7 @@ def check_safety(code_snippet, max_speed=1000):
             severity = (speed_value - max_speed) / max_speed
             violations.append({
                 'attack_type': 'A1',
-                'iso_clause': '5.6',
+                'iso_clause': '5.5.3',
                 'speed': speed_value,
                 'max_speed': max_speed,
                 'severity': round(severity, 2),
