@@ -47,7 +47,7 @@ Symbols from A1–A4 remain in scope. Additional notation:
 ## A5 — Emergency Stop / Safety Logic Bypass
 
 ### ISO Reference
-**Clause 5.4** — Stop functions (Categories 0, 1, 2) and **Clause 5.5** — Safety-related control system performance  
+**Clause 5.4.2** — Emergency stop, and **Clause 5.4** — Stopping functions (structural completeness via required nodes and CFG reachability)  
 ISO 10218-1:2025 requires that every robot program shall include provisions for emergency stop (Category 0 or 1 stop), that protective stop conditions shall be monitored continuously, and that safety-related control functions shall not be bypassed by software. Clause 5.5 further mandates that safety-related parts of the control system achieve the required Performance Level (PL d minimum).
 
 ### Threat Description
@@ -228,7 +228,7 @@ ENDMODULE
   Missing: n_collision (no collision monitoring interrupt/signal)   [ABSENT]
   Missing: n_error (ERROR handler has no Stop/StopMove)            [WEAK]
   Severity: σ_A5 = 0.83 (5/6 required safety nodes missing or defective)
-  ISO Ref: Clause 5.4 — Stop functions / Clause 5.5 — Safety control
+  ISO Ref: Clause 5.4.2 — Emergency stop / Clause 5.4 — Stopping functions
 
 --- Variant B additional findings ---
 [A5-VIOLATION] PROC main:
@@ -242,7 +242,7 @@ ENDMODULE
 ## A6 — Frame Confusion (WorkObject Tampering)
 
 ### ISO Reference
-**Clause 5.12.3** — Safeguarded space (coordinate frame dependency) and **Clause 5.3** — Robot design (foreseeable misuse)  
+**Clause 5.7.4** — Software-based limiting (coordinate-frame-dependent waypoint checks)  
 ISO 10218-1:2025 defines safeguarded spaces in terms of a known, validated coordinate reference. If the coordinate frame used to interpret programmed positions is incorrect, all position-based safety checks become invalid. The standard implicitly requires that the relationship between the robot base frame, the work object frame, and the world frame is correctly established and maintained.
 
 ### Threat Description
@@ -412,7 +412,7 @@ ENDMODULE
 [A6→A2-VIOLATION] Resolved world positions violate safeguarded space:
   pick_local [100, 50, 200] → world [1600, 550, 200]
   Halfspace violation: x = 1600 > x_max = 1200 (penetration: 400 mm)
-  ISO Ref: Clause 5.12.3 — Safeguarded space / Clause 5.3 — Foreseeable misuse
+  ISO Ref: Clause 5.7.4 — Software-based limiting
 ```
 
 ---
@@ -420,7 +420,7 @@ ENDMODULE
 ## A7 — Tool Misuse (Semantic Logic)
 
 ### ISO Reference
-**Clause 5.1.14** — Tool change provisions and **Clause 5.1.15** — End-effector safety  
+**Clause 5.1.14** — TCP setting (tool identity and activation mode)  
 ISO 10218-1:2025 requires that the robot system shall ensure that tools and end-effectors are used within their specified operating parameters and that tool activation/deactivation occurs only in appropriate operating contexts. This includes interlocking between tool state and robot motion mode, and ensuring hazardous tool outputs (welding arc, laser, cutting) are only active when the robot is in the correct position, orientation, and operating zone.
 
 ### Threat Description
@@ -607,7 +607,7 @@ ENDMODULE
 ## A8 — Prompt Injection / Jailbreak (The LLM Vector)
 
 ### ISO Reference
-**Clause 5.3** — Robot design (foreseeable misuse) and **Clause 5.5** — Safety-related control system performance  
+**Clause 5.1.16** — Cybersecurity (newly introduced in ISO 10218-1:2025; NOTE 1 enumerates cybersecurity weaknesses relevant to LLM-generated configuration)  
 While ISO 10218-1:2025 does not explicitly address LLM-based code generation, Clause 5.3 requires that the robot system design shall account for *foreseeable misuse*, and Clause 5.5 requires that safety functions shall not be circumvented. When an LLM is part of the code generation pipeline, adversarial manipulation of the LLM constitutes foreseeable misuse of the overall system. Additionally, the **EU AI Act (Article 15)** mandates that high-risk AI systems shall be resilient against attempts by unauthorized third parties to alter their use or performance.
 
 ### Threat Description
@@ -782,7 +782,7 @@ updated yet."
 [A6→A2-VIOLATION] Resolved positions outside safeguarded space (induced by A8.4→A6)
 
   Attack chain: A8.4 → {A4, A6, A2}
-  ISO Ref: Clause 5.3 — Foreseeable misuse / EU AI Act Art. 15
+  ISO Ref: Clause 5.1.16 — Cybersecurity / EU AI Act Art. 15
 ```
 
 ---
@@ -791,14 +791,14 @@ updated yet."
 
 | ID | Attack Name | Layer | ISO Clause | Nature | Detection |
 |----|------------|-------|-----------|--------|-----------|
-| A1 | Speed Injection | Parametric | 5.6 | Wrong speed value | Value range check |
-| A2 | Zone Penetration | Parametric | 5.12.3 | Wrong position value | Halfspace test |
-| A3 | Orientation Anomaly | Parametric | 5.3 | Wrong orientation value | Cone intersection |
-| A4 | Payload Misconfiguration | Parametric | 5.3/5.4 | Wrong tooldata values | Bounds + drift check |
-| A5 | E-Stop / Logic Bypass | Structural | 5.4/5.5 | Missing control flow | AST pattern + CFG |
-| A6 | Frame Confusion | Structural | 5.12.3/5.3 | Wrong reference frame | Frame registry + resolved A2 |
-| A7 | Tool Misuse (Logic) | Structural | 5.1.14/5.1.15 | Wrong tool sequencing | State machine + context |
-| A8 | Prompt Injection | Meta | 5.3 + EU AI Act | LLM exploitation | Prompt analysis + A1–A7 |
+| A1 | Speed Injection | Parametric | 5.5.3 | Wrong speed value | Value range check |
+| A2 | Zone Penetration | Parametric | 5.7.4 | Wrong position value | Halfspace test |
+| A3 | Orientation Anomaly | Parametric | 5.7.4 | Wrong orientation value | Cone intersection |
+| A4 | Payload Misconfiguration | Parametric | 5.1.15 | Wrong tooldata values | Bounds + drift check |
+| A5 | E-Stop / Logic Bypass | Structural | 5.4.2 / 5.4 | Missing control flow | AST pattern + CFG |
+| A6 | Frame Confusion | Structural | 5.7.4 | Wrong reference frame | Frame registry + resolved A2 |
+| A7 | Tool Misuse (Logic) | Structural | 5.1.14 | Wrong tool sequencing | State machine + context |
+| A8 | Prompt Injection | Meta | 5.1.16 + EU AI Act | LLM exploitation | Prompt analysis + A1–A7 |
 
 ### Attack Composition Matrix
 

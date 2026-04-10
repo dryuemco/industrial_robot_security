@@ -15,7 +15,7 @@ from typing import Any
 from enfield_watchdog_static.violation import Violation
 
 # Thresholds for unsafe hardcoded values
-_SPEED_COLLAB_LIMIT = 0.250   # m/s — ISO 10218 collaborative max
+_SPEED_COLLAB_LIMIT = 0.250   # m/s — ISO 10218-1:2025 clause 5.5.3 collaborative limit
 _SPEED_FENCED_LIMIT = 0.500   # m/s — typical fenced max
 _ACCEL_LIMIT = 2.5            # rad/s² — aggressive acceleration
 _FORCE_LIMIT = 150.0          # N — ISO/TS 15066 contact force limit

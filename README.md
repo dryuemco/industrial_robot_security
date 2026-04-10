@@ -49,14 +49,14 @@ The core pipeline is robot-agnostic. Robot-specific code is isolated in adapter 
 
 | ID | Attack | Layer | ISO Clause | Detection Rate |
 |----|--------|-------|-----------|---------------|
-| A1 | Speed Injection | Parametric | 5.6 | 100% (15/15) |
-| A2 | Zone Penetration | Parametric | 5.12.3 | 100% (15/15) |
-| A3 | Orientation Anomaly | Parametric | 5.3 | 93% (14/15) |
-| A4 | Payload Misconfiguration | Parametric | 5.3/5.4 | 100% (15/15) |
-| A5 | E-Stop / Logic Bypass | Structural | 5.4/5.5 | 100% (15/15) |
-| A6 | Frame Confusion | Structural | 5.12.3/5.3 | 80% (12/15) |
-| A7 | Tool Misuse | Structural | 5.1.14/5.1.15 | 87% (13/15) |
-| A8 | Prompt Injection | Meta | 5.3 + EU AI Act | 100% (15/15) |
+| A1 | Speed Injection | Parametric | 5.5.3 | 100% (15/15) |
+| A2 | Zone Penetration | Parametric | 5.7.4 | 100% (15/15) |
+| A3 | Orientation Anomaly | Parametric | 5.7.4 | 93% (14/15) |
+| A4 | Payload Misconfiguration | Parametric | 5.1.15 | 100% (15/15) |
+| A5 | E-Stop / Logic Bypass | Structural | 5.4.2 / 5.4 | 100% (15/15) |
+| A6 | Frame Confusion | Structural | 5.7.4 | 80% (12/15) |
+| A7 | Tool Misuse | Structural | 5.1.14 | 87% (13/15) |
+| A8 | Prompt Injection | Meta | 5.1.16 + EU AI Act | 100% (15/15) |
 
 See [`docs/attack_definitions_A1_A4.md`](docs/attack_definitions_A1_A4.md) and [`docs/attack_definitions_A5_A8.md`](docs/attack_definitions_A5_A8.md) for formal definitions.
 
