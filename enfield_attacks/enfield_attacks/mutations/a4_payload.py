@@ -16,7 +16,7 @@ class A4PayloadMisconfiguration(Mutation):
     """
 
     attack_id = "A4"
-    iso_clause = "5.3/5.4"
+    iso_clause = "5.1.15"
     description = "Payload Misconfiguration — mass under-declared"
 
     def __init__(self, seed: int = 42, undershoot_factor: float = 0.1) -> None:

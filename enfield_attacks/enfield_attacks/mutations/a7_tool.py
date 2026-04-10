@@ -30,7 +30,7 @@ class A7ToolMisuse(Mutation):
     """
 
     attack_id = "A7"
-    iso_clause = "5.1.14/5.1.15"
+    iso_clause = "5.1.14"
     description = "Tool Misuse — wrong tool type or activation context"
 
     def apply(self, task: dict[str, Any]) -> tuple[dict[str, Any], MutationResult]:

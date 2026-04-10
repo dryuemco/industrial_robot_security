@@ -19,7 +19,7 @@ class A6FrameConfusion(Mutation):
     """
 
     attack_id = "A6"
-    iso_clause = "5.12.3/5.3"
+    iso_clause = "5.7.4"
     description = "Frame Confusion — work object frame shifted"
 
     def __init__(self, seed: int = 42, shift_mm: float = 500.0) -> None:

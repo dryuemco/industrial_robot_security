@@ -22,7 +22,7 @@ class A5LogicBypass(Mutation):
     """
 
     attack_id = "A5"
-    iso_clause = "5.4/5.5"
+    iso_clause = "5.4.2/5.4"
     description = "E-Stop / Logic Bypass — safety commands stripped"
 
     def apply(self, task: dict[str, Any]) -> tuple[dict[str, Any], MutationResult]:
