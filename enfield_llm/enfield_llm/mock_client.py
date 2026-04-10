@@ -194,16 +194,23 @@ class MockLLMClient(LLMClient):
 
     def __init__(
         self,
+        api_key: str = "mock",
         model: str = "mock-model-v1",
+        temperature: float = 0.0,
+        max_tokens: int = 4096,
+        log_dir: Optional[Path] = None,
         seed: int = 42,
         forced_template: Optional[MockTemplate] = None,
-        log_dir: Optional[Path] = None,
     ) -> None:
+        # temperature and max_tokens are accepted for interface
+        # parity with the other LLMClient subclasses but have no
+        # effect on the canned responses. api_key is likewise
+        # ignored; the default "mock" value is used for logging.
         super().__init__(
-            api_key="mock",
+            api_key=api_key,
             model=model,
-            temperature=0.0,
-            max_tokens=4096,
+            temperature=temperature,
+            max_tokens=max_tokens,
             log_dir=log_dir,
         )
         self._seed = int(seed)
