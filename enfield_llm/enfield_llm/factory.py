@@ -79,6 +79,7 @@ def create_client(
     log_dir: Optional[Path] = None,
     temperature: float = 0.0,
     max_tokens: int = 4096,
+    seed: Optional[int] = None,
 ) -> LLMClient:
     """Create an LLM client for the given provider.
 
@@ -93,6 +94,9 @@ def create_client(
         log_dir: Directory for request/response logs.
         temperature: Sampling temperature (0.0 = deterministic).
         max_tokens: Maximum output tokens.
+        seed: Optional integer seed. Currently only consumed by the
+            'mock' provider (template rotation). Live providers
+            ignore this parameter.
 
     Returns:
         Configured LLMClient instance.
@@ -122,9 +126,12 @@ def create_client(
 
     # --- Mock (deterministic offline; runner smoke test) ---
     if provider == "mock":
+        mock_kwargs = dict(kwargs)
+        if seed is not None:
+            mock_kwargs["seed"] = seed
         return MockLLMClient(
             model=model or "mock-model-v1",
-            **kwargs,
+            **mock_kwargs,
         )
 
     # --- Cloud providers (API key required) ---
