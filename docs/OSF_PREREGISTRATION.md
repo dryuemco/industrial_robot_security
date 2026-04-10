@@ -322,7 +322,7 @@ the scope was extended to include:
 | `deepseek-coder-v2:16b` | DeepSeek AI | 16B | Q4_K_M | DeepSeek License |
 | `codellama:34b` | Meta AI | 34B | Q4_K_M | Meta Llama 2 License |
 
-Fixed inference parameters (all models): temperature=0.0, max_tokens=1024, timeout=300s.
+Fixed inference parameters (all models): temperature=0.0, max_tokens=4096, timeout=300s. Determinism from greedy decoding at temperature=0.0 (no explicit sampling seed).
 
 #### 4. Updated hypothesis table
 
