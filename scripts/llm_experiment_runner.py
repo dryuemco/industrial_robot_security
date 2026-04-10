@@ -42,7 +42,7 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 # Add package paths
 REPO_DIR = Path(__file__).resolve().parent.parent
@@ -55,6 +55,24 @@ from enfield_llm.prompt_builder import PromptBuilder, PromptMode, AdversarialTyp
 from enfield_llm.code_parser import CodeParser
 from enfield_llm.base_client import ResponseStatus
 from enfield_watchdog_static.watchdog import StaticWatchdog
+
+# Single-entry model table used when --provider=mock. Running the
+# mock client against all three live models would triple the runner
+# time without adding coverage: the canned templates do not depend
+# on the model_id string.
+_MOCK_MODELS = {"mock": "mock-model-v1"}
+
+
+def _models_for_provider(provider: str) -> dict:
+    """Return the {short_name: model_id} table for a provider.
+
+    Live provider: uses EXPERIMENT_MODELS (qwen_coder, deepseek,
+    codellama). Mock provider: uses a single synthetic model so
+    that smoke runs finish in seconds.
+    """
+    if provider == "mock":
+        return _MOCK_MODELS
+    return EXPERIMENT_MODELS
 
 logging.basicConfig(
     level=logging.INFO,
@@ -273,13 +291,19 @@ def run_single_call(
 # E1: Baseline experiment
 # ---------------------------------------------------------------------------
 
-def run_e1(tasks: list[dict], reps: int, output_dir: Path) -> list[dict]:
+def run_e1(
+    tasks: list[dict],
+    reps: int,
+    output_dir: Path,
+    provider: str = "ollama",
+    mock_seed: Optional[int] = None,
+) -> list[dict]:
     """E1: Baseline + Safety — 3 LLMs × N tasks × 2 conditions × R reps."""
     logger.info("=" * 60)
     logger.info("EXPERIMENT E1: Baseline")
     logger.info("Models: %d | Tasks: %d | Conditions: 2 | Reps: %d",
-                len(EXPERIMENT_MODELS), len(tasks), reps)
-    total_calls = len(EXPERIMENT_MODELS) * len(tasks) * 2 * reps
+                len(_models_for_provider(provider)), len(tasks), reps)
+    total_calls = len(_models_for_provider(provider)) * len(tasks) * 2 * reps
     logger.info("Total calls: %d", total_calls)
     logger.info("=" * 60)
 
@@ -295,8 +319,13 @@ def run_e1(tasks: list[dict], reps: int, output_dir: Path) -> list[dict]:
         (PromptMode.SAFETY, None),
     ]
 
-    for model_name, model_id in EXPERIMENT_MODELS.items():
-        client = create_client("ollama", model=model_id, log_dir=output_dir / "logs")
+    for model_name, model_id in _models_for_provider(provider).items():
+        client = create_client(
+            provider,
+            model=model_id,
+            log_dir=output_dir / "logs",
+            seed=mock_seed,
+        )
         logger.info("\n--- Model: %s (%s) ---", model_name, model_id)
 
         for task_ir in tasks:
@@ -328,13 +357,18 @@ def run_e1(tasks: list[dict], reps: int, output_dir: Path) -> list[dict]:
 # E2: Adversarial experiment
 # ---------------------------------------------------------------------------
 
-def run_e2(tasks: list[dict], output_dir: Path) -> list[dict]:
+def run_e2(
+    tasks: list[dict],
+    output_dir: Path,
+    provider: str = "ollama",
+    mock_seed: Optional[int] = None,
+) -> list[dict]:
     """E2: Adversarial — 3 LLMs × N tasks × 8 attacks × 1 rep."""
     logger.info("=" * 60)
     logger.info("EXPERIMENT E2: Adversarial")
     logger.info("Models: %d | Tasks: %d | Attacks: 8 | Reps: 1",
-                len(EXPERIMENT_MODELS), len(tasks))
-    total_calls = len(EXPERIMENT_MODELS) * len(tasks) * 8
+                len(_models_for_provider(provider)), len(tasks))
+    total_calls = len(_models_for_provider(provider)) * len(tasks) * 8
     logger.info("Total calls: %d", total_calls)
     logger.info("=" * 60)
 
@@ -345,8 +379,13 @@ def run_e2(tasks: list[dict], output_dir: Path) -> list[dict]:
     results = []
     call_num = 0
 
-    for model_name, model_id in EXPERIMENT_MODELS.items():
-        client = create_client("ollama", model=model_id, log_dir=output_dir / "logs")
+    for model_name, model_id in _models_for_provider(provider).items():
+        client = create_client(
+            provider,
+            model=model_id,
+            log_dir=output_dir / "logs",
+            seed=mock_seed,
+        )
         logger.info("\n--- Model: %s (%s) ---", model_name, model_id)
 
         for task_ir in tasks:
@@ -377,14 +416,20 @@ def run_e2(tasks: list[dict], output_dir: Path) -> list[dict]:
 # E3: Watchdog-in-loop
 # ---------------------------------------------------------------------------
 
-def run_e3(tasks: list[dict], reps: int, max_retries: int,
-           output_dir: Path) -> list[dict]:
+def run_e3(
+    tasks: list[dict],
+    reps: int,
+    max_retries: int,
+    output_dir: Path,
+    provider: str = "ollama",
+    mock_seed: Optional[int] = None,
+) -> list[dict]:
     """E3: Watchdog-in-loop — 3 LLMs × N tasks × R reps with feedback retry."""
     logger.info("=" * 60)
     logger.info("EXPERIMENT E3: Watchdog-in-loop")
     logger.info("Models: %d | Tasks: %d | Reps: %d | Max retries: %d",
-                len(EXPERIMENT_MODELS), len(tasks), reps, max_retries)
-    total_calls = len(EXPERIMENT_MODELS) * len(tasks) * reps
+                len(_models_for_provider(provider)), len(tasks), reps, max_retries)
+    total_calls = len(_models_for_provider(provider)) * len(tasks) * reps
     logger.info("Initial calls: %d (+ retries)", total_calls)
     logger.info("=" * 60)
 
@@ -395,8 +440,13 @@ def run_e3(tasks: list[dict], reps: int, max_retries: int,
     results = []
     call_num = 0
 
-    for model_name, model_id in EXPERIMENT_MODELS.items():
-        client = create_client("ollama", model=model_id, log_dir=output_dir / "logs")
+    for model_name, model_id in _models_for_provider(provider).items():
+        client = create_client(
+            provider,
+            model=model_id,
+            log_dir=output_dir / "logs",
+            seed=mock_seed,
+        )
         logger.info("\n--- Model: %s (%s) ---", model_name, model_id)
 
         for task_ir in tasks:
@@ -561,6 +611,13 @@ def main() -> int:
                     help="Max watchdog feedback retries (E3 only, default: 3)")
     ap.add_argument("--output", type=str, default=None,
                     help="Output directory (default: results/<experiment>)")
+    ap.add_argument("--provider", type=str, default="ollama",
+                    choices=["ollama", "mock"],
+                    help="LLM provider (default: ollama). 'mock' uses a "
+                         "deterministic offline client for smoke testing.")
+    ap.add_argument("--mock-seed", type=int, default=42,
+                    help="Seed for MockLLMClient template rotation "
+                         "(only used when --provider=mock; default: 42).")
 
     args = ap.parse_args()
     experiment = args.experiment
@@ -570,9 +627,13 @@ def main() -> int:
     logger.info("Experiment: %s", experiment)
     logger.info("Output: %s", output_dir)
 
-    # Check Ollama
-    ollama_host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
-    logger.info("Ollama host: %s", ollama_host)
+    # Check Ollama (live provider only)
+    if args.provider == "ollama":
+        ollama_host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
+        logger.info("Ollama host: %s", ollama_host)
+    else:
+        logger.info("Provider: %s (offline, seed=%d)",
+                    args.provider, args.mock_seed)
 
     # Load tasks
     tasks = load_tasks(args.tasks)
@@ -584,12 +645,29 @@ def main() -> int:
     start = time.time()
 
     if experiment == "E1":
-        results = run_e1(tasks, reps=args.reps, output_dir=output_dir)
+        results = run_e1(
+            tasks,
+            reps=args.reps,
+            output_dir=output_dir,
+            provider=args.provider,
+            mock_seed=args.mock_seed,
+        )
     elif experiment == "E2":
-        results = run_e2(tasks, output_dir=output_dir)
+        results = run_e2(
+            tasks,
+            output_dir=output_dir,
+            provider=args.provider,
+            mock_seed=args.mock_seed,
+        )
     elif experiment == "E3":
-        results = run_e3(tasks, reps=args.reps, max_retries=args.max_retries,
-                         output_dir=output_dir)
+        results = run_e3(
+            tasks,
+            reps=args.reps,
+            max_retries=args.max_retries,
+            output_dir=output_dir,
+            provider=args.provider,
+            mock_seed=args.mock_seed,
+        )
     else:
         logger.error("Unknown experiment: %s", experiment)
         return 1

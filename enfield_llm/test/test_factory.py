@@ -66,6 +66,26 @@ class TestMockProvider:
         assert set(seq_a) == {t.value for t in MockTemplate}
 
 
+    def test_mock_seed_forwarded(self):
+        """Explicit seed reaches the MockLLMClient instance."""
+        client = create_client("mock", seed=123)
+        assert client._seed == 123
+
+    def test_mock_seed_none_uses_default(self):
+        """When no seed is passed, MockLLMClient's own default (42)
+        is used."""
+        client = create_client("mock")
+        assert client._seed == 42
+
+    def test_mock_seed_changes_template_sequence(self):
+        """Different factory seeds produce different sequences,
+        matching the raw MockLLMClient determinism contract."""
+        a = create_client("mock", seed=0)
+        b = create_client("mock", seed=1)
+        seq_a = [a.generate("s", "u").metadata["template"] for _ in range(7)]
+        seq_b = [b.generate("s", "u").metadata["template"] for _ in range(7)]
+        assert seq_a != seq_b
+
 # ---------------------------------------------------------------------------
 # Error paths
 # ---------------------------------------------------------------------------
