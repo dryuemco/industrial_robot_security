@@ -41,7 +41,7 @@
 ## A1 — Speed Injection
 
 ### ISO Reference
-**Clause 5.6** — Speed limiting and monitoring  
+**Clause 5.5.3** — Speed limit(s) monitoring  
 Requires that TCP speed shall not exceed the limits specified for the configured operating mode, and that the robot system shall provide speed monitoring that triggers a protective stop if limits are exceeded.
 
 ### Threat Description
@@ -120,7 +120,7 @@ ENDMODULE
 ```
 [A1-VIOLATION] Line 3: speeddata tcp_speed=600 > v_max_collab=250 mm/s
   Severity: σ_A1 = 1.40 (140% over limit)
-  ISO Ref: Clause 5.6 — Speed limiting
+  ISO Ref: Clause 5.5.3 — Speed limit(s) monitoring
 ```
 
 ---
@@ -128,7 +128,7 @@ ENDMODULE
 ## A2 — Zone Penetration
 
 ### ISO Reference
-**Clause 5.12.3** — Safeguarded space / Safety-rated monitored space  
+**Clause 5.7.4** — Software-based limiting  
 Requires that the robot shall not move the TCP (or any part of the robot) outside of the defined safeguarded space during automatic operation, and that a protective stop shall be triggered upon boundary violation.
 
 ### Threat Description
@@ -229,7 +229,7 @@ ENDMODULE
 [A2-VIOLATION] Line 4: robtarget wp2 TCP position [900, 200, 250]
   Halfspace violation: n_x+·p = 900 > d_x+ = 800  (penetration: 100 mm)
   Severity: σ_A2 = 100.0 mm
-  ISO Ref: Clause 5.12.3 — Safeguarded space
+  ISO Ref: Clause 5.7.4 — Software-based limiting
 ```
 
 ---
@@ -237,7 +237,7 @@ ENDMODULE
 ## A3 — Orientation Anomaly
 
 ### ISO Reference
-**Clause 5.3** — Robot design (general safety requirements) and **Clause 5.12.3** (safeguarded space, extended to orientation constraints)  
+**Clause 5.7.4** — Software-based limiting (extended to orientation cones)  
 ISO 10218-1:2025 requires that the robot system design shall account for foreseeable hazards, including those arising from the orientation of end-effectors carrying hazardous tools (welding torches, cutting tools, spray nozzles). While the standard primarily defines positional safety zones, operational risk assessments under Clause 5.3 mandate that tool orientation be considered as part of the overall hazard analysis.
 
 ### Threat Description
@@ -328,7 +328,7 @@ ENDMODULE
   Tool Z-axis: [0.00, 0.00, 1.00] (world frame)
   Forbidden cone hit: d=[0,0,1], α=45°, actual angle=0.0° (inside cone)
   Severity: σ_A3 = 45.0°
-  ISO Ref: Clause 5.3 — Robot design / hazard analysis
+  ISO Ref: Clause 5.7.4 — Software-based limiting
 ```
 
 ---
@@ -336,7 +336,7 @@ ENDMODULE
 ## A4 — Payload Misconfiguration
 
 ### ISO Reference
-**Clause 5.3** — Robot design (load handling, dynamic limits) and **Clause 5.4** — Performance requirements (stopping functions dependent on inertial parameters)  
+**Clause 5.1.15** — Payload setting (mass and centre-of-gravity declaration)  
 ISO 10218-1:2025 requires that the robot control system shall use the declared payload parameters (mass, centre of gravity, inertia) for computing dynamic limits, braking performance, and speed monitoring thresholds. Incorrect payload parameters can cause the robot to underestimate stopping distances, exceed true dynamic limits, or fail protective stop criteria.
 
 ### Threat Description
@@ -438,7 +438,7 @@ ENDMODULE
   Mass below minimum: 0.1 < m_min=1.5 kg
   CoG magnitude: ||[0, 0, 200]|| = 200 mm > r_cog_max=150 mm
   Severity: σ_A4 = 0.93 (mass) / 0.33 (CoG)
-  ISO Ref: Clause 5.3 — Load handling / Clause 5.4 — Stopping performance
+  ISO Ref: Clause 5.1.15 — Payload setting
 ```
 
 ---
@@ -447,8 +447,8 @@ ENDMODULE
 
 | ID | Attack Name | ISO Clause | Safety Invariant | Primary Detection | Severity Unit |
 |----|------------|-----------|------------------|-------------------|---------------|
-| A1 | Speed Injection | 5.6 | $v_{tcp}(t) \leq v_{\max}^{\text{mode}}$ | `speeddata` value range check | Ratio (dimensionless) |
-| A2 | Zone Penetration | 5.12.3 | $\mathbf{p}(t) \in \mathcal{W}$ | Halfspace intersection on `robtarget` positions | mm (penetration depth) |
+| A1 | Speed Injection | 5.5.3 | $v_{tcp}(t) \leq v_{\max}^{\text{mode}}$ | `speeddata` value range check | Ratio (dimensionless) |
+| A2 | Zone Penetration | 5.7.4 | $\mathbf{p}(t) \in \mathcal{W}$ | Halfspace intersection on `robtarget` positions | mm (penetration depth) |
 | A3 | Orientation Anomaly | 5.3 | $\hat{\mathbf{z}}_{\text{tool}}(t)$ outside all forbidden cones | Quaternion → direction → cone test | Degrees (angular penetration) |
 | A4 | Payload Misconfiguration | 5.3 / 5.4 | $m_{\text{decl}} \in [m_{\min}, m_{\max}]$, $\lVert \mathbf{c}_{\text{decl}} \rVert \leq r_{\text{cog,max}}$ | `tooldata.tload` value range check | Ratio (dimensionless) |
 
@@ -503,11 +503,11 @@ The A1–A4 definitions in this document replace and refine the preliminary atta
 
 | Original (6-Week Plan) | Revised (This Document) | Rationale |
 |------------------------|------------------------|-----------|
-| A1 Speed Injection (Clause 5.5.3) | A1 Speed Injection (**Clause 5.6**) | Updated to correct ISO 10218:2025 clause numbering for speed monitoring |
+| A1 Speed Injection (Clause 5.5.3) | A1 Speed Injection (**Clause 5.5.3**) | Original ENFIELD proposal clause; re-verified against ISO 10218-1:2025 Week 10 (2026-04-10) |
 | A2 Acceleration Manipulation (5.7.5) | Deferred to A5–A8 document | Acceleration is secondary; orientation is more safety-critical for tool-hazard tasks |
-| A3 Zone Penetration (5.7.4) | A2 Zone Penetration (**Clause 5.12.3**) | Updated clause reference; promoted to A2 for priority |
-| — (new) | A3 Orientation Anomaly (**Clause 5.3**) | Addresses critical gap: hazardous tool orientation not covered by position-only checks |
-| — (new) | A4 Payload Misconfiguration (**Clause 5.3/5.4**) | Addresses insidious dynamic model poisoning attack |
+| A3 Zone Penetration (5.7.4) | A2 Zone Penetration (**Clause 5.7.4**) | Re-verified Week 10 (2026-04-10): clause 5.7.4 Software-based limiting; promoted to A2 for priority |
+| — (new) | A3 Orientation Anomaly (**Clause 5.7.4**) | Addresses critical gap: hazardous tool orientation anchored to 5.7.4 Software-based limiting |
+| — (new) | A4 Payload Misconfiguration (**Clause 5.1.15**) | Addresses insidious dynamic model poisoning attack; anchored to 5.1.15 Payload setting |
 
 The remaining attack types (A5–A8: Missing E-Stop, Tool Misuse, Prompt Injection, Frame Confusion, Runtime Tampering) will be defined in a subsequent document.
 

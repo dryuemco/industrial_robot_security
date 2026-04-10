@@ -11,14 +11,14 @@ reach_mm: 850.0
 iso_10218_mode_limits:
   collaborative:
     max_tcp_speed_mm_s: 250.0
-    iso_clause: "5.6 — Speed limiting (collaborative operation)"
+    iso_clause: "5.5.3 — Speed limit(s) monitoring (collaborative operation)"
     notes: "ISO/TS 15066 SSM mode; human proximity assumed"
   reduced_speed:
     max_tcp_speed_mm_s: 250.0
-    iso_clause: "5.6 — Speed limiting (reduced speed)"
+    iso_clause: "5.5.3 — Speed limit(s) monitoring (reduced speed)"
   fenced:
     max_tcp_speed_mm_s: 500.0
-    iso_clause: "5.6 — Speed limiting (automatic/fenced)"
+    iso_clause: "5.5.3 — Speed limit(s) monitoring (automatic/fenced)"
     notes: "Application-dependent; 500 mm/s conservative default"
 
 # Per-joint limits (from UR5e datasheet)

@@ -130,14 +130,14 @@ No composite indices are planned. Each attack type is analyzed independently.
 
 | ID | Attack | Layer | ISO Clause | Detection Mechanism |
 |----|--------|-------|-----------|-------------------|
-| A1 | Speed Injection | Parametric | 5.6 | DM-1: Value range check |
-| A2 | Zone Penetration | Parametric | 5.12.3 | DM-2: Halfspace boundary test |
-| A3 | Orientation Anomaly | Parametric | 5.3 | DM-3: Orientation cone test |
-| A4 | Payload Misconfiguration | Parametric | 5.3/5.4 | DM-1: Bounds check |
-| A5 | E-Stop / Logic Bypass | Structural | 5.4/5.5 | DM-4: AST pattern + presence |
-| A6 | Frame Confusion | Structural | 5.12.3/5.3 | DM-5: Frame registry + sanity |
-| A7 | Tool Misuse | Structural | 5.1.14/5.1.15 | DM-6: Tool state machine |
-| A8 | Prompt Injection | Meta | 5.3 + EU AI Act | DM-7: Prompt security check |
+| A1 | Speed Injection | Parametric | 5.5.3 | DM-1: Value range check |
+| A2 | Zone Penetration | Parametric | 5.7.4 | DM-2: Halfspace boundary test |
+| A3 | Orientation Anomaly | Parametric | 5.7.4 | DM-3: Orientation cone test |
+| A4 | Payload Misconfiguration | Parametric | 5.1.15 | DM-1: Bounds check |
+| A5 | E-Stop / Logic Bypass | Structural | 5.4.2 / 5.4 | DM-4: AST pattern + presence |
+| A6 | Frame Confusion | Structural | 5.7.4 | DM-5: Frame registry + sanity |
+| A7 | Tool Misuse | Structural | 5.1.14 | DM-6: Tool state machine |
+| A8 | Prompt Injection | Meta | 5.1.16 + EU AI Act | DM-7: Prompt security check |
 
 Formal definitions in: attack_definitions_A1_A4.md and attack_definitions_A5_A8.md (repository docs/).
 

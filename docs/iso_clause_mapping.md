@@ -17,14 +17,14 @@
 
 | ISO Clause | Clause Title | Attack(s) | Safety Invariant | Detection Mechanism | Evidence Artifact | Priority |
 |-----------|-------------|-----------|-----------------|-------------------|------------------|----------|
-| **5.3** | Robot design — General safety requirements / Foreseeable misuse | A3, A4, A6, A8 | $\Phi_{A3}$ (orientation cones), $\Phi_{A4}$ (payload bounds), $\Phi_{A6}$ (frame integrity) | Orientation cone test; tooldata bounds check; frame registry comparison; prompt analysis | AST report, sim orientation trace, tooldata diff, prompt log | **HIGH** |
-| **5.4** | Stop functions (Cat. 0, 1, 2) | A5 | $\Phi_{A5}^{\text{present}}$ (E-Stop node exists), $\Phi_{A5}^{\text{reach}}$ (reachable in CFG) | AST pattern matching for E-Stop/Stop/StopMove; CFG reachability analysis | AST report, CFG graph export, required node checklist | **HIGH** |
-| **5.5** | Safety-related control system performance | A5, A8 | $\Phi_{A5}^{\text{live}}$ (guard conditions not dead code) | Dead code detection; error handler validation; prompt override detection | AST report, dead code map, prompt analysis log | **HIGH** |
-| **5.6** | Speed limiting and monitoring | A1 | $\Phi_{A1}: v_{tcp}(t) \leq v_{\max}^{\text{mode}}$ | `speeddata` value range check against Task IR mode limits | AST report, sim velocity trace (CSV), threshold comparison | **HIGH** |
-| **5.12.3** | Safeguarded space / Safety-rated monitored space | A2, A6 | $\Phi_{A2}: \mathbf{p}(t) \in \mathcal{W}$ (halfspace test), $\Phi_{A6}^{\text{resolved}}$ (frame-resolved positions) | Halfspace intersection on `robtarget` positions; frame-resolved world position check | AST report, sim trajectory trace, zone boundary visualization, penetration depth log | **HIGH** |
-| **5.1.14** | Tool change provisions | A7 | $\Phi_{A7}^{\text{id}}$ (tool identity match) | Tool identity comparison against Task IR specification | AST report, tooldata diff | MEDIUM |
-| **5.1.15** | End-effector safety | A7 | $\Phi_{A7}$ (tool-context interlock), $\Phi_{A7}^{\text{seq}}$ (activation sequence) | Tool state machine tracking; zone/speed context validation during tool-ON; sequence pattern matching | AST report, tool activation timeline, zone overlap check | MEDIUM |
-| **EU AI Act Art. 15** | Accuracy, Robustness, Cybersecurity | A8 | $\text{ASR}_{A8}$ (attack success rate) | Prompt-level analysis (perplexity, pattern matching, encoding detection); code-level A1–A7 watchdog (defense in depth) | Prompt log, perplexity scores, pattern match results, A1–A7 detection cascade | **HIGH** |
+| **5.1.14** | TCP setting | A7, SM-6a | $\Phi_{A7}^{\text{id}}$ (tool identity), $\Phi_{A7}^{\text{mode}}$ (activation mode) | Tool identity check + tool activation mode check + missing `set_tcp` preamble (SM-6a) | AST report, tooldata diff, tool activation timeline | **HIGH** |
+| **5.1.15** | Payload setting | A4, SM-6b | $\Phi_{A4}$ (payload mass / CoG bounds) | Payload value range check + missing `set_payload` preamble (SM-6b) | AST report, tooldata diff | **HIGH** |
+| **5.1.16** | Cybersecurity (new in ISO 10218-1:2025) | A8, SM-1, SM-3, SM-5, SM-7 | $\text{ASR}_{A8}$ plus CWE-mapped weakness classes (CWE-20 / CWE-693 / CWE-798) | Prompt-security config integrity (DM-7) + input validation (SM-1, CWE-20) + protection failure (SM-3, CWE-693) + hardcoded values (SM-5, CWE-798) + prompt-injection marker leakage (SM-7) | Prompt log, pattern match results, CWE-to-NOTE-1 mapping table | **HIGH** |
+| **5.4** | Stopping functions (structural completeness) | A5 (second check) | $\Phi_{A5}^{\text{struct}}$ (required nodes + CFG reachability + dead-code check) | Safety-logic structural completeness check | AST report, CFG graph export, required node checklist | **HIGH** |
+| **5.4.2** | Emergency stop | A5 (first check) | $\Phi_{A5}^{\text{present}}$ (E-Stop command exists in motion sequence) | E-Stop command presence check in motion sequence | AST report, E-Stop presence checklist | **HIGH** |
+| **5.5.3** | Speed limit(s) monitoring | A1 | $\Phi_{A1}: v_{tcp}(t) \leq v_{\max}^{\text{mode}}$ | Speed value range check against Task IR mode limits | AST report, sim velocity trace (CSV), threshold comparison | **HIGH** |
+| **5.7.4** | Software-based limiting | A2, A3, A6 | $\Phi_{A2}$ (halfspace), $\Phi_{A3}$ (orientation cones), $\Phi_{A6}$ (frame consistency + cross-frame deviation) | Halfspace test + orientation cone test + frame consistency check + cross-frame deviation check | AST report, sim trajectory trace, zone boundary visualization | **HIGH** |
+| **EU AI Act Art. 15** | Accuracy, Robustness, Cybersecurity | A8 (meta) | $\text{ASR}_{A8}$ (attack success rate) | Prompt-level analysis (perplexity, pattern matching, encoding detection); code-level A1–A7 watchdog (defense in depth) | Prompt log, perplexity scores, pattern match results, A1–A7 detection cascade | **HIGH** |
 
 ---
 
@@ -32,14 +32,14 @@
 
 | Attack | Primary ISO Clause | Secondary ISO Clause(s) | Composition |
 |--------|-------------------|------------------------|-------------|
-| **A1** Speed Injection | **5.6** (speed limiting) | — | Standalone |
-| **A2** Zone Penetration | **5.12.3** (safeguarded space) | — | Standalone; also induced by A6 |
-| **A3** Orientation Anomaly | **5.3** (robot design) | 5.12.3 (extended to orientation) | Standalone |
-| **A4** Payload Misconfiguration | **5.3** (load handling) | **5.4** (stopping performance depends on inertia) | Standalone |
-| **A5** E-Stop / Logic Bypass | **5.4** (stop functions) | **5.5** (safety control performance) | Standalone |
-| **A6** Frame Confusion | **5.12.3** (coordinate frame) | **5.3** (foreseeable misuse) | Induces A2 (zone penetration in world frame) |
-| **A7** Tool Misuse | **5.1.14** (tool change) | **5.1.15** (end-effector safety) | Standalone |
-| **A8** Prompt Injection | **5.3** (foreseeable misuse) | **EU AI Act Art. 15** | Meta: induces A1–A7 |
+| **A1** Speed Injection | **5.5.3** (Speed limit(s) monitoring) | — | Standalone |
+| **A2** Zone Penetration | **5.7.4** (Software-based limiting) | — | Standalone; also induced by A6 |
+| **A3** Orientation Anomaly | **5.7.4** (Software-based limiting) | — | Standalone |
+| **A4** Payload Misconfiguration | **5.1.15** (Payload setting) | — | Standalone |
+| **A5** E-Stop / Logic Bypass | **5.4.2** (Emergency stop) | **5.4** (Stopping functions) | Standalone (two checks) |
+| **A6** Frame Confusion | **5.7.4** (Software-based limiting) | — | Induces A2 (zone penetration in world frame) |
+| **A7** Tool Misuse | **5.1.14** (TCP setting) | — | Standalone |
+| **A8** Prompt Injection | **5.1.16** (Cybersecurity, new in 2025) | **EU AI Act Art. 15** | Meta: induces A1–A7 |
 
 ---
 
@@ -148,12 +148,12 @@ The following clauses are the strongest candidates for inclusion in the final pa
 
 | Rank | ISO Clause | Attack | Rationale |
 |------|-----------|--------|-----------|
-| 1 | **5.6** (Speed limiting) | A1 | Most mature detection (PoC parser exists); clear quantitative metric |
-| 2 | **5.12.3** (Safeguarded space) | A2, A6 | Geometric detection well-defined; strong visual evidence |
-| 3 | **5.4** (Stop functions) | A5 | Demonstrates structural analysis capability; high safety impact |
-| 4 | **5.3** (Robot design) | A3, A4, A8 | Covers multiple attack types; bridges to EU AI Act |
-| 5 | **5.1.14/15** (Tool/end-effector) | A7 | Novel contribution — tool-context interlock rarely analyzed |
-| 6 | **5.5** (Safety control) | A5 | Complements 5.4 with dead code / reachability analysis |
+| 1 | **5.5.3** (Speed limit(s) monitoring) | A1 | Most mature detection; clear quantitative metric |
+| 2 | **5.7.4** (Software-based limiting) | A2, A3, A6 | Geometric detection well-defined; spans three attack types; strong visual evidence |
+| 3 | **5.4.2** / **5.4** (Emergency stop + Stopping functions) | A5 | E-Stop command presence and structural completeness (required nodes + CFG reachability) |
+| 4 | **5.1.16** (Cybersecurity, new in 2025) | A8 + SM-1/3/5/7 | Novel contribution: anchors all CWE-mapped security rules to the new 2025 clause |
+| 5 | **5.1.14** (TCP setting) | A7, SM-6a | Tool-context integrity rarely analyzed |
+| 6 | **5.1.15** (Payload setting) | A4, SM-6b | Dynamic model integrity (mass/CoG bounds + preamble) |
 
 > Final selection will be made with supervisor during NTNU Visit 3 (Weeks 22–24).
 
@@ -174,6 +174,7 @@ The following clauses are the strongest candidates for inclusion in the final pa
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2026-02-28 | Initial traceability matrix covering all A1–A8 attacks, 7 detection mechanisms, evidence catalog |
+| 1.1 | 2026-04-10 | ISO 10218-1:2025 clause verification (Week 10). Corrected: 5.6 → 5.5.3 (Speed limit(s) monitoring), 5.12.3 → 5.7.4 (Software-based limiting; clause 5.12 does not exist in the 2025 revision), 5.3 (A3/A4/A8 mapping) → 5.7.4 / 5.1.15 / 5.1.16 respectively. Added anchor to the newly introduced clause **5.1.16 Cybersecurity** for A8, SM-1, SM-3, SM-5, SM-7. SM-2 (CWE-252) and SM-4 (CWE-754) remain CWE-only with no direct ISO anchor. |
 
 ---
 

@@ -99,14 +99,14 @@ The complete attack taxonomy defines eight attack types organized across three l
 
 | Layer | ID | Attack Name | ISO Clause | Nature | Formal Definition |
 |-------|----|-------------|-----------|--------|-------------------|
-| Parametric | **A1** | Speed Injection | 5.6 | Wrong speed value | [A1–A4 doc](attack_definitions_A1_A4.md#a1--speed-injection) |
-| Parametric | **A2** | Zone Penetration | 5.12.3 | Wrong position value | [A1–A4 doc](attack_definitions_A1_A4.md#a2--zone-penetration) |
-| Parametric | **A3** | Orientation Anomaly | 5.3 | Wrong orientation value | [A1–A4 doc](attack_definitions_A1_A4.md#a3--orientation-anomaly) |
-| Parametric | **A4** | Payload Misconfiguration | 5.3 / 5.4 | Wrong tooldata values | [A1–A4 doc](attack_definitions_A1_A4.md#a4--payload-misconfiguration) |
-| Structural | **A5** | E-Stop / Logic Bypass | 5.4 / 5.5 | Missing control flow | [A5–A8 doc](attack_definitions_A5_A8.md#a5--emergency-stop--safety-logic-bypass) |
-| Structural | **A6** | Frame Confusion | 5.12.3 / 5.3 | Wrong reference frame | [A5–A8 doc](attack_definitions_A5_A8.md#a6--frame-confusion-workobject-tampering) |
-| Structural | **A7** | Tool Misuse (Logic) | 5.1.14 / 5.1.15 | Wrong tool sequencing | [A5–A8 doc](attack_definitions_A5_A8.md#a7--tool-misuse-semantic-logic) |
-| Meta | **A8** | Prompt Injection | 5.3 + EU AI Act | LLM exploitation | [A5–A8 doc](attack_definitions_A5_A8.md#a8--prompt-injection--jailbreak-the-llm-vector) |
+| Parametric | **A1** | Speed Injection | 5.5.3 | Wrong speed value | [A1–A4 doc](attack_definitions_A1_A4.md#a1--speed-injection) |
+| Parametric | **A2** | Zone Penetration | 5.7.4 | Wrong position value | [A1–A4 doc](attack_definitions_A1_A4.md#a2--zone-penetration) |
+| Parametric | **A3** | Orientation Anomaly | 5.7.4 | Wrong orientation value | [A1–A4 doc](attack_definitions_A1_A4.md#a3--orientation-anomaly) |
+| Parametric | **A4** | Payload Misconfiguration | 5.1.15 | Wrong tooldata values | [A1–A4 doc](attack_definitions_A1_A4.md#a4--payload-misconfiguration) |
+| Structural | **A5** | E-Stop / Logic Bypass | 5.4.2 / 5.4 | Missing control flow | [A5–A8 doc](attack_definitions_A5_A8.md#a5--emergency-stop--safety-logic-bypass) |
+| Structural | **A6** | Frame Confusion | 5.7.4 | Wrong reference frame | [A5–A8 doc](attack_definitions_A5_A8.md#a6--frame-confusion-workobject-tampering) |
+| Structural | **A7** | Tool Misuse (Logic) | 5.1.14 | Wrong tool sequencing | [A5–A8 doc](attack_definitions_A5_A8.md#a7--tool-misuse-semantic-logic) |
+| Meta | **A8** | Prompt Injection | 5.1.16 + EU AI Act | LLM exploitation | [A5–A8 doc](attack_definitions_A5_A8.md#a8--prompt-injection--jailbreak-the-llm-vector) |
 
 ### Attack Layer Description
 

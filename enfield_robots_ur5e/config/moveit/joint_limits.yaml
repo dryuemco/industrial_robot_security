@@ -2,7 +2,7 @@
 # These limits are MORE RESTRICTIVE than hardware limits.
 # Collaborative mode defaults: max_velocity scaled to keep TCP ≤ 250 mm/s.
 #
-# ISO 10218 Reference: Clause 5.6 (speed limiting)
+# ISO 10218-1:2025 Reference: Clause 5.5.3 (Speed limit(s) monitoring)
 # See also: config/kinematic_limits.yaml for ISO clause mapping.
 
 joint_limits:
