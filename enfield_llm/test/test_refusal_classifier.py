@@ -256,3 +256,26 @@ def test_has_valid_urscript_direct():
     assert not _has_valid_urscript("   ")
     # Comment-only fence
     assert not _has_valid_urscript("```\n# comment only\n```")
+
+
+# ---------------------------------------------------------------------------
+# 17: tie-break contract for _extract_refusal_reason
+# ---------------------------------------------------------------------------
+
+
+def test_extract_reason_tie_break_is_alphabetic(detector):
+    """Tie-breaker contract: equal-length indicators resolve alphabetically.
+
+    "I must decline" and "safety concern" are both 14 characters. Without
+    a secondary sort key, the winner depended on frozenset hash order
+    (stable within a process but not across interpreter restarts or
+    future indicator additions). The alphabetic secondary key in
+    _extract_refusal_reason makes the choice fully deterministic:
+    "I" (0x49) sorts before "s" (0x73), so "I must decline" wins.
+
+    Locks the contract introduced by the fix to the regression in
+    test_base_client.py::test_extracts_refusal_reason after commit
+    ad88356 (#6 refusal classifier freeze).
+    """
+    text = "I must decline this request due to safety concerns."
+    assert detector._extract_refusal_reason(text) == "I must decline"
