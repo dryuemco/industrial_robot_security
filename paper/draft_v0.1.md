@@ -284,23 +284,22 @@ after the first confirmatory E1 run with the new classifier.
 
 **Hypotheses.** Three confirmatory hypotheses, formalized in OSF Amendment 1 (approved 2026-04-07, see Appendix A):
 
-- **H4 (watchdog-in-loop reduction).** Iterative feedback from the static watchdog into the LLM generation loop reduces the combined (safety ∪ security) violation rate by ≥30% relative to single-shot generation, on matched task–model pairs. Tested via McNemar's exact test on paired binary outcomes (violation present / absent). *Status: analysis plan frozen; E3 data collection pending.*
-- **H5 (adversarial uplift).** Adversarial prompts A8.1–A8.8 increase the combined violation rate by ≥50% relative to the baseline condition, on matched task–model pairs. Tested via McNemar's exact test, per attack subtype.
-- **H6 (cross-model heterogeneity).** Combined violation rates differ across the three models (Qwen2.5-Coder-32B, DeepSeek-Coder-V2-16B, CodeLlama-34B) under matched conditions. Tested via Cochran's Q across the three paired proportions, with post-hoc pairwise McNemar tests.
+- **H4 (baseline violation rate).** At least 30% of baseline LLM-generated code samples contain at least one safety or security violation under the combined (DM ∪ SM) verdict, on matched task–model pairs. Tested via a one-sided exact binomial test against the threshold p₀ = 0.30, per model and pooled across models, with 95% Wilson confidence intervals on the per-model rates. *Status: analysis plan frozen; E1 data collection pending.*
+- **H5 (adversarial uplift).** Adversarial prompts A8.1–A8.8 increase the combined violation rate by at least 50 percentage points (absolute) over the matched-pair baseline, per (model, attack subtype) cell. Tested via McNemar's exact test on paired binary outcomes, with Holm–Bonferroni correction across the 24 (3 models × 8 subtypes) cells.
+- **H6 (watchdog-in-loop reduction).** Iterative feedback from the static watchdog into the LLM generation loop reduces the combined violation rate by at least 40% relative to single-shot generation, on matched task–model pairs. The single-shot conditions are baseline prompting and safety-prompted generation (E1), and the iterative condition is watchdog-in-loop feedback (E3). Tested via McNemar's exact test, per model and per single-shot condition (baseline-vs-watchdog and safety-vs-watchdog), with Newcombe 95% confidence intervals on the per-model relative reductions and Holm–Bonferroni correction across the per-model contrasts. *Status: analysis plan frozen; E3 data collection pending.*
 
 **Tests and corrections.**
 
-- McNemar's exact test for matched pairs (baseline vs. safety, baseline vs. adversarial, single-shot vs. watchdog-in-loop).
-- Cochran's Q for cross-model comparison under matched conditions.
-- Holm–Bonferroni correction across the H4–H6 family (family-wise α=0.05).
-- Power analysis: n≥25 matched pairs per contrast, α=0.05, β=0.20, target effect δ=30% absolute reduction (H4) / 50% relative uplift (H5).
+- McNemar's exact test for matched pairs (baseline vs. adversarial for H5; single-shot vs. watchdog-in-loop for H6). One-sided exact binomial test for H4.
+- Holm–Bonferroni correction across the H4–H6 confirmatory family (family-wise α = 0.05), and within each family's internal multiple-comparison set (24 cells for H5; per-model contrasts for H6).
+- **Cochran's Q across the three models is reported as exploratory only (see §VI.J), not as part of the preregistered H4–H6 confirmatory family.**
 
 **Sensitivity analyses (pre-specified, exploratory).**
 
-- *Per-attack subgroup (H5).* McNemar test repeated for each adversarial subtype A8.1–A8.8 separately, to localize which attack vectors drive the aggregate uplift. Reported with Holm–Bonferroni correction within the 8-subtype family.
-- *Per-model subgroup (H5, H6).* H5 contrast computed separately for each of the three models, to characterize model-specific adversarial vulnerability. Motivated by the smoke-test observation that DeepSeek-Coder-V2-16B exhibited a 1→22 violation spike under A8.6 while the other two models were unaffected.
-- *URScript validity gate.* Before any violation is counted toward H4–H6, generated code must pass a syntactic validity check against the URScript grammar (see §IV.C). Outputs failing the gate are reported separately as *invalid generations* rather than counted as zero-violation, to prevent pseudo-code outputs (observed in CodeLlama-34B) from inflating apparent safety. Sensitivity analysis re-runs all H5/H6 contrasts on the gate-passing subset only.
-- *Effect-size estimation.* For each McNemar contrast, we report the odds ratio with 95% mid-p confidence interval alongside the p-value, so that readers can assess practical significance independently of the binary hypothesis decision.
+- *Per-attack subgroup (H5).* The McNemar contrast is computed for each adversarial subtype A8.1–A8.8 separately, to localize which attack vectors drive the aggregate uplift. Reported with Holm–Bonferroni correction within the 8-subtype family.
+- *Per-model subgroup (H5).* The H5 contrast is computed separately for each of the three models, to characterize model-specific adversarial vulnerability. Motivated by the smoke-test observation that DeepSeek-Coder-V2-16B exhibited a 1→22 violation spike under A8.6 while the other two models were unaffected.
+- *URScript validity gate.* Before any violation is counted toward H4, H5, or H6, generated code must pass a syntactic validity check against the URScript grammar (see §IV.C). Outputs failing the gate are reported separately as *invalid generations* rather than counted as zero-violation, to prevent pseudo-code outputs (observed in CodeLlama-34B) from inflating apparent safety. All H4, H5, and H6 contrasts are re-run on the gate-passing subset only.
+- *Effect-size estimation.* For each McNemar contrast, we report the odds ratio with 95% mid-p confidence interval alongside the p-value, so that readers can assess practical significance independently of the binary hypothesis decision. For the H4 binomial test, the per-model rate and Wilson CI is the primary effect-size summary.
 
 ---
 
