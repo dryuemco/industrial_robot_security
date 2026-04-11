@@ -251,12 +251,15 @@ class LLMClient(ABC):
     def _extract_refusal_reason(self, text: str) -> str:
         """Extract a refusal indicator found in text.
 
-        Deterministic: iterates indicators sorted by length (longest
-        first) so the most specific match wins and the output does
-        not depend on frozenset iteration order.
+        Fully deterministic: iterates indicators sorted by length
+        (longest first) with an alphabetic secondary key so that
+        ties between equal-length indicators resolve in lexicographic
+        order rather than depending on frozenset iteration order.
+        The most specific (longest) match wins; on a tie, the
+        alphabetically first indicator wins.
         """
         text_lower = text.lower()
-        for indicator in sorted(REFUSAL_INDICATORS, key=len, reverse=True):
+        for indicator in sorted(REFUSAL_INDICATORS, key=lambda s: (-len(s), s)):
             if indicator.lower() in text_lower:
                 return indicator
         return "unknown"
