@@ -284,7 +284,7 @@ after the first confirmatory E1 run with the new classifier.
 
 **Hypotheses.** Three confirmatory hypotheses, formalized in OSF Amendment 1 (approved 2026-04-07, see Appendix A):
 
-- **H4 (baseline violation rate).** At least 30% of baseline LLM-generated code samples contain at least one safety or security violation under the combined (DM ∪ SM) verdict, on matched task–model pairs. Tested via a one-sided exact binomial test against the threshold p₀ = 0.30, per model and pooled across models, with 95% Wilson confidence intervals on the per-model rates. *Status: analysis plan frozen; E1 data collection pending.*
+- **H4 (baseline violation rate).** At least 30% of baseline (neutral-prompted) LLM-generated code samples contain at least one safety or security violation under the combined (DM ∪ SM) verdict, on matched task–model pairs. Tested via a one-sided exact binomial test against the threshold p₀ = 0.30, per model and pooled across models, with 95% Wilson confidence intervals on the per-model and pooled rates. Safety-augmented prompting is reported descriptively in §VI.F (Table III(b)) but is not part of the H4 confirmatory test. *Status: analysis plan frozen; E1 data collection pending.*
 - **H5 (adversarial uplift).** Adversarial prompts A8.1–A8.8 increase the combined violation rate by at least 50 percentage points (absolute) over the matched-pair baseline, per (model, attack subtype) cell. Tested via McNemar's exact test on paired binary outcomes, with Holm–Bonferroni correction across the 24 (3 models × 8 subtypes) cells.
 - **H6 (watchdog-in-loop reduction).** Iterative feedback from the static watchdog into the LLM generation loop reduces the combined violation rate by at least 40% relative to single-shot generation, on matched task–model pairs. The single-shot conditions are baseline prompting and safety-prompted generation (E1), and the iterative condition is watchdog-in-loop feedback (E3). Tested via McNemar's exact test, per model and per single-shot condition (baseline-vs-watchdog and safety-vs-watchdog), with Newcombe 95% confidence intervals on the per-model relative reductions and Holm–Bonferroni correction across the per-model contrasts. *Status: analysis plan frozen; E3 data collection pending.*
 
@@ -377,18 +377,24 @@ Valid URScript uses `movej()` and `movel()` with specific parameter syntax. The 
 > from `results/E1/` once the LLM inference server is available. Cells marked
 > `—` are placeholders.*
 
-**Table III.** Combined violation rate (CVR) per model under neutral and safety-augmented prompts. Cell-level binary: ≥1 violating response in 3 reps. CIs are exact binomial (Clopper–Pearson, 95%).
+**Table III(a).** Combined violation rate (CVR) under the neutral baseline prompt — *H4 confirmatory analysis*. Cell-level binary: ≥1 violating response in 3 reps. CIs are Wilson score 95% intervals; the binomial test is one-sided against p₀ = 0.30.
 
-| Model | Condition | N cells | CVR | 95% CI | Refusal Rate | Invalid pseudo-code | H4 result |
-|---|---|---|---|---|---|---|---|
-| Qwen2.5-Coder-32B | neutral | 15 | — | — | — | — | — |
-| Qwen2.5-Coder-32B | safety-augmented | 15 | — | — | — | — | — |
-| DeepSeek-Coder-V2-16B | neutral | 15 | — | — | — | — | — |
-| DeepSeek-Coder-V2-16B | safety-augmented | 15 | — | — | — | — | — |
-| CodeLlama-34B | neutral | 15 | — | — | — | — | — |
-| CodeLlama-34B | safety-augmented | 15 | — | — | — | — | — |
+| Scope | N cells | CVR | 95% Wilson CI | p (one-sided binomial) | H4 result |
+|---|---|---|---|---|---|
+| Qwen2.5-Coder-32B | 15 | — | — | — | — |
+| DeepSeek-Coder-V2-16B | 15 | — | — | — | — |
+| CodeLlama-34B | 15 | — | — | — | — |
+| All models (pooled) | 45 | — | — | — | — |
 
-**H4 decision:** supported if at least one model rejects H0: CVR < 0.30 after Holm–Bonferroni correction across the 3 models (family-wise α=0.05). See §V.E for the pre-specified analysis plan.
+**H4 decision:** supported if at least one of the four tests (3 per-model + 1 pooled) rejects H0: p < 0.30 at family-wise α = 0.05 after Holm–Bonferroni correction. See §V.E for the pre-specified analysis plan.
+
+**Table III(b).** Combined violation rate under the safety-augmented prompt — *descriptive only*. These rates are reported for completeness and to characterize the effect of safety-prompted generation; they are **not** part of the H4 confirmatory test (see §V.E).
+
+| Model | N cells | CVR | 95% Wilson CI | Refusal Rate | Invalid pseudo-code |
+|---|---|---|---|---|---|
+| Qwen2.5-Coder-32B | 15 | — | — | — | — |
+| DeepSeek-Coder-V2-16B | 15 | — | — | — | — |
+| CodeLlama-34B | 15 | — | — | — | — |
 
 ---
 
@@ -410,15 +416,18 @@ Valid URScript uses `movej()` and `movel()` with specific parameter syntax. The 
 
 ### H. E3 — Watchdog-in-Loop Defense (H6) [PENDING DATA]
 
-**Table V.** McNemar test on matched (model, task, condition) pairs comparing single-shot vs. watchdog-in-loop generation. WRR = relative reduction; b/c = discordant cells; OR = b/c with conditional MLE 95% CI.
+**Table V.** McNemar test on matched (model, task) pairs comparing single-shot generation against watchdog-in-loop generation. Two single-shot conditions are contrasted against the watchdog-in-loop condition (E3) per model: the neutral baseline prompt and the safety-augmented prompt (both from E1). WRR = relative reduction (Δ / rate_single-shot); b/c = discordant cells; CI is the Newcombe hybrid score 95% interval on the absolute rate difference Δpp.
 
-| Model | N pairs | b (helps) | c (harms) | WRR | OR (95% CI) | p (Holm-adj) | H6 result |
-|---|---|---|---|---|---|---|---|
-| Qwen2.5-Coder-32B | — | — | — | — | — | — | — |
-| DeepSeek-Coder-V2-16B | — | — | — | — | — | — | — |
-| CodeLlama-34B | — | — | — | — | — | — | — |
+| Model | Single-shot condition | N pairs | b (helps) | c (harms) | Δpp (Newcombe 95% CI) | WRR | p (Holm-adj) | H6 result |
+|---|---|---|---|---|---|---|---|---|
+| Qwen2.5-Coder-32B | neutral baseline | — | — | — | — | — | — | — |
+| Qwen2.5-Coder-32B | safety-augmented | — | — | — | — | — | — | — |
+| DeepSeek-Coder-V2-16B | neutral baseline | — | — | — | — | — | — | — |
+| DeepSeek-Coder-V2-16B | safety-augmented | — | — | — | — | — | — | — |
+| CodeLlama-34B | neutral baseline | — | — | — | — | — | — | — |
+| CodeLlama-34B | safety-augmented | — | — | — | — | — | — | — |
 
-**H6 decision:** supported per model if McNemar p < 0.05 after Holm–Bonferroni AND WRR ≥ 40%. Significant results with WRR < 40% reported as "statistically significant but below the pre-specified effect-size threshold."
+**H6 decision:** supported per (model, single-shot condition) cell if McNemar p < 0.05 after Holm–Bonferroni correction across the 6 contrasts AND WRR ≥ 40%. Significant results with WRR < 40% reported as "statistically significant but below the pre-specified effect-size threshold."
 
 ---
 
