@@ -561,16 +561,29 @@ Pre-registered hypotheses:
 ### B. Reproducibility
 
 All experiments can be replicated at zero cost:
+<!-- FIXME (Phase 6 Step 2 audit, 2026-04-13):
+     The sub-counts "45 McNemar paired-design tests" and
+     "5 URScript validity-gate tests" below have been stale
+     since at least commit f636ff6 (Phase 3e, "cascade test
+     count 624 -> 702"). Earlier cascades (619 -> 624 -> 702)
+     updated the total but left these sub-claims untouched,
+     and it is unclear from history what taxonomy they were
+     originally derived from. The total (708) has been
+     verified via `pytest --collect-only`; the sub-claims
+     have NOT. Verify and correct in a dedicated audit commit
+     before the confirmatory E1 run, or remove the sub-claims
+     if the taxonomy cannot be reconstructed. -->
+
 ```bash
 git clone https://github.com/dryuemco/industrial_robot_security
 ollama pull qwen2.5-coder:32b
 ollama pull deepseek-coder-v2:16b
 ollama pull codellama:34b
 OLLAMA_HOST=http://<your-ollama-ip>:11434 python3 scripts/smoke_test_llm.py
-./scripts/run_tests.sh   # 702 tests, including 45 McNemar paired-design tests
+./scripts/run_tests.sh   # 708 tests, including 45 McNemar paired-design tests
 ```
 
-The full test suite (702 tests across `tests/`, including 45 McNemar paired-design tests for H4–H6 and 5 URScript validity-gate tests) is executed by `./scripts/run_tests.sh` and gated by GitHub Actions CI on every push to `main`.
+The full test suite (708 tests across `tests/`, including 45 McNemar paired-design tests for H4–H6 and 5 URScript validity-gate tests) is executed by `./scripts/run_tests.sh` and gated by GitHub Actions CI on every push to `main`.
 
 ### C. Smoke Test Raw Data
 
