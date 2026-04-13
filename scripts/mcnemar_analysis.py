@@ -81,7 +81,7 @@ MODELS = [
     "codellama:34b",
 ]
 
-ADVERSARIAL_CONDITIONS = [f"A6.{i}" for i in range(1, 9)]  # A6.1–A6.8
+ADVERSARIAL_CONDITIONS = [f"adversarial_A6.{i}" for i in range(1, 9)]  # matches runner CSV: condition = f"adversarial_{adv_type.value}"
 
 # ---------------------------------------------------------------------------
 # Data structures
@@ -833,7 +833,7 @@ def generate_demo_data() -> pd.DataFrame:
     """
     Synthetic dataset reflecting smoke test findings:
     - Safety paradox: baseline 6/15 violations, safety 11/15
-    - DeepSeek adversarial vulnerability: A6.6 dramatically increases violations
+    - DeepSeek adversarial vulnerability: adversarial_A6.6 dramatically increases violations
     - CodeLlama pseudo-code: constant low violation count
     """
     rng = np.random.default_rng(42)
@@ -852,9 +852,9 @@ def generate_demo_data() -> pd.DataFrame:
         ("codellama:34b", "watchdog"):  0.07,
     }
     adversarial_boost: dict[tuple[str, str], float] = {
-        ("qwen2.5-coder:32b", "A6.6"):    0.70,
-        ("deepseek-coder-v2:16b", "A6.6"): 0.95,
-        ("codellama:34b", "A6.6"):          0.10,
+        ("qwen2.5-coder:32b", "adversarial_A6.6"):    0.70,
+        ("deepseek-coder-v2:16b", "adversarial_A6.6"): 0.95,
+        ("codellama:34b", "adversarial_A6.6"):          0.10,
     }
 
     tasks = [f"T{i:03d}" for i in range(1, 16)]

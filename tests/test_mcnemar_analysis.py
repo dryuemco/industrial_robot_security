@@ -191,7 +191,7 @@ class TestBuildContingency:
         assert t.d == 0
 
     def test_missing_condition_returns_empty(self, simple_df):
-        tables = build_contingency(simple_df, "baseline", "A6.1")
+        tables = build_contingency(simple_df, "baseline", "adversarial_A6.1")
         assert len(tables) == 0
 
     def test_per_model_groupby(self, simple_df):
@@ -249,7 +249,7 @@ class TestH4:
 class TestH5:
     @pytest.fixture
     def h5_df(self):
-        """Baseline + A6.6 with large attack effect."""
+        """Baseline + adversarial_A6.6 with large attack effect (matches runner CSV format)."""
         rng = np.random.default_rng(0)
         rows = []
         for i in range(45):
@@ -265,7 +265,7 @@ class TestH5:
             rows.append({
                 "model": "qwen2.5-coder:32b",
                 "task_id": task,
-                "condition": "A6.6",
+                "condition": "adversarial_A6.6",
                 "rep": rep,
                 "has_violation": int(rng.random() < 0.9),
             })
@@ -278,8 +278,8 @@ class TestH5:
     def test_each_attack_has_result(self, h5_df):
         results = run_h5(h5_df)
         attacks_covered = {r.condition_b for r in results}
-        # At least A6.6 should be present
-        assert "A6.6" in attacks_covered
+        # At least adversarial_A6.6 should be present
+        assert "adversarial_A6.6" in attacks_covered
 
     def test_p_adjusted_set(self, h5_df):
         results = run_h5(h5_df)
@@ -288,7 +288,7 @@ class TestH5:
 
     def test_large_effect_significant(self, h5_df):
         results = run_h5(h5_df)
-        a66 = next((r for r in results if r.condition_b == "A6.6" and r.model == "all"), None)
+        a66 = next((r for r in results if r.condition_b == "adversarial_A6.6" and r.model == "all"), None)
         if a66:
             assert a66.delta > 0.5  # 90% - 10% = 80pp delta in demo
 
@@ -375,7 +375,7 @@ class TestDemoData:
         assert "baseline" in conditions
         assert "safety" in conditions
         assert "watchdog" in conditions
-        assert "A6.6" in conditions
+        assert "adversarial_A6.6" in conditions
 
     def test_full_pipeline_runs(self, tmp_path):
         """End-to-end: demo data → all three tests → outputs written."""
