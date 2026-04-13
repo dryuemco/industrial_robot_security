@@ -23,6 +23,7 @@ from mcnemar_analysis import (
     H4_THRESHOLD,
     H5_THRESHOLD,
     H6_THRESHOLD,
+    MODELS,
     ContingencyTable,
     McNemarResult,
     build_contingency,
@@ -659,4 +660,213 @@ class TestCrossModelCochranQ:
             d = asdict(r)
             assert "q_statistic" in d
             assert "per_condition_rates" in d
+
+
+# ---------------------------------------------------------------------------
+# Hypothesis mapping invariants (Phase 6)
+# ---------------------------------------------------------------------------
+
+class TestHypothesisMappingInvariants:
+    """
+    Pin the contract between run_h4/h5/h6 and paper hypotheses H4/H5/H6
+    (post OSF Amendment 1, approved 2026-04-07).
+
+    These tests are semantic tripwires: they encode mapping invariants
+    that a future refactor could silently break without affecting any
+    other test in the suite. They deliberately build minimal independent
+    fixtures (no reuse of h5_df, full_condition_df, etc.) so that each
+    invariant is about the function's behavior, not a shared setup's
+    coincidences.
+
+    See scripts/mcnemar_analysis.py module docstring for the
+    authoritative naming convention declaration, and
+    docs/WEEK10_TODO.md item #12 for the audit trail.
+    """
+
+    # ---- minimal fixture helpers ----
+
+    def _make_baseline_only_df(self):
+        """3 models x 10 tasks, condition='baseline' only, 50% violation rate."""
+        rows = []
+        for model in MODELS:
+            for i in range(10):
+                rows.append({
+                    "model": model,
+                    "task_id": f"T{i:03d}",
+                    "condition": "baseline",
+                    "rep": 1,
+                    "has_violation": 1 if i < 5 else 0,
+                })
+        return pd.DataFrame(rows)
+
+    def _make_full_condition_df(self):
+        """3 models x 10 tasks x {baseline, safety, watchdog, adversarial_A6.1}."""
+        rows = []
+        for model in MODELS:
+            for cond in ["baseline", "safety", "watchdog", "adversarial_A6.1"]:
+                for i in range(10):
+                    rows.append({
+                        "model": model,
+                        "task_id": f"T{i:03d}",
+                        "condition": cond,
+                        "rep": 1,
+                        "has_violation": 1 if i < 5 else 0,
+                    })
+        return pd.DataFrame(rows)
+
+    # ---- T1: H4 ignores non-baseline rows ----
+
+    def test_run_h4_only_uses_baseline_condition(self):
+        """H4 must filter to condition=='baseline' and ignore other rows.
+
+        Behavioral invariant: if we inject all-violation contamination
+        rows for safety/watchdog/adversarial conditions, the pooled
+        baseline rate from run_h4 must be unchanged. A basic
+        'baseline-only df runs' test would be vacuous -- it would pass
+        even if the condition filter were removed entirely.
+        """
+        df_clean = self._make_baseline_only_df()
+
+        contaminants = []
+        for model in MODELS:
+            for i in range(10):
+                for cond in ["safety", "watchdog", "adversarial_A6.1"]:
+                    contaminants.append({
+                        "model": model,
+                        "task_id": f"T{i:03d}",
+                        "condition": cond,
+                        "rep": 1,
+                        "has_violation": 1,
+                    })
+        df_contaminated = pd.concat(
+            [df_clean, pd.DataFrame(contaminants)], ignore_index=True
+        )
+
+        results_clean = run_h4(df_clean)
+        results_contaminated = run_h4(df_contaminated)
+
+        pooled_clean = next(r for r in results_clean if r.model == "all_models")
+        pooled_contaminated = next(
+            r for r in results_contaminated if r.model == "all_models"
+        )
+
+        assert pooled_clean.rate_a == pooled_contaminated.rate_a
+        assert pooled_clean.n_pairs == pooled_contaminated.n_pairs
+
+    # ---- T2: H4 comparison string and row shape ----
+
+    def test_run_h4_comparison_string_and_row_shape(self):
+        """H4 returns comparison='H4_baseline_rate' for every row, with
+        one pooled row ('all_models') plus one row per model in MODELS.
+        """
+        df = self._make_baseline_only_df()
+        results = run_h4(df)
+
+        assert all(r.comparison == "H4_baseline_rate" for r in results)
+
+        models_seen = {r.model for r in results}
+        assert "all_models" in models_seen
+        for m in MODELS:
+            assert m in models_seen
+
+        assert len(results) == 1 + len(MODELS)
+
+    # ---- T3: H5 comparison strings use runner-aligned prefixed labels ----
+
+    def test_run_h5_uses_prefixed_adversarial_labels(self):
+        """H5 comparison strings must match runner CSV label format
+        ('adversarial_A6.N'), not the bare 'A6.N' form. This pins the
+        fix from commit 01739ba (Phase 6-prereq) against silent
+        regression.
+        """
+        rows = []
+        for model in MODELS:
+            for i in range(15):
+                rows.append({
+                    "model": model,
+                    "task_id": f"T{i:03d}",
+                    "condition": "baseline",
+                    "rep": 1,
+                    "has_violation": 1 if i < 2 else 0,
+                })
+                rows.append({
+                    "model": model,
+                    "task_id": f"T{i:03d}",
+                    "condition": "adversarial_A6.1",
+                    "rep": 1,
+                    "has_violation": 1 if i < 12 else 0,
+                })
+        df = pd.DataFrame(rows)
+
+        results = run_h5(df)
+        assert len(results) > 0
+
+        comparisons = {r.comparison for r in results}
+        assert "H5_adversarial_A6.1_vs_baseline" in comparisons
+        assert "H5_A6.1_vs_baseline" not in comparisons
+
+        for r in results:
+            assert r.condition_b.startswith("adversarial_A6.")
+
+    # ---- T4: H6 tests both single-shot conditions against watchdog ----
+
+    def test_run_h6_tests_baseline_and_safety_against_watchdog(self):
+        """H6 must produce contrasts for (baseline, watchdog) AND
+        (safety, watchdog). Full fixture => 3 per-model rows + 1 pooled
+        row per condition pair = 2 * (len(MODELS) + 1) = 8 rows total.
+
+        The pooled row uses model_key=='all' (distinct from H4's
+        'all_models' label; this stylistic inconsistency is a
+        pre-existing property of run_h5/run_h6 vs run_h4 and is NOT
+        in scope for Phase 6 to fix).
+        """
+        df = self._make_full_condition_df()
+        results = run_h6(df)
+
+        cond_a_set = {r.condition_a for r in results}
+        cond_b_set = {r.condition_b for r in results}
+        assert cond_a_set == {"baseline", "safety"}
+        assert cond_b_set == {"watchdog"}
+
+        assert len(results) == 2 * (len(MODELS) + 1)
+
+    # ---- T5: H6 comparison string format is exact ----
+
+    def test_run_h6_comparison_string_format(self):
+        """H6 comparison strings must be exactly the two documented
+        forms; any extra or missing permutation fails the set equality.
+        """
+        df = self._make_full_condition_df()
+        results = run_h6(df)
+
+        comparisons = {r.comparison for r in results}
+        assert comparisons == {
+            "H6_watchdog_vs_baseline",
+            "H6_watchdog_vs_safety",
+        }
+
+    # ---- T6: confirmatory vs exploratory return-type distinction ----
+
+    def test_confirmatory_family_and_cochran_return_types_distinct(self):
+        """run_h4/h5/h6 return list[McNemarResult]; run_cross_model_cochran_q
+        returns list[CochranResult]. The return-type distinction encodes
+        the confirmatory / exploratory split (OSF Amendment 1) and must
+        be preserved across any future refactor.
+        """
+        df = self._make_full_condition_df()
+
+        h4 = run_h4(df)
+        h5 = run_h5(df)
+        h6 = run_h6(df)
+        cq = run_cross_model_cochran_q(df)
+
+        assert len(h4) > 0
+        assert len(h5) > 0
+        assert len(h6) > 0
+        assert len(cq) > 0
+
+        assert all(isinstance(r, McNemarResult) for r in h4)
+        assert all(isinstance(r, McNemarResult) for r in h5)
+        assert all(isinstance(r, McNemarResult) for r in h6)
+        assert all(isinstance(r, CochranResult) for r in cq)
 
