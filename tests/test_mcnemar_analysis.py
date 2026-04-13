@@ -639,7 +639,7 @@ class TestCrossModelCochranQ:
             h4_list=[], h5_list=[], h6_list=[],
             cochran_results=results,
         )
-        assert "## H6 Omnibus: Cross-Model Cochran's Q" in md
+        assert "## Exploratory: Cross-Model Cochran's Q (not part of H4-H6 confirmatory family)" in md
         assert "baseline" in md
         assert "safety" in md
         assert "adversarial_any" in md
@@ -649,7 +649,7 @@ class TestCrossModelCochranQ:
         # When cochran_results is None, the section header is still
         # rendered and a 'not computed' placeholder row is emitted
         # so the reader knows the test was deliberately skipped.
-        assert "## H6 Omnibus: Cross-Model Cochran's Q" in md
+        assert "## Exploratory: Cross-Model Cochran's Q (not part of H4-H6 confirmatory family)" in md
         assert "not computed" in md
 
     def test_cochran_result_serializable(self, full_condition_df):

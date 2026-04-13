@@ -4,10 +4,20 @@ ENFIELD McNemar Statistical Analysis
 =====================================
 Tests H4, H5, H6 hypotheses from E1/E2/E3 experiment results.
 
-Hypotheses:
+Hypotheses (per OSF Amendment 1, approved 2026-04-07):
   H4: LLMs generate safety violations in ≥30% of baseline scenarios
   H5: Adversarial prompts increase violation rate by ≥50 percentage points
   H6: Watchdog-in-loop reduces violations by ≥40% (relative)
+
+Naming convention:
+  run_h4, run_h5, run_h6 align 1:1 with paper hypotheses H4, H5, H6.
+  Function names are kept stable because they are referenced in the
+  OSF preregistration; any future rename must preserve this mapping.
+  Cochran's Q (run_cross_model_cochran_q) is NOT a fourth confirmatory
+  hypothesis -- it is an exploratory cross-model heterogeneity analysis
+  reported alongside the confirmatory H4-H6 family but explicitly
+  outside it. See paper sections V.E, VI.J, VII.B.5 and
+  docs/WEEK10_TODO.md #12 for the audit trail.
 
 Usage:
   python3 scripts/mcnemar_analysis.py --results-dir results/
@@ -132,14 +142,18 @@ class McNemarResult:
 class CochranResult:
     """Cochran's Q omnibus test across k matched conditions.
 
-    Used for paper-level H6 (cross-model heterogeneity): given N
-    tasks and k=3 models, test whether the probability of a
-    violation differs across the three models under a fixed
-    experimental condition (baseline / safety / adversarial-OR).
-    Cochran's Q reduces to McNemar when k==2 and is the natural
-    omnibus extension for k>=3 matched binary proportions. When
-    Q is significant, the preregistered post-hoc is the pairwise
-    McNemar family already produced by run_h5 and run_h6.
+    Exploratory cross-model heterogeneity analysis: given N tasks
+    and k=3 models, test whether the probability of a violation
+    differs across the three models under a fixed experimental
+    condition (baseline / safety / adversarial-OR). Cochran's Q
+    reduces to McNemar when k==2 and is the natural omnibus
+    extension for k>=3 matched binary proportions.
+
+    NOT part of the H4-H6 confirmatory family per OSF Amendment 1
+    (approved 2026-04-07). The confirmatory family is H4 (run_h4),
+    H5 (run_h5), H6 (run_h6); Cochran's Q is reported as exploratory
+    only, alongside the confirmatory McNemar contrasts. See paper
+    sections V.E, VI.J, and VII.B.5 for the full rationale.
     """
 
     condition: str           # e.g. 'baseline', 'safety', 'adversarial_any'
@@ -485,7 +499,7 @@ def _task_model_matrix(
 
 
 def run_cross_model_cochran_q(df: pd.DataFrame) -> list[CochranResult]:
-    """Paper-level H6: are violation rates equal across the k models?
+    """Exploratory: are violation rates equal across the k models?
 
     Runs one Cochran's Q test per experimental condition:
 
@@ -502,14 +516,14 @@ def run_cross_model_cochran_q(df: pd.DataFrame) -> list[CochranResult]:
     applied across the (up to three) conditions as a single
     family at alpha=ALPHA.
 
-    Note: kodda mevcut run_h4/run_h5/run_h6 fonksiyonları paper-
-    level H4/H5/H6 hipotezleri ile **aynı numarayı kullanmıyor**
-    olabilir (kod-level run_h6 aslında watchdog-in-loop testidir,
-    paper-level H4 ile örtüşür). Bu fonksiyon paper-level H6
-    semantiğinde (cross-model heterogeneity) çalışır; mevcut
-    run_h* fonksiyonlarına dokunulmuyor. Kod <-> paper
-    isimlendirme çakışması ayrı bir audit item olarak
-    docs/WEEK10_TODO.md'de kayıt altındadır.
+    Naming convention (post-OSF-Amendment-1, approved 2026-04-07):
+    run_h4, run_h5, and run_h6 in this module align 1:1 with paper
+    hypotheses H4 (baseline violation rate), H5 (adversarial uplift),
+    and H6 (watchdog-in-loop reduction). Cochran's Q is NOT a fourth
+    confirmatory hypothesis; it is an exploratory cross-model
+    heterogeneity analysis reported alongside the confirmatory family
+    but explicitly outside it. See paper sections V.E, VI.J, and
+    VII.B.5, and docs/WEEK10_TODO.md item #12 for the audit trail.
     """
     raw_results: list[CochranResult] = []
 
@@ -758,14 +772,16 @@ def generate_markdown_report(
         "",
         "---",
         "",
-        "## H6 Omnibus: Cross-Model Cochran's Q",
+        "## Exploratory: Cross-Model Cochran's Q (not part of H4-H6 confirmatory family)",
         "",
         "Cochran's Q test for equality of violation proportions across "
-        "the k models under each fixed experimental condition. This is "
-        "the preregistered omnibus companion to the pairwise McNemar "
-        "contrasts reported above; a significant Q motivates the "
-        "pairwise post-hocs, a non-significant Q suggests the models "
-        "are indistinguishable under that condition.",
+        "the k models under each fixed experimental condition. Reported "
+        "as an exploratory companion to the confirmatory H4-H6 family "
+        "above, per OSF Amendment 1 (approved 2026-04-07): Cochran's Q "
+        "is NOT part of the preregistered confirmatory family. A "
+        "significant Q motivates descriptive inspection of per-model "
+        "rates; a non-significant Q suggests the models are "
+        "indistinguishable under that condition.",
         "",
         "| Condition | k | N | Q | df | p | p (adj) | Result |",
         "|-----------|---|---|---|----|---|---------|--------|",
@@ -980,7 +996,7 @@ def main() -> int:
     log.info("Testing H6 (watchdog effectiveness)…")
     h6_results = run_h6(df)
 
-    log.info("Testing cross-model Cochran's Q (paper H6 omnibus)…")
+    log.info("Testing cross-model Cochran's Q (exploratory, not in H4-H6 confirmatory family)…")
     cochran_results = run_cross_model_cochran_q(df)
 
     all_results = h4_results + h5_results + h6_results
@@ -1060,7 +1076,7 @@ def main() -> int:
 
     # Cochran's Q cross-model omnibus
     if cochran_results:
-        print(f"\n  H6 omnibus (Cochran's Q, cross-model)")
+        print(f"\n  Exploratory: cross-model Cochran's Q (not part of confirmatory family)")
         for r in cochran_results:
             if r.n_subjects < 2 or r.k < 2:
                 print(
