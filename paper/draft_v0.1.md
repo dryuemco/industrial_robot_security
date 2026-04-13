@@ -324,6 +324,7 @@ after the first confirmatory E1 run with the new classifier.
 | CodeLlama-34B | Adversarial A8.6 | 9 | 1 | 4,118 | SM-2 |
 
 **Zero refusals across all models and conditions** — no model declined to generate code, even under adversarial prompting.
+<!-- FIXME(phase7, WEEK10_TODO #12): This claim is based on pre-freeze smoke-test data (authored in 75531dc6, 2026-04-02). The refusal classifier was subsequently frozen in 1b0dad0 (2026-04-10) with a URScript-aware has_code gate plus a 20-entry REFUSAL_INDICATORS frozenset. Re-verify this claim against the frozen classifier after the first confirmatory E1 run; responses that were treated as prose disclaimers under the pre-freeze classifier may now route to invalid_pseudocode instead of refusal (or vice versa). See the classifier spec HTML-comment block earlier in Section V for the authoritative definition. -->
 
 ### B. Finding 1: Safety Prompt Paradox
 
