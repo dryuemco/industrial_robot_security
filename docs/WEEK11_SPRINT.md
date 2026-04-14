@@ -784,3 +784,291 @@ as W11-S4, F3 retained). All other sweeps clean.
 
 **Resolution:** Sweep complete. Recorded here so session 11
 does not re-run the mechanical battery.
+
+
+---
+
+## Filed in session 11 (Week 11 editorial pass)
+
+Session 11 transitioned from the pre-E1 integrity audit (closed
+in session 10) into the Week 11 editorial pass territory. Scope:
+W11-S4 (paper refusal classifier spec promotion) and W11-S1
+(THREAT_MODEL.md A8 sub-variant taxonomy realignment). Both
+items were filed during sessions 8 and 10 as paper-editorial
+bundle candidates and inherited clean by session 11.
+
+Session 11 did not start E1, did not check PC2 reachability,
+did not touch paper sec V.E, did not start Phase 3d, did not
+start Phase 8, did not touch OSF, did not amend any commit,
+did not start the code-side A6.* -> A8.* rename (W11-S2). The
+session7-pre-rebase-backup tag is still present at its session
+7 position.
+
+### W11-S4 closure -- paper refusal classifier spec promotion
+
+**Commit:** `f3525df` on main, pushed to origin/main.
+**Diff stats:** 1 file changed, 3 insertions(+), 37 deletions(-).
+**Files touched:** `paper/draft_v0.1.md` only.
+
+**What it did:**
+
+1. Consolidated the paper V.D Metrics table, which was
+   previously split in half by a 33-line HTML comment block
+   sitting between the RR row and the ASR/Detection Rate/FPR
+   rows. Post-patch the metrics table is contiguous.
+2. Promoted the two-gate refusal classifier spec from the
+   HTML comment's "Ready-to-paste text" block to a visible
+   bold-lead paragraph (`**Refusal detection.**`)
+   immediately following the metrics table. Text kept
+   verbatim from the HTML comment (indent stripped only),
+   so the VI.A FIXME back-reference still points at the
+   same authoritative definition. The bold-lead style
+   matches the V.E `**H4.**` convention; no new
+   sub-subsection was created, because V.A/B/C/D already
+   contain no sub-subsections and introducing one only for
+   refusal detection would create structural asymmetry.
+3. Dropped the HTML comment's "Also update: line ~291..."
+   reminder, which was redundant with the VI.A FIXME
+   block that already tracks the same post-E1 re-verify
+   action.
+4. Dropped the HTML comment's "TODO (Week 10 #6, commit
+   ad88356)" marker, which resolves with the promotion.
+5. Updated the VI.A FIXME back-reference wording from
+   "classifier spec HTML-comment block earlier in Section V"
+   to "Refusal detection paragraph earlier in Section V".
+   The FIXME's semantic content (post-E1 re-verify of the
+   zero-refusals claim against the frozen classifier) is
+   unchanged; the wording update is a direct mechanical
+   consequence of the promotion.
+
+**V.E lock preserved.** The line ~327 FIXME block at the
+VI.A zero-refusals claim was not touched except for the
+six-word back-reference wording fix.
+
+**Test count:** 708 throughout. Post-commit HEAD blob grep
+verified: "Refusal detection"=2, "HTML-comment block"=0,
+FIXME(phase7)=1.
+
+### W11-S1 closure -- THREAT_MODEL.md A8 sub-variant taxonomy realignment
+
+**Commit:** `8774b0f` on main, pushed to origin/main.
+**Diff stats:** 1 file changed, 15 insertions(+), 33 deletions(-).
+**Files touched:** `docs/THREAT_MODEL.md` only.
+
+**What it did:** Nine in-place str_replace edits across a
+single atomic commit:
+
+1. Version header bump 1.1 -> 1.2
+2. Date header bump 2026-02-28 -> 2026-04-14
+3. Retired the session 8 advisory blockquote (18-line
+   STATUS NOTE added by commit `31f8f86`). The document
+   header now flows directly into section 1 through the
+   standard markdown separator.
+4. Section 2.1 White-Box A8 Sub-vectors: expanded from
+   the pre-taxonomy six-label list to `A8.1-A8.8` with
+   a note that white-box additionally benefits from GCG
+   optimization as a cross-cutting delivery mechanism
+   over any sub-variant. The GCG capability description
+   itself (Capability bullet, line 68) is unchanged.
+5. Section 2.2 Gray-Box A8 Sub-vectors: expanded from
+   five labels to `A8.1-A8.8` with a note on realistic
+   prompt engineering within the 100-query budget.
+6. Section 2.3 Black-Box A8 Sub-vectors: expanded from
+   three labels to `A8.1-A8.6` plus `A8.8`, with A8.7
+   Obfuscation explicitly excluded (rationale: the code
+   template for A8.7 uses hex-encoded unit values such
+   as `0x03E8 mm/s`, which requires URScript parameter
+   and unit knowledge unavailable to black-box attackers
+   who observe only execution outcomes).
+7. Attacker Capability Comparison A8 sub-vectors row:
+   realigned with the per-tier lists above. Rows for
+   other capability dimensions unchanged.
+8. Attack-Attacker Matrix A1-A8 rows: gray-box cells
+   re-derived from code-side `A6_N` template semantics
+   as realized in `enfield_llm/enfield_llm/prompt_builder.py`,
+   then mapped to the new paper `A8.*` labels. The A8 row
+   white-box cell rewritten as "Template injection
+   (A8.1-A8.8) + GCG (section 2.1)", removing the legacy
+   "GCG suffix (A8.1)" claim since the new A8.* taxonomy
+   is prompt-engineering-only; GCG lives in section 2.1
+   capability and section 4 methodology. Black-box column
+   "Transfer suffix" phrasing preserved (refers to section
+   2.3 surrogate transferability, not a sub-variant label).
+9. Changelog row for v1.2 appended with a descriptive
+   summary (intentionally not embedding the retired label
+   strings; see lesson below).
+
+**Resolution direction:** THREAT_MODEL.md follows paper
+section IV.C. Paper IV.C was treated as design-time ground
+truth for the A8 labels, even though code-side
+`A6_1..A6_8` enum identifiers still use the legacy names.
+The paper IV.C Note explicitly documents this asymmetry
+as "the rename is purely editorial and does not affect
+attack generation semantics" and it remains the
+authoritative record of the code<->paper label mapping
+until the code rename lands as W11-S2.
+
+**Out of scope (not touched):** paper, code, tests, OSF,
+section 2.1 GCG capability description (line 68), section
+4 Adapted GCG methodology, attack taxonomy table structural
+attacks A1-A7, attack layer description prose, scenario
+share percentages, `attack_definitions_A5_A8.md`
+cross-references.
+
+**Test count:** 708 throughout. Post-commit HEAD blob grep
+verified: "⚠ STATUS NOTE"=0, "A8.1–A8.8"=4 (line-based;
+python count=5 because the Attacker Capability Comparison
+row has the range twice on one line), "| GCG suffix (A8.1) |"=0,
+"Greedy Coordinate Gradient"=2 (section 2.1 capability +
+section 4.1 header, both invariance-intact), "1.2 | 2026-04-14"=1.
+
+### Session 11 lesson -- meta-circular changelog quotes
+
+Session 11 hit one non-trivial patch-script failure worth
+recording so future sessions inherit the pattern. The W11-S1
+patch script v1 (`apply_w11_s1.py`) did all nine str_replace
+edits correctly, then failed on a post-assertion:
+
+    assert content.count("STATUS NOTE") == 0, "STATUS NOTE leak"
+    AssertionError: STATUS NOTE leak
+
+The failure was genuine, not a false positive. The SR-9
+changelog entry in v1 literally read:
+
+    retired session 8 STATUS NOTE (commit 31f8f86)
+
+and:
+
+    removed "GCG suffix (A8.1)" claim from the matrix A8 row
+
+Both phrases were written to describe what the commit was
+removing, but they re-introduced the exact strings that SR-3
+and SR-8 had just deleted. The post-assertion gates then
+caught the literal substring re-introduction and correctly
+aborted before write_text. The file was not corrupted; the
+tree stayed clean; the retry with v2 produced the landed
+commit `8774b0f`.
+
+**The pattern:** when an atomic commit's purpose is to REMOVE
+a structural substring (a block marker, a stale label, a
+deprecated identifier), the commit's own changelog entry,
+release note, or commit message body MUST NOT contain that
+same substring as a literal quote. Descriptive paraphrase is
+required. Rationale: strict post-assertions that guard the
+removal are a feature (session 11 v1 demonstrated they catch
+authoring errors before they reach disk), and the assertion
+contract is "this string is absent from the authoritative
+content of the file after the edit". Meta-references to the
+removal must use different wording so the assertion remains
+a sharp invariance gate rather than being diluted into a
+structural-position gate.
+
+**v2 fix:** SR-9 changelog wording rewritten to descriptive
+form ("the legacy GCG-suffix claim", "the session-8 advisory
+blockquote"). Post-assertions v2 also tightened to target the
+blockquote opener (`⚠ STATUS NOTE`) and the matrix row cell
+(`| GCG suffix (A8.1) |`) uniquely, so future legitimate
+historical references in changelog entries or prose will not
+trip the gates. `replace_once` also gained a defensive
+`new_text == text` guard that would catch a no-op replace
+(old == new, not a danger in v1 but now explicit).
+
+**Takeaway for future sessions:** if a patch script's content
+changes include both a removal and a changelog entry about
+the removal, run the full patch in dry-run-in-memory first
+and grep the resulting buffer for the substrings you are
+asserting absent. The v1 failure cost zero disk state, but
+the diagnosis round-trip was non-trivial and the lesson is
+worth the filing.
+
+### W11-S2 forward-notes discovered in session 11
+
+While mapping code-side `A6_N` templates to paper `A8.*`
+labels for the W11-S1 Attack-Attacker Matrix rewrite, two
+structural findings emerged in
+`enfield_llm/enfield_llm/prompt_builder.py`. Neither is
+addressed by session 11 (W11-S2 scope). Both are filed here
+so the W11-S2 session inherits them as scoped decisions.
+
+**Note 1 -- A6_4 INSTRUCTION_INJECTION is an empty template.**
+The `ADVERSARIAL_TEMPLATES` dict entry for
+`AdversarialType.A6_4_INSTRUCTION_INJECTION` has both
+`system_suffix` and `user_prefix` set to empty strings. No
+active adversarial payload is injected. Under the new paper
+taxonomy this enum member nominally corresponds to A8.4
+Incremental, but the code currently has no incremental
+escalation content. W11-S2 must decide, as part of the A6.*
+-> A8.* rename, either to (a) populate the template to match
+A8.4 Incremental semantics (gradual request escalation), or
+(b) remove the enum member with corresponding test updates
+and document the reduction in paper IV.C. The current empty
+state is not a safety risk (an empty prompt passes through
+as baseline-equivalent) but it is a paper-vs-code semantic
+asymmetry that W11-S2 should resolve explicitly.
+
+**Note 2 -- A8.8 Dual Instruction has no code-side template.**
+Paper IV.C defines eight A8 sub-variants (A8.1 through A8.8).
+The code-side `AdversarialType` enum has eight members
+(`A6_1` through `A6_8`). However, mapping semantics pairwise
+produces only seven one-to-one correspondences and one
+asymmetry:
+
+  A6_1 SAFETY_OVERRIDE            -> A8.1 Direct Override
+  A6_3 ROLEPLAY_JAILBREAK         -> A8.2 Role Playing
+  A6_2 CONTEXT_MANIPULATION       -> A8.3 Context Overflow
+  A6_5 GRADUAL_ESCALATION         -> A8.4 Incremental
+  A6_7 AUTHORITY_IMPERSONATION    -> A8.5 Authority Claim
+  A6_6 SPEC_AMBIGUITY             -> A8.6 Performance Framing
+  A6_8 OBFUSCATION                -> A8.7 Obfuscation
+  A6_4 INSTRUCTION_INJECTION      -> (empty; see Note 1)
+  (none)                          -> A8.8 Dual Instruction
+
+Paper A8.8 Dual Instruction (contradictory safe/unsafe
+instructions in the same prompt) has no A6_N counterpart
+in the code enum. W11-S2 must decide: (a) add an A8_8
+Dual Instruction template alongside the rename, or (b)
+document the paper-vs-code asymmetry explicitly in paper
+IV.C and reduce the paper sub-variant count from 8 to 7.
+Option (a) is preferred on design-consistency grounds but
+requires new adversarial content and new tests. Option (b)
+is a smaller change but weakens the paper taxonomy.
+
+The pairwise mapping above was used for the W11-S1
+Attack-Attacker Matrix rewrite and is recorded here as
+the authoritative semantic bridge until W11-S2 makes the
+rename concrete.
+
+### Session 11 statistics
+
+- **Substantial commits (2):**
+  - `f3525df` W11-S4 paper V.D refusal classifier spec promotion
+  - `8774b0f` W11-S1 THREAT_MODEL.md A8 sub-variant taxonomy realignment
+- **Closure commit (1):** this commit
+- **Test count:** 708 passing throughout
+- **Failed patch scripts:** 1 (`apply_w11_s1.py` v1, assertion
+  failure pre-write, zero file corruption, zero tree pollution)
+- **Retries:** 1 (`apply_w11_s1_v2.py` clean landing)
+- **Lines changed in substantial commits:** +18 / -70
+- **Invariance protections preserved:**
+  - paper sec V.E: untouched
+  - OSF: untouched
+  - code: untouched
+  - tests: untouched
+  - `session7-pre-rebase-backup` tag: still present
+  - no `--amend` used
+  - orphaned commit `48ec94f` still intentionally retained
+    in reflog per session 10 ITEM 6 F3 decision
+- **Week 11 backlog remaining:** W11-S2 only (large,
+  multi-session, code-level A6.* -> A8.* rename with
+  test updates)
+
+### Session 11 end state
+
+Session 11 ended at commit `8774b0f` on main, pushed to
+origin/main. 708 tests passing. Tree clean. W11-S4 and
+W11-S1 closed. W11-S2 is the only remaining Week 11
+backlog item, now with two forward-notes attached
+(A6_4 empty template, A8.8 no code counterpart). Pre-E1
+integrity audit remains closed from session 10. E1 itself
+is still blocked on PC2 LLM server reachability (unchecked
+since session 8; session 11 did not address the PC2 lane).
