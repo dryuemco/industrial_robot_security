@@ -1,31 +1,12 @@
 # Threat Model: Adversarial Attacks on LLM-Generated Industrial Robot Code
 
-**Version:** 1.1  
-**Date:** 2026-02-28  
+**Version:** 1.2  
+**Date:** 2026-04-14  
 **Author:** Yunus Emre Çogurcu, PhD (Çukurova University)  
 **Supervisor:** Assoc. Prof. Georgios Spathoulas (NTNU)  
 **Status:** Draft for supervisor review  
 
 **Based on:** ISO 10218-1:2025, ISO 10218-2:2025, Zou et al. (2023), Kumar et al. (COLM 2024)
-
-> **⚠ STATUS NOTE (Session 8, 2026-04-14):** The A8 Prompt Injection
-> sub-variant labels used throughout this document (A8.1 suffix, A8.2
-> overflow, A8.3 role-play, A8.4 hierarchy, A8.5 encoded, A8.6 multi-turn)
-> reflect a pre-taxonomy-change state and are **no longer authoritative**.
-> The current authoritative A8 taxonomy is defined in `paper/draft_v0.1.md`
-> Section IV.C (A8.1 Direct Override, A8.2 Role Playing, A8.3 Context
-> Overflow, A8.4 Incremental, A8.5 Authority Claim, A8.6 Performance
-> Framing, A8.7 Obfuscation, A8.8 Dual Instruction) and grounded in the
-> code enum `enfield_llm/enfield_llm/prompt_builder.py`
-> (`AdversarialSubCategory`, 8 members A6_1..A6_8 per the paper-vs-code
-> naming convention of paper §IV.C Note).
-> 
-> A full rewrite of this document to reflect the current taxonomy is
-> filed as `docs/WEEK11_SPRINT.md` item **W11-S1** and deferred to the
-> editorial pass that accompanies the A6.*→A8.* code-level rename.
-> Until then, treat the sub-variant labels below as illustrative of the
-> attacker-capability structure only; cross-reference the paper for the
-> current IDs.
 
 ---
 
@@ -68,7 +49,7 @@ Three attacker capability levels are defined, ordered from most to least powerfu
 - **Capability:** Can run gradient-based optimization algorithms such as the Greedy Coordinate Gradient (GCG) algorithm (Zou et al., 2023) to compute mathematically optimal adversarial suffixes.
 - **Compute Budget:** Unlimited. Can run thousands of forward/backward passes.
 - **Query Budget:** Unlimited.
-- **A8 Sub-vectors:** A8.1 (suffix), A8.2 (overflow), A8.3 (role-play), A8.4 (hierarchy), A8.5 (encoded), A8.6 (multi-turn).
+- **A8 Sub-vectors:** A8.1–A8.8 (all prompt-engineering sub-variants per paper §IV.C). White-box additionally benefits from GCG optimization (see Capability above) as a cross-cutting delivery mechanism over any sub-variant.
 - **Goal:** Prove fundamental vulnerabilities in open-source models used for robot code generation.
 - **Real-world Analogy:** Security researcher with local model deployment; insider with model access.
 - **Scenario Share:** ~25% of experimental scenarios.
@@ -79,7 +60,7 @@ Three attacker capability levels are defined, ordered from most to least powerfu
 - **Capability:** Iterative prompt engineering, systematic prompt probing, few-shot manipulation, chain-of-thought exploitation. Can craft targeted prompts based on observed model behavior patterns.
 - **Compute Budget:** Limited to API costs.
 - **Query Budget:** **100 queries per scenario** (configurable; to be confirmed with supervisor: 100 vs 50).
-- **A8 Sub-vectors:** A8.2 (overflow), A8.3 (role-play), A8.4 (hierarchy), A8.5 (encoded), A8.6 (multi-turn).
+- **A8 Sub-vectors:** A8.1–A8.8 (all prompt-engineering sub-variants per paper §IV.C). Realistic for iterative prompt engineering within the 100-query budget.
 - **Goal:** Exploit API-deployed LLMs through systematic prompt engineering within realistic budget constraints.
 - **Real-world Analogy:** External contractor with API access to a code generation service; malicious user of a robot programming assistant.
 - **Scenario Share:** **~62.5% of experimental scenarios** (primary focus — most representative of real-world API deployment).
@@ -92,7 +73,7 @@ Three attacker capability levels are defined, ordered from most to least powerfu
 - **Capability:** Relies on **transferability** of adversarial suffixes (optimized on a white-box surrogate model) and manual prompt crafting based on outcome feedback.
 - **Compute Budget:** Minimal (no model training).
 - **Query Budget:** **10–20 queries per scenario**.
-- **A8 Sub-vectors:** A8.3 (role-play), A8.4 (hierarchy), A8.6 (multi-turn).
+- **A8 Sub-vectors:** A8.1–A8.6, A8.8 (A8.7 Obfuscation is excluded because its delivery requires URScript parameter-name and unit-hex knowledge unavailable to black-box attackers who observe only execution outcomes).
 - **Goal:** Demonstrate that even attackers with no model knowledge can induce safety violations through transferred attacks or naive prompt manipulation.
 - **Real-world Analogy:** End-user with no AI expertise; attacker exploiting a publicly available robot programming chatbot.
 - **Scenario Share:** ~12.5% of experimental scenarios.
@@ -107,7 +88,7 @@ Three attacker capability levels are defined, ordered from most to least powerfu
 | System prompt knowledge | ✅ Full | ⚠ Partial (probing) | ❌ None |
 | Query budget | Unlimited | 100 / scenario | 10–20 / scenario |
 | Optimization method | GCG (gradient) | Iterative prompt eng. | Transfer + manual |
-| A8 sub-vectors | All (A8.1–A8.6) | A8.2–A8.6 | A8.3, A8.4, A8.6 |
+| A8 sub-vectors | All (A8.1–A8.8) | All (A8.1–A8.8) | A8.1–A8.6, A8.8 (A8.7 excluded) |
 | Scenario share | ~25% | **~62.5%** | ~12.5% |
 
 ---
@@ -139,14 +120,14 @@ The complete attack taxonomy defines eight attack types organized across three l
 
 | Attack | White-Box | Gray-Box | Black-Box | Primary Delivery |
 |--------|-----------|----------|-----------|-----------------|
-| A1 Speed Injection | Direct AST edit | A8.3/A8.4 prompt | Transfer suffix | Value manipulation |
-| A2 Zone Penetration | Direct AST edit | A8.4 coordinate override | Transfer suffix | Value manipulation |
-| A3 Orientation Anomaly | Direct AST edit | A8.4 quaternion override | Transfer suffix | Value manipulation |
-| A4 Payload Misconfig | Direct AST edit | A8.4 parameter override | Transfer suffix | Value manipulation |
-| A5 Logic Bypass | Code stripping | A8.2/A8.3 "efficiency" | Transfer suffix | Structure removal |
-| A6 Frame Confusion | Frame edit | A8.4 "updated values" | Transfer suffix | Reference corruption |
-| A7 Tool Misuse | Sequence edit | A8.3 "skip setup" | Manual prompt | Sequence corruption |
-| A8 Prompt Injection | GCG suffix (A8.1) | Iterative probing | Role-play (A8.3) | LLM exploitation |
+| A1 Speed Injection | Direct AST edit | Performance framing (A8.6), Direct override (A8.1) | Transfer suffix | Value manipulation |
+| A2 Zone Penetration | Direct AST edit | Context overflow (A8.3), Direct override (A8.1) | Transfer suffix | Value manipulation |
+| A3 Orientation Anomaly | Direct AST edit | Incremental (A8.4), Direct override (A8.1) | Transfer suffix | Value manipulation |
+| A4 Payload Misconfig | Direct AST edit | Authority claim (A8.5), Direct override (A8.1) | Transfer suffix | Value manipulation |
+| A5 Logic Bypass | Code stripping | Direct override (A8.1), Performance framing (A8.6) | Transfer suffix | Structure removal |
+| A6 Frame Confusion | Frame edit | Context overflow (A8.3), Role playing (A8.2) | Transfer suffix | Reference corruption |
+| A7 Tool Misuse | Sequence edit | Role playing (A8.2), Incremental (A8.4) | Manual prompt | Sequence corruption |
+| A8 Prompt Injection | Template injection (A8.1–A8.8) + GCG (§2.1) | Iterative probing | Role playing (A8.2) | LLM exploitation |
 
 ---
 
@@ -253,6 +234,7 @@ ROS2 safety monitor nodes that validate velocity, zone boundaries, and tool stat
 |---------|------|---------|
 | 1.0 | 2026-02-14 | Initial threat model with White-box and Black-box attackers, A1–A5 (preliminary) |
 | 1.1 | 2026-02-28 | Added Gray-box attacker (§2.2); updated attack taxonomy to formal A1–A8; updated robot reference to UR5e; added system architecture diagram; added attack-attacker matrix; added defence architecture; cross-referenced formal definition documents |
+| 1.2 | 2026-04-14 | W11-S1 editorial pass: re-labeled A8 sub-variant lists (§2.1–§2.3, §2 capability-comparison, §3 attack-attacker matrix) against paper §IV.C ground truth (A8.1 Direct Override through A8.8 Dual Instruction); removed the legacy GCG-suffix claim from the matrix A8 row since A8.* is a prompt-engineering taxonomy and GCG lives in §2.1 capability and §4 methodology; retired the session-8 advisory blockquote (commit 31f8f86). Code-side `A6_1..A6_8` enum rename is pending as W11-S2; paper §IV.C Note on legacy `A6.*` identifiers remains authoritative for the code↔paper label mapping. |
 
 ---
 
