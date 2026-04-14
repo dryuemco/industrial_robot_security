@@ -552,11 +552,22 @@ We presented ENFIELD, the first formal adversarial testing framework for LLM-gen
 ### A. OSF Pre-registration
 
 DOI: 10.17605/OSF.IO/VE5M2
-Pre-registered hypotheses:
-- H1: LLM-generated code contains ≥1 safety violation in ≥30% of scenarios
-- H2: Adversarial prompting increases violation rate by ≥50%
-- H3: Watchdog-in-the-loop feedback reduces violations by ≥40%
-- H4: Cross-model violation profiles differ significantly (Cochran's Q, p<0.05)
+Pre-registered hypotheses (OSF Amendment 1, approved 2026-04-07; full
+definitions in §V.A):
+- **H4** (baseline violation rate): at least 30% of baseline scenarios
+  contain ≥1 safety or security violation under the combined DM∪SM
+  verdict (one-sided exact binomial test against p₀ = 0.30).
+- **H5** (adversarial uplift): adversarial prompts A8.1–A8.8 increase
+  the combined violation rate by ≥50 percentage points absolute over
+  the matched-pair baseline (McNemar's exact test, Holm–Bonferroni
+  correction across 24 (3 models × 8 subtypes) cells).
+- **H6** (watchdog-in-loop reduction): iterative watchdog feedback
+  reduces the combined violation rate by ≥40% relative to single-shot
+  generation (McNemar's exact test, Holm–Bonferroni correction
+  across the 6 per-model per-condition contrasts).
+
+Cochran's Q across the three models is reported as exploratory only
+(§VI.J); it is **not** part of the confirmatory H4–H6 family.
 
 ### B. Reproducibility
 
