@@ -361,6 +361,149 @@ session 9 does not re-audit the same prose.
 
 ## Filed in session 9 (pre-E1 audit, continued)
 
-*Placeholder. Session 9 will add its own `W11-S<n>` items from
-ITEMs 2, 3, 4, 5, 6 of the session 8/9 audit plan. Numbering
-continues from `W11-S3`.*
+Session 9 closed ITEMs 2 and 3 of the session 8/9 audit plan
+by direct atomic fix. Neither item added new `W11-S<n>` items
+to this backlog.
+
+### ITEM 2 -- GT10 FIXME resolution -- CLOSED by commit `12e1cb7`
+
+Stale sub-claims ("45 McNemar paired-design tests" and
+"5 URScript validity-gate tests") in `paper/draft_v0.1.md`
+Appendix B were removed after git archaeology confirmed the
+taxonomy could not be reconstructed:
+
+- "45 McNemar" claim originated in commit `df91f6d` as a
+  bare assertion, never verified. Current mcnemar collection
+  is 65 tests, of which 6 are Phase 6 invariant tests, leaving
+  ~59 potential paired-design tests -- "45" cannot be
+  reconstructed without inventing a taxonomy.
+- "5 URScript validity-gate" claim originated in commit
+  `5dead70` as the delta `enfield_llm 38 -> 43`. Current
+  `test_code_parser.py` has 18 tests including a dedicated
+  `TestURScriptValidityGate` class -- the original delta has
+  drifted and cannot be recovered without categorizing each
+  test body.
+
+Resolution: remove both sub-claims, keep the verified 708
+total, remove the 13-line FIXME HTML comment. Drift category:
+C (paper-vs-memory). No W11-S item filed.
+
+### ITEM 3 -- Appendix A hypothesis enumeration -- CLOSED by commit `f73723e`
+
+`paper/draft_v0.1.md` Appendix A still listed the original
+prereg v0 hypotheses (H1-H3 plus Cochran's Q as confirmatory
+H4), which contradicted sec V.A (Amendment 1 H4-H6), sec V.E
+(Cochran exploratory), sec VI.J (Cochran exploratory), and
+sec VII.B (Cochran exploratory). Three-way drift:
+
+1. Numbering stale (H1-H3 -> H4-H6 per Amendment 1).
+2. Cochran's Q mis-framed as confirmatory H4 (contradicts
+   four other locations in the paper).
+3. H5 threshold ambiguous ("by >=50%" with no
+   relative/absolute distinction; sec V.A defines it as
+   ">=50 percentage points absolute").
+
+Resolution: replace the 5-line Appendix A block with a 14-line
+Amendment 1 aligned block citing the 2026-04-07 approval,
+back-referencing sec V.A for full definitions, summarizing
+H4/H5/H6 with correct thresholds and tests, and explicitly
+marking Cochran's Q as exploratory only. Drift category: C
+(paper-vs-memory). No W11-S item filed. V.E lock respected --
+Appendix A is outside V.E.
+
+### ITEMs 4, 5, 6 -- NOT STARTED in session 9
+
+Deferred to session 10. Session 10 handoff will carry forward
+the ITEM 4/5/6 audit instructions unchanged. These are not
+Week 11 editorial pass items and are not filed here -- they
+are still inter-session audit work.
+
+## Verified not-drift in session 9 (pre-E1 audit, continued)
+
+This section records audit targets that session 9 checked
+directly and confirmed as NOT-drift, so that session 10 or
+later sessions do not re-audit the same claim. Parallel to
+the session 8 verified-not-drift section above.
+
+### ITEM 3 audit -- paper sec V.A, V.E, VI.J, VII.B Amendment 1 alignment
+
+**Audit scope:** Whether paper body sections defining and
+cross-referencing the H4-H6 hypothesis framework are aligned
+with OSF Amendment 1 (approved 2026-04-07) and with the code
+side (`scripts/mcnemar_analysis.py` docstring).
+
+**Session 9 verification (direct read, commit `12e1cb7` file
+state, before the ITEM 3 edit):**
+
+- **sec V.A line 285:** "Three confirmatory hypotheses,
+  formalized in OSF Amendment 1 (approved 2026-04-07, see
+  Appendix A)" -- Amendment 1 reference present and dated.
+- **sec V.A lines 287-289:** H4, H5, H6 defined with correct
+  thresholds, test names, and status stamps. H4 = one-sided
+  exact binomial vs p0 = 0.30. H5 = McNemar's exact, Holm-
+  Bonferroni across 24 cells, 50 pp absolute. H6 = McNemar's
+  exact, Holm-Bonferroni across 6 contrasts, 40% relative.
+- **sec V.E line 295:** "Cochran's Q ... exploratory only
+  (see sec VI.J), not as part of the preregistered H4-H6
+  confirmatory family." Exactly aligned with code docstring.
+- **sec VI.J lines 449, 451:** Cochran's Q results table
+  introduced as "exploratory only; not used to evaluate
+  H4-H6." Aligned.
+- **sec VII.B line 515:** Threats-to-validity paragraph
+  describes Cochran's Q as exploratory, not in confirmatory
+  family, alongside the URScript validity gate selection
+  issue. Aligned.
+
+**Code side verification (direct read of
+`scripts/mcnemar_analysis.py` lines 1-30):**
+
+Module docstring states: `run_h4, run_h5, run_h6 align 1:1
+with paper hypotheses H4, H5, H6` and `Cochran's Q
+(run_cross_model_cochran_q) is NOT a fourth confirmatory
+hypothesis -- it is an exploratory cross-model heterogeneity
+analysis`. Cross-references sec V.E, VI.J, VII.B.5, and
+WEEK10_TODO #12. Exactly matches the paper body.
+
+**Assessment:**
+
+Paper body (sec V.A, V.E, VI.J, VII.B) and code side
+(`mcnemar_analysis.py` docstring) are fully aligned with
+OSF Amendment 1. The only drift was in Appendix A, which
+ITEM 3 fixed via commit `f73723e`. Session 8 pre-discovery
+(finding 3 of session 8 handoff) flagged Appendix A line
+558-561 as likely Category C drift; session 9 confirmed
+this and fixed it as a single atomic edit.
+
+**Resolution:** No residual drift in the paper body or code
+side. Recorded here so session 10 or later sessions do not
+re-audit the H4-H6 framework alignment.
+
+### ITEM 3 audit -- A6_* code string leakage into paper text
+
+**Audit scope:** Whether code-level enum string fragments
+such as `A6_1`, `A6_2`, `adversarial_A6`, or `H5_adversarial_
+A6_N_vs_baseline` appear in `paper/draft_v0.1.md` prose or
+tables, which would constitute a cross-reference drift
+between the code taxonomy (A6_*) and paper taxonomy (A8.*).
+
+**Session 9 verification:**
+
+```
+grep -n "adversarial_A6\|A6\.1\|A6\.2\|A6_1\|A6_2" paper/draft_v0.1.md
+```
+
+Zero matches. Paper body consistently uses A8.1-A8.8 in all
+prose and tables (per sec IV.C Note, sec V.A H5 definition,
+sec V.E sensitivity, sec VI.G adversarial results table).
+
+**Assessment:**
+
+No leakage. The session 8 W11-S2 finding (paper IV.C table
+A8.* entries do not semantically match code A6_* entries, 5/8
+set overlap) remains the authoritative Category B drift for
+this taxonomy, and its resolution still belongs to the Week
+11 editorial pass. But the string-level leakage risk is
+separately verified as not present.
+
+**Resolution:** No drift. Recorded here so session 10 does
+not re-run this grep.
