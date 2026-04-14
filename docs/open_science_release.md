@@ -41,9 +41,9 @@ New hypotheses (H4–H6) and the Refusal Rate (RR) metric were registered via OS
 
 | New Hypothesis | Description |
 |----------------|-------------|
-| H2 | ≥30% of LLM-generated robot code contains safety/security violations without safety prompting |
-| H3 | Adversarial prompts increase violation rate by ≥50% relative to baseline |
-| H4 | Watchdog-in-the-loop reduces violation rate by ≥40% relative to single-pass generation |
+| H4 | ≥30% of baseline LLM-generated code contains ≥1 safety or security violation |
+| H5 | Adversarial prompts (A8.1–A8.8) increase combined violation rate by ≥50 pp vs baseline |
+| H6 | Watchdog-in-the-loop reduces violation rate by ≥40% relative to single-pass generation |
 
 ---
 
