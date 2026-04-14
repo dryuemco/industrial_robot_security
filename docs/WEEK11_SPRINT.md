@@ -507,3 +507,280 @@ separately verified as not present.
 
 **Resolution:** No drift. Recorded here so session 10 does
 not re-run this grep.
+
+
+## Filed in session 10 (pre-E1 audit, continued)
+
+Session 10 covered ITEMs 4, 5, and 6 of the pre-E1 integrity
+audit. ITEM 4 (Amendment 1 vs current code/paper) produced one
+atomic paper-side commit (`29a67a1`). ITEM 5 (stale plan doc
+cleanup) produced one in-place STATUS commit (`7396549`,
+session 8 THREAT_MODEL pattern). ITEM 6 (final sanity sweep)
+produced one atomic paper-side commit (`bf898dd`) and one new
+Week 11 backlog entry (W11-S4 below). Session 10 ended at
+commit `bf898dd` on main, pushed to origin/main. 708 tests
+passing throughout. Tree clean.
+
+Session 10 did not start E1, did not touch paper sec V.E, did
+not start Phase 3d, did not start Phase 8, did not start the
+A6.* -> A8.* code-level rename, did not touch OSF, did not
+amend any commit.
+
+### W11-S4 -- paper/draft_v0.1.md refusal classifier spec paste (editorial)
+
+**Source:** `paper/draft_v0.1.md:245` HTML-comment TODO block,
+filed by session 10 ITEM 6 finding F1.
+
+**Context:** Week 10 TODO #6 froze the URScript-aware refusal
+classifier in commit `ad88356` (2026-04-10), with tests pinning
+the two-gate procedure (`has_code` + `REFUSAL_INDICATORS`
+frozenset) and docstring notes in
+`enfield_llm/enfield_llm/base_client.py:72`. The code-side
+deliverable is DONE. What remains is a paper-editorial step:
+the authoritative classifier spec currently lives as an HTML
+comment block in `paper/draft_v0.1.md` around line 245, with
+a "ready-to-paste text:" paragraph inside the comment. The
+paragraph needs to be promoted from HTML comment to
+render-visible prose somewhere in Section V.
+
+**Why this was not fixed in session 10:**
+1. Placement decision required. Section V.A (current state)
+   introduces the watchdog; V.D defines metrics including RR;
+   V.E is locked and already references the classifier by
+   forward-link. The right host subsection is not obvious
+   from the existing structure, and a wrong placement would
+   either bloat V.A or require touching V.E.
+2. V.E lock. The line 327 FIXME block explicitly points to
+   "the classifier spec HTML-comment block earlier in
+   Section V for the authoritative definition", so the V.E
+   prose already assumes this block exists somewhere earlier
+   in V. Promoting the block to visible prose without a V.E
+   touch is possible but requires care.
+3. Session 10 scope discipline: no unilateral paper-editorial
+   changes beyond atomic drift fixes.
+
+**Scope for Week 11 editorial pass:**
+- Decide host subsection in V (recommend V.D as a new
+  "Refusal detection" sub-subsection adjacent to the RR
+  metric row in the metrics table; V.A is already dense with
+  watchdog architecture)
+- Promote the HTML comment block to visible prose, keeping
+  the 2-gate definition verbatim so the line 327 FIXME back-
+  reference stays valid
+- Remove the `TODO (Week 10 #6, commit ad88356)` marker from
+  the HTML comment (the TODO resolves when the paste lands)
+- Re-grep to confirm no other paper location references a
+  classifier spec elsewhere
+
+**Not in scope for W11-S4:**
+- Any change to the frozen classifier code itself (it is
+  pinned by `tests/test_refusal_classifier.py` and must stay
+  stable for preregistration)
+- Re-running the refusal-classification of smoke-test data
+  (that is the line 327 FIXME's post-E1 work, not W11-S4)
+- V.E prose (locked)
+
+**Priority:** MEDIUM. Non-E1-blocking. Bundle candidate with
+W11-S2 (A6.* -> A8.* rename) since both are Week 11 paper-
+editorial passes and can share a single `./scripts/run_tests.sh`
+gate.
+
+**Estimated size:** 15-25 lines of visible prose plus removal
+of the HTML comment wrapper. One atomic paper-only commit, no
+code changes.
+
+
+## Verified not-drift in session 10 (pre-E1 audit, continued)
+
+Session 10 verified the following audit targets as clean (no
+drift) and records them here so session 11 does not re-run
+the same checks.
+
+### ITEM 4 item (c) audit -- analyze_combined OR-aggregation
+
+**Audit scope:** Whether paper sec V.A line 145 and related
+H4/H5/H6 definitions describe the `analyze_combined` OR
+aggregation in a way that matches the actual code behavior
+in `enfield_watchdog_static/enfield_watchdog_static/watchdog.py:130`.
+
+**Code ground truth (read first, per handoff discipline):**
+`analyze_combined(self, task, code, source_file="")` runs
+`self.analyze(task)` and `self.analyze_code(code, task_id=...)`,
+then merges by list concat (`safety_report.violations.extend
+(security_report.violations)`) and by sum (`checks_run +=`).
+The merged report's `violations` list is non-empty iff at
+least one of safety or security produced at least one
+violation, which is exactly "OR aggregation" in the "at least
+one of either dimension" sense.
+
+**Paper references audited:**
+- sec V.A line 145 ("The two passes are run jointly by
+  `analyze_combined(task_ir, urscript)`, and a response is
+  'violating' under the H4-H6 combined verdict if either
+  pass triggers (OR aggregation, see sec V.E).")
+- sec V.A line 287 H4 definition ("under the combined
+  (DM cup SM) verdict")
+- sec V.A lines 288-289 H5 and H6 definitions ("combined
+  violation rate")
+- sec VII.B line 487 bug history (argument order
+  `(task_ir, code)` matches the code signature `(task, code)`)
+- Appendix H4 paraphrase lines 557-566 ("combined DM cup SM
+  verdict")
+- sec VI Results tables III(a), III(b), IV (CVR = Combined
+  Violation Rate)
+
+**Assessment:** All six locations align with the code
+behavior. Argument order, OR semantics, list-union
+interpretation, and the DM cup SM set-union notation are all
+consistent. No paper edit required. V.E was not touched.
+
+**Side note (not drift, for ITEM 6 context):** the code
+merges `checks_run` by sum, which preserves the total-checks
+metric but does not preserve the safety-vs-security
+decomposition. Paper sec V line 441 promises a per-rule
+decomposition ("CVR split into safety-only (DM-1..7) and
+security-only (SM-1..7) components, reported descriptively
+per cell"), which implies the downstream analysis (likely in
+`scripts/mcnemar_analysis.py`) recovers the decomposition
+from rule ID prefixes rather than from `checks_run`. This is
+not drift, but worth re-verifying when E1 results are
+analyzed.
+
+**Resolution:** No drift. Recorded here so session 11 does
+not re-audit the V.A/VII.B analyze_combined language.
+
+### ITEM 4 refusal classifier FIXME at line 327
+
+**Audit scope:** Whether the HTML-comment FIXME at
+`paper/draft_v0.1.md:327` (pre-freeze smoke-test data warning
+for the "zero refusals" claim) should be resolved in session
+10 or left intact.
+
+**Session 10 verification:** The FIXME block itself says
+"Re-verify this claim against the frozen classifier after the
+first confirmatory E1 run", which explicitly defers the
+resolution to post-E1. Session 10 has no E1 data and cannot
+resolve the deferral. The FIXME is also non-rendered (HTML
+comment) so it does not affect reader experience, and it
+correctly points to "the classifier spec HTML-comment block
+earlier in Section V" as the authoritative definition.
+
+**Assessment:** Intact-by-design. The FIXME is doing its job:
+dated, scoped, pointing at the authoritative spec, and
+explicitly time-gated on post-E1 verification.
+
+**Resolution:** No edit. Recorded here so session 11 does not
+re-consider resolving or rephrasing the FIXME before E1 data
+exists.
+
+### ITEM 5 Scope A -- out-of-repo /mnt/project/ stale plan docs
+
+**Audit scope:** Whether the three planning artifacts that
+live only in Yunus's Claude-project file context
+(ENFIELD_24Week_Plan.docx, ENFIELD_Revised_Plan_v2_1.md,
+ENFIELD_Status_Week9.md) should be addressed by a repo-side
+commit.
+
+**Session 10 verification:**
+```
+find . -type f \( -name "ENFIELD_24Week_Plan*" \
+  -o -name "ENFIELD_Revised_Plan*" \
+  -o -name "ENFIELD_Status_Week9*" \) 2>/dev/null
+git ls-files | grep -i "enfield_24week\|revised_plan_v2_1\|status_week9"
+```
+Both queries return empty. None of the three files are in
+the repo, neither tracked nor untracked. They are Claude-
+project context artifacts that travel with chat sessions,
+not version-controlled project documentation.
+
+**Assessment:** Out of repo scope. No repo-side action is
+available.
+
+**Watch-out note for future sessions:** These files were the
+root cause of the session 7 deck drift (3 of 4 factual
+errors in commit `d9b4487` traced to drafting from the
+24-week plan rather than from `paper/draft_v0.1.md` Table I).
+Future Claude sessions should treat `paper/draft_v0.1.md` as
+the authoritative source for attack taxonomy, hypothesis
+framing, ISO mapping, and model selection -- never the
+/mnt/project/ planning artifacts. The in-repo analogue
+`docs/revised_plan_v2.md` has been explicitly STATUS-noted
+in commit `7396549` to avoid the same trap inside the repo.
+
+**Resolution:** No commit. Recorded as a watch-out for
+session 11 and beyond.
+
+### ITEM 6 F3 -- WEEK10_TODO #9 close-note 48ec94f hash
+
+**Audit scope:** The close-note for WEEK10_TODO #9
+(`docs/WEEK10_TODO.md` line 27) includes a reference to
+commit `48ec94f`, which is an orphaned commit from the
+session 7 pre-rebase state. After the session 7 rebase the
+equivalent change landed as `303de56` on main.
+
+**Session 10 verification:** The close-note's semantic
+content is still correct ("Filed #15 ... during the same
+audit"). `48ec94f` remains present in the reflog, is not a
+dangling hash, and its presence in the close-note documents
+the session 7 rebase history rather than asserting a
+current-main location. Changing the hash to `303de56` would
+also be defensible but would lose the session 7 archaeology
+signal.
+
+**Assessment:** Intentionally retained as a session 7
+history artifact. The session7-pre-rebase-backup tag (still
+present at the end of session 10) anchors the orphaned
+commit's reachability.
+
+**Resolution:** No edit. Recorded here so session 11 does
+not rewrite the hash on grounds of drift.
+
+### ITEM 6 mechanical sweep -- no new drift found
+
+**Audit scope:** A full-repo mechanical sweep for residual
+drift patterns that might have accumulated since session 9.
+
+**Sweeps run and outcomes:**
+1. `./scripts/run_tests.sh` -- 708 passing, no regression.
+2. TODO/FIXME/XXX scan across `*.md` and `*.py` (excluding
+   tests/ and results/) -- 20 hits, all either tracked
+   trackers (WEEK10_TODO, WEEK11_SPRINT, h_numbering_audit),
+   known FIXMEs (paper line 327, paper line 245 filed as
+   W11-S4), mock-test input strings, or documentary
+   comments. No unexpected new flags.
+3. Reverse taxonomy drift (A6 prefix + Prompt word, or A8
+   prefix + Frame word) -- 13 hits, all either session 8
+   W11-S1/W11-S2 tracked, session 8 verified no-drift
+   (attack_definitions_A5_A8.md), paper-correct abstract
+   mention, or now inside the session 10 STATUS-noted
+   `docs/revised_plan_v2.md`. No new leakage.
+4. 7->11 memory drift (paper abstract says 6->11) -- 1 hit
+   inside `WEEK10_TODO.md` #9 close-note, which is the
+   correct session 7 audit record ("7->11 vs 6->11 paradox
+   count" caught by session 7 audit). Documentary, not
+   drift.
+5. A8 range drift (A8.1-A8.6/7) -- 5 hits, all tracked
+   (WEEK10_TODO #15 close note, WEEK11_SPRINT W11-S1 and
+   verify notes, h_numbering_audit THREAT_MODEL reference
+   which is W11-S1 territory).
+6. H1/H2/H3 label leakage outside Appendix A -- 11 hits;
+   OSF_PREREGISTRATION.md lines 167-168 and 331 are the
+   pre-Amendment immutable record and correctly preserved;
+   h_numbering_audit table header is documentary;
+   revised_plan_v2.md is STATUS-noted by commit `7396549`;
+   the ONE actionable drift was `open_science_release.md`
+   lines 44-46, fixed in session 10 commit `bf898dd`.
+7. WEEK10_TODO #9 `48ec94f` hash -- 1 hit, resolved as
+   "intentionally retained" (see ITEM 6 F3 above).
+8. origin/main sync check -- both `origin/main..HEAD` and
+   `HEAD..origin/main` empty at session 10 end. In sync
+   after all pushes.
+9. Tree clean at session 10 end.
+10. `session7-pre-rebase-backup` tag still present.
+
+**Assessment:** One actionable drift found (F2, fixed).
+Two non-actionable items recorded as intentional (F1 filed
+as W11-S4, F3 retained). All other sweeps clean.
+
+**Resolution:** Sweep complete. Recorded here so session 11
+does not re-run the mechanical battery.
