@@ -42,6 +42,8 @@
 
 - [ ] **#14 TestH5.test_large_effect_significant "if a66:" guard is pre-existing test weakness** (low-priority, test hygiene). The guard at `tests/test_mcnemar_analysis.py::TestH5::test_large_effect_significant` silently passes if `run_h5` returns no matching result for the 'A6.6' condition, rather than asserting that a matching result exists. This is a pre-existing weakness from before Phase 6-prereq (commit 01739ba) — not introduced by the prefixed-label fix. It was left untouched during Phase 6-prereq because fixing a test weakness in the middle of an integration bug fix would conflate two scopes. A stronger variant should assert that at least one matching result exists, then run the significance assertion on that result. Scope is a single test method, fully offline, can be picked up at any time before the confirmatory runs.
 
+- [ ] **#15 Paper A8 sub-variant count drift** (low-priority, audit) — `paper/draft_v0.1.md` line 98 (Table I) says `A8.1-A8.7` (seven sub-variants) while line 112 Note says `A8.1-A8.8` (eight sub-variants). Same table, adjacent lines. Discovered during session 7 demo deck audit (grep for `A8.*Prompt` in paper/draft_v0.1.md). Ground truth must come from the code: count the A6.* sub-variant generators in `enfield_llm/enfield_llm/prompt_builder.py` and the A6.* classes in `enfield_attacks/test/test_variant_generator.py`. Resolution: correct whichever of line 98 or line 112 is wrong, in a dedicated audit commit (Shape C). Do NOT bundle with any other V.E or Table I edit. Not a session 7 target — filed only.
+
 ## Sonra (LLM server geldiğinde)
 
 - [ ] E1 pilot run: 3 model × 5 task × 2 condition × 1 rep = 30 çağrı (pipeline doğrulama)
