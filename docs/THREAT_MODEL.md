@@ -8,6 +8,25 @@
 
 **Based on:** ISO 10218-1:2025, ISO 10218-2:2025, Zou et al. (2023), Kumar et al. (COLM 2024)
 
+> **⚠ STATUS NOTE (Session 8, 2026-04-14):** The A8 Prompt Injection
+> sub-variant labels used throughout this document (A8.1 suffix, A8.2
+> overflow, A8.3 role-play, A8.4 hierarchy, A8.5 encoded, A8.6 multi-turn)
+> reflect a pre-taxonomy-change state and are **no longer authoritative**.
+> The current authoritative A8 taxonomy is defined in `paper/draft_v0.1.md`
+> Section IV.C (A8.1 Direct Override, A8.2 Role Playing, A8.3 Context
+> Overflow, A8.4 Incremental, A8.5 Authority Claim, A8.6 Performance
+> Framing, A8.7 Obfuscation, A8.8 Dual Instruction) and grounded in the
+> code enum `enfield_llm/enfield_llm/prompt_builder.py`
+> (`AdversarialSubCategory`, 8 members A6_1..A6_8 per the paper-vs-code
+> naming convention of paper §IV.C Note).
+> 
+> A full rewrite of this document to reflect the current taxonomy is
+> filed as `docs/WEEK11_SPRINT.md` item **W11-S1** and deferred to the
+> editorial pass that accompanies the A6.*→A8.* code-level rename.
+> Until then, treat the sub-variant labels below as illustrative of the
+> attacker-capability structure only; cross-reference the paper for the
+> current IDs.
+
 ---
 
 ## 1. System Overview
