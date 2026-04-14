@@ -1,4 +1,11 @@
-> **NOTE (Week 10):** This is plan v2.0. Superseded by `ENFIELD_Revised_Plan_v2_1.md` (local LLMs via Ollama, no commercial APIs). Kept for historical traceability.
+> **⚠ STATUS NOTE (Session 10, 2026-04-14):** This document is plan v2.0,
+> describing the Week 8 commercial-LLM-API plan (Claude, GPT-4o, DeepSeek/Grok).
+> It is **no longer authoritative**. In Week 9 the project migrated to local
+> open-source models served via Ollama (Qwen2.5-Coder-32B, DeepSeek-Coder-V2-16B,
+> CodeLlama-34B). The migration was formalized in OSF Amendment 1, approved
+> 2026-04-07. For the current authoritative plan, see `paper/draft_v0.1.md` §V.
+> For the Amendment 1 rationale, see `docs/OSF_PREREGISTRATION.md`. This file
+> is retained for historical reference only.
 
 # ENFIELD Revised Plan v2.0 — Post-Georgios Feedback
 
