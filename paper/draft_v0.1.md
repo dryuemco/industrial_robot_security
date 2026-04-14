@@ -240,45 +240,11 @@ Communication: HTTP API over local network (PC1 → PC2:11434).
 | SecVR | Primary | Security Violation Rate (SM-rule violations per code sample) |
 | Combined VR | Primary | Any DM or SM violation present |
 | RR | Primary | Refusal Rate (LLM refused to generate code) |
-
-<!--
-TODO (Week 10 #6, commit ad88356): paste the classifier spec
-paragraph below into section V as prose. Placed as an HTML comment
-so it survives edits without rendering in the PDF.
-
-Ready-to-paste text:
-
-    Refusal detection. Each model response is classified by a
-    deterministic two-gate procedure frozen in
-    enfield_llm/enfield_llm/base_client.py. The first gate, a
-    URScript-aware has_code check, delegates to CodeParser.extract()
-    and the is_valid_urscript regex: a response counts as a code
-    attempt iff the extractor returns a non-empty snippet that
-    passes the regex gate. This is the same definition of "real
-    code" that the runner's validity gate uses to route responses
-    to the invalid_pseudocode status, so the refusal classifier and
-    the validity gate share a single truth source. The second
-    gate is a case-insensitive substring match against a
-    frozen 20-entry REFUSAL_INDICATORS frozenset; changing the
-    set requires a code change that breaks
-    enfield_llm/test/test_refusal_classifier.py. A response is
-    labelled REFUSAL iff the has_code gate returns False AND the
-    keyword gate matches; responses with real URScript are never
-    labelled as refusals even when they contain disclaimer
-    language, and prose that merely mentions URScript keywords is
-    routed to invalid_pseudocode by the validity gate rather than
-    captured as a refusal. This three-way split (refusal /
-    invalid_pseudocode / success) is what makes the refusal
-    sensitivity analysis in Section V (refusal-as-non-violating
-    vs refusal-as-violating vs refusal-excluded) well-defined.
-
-Also update: line ~291 ("Zero refusals across all models and
-conditions") is based on pre-freeze smoke-test data; re-verify
-after the first confirmatory E1 run with the new classifier.
--->
 | ASR | Secondary | Attack Success Rate (violation increase under adversarial) |
 | Detection Rate | Secondary | Watchdog true positive rate |
 | FPR | Secondary | Watchdog false positive rate |
+
+**Refusal detection.** Each model response is classified by a deterministic two-gate procedure frozen in enfield_llm/enfield_llm/base_client.py. The first gate, a URScript-aware has_code check, delegates to CodeParser.extract() and the is_valid_urscript regex: a response counts as a code attempt iff the extractor returns a non-empty snippet that passes the regex gate. This is the same definition of "real code" that the runner's validity gate uses to route responses to the invalid_pseudocode status, so the refusal classifier and the validity gate share a single truth source. The second gate is a case-insensitive substring match against a frozen 20-entry REFUSAL_INDICATORS frozenset; changing the set requires a code change that breaks enfield_llm/test/test_refusal_classifier.py. A response is labelled REFUSAL iff the has_code gate returns False AND the keyword gate matches; responses with real URScript are never labelled as refusals even when they contain disclaimer language, and prose that merely mentions URScript keywords is routed to invalid_pseudocode by the validity gate rather than captured as a refusal. This three-way split (refusal / invalid_pseudocode / success) is what makes the refusal sensitivity analysis in Section V (refusal-as-non-violating vs refusal-as-violating vs refusal-excluded) well-defined.
 
 ### E. Statistical Analysis
 
@@ -324,7 +290,7 @@ after the first confirmatory E1 run with the new classifier.
 | CodeLlama-34B | Adversarial A8.6 | 9 | 1 | 4,118 | SM-2 |
 
 **Zero refusals across all models and conditions** — no model declined to generate code, even under adversarial prompting.
-<!-- FIXME(phase7, WEEK10_TODO #12): This claim is based on pre-freeze smoke-test data (authored in 75531dc6, 2026-04-02). The refusal classifier was subsequently frozen in 1b0dad0 (2026-04-10) with a URScript-aware has_code gate plus a 20-entry REFUSAL_INDICATORS frozenset. Re-verify this claim against the frozen classifier after the first confirmatory E1 run; responses that were treated as prose disclaimers under the pre-freeze classifier may now route to invalid_pseudocode instead of refusal (or vice versa). See the classifier spec HTML-comment block earlier in Section V for the authoritative definition. -->
+<!-- FIXME(phase7, WEEK10_TODO #12): This claim is based on pre-freeze smoke-test data (authored in 75531dc6, 2026-04-02). The refusal classifier was subsequently frozen in 1b0dad0 (2026-04-10) with a URScript-aware has_code gate plus a 20-entry REFUSAL_INDICATORS frozenset. Re-verify this claim against the frozen classifier after the first confirmatory E1 run; responses that were treated as prose disclaimers under the pre-freeze classifier may now route to invalid_pseudocode instead of refusal (or vice versa). See the "Refusal detection" paragraph earlier in Section V for the authoritative definition. -->
 
 ### B. Finding 1: Safety Prompt Paradox
 
