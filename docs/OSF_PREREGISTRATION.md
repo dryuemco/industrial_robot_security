@@ -345,3 +345,75 @@ Fixed inference parameters (all models): temperature=0.0, max_tokens=4096, timeo
 This amendment was filed on the OSF pre-registration page on 2026-04-06 and **approved by OSF admin on 2026-04-07**. H4–H6 are now confirmatory under the registered protocol.
 (DOI: [10.17605/OSF.IO/VE5M2](https://doi.org/10.17605/OSF.IO/VE5M2))
 under the "Amendments" tab with the title and justification text above.
+
+
+## Amendment 2 candidate — 2026-04-15 (Week 11 of 24)
+
+**Title:** Reduce adversarial sub-variant family from eight to seven sub-variants; reduce H5 Holm–Bonferroni family from 24 to 21 (model, subtype) cells
+
+**Status:** 🟡 **CANDIDATE — not yet submitted to OSF.** This block documents a scope-reduction action taken locally in the repository (paper, runner, McNemar module, tests) and held as a candidate amendment to the OSF pre-registration record. Submission to OSF is pending an explicit go-ahead. Until OSF acknowledgement, the OSF registration record continues to reflect the eight-subtype, twenty-four-cell H5 family of Amendment 1.
+
+**Filed before E1/E2/E3 confirmatory data collection:** ✅ Yes. Only the E1 pilot (3 LLMs × 5 tasks × 2 conditions × 1 rep, exploratory, not part of the confirmatory family) has been executed. No confirmatory E1, E2, or E3 data exist as of this filing.
+
+### Changes
+
+#### 1. Adversarial sub-variant scope reduction (eight to seven)
+
+One sub-variant in the original eight-subtype A8 taxonomy (the entry previously labelled A8.8 / Dual Instruction in earlier drafts of paper section III.C, and A6_4 in the codebase) had user-prompt and system-prompt templates that were placeholder strings rather than concrete adversarial content, making it a no-op at runtime. The variant could not contribute interpretable rejection power in the H5 confirmatory family.
+
+Two alternatives were considered:
+  (a) silently drop the variant during analysis with no record of the change — rejected as opaque to reviewers and inconsistent with pre-registration discipline;
+  (b) back-fill the variant with new adversarial content after Amendment 1 approval — rejected as straightforwardly HARK-adjacent, since any new content would have been chosen with knowledge of the pilot data.
+
+The remaining option — transparent removal before any confirmatory run, recorded explicitly here and in paper section VII.B.6 — was judged the more disciplined path. The seven retained sub-variants are: A8.1 Direct Override, A8.2 Role Playing, A8.3 Context Overflow, A8.4 Incremental, A8.5 Authority Claim, A8.6 Performance Framing, A8.7 Obfuscation.
+
+#### 2. H5 Holm–Bonferroni family-size reduction (24 to 21 cells)
+
+Consequent to change 1, the per-(model, subtype) cell count drops from 24 (3 models × 8 subtypes) to 21 (3 models × 7 subtypes). The corrected p-value threshold under Holm–Bonferroni at family-wise α = 0.05 changes from 0.05/24 = 0.00208 to 0.05/21 = 0.00238 for the most-significant cell, with the standard step-down adjustments for subsequent cells. The H5 decision criterion (at least one cell rejects H0: ΔCVR < 0.50 after correction) is unchanged in form; only the family size and corresponding thresholds shift.
+
+#### 3. Experiment matrix call-budget update
+
+The total call budget across E1, E2, E3 drops from approximately 1170 to 1125. The breakdown is: E1 baseline 270 calls (unchanged), E2 adversarial 315 calls (was 360; recomputed as 3 × 15 × 7), E3 watchdog-in-loop approximately 540 calls (unchanged). Cost remains zero (open-source models served via local Ollama).
+
+#### 4. Updated H5 hypothesis row
+
+| ID | Hypothesis (Amendment 2 candidate) | Test | Status |
+|---|---|---|---|
+| H5 | Adversarial prompts (A8.1–A8.7) increase combined violation rate by ≥50 pp vs baseline | McNemar per attack; Holm–Bonferroni; family-wise α=0.05; family size 21 | Candidate revision of Amendment 1 H5 row |
+
+H4 and H6 rows are not affected by this amendment and retain the wording filed in Amendment 1.
+
+### Affected paper sections (already reflect this candidate)
+
+| Paper location | Status under this candidate |
+|---|---|
+| §III.B Table I, A8 row range | Updated to A8.1–A8.7 in Commit C |
+| §III.C sub-variant table | Eighth row dropped, legacy editorial note removed in Commit C |
+| §IV.B architecture diagram | Range narrowed in Commit C |
+| §V.C experiment matrix (E2 and Total rows) | Recomputed in Commit C |
+| §VI.G Table IV | Eighth column dropped from header, separator, and three model rows in Commit C |
+| §VII.B.6 Pre-registered scope drift sub-subsection | Newly added in Commit D, references this candidate |
+
+### Locked sections (intentionally retain Amendment 1 text)
+
+The following sections continue to mirror the OSF-approved Amendment 1 record and will be brought into alignment with this candidate only after OSF acknowledgement:
+
+| Locked location | Retained content |
+|---|---|
+| Paper §V.E (Statistical Analysis) | "A8.1–A8.8", "24 (3 models × 8 subtypes) cells", "8-subtype family" |
+| Paper §VI.G H5 decision sentence | "across all 24 (3 × 8) tests" |
+| Paper Appendix A (H5 description) | "A8.1–A8.8", "24 (3 models × 8 subtypes) cells" |
+| This document, Amendment 1 H5 row (line 333) | "(A6.1–A6.8)", as approved by OSF |
+
+### Related commits
+
+| Commit | Description |
+|---|---|
+| `7b88bca` | refactor(prompt_builder): rename adversarial enum to A8.x and drop no-op variant |
+| `649282d` | refactor(mcnemar): align condition labels with A8.x naming |
+| `5558a5e` | docs(paper): align non-locked sections with seven-variant scope |
+| `6d47f71` | docs(paper): document spec-vs-implementation drift in VII.B |
+
+### OSF platform note
+
+This amendment is **NOT yet filed** on the OSF pre-registration page (DOI: [10.17605/OSF.IO/VE5M2](https://doi.org/10.17605/OSF.IO/VE5M2)). The OSF registration record continues to reflect Amendment 1 (eight-subtype family, twenty-four-cell H5 contrast). When this candidate is submitted, the OSF "Amendments" tab will receive a new entry with the title and justification text above; the locked paper sections and the H5 row in this document will then be updated in a follow-up commit to remove the spec-vs-implementation drift documented in paper section VII.B.6.
