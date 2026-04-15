@@ -1072,3 +1072,101 @@ backlog item, now with two forward-notes attached
 integrity audit remains closed from session 10. E1 itself
 is still blocked on PC2 LLM server reachability (unchecked
 since session 8; session 11 did not address the PC2 lane).
+
+
+## Session 12 -- E1 pilot executed (info only, not a backlog item)
+
+Run window: 2026-04-15 14:20-14:29 UTC.
+HEAD at run time: `cd6906d` (PC2 IP drift fix, .6 -> .5
+across 4 doc files, landed earlier in session 12).
+
+Command actually executed:
+```
+OLLAMA_HOST=http://192.168.1.5:11434 \
+  python3 scripts/llm_experiment_runner.py \
+    --experiment E1 --tasks T001-T005 --reps 1 \
+    --output results/e1_pilot_session12/
+```
+
+Scope: 3 models x 5 tasks x 2 conditions x 1 rep = 30 calls.
+Wall-clock: 9.5 minutes.
+
+### Outcomes (30 calls)
+
+- 21 success, 9 invalid_pseudocode, 0 refusal,
+  1 error (codellama T005 baseline, 300s HTTP timeout)
+- All three Amendment-1 models exercised end-to-end
+  against live PC2 Ollama server; runner code path
+  fully validated under real LLM conditions
+- Mean latency per model:
+  - deepseek-coder-v2:16b ~2.0s
+  - codellama:34b ~7.1s
+  - qwen2.5-coder:32b ~17.7s
+- Per-condition mean violations among successes:
+  - baseline 9.4 (n=8 successes)
+  - safety 5.6 (n=13 successes)
+
+These per-condition numbers are NOT statistically
+meaningful at this scale. Confirmatory E1 (3x15x2x3 =
+270 calls) will resolve the safety-prompt direction.
+
+### Pilot purpose and limits
+
+The pilot was a runner end-to-end gate against the live
+LLM server, NOT a confirmatory experiment. No hypothesis
+was tested. No statistical claim is supported by these
+30 calls. The pilot's only deliverable is the demonstration
+that the E1 code path -- prompt building, HTTP, code
+parsing, validity gate, watchdog scoring, CSV/JSON
+output -- runs cleanly against three live models on PC2.
+
+### Findings carried forward (informational, not blocking)
+
+1. Codellama invalid_pseudocode rate 5/9 in this slice
+   confirms the long-noted false-negative pattern. The
+   URScript validity gate behaves as designed: codellama
+   pseudo-code is correctly excluded from the violation
+   denominator rather than silently scoring zero.
+
+2. One 300s HTTP timeout on codellama T005 baseline.
+   E1 currently has no per-call retry (retries are E3
+   territory). If confirmatory E1 sees more timeouts at
+   scale, a per-call retry policy may be warranted;
+   filed as a forward consideration only, not as a
+   session 12 action item.
+
+3. The safety-prompt direction in this 5-task slice
+   (safety reducing mean violations relative to baseline)
+   differs from the Week 9 single-task smoke-test
+   observation (Qwen 7 -> 11 violations under safety).
+   Single-task patterns may not generalize. Confirmatory
+   E1 at n=270 will be the authoritative read.
+
+### Artifacts (NOT committed; OSF data deposit candidates)
+
+Local only, under `results/e1_pilot_session12/`,
+gitignored via `.gitignore` `results/` rule:
+
+- `e1_results.csv` -- 30 rows, 23 columns, full provenance
+- `e1_summary.json` -- aggregate per-model / per-condition
+- `code/` -- 29 generated URScript files (1 missing due
+  to the timeout); `.invalid.urscript` suffix marks
+  validity-gate failures
+- `logs/ollama_log.jsonl` -- 30 entries, full request
+  and response capture for OSF replication package
+- `run.log` -- stdout transcript
+
+### State at session 12 mid-point
+
+- HEAD: `cd6906d` on main, pushed
+- Tests: 708 passing (unchanged by pilot; pilot does not
+  touch repo state)
+- Tree: clean (results/ gitignored)
+- PC2: reachable at 192.168.1.5 (handoff said .6, was
+  wrong; corrected in cd6906d)
+- Mock smoke gate: green (re-verified at session 12 start)
+- Live runner gate: now green (this pilot)
+- W11-S2: still the only Week 11 backlog item; pilot
+  did not advance or block it
+- Confirmatory E1, E2, E3: unblocked from infrastructure
+  standpoint; sequencing is a separate Yunus decision
