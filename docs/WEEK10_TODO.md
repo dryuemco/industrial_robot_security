@@ -1,6 +1,6 @@
 # ENFIELD Week 10 — LLM-Server-Independent Backlog
 
-> Local working TODO. LLM inference server (Ollama @ 192.168.1.6:11434)
+> Local working TODO. LLM inference server (Ollama @ 192.168.1.5:11434)
 > şu an bağımsız çalıştığında E1/E2/E3 başlatılacak. Bu liste sunucu
 > yokken yapılabilecek tüm işleri ve durumlarını izler.
 > **Update bu dosyayı her commit'te.** Bitmiş işleri silme — `[x]` + commit hash bırak.

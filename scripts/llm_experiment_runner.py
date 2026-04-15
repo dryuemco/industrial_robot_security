@@ -9,19 +9,19 @@ Experiments:
 
 Usage:
     # E1 pilot (5 tasks, 1 rep)
-    OLLAMA_HOST=http://192.168.1.6:11434 python3 scripts/llm_experiment_runner.py \\
+    OLLAMA_HOST=http://192.168.1.5:11434 python3 scripts/llm_experiment_runner.py \\
         --experiment E1 --tasks T001-T005 --reps 1
 
     # E1 full (15 tasks, 3 reps)
-    OLLAMA_HOST=http://192.168.1.6:11434 python3 scripts/llm_experiment_runner.py \\
+    OLLAMA_HOST=http://192.168.1.5:11434 python3 scripts/llm_experiment_runner.py \\
         --experiment E1 --reps 3
 
     # E2 adversarial (15 tasks, all A6.x)
-    OLLAMA_HOST=http://192.168.1.6:11434 python3 scripts/llm_experiment_runner.py \\
+    OLLAMA_HOST=http://192.168.1.5:11434 python3 scripts/llm_experiment_runner.py \\
         --experiment E2
 
     # E3 watchdog-in-loop (15 tasks, 3 reps, max 3 retries)
-    OLLAMA_HOST=http://192.168.1.6:11434 python3 scripts/llm_experiment_runner.py \\
+    OLLAMA_HOST=http://192.168.1.5:11434 python3 scripts/llm_experiment_runner.py \\
         --experiment E3 --reps 3 --max-retries 3
 
 Outputs:

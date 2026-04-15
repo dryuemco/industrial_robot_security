@@ -172,7 +172,7 @@ Total repo test count is **708 passing** as of commit `6100f91` (session 6 HEAD)
 - `#7`  Cochran's Q omnibus (as exploratory addition per Amendment 1) — DONE
 - Phase 6 hypothesis-mapping invariant tests — DONE (session 6)
 
-**Remaining blocker:** PC2 LLM server reachability. The three models live on PC2 (Windows, RTX 5090, Ollama at `192.168.1.6:11434`) and PC2 is currently unreachable. As soon as it is back, I run the E1 pilot (3 LLMs × 5 tasks × 2 conditions × 1 rep = 30 calls), then E1 full, E2, E3.
+**Remaining blocker:** PC2 LLM server reachability. The three models live on PC2 (Windows, RTX 5090, Ollama at `192.168.1.5:11434`) and PC2 is currently unreachable. As soon as it is back, I run the E1 pilot (3 LLMs × 5 tasks × 2 conditions × 1 rep = 30 calls), then E1 full, E2, E3.
 
 **Still blocked pending your input:**
 
