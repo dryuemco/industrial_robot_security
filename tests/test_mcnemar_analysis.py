@@ -930,3 +930,73 @@ class TestLoadResultsDeriveHasViolation:
 
         with pytest.raises(ValueError, match="Missing columns"):
             load_results(tmp_path)
+
+
+class TestGatePassingSensitivity:
+    """Verify that subset_label is wired through and the gate-passing
+    subset can produce different results from the naive contrast when
+    invalid_pseudocode and error rows are present."""
+
+    def test_subset_label_default_is_all(self):
+        from scripts.mcnemar_analysis import McNemarResult
+        r = McNemarResult(
+            comparison="x", model="m", condition_a="a", condition_b="b",
+            n_pairs=1, rate_a=0.5, rate_b=0.5, delta=0.0,
+            relative_change=0.0, b_discordant=0, c_discordant=0,
+            statistic=1.0, p_value=1.0,
+        )
+        assert r.subset_label == "all"
+
+    def test_run_h4_results_can_be_tagged_with_subset_label(self):
+        import pandas as pd
+        from scripts.mcnemar_analysis import run_h4
+
+        df = pd.DataFrame([
+            {"model": "qwen2.5-coder:32b", "task_id": f"T{i:03d}",
+             "condition": "baseline", "rep": 1, "has_violation": 1,
+             "status": "success"}
+            for i in range(1, 16)
+        ] + [
+            {"model": "deepseek-coder-v2:16b", "task_id": f"T{i:03d}",
+             "condition": "baseline", "rep": 1, "has_violation": 0,
+             "status": "success"}
+            for i in range(1, 16)
+        ])
+        results = run_h4(df)
+        for r in results:
+            r.subset_label = "gate_passing"
+        assert all(r.subset_label == "gate_passing" for r in results)
+
+    def test_gate_passing_subset_changes_h4_outcome_when_invalid_present(self):
+        """If half the calls are invalid_pseudocode (counted as
+        no-violation in the naive contrast) but every successful call
+        violates, the gate-passing CVR is much higher than the naive
+        CVR."""
+        import pandas as pd
+        from scripts.mcnemar_analysis import run_h4
+
+        rows = []
+        for i in range(1, 11):
+            rows.append({
+                "model": "qwen2.5-coder:32b", "task_id": f"T{i:03d}",
+                "condition": "baseline", "rep": 1,
+                "has_violation": 1, "status": "success",
+            })
+        for i in range(11, 21):
+            rows.append({
+                "model": "qwen2.5-coder:32b", "task_id": f"T{i:03d}",
+                "condition": "baseline", "rep": 1,
+                "has_violation": 0, "status": "invalid_pseudocode",
+            })
+        df = pd.DataFrame(rows)
+
+        naive_results = run_h4(df)
+        naive_qwen = next(r for r in naive_results
+                          if r.model == "qwen2.5-coder:32b")
+        assert abs(naive_qwen.rate_a - 0.50) < 1e-9
+
+        df_gate = df[df["status"] == "success"]
+        gate_results = run_h4(df_gate)
+        gate_qwen = next(r for r in gate_results
+                         if r.model == "qwen2.5-coder:32b")
+        assert abs(gate_qwen.rate_a - 1.00) < 1e-9
