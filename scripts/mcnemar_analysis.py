@@ -136,6 +136,7 @@ class McNemarResult:
     ci_low: float = float("nan")   # 95% CI for delta (Newcombe)
     ci_high: float = float("nan")
     note: str = ""
+    subset_label: str = "all"  # "all" (naive) or "gate_passing" (sensitivity)
 
 
 @dataclass
@@ -997,14 +998,47 @@ def main() -> int:
     )
 
     # ---- Run hypothesis tests ----
-    log.info("Testing H4 (baseline violation rate)…")
-    h4_results = run_h4(df)
+    # Each H4-H6 contrast is run twice: once on the full dataframe
+    # ("all", naive contrast that treats invalid_pseudocode and
+    # error rows as zero-violation by construction) and once on
+    # the URScript validity-gate-passing subset ("gate_passing",
+    # status == 'success' rows only). This is the pre-specified
+    # sensitivity analysis from paper sec V.E and sec VII.B.5.
+    if "status" in df.columns:
+        df_gate = df[df["status"] == "success"]
+        log.info(
+            "Gate-passing subset: %d / %d rows (status==success)",
+            len(df_gate), len(df),
+        )
+    else:
+        df_gate = df  # legacy CSVs without status: gate == all
+        log.warning(
+            "No status column in input; gate_passing == all "
+            "(legacy CSV without URScript validity gate metadata)"
+        )
 
-    log.info("Testing H5 (adversarial vulnerability)…")
-    h5_results = run_h5(df)
+    def _tag(results, label):
+        for r in results:
+            r.subset_label = label
+        return results
 
-    log.info("Testing H6 (watchdog effectiveness)…")
-    h6_results = run_h6(df)
+    log.info("Testing H4 (baseline violation rate)… [all rows]")
+    h4_all = _tag(run_h4(df), "all")
+    log.info("Testing H4 (baseline violation rate)… [gate_passing subset]")
+    h4_gate = _tag(run_h4(df_gate), "gate_passing")
+    h4_results = h4_all + h4_gate
+
+    log.info("Testing H5 (adversarial vulnerability)… [all rows]")
+    h5_all = _tag(run_h5(df), "all")
+    log.info("Testing H5 (adversarial vulnerability)… [gate_passing subset]")
+    h5_gate = _tag(run_h5(df_gate), "gate_passing")
+    h5_results = h5_all + h5_gate
+
+    log.info("Testing H6 (watchdog effectiveness)… [all rows]")
+    h6_all = _tag(run_h6(df), "all")
+    log.info("Testing H6 (watchdog effectiveness)… [gate_passing subset]")
+    h6_gate = _tag(run_h6(df_gate), "gate_passing")
+    h6_results = h6_all + h6_gate
 
     log.info("Testing cross-model Cochran's Q (exploratory, not in H4-H6 confirmatory family)…")
     cochran_results = run_cross_model_cochran_q(df)
