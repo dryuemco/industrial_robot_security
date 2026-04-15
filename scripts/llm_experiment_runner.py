@@ -362,12 +362,13 @@ def run_e2(
     provider: str = "ollama",
     mock_seed: Optional[int] = None,
 ) -> list[dict]:
-    """E2: Adversarial — 3 LLMs × N tasks × 8 attacks × 1 rep."""
+    """E2: Adversarial — 3 LLMs × N tasks × 7 attacks (A8.1-A8.7) × 1 rep."""
     logger.info("=" * 60)
     logger.info("EXPERIMENT E2: Adversarial")
-    logger.info("Models: %d | Tasks: %d | Attacks: 8 | Reps: 1",
-                len(_models_for_provider(provider)), len(tasks))
-    total_calls = len(_models_for_provider(provider)) * len(tasks) * 8
+    logger.info("Models: %d | Tasks: %d | Attacks: %d | Reps: 1",
+                len(_models_for_provider(provider)), len(tasks),
+                len(ALL_ADVERSARIAL))
+    total_calls = len(_models_for_provider(provider)) * len(tasks) * len(ALL_ADVERSARIAL)
     logger.info("Total calls: %d", total_calls)
     logger.info("=" * 60)
 
