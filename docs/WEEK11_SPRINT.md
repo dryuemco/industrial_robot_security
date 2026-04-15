@@ -1440,3 +1440,128 @@ non-locked sections of the paper, and the OSF preregistration local
 doc; the four locked artefacts retain their pre-W11-S2 wording and
 the gap is explicitly documented in paper section VII.B.6 with a
 named resolution path through OSF Amendment 2 submission.
+
+## Session 14 -- Statistics phase (commits 7-9)
+
+### Per-commit summary
+
+| # | Commit | Scope |
+|---|---|---|
+| G | `275a942` | Code fix: McNemar module now derives `has_violation` from `total_violations` when the boolean column is absent from a result row, removing a silent miscount that had been masking confirmatory rows during pipeline drift. |
+| H | `7b27bdb` | Code feature: McNemar module gains a gate-passing sensitivity contrast for H4/H5/H6 in addition to the naive all-rows contrast. Six new tests added; total test count moved from 707 to 713. |
+| I | `398e17d` | Paper: section VI.F populated with H4 confirmatory results from the E1 run; placeholder pattern matches the format reserved for sections VI.G (H5, pending E2) and VI.H (H6, pending E3). One file touched. |
+
+### E1 confirmatory run
+
+Run completed 2026-04-15: 270 calls (3 models * 15 tasks * 2 conditions
+* 3 reps), wall time 93 minutes, OLLAMA_HOST = http://192.168.1.5:11434.
+Output deposit (git-ignored, reserved for OSF Month 6):
+`results/e1_confirmatory_session14/` and `results/stats_session14/`.
+
+### H4 hypothesis result
+
+Both contrasts SUPPORT H4 under the V.E decision rule:
+
+  - Naive contrast (all 135 baseline rows): pooled relative reduction
+    60.7%, p<0.001. Per-model: Qwen 100.0% (p<0.001), DeepSeek 42.2%
+    (p=0.055), CodeLlama 40.0% (p=0.099).
+  - Gate-passing contrast (83 success-status rows): pooled relative
+    reduction 98.8%, p<0.001. Per-model: Qwen 100.0%, DeepSeek 95.0%,
+    CodeLlama 100.0%, all p<0.001.
+
+Gate-passing is treated as the primary safety contrast (paper section
+V.E reasoning); naive is the transparency sensitivity. Both directions
+agree, so H4 carries cleanly without contrast-selection ambiguity.
+
+### Cross-model heterogeneity (exploratory)
+
+Cochran's Q on per-model violation rates (Holm-Bonferroni adjusted):
+
+  - Baseline condition: Q=12.60, df=2, p_adj=0.002
+  - Safety-prompted condition: Q=20.00, df=2, p_adj<0.001
+  - Adversarial condition: insufficient data (E2 not yet run)
+
+Significant heterogeneity in both available conditions. Flagged
+exploratory only; not a preregistered hypothesis.
+
+### Status breakdown by model (270 calls)
+
+  - qwen2.5-coder:32b: 90/90 success (100%)
+  - deepseek-coder-v2:16b: 62/90 success (69%); 28 invalid_pseudocode
+  - codellama:34b: 39/90 success (43%); 47 invalid_pseudocode + 9 hard
+    errors. Hard-error root cause (timeout vs OOM vs other) not yet
+    investigated; logged as a paper limitation pending follow-up.
+
+### Cumulative hidden-bug pattern (mock smoke + sensitivity)
+
+Five distinct runner/analysis bugs caught across Sessions 13-14 that
+would have invalidated confirmatory results if shipped untouched:
+
+  1. `parser.parse()` vs `parser.extract()` method name mismatch
+     (caught by mock smoke, Session 13).
+  2. Missing URScript validity gate before watchdog analysis
+     (caught by mock smoke, Session 13).
+  3. `analyze_combined` argument order swap
+     (caught by mock smoke, Session 13).
+  4. `response.content` vs `response.raw_response` attribute mismatch
+     (caught by mock smoke, Session 13).
+  5. McNemar `has_violation` column derivation gap when only
+     `total_violations` was present in the result row
+     (caught during E1 confirmatory analysis, Session 14, fixed in
+     commit 275a942).
+
+Operating rule reaffirmed: every confirmatory experiment must be
+preceded by an end-to-end runner pass with `MockLLMClient`, enforced
+by `tests/test_runner_mock_smoke.py`.
+
+### Cumulative state after the statistics phase
+
+  - 713 tests passing across all six pytest suites.
+  - Paper section VI.F populated with the H4 confirmatory result
+    block; sections VI.G (H5) and VI.H (H6) still carry PENDING DATA
+    placeholders awaiting E2 and E3 runs.
+  - McNemar analysis module produces both naive and gate-passing
+    contrasts in a single run; output schema documented in the
+    `mcnemar_results.csv` header row.
+  - PC2 LLM server reachability confirmed at 192.168.1.5:11434
+    (3-packet ping 0% loss, `/api/tags` returns three expected models).
+
+### Outstanding items beyond the statistics phase
+
+  - Confirmatory E2: ~315 calls (3 models * 15 tasks * 7 attacks * 1
+    rep), expected wall time ~2.5 hours, output to
+    `results/e2_confirmatory/`. Unblocked; queued for Session 15.
+  - Confirmatory E3: ~540 calls watchdog-in-loop, after E2.
+  - Paper section VI.G populate (H5 results, after E2 + McNemar
+    re-run with per-attack subgroup analysis).
+  - Paper section VI.H populate (H6 results, after E3).
+  - CodeLlama 9 hard-error root cause investigation (timeout vs OOM
+    vs other) -- paper limitation for now.
+  - OSF Amendment 2 submission and the locked-artefact alignment
+    follow-up commit remain queued behind explicit go-ahead, as
+    documented in the W11-S2 mechanical phase closure above.
+
+### Hard rules audit -- session 14 statistics phase
+
+  - paper sec V.E: untouched (lock honoured)
+  - paper VI.G H5 decision sentence: untouched (V.E execution mirror)
+  - paper Appendix A H5 description: untouched (V.E mirror)
+  - OSF preregistration Amendment 1 block: untouched (verbatim OSF
+    mirror)
+  - OSF API: zero calls
+  - git commit --amend: not used; three clean forward-only commits
+  - Patch script PRE-assertions: every code edit guarded by
+    expected-occurrence-count assertions before write
+  - Mock smoke gate: green before E1 confirmatory run was started
+
+### Session 14 statistics phase summary
+
+Three commits, zero amendments forced through against locks, zero OSF
+API calls, zero test regressions (707 -> 713, additions only). The
+E1 confirmatory run completed successfully and H4 is SUPPORTED under
+both the naive all-rows contrast and the gate-passing primary
+contrast. Two pipeline drift bugs were caught and fixed in flight
+(`has_violation` derivation, gate-passing sensitivity absence) and
+the paper section VI.F now carries the first preregistered
+confirmatory result. E2 confirmatory is the next gate; PC2
+reachability has been verified.
