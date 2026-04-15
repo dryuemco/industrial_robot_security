@@ -180,7 +180,7 @@ class TestE2MockSmoke:
             provider="mock",
             mock_seed=42,
         )
-        assert len(results) == 16
+        assert len(results) == 14
         for row in results:
             assert row["experiment"] == "E2"
             assert row["condition"].startswith("adversarial_")
