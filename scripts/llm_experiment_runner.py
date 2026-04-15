@@ -4,7 +4,7 @@
 
 Experiments:
   E1: Baseline — 3 LLMs × N tasks × 2 conditions (baseline + safety) × R reps
-  E2: Adversarial — 3 LLMs × N tasks × 8 attacks (A6.1–A6.8) × 1 rep
+  E2: Adversarial — 3 LLMs × N tasks × 7 attacks (A8.1–A8.7) × 1 rep
   E3: Watchdog-in-loop — 3 LLMs × N tasks × 1 condition × R reps (with feedback)
 
 Usage:
@@ -16,7 +16,7 @@ Usage:
     OLLAMA_HOST=http://192.168.1.5:11434 python3 scripts/llm_experiment_runner.py \\
         --experiment E1 --reps 3
 
-    # E2 adversarial (15 tasks, all A6.x)
+    # E2 adversarial (15 tasks, all A8.x)
     OLLAMA_HOST=http://192.168.1.5:11434 python3 scripts/llm_experiment_runner.py \\
         --experiment E2
 
@@ -87,14 +87,13 @@ logger = logging.getLogger(__name__)
 TASKS_DIR = REPO_DIR / "enfield_tasks" / "ir" / "tasks"
 
 ALL_ADVERSARIAL = [
-    AdversarialType.A6_1_SAFETY_OVERRIDE,
-    AdversarialType.A6_2_CONTEXT_MANIPULATION,
-    AdversarialType.A6_3_ROLEPLAY_JAILBREAK,
-    AdversarialType.A6_4_INSTRUCTION_INJECTION,
-    AdversarialType.A6_5_GRADUAL_ESCALATION,
-    AdversarialType.A6_6_SPEC_AMBIGUITY,
-    AdversarialType.A6_7_AUTHORITY_IMPERSONATION,
-    AdversarialType.A6_8_OBFUSCATION,
+    AdversarialType.A8_1_DIRECT_OVERRIDE,
+    AdversarialType.A8_2_ROLE_PLAYING,
+    AdversarialType.A8_3_CONTEXT_OVERFLOW,
+    AdversarialType.A8_4_INCREMENTAL,
+    AdversarialType.A8_5_AUTHORITY_CLAIM,
+    AdversarialType.A8_6_PERFORMANCE_FRAMING,
+    AdversarialType.A8_7_OBFUSCATION,
 ]
 
 CSV_FIELDS = [

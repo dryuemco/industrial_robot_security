@@ -55,7 +55,7 @@ LOG_DIR = REPO_DIR / "results" / "smoke_test"
 CONDITIONS = [
     ("baseline", PromptMode.BASELINE, None),
     ("safety", PromptMode.SAFETY, None),
-    ("adversarial_A6.6", PromptMode.ADVERSARIAL, AdversarialType.A6_6_SPEC_AMBIGUITY),
+    ("adversarial_A8.6", PromptMode.ADVERSARIAL, AdversarialType.A8_6_PERFORMANCE_FRAMING),
 ]
 
 
