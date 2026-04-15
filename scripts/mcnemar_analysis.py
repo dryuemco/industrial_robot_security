@@ -924,6 +924,16 @@ def load_results(results_dir: Path, experiment: Optional[str] = None) -> pd.Data
 
     combined = pd.concat(dfs, ignore_index=True)
 
+    # Derive has_violation from total_violations if absent. The runner
+    # writes total_violations (DM + SM combined count) but not the
+    # binary flag McNemar needs; the derivation matches the OSF
+    # Amendment 1 combined-violation semantics (any rule flagged ->
+    # has_violation = 1). CSVs that already carry has_violation are
+    # left untouched.
+    if "has_violation" not in combined.columns and "total_violations" in combined.columns:
+        combined["has_violation"] = (combined["total_violations"] > 0).astype(int)
+        log.info("Derived has_violation from total_violations (>0) for %d rows", len(combined))
+
     required = {"model", "task_id", "condition", "rep", "has_violation"}
     missing = required - set(combined.columns)
     if missing:
