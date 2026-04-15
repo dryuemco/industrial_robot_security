@@ -192,7 +192,7 @@ class TestBuildContingency:
         assert t.d == 0
 
     def test_missing_condition_returns_empty(self, simple_df):
-        tables = build_contingency(simple_df, "baseline", "adversarial_A6.1")
+        tables = build_contingency(simple_df, "baseline", "adversarial_A8.1")
         assert len(tables) == 0
 
     def test_per_model_groupby(self, simple_df):
@@ -250,7 +250,7 @@ class TestH4:
 class TestH5:
     @pytest.fixture
     def h5_df(self):
-        """Baseline + adversarial_A6.6 with large attack effect (matches runner CSV format)."""
+        """Baseline + adversarial_A8.6 with large attack effect (matches runner CSV format)."""
         rng = np.random.default_rng(0)
         rows = []
         for i in range(45):
@@ -266,7 +266,7 @@ class TestH5:
             rows.append({
                 "model": "qwen2.5-coder:32b",
                 "task_id": task,
-                "condition": "adversarial_A6.6",
+                "condition": "adversarial_A8.6",
                 "rep": rep,
                 "has_violation": int(rng.random() < 0.9),
             })
@@ -279,8 +279,8 @@ class TestH5:
     def test_each_attack_has_result(self, h5_df):
         results = run_h5(h5_df)
         attacks_covered = {r.condition_b for r in results}
-        # At least adversarial_A6.6 should be present
-        assert "adversarial_A6.6" in attacks_covered
+        # At least adversarial_A8.6 should be present
+        assert "adversarial_A8.6" in attacks_covered
 
     def test_p_adjusted_set(self, h5_df):
         results = run_h5(h5_df)
@@ -289,7 +289,7 @@ class TestH5:
 
     def test_large_effect_significant(self, h5_df):
         results = run_h5(h5_df)
-        a66 = next((r for r in results if r.condition_b == "adversarial_A6.6" and r.model == "all"), None)
+        a66 = next((r for r in results if r.condition_b == "adversarial_A8.6" and r.model == "all"), None)
         if a66:
             assert a66.delta > 0.5  # 90% - 10% = 80pp delta in demo
 
@@ -376,7 +376,7 @@ class TestDemoData:
         assert "baseline" in conditions
         assert "safety" in conditions
         assert "watchdog" in conditions
-        assert "adversarial_A6.6" in conditions
+        assert "adversarial_A8.6" in conditions
 
     def test_full_pipeline_runs(self, tmp_path):
         """End-to-end: demo data → all three tests → outputs written."""
@@ -700,10 +700,10 @@ class TestHypothesisMappingInvariants:
         return pd.DataFrame(rows)
 
     def _make_full_condition_df(self):
-        """3 models x 10 tasks x {baseline, safety, watchdog, adversarial_A6.1}."""
+        """3 models x 10 tasks x {baseline, safety, watchdog, adversarial_A8.1}."""
         rows = []
         for model in MODELS:
-            for cond in ["baseline", "safety", "watchdog", "adversarial_A6.1"]:
+            for cond in ["baseline", "safety", "watchdog", "adversarial_A8.1"]:
                 for i in range(10):
                     rows.append({
                         "model": model,
@@ -730,7 +730,7 @@ class TestHypothesisMappingInvariants:
         contaminants = []
         for model in MODELS:
             for i in range(10):
-                for cond in ["safety", "watchdog", "adversarial_A6.1"]:
+                for cond in ["safety", "watchdog", "adversarial_A8.1"]:
                     contaminants.append({
                         "model": model,
                         "task_id": f"T{i:03d}",
@@ -775,7 +775,7 @@ class TestHypothesisMappingInvariants:
 
     def test_run_h5_uses_prefixed_adversarial_labels(self):
         """H5 comparison strings must match runner CSV label format
-        ('adversarial_A6.N'), not the bare 'A6.N' form. This pins the
+        ('adversarial_A8.N'), not the bare 'A8.N' form. This pins the
         fix from commit 01739ba (Phase 6-prereq) against silent
         regression.
         """
@@ -792,7 +792,7 @@ class TestHypothesisMappingInvariants:
                 rows.append({
                     "model": model,
                     "task_id": f"T{i:03d}",
-                    "condition": "adversarial_A6.1",
+                    "condition": "adversarial_A8.1",
                     "rep": 1,
                     "has_violation": 1 if i < 12 else 0,
                 })
@@ -802,11 +802,11 @@ class TestHypothesisMappingInvariants:
         assert len(results) > 0
 
         comparisons = {r.comparison for r in results}
-        assert "H5_adversarial_A6.1_vs_baseline" in comparisons
-        assert "H5_A6.1_vs_baseline" not in comparisons
+        assert "H5_adversarial_A8.1_vs_baseline" in comparisons
+        assert "H5_A8.1_vs_baseline" not in comparisons
 
         for r in results:
-            assert r.condition_b.startswith("adversarial_A6.")
+            assert r.condition_b.startswith("adversarial_A8.")
 
     # ---- T4: H6 tests both single-shot conditions against watchdog ----
 
