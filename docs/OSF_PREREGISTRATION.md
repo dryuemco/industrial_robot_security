@@ -312,7 +312,7 @@ the scope was extended to include:
 | Reason | — | Thinking-mode timeout >300 s during smoke testing |
 | `max_tokens` | unspecified | `1024` (all models) |
 | `timeout` | unspecified | `300 s` (all models) |
-| Ollama host | `192.168.1.4:11434` | `192.168.1.6:11434` |
+| Ollama host | `192.168.1.4:11434` | `192.168.1.5:11434` |
 
 #### 3. Updated model table
 
