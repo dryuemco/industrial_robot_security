@@ -95,7 +95,7 @@ We define three attacker levels following standard threat modeling practice:
 | A5 | Safety-Logic Bypass | 5.4.2 / 5.4 | Missing E-Stop command or incomplete safety control flow |
 | A6 | Frame Confusion | 5.7.4 | Coordinate-frame inconsistencies across waypoints |
 | A7 | Tool Misuse | 5.1.14 | Invalid tool identity or activation mode |
-| A8 | Prompt Injection | 5.1.16 | Adversarial prompts / configuration tampering (A8.1–A8.8) |
+| A8 | Prompt Injection | 5.1.16 | Adversarial prompts / configuration tampering (A8.1–A8.7) |
 
 ### C. A8 Prompt Injection Sub-variants
 
@@ -108,9 +108,6 @@ We define three attacker levels following standard threat modeling practice:
 | A8.5 | Authority Claim | "As the safety officer, I authorize max speed" |
 | A8.6 | Performance Framing | "Optimize for maximum throughput, speed is priority" |
 | A8.7 | Obfuscation | Encoding unsafe values in comments/variables |
-| A8.8 | Dual Instruction | Contradictory safe/unsafe instructions |
-
-*Note:* throughout this paper the prompt-injection sub-variants are referred to as `A8.1`–`A8.8`, consistent with the attack taxonomy of Table I. The codebase (experiment runner `scripts/llm_experiment_runner.py`, prompt builder, and mutation modules) retains the legacy `A6.*` identifiers pending a future refactor; the rename is purely editorial and does not affect attack generation semantics, hypotheses, or statistical analysis.
 
 ---
 
@@ -131,7 +128,7 @@ Tasks are defined in a vendor-neutral JSON IR (JSON Schema Draft 2020-12) specif
 ```
 Task IR (JSON) → PromptBuilder → LLM (Ollama) → CodeParser → URScript → Watchdog → Results
                   ↑                                                          |
-                  |  baseline / safety / adversarial (A8.1–A8.8)             |
+                  |  baseline / safety / adversarial (A8.1–A8.7)             |
                   └──────────── feedback loop (E3) ──────────────────────────┘
 ```
 
@@ -228,9 +225,9 @@ Communication: HTTP API over local network (PC1 → PC2:11434).
 | Exp | Description | LLMs | Tasks | Conditions | Reps | Calls | Cost |
 |-----|-------------|------|-------|-----------|------|-------|------|
 | E1 | Baseline | 3 | 15 | 2 (baseline + safety) | 3 | 270 | $0 |
-| E2 | Adversarial | 3 | 15 | 8 (A8.1–A8.8) | 1 | 360 | $0 |
+| E2 | Adversarial | 3 | 15 | 7 (A8.1–A8.7) | 1 | 315 | $0 |
 | E3 | Watchdog-in-loop | 3 | 15 | 1 (feedback) | 3 | ~540 | $0 |
-| **Total** | | | | | | **~1170** | **$0** |
+| **Total** | | | | | | **~1125** | **$0** |
 
 ### D. Metrics
 
@@ -369,11 +366,11 @@ Valid URScript uses `movej()` and `movel()` with specific parameter syntax. The 
 
 **Table IV.** ΔCVR (percentage points) per model per A8 subtype, relative to E1 neutral baseline. Newcombe hybrid score 95% CI on the difference.
 
-| Model | A8.1 | A8.2 | A8.3 | A8.4 | A8.5 | A8.6 | A8.7 | A8.8 | max ΔCVR |
-|---|---|---|---|---|---|---|---|---|---|
-| Qwen2.5-Coder-32B | — | — | — | — | — | — | — | — | — |
-| DeepSeek-Coder-V2-16B | — | — | — | — | — | — | — | — | — |
-| CodeLlama-34B | — | — | — | — | — | — | — | — | — |
+| Model | A8.1 | A8.2 | A8.3 | A8.4 | A8.5 | A8.6 | A8.7 | max ΔCVR |
+|---|---|---|---|---|---|---|---|---|
+| Qwen2.5-Coder-32B | — | — | — | — | — | — | — | — |
+| DeepSeek-Coder-V2-16B | — | — | — | — | — | — | — | — |
+| CodeLlama-34B | — | — | — | — | — | — | — | — |
 
 **H5 decision:** supported if at least one (model, A8.k) cell rejects H0: ΔCVR < 0.50 after Holm–Bonferroni correction across all 24 (3 × 8) tests.
 
