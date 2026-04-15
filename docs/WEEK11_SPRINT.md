@@ -1170,3 +1170,182 @@ gitignored via `.gitignore` `results/` rule:
   did not advance or block it
 - Confirmatory E1, E2, E3: unblocked from infrastructure
   standpoint; sequencing is a separate Yunus decision
+
+
+---
+
+## Session 13 -- W11-S2 decisions filed
+
+Session 13 closed the two W11-S2 forward-notes that had been outstanding
+since session 11. Both decisions were taken with a single guiding
+principle: preregistration fidelity and code-paper-OSF triple integrity
+take precedence over preserving the original variant count. No code,
+test, paper, or OSF artifact was touched in session 13; this entry is
+the design-time ground truth that the W11-S2 mechanical phase will
+execute against in a later session.
+
+### Note 1 decision -- A6_4 INSTRUCTION_INJECTION
+
+**Decision:** option (b) -- remove the A6_4 enum member and its
+associated test fixtures pre-confirmatory. The empty user_prefix and
+system_suffix templates make the variant a no-op at runtime; populating
+them post-hoc with new adversarial content would constitute a
+post-registration design change without an approved OSF amendment.
+
+**Rationale:**
+
+1. Preregistration fidelity. The empty template means any confirmatory
+   E1/E2/E3 row produced under A6_4 would be a no-op condition, not a
+   true adversarial probe. Reporting such a row as if it were a
+   real measurement would be misleading.
+2. No-op condition avoidance. Confirmatory experiments must compare
+   like with like; a variant with no actual prompt content cannot
+   contribute interpretable violation rates, refusal rates, or pooled
+   statistics.
+3. Reviewer defensibility. A reviewer asking "why N=7 of 8 originally
+   planned variants?" receives a single-sentence answer: empty template,
+   removed pre-confirmatory, documented in IV.C and VII.B. A reviewer
+   asking "why did A6_4 contribute a row of zeros?" has no clean
+   answer if the variant is retained.
+4. HARK avoidance. Populating an empty template with semantics chosen
+   after the OSF preregistration was filed would push the work into
+   Hypothesizing After Results Known territory, even if no experiments
+   had yet been run with the populated form.
+
+**Alternatives considered and rejected:**
+
+  - (a1) Remap A6_4 to A8.8 Dual Instruction semantics. Rejected:
+    requires designing new adversarial content post-registration,
+    triggers Note 2 in a way that compounds the post-hoc design
+    concern, and would itself require an OSF amendment for content
+    addition rather than scope reduction.
+  - (a2) Treat A6_4 as a second variant of A8.4 Incremental
+    (A8.4a / A8.4b split). Rejected: post-hoc taxonomy refinement
+    fitted to the existence of the empty template; not in the
+    preregistered design.
+  - (a3) Map A6_4 to A8.4 Incremental as the handoff text literally
+    suggested. Rejected: produces semantic duplication with A6_5
+    GRADUAL_ESCALATION, which already maps to A8.4 in the W11-S1
+    pairwise table; two enum members representing the same attack
+    inflates results.
+
+### Note 2 decision -- Paper A8.8 Dual Instruction
+
+**Decision:** option (b) -- remove the A8.8 row from paper section IV.C
+and document the removal in section VII.B Threats to Validity. No
+code-side addition.
+
+**Rationale (symmetric with Note 1):**
+
+1. Code-paper symmetry. Note 1 removed a planned-but-unimplemented
+   variant from the code side. Note 2 applies the same principle to a
+   planned-but-unimplemented variant on the paper side. Both arrive at
+   the same disposition: planned, not implemented, removed
+   pre-confirmatory.
+2. HARK avoidance. Adding an A8_8 enum member and template now would
+   add a new adversarial probe after the preregistration window
+   closed, requiring an OSF amendment for scope expansion. Such
+   amendments are higher-scrutiny than scope-reduction amendments.
+3. Reviewer defensibility. A single-principle removal is easier to
+   defend than a two-track handling where one variant is deleted and
+   another is retained as future work. The seven variants that remain
+   are all fully implemented, fully tested, and fully reported.
+4. Single, sharp boundary. Listing eight variants in IV.C while only
+   evaluating seven blurs the boundary between the taxonomy the work
+   claims to evaluate and the subset it actually evaluates. Removing
+   the eighth row keeps that boundary sharp.
+
+**Alternative considered and rejected:**
+
+  - (c) Retain the A8.8 row in IV.C with a "specified in taxonomy
+    but not evaluated; left for future work" annotation. Rejected:
+    creates inconsistent handling between Note 1 (removed) and Note 2
+    (retained with caveat), inviting reviewer questions about why the
+    two cases were handled differently.
+
+### Combined effect of Note 1 + Note 2
+
+  - Code-side adversarial variant count: 8 -> 7 (A6_4 to be removed
+    in the W11-S2 mechanical phase)
+  - Paper IV.C variant count: 8 -> 7 (A8.8 row to be removed in the
+    W11-S2 mechanical phase)
+  - Pairwise mapping: full 7-to-7 correspondence, no asymmetry
+  - Paper VII.B Threats to Validity: new sub-subsection candidate
+    documenting the reduction, framed as scope clarification not
+    scope failure
+  - OSF amendment posture: a single Amendment 2 candidate covering
+    both removals as one scope-reduction action; lower scrutiny than
+    a content-addition amendment would have been
+
+### W11-S2 mechanical phase checklist (for a later session)
+
+The mechanical phase must execute the following in a single coherent
+sweep, ideally one session, with the test count tracked at every
+intermediate state:
+
+  1. enfield_llm/enfield_llm/prompt_builder.py
+     - Delete the A6_4 enum member from AdversarialType
+     - Delete the A6_4 entry from ADVERSARIAL_TEMPLATES
+     - Rename remaining A6_N members to A8_M per the W11-S1 pairwise
+       mapping (A6_1 -> A8_1, A6_3 -> A8_2, A6_2 -> A8_3, A6_5 -> A8_4,
+       A6_7 -> A8_5, A6_6 -> A8_6, A6_8 -> A8_7)
+     - Rename ADVERSARIAL_TEMPLATES dict keys to match
+     - Update any module-level references
+     - Critical: this is NOT a positional rename; sed s/A6_/A8_/ would
+       produce incorrect code
+
+  2. scripts/llm_experiment_runner.py
+     - Update any A6_* references to the new A8_M names
+     - Verify EXPERIMENT_MODELS dict unaffected (it is, but verify)
+
+  3. scripts/mcnemar_analysis.py
+     - Update pooled-rate table cell keys
+     - Verify run_h5 / run_h6 routing per the H-numbering audit
+       carried forward from WEEK10_TODO #12
+
+  4. tests/
+     - Update all A6_* parametrize values, fixtures, assertion strings
+     - Delete A6_4 specific test cases; document deletion count
+     - Final test count expected to drop from 708 by the number of
+       A6_4-specific tests removed; no other test should break
+
+  5. paper/draft_v0.1.md section IV.C
+     - Remove the A8.8 row from the sub-variant table
+     - Update narrative to reflect N=7 evaluated variants
+     - Remove the legacy "codebase retains the legacy A6.* identifiers
+       pending a future refactor" Note; replace with a brief landed-
+       rename acknowledgement or remove entirely
+
+  6. paper/draft_v0.1.md section VII.B
+     - Add new sub-subsection for the A6_4 / A8.8 reductions, framing
+       both as scope clarifications taken pre-confirmatory to maintain
+       code-paper-OSF integrity
+     - Reference the OSF Amendment 2 candidate
+
+  7. docs/OSF_PREREGISTRATION.md (local doc only; OSF API untouched
+     in W11-S2 mechanical phase)
+     - Add an Amendment 2 candidate entry covering both removals as
+       a single scope-reduction action
+
+  8. Mock smoke gate + live runner gate re-run after the rename to
+     confirm no path regressions
+
+### Hard rules audit -- session 13
+
+  - paper sec V.E: untouched (lock honoured)
+  - OSF API: zero calls (no amendments filed; Amendment 2 is a
+    candidate filed in local docs only, awaits explicit go-ahead)
+  - Code source files: zero edits
+  - Test files: zero edits
+  - Phase 3d: not started
+  - Phase 8: not started
+  - session7-pre-rebase-backup tag: preserved
+  - git commit --amend: not used
+  - Test count: 708 preserved throughout session 13
+
+### Session 13 closure summary
+
+Two decisions filed, one commit, zero code touches, zero test touches,
+zero paper touches, zero OSF API calls. W11-S2 mechanical phase is now
+fully unblocked and can be executed deterministically in any future
+session against the design-time ground truth recorded above.
