@@ -1349,3 +1349,94 @@ Two decisions filed, one commit, zero code touches, zero test touches,
 zero paper touches, zero OSF API calls. W11-S2 mechanical phase is now
 fully unblocked and can be executed deterministically in any future
 session against the design-time ground truth recorded above.
+
+
+## Session 14 -- W11-S2 mechanical phase executed
+
+The W11-S2 mechanical phase planned in Session 13 was executed in
+this session as a sequence of six small, atomic commits landed
+directly on main. Working style: terminal-first, post-commit HEAD
+blob verification after every push, defensive POST-assertions in
+each patch script that roll the file state back if any expected
+edit count diverges from the plan.
+
+### Per-commit summary
+
+| # | Commit | Scope |
+|---|---|---|
+| A | `7b88bca` | Code: rename adversarial enum to A8.x and drop the no-op variant. Five files touched (prompt builder + its tests, runner, smoke test, runner mock smoke test). Test count moved from 708 to 707 (one variant-specific test removed). |
+| B | `649282d` | Code: align McNemar module string-literal condition labels with the new A8.N naming. Two files touched. Test count unchanged. |
+| C | `5558a5e` | Paper: align non-locked sections with the seven-variant scope. Section III.B Table I, Section III.C sub-variant table and editorial note, Section IV.B diagram, Section V.C experiment matrix (E2 and Total rows), Section VI.G Table IV. One file touched. Test count unchanged. |
+| D | `6d47f71` | Paper: insert new sub-subsection VII.B.6 documenting the spec-vs-implementation drift; renumber the pre-existing residual-limitations sub-subsection from B.6 to B.7; fix the now-stale eight-subtype claim inside it. One file touched. Test count unchanged. |
+| E | `d251c15` | OSF preregistration local doc: append a structured Amendment 2 candidate entry mirroring the Amendment 1 format; status flagged as candidate, not yet submitted to OSF. One file touched. Amendment 1 (lines 283-347) left verbatim, including the H5 hypothesis row on line 333. Test count unchanged. |
+| F | *(this commit)* | Sprint tracker closure entry. |
+
+### Cumulative state after the phase
+
+  - Code, McNemar module, runner, paper non-locked sections, and
+    OSF preregistration local doc all consistent with the
+    seven-variant adversarial scope (A8.1 Direct Override, A8.2
+    Role Playing, A8.3 Context Overflow, A8.4 Incremental, A8.5
+    Authority Claim, A8.6 Performance Framing, A8.7 Obfuscation).
+  - Total test count: 707 passing, all six pytest suites green.
+  - Paper section VII.B.6 carries an explicit forward reference to
+    the Amendment 2 candidate; paper section VII.B.7 (formerly
+    B.6, "Residual limitations") carries the corrected
+    seven-subtype claim with a backward reference to B.6.
+  - The OSF Amendment 2 candidate is filed locally with a clearly
+    labelled "CANDIDATE -- not yet submitted to OSF" status line
+    and a complete affected-vs-locked sections table.
+
+### Locked sections deliberately untouched across the whole phase
+
+| Locked artefact | Reason |
+|---|---|
+| Paper section V.E (statistical analysis) | Preregistered H5 family-size and per-attack-subgroup spec; held under V.E lock honoured since Session 4 |
+| Paper section VI.G H5 decision sentence | Direct execution mirror of V.E spec; held under same lock |
+| Paper Appendix A H5 description | Verbatim mirror of OSF preregistration text; held under same lock |
+| OSF preregistration document Amendment 1 (lines 283-347) | Verbatim mirror of OSF-approved record; H5 row on line 333 explicitly preserved with original A6 namespace label |
+| OSF registration record itself | Zero API calls; all amendment work is local-doc-only until explicit go-ahead |
+
+### Hard rules audit -- session 14
+
+  - paper sec V.E: untouched (lock honoured)
+  - paper VI.G H5 decision sentence: untouched (V.E execution mirror)
+  - paper Appendix A H5 description: untouched (V.E mirror)
+  - OSF preregistration Amendment 1 block: untouched (verbatim OSF mirror)
+  - OSF API: zero calls
+  - git commit --amend: not used; six clean forward-only commits
+  - session7-pre-rebase-backup tag: preserved
+  - Patch script POST-assertions: every patch in the phase guarded
+    by expected-occurrence-count assertions; no silent edits
+  - Commit message bodies: forbidden literal tokens
+    (full enum suffix and full numeric label of the dropped
+    variant) were paraphrased throughout, per the Session 11 rule
+
+### Outstanding items beyond W11-S2 mechanical phase
+
+  - OSF Amendment 2 submission: candidate is filed locally; an
+    explicit go-ahead is required before any OSF API call to
+    attach the amendment to the registration record. After
+    OSF acknowledgement, a follow-up commit will bring the four
+    locked artefacts above into alignment with the seven-variant
+    implementation, removing the spec-vs-implementation drift
+    documented in paper section VII.B.6.
+  - Confirmatory E1, E2, E3 runs: unblocked from a preregistration
+    standpoint by the Session 13 hard-gate closure (mock smoke,
+    refusal classifier freeze, runner end-to-end gate). The real
+    blocker remains PC2 LLM server reachability; no confirmatory
+    data has been collected as of this filing.
+  - W10 backlog items #9 (Georgios demo deck), #10 (Related Work
+    expansion), #11 (Task IR review), #12 (H-numbering drift audit
+    in mcnemar_analysis.py): untouched in this session.
+
+### Session 14 closure summary
+
+Six commits, zero amendments forced through against locks, zero OSF
+API calls, zero test regressions. The W11-S2 mechanical phase is
+complete. The repository now consistently presents a seven-variant
+adversarial scope across code, the McNemar analysis module, the
+non-locked sections of the paper, and the OSF preregistration local
+doc; the four locked artefacts retain their pre-W11-S2 wording and
+the gap is explicitly documented in paper section VII.B.6 with a
+named resolution path through OSF Amendment 2 submission.
