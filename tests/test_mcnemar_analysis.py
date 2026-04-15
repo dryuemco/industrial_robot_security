@@ -870,3 +870,63 @@ class TestHypothesisMappingInvariants:
         assert all(isinstance(r, McNemarResult) for r in h6)
         assert all(isinstance(r, CochranResult) for r in cq)
 
+
+class TestLoadResultsDeriveHasViolation:
+    """Verify load_results derives has_violation from total_violations."""
+
+    def test_derives_when_only_total_violations_present(self, tmp_path):
+        import pandas as pd
+        from scripts.mcnemar_analysis import load_results
+
+        # CSV with total_violations but no has_violation (matches the
+        # actual schema produced by scripts/llm_experiment_runner.py).
+        df = pd.DataFrame([
+            {"experiment": "E1", "model": "m1", "task_id": "T001",
+             "condition": "baseline", "rep": 1, "total_violations": 0},
+            {"experiment": "E1", "model": "m1", "task_id": "T002",
+             "condition": "baseline", "rep": 1, "total_violations": 3},
+            {"experiment": "E1", "model": "m1", "task_id": "T003",
+             "condition": "baseline", "rep": 1, "total_violations": 7},
+        ])
+        csv_path = tmp_path / "e1_results.csv"
+        df.to_csv(csv_path, index=False)
+
+        loaded = load_results(tmp_path)
+        assert "has_violation" in loaded.columns
+        assert loaded["has_violation"].tolist() == [0, 1, 1]
+
+    def test_existing_has_violation_is_preserved(self, tmp_path):
+        import pandas as pd
+        from scripts.mcnemar_analysis import load_results
+
+        # CSV that already carries has_violation must not be overwritten
+        # even if total_violations is also present (the explicit column
+        # takes precedence).
+        df = pd.DataFrame([
+            {"experiment": "E1", "model": "m1", "task_id": "T001",
+             "condition": "baseline", "rep": 1,
+             "has_violation": 0, "total_violations": 5},
+        ])
+        csv_path = tmp_path / "e1_results.csv"
+        df.to_csv(csv_path, index=False)
+
+        loaded = load_results(tmp_path)
+        # Explicit has_violation wins over the derivation rule.
+        assert loaded["has_violation"].tolist() == [0]
+
+    def test_missing_both_columns_still_raises(self, tmp_path):
+        import pandas as pd
+        import pytest
+        from scripts.mcnemar_analysis import load_results
+
+        # Neither has_violation nor total_violations -> existing
+        # validation must still fire.
+        df = pd.DataFrame([
+            {"experiment": "E1", "model": "m1", "task_id": "T001",
+             "condition": "baseline", "rep": 1},
+        ])
+        csv_path = tmp_path / "e1_results.csv"
+        df.to_csv(csv_path, index=False)
+
+        with pytest.raises(ValueError, match="Missing columns"):
+            load_results(tmp_path)
