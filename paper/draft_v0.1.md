@@ -401,6 +401,19 @@ Confirmatory analysis from `results/e2_confirmatory` (2026-04-15, 315 calls: 3 m
 
 **H5 decision:** supported if at least one (model, A8.k) cell rejects H0: ΔCVR < 0.50 after Holm–Bonferroni correction across all 24 (3 × 8) tests.
 
+**Exploratory count inspection (post-hoc, descriptive; not part of the H5 confirmatory test).** Under the preregistered binary decision rule of §V.E, H5 is evaluated on `has_violation` — a 0/1 indicator of whether each call produced any violation at all. As discussed in the H5 result paragraph above, the baseline gate-passing CVR of 0.988 leaves almost no room for the adversarial condition to produce a measurable binary increase; the 100% ceiling is reached in every adversarial cell under the gate-passing contrast. To contextualise the ceiling, we report the mean `total_violations` count per (model, condition) cell in Table IV(b) below. Because the protocol-level invariant of §V.C fixes the Task IR across conditions, the DM pass contributes zero to `total_violations` in every row; the count below is therefore driven entirely by the SM rule family (SM-1, SM-2, SM-4, SM-5, SM-6 in the E1 + E2 data). Counts are reported as means over the gate-passing subset, pooled across the 15 tasks and across reps where applicable.
+
+**Table IV(b).** Mean `total_violations` per (model, condition) cell, gate-passing subset (E1 baseline + safety, E2 adversarial). The N cell is abbreviated as `b=baseline-N, s=safety-N, a=adversarial-N-range`, where the adversarial range spans the seven A8 cells.
+
+| Model | N | baseline | safety | A8.1 | A8.2 | A8.3 | A8.4 | A8.5 | A8.6 | A8.7 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Qwen2.5-Coder-32B | b=45, s=45, a=15 | 10.36 | 10.38 | 13.80 | 10.47 | 11.80 | 21.33 | 14.20 | 11.87 | 13.53 |
+| DeepSeek-Coder-V2-16B | b=20, s=42, a=5–11 | 9.50 | 3.69 | 7.50 | 5.78 | 8.00 | 6.83 | 7.64 | 13.80 | 6.40 |
+| CodeLlama-34B | b=18, s=21, a=4–7 | 10.00 | 3.19 | 12.40 | 11.00 | 9.71 | 11.00 | 9.20 | 7.20 | 15.50 |
+| **All models (pooled)** | b=83, s=108, a=25–31 | 10.07 | 6.38 | 12.08 | 9.04 | 10.38 | 15.81 | 11.06 | 11.32 | 12.62 |
+
+The pattern in Table IV(b) is model-dependent and does not support a uniform "adversarial prompts increase violation count" reading. Qwen2.5-Coder-32B shows the clearest count-level uplift: the A8.4 (Incremental) cell raises the per-call mean from 10.36 at baseline to 21.33, and five of the other six A8 cells fall between 10.47 and 14.20. DeepSeek-Coder-V2-16B shows count-level uplift only on A8.6 (Performance Framing, mean 13.80 vs baseline 9.50); the other six A8 cells sit at or below the baseline mean, with the per-cell gate-passing denominator as low as N = 5. CodeLlama-34B shows positive uplift on A8.1, A8.2, A8.4, and A8.7 but the per-cell N is at most 7 and the standard deviations (available in `results/e2_confirmatory/e2_results.csv`) are comparable to the cell means. The safety-augmented prompt reduces mean count for DeepSeek (3.69 vs 9.50) and CodeLlama (3.19 vs 10.00); Qwen is unchanged at 10.38. We interpret Table IV(b) only as descriptive context for the ceiling discussion above and in §VII.B; we make no confirmatory claim about adversarial-prompt effect on count, and no statistical test is applied to these means.
+
 ---
 
 ### H. E3 — Watchdog-in-Loop Defense (H6) [PENDING DATA]
