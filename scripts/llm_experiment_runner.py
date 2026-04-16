@@ -274,7 +274,7 @@ def run_single_call(
         "code_lines": parse_result.line_count,
         "has_motion": parse_result.has_motion_command,
         "has_safety_check": parse_result.has_safety_check,
-        "dm_violations": sum(1 for v in combined_report.violations if v.attack_type.startswith("DM")),
+        "dm_violations": sum(1 for v in combined_report.violations if v.detection_mechanism.startswith("DM")),
         "sm_violations": sum(1 for v in combined_report.violations if v.attack_type.startswith("SM")),
         "total_violations": combined_report.violation_count,
         "violation_types": ",".join(vtypes),
