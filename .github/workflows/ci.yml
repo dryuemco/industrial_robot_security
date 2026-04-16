@@ -160,7 +160,7 @@ jobs:
             --tb=short
 
   # ---------------------------------------------------------------------------
-  # Job 6: LLM client, prompt builder, code parser tests (38 tests)
+  # Job 6: LLM client, prompt builder, code parser tests (95 tests)
   # ---------------------------------------------------------------------------
   test-llm:
     runs-on: ubuntu-22.04
@@ -185,7 +185,7 @@ jobs:
             --tb=short
 
   # ---------------------------------------------------------------------------
-  # Job 7: Experiment runner tests (23 tests)
+  # Job 7: Experiment runner tests (117 tests)
   # ---------------------------------------------------------------------------
   test-experiment-runner:
     runs-on: ubuntu-22.04

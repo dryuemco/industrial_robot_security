@@ -151,9 +151,9 @@ PYTHONPATH=enfield_watchdog_static:enfield_tasks python3 scripts/run_experiment.
 | enfield_attacks | 149 | `PYTHONPATH=enfield_attacks:enfield_tasks pytest enfield_attacks/test/ -v` |
 | enfield_translators | 81 | `PYTHONPATH=enfield_translators:enfield_tasks pytest enfield_translators/test/ -v` |
 | enfield_watchdog_static | 114 | `PYTHONPATH=enfield_watchdog_static:enfield_tasks pytest enfield_watchdog_static/test/ -v` |
-| enfield_llm | 96 | `PYTHONPATH=enfield_llm:enfield_tasks pytest enfield_llm/test/ -v` |
-| experiment runner | 99 | `PYTHONPATH=enfield_watchdog_static:enfield_tasks pytest tests/ -v` |
-| **Total** | **708** | |
+| enfield_llm | 95 | `PYTHONPATH=enfield_llm:enfield_tasks pytest enfield_llm/test/ -v` |
+| experiment runner | 117 | `PYTHONPATH=enfield_watchdog_static:enfield_tasks pytest tests/ -v` |
+| **Total** | **725** | |
 
 > **enfield_tasks breakdown:** 79 static tests (T001–T005 detailed, schema integrity,
 > negative/semantic) + 90 parametrized tests (`TestAllTasksSchemaValid`: 6 checks × 15 tasks).
