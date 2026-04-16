@@ -249,3 +249,145 @@ class TestRunnerCodePathCoverage:
             r["status"] == "success" and r["sm_violations"] > 0
             for r in combined_results
         )
+
+
+# ---------------------------------------------------------------------------
+# E3 watchdog-in-loop smoke coverage
+# ---------------------------------------------------------------------------
+
+
+class TestE3MockSmoke:
+    """Smoke coverage for run_e3(). Locks in the watchdog-in-loop
+    protocol as implemented: initial call in BASELINE, up to
+    max_retries retries each also in BASELINE, retry loop breaks
+    when total_violations == 0 or status != 'success'.
+
+    The third test in this class (test_retry_rows_are_baseline_mode)
+    is a regression guard for Session 17 Commit 1b: the retry path
+    used to run in SAFETY mode, which confounded H6 with the safety
+    prompt paradox. If anyone flips it back, that test fails."""
+
+    def test_run_e3_returns_nonempty_result_list(self, two_tasks, output_dir):
+        results = runner.run_e3(
+            tasks=two_tasks,
+            reps=2,
+            max_retries=2,
+            output_dir=output_dir,
+            provider="mock",
+            mock_seed=42,
+        )
+        # Lower bound: 1 model * 2 tasks * 2 reps = 4 initial calls.
+        # Upper bound: 4 * (1 + max_retries) = 12 with all retries used.
+        assert 4 <= len(results) <= 12, (
+            f"E3 row count {len(results)} outside expected [4, 12]"
+        )
+
+    def test_run_e3_rows_have_required_schema(self, two_tasks, output_dir):
+        results = runner.run_e3(
+            tasks=two_tasks, reps=2, max_retries=2,
+            output_dir=output_dir, provider="mock", mock_seed=42,
+        )
+        for row in results:
+            missing = REQUIRED_COLUMNS - row.keys()
+            assert not missing, f"row missing columns: {missing}"
+            assert row["experiment"] == "E3"
+
+    def test_retry_rows_are_baseline_mode(self, two_tasks, output_dir):
+        """REGRESSION GUARD (Session 17 Commit 1b). Every retry row
+        must carry condition == 'baseline'. If anyone changes the
+        retry call back to PromptMode.SAFETY (or any other mode),
+        this test fails and blocks the regression from reaching
+        confirmatory E3 data collection."""
+        results = runner.run_e3(
+            tasks=two_tasks, reps=2, max_retries=2,
+            output_dir=output_dir, provider="mock", mock_seed=42,
+        )
+        retry_rows = [r for r in results if r["retry"] > 0]
+        # At least one retry must have fired for this test to be
+        # meaningful under the mock's deterministic template rotation.
+        assert len(retry_rows) > 0, (
+            "No retry rows produced; cannot guard retry mode. "
+            "Check that mock_seed=42 produces at least one violation-"
+            "bearing initial call."
+        )
+        for r in retry_rows:
+            assert r["condition"] == "baseline", (
+                f"Retry row in mode '{r['condition']}', expected "
+                f"'baseline'. Commit 1b regression detected."
+            )
+
+    def test_initial_rows_are_baseline_mode(self, two_tasks, output_dir):
+        results = runner.run_e3(
+            tasks=two_tasks, reps=2, max_retries=2,
+            output_dir=output_dir, provider="mock", mock_seed=42,
+        )
+        initial_rows = [r for r in results if r["retry"] == 0]
+        assert len(initial_rows) == 4, (
+            f"Expected 4 initial rows (1 model * 2 tasks * 2 reps), "
+            f"got {len(initial_rows)}"
+        )
+        for r in initial_rows:
+            assert r["condition"] == "baseline"
+
+    def test_retry_bound_respected(self, two_tasks, output_dir):
+        """No row's retry field may exceed max_retries."""
+        max_retries = 2
+        results = runner.run_e3(
+            tasks=two_tasks, reps=2, max_retries=max_retries,
+            output_dir=output_dir, provider="mock", mock_seed=42,
+        )
+        for r in results:
+            assert r["retry"] <= max_retries, (
+                f"Row retry={r['retry']} exceeds max_retries={max_retries}"
+            )
+
+    def test_break_on_clean_initial_call(self, two_tasks, output_dir):
+        """If an initial call has zero violations and success status,
+        no retry rows should exist for that (model, task, rep) key."""
+        results = runner.run_e3(
+            tasks=two_tasks, reps=2, max_retries=2,
+            output_dir=output_dir, provider="mock", mock_seed=42,
+        )
+        # Group rows by (model, task_id, rep) and inspect each group
+        from collections import defaultdict
+        groups = defaultdict(list)
+        for r in results:
+            key = (r["model"], r["task_id"], r["rep"])
+            groups[key].append(r)
+
+        for key, rows in groups.items():
+            rows_sorted = sorted(rows, key=lambda r: r["retry"])
+            initial = rows_sorted[0]
+            assert initial["retry"] == 0
+            if (
+                initial["status"] == "success"
+                and initial["total_violations"] == 0
+            ):
+                assert len(rows_sorted) == 1, (
+                    f"Group {key} had clean initial call but "
+                    f"{len(rows_sorted) - 1} retry rows"
+                )
+
+    def test_run_e3_is_deterministic_across_runs(self, two_tasks, output_dir):
+        """Same seed must produce the same result list across runs."""
+        r1 = runner.run_e3(
+            tasks=two_tasks, reps=2, max_retries=2,
+            output_dir=output_dir, provider="mock", mock_seed=42,
+        )
+        # Re-create an isolated output dir for the second run to avoid
+        # file-collision side effects.
+        r2 = runner.run_e3(
+            tasks=two_tasks, reps=2, max_retries=2,
+            output_dir=output_dir, provider="mock", mock_seed=42,
+        )
+        assert len(r1) == len(r2), (
+            f"Determinism violated: len {len(r1)} vs {len(r2)}"
+        )
+        for a, b in zip(r1, r2):
+            # Timestamps differ between runs; compare the substantive
+            # structural fields only.
+            for k in ("experiment", "model", "task_id", "condition",
+                      "rep", "retry", "status", "total_violations"):
+                assert a[k] == b[k], (
+                    f"Determinism violated at key '{k}': {a[k]} vs {b[k]}"
+                )
