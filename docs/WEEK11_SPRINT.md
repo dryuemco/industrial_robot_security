@@ -1638,3 +1638,85 @@ Cumulative rule reaffirmed for future patches: pre-write guards only, scoped to 
 ### Session 15 summary
 
 Six commits, zero locked-artefact disturbance, zero OSF API calls, zero test regressions (713 -> 713). E2 confirmatory run completed successfully at 315 calls in ~100 minutes; H5 NOT SUPPORTED under the preregistered decision rule is now documented across section VI.G (confirmatory) and sections V.C / VI.G.exploratory / VII.B.8 (methodological context, clearly-labelled descriptive supplement, and interpretive threats-to-validity treatment). The paper now carries preregistered confirmatory results for two of the three H4-H6 hypotheses (H4 supported, H5 not supported); H6 remains pending E3. The W11-S2 mechanical phase commitments from session 14 remain intact: no locked artefact touched, no literal `A6_4` / `A8.8` token in a removal commit message body, ASCII-only commit messages.
+## Session 16 -- B+C quick-wins + Georgios brief + sensitivity analyses (commits 1-7)
+
+Date: 2026-04-16 (Week 11/24)
+HEAD at session close: 20dbe9a on origin/main, working tree clean
+Test count: 713 -> 725 (+12 new tests)
+PENDING DATA markers: 3 -> 1 (VI.J and VI.I resolved; VI.H remains, awaiting E3)
+
+### Commits
+
+| # | SHA | Message | Impact |
+|---|---|---|---|
+| 1 | c405242 | fix(paper): correct baseline Holm-adjusted p in VI.F | Bug fix: 0.002 -> 0.004 (raw p was mislabelled as Holm-adjusted) |
+| 2 | ca2ba91 | docs(paper): populate section VI.J Cochran Q heterogeneity | PENDING 3->2; Q=12.60/20.00/8.00 all REJECT H0 |
+| 3 | d28a4f0 | docs(paper): add safety-prompt count-level effect to VI.F | Pooled 10.07->6.38 (37% reduction); DeepSeek 61%, CodeLlama 68%, Qwen unchanged |
+| 4 | 95398de | docs(briefs): add H5 finding brief for Georgios (2026-04-16) | Supervisor brief: H5 NOT SUPPORTED + ceiling + 3 requests |
+| 5 | efda791 | feat(mcnemar): add --sensitivity flag | +3 functions, +12 tests; 713->725 |
+| 6 | bc4ed5c | chore(docs): align test-count cascade | README/CI/open_science/run_tests.sh pre-existing drift resolved |
+| 7 | 20dbe9a | docs(paper): populate section VI.I sensitivity analyses | PENDING 2->1; Table VI per-rule decomposition + refusal finding |
+
+### Key findings documented in paper this session
+
+1. **Zero refusals (0/585).** None of the three open-source models declined to generate industrial robot code across all E1+E2 conditions including adversarial prompting. The three preregistered refusal-handling modes (violating/non-violating/excluded) yield mathematically identical H4/H5 contrasts. Safety-through-refusal is not an active mitigation in this model family and task domain.
+
+2. **SM-3 and SM-7 never fired.** Two of seven SM rules produced zero violations across 585 rows. SM-3 (CWE-693 Protection Failure) targets protection-bypass patterns absent in motion-primitive code; SM-7 (prompt-injection marker) targets explicit markers that A8 variants do not emit by design. Five SM rules (SM-1, SM-2, SM-4, SM-5, SM-6) are the empirical basis of `has_violation` for H4/H5.
+
+3. **Safety-prompt count-level reduction.** The binary CVR metric saturates (gate-passing baseline CVR = 0.988) but the count-level statistic reveals a 37% pooled reduction (10.07 -> 6.38) under the safety-augmented prompt, driven by DeepSeek (61%) and CodeLlama (68%); Qwen unchanged. Reported descriptively, not part of H4 confirmatory test.
+
+4. **Cochran Q heterogeneity.** All three conditions (baseline, safety, adversarial-any) reject H0 at family-wise alpha=0.05: models disagree significantly on per-task violation rates. CodeLlama rate reflects validity-gate failures as much as safe/unsafe URScript.
+
+### Pre-existing drift resolved
+
+Test-count cascade had drifted across four files predating this session:
+
+  - README: enfield_llm 96->95 (1 test removed without update), experiment_runner 99->117 (tests added without update), Total 708->725
+  - CI: Job 6 comment (38->95), Job 7 comment (23->117)
+  - open_science_release: total (574->725), enfield_llm (38->95)
+  - run_tests.sh: header comment (574+->725+)
+
+All resolved in commit bc4ed5c (chore(docs): align test-count cascade).
+
+### Supervisor communication
+
+Georgios brief committed to `docs/brief_2026-04-16_h5_finding.md` (95398de) and emailed (full detail inline variant). Three requests:
+
+1. OSF Amendment 2 submission go-ahead (candidate d251c15, scope: 8->7 A8 subtypes)
+2. Writing-strategy confirmation (full disclosure via VII.B.8 + VI.G exploratory)
+3. E3 design heads-up (invariant-IR vs variant-IR, to avoid ceiling repeat)
+
+Responses pending as of session close. Per supervisor's stated delegation ("the project is yours, do what you think is right"), Amendment 2 submission proceeds after a 24-hour courtesy window.
+
+### Silent-fail patterns caught this session
+
+1. **ANSI color escape in subprocess output.** `run_tests.sh` emits ANSI codes (`\x1b[1m`, `\x1b[0m`) around numeric totals. Naive regex `r"Total:\s*(\d+)\s*tests"` failed to match. Fix: `re.sub(r"\x1b\[[0-9;]*m", "", raw)` before parsing. Rule for future patches: any subprocess capture of run_tests.sh output must strip ANSI escapes first.
+
+2. **Browser download filename collision.** Re-presenting a fixed patch with the same filename caused the browser to serve the cached old version (20496 bytes instead of 20852). Fix: version-suffix the filename (`patch_v2_*.py`). Rule for future patches: when re-presenting a corrected file, always use a distinct filename.
+
+3. **Post-write guard checking for absent string.** Commit 2 v1 guard asserted `"0/585"` present in VI.I, but the actual text used `"zero refusals"` + `"585 calls"` separately. Guard was inconsistent with its own NEW text. Fix: align guard string with actual prose (`"585 calls"` instead of `"0/585"`). Rule: every post-write guard string must appear verbatim in the NEW replacement block; cross-check mechanically before committing the patch.
+
+4. **create_file silent no-op.** Claude's `create_file` tool reported success but files were not created on disk (filename collision with pre-existing files from an earlier tool invocation in the same session). Caught by manual `ls` verification. Rule: always verify file existence with `ls -la` after `create_file`, especially when the target directory already has files from an earlier attempt.
+
+### Hard rules audit -- session 16
+
+  - paper sec V.E: untouched (lock honoured)
+  - paper VI.G H5 decision sentence: untouched (verified at line 404, shifted +2 from commit 3 paragraph insertion)
+  - paper Appendix A H5 description: untouched
+  - OSF preregistration Amendment 1 block: untouched
+  - git commit --amend: not used; seven clean forward-only commits
+  - All patches: pre-write assertions, CSV-verified numerics, post-write disk verify, locked-artefact check
+  - Session 15 closure block: preserved verbatim
+
+### Outstanding items beyond session 16
+
+  - **F: OSF Amendment 2 submission** -- candidate d251c15, awaiting Georgios response (~24h window from email sent 2026-04-16). After OSF acknowledgment, four locked artefacts align in one follow-up commit.
+  - **A: E3 design review** -- invariant-IR vs variant-IR decision. Georgios Request 3 pending. Critical to avoid H6 NOT SUPPORTED for the same ceiling reason as H5.
+  - **VI.H: E3 data + H6 populate** -- last PENDING DATA marker. Requires E3 design decision + PC2 reachability + ~540 calls.
+  - **CodeLlama 12 timeout root cause** -- deferred, logged as paper limitation.
+  - **Related Work expansion** (W10 #10) -- deferred.
+  - **Georgios demo deck** (W10 #9) -- deferred.
+
+### Session 16 summary
+
+Seven commits, zero locked-artefact disturbance, zero OSF API calls, test count 713->725 (+12). PENDING DATA 3->1 (VI.J resolved via Cochran Q table, VI.I resolved via refusal finding + per-rule Table VI; VI.H remains awaiting E3). Pre-existing test-count cascade drift resolved across four documentation files. Supervisor brief emailed with three explicit requests (Amendment 2, writing strategy, E3 design). Three new silent-fail patterns documented and mitigated (ANSI escape, browser cache, guard-text inconsistency). The paper now carries populated results for H4 (supported), H5 (not supported), sensitivity analyses (VI.I), and cross-model heterogeneity (VI.J); only H6 (VI.H) remains pending.
