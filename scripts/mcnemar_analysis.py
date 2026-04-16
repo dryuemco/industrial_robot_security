@@ -968,7 +968,135 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--demo", action="store_true",
                    help="Run on synthetic demo data (no LLM server needed)")
     p.add_argument("--verbose", "-v", action="store_true")
+    p.add_argument("--sensitivity", action="store_true",
+                   help="Also write sensitivity CSVs "
+                        "(refusal summary + per-rule decomposition)")
     return p.parse_args()
+
+
+
+# ---------------------------------------------------------------------------
+# Sensitivity analyses (refusal summary + per-rule decomposition)
+# ---------------------------------------------------------------------------
+# Pre-specified in paper sec V.E and OSF Amendment 1. The three refusal-
+# handling modes (violating / non-violating / excluded) yield identical
+# H4/H5 contrasts by construction when refusal count is zero for every
+# (model, condition) cell; refusal_rate_summary exposes that count so the
+# invariance can be verified empirically.
+#
+# decompose_by_rule reports per-rule violation counts used to populate
+# paper sec VI.I Table VI. Condition groups are baseline, safety, and
+# adversarial_any_a8k (E2 pooled across A8.1-A8.7). DM-* counts are
+# tracked alongside SM-* for audit; the invariant-IR protocol of sec V.C
+# guarantees DM-* counts are zero in E1/E2 data.
+
+
+def refusal_rate_summary(df):
+    """Return per-(model, condition) refusal rate as a DataFrame.
+
+    Columns: model, condition, n, n_refusals, refusal_rate.
+
+    Accepts both boolean and string ("True"/"False") values in the
+    refusal column (CSV-loaded frames typically carry strings).
+    """
+    columns = ["model", "condition", "n", "n_refusals", "refusal_rate"]
+    if df is None or len(df) == 0 or "refusal" not in df.columns:
+        return pd.DataFrame(columns=columns)
+
+    def _is_refusal(v):
+        if isinstance(v, bool):
+            return v
+        return str(v).strip().lower() == "true"
+
+    rows = []
+    for (model, cond), sub in df.groupby(["model", "condition"]):
+        n = len(sub)
+        n_ref = sum(1 for v in sub["refusal"] if _is_refusal(v))
+        rows.append({
+            "model": model,
+            "condition": cond,
+            "n": n,
+            "n_refusals": n_ref,
+            "refusal_rate": n_ref / n if n > 0 else 0.0,
+        })
+    return (
+        pd.DataFrame(rows, columns=columns)
+        .sort_values(["model", "condition"])
+        .reset_index(drop=True)
+    )
+
+
+def decompose_by_rule(df):
+    """Return per-(condition-group, rule) violation count as a DataFrame.
+
+    Condition groups:
+      - baseline:               condition == "baseline"
+      - safety:                 condition == "safety"
+      - adversarial_any_a8k:    condition startswith "adversarial_A8."
+    Rows with any other condition value are excluded.
+
+    For each group, counts per-occurrence tokens of SM-1..7 and DM-1..7
+    in the violation_types column (comma-separated). Each occurrence
+    contributes +1; duplicate tokens within a single row are counted
+    per-instance.
+
+    Columns: condition_group, n_rows, SM-1..SM-7, DM-1..DM-7.
+    """
+    rule_tokens = [f"SM-{i}" for i in range(1, 8)] + [f"DM-{i}" for i in range(1, 8)]
+    cols = ["condition_group", "n_rows"] + rule_tokens
+
+    if df is None or len(df) == 0:
+        return pd.DataFrame(columns=cols)
+
+    def _group_of(cond):
+        s = str(cond)
+        if s == "baseline":
+            return "baseline"
+        if s == "safety":
+            return "safety"
+        if s.startswith("adversarial_A8."):
+            return "adversarial_any_a8k"
+        return "_other"
+
+    df_local = df.copy()
+    df_local["_grp"] = df_local["condition"].apply(_group_of)
+    df_local = df_local[df_local["_grp"] != "_other"]
+    if len(df_local) == 0:
+        return pd.DataFrame(columns=cols)
+
+    rows = []
+    for grp, sub in df_local.groupby("_grp"):
+        row = {"condition_group": grp, "n_rows": len(sub)}
+        for rule in rule_tokens:
+            row[rule] = 0
+        vt_series = sub.get("violation_types", pd.Series([""] * len(sub), index=sub.index))
+        for vt in vt_series.fillna("").astype(str):
+            for tok in vt.split(","):
+                tok = tok.strip()
+                if tok in row:
+                    row[tok] += 1
+        rows.append(row)
+
+    group_order = {"baseline": 0, "safety": 1, "adversarial_any_a8k": 2}
+    result = pd.DataFrame(rows, columns=cols)
+    result = result.sort_values(
+        "condition_group",
+        key=lambda s: s.map(lambda g: group_order.get(g, 99)),
+    ).reset_index(drop=True)
+    return result
+
+
+def write_sensitivity_outputs(df, output_dir):
+    """Write refusal summary + per-rule decomposition to output_dir/sensitivity/."""
+    output_dir = Path(output_dir)
+    sens_dir = output_dir / "sensitivity"
+    sens_dir.mkdir(parents=True, exist_ok=True)
+    refusal_rate_summary(df).to_csv(
+        sens_dir / "refusal_summary.csv", index=False
+    )
+    decompose_by_rule(df).to_csv(
+        sens_dir / "per_rule_decomposition.csv", index=False
+    )
 
 
 def main() -> int:
@@ -1139,6 +1267,10 @@ def main() -> int:
     print(f"  Cochran results: {cochran_csv_path}")
     print(f"  Report:          {md_path}")
     print("═" * 60 + "\n")
+
+    if args.sensitivity:
+        log.info("Writing sensitivity analyses to %s/sensitivity/", args.output_dir)
+        write_sensitivity_outputs(df, args.output_dir)
 
     return 0
 
