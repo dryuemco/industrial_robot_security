@@ -391,3 +391,120 @@ class TestE3MockSmoke:
                 assert a[k] == b[k], (
                     f"Determinism violated at key '{k}': {a[k]} vs {b[k]}"
                 )
+
+
+# ---------------------------------------------------------------------------
+# compute_summary / JSON summary fields (Session 17 Commit 3.5)
+# ---------------------------------------------------------------------------
+
+
+class TestSummaryJSON:
+    """Regression tests for scripts/llm_experiment_runner.py compute_summary.
+
+    Guards the backward-compatible field set introduced in Session 17
+    Commit 3.5: per-model dicts now expose attempted_calls,
+    invalid_pseudocode_calls, and gate_pass_rate in addition to the
+    existing calls/mean_violations/violation_rate. The fix was
+    motivated by the E3 pilot (session 17), where CodeLlama-34B and
+    DeepSeek-Coder-V2-16B produced only invalid_pseudocode outputs
+    and therefore registered as {"calls": 0} in the summary, hiding
+    the fact that they had been called at all."""
+
+    def test_attempted_calls_field_present_per_model(
+        self, two_tasks, output_dir
+    ):
+        """Every per-model dict must carry attempted_calls, regardless
+        of whether that model produced any successful output."""
+        results = runner.run_e1(
+            tasks=two_tasks, reps=1,
+            output_dir=output_dir, provider="mock", mock_seed=42,
+        )
+        summary = runner.compute_summary(results, "E1")
+        for model, stats in summary["per_model"].items():
+            assert "attempted_calls" in stats, (
+                f"Model {model} missing attempted_calls field"
+            )
+            assert "invalid_pseudocode_calls" in stats
+            assert "gate_pass_rate" in stats
+            assert stats["attempted_calls"] >= 1, (
+                f"Model {model} has attempted_calls={stats['attempted_calls']}"
+            )
+
+    def test_gate_pass_rate_is_successful_over_attempted(
+        self, two_tasks, output_dir
+    ):
+        """Mathematical invariant: gate_pass_rate == calls / attempted_calls."""
+        results = runner.run_e1(
+            tasks=two_tasks, reps=1,
+            output_dir=output_dir, provider="mock", mock_seed=42,
+        )
+        summary = runner.compute_summary(results, "E1")
+        for model, stats in summary["per_model"].items():
+            if stats["attempted_calls"] == 0:
+                continue
+            expected = round(
+                stats["calls"] / stats["attempted_calls"], 3
+            )
+            assert stats["gate_pass_rate"] == expected, (
+                f"gate_pass_rate mismatch for {model}: "
+                f"{stats['gate_pass_rate']} vs {expected}"
+            )
+
+    def test_invalid_pseudocode_rows_counted_correctly(self):
+        """Synthetic scenario: one model with two invalid_pseudocode
+        rows and zero successful rows must produce attempted_calls=2,
+        calls=0, gate_pass_rate=0.0."""
+        synthetic_rows = [
+            {
+                "status": "invalid_pseudocode",
+                "model": "fake-model",
+                "condition": "baseline",
+                "total_violations": 0,
+                "latency_ms": 100,
+            },
+            {
+                "status": "invalid_pseudocode",
+                "model": "fake-model",
+                "condition": "baseline",
+                "total_violations": 0,
+                "latency_ms": 200,
+            },
+        ]
+        summary = runner.compute_summary(synthetic_rows, "synth")
+        assert summary["per_model"]["fake-model"]["attempted_calls"] == 2
+        assert summary["per_model"]["fake-model"]["calls"] == 0
+        assert (
+            summary["per_model"]["fake-model"]["invalid_pseudocode_calls"]
+            == 2
+        )
+        assert summary["per_model"]["fake-model"]["gate_pass_rate"] == 0.0
+
+    def test_mixed_rows_produce_nonzero_gate_pass_rate(self):
+        """Synthetic scenario: one model with one success and one
+        invalid_pseudocode must produce attempted_calls=2, calls=1,
+        gate_pass_rate=0.5."""
+        synthetic_rows = [
+            {
+                "status": "success",
+                "model": "fake-model",
+                "condition": "baseline",
+                "total_violations": 3,
+                "latency_ms": 100,
+            },
+            {
+                "status": "invalid_pseudocode",
+                "model": "fake-model",
+                "condition": "baseline",
+                "total_violations": 0,
+                "latency_ms": 200,
+            },
+        ]
+        summary = runner.compute_summary(synthetic_rows, "synth")
+        stats = summary["per_model"]["fake-model"]
+        assert stats["attempted_calls"] == 2
+        assert stats["calls"] == 1
+        assert stats["invalid_pseudocode_calls"] == 1
+        assert stats["gate_pass_rate"] == 0.5
+        # mean_violations and violation_rate are conditioned on success
+        assert stats["mean_violations"] == 3.0
+        assert stats["violation_rate"] == 1.0
