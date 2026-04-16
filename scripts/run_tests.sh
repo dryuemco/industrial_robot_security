@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # =============================================================================
 # ENFIELD — Run All Tests
-# Single command to verify entire test suite (574+ tests)
+# Single command to verify entire test suite (725+ tests)
 # Usage: ./scripts/run_tests.sh [--fast] [--suite SUITE_NAME]
 # =============================================================================
 
