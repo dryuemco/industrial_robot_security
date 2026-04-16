@@ -480,7 +480,7 @@ def run_e3(
 
                     row = run_single_call(
                         client, builder, parser, watchdog,
-                        task_ir, PromptMode.SAFETY, None, code_dir,
+                        task_ir, PromptMode.BASELINE, None, code_dir,
                         experiment="E3", rep=rep, retry=retry_num,
                         feedback=feedback,
                     )
