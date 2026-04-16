@@ -40,6 +40,9 @@ from mcnemar_analysis import (
     _cochran_from_matrix,
     cochran_results_to_df,
     generate_markdown_report,
+    refusal_rate_summary,
+    decompose_by_rule,
+    write_sensitivity_outputs,
 )
 
 
@@ -1000,3 +1003,141 @@ class TestGatePassingSensitivity:
         gate_qwen = next(r for r in gate_results
                          if r.model == "qwen2.5-coder:32b")
         assert abs(gate_qwen.rate_a - 1.00) < 1e-9
+# ---------------------------------------------------------------------------
+# Sensitivity analyses (session 16, commit 1a)
+# ---------------------------------------------------------------------------
+
+class TestRefusalRateSummary:
+    def test_empty_df_returns_empty_df(self):
+        empty = pd.DataFrame(columns=["model", "condition", "refusal"])
+        result = refusal_rate_summary(empty)
+        assert result.empty
+        assert list(result.columns) == [
+            "model", "condition", "n", "n_refusals", "refusal_rate",
+        ]
+
+    def test_zero_refusals_yields_zero_rate(self):
+        df = pd.DataFrame([
+            {"model": "m1", "condition": "baseline", "refusal": False},
+            {"model": "m1", "condition": "baseline", "refusal": False},
+        ])
+        result = refusal_rate_summary(df)
+        row = result.iloc[0]
+        assert row["n"] == 2
+        assert row["n_refusals"] == 0
+        assert row["refusal_rate"] == 0.0
+
+    def test_mixed_refusals_counts_correctly(self):
+        df = pd.DataFrame([
+            {"model": "m1", "condition": "baseline", "refusal": True},
+            {"model": "m1", "condition": "baseline", "refusal": False},
+            {"model": "m1", "condition": "baseline", "refusal": True},
+        ])
+        result = refusal_rate_summary(df)
+        row = result.iloc[0]
+        assert row["n"] == 3
+        assert row["n_refusals"] == 2
+        assert abs(row["refusal_rate"] - 2 / 3) < 1e-9
+
+    def test_string_refusal_values_accepted(self):
+        """CSV-loaded frames may carry 'True'/'False' strings."""
+        df = pd.DataFrame([
+            {"model": "m1", "condition": "baseline", "refusal": "True"},
+            {"model": "m1", "condition": "baseline", "refusal": "False"},
+        ])
+        result = refusal_rate_summary(df)
+        row = result.iloc[0]
+        assert row["n_refusals"] == 1
+
+
+class TestDecomposeByRule:
+    def test_empty_df_returns_empty_df(self):
+        empty = pd.DataFrame(columns=["model", "condition", "violation_types"])
+        result = decompose_by_rule(empty)
+        assert result.empty
+
+    def test_single_sm_token_counted_once(self):
+        df = pd.DataFrame([{
+            "model": "m1",
+            "condition": "baseline",
+            "violation_types": "SM-2",
+        }])
+        result = decompose_by_rule(df)
+        assert len(result) == 1
+        row = result.iloc[0]
+        assert row["condition_group"] == "baseline"
+        assert row["n_rows"] == 1
+        assert row["SM-2"] == 1
+        assert row["SM-1"] == 0
+
+    def test_duplicate_tokens_counted_per_occurrence(self):
+        df = pd.DataFrame([{
+            "model": "m1",
+            "condition": "baseline",
+            "violation_types": "SM-2,SM-2,SM-5",
+        }])
+        result = decompose_by_rule(df)
+        row = result.iloc[0]
+        assert row["SM-2"] == 2
+        assert row["SM-5"] == 1
+
+    def test_empty_violation_types_gives_zero_counts(self):
+        df = pd.DataFrame([{
+            "model": "m1",
+            "condition": "baseline",
+            "violation_types": "",
+        }])
+        result = decompose_by_rule(df)
+        row = result.iloc[0]
+        assert row["n_rows"] == 1
+        for rule in ["SM-1", "SM-2", "SM-3", "SM-4", "SM-5", "SM-6", "SM-7"]:
+            assert row[rule] == 0
+
+    def test_sm3_sm7_remain_zero_when_absent(self):
+        """Empirical: SM-3 and SM-7 did not fire in E1+E2 confirmatory data."""
+        df = pd.DataFrame([{
+            "model": "m1",
+            "condition": "baseline",
+            "violation_types": "SM-1,SM-2,SM-4,SM-5,SM-6",
+        }])
+        result = decompose_by_rule(df)
+        row = result.iloc[0]
+        assert row["SM-3"] == 0
+        assert row["SM-7"] == 0
+
+    def test_adversarial_conditions_pool_to_any_a8k(self):
+        df = pd.DataFrame([
+            {"model": "m1", "condition": "adversarial_A8.1",
+             "violation_types": "SM-2"},
+            {"model": "m1", "condition": "adversarial_A8.4",
+             "violation_types": "SM-5"},
+        ])
+        result = decompose_by_rule(df)
+        assert len(result) == 1
+        row = result.iloc[0]
+        assert row["condition_group"] == "adversarial_any_a8k"
+        assert row["n_rows"] == 2
+        assert row["SM-2"] == 1
+        assert row["SM-5"] == 1
+
+    def test_unknown_condition_excluded(self):
+        df = pd.DataFrame([{
+            "model": "m1",
+            "condition": "unexpected_mode",
+            "violation_types": "SM-1",
+        }])
+        result = decompose_by_rule(df)
+        assert result.empty
+
+
+class TestWriteSensitivityOutputs:
+    def test_writes_two_csvs_to_sensitivity_subdir(self, tmp_path):
+        df = pd.DataFrame([
+            {"model": "m1", "condition": "baseline", "refusal": False,
+             "violation_types": "SM-2"},
+        ])
+        write_sensitivity_outputs(df, tmp_path)
+        sens_dir = tmp_path / "sensitivity"
+        assert sens_dir.is_dir()
+        assert (sens_dir / "refusal_summary.csv").exists()
+        assert (sens_dir / "per_rule_decomposition.csv").exists()
