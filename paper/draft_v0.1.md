@@ -375,19 +375,31 @@ Readers should note that the H4 family-size and decision-rule wording in §V.E a
 
 ---
 
-### G. E2 — Adversarial Uplift (H5) [PENDING DATA]
+### G. E2 — Adversarial Uplift (H5)
 
-**Table IV.** ΔCVR (percentage points) per model per A8 subtype, relative to E1 neutral baseline. Newcombe hybrid score 95% CI on the difference.
+Confirmatory analysis from `results/e2_confirmatory` (2026-04-15, 315 calls: 3 models × 15 tasks × 7 conditions (A8.1–A8.7) × 1 rep), combined with the baseline condition of E1 as the matched-pair reference for each (model, task) pair. Under the preregistered decision rule of §V.E, H5 is tested per (model, A8.k) cell, as a McNemar contrast on baseline-vs-adversarial paired outcomes; Holm–Bonferroni correction is applied within the family. The H5 contrast is reported in the same two complementary forms as H4: a naive contrast over all matched pairs, and a gate-passing contrast over pairs in which both the baseline and the adversarial call passed the URScript validity gate of §IV.C. Every cell below carries Holm-adjusted p = 1.000 and is therefore reported as a delta-only table; no cell crosses the preregistered 50 pp threshold (ΔCVR ≥ 0.50 on the [0,1] scale) under either contrast.
 
-| Model | A8.1 | A8.2 | A8.3 | A8.4 | A8.5 | A8.6 | A8.7 | max ΔCVR |
-|---|---|---|---|---|---|---|---|---|
-| Qwen2.5-Coder-32B | — | — | — | — | — | — | — | — |
-| DeepSeek-Coder-V2-16B | — | — | — | — | — | — | — | — |
-| CodeLlama-34B | — | — | — | — | — | — | — | — |
+**Table IV(a)‑naive.** H5 contrast over all matched pairs. Δpp = adversarial CVR − baseline CVR in percentage points. The baseline CVR column reports the per-model baseline rate used as the contrast reference (same E1 data as Table III(a)-naive).
+
+| Model | N per cell | Baseline CVR | A8.1 Δpp | A8.2 Δpp | A8.3 Δpp | A8.4 Δpp | A8.5 Δpp | A8.6 Δpp | A8.7 Δpp | max Δpp |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Qwen2.5-Coder-32B | 15 | 100.00% | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 |
+| DeepSeek-Coder-V2-16B | 15 | 46.67% | -6.67 | +13.33 | 0.00 | -6.67 | +26.67 | -13.33 | -13.33 | +26.67 |
+| CodeLlama-34B | 15 | 40.00% | -6.67 | -13.33 | +6.67 | 0.00 | -6.67 | -6.67 | 0.00 | +6.67 |
+| All models (pooled) | 45 | 62.22% | -4.44 | 0.00 | +2.22 | -2.22 | +6.67 | -6.67 | -4.44 | +6.67 |
+
+**Table IV(a)‑gate.** H5 contrast restricted to matched pairs in which both sides passed the URScript validity gate. N per cell is a range across the seven A8 cells because the gate-passing denominator varies per (model, attack) pair; exact per-cell N values are available in `results/stats_e2/mcnemar_results.csv`.
+
+| Model | N per cell (range) | A8.1 Δpp | A8.2 Δpp | A8.3 Δpp | A8.4 Δpp | A8.5 Δpp | A8.6 Δpp | A8.7 Δpp | max Δpp |
+|---|---|---|---|---|---|---|---|---|---|
+| Qwen2.5-Coder-32B | 15 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 |
+| DeepSeek-Coder-V2-16B | 3–6 | +33.33 | +20.00 | 0.00 | +33.33 | +16.67 | 0.00 | 0.00 | +33.33 |
+| CodeLlama-34B | 3–6 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 |
+| All models (pooled) | 21–25 | +4.76 | +4.17 | 0.00 | +4.55 | +4.17 | 0.00 | 0.00 | +4.76 |
+
+**H5 result.** No cell in either contrast rejects H0 under the preregistered decision rule. Under the naive contrast the largest per-model Δpp is +26.67 pp (DeepSeek-Coder-V2-16B / A8.5) and the largest pooled Δpp is +6.67 pp (A8.5); neither clears the 50 pp threshold. Under the gate-passing contrast the largest per-model Δpp is +33.33 pp (DeepSeek-Coder-V2-16B / A8.1 and A8.4) and the largest pooled Δpp is +4.76 pp (A8.1); again, no cell clears the threshold. All 42 per-model and 14 pooled tests return Holm-adjusted p = 1.000. A mechanical consequence is that the gate-passing contrast is numerically bounded above by 4.76 pp at the pooled level because the baseline gate-passing CVR is 0.988 (§VI.F, Table III(a)-gate) — only 1.2 pp remains below the 100% ceiling for any attack to exploit. The binary-flag ceiling under which this contrast operates is discussed in §VII.B; the H5 NOT SUPPORTED outcome is primarily an artefact of the metric–data interaction under this ceiling rather than evidence of adversarial-prompt safety.
 
 **H5 decision:** supported if at least one (model, A8.k) cell rejects H0: ΔCVR < 0.50 after Holm–Bonferroni correction across all 24 (3 × 8) tests.
-
-*Smoke-test signal to verify at full scale: DeepSeek-Coder-V2-16B exhibited a 1→22 violation spike under A8.6 (positional `movej()`/`movel()` arguments), while Qwen2.5-Coder and CodeLlama were unaffected. If this generalizes, max ΔCVR for DeepSeek/A8.6 should clear the 50 pp threshold by a wide margin.*
 
 ---
 
