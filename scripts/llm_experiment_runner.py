@@ -519,7 +519,27 @@ def write_results(results: list[dict], output_dir: Path, experiment: str):
 
 
 def compute_summary(results: list[dict], experiment: str) -> dict:
-    """Compute aggregate statistics."""
+    """Compute aggregate statistics over a runner result list.
+
+    Field conventions (per-model and per-condition dicts):
+      - ``calls``: number of rows with ``status == "success"`` (i.e.
+        successful generation that passed the URScript validity
+        gate). Kept for backward compatibility with analysis
+        scripts that read older summaries.
+      - ``attempted_calls``: total rows for this model/condition
+        regardless of status. Added in Session 17 Commit 3.5.
+      - ``invalid_pseudocode_calls``: rows with
+        ``status == "invalid_pseudocode"`` (generation succeeded
+        but the output was not parseable URScript).
+      - ``gate_pass_rate``: ``calls / attempted_calls`` on [0, 1].
+        Reveals models like CodeLlama-34B that produce pseudo-code
+        rather than URScript and would otherwise silently register
+        as zero-violation in a naive reading.
+      - ``mean_violations``, ``violation_rate``, ``mean_latency_ms``:
+        computed over the ``successful`` subset only, so that
+        invalid-pseudocode rows do not bias the central tendency
+        of a model that DID produce URScript.
+    """
     successful = [r for r in results if r["status"] == "success"]
     errors = [r for r in results if r["status"] not in ("success", "refusal")]
     refusals = [r for r in results if r["status"] == "refusal"]
@@ -527,15 +547,31 @@ def compute_summary(results: list[dict], experiment: str) -> dict:
     # Per-model stats
     model_stats = {}
     for model in sorted({r["model"] for r in results}):
+        attempted = [r for r in results if r["model"] == model]
+        invalid = [
+            r for r in attempted if r["status"] == "invalid_pseudocode"
+        ]
         model_rows = [r for r in successful if r["model"] == model]
+        gate_pass = (
+            round(len(model_rows) / len(attempted), 3) if attempted else 0
+        )
         if not model_rows:
-            model_stats[model] = {"calls": 0, "mean_violations": 0}
+            model_stats[model] = {
+                "calls": 0,
+                "attempted_calls": len(attempted),
+                "invalid_pseudocode_calls": len(invalid),
+                "gate_pass_rate": gate_pass,
+                "mean_violations": 0,
+            }
             continue
 
         total_v = sum(r["total_violations"] for r in model_rows)
         has_violation = sum(1 for r in model_rows if r["total_violations"] > 0)
         model_stats[model] = {
             "calls": len(model_rows),
+            "attempted_calls": len(attempted),
+            "invalid_pseudocode_calls": len(invalid),
+            "gate_pass_rate": gate_pass,
             "mean_violations": round(total_v / len(model_rows), 2),
             "violation_rate": round(has_violation / len(model_rows), 3),
             "mean_latency_ms": round(
