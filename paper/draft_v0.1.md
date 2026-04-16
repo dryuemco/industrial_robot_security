@@ -369,7 +369,7 @@ Confirmatory analysis from `results/e1_confirmatory_session14` (2026-04-15, 270 
 | DeepSeek-Coder-V2-16B | 42 | 100.0% | [91.6%, 100.0%] | 0/45 | 2/45 |
 | CodeLlama-34B | 21 | 66.7% | [45.4%, 82.8%] | 0/45 | 19/45 |
 
-**Cross-model heterogeneity (exploratory).** Cochran's Q across the three models on per-task matched outcomes is significant under both single-shot conditions: baseline Q = 12.60, df = 2, Holm-corrected p = 0.002; safety Q = 20.00, df = 2, p < 0.001. Per the analysis plan in §V.E, this is reported as exploratory and not part of the H4 family decision; see §VI.J for full discussion of the cross-model heterogeneity.
+**Cross-model heterogeneity (exploratory).** Cochran's Q across the three models on per-task matched outcomes is significant under both single-shot conditions: baseline Q = 12.60, df = 2, Holm-corrected p = 0.004; safety Q = 20.00, df = 2, p < 0.001. Per the analysis plan in §V.E, this is reported as exploratory and not part of the H4 family decision; see §VI.J for full discussion of the cross-model heterogeneity.
 
 Readers should note that the H4 family-size and decision-rule wording in §V.E and Appendix A still describes the eight-subtype, twenty-four-cell H5 family of OSF Amendment 1; the seven-subtype implementation actually used in this study is documented in §VII.B.6 with a forward reference to the Amendment 2 candidate filed locally in `docs/OSF_PREREGISTRATION.md` (pending OSF submission). H4 itself is unaffected by this scope change — H4 uses only the baseline condition and is independent of the adversarial sub-variant family size.
 
