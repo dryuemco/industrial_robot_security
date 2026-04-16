@@ -229,6 +229,8 @@ Communication: HTTP API over local network (PC1 → PC2:11434).
 | E3 | Watchdog-in-loop | 3 | 15 | 1 (feedback) | 3 | ~540 | $0 |
 | **Total** | | | | | | **~1125** | **$0** |
 
+**Protocol-level invariant.** In E1, E2, and E3 the Task IR is held invariant across conditions for any given task; the baseline safe IR of §IV.A is the input to the watchdog's DM pass in every call. Adversarial manipulation enters the pipeline at the prompt level only (§III.C) and is observed, if at all, in the LLM's URScript output — the input to the SM pass. A direct consequence is that the DM pass reports the same verdict across all conditions of a given task, and the combined (DM ∪ SM) signal reported for H4–H6 is carried by the SM pass. This is a deliberate scope choice: IR mutation constitutes a separate attack surface (task-specification tampering) which we do not address in this study and flag as future work in §VII.B.
+
 ### D. Metrics
 
 | Metric | Type | Definition |
