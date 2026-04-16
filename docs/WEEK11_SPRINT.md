@@ -1565,3 +1565,76 @@ contrast. Two pipeline drift bugs were caught and fixed in flight
 the paper section VI.F now carries the first preregistered
 confirmatory result. E2 confirmatory is the next gate; PC2
 reachability has been verified.
+
+## Session 15 -- E2 confirmatory + H5 writeup + VII.B.8 (commits 1-6)
+
+### Per-commit summary
+
+| # | Commit | Scope |
+|---|---|---|
+| 1 | `126672b` | Runner cosmetic: align E2 banner and `total_calls` arithmetic with the 7-variant `ALL_ADVERSARIAL` iterator; three hard-coded `8` spots replaced with `len(ALL_ADVERSARIAL)`. Killed E2 run was printing `[1/360]` where 315 was correct. |
+| 2 | `14efabd` | Runner fix: `dm_violations` split reads `v.detection_mechanism.startswith("DM")` instead of `v.attack_type.startswith("DM")`. Safety rules set `attack_type` to `A1..A8` and `detection_mechanism` to `DM-1..DM-7`; the old guard never matched. Empirically silent because the invariant-IR protocol reports 0 safety violations anyway. Forward-kinematic hardening. |
+| 3 | `3e0272e` | Paper: add 'Protocol-level invariant' paragraph to section V.C Experiments, making explicit that the Task IR is held constant across conditions in E1, E2, E3 and that the combined DM ∪ SM signal for H4-H6 is carried by the SM pass. One paragraph, zero numerical claims changed. |
+| 4 | `893c09e` | Paper: populate section VI.G with confirmatory H5 result from E2. Table IV(a)-naive and Table IV(a)-gate, 4 rows x 9 columns each, all 56 delta values CSV-verified against `results/stats_e2/mcnemar_results.csv`. H5 NOT SUPPORTED under the preregistered decision rule; Holm-adjusted p = 1.000 on every cell. Locked H5 decision sentence retained verbatim; smoke-test italic speculation (DeepSeek A8.6 spike, not reproduced at scale) removed. |
+| 5 | `8205109` | Paper: add 'Exploratory count inspection (post-hoc, descriptive)' subsection to VI.G, below the locked H5 decision sentence. Table IV(b), 4 rows x 9 columns, mean `total_violations` per (model, condition), 36 cells CSV-verified against `results/h5_staging/`. Strict discipline enforced by pre-write guards: no p-values, no Holm, no supported/not-supported verdict, explicit disclaimers that no confirmatory claim is made. |
+| 6 | `65e97ea` | Paper: add section VII.B.8 'Binary violation flag saturation and detection-pass asymmetry'. Single long paragraph matching B.5-B.7 style. Resolves two forward references (VI.G exploratory -> VII.B, V.C protocol-level invariant -> VII.B). Frames H5 NOT SUPPORTED as a metric-data interaction under the binary ceiling, not as evidence about adversarial-prompt safety. |
+
+### E2 confirmatory run
+
+Run completed 2026-04-15 21:33-23:14: 315 calls (3 models * 15 tasks * 7 attacks * 1 rep), wall time ~100 minutes, OLLAMA_HOST = http://192.168.1.5:11434. Output deposit (git-ignored, reserved for OSF Month 6): `results/e2_confirmatory/` and `results/stats_e2/`.
+
+Status breakdown (315 calls):
+  - qwen2.5-coder:32b: 105/105 success
+  - deepseek-coder-v2:16b: 49/105 success (27 invalid_pseudocode + a small number of parse_failures)
+  - codellama:34b: 38/105 success (42 invalid_pseudocode, 13 parse_failure, 12 hard errors; the hard errors were all 300-second `ollama timed out` responses clustered on a subset of A8 cells)
+
+No network-level failures on the PC2 side (qwen completed cleanly in the same time window); the codellama hard errors are model-specific timeouts likely linked to long adversarial prompts and remain logged as a paper limitation rather than investigated in this session.
+
+### H5 hypothesis result
+
+H5 NOT SUPPORTED under the preregistered decision rule (section V.E) in all 42 per-model cells and all 14 pooled cells (3 models x 7 attacks x 2 contrasts). Holm-adjusted p = 1.000 on every cell. Largest per-model delta: +33.33 pp (DeepSeek-Coder-V2-16B / A8.1 and A8.4, gate-passing); largest pooled delta: +6.67 pp (A8.5, naive). Neither is within ~40 pp of the preregistered 50 pp threshold.
+
+The NOT-SUPPORTED verdict is a consequence of binary-flag saturation under the baseline condition (gate-passing CVR = 0.988, section VI.F Table III(a)-gate), not evidence that adversarial prompts leave the combined violation rate unchanged. The count-level descriptive statistics in Table IV(b) (section VI.G) show model-dependent count uplift under several A8 cells, most clearly Qwen2.5-Coder-32B on A8.4 (10.36 -> 21.33 mean violations).
+
+### DM / SM detection asymmetry
+
+`dm_violations = 0` in all 585 / 585 rows of the E1 + E2 confirmatory datasets. This is by construction under the invariant-IR protocol: the Task IR is held constant across conditions and never mutated, so the DM pass reports the same verdict on every call for a given task. The combined (DM ∪ SM) signal used in the H4 and H5 tests reduces to the SM signal alone under this protocol. This asymmetry was silent until now; a latent runner-side bug (`dm_violations` split using the wrong `Violation` field) would have produced the same zero in any downstream data and was caught and fixed in commit 14efabd.
+
+### Writing strategy decision
+
+On the H5 NOT SUPPORTED verdict, the supervisor delegated the writing-strategy choice; the post-doc chose 'full disclosure + methodological transparency' (Strategy 2) over the minimal 'preregistered-only' option. The preregistered H5 decision rule and its NOT SUPPORTED outcome are reported verbatim in VI.G. A clearly-labelled post-hoc descriptive subsection (Table IV(b)) reports count-level statistics that sit below the binary ceiling, with explicit disclaimers that no confirmatory claim is made. The discipline was enforced mechanically in the patch script by pre-write guards that reject any insertion containing p-value, Holm correction, or a supported/not-supported verdict within the exploratory subsection. Section VII.B.8 frames the interpretive context (metric-data interaction, not a safety verdict) and resolves the forward references from V.C and VI.G.
+
+### Cumulative silent-fail pattern -- session 14 + session 15
+
+Prior sessions closed out a five-bug pattern in the runner and McNemar module. Session 15 surfaces three more related failure modes in patch scripts themselves:
+
+  1. Hard-coded `8` constants in the runner (`--experiment E2` banner, `total_calls` arithmetic) kept the data pipeline running correctly on the 7-element iterator but printed misleading `[1/360]` progress denominators; fixed in 126672b by replacing the literals with `len(ALL_ADVERSARIAL)`.
+  2. Post-write sanity guards in patch scripts scoped across the entire paper (rather than the newly inserted block) fired on pre-existing locked text. One instance aborted the VI.G populate patch on a V.E smoke-test reference; a later instance aborted the VI.G exploratory patch on the locked H5 decision sentence's Holm reference. Both were retried as v2 with region-scoped guards keyed on a split-anchor present only in the new block.
+  3. A Boolean-logic slip in one of the above guards (`A not in s or B not in s`) fired when it should not have. Fixed in the v2 retry alongside the scope fix.
+
+Cumulative rule reaffirmed for future patches: pre-write guards only, scoped to the newly inserted region, using a split anchor unique to the new content; no post-write assertions about state in other sections; and any Boolean guard reviewed for De Morgan correctness.
+
+### Outstanding items beyond session 15
+
+  - Confirmatory E3: ~540 calls watchdog-in-loop. Prerequisite for section VI.H (H6 populate) and for exercising DM-1..DM-7 under variant-IR conditions (see VII.B.8 future-work pointer). E3 design may need revisiting in light of the DM/SM asymmetry documented this session.
+  - Paper section VI.H populate (H6 results), after E3.
+  - Paper section VI.I Sensitivity Analyses populate (refusal sensitivity, validity-gated subset, per-rule decomposition), after E2 sensitivities via `mcnemar_analysis.py --sensitivity`.
+  - Paper section VI.J Cross-Model Heterogeneity populate (Cochran's Q full table), after E3 supplies the adversarial_any cell with sufficient data (E2 alone already has insufficient Cochran's Q coverage under adversarial).
+  - OSF Amendment 2 submission (candidate filed locally in commit d251c15 during session 14). After OSF acknowledgment, the four locked artefacts (V.E, VI.G H5 decision sentence, Appendix A H5 description, preregistration Amendment 1 H5 row) will be brought into alignment with the seven-variant implementation in a single follow-up commit.
+  - CodeLlama 12 timeout root cause: out-of-memory vs context-length vs model-specific slow path. Logged as a paper limitation; investigation deferred.
+  - PC2 reachability remains green as of this session close.
+
+### Hard rules audit -- session 15
+
+  - paper sec V.E: untouched (lock honoured)
+  - paper VI.G H5 decision sentence: untouched (V.E execution mirror)
+  - paper Appendix A H5 description: untouched (V.E mirror)
+  - OSF preregistration Amendment 1 block: untouched (verbatim OSF mirror)
+  - OSF API: zero calls
+  - git commit --amend: not used; six clean forward-only commits
+  - Patch script PRE-assertions: every code edit and every paper edit guarded by PRE-assertions. Two patches (VI.G populate, VI.G exploratory) were retried as v2 after v1 post-write sanity guards fired on pre-existing locked text; the retries scoped their guards to the newly inserted region via a split anchor unique to the new content.
+  - Session 14 closure block above: preserved verbatim.
+
+### Session 15 summary
+
+Six commits, zero locked-artefact disturbance, zero OSF API calls, zero test regressions (713 -> 713). E2 confirmatory run completed successfully at 315 calls in ~100 minutes; H5 NOT SUPPORTED under the preregistered decision rule is now documented across section VI.G (confirmatory) and sections V.C / VI.G.exploratory / VII.B.8 (methodological context, clearly-labelled descriptive supplement, and interpretive threats-to-validity treatment). The paper now carries preregistered confirmatory results for two of the three H4-H6 hypotheses (H4 supported, H5 not supported); H6 remains pending E3. The W11-S2 mechanical phase commitments from session 14 remain intact: no locked artefact touched, no literal `A6_4` / `A8.8` token in a removal commit message body, ASCII-only commit messages.
