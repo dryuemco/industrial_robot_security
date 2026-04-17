@@ -32,7 +32,7 @@ The target system is an automated code generation pipeline where an Operator pro
        │                  │                │                      │
        │            ┌─────┴─────┐    ┌─────┴──────┐        ┌─────┴──────┐
        │            │ A8: Prompt│    │ A1-A7:     │        │ Simulation │
-       │            │ Injection │    │ Code-level │        │ (Gazebo)   │
+       │            │ Injection │    │ Code-level │        │ (URSim)    │
        └────────────┤ Attacks   │    │ Violations │        └────────────┘
                     └───────────┘    └────────────┘
 ```
@@ -209,7 +209,7 @@ ROS2 safety monitor nodes that validate velocity, zone boundaries, and tool stat
 
 ## 6. Scope and Limitations
 
-- **Simulation-only:** All attacks and defences are tested in Gazebo simulation. No physical robot deployment.
+- **Simulation-only:** All attacks and defences are tested in URSim simulation (Universal Robots' official offline simulator). No physical robot deployment.
 - **Synthetic data:** All robot code samples are generated or hand-crafted for testing purposes.
 - **No real-world harm:** Attack code is designed exclusively for testing the watchdog's detection capabilities.
 - **ISO compliance is advisory:** This framework demonstrates feasibility of ISO 10218 traceability; it does not constitute formal certification.
