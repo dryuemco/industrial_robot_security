@@ -185,7 +185,7 @@ jobs:
             --tb=short
 
   # ---------------------------------------------------------------------------
-  # Job 7: Experiment runner tests (128 tests)
+  # Job 7: Experiment runner tests (132 tests)
   # ---------------------------------------------------------------------------
   test-experiment-runner:
     runs-on: ubuntu-22.04

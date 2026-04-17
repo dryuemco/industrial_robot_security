@@ -54,7 +54,7 @@ New hypotheses (H4–H6) and the Refusal Rate (RR) metric were registered via OS
 | Item | Status | Notes |
 |------|--------|-------|
 | All ROS2 packages build cleanly | Done | `colcon build` green |
-| All tests pass (736 total) | Done | 169+149+81+114+95+128 across 6 suites |
+| All tests pass (740 total) | Done | 169+149+81+114+95+132 across 6 suites |
 | CI pipeline green (9 jobs) | Done | build + 6 test suites + docker + sbom |
 | LICENSE file present (Apache-2.0) | Done | |
 | CITATION.cff complete with DOIs | Done | OSF DOI added 2026-03-22, v0.2.0 |

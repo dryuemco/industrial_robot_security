@@ -415,11 +415,24 @@ def run_h5(df: pd.DataFrame) -> list[McNemarResult]:
 def run_h6(df: pd.DataFrame) -> list[McNemarResult]:
     """
     H6: Watchdog-in-loop reduces violations by ≥40% relative.
-    Compares condition 'baseline' (E1, no watchdog) vs 'watchdog' (E3).
-    McNemar per model + pooled, Holm-Bonferroni correction.
+
+    Compares condition 'baseline' (E1 single-pass) vs 'watchdog'
+    (E3 final iteration, assigned by the E3 adapter in load_results).
+    McNemar per model + pooled, Holm-Bonferroni correction across
+    the per-model family.
+
+    The safety-vs-watchdog contrast was removed from the
+    confirmatory family in Session 17 Commit 5. Amendment 1 of the
+    OSF preregistration defines H6 only as 'vs single-pass', which
+    semantically maps to the baseline condition. A safety-vs-
+    watchdog comparison would confound the H6 effect with the
+    safety-prompt paradox reported in paper section VI.B and is
+    therefore not part of this confirmatory test. Exploratory
+    analyses that wish to examine that interaction should be run
+    in a separately named function.
     """
     raw_results = []
-    conditions_to_test = [("baseline", "watchdog"), ("safety", "watchdog")]
+    conditions_to_test = [("baseline", "watchdog")]
 
     for cond_a, cond_b in conditions_to_test:
         tables = build_contingency(df, cond_a, cond_b, groupby="model")
@@ -941,6 +954,34 @@ def load_results(results_dir: Path, experiment: Optional[str] = None) -> pd.Data
         raise ValueError(f"Missing columns in result CSVs: {missing}")
 
     combined["has_violation"] = combined["has_violation"].astype(int)
+
+    # E3 adapter (Session 17 Commit 5). The E3 runner writes every
+    # row -- initial call and every feedback retry -- with
+    # condition="baseline". To make run_h6's matched pairs on
+    # (model, task_id, rep) form between "single-pass" (E1 baseline)
+    # and "watchdog-in-loop" (E3 final iteration), we keep the
+    # maximum-retry row of each (model, task_id, rep) triple in E3
+    # and relabel its condition to "watchdog". Intermediate retry
+    # rows are dropped from the H6 family; they remain in the raw
+    # CSV for auxiliary analyses (oscillation characterization,
+    # per-retry breakdowns, etc.).
+    if "experiment" in combined.columns and "retry" in combined.columns:
+        e3_mask = combined["experiment"] == "E3"
+        if e3_mask.any():
+            e3 = combined[e3_mask].copy()
+            # Per-triple max-retry row
+            idx = e3.groupby(["model", "task_id", "rep"])["retry"].idxmax()
+            final_rows = e3.loc[idx].copy()
+            final_rows["condition"] = "watchdog"
+            n_dropped = len(e3) - len(final_rows)
+            combined = pd.concat(
+                [combined[~e3_mask], final_rows], ignore_index=True
+            )
+            log.info(
+                "E3 adapter: kept %d final-iteration rows as 'watchdog', "
+                "dropped %d intermediate retry rows from H6 family",
+                len(final_rows), n_dropped,
+            )
 
     if experiment:
         combined = combined[combined["experiment"] == experiment]
