@@ -813,40 +813,47 @@ class TestHypothesisMappingInvariants:
 
     # ---- T4: H6 tests both single-shot conditions against watchdog ----
 
-    def test_run_h6_tests_baseline_and_safety_against_watchdog(self):
-        """H6 must produce contrasts for (baseline, watchdog) AND
-        (safety, watchdog). Full fixture => 3 per-model rows + 1 pooled
-        row per condition pair = 2 * (len(MODELS) + 1) = 8 rows total.
+    def test_run_h6_tests_only_baseline_against_watchdog(self):
+        """H6 must produce a single confirmatory contrast:
+        (baseline, watchdog). The earlier safety-vs-watchdog contrast
+        was removed in Session 17 Commit 5 to align with Amendment 1
+        of the OSF preregistration, which defines H6 only as
+        'vs single-pass' (= baseline); see paper VI.H and docs/
+        E3_DESIGN.md section 5.1 for rationale.
+
+        Full fixture => len(MODELS) per-model rows + 1 pooled row
+        per condition pair = 1 * (len(MODELS) + 1) = 4 rows total.
 
         The pooled row uses model_key=='all' (distinct from H4's
         'all_models' label; this stylistic inconsistency is a
         pre-existing property of run_h5/run_h6 vs run_h4 and is NOT
-        in scope for Phase 6 to fix).
+        in scope for this commit to fix).
         """
         df = self._make_full_condition_df()
         results = run_h6(df)
 
         cond_a_set = {r.condition_a for r in results}
         cond_b_set = {r.condition_b for r in results}
-        assert cond_a_set == {"baseline", "safety"}
+        assert cond_a_set == {"baseline"}, (
+            f"H6 must test only baseline (not {cond_a_set}); "
+            f"safety-vs-watchdog was removed from confirmatory family."
+        )
         assert cond_b_set == {"watchdog"}
 
-        assert len(results) == 2 * (len(MODELS) + 1)
+        assert len(results) == 1 * (len(MODELS) + 1)
 
     # ---- T5: H6 comparison string format is exact ----
 
     def test_run_h6_comparison_string_format(self):
-        """H6 comparison strings must be exactly the two documented
-        forms; any extra or missing permutation fails the set equality.
+        """H6 comparison strings must be exactly the single documented
+        form after Session 17 Commit 5; any extra or missing
+        permutation fails the set equality.
         """
         df = self._make_full_condition_df()
         results = run_h6(df)
 
         comparisons = {r.comparison for r in results}
-        assert comparisons == {
-            "H6_watchdog_vs_baseline",
-            "H6_watchdog_vs_safety",
-        }
+        assert comparisons == {"H6_watchdog_vs_baseline"}
 
     # ---- T6: confirmatory vs exploratory return-type distinction ----
 
@@ -1141,3 +1148,138 @@ class TestWriteSensitivityOutputs:
         assert sens_dir.is_dir()
         assert (sens_dir / "refusal_summary.csv").exists()
         assert (sens_dir / "per_rule_decomposition.csv").exists()
+
+
+# ---------------------------------------------------------------------------
+# E3 adapter in load_results (Session 17 Commit 5)
+# ---------------------------------------------------------------------------
+
+
+class TestE3Adapter:
+    """Tests for the E3 post-processing step in load_results. The
+    adapter selects the maximum-retry row per (model, task_id, rep)
+    in E3 data and relabels its condition to 'watchdog' so that
+    run_h6's matched pairs form correctly. Session 17 Commit 5."""
+
+    def _write_csv(self, path, rows):
+        import pandas as pd
+        pd.DataFrame(rows).to_csv(path, index=False)
+
+    def test_adapter_keeps_only_max_retry_row_per_triple(self, tmp_path):
+        """Given an E3 CSV with retry=[0,1,2,3] for one triple, the
+        adapter should keep only retry=3 in the H6 family."""
+        from scripts.mcnemar_analysis import load_results
+        rows = []
+        for retry in range(4):
+            rows.append({
+                "experiment": "E3",
+                "model": "qwen2.5-coder:32b",
+                "task_id": "T001",
+                "condition": "baseline",
+                "rep": 1,
+                "retry": retry,
+                "total_violations": 10 - retry,  # improving
+            })
+        self._write_csv(tmp_path / "e3_results.csv", rows)
+        df = load_results(tmp_path)
+        e3 = df[df["experiment"] == "E3"]
+        assert len(e3) == 1, (
+            f"Expected 1 E3 row after adapter, got {len(e3)}"
+        )
+        assert int(e3.iloc[0]["retry"]) == 3, (
+            "Adapter must keep the max-retry row"
+        )
+
+    def test_adapter_relabels_condition_to_watchdog(self, tmp_path):
+        """The kept E3 row must have condition='watchdog', not the
+        original 'baseline' label."""
+        from scripts.mcnemar_analysis import load_results
+        rows = [
+            {
+                "experiment": "E3",
+                "model": "qwen2.5-coder:32b",
+                "task_id": "T001",
+                "condition": "baseline",
+                "rep": 1,
+                "retry": 0,
+                "total_violations": 5,
+            },
+            {
+                "experiment": "E3",
+                "model": "qwen2.5-coder:32b",
+                "task_id": "T001",
+                "condition": "baseline",
+                "rep": 1,
+                "retry": 1,
+                "total_violations": 3,
+            },
+        ]
+        self._write_csv(tmp_path / "e3_results.csv", rows)
+        df = load_results(tmp_path)
+        e3 = df[df["experiment"] == "E3"]
+        assert len(e3) == 1
+        assert e3.iloc[0]["condition"] == "watchdog"
+
+    def test_adapter_preserves_e1_rows_unchanged(self, tmp_path):
+        """E1 rows must pass through the adapter untouched (condition
+        stays 'baseline', row count preserved)."""
+        from scripts.mcnemar_analysis import load_results
+        e1_rows = [
+            {
+                "experiment": "E1",
+                "model": "qwen2.5-coder:32b",
+                "task_id": "T001",
+                "condition": "baseline",
+                "rep": 1,
+                "retry": 0,
+                "total_violations": 7,
+            },
+            {
+                "experiment": "E1",
+                "model": "deepseek-coder-v2:16b",
+                "task_id": "T001",
+                "condition": "safety",
+                "rep": 1,
+                "retry": 0,
+                "total_violations": 3,
+            },
+        ]
+        self._write_csv(tmp_path / "e1_results.csv", e1_rows)
+        df = load_results(tmp_path)
+        e1 = df[df["experiment"] == "E1"]
+        assert len(e1) == 2
+        # Conditions preserved
+        conditions = set(e1["condition"])
+        assert conditions == {"baseline", "safety"}
+
+    def test_adapter_handles_mixed_e1_e3_input(self, tmp_path):
+        """With both E1 and E3 rows present, the adapter should
+        preserve E1 and process E3 correctly."""
+        from scripts.mcnemar_analysis import load_results
+        mixed = [
+            {
+                "experiment": "E1",
+                "model": "qwen2.5-coder:32b",
+                "task_id": "T001",
+                "condition": "baseline",
+                "rep": 1,
+                "retry": 0,
+                "total_violations": 7,
+            },
+        ]
+        for retry in range(3):
+            mixed.append({
+                "experiment": "E3",
+                "model": "qwen2.5-coder:32b",
+                "task_id": "T001",
+                "condition": "baseline",
+                "rep": 1,
+                "retry": retry,
+                "total_violations": 7 - retry,
+            })
+        self._write_csv(tmp_path / "mixed_results.csv", mixed)
+        df = load_results(tmp_path)
+        # 1 E1 row + 1 E3 final row = 2 total
+        assert len(df) == 2
+        conditions = set(df["condition"])
+        assert conditions == {"baseline", "watchdog"}
