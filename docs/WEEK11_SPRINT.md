@@ -1720,3 +1720,145 @@ Responses pending as of session close. Per supervisor's stated delegation ("the 
 ### Session 16 summary
 
 Seven commits, zero locked-artefact disturbance, zero OSF API calls, test count 713->725 (+12). PENDING DATA 3->1 (VI.J resolved via Cochran Q table, VI.I resolved via refusal finding + per-rule Table VI; VI.H remains awaiting E3). Pre-existing test-count cascade drift resolved across four documentation files. Supervisor brief emailed with three explicit requests (Amendment 2, writing strategy, E3 design). Three new silent-fail patterns documented and mitigated (ANSI escape, browser cache, guard-text inconsistency). The paper now carries populated results for H4 (supported), H5 (not supported), sensitivity analyses (VI.I), and cross-model heterogeneity (VI.J); only H6 (VI.H) remains pending.
+
+---
+
+## Filed in session 17 (E3 infrastructure + full confirmatory run + paper VI.H populate)
+
+### Commits landed this session
+
+Eight commits, forward-only, no amend. HEAD advanced through eight
+states, closing at `c35d648`.
+
+```
+c35d648  docs(paper): populate section VI.H with H6 confirmatory results
+be7a619  fix(mcnemar): E3 adapter in load_results; run_h6 single contrast
+8a3df39  fix(cascade): apply missed test-count cascade from 6d543dc
+6d543dc  fix(runner): compute_summary reports attempted vs gate-passing
+e9b3d52  docs(e3): add E3_DESIGN.md protocol specification
+0d8d1d5  docs(readme): update test count badge 725 to 732
+5e974e0  fix(e3): retry path uses BASELINE mode; add TestE3MockSmoke gate
+7a49c2f  docs(readme): update test count badge 708 to 725
+```
+
+Test count progression: README badge 708 -> 725 (commit `7a49c2f`,
+correcting drift carried over from Session 16 close), 725 -> 732
+(commit `0d8d1d5` after TestE3MockSmoke additions), and 732 -> 740
+after completion of E3 runner infrastructure. Net Session 17 test
+count delta: +15 real tests added through TestE3MockSmoke and
+related runner gates.
+
+### Key findings this session
+
+**E3 full confirmatory run completed.** 339 calls (3 models x 15
+tasks x 3 reps, up to 3 retries), 1h 43min wall-clock, Ollama
+`temperature=0.0` producing bit-identical trajectories across
+repeats. Results persisted to
+`results/e3_confirmatory/e3_results.csv`.
+
+**H6 confirmatory results:**
+
+- CodeLlama: -50% relative violation reduction (SUPPORTED)
+- DeepSeek: -84% relative violation reduction (SUPPORTED)
+- Qwen: binary ceiling saturation in gate-passing subset
+  (100% baseline / 100% watchdog), not testable
+- Pooled: -30% relative reduction, statistically significant but
+  below the 40% preregistered threshold
+
+**Watchdog-via-invalidation artefact** (documented in paper
+section VI.H mechanism subsection): DeepSeek gate-pass rate
+dropped 44% -> 4% under the watchdog-in-loop protocol; CodeLlama
+dropped 40% -> 20%. Watchdog feedback was pushing the models away
+from valid URScript toward pseudo-code; the `has_violation` flag
+dropped because the SM rules do not attach to prose, not because
+the code was actually safer. A real mechanism worth flagging in
+section VII.B.
+
+**Deterministic oscillation under retry loop** (documented in
+paper section VI.H trajectory paragraph): four trajectory
+archetypes observed across the 3-rep bit-identical reruns:
+
+- Monotonic convergence (T010: 25 -> 11 -> 9 -> 8)
+- Strict two-state oscillation (T002: 15 -> 4 -> 15 -> 4;
+  byte-identical code at retry=0/2 and retry=1/3)
+- Improve-then-regress (T013: 4 -> 12 -> 15 -> 13)
+- Invariant (T003: 7 -> 7 -> 7 -> 7)
+
+**Binary ceiling saturation is active in E3 as well**
+(section VII.B.8 pattern): the gate-passing subset shows
+100%/100% for every model, making the McNemar test inapplicable
+for Qwen in H6 — the same limitation that applied to H5.
+
+### Silent-fail patterns caught this session
+
+1. **Post-write sanity bound calibrated against guess, not data.**
+   The v1 guard for the section VI.H populate patch asserted
+   `20 <= delta <= 80` for the pooled H6 delta. The actual
+   CSV-derived delta was 15, so the assertion failed post-write
+   — but the file had already been written, creating confusion
+   about whether the patch had succeeded. Rule: derive empirical
+   bounds from the actual data before writing the guard, never
+   from a mental estimate. If the guard fails, the operator must
+   be able to trust that the file is unchanged, and that trust
+   requires data-calibrated bounds.
+
+2. **Cascade + fix split across commits.** Commit `6d543dc`
+   introduced a change that required a test-count cascade update
+   across four documentation files (README.md,
+   `.github/workflows/ci.yml`, `docs/open_science_release.md`,
+   `scripts/run_tests.sh`). The cascade was mentioned in the
+   commit message but the cascade files were not staged.
+   Forward-fix commit `8a3df39` was required one commit later.
+   Rule: cascade + fix must land in a single atomic commit.
+   Pre-commit visual check: `git diff --cached --name-only` must
+   show every cascade file if the commit message mentions
+   cascade.
+
+3. **Large patches corrupted via heredoc paste.** Heredoc-pasted
+   patches above roughly 30 lines were being mangled in the
+   terminal during paste (likely line-wrapping plus quote
+   interaction). Rule: large patches (>30 lines) must be
+   delivered via a `create_file` + `present_files` workflow for
+   download and local `python3` execution, not heredoc paste.
+
+### Hard rules audit -- session 17
+
+- Paper section V.E: untouched (lock honoured)
+- Paper section VI.G H5 decision sentence: untouched
+- Paper Appendix A H5 description: untouched
+- OSF preregistration Amendment 1 block: untouched
+- `git commit --amend`: not used; eight clean forward-only commits
+- All patches: pre-write assertions, post-write disk verify,
+  locked-artefact check after each commit
+
+### Outstanding items beyond session 17
+
+- **OSF Amendment 2 submission** — candidate `d251c15` still
+  pending supervisor acknowledgment; scope has since grown to
+  additionally cover the A6.X -> A8.X adversarial prompt
+  taxonomy drift identified during Session 18's README audit.
+- **README Week badge drift** — Week 8 badge in README.md;
+  carried over and resolved in Session 18 Commit 7 (`1d99936`).
+- **WEEK11_SPRINT.md Session 17 closure** — this block; filed
+  in Session 18 Commit 8.
+- **Cochran Q watchdog condition** — optional section VI.J
+  enrichment, not data-blocking; deferred.
+- **Related Work expansion** (W10 #10) — still deferred.
+- **Georgios demo deck** (W10 #9) — still deferred.
+- **CodeLlama T012 timeout root cause** — still deferred; logged
+  as a paper limitation in section VII.B.
+
+### Session 17 summary
+
+Eight commits, forward-only, zero locked-artefact disturbance. E3
+infrastructure built (retry path restored to BASELINE mode to
+avoid the safety-paradox confound; TestE3MockSmoke gate installed
+to catch retry-path regressions). E3 full confirmatory run
+executed end-to-end (339 calls in 1h 43min). H6 results computed
+via `mcnemar_analysis.py` E3 adapter and populated into paper
+section VI.H. The last PENDING DATA marker in paper v0.1 closed,
+taking the paper to DATA-COMPLETE across all four hypotheses (H4
+supported, H5 not supported, H6 two-of-three supported with
+pooled result below the preregistered threshold). Three new
+silent-fail patterns documented. Two items (README Week badge
+drift, this Session 17 closure block) carried over to Session 18.
