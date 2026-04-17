@@ -521,13 +521,16 @@ def run_cross_model_cochran_q(df: pd.DataFrame) -> list[CochranResult]:
         - 'safety'           : df.condition == 'safety'
         - 'adversarial_any'  : OR-aggregate of rows whose condition
                                label starts with 'adversarial_'
-                               (i.e. the eight A8.* subtypes)
+                               (i.e. the seven A8.1-A8.7 subtypes)
+        - 'watchdog'         : df.condition == 'watchdog' (E3 final
+                               iteration, assigned by the E3 adapter
+                               in load_results)
 
     For each condition the function builds a complete-case
     (N_tasks, K_models) binary matrix, calls
     statsmodels.stats.contingency_tables.cochrans_q, and wraps
     the result in a CochranResult. Holm-Bonferroni correction is
-    applied across the (up to three) conditions as a single
+    applied across the (up to four) conditions as a single
     family at alpha=ALPHA.
 
     Naming convention (post-OSF-Amendment-1, approved 2026-04-07):
@@ -560,6 +563,13 @@ def run_cross_model_cochran_q(df: pd.DataFrame) -> list[CochranResult]:
     matrix, models, tasks = _task_model_matrix(adv)
     raw_results.append(_cochran_from_matrix(
         matrix, models, tasks, condition_label="adversarial_any",
+    ))
+
+    # --- watchdog (E3, one row per (model, task_id, rep) after adapter) ---
+    watchdog = df[df["condition"] == "watchdog"]
+    matrix, models, tasks = _task_model_matrix(watchdog)
+    raw_results.append(_cochran_from_matrix(
+        matrix, models, tasks, condition_label="watchdog",
     ))
 
     # Drop results that could not be computed (n_subjects == 0 or k < 2).
