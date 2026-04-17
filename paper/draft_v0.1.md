@@ -476,15 +476,16 @@ DM-1 through DM-7 report zero violations in all 585 rows, as expected from the i
 
 ### J. Cross-Model Heterogeneity (Exploratory)
 
-Cochran's Q across the three models on per-task matched outcomes, reported for each single-shot E1 condition and for the pooled adversarial outcome of E2. Exploratory only; not part of the H4–H6 confirmatory family (see §V.E, "Tests and corrections"). The watchdog-in-loop condition (E3) will be added to this table once the H6 data collection reported in §VI.H is complete.
+Cochran's Q across the three models on per-task matched outcomes, reported for each single-shot E1 condition and for the pooled adversarial outcome of E2. Exploratory only; not part of the H4–H6 confirmatory family (see §V.E, "Tests and corrections"). Watchdog-in-loop (E3) is now included in the table below, following completion of the H6 data collection reported in §VI.H.
 
 | Condition | N | Cochran's Q | df | Holm-adjusted p | Decision |
 |---|---|---|---|---|---|
 | Baseline (E1, neutral prompt) | 15 | 12.60 | 2 | 0.004 | Reject H0 |
 | Safety-augmented (E1) | 15 | 20.00 | 2 | <0.001 | Reject H0 |
 | Adversarial, any A8.k (E2) | 15 | 8.00 | 2 | 0.018 | Reject H0 |
+| Watchdog-in-loop (E3) | 15 | 22.93 | 2 | <0.001 | Reject H0 |
 
-Under each condition, the three models disagree significantly at the per-task level. The per-condition model rates (over 15 tasks) are Qwen2.5-Coder-32B / DeepSeek-Coder-V2-16B / CodeLlama-34B = 1.00 / 0.60 / 0.40 for baseline, 1.00 / 1.00 / 0.33 for safety-augmented, and 1.00 / 1.00 / 0.73 for "any A8.k triggers a violation in at least one rep"; the CodeLlama-34B rate carries the caveat that its validity-gate failure rate (§VI.F, Table III(a)-naive) is high, so its per-task `has_violation` flag partly reflects invalid-pseudocode outputs rather than unsafe URScript. Holm-adjusted p-values are computed across the three Cochran tests; raw p-values and per-task contingency tables are available in `results/stats_e2/cochran_results.csv` and `results/stats_e2/contingency_tables.json`. The heterogeneity pattern motivates the per-model reporting used throughout §VI.
+Under each condition, the three models disagree significantly at the per-task level. The per-condition model rates (over 15 tasks) are Qwen2.5-Coder-32B / DeepSeek-Coder-V2-16B / CodeLlama-34B = 1.00 / 0.60 / 0.40 for baseline, 1.00 / 1.00 / 0.33 for safety-augmented, 1.00 / 1.00 / 0.73 for "any A8.k triggers a violation in at least one rep", and 1.00 / 0.07 / 0.20 for watchdog-in-loop (E3). The CodeLlama-34B rate carries the caveat that its validity-gate failure rate (§VI.F, Table III(a)-naive) is high, so its per-task `has_violation` flag partly reflects invalid-pseudocode outputs rather than unsafe URScript; under the watchdog-in-loop condition, DeepSeek-Coder-V2-16B is subject to the analogous watchdog-via-invalidation mechanism documented in §VI.H (its `has_violation` rate drops to 0.07 not via genuine safety improvement but because feedback pushes outputs toward invalid pseudo-code that the SM rules cannot attach to). Holm-adjusted p-values are computed across the four Cochran tests (adding the watchdog row leaves the three pre-existing p_adjusted values unchanged due to the Holm rank-multiplier arithmetic); raw p-values and per-task contingency tables are available in `results/stats_e3_full/cochran_results.csv` and `results/stats_e3_full/contingency_tables.json`. The heterogeneity pattern motivates the per-model reporting used throughout §VI.
 
 | Observation | Qwen2.5-Coder | DeepSeek-Coder-V2 | CodeLlama |
 |-------------|--------------|-------------------|-----------|
