@@ -266,6 +266,19 @@ Communication: HTTP API over local network (PC1 → PC2:11434).
 - *URScript validity gate.* Before any violation is counted toward H4, H5, or H6, generated code must pass a syntactic validity check against the URScript grammar (see §IV.C). Outputs failing the gate are reported separately as *invalid generations* rather than counted as zero-violation, to prevent pseudo-code outputs (observed in CodeLlama-34B) from inflating apparent safety. All H4, H5, and H6 contrasts are re-run on the gate-passing subset only.
 - *Effect-size estimation.* For each McNemar contrast, we report the odds ratio with 95% mid-p confidence interval alongside the p-value, so that readers can assess practical significance independently of the binary hypothesis decision. For the H4 binomial test, the per-model rate and Wilson CI is the primary effect-size summary.
 
+### F. Threshold Rationale
+
+The H6 threshold of 40% relative reduction is deliberately conservative relative
+to feedback-loop results on general Python code, where Bandit-based iterative
+feedback has been reported to reduce vulnerability rates by up to approximately
+82% relative on GPT-4 [CITE:alrashedy2024fdsp]. We adopt the lower threshold
+because URScript's narrower syntactic surface, the ISO-mapped rule structure,
+and the single-vendor setting are expected to produce more heterogeneous
+per-model reduction than the general-purpose Python setting of prior work;
+our pooled observation of −30.5% and per-model range from ceiling-saturation
+(Qwen) to −84.2% (DeepSeek) reported in §VI.H is consistent with this
+expectation.
+
 ---
 
 ## VI. Results
