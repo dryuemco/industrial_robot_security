@@ -418,20 +418,35 @@ The pattern in Table IV(b) is model-dependent and does not support a uniform "ad
 
 ---
 
-### H. E3 — Watchdog-in-Loop Defense (H6) [PENDING DATA]
+### H. E3 — Watchdog-in-Loop Defense (H6)
 
-**Table V.** McNemar test on matched (model, task) pairs comparing single-shot generation against watchdog-in-loop generation. Two single-shot conditions are contrasted against the watchdog-in-loop condition (E3) per model: the neutral baseline prompt and the safety-augmented prompt (both from E1). WRR = relative reduction (Δ / rate_single-shot); b/c = discordant cells; CI is the Newcombe hybrid score 95% interval on the absolute rate difference Δpp.
+Confirmatory analysis from `results/e3_confirmatory` (2026-04-16, 339 LLM calls: 3 models × 15 tasks × 3 reps × up to max_retries=3 feedback iterations per call), combined with the BASELINE condition of E1 as the single-pass reference for each (model, task, rep) triple. The E3 adapter in `scripts/mcnemar_analysis.py::load_results` selects the maximum-retry row of each triple in E3 and relabels its condition to `watchdog`; the 204 intermediate retry rows are dropped from the H6 family but remain available in the raw CSV for the trajectory-level inspection reported at the end of this subsection. Under the preregistered decision rule of §V.E, H6 is tested per model and pooled as a McNemar contrast on baseline-vs-watchdog paired binary `has_violation` outcomes; Holm–Bonferroni correction is applied within the per-model family. Following §VI.G, the H6 contrast is reported in two complementary forms: a naive contrast over all matched pairs, and a gate-passing contrast over pairs in which both the baseline and the watchdog call passed the URScript validity gate of §IV.C.
 
-| Model | Single-shot condition | N pairs | b (helps) | c (harms) | Δpp (Newcombe 95% CI) | WRR | p (Holm-adj) | H6 result |
+**Table V.** McNemar test on matched (model, task, rep) pairs contrasting E1 single-pass baseline against the E3 watchdog-in-loop final iteration. rel = relative reduction ((rate_watchdog − rate_baseline) / rate_baseline); b/c = discordant cells (b: only watchdog violates, c: only baseline violates); CI is the Newcombe hybrid score 95% interval on the absolute rate difference Δpp. Subset (a) uses all matched pairs; subset (b) restricts to pairs where both rows pass the URScript validity gate (§IV.C). Source: `results/stats_e3_full/mcnemar_results.csv`.
+
+**Table V(a) — Naive contrast (all matched pairs).**
+
+| Model | N | Baseline rate | Watchdog rate | Δpp (Newcombe 95% CI) | rel | b/c | p (Holm-adj) | H6 |
 |---|---|---|---|---|---|---|---|---|
-| Qwen2.5-Coder-32B | neutral baseline | — | — | — | — | — | — | — |
-| Qwen2.5-Coder-32B | safety-augmented | — | — | — | — | — | — | — |
-| DeepSeek-Coder-V2-16B | neutral baseline | — | — | — | — | — | — | — |
-| DeepSeek-Coder-V2-16B | safety-augmented | — | — | — | — | — | — | — |
-| CodeLlama-34B | neutral baseline | — | — | — | — | — | — | — |
-| CodeLlama-34B | safety-augmented | — | — | — | — | — | — | — |
+| Qwen2.5-Coder-32B | 45 | 100.0% | 100.0% | 0.0 [0.0, 0.0] | 0.0% | 0/0 | 1.000 | ❌ (ceiling) |
+| DeepSeek-Coder-V2-16B | 45 | 42.2% | 6.7% | −35.6 [−51.7, −19.4] | −84.2% | 1/17 | <0.001 | ✅ SUPPORTED |
+| CodeLlama-34B | 45 | 40.0% | 20.0% | −20.0 [−38.5, −1.5] | −50.0% | 0/9 | 0.008 | ✅ SUPPORTED |
+| Pooled | 135 | 60.7% | 42.2% | −18.5 [−30.2, −6.8] | −30.5% | 1/26 | <0.001 | ❌ (below threshold) |
 
-**H6 decision:** supported per (model, single-shot condition) cell if McNemar p < 0.05 after Holm–Bonferroni correction across the 6 contrasts AND WRR ≥ 40%. Significant results with WRR < 40% reported as "statistically significant but below the pre-specified effect-size threshold."
+**Table V(b) — Gate-passing contrast (both rows valid URScript).**
+
+| Model | N | Baseline rate | Watchdog rate | Δpp (Newcombe 95% CI) | rel | b/c | p (Holm-adj) | H6 |
+|---|---|---|---|---|---|---|---|---|
+| Qwen2.5-Coder-32B | 45 | 100.0% | 100.0% | 0.0 [0.0, 0.0] | 0.0% | 0/0 | 1.000 | ❌ (ceiling) |
+| DeepSeek-Coder-V2-16B | 2 | 100.0% | 100.0% | 0.0 [0.0, 0.0] | 0.0% | 0/0 | 1.000 | ❌ (ceiling) |
+| CodeLlama-34B | 9 | 100.0% | 100.0% | 0.0 [0.0, 0.0] | 0.0% | 0/0 | 1.000 | ❌ (ceiling) |
+| Pooled | 56 | 100.0% | 100.0% | 0.0 [0.0, 0.0] | 0.0% | 0/0 | 1.000 | ❌ (ceiling) |
+
+**H6 decision.** Under the naive contrast, H6 is **SUPPORTED** for DeepSeek-Coder-V2-16B (rel=−84.2%, p_adj<0.001) and for CodeLlama-34B (rel=−50.0%, p_adj=0.008); both clear the preregistered 40% relative-reduction threshold after Holm–Bonferroni correction within the per-model family. H6 is **not testable** for Qwen2.5-Coder-32B under either contrast: Qwen produces at least one violating call on every (model, task, rep) triple in both the baseline and watchdog conditions, so the binary `has_violation` flag saturates at 100% on both arms and no discordant pair is available for McNemar (this is the same binary-ceiling pattern that bounds H5 in §VII.B.8). The pooled contrast is statistically significant (p_adj<0.001) but below the effect-size threshold (rel=−30.5% > −40%), and is therefore reported as "statistically significant but below the pre-specified effect-size threshold", consistent with the dispatch rule in §V.E. The gate-passing contrast is uninformative for all three models: within the pairs where both the baseline and the watchdog call pass the URScript validity gate, every single call violates at least one SM rule, yielding an all-saturated table identical to the H5 gate-passing result (§VI.G, Table IV(b)).
+
+**Mechanism: the watchdog-via-invalidation artefact.** The DeepSeek per-model result (−84.2% relative reduction on the naive contrast) deserves a targeted discussion. DeepSeek's baseline gate-pass rate over 45 rows is 44% (20 valid URScript generations out of 45); under watchdog-in-loop the gate-pass rate drops to 4% (2 valid final iterations out of 45). In other words, the watchdog feedback does not cause DeepSeek to produce cleaner URScript; it causes the model to fall off the URScript syntax into prose pseudo-code that the validity gate then rejects as `invalid_pseudocode` (§IV.C). The `has_violation` flag drops from 1 to 0 on those rows because the SM rules have no syntactic foothold on prose — not because the code is actually safe. A similar but weaker pattern holds for CodeLlama: baseline gate-pass rate 40% (18 / 45) falls to 20% (9 / 45) under watchdog-in-loop. We do not count this mechanism as a watchdog failure — the preregistered H6 decision rule is defined on the `has_violation` flag (§V.A), and the flag does reduce as specified — but we do flag it as an interpretation caveat: for DeepSeek and CodeLlama, "watchdog-in-loop" as operationalised by this protocol partly reduces to "induce the model to refuse via syntactic dropout". Qwen, which maintains a 100% baseline gate-pass rate under watchdog-in-loop as well, does not exhibit this artefact; its ceiling-bound watchdog outcome is therefore the cleanest single-model read of the H6 effect in the current dataset, and happens to be the least informative.
+
+**Trajectory-level finding: deterministic oscillation under Qwen.** A supplementary observation from the intermediate retry rows that were excluded from the H6 family (retry=1..2 of each Qwen triple) concerns the shape of the retry trajectory itself. Across all 45 Qwen triples, the sequence (initial, retry1, retry2, retry3) of per-call violation counts is bit-identical across the three replications of each (model, task) pair; Ollama with `temperature=0.0` and fixed model digest produced the same token stream on every replication of this dataset. The trajectory shape then varies by task: some triples converge monotonically (T010: 25 → 11 → 9 → 8), some oscillate strictly between two states (T002: 15 → 4 → 15 → 4, with the code files at retry=0 and retry=2 byte-identical, and the code files at retry=1 and retry=3 byte-identical), some improve briefly and regress (T013: 4 → 12 → 15 → 13), and some remain invariant (T003: 7 → 7 → 7 → 7). The strict two-state oscillation in particular indicates that the model enters a two-cycle in its self-correction loop: retry k+1 undoes retry k's fix while introducing back the rule that retry k had just fixed. We flag this as a mechanism-level observation that connects the binary-ceiling result above to a concrete code-level dynamic; a formal characterisation of oscillating self-repair loops is left to future work.
 
 ---
 
