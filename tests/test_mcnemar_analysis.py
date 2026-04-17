@@ -484,11 +484,11 @@ class TestCrossModelCochranQ:
 
     @pytest.fixture
     def full_condition_df(self):
-        """DataFrame with baseline / safety / adversarial_A8.1 rows so
-        the three per-condition Cochran tests can all fire."""
+        """DataFrame with baseline / safety / adversarial_A8.1 / watchdog
+        rows so the four per-condition Cochran tests can all fire."""
         rows = []
         models = ["qwen", "deepseek", "codellama"]
-        conditions = ["baseline", "safety", "adversarial_A8.1"]
+        conditions = ["baseline", "safety", "adversarial_A8.1", "watchdog"]
         for cond in conditions:
             for t in range(6):
                 # Make qwen the outlier under each condition so all
@@ -591,14 +591,14 @@ class TestCrossModelCochranQ:
 
     def test_run_returns_result_per_condition(self, full_condition_df):
         results = run_cross_model_cochran_q(full_condition_df)
-        # Exactly three results: baseline, safety, adversarial_any.
-        assert len(results) == 3
+        # Exactly four results: baseline, safety, adversarial_any, watchdog.
+        assert len(results) == 4
         conds = {r.condition for r in results}
-        assert conds == {"baseline", "safety", "adversarial_any"}
+        assert conds == {"baseline", "safety", "adversarial_any", "watchdog"}
 
     def test_run_applies_holm_bonferroni(self, full_condition_df):
         results = run_cross_model_cochran_q(full_condition_df)
-        # All three conditions are strongly divergent in the fixture,
+        # All four conditions are strongly divergent in the fixture,
         # so every adjusted p-value must be set (not NaN).
         for r in results:
             assert not math.isnan(r.p_adjusted)
@@ -613,9 +613,9 @@ class TestCrossModelCochranQ:
             columns=["task_id", "model", "condition", "rep", "has_violation"]
         )
         results = run_cross_model_cochran_q(empty)
-        # Should return three 'insufficient data' placeholders,
+        # Should return four 'insufficient data' placeholders,
         # never raise.
-        assert len(results) == 3
+        assert len(results) == 4
         for r in results:
             assert r.n_subjects == 0
             assert "insufficient" in r.note
@@ -623,7 +623,7 @@ class TestCrossModelCochranQ:
     def test_cochran_results_to_df_shape_and_columns(self, full_condition_df):
         results = run_cross_model_cochran_q(full_condition_df)
         df = cochran_results_to_df(results)
-        assert len(df) == 3
+        assert len(df) == 4
         for col in (
             "condition", "k", "n_subjects",
             "q_statistic", "df", "p_value",
@@ -647,6 +647,7 @@ class TestCrossModelCochranQ:
         assert "baseline" in md
         assert "safety" in md
         assert "adversarial_any" in md
+        assert "watchdog" in md
 
     def test_markdown_report_handles_no_cochran(self):
         md = generate_markdown_report(h4_list=[], h5_list=[], h6_list=[])
