@@ -124,7 +124,7 @@ Each experimental run produces the following traceable evidence:
 | `EV-ZONE-VIS` | Visualization | Trajectory overlaid on safe zone | PNG / HTML | `results/visualizations/` |
 | `EV-PROMPT` | Input log | Prompt text + A8 analysis results | JSON | `results/prompt_logs/` |
 | `EV-VERDICT` | Summary | Per-scenario pass/fail with severity metrics | JSON + CSV | `results/verdicts/` |
-| `EV-VIDEO` | Simulation | Gazebo recording of scenario execution | MP4 | `results/videos/` |
+| `EV-VIDEO` | Simulation | URSim recording of scenario execution | MP4 | `results/videos/` |
 
 ### Evidence Chain
 
