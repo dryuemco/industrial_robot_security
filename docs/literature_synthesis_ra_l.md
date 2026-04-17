@@ -111,6 +111,16 @@ Add a new sub-subsection, e.g., §VII.B.9:
 
 ---
 
+### 4.9 Simulator choice rationale — URSim vs physics-based alternatives
+
+**§V.B Experimental Setup drop-in, 2 paragraphs**
+
+ENFIELD uses URSim 5.12.6 LTS as its runtime simulator rather than Gazebo or Isaac Sim. This choice is motivated by three considerations. First, controller-level fidelity: URSim is Universal Robots' official 1:1 software emulation of the UR controller, preserving URScript semantics (including `stopj`, `sync`, interrupt handling, and socket thread interaction) that would require custom translation layers under a Gazebo + `ros2_control` + `ur_robot_driver` stack. Second, scope alignment: ISO 10218-1:2025 safety metrics targeted by the watchdog (TCP velocity ≤ 250 mm/s collaborative, acceleration bounds, zone boundaries, E-stop presence) are kinematic-level observables; physics-based simulation adds cost without proportional evaluation signal at this scope. Third, reproducibility: URSim ships as a single pinned Docker container, reducing the version-chain fragility of a multi-component Gazebo stack.
+
+Academic precedent for URSim in LLM-generated URScript evaluation is established by Le & Le (2025) [CITE:le2025ur], which used URSim 5.12.6 LTS for Qwen2.5-Coder fine-tuning data collection and evaluation. While URSim is less common than Gazebo in the broader robotics research community, its domain-specific fit for URScript controller semantics is stronger. RA-L precedent for execution-based trace evaluation without full physics simulation is established by CodeBotler/RoboEval [CITE:hu2024codebotler], which used a symbolic simulator with temporal-logic trace verification. ENFIELD's URSim-based evaluation fits this precedent: execution-based observation over the narrower-than-physics domain of kinematic safety constraints. Limitations of this choice — in particular, the absence of contact-force and collision-response simulation relative to Gazebo physics — are acknowledged as a scope boundary for this work; physical-simulation integration is identified as future work.
+
+---
+
 ## 5. OSF Amendment 3 — draft scope (optional, after Georgios review)
 
 **Scope:** add H7 and H8 as **post-hoc exploratory** hypotheses. Explicitly mark them as non-confirmatory. Do not modify H4, H5, H6 wording or decision rules.
