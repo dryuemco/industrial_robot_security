@@ -193,7 +193,7 @@ At the time of pre-registration, the following infrastructure and data exist:
 - Static watchdog with 8 detection rules (DM-1 through DM-7)
 - IR to URScript translator for UR5e
 - Experiment runner producing CSV/JSON reports
-- CI/CD pipeline with 708 passing tests across 9 jobs
+- CI/CD pipeline with 740 passing tests across 9 jobs
 
 **Datasets:**
 - 15 baseline tasks (T001-T015) spanning 5 categories x 3 operating modes (14/15 cells filled)
