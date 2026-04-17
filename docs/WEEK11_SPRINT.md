@@ -1862,3 +1862,190 @@ supported, H5 not supported, H6 two-of-three supported with
 pooled result below the preregistered threshold). Three new
 silent-fail patterns documented. Two items (README Week badge
 drift, this Session 17 closure block) carried over to Session 18.
+
+---
+
+## Filed in session 18 (README stale content sync + WEEK11_SPRINT session 17 closure + Cochran Q watchdog + paper VI.J populate)
+
+### Commits landed this session
+
+Four commits, forward-only, no amend. HEAD advanced from `c35d648`
+(Session 17 close) through four states, closing at `afe71ad`.
+
+```
+afe71ad  docs(paper): add watchdog row to VI.J Cochran Q table
+b83c74b  feat(mcnemar): add watchdog condition to Cochran Q exploratory
+813dc3d  docs(sprint): file session 17 closure block
+1d99936  docs(readme): sync stale content (8 fixes)
+```
+
+Test count: 740 unchanged across all four commits. No test-count
+cascade required.
+
+### Key findings this session
+
+**README.md carried extensive stale content across multiple
+sections** (Commit 7). Eight independent fixes in one atomic
+patch: Week 8 -> Week 11 badge (Session 17 carryover); LLM Models
+Under Test table still listed commercial APIs (Claude Sonnet 4,
+GPT-4o, Grok 4.1 Fast) while the Overview paragraph above already
+listed the Ollama-served local models (Qwen / DeepSeek /
+CodeLlama) per Revised Plan v2.1 -- internal contradiction within
+the same file; Adversarial Prompt Taxonomy used the pre-rename
+A6.1-A6.8 labels (8 rows, with a fabricated "A6.4 Instruction
+Injection") while the code and paper used A8.1-A8.7 (7 rows);
+Quick Start referenced a `test/` directory that does not exist
+(should be `tests/`); Test Summary row label "experiment runner"
+understated the 132-test scope (actually covers runner + mcnemar +
+mock smoke); ISO 10218:2025 occurrence in Overview should be ISO
+10218-1:2025 per the physical standard copy on hand; and the RQ3
+research-question row carried the same A6.1-A6.8 drift.
+
+**Cochran Q watchdog condition added to exploratory analysis**
+(Commits 9 and 10). `scripts/mcnemar_analysis.py::run_cross_model_cochran_q`
+was hardcoded to test three conditions (baseline, safety,
+adversarial_any); extended to four by adding a watchdog block
+that filters on `df["condition"] == "watchdog"` (the condition
+label assigned by the E3 adapter in `load_results` from Session
+17 commit be7a619). Re-ran the analysis on the merged E1+E2+E3
+staging directory:
+
+- N=15 (complete-case, all three models per task)
+- Q = 22.93, df = 2
+- p_raw = 1.05e-05, Holm-adjusted p = 4.19e-05 (< 0.001)
+- REJECT H0: models differ significantly under watchdog-in-loop
+- Per-model `has_violation` rates (Qwen / DeepSeek / CodeLlama):
+  1.00 / 0.07 / 0.20
+
+**Holm-Bonferroni 3-test to 4-test rank-multiplier arithmetic
+leaves existing p_adjusted values unchanged.** The new watchdog
+row has the smallest p, so it becomes rank 1 with multiplier x4.
+Safety shifts rank 1 -> 2 (x3 -> x3, same multiplier).
+Baseline shifts rank 2 -> 3 (x2 -> x2, same). Adversarial
+shifts rank 3 -> 4 (x1 -> x1, same). Therefore the three
+pre-existing rows in paper table VI.J keep their numerical
+p_adjusted values; only the new watchdog row carries a 4-test
+Holm p. Documented inline in paper section VI.J so readers do
+not wonder whether the old numbers were re-derived.
+
+**DeepSeek watchdog rate 0.07 is an artefact, not a safety
+improvement.** Analogous to the CodeLlama validity-gate caveat
+already flagged in the same paragraph: under watchdog-in-loop,
+feedback pushes DeepSeek outputs toward invalid pseudo-code that
+the SM rules cannot attach to, so `has_violation` drops
+mechanically. Paper section VI.H already documents the full
+mechanism (gate-pass rate 44% -> 4%); section VI.J now carries
+a short cross-reference caveat pointing readers there.
+
+### Silent-fail patterns caught this session
+
+1. **Pattern sweep before patch (Commit 7 v1 -> v2).** The v1
+   README patch fixed every known A6.1-A6.8 occurrence but missed
+   the Research Questions RQ3 row, which carried the same drift.
+   The sanity guard (`no A6.[1-8] subtypes remain`) caught it
+   post-write and refused to write the file; v2 added Fix 8 for
+   RQ3 and applied cleanly. Rule: before writing a pattern-based
+   patch, run `grep -n PATTERN file` and enumerate every
+   occurrence, not just the ones the author happens to be
+   thinking about. This refines the Session 17 "verify before
+   patch" lesson from "check known strings" to "exhaustively
+   enumerate pattern occurrences". The pattern sweep would have
+   taken ~30 seconds; the v1 -> v2 cycle took ~5 minutes.
+
+2. **Append-pattern false positive in post-write guard
+   (Commit 10 v1 -> v2).** Block 2 of the paper VI.J patch used
+   an append pattern where `NEW = OLD + "\n| Watchdog-in-loop ..."`
+   (adding a new table row after the existing last row). The v1
+   `verify_post` helper checked `old not in content` post-replace,
+   which false-positived because OLD legitimately remains as a
+   prefix of NEW. v2 added append-pattern detection
+   (`if old in new: skip absence check; only verify NEW present`)
+   and relied on sanity checks for the specific new content
+   (watchdog row, four-test language, etc.). Rule: every time NEW
+   contains OLD as a substring (append, wrap, prefix, suffix),
+   the guard must branch. Generic `old not in content` is unsafe
+   in these cases; sanity checks targeted at the incremental new
+   content are the right verification.
+
+3. **String anchors must be sourced from the actual file, not
+   reconstructed from memory (Commit 11 v1 -> v2).** The v1
+   Session 18 closure patch used a multi-line tail anchor that
+   I constructed by mentally reconstructing the wrap pattern of
+   the Session 17 closure's final paragraph. The actual Python
+   string literal in the Commit 8 patch script had wrapped
+   differently (`"Three new\n"` vs my guess
+   `"Three new silent-fail\n"`); the anchor did not match, and
+   pre-write guard caught it before any write attempt. v2 used
+   a single-line anchor (the final sentence of the Session 17
+   summary) sourced from `tail -1 docs/WEEK11_SPRINT.md` verbatim.
+   Rule: when anchoring a patch on content produced by an earlier
+   patch, do not trust memory or mental reconstruction -- read
+   the actual on-disk file (`tail -N` or `sed -n`) and copy the
+   string byte-for-byte into the new patch. Sibling of the Session
+   17 lesson on data-calibrated sanity bounds: bounds from guess,
+   anchors from guess -- both unsafe.
+
+### Hard rules audit -- session 18
+
+- Paper section V.E: untouched (lock honoured)
+- Paper section VI.G H5 decision sentence: untouched
+- Paper Appendix A H5 description: untouched
+- OSF preregistration Amendment 1 block: untouched
+- Paper section VI.H watchdog-via-invalidation paragraph:
+  untouched (Commit 10 added a short cross-reference in VI.J
+  pointing to VI.H, but did not duplicate the mechanism
+  description)
+- `git commit --amend`: not used; four clean forward-only commits
+- All patches: pre-write assertions, post-write guards (now
+  append-pattern aware), sanity checks targeted at the specific
+  new content, dry-run verification before apply
+
+### Outstanding items beyond session 18
+
+- **OSF Amendment 2 submission** -- candidate `d251c15` still
+  pending supervisor acknowledgment. Scope remains 8 -> 7 A8
+  subtypes plus the other Amendment 2 items identified before
+  Session 18; no new Amendment 2 items were added this session.
+- **Related Work expansion** (W10 #10) -- still deferred;
+  ~2 hour estimate.
+- **Abstract + conclusion draft** -- still deferred; ~3 hour
+  estimate.
+- **Figure preparation** -- still deferred; ~2 hour estimate
+  (architecture diagram, per-model violation rate chart, T002
+  trajectory oscillation visualisation).
+- **Georgios demo deck** (W10 #9) -- still deferred.
+- **CodeLlama T012 timeout root cause** -- still deferred;
+  logged as paper limitation in section VII.B.
+- **Session 19 scope decision** -- to be made at Session 19
+  opening; the four largest deferred items (related work,
+  abstract + conclusion, figures, demo deck) fit badly into a
+  single session and will likely need individual sessions.
+
+### Session 18 summary
+
+Four commits, forward-only, zero locked-artefact disturbance.
+Commit 7 cleaned eight stale content items in README.md across
+five independent drift categories (Week badge, commercial-vs-local
+LLM table contradiction, A6 -> A8 adversarial taxonomy drift in
+three places, test directory path, Test Summary label misleading,
+ISO 10218 naming precision). Commit 8 filed the Session 17
+closure block in `docs/WEEK11_SPRINT.md` after the Session 17
+handoff had carried it over; this closed the carryover loop that
+Session 17 had predicted. Commits 9 and 10 closed the
+Cochran-Q-watchdog TODO from the "orta vadede" list in the
+Session 18 handoff: `mcnemar_analysis.py` extended (6 lines of
+logic + docstring), five existing tests updated, analysis
+re-run on a freshly-created merged E1+E2+E3 staging directory
+(`results/stats_e18_cochran_staging/`) producing a 4-row
+`cochran_results.csv` in `results/stats_e3_full/`, and paper
+section VI.J populated with the new Q=22.93 row, rewritten
+analysis paragraph, four-Cochran-test Holm note, and a
+cross-reference caveat to section VI.H for the DeepSeek
+watchdog-via-invalidation mechanism. Three silent-fail patterns
+documented (pattern sweep before patch, append-pattern guard
+false positive, string-anchor reconstruction from memory); all
+three were caught by pre-write or post-write guards before any
+broken file would have shipped -- the guard framework that
+Sessions 13-17 built is paying dividends. Test count 740
+unchanged across all four commits; no cascade needed. Paper
+section VI.J is now data-complete alongside VI.H.
