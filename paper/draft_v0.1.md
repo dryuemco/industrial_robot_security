@@ -49,24 +49,15 @@ We present ENFIELD, a formal adversarial testing framework that:
 
 ### A. LLM Code Generation Security
 
-- Kumar et al. (COLM 2024): adversarial attacks on code generation
-- INSEC (ICML 2025): CWE-based security evaluation of LLM-generated code
-- Zou et al. (2023): universal adversarial attacks on LLMs (GCG)
-- Gap: none address industrial robot code or safety-standard compliance
+Empirical studies consistently report that LLM-generated code contains exploitable vulnerabilities at high rates. Pearce et al. prompted GitHub Copilot with 89 CWE-scoped scenarios and found approximately 40% of the 1689 generated programs were vulnerable [CITE:pearce2022asleep]. SecurityEval provides 130 samples across 75 CWE types for systematic benchmarking, with Siddiq and Santos reporting vulnerability rates of 68% for InCoder and 74% for Copilot [CITE:siddiq2022securityeval]. More recent outcome-driven evaluation frameworks such as CWEval quantify a 25–35 percentage-point absolute gap between functional correctness and simultaneously functional and secure generation across frontier LLMs [CITE:peng2025cweval]. These benchmarks are confined to general-purpose Python or Java; none address industrial-robot motion primitives or safety standards.
 
 ### B. LLM-Robotics Integration
 
-- SayCan (Ahn et al., 2022): grounding LLMs in robot affordances
-- Code as Policies (Liang et al., 2023): LLM-generated robot policies
-- BlockAgents (2024): multi-agent Byzantine attack resistance
-- arXiv:2509.02163: LLM-robotics integration survey
-- Gap: task-success metrics only, no ISO traceability, no adversarial code analysis
+The use of LLMs to generate robot control programs was established by Code-as-Policies [CITE:liang2023cap] and ProgPrompt [CITE:singh2023progprompt], which demonstrate policy-code and task-plan generation from natural language. Safety validation for LLM-driven robot agents has been approached through temporal-logic runtime monitoring referencing ISO 61508 functional-safety concepts [CITE:yang2023safetychip], through rule-based validation of high-level Move, Turn, and Stop primitives [CITE:enhance_reliability_2509], and through knowledge-graph-assisted safe code generation in the drone domain [CITE:althobaiti2024drone]. None of these works operate at the granularity of velocity, acceleration, zone, and coordinate-frame parameters in vendor-specific motion code, and none map to ISO 10218-1:2025 clauses.
 
-### C. Robot Safety Standards
+### C. Adversarial Robustness of LLMs and Code Models
 
-- ISO 10218:2025: Safety requirements for industrial robots
-- ISO/TS 15066: Collaborative robot safety (speed/separation monitoring)
-- Gap: no formal mapping from LLM-generated code violations to ISO clauses
+Adversarial attacks on chat-aligned LLMs achieve 85–100% success rates under automated methods such as Greedy Coordinate Gradient [CITE:zou2023universal], and systematic surveys of agentic coding assistants report attack success above 85% against state-of-the-art defenses [CITE:agentic_sok_2026]. However, recent work characterizes safety alignment as shallow — concentrated in the first few output tokens — which predicts weaker refusal behavior in code-specialized LLMs that emit code tokens immediately [CITE:qi2024shallow]. Empirical evidence from ACL 2025 [CITE:malwarereq2025acl] and recent auditing work [CITE:tan2025sasnlsafety] confirms this family-wise gradient, reporting near-zero baseline refusal for Qwen2.5-coder, DeepSeek-coder, and CodeLlama against injected malicious content. Our results are consistent with this literature and extend it to the specific case of industrial-robot safety-rule violations.
 
 ---
 
