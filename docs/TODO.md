@@ -2,34 +2,56 @@
 
 **Authoritative forward-looking tracker.** Supersedes `WEEK10_TODO.md` and `WEEK11_SPRINT.md` (both in `docs/archive/`).
 
-**Last updated:** Session 19 close (comprehensive archive scan), 2026-04-17.
-**HEAD:** `d8fb0bb` on main.
+**Last updated:** Session 20 close (URSim decision + literature research), 2026-04-17.
 **Tests:** 740 passing.
-**Phase:** Paper editorial (data-complete; remaining is writing + figures).
+**Phase:** Paper editorial (data-complete; remaining is writing + figures). URSim runtime-validation sprint in S21+ as parallel lane.
 
 ---
 
 ## Next sessions
 
-### Session 20 — Reviewer-critical paper integrations
+### Session 20 — Reviewer-critical paper integrations (CLOSED 2026-04-17)
 
-Estimated ~3 hours. Drop-in sentences drafted in `docs/literature_synthesis_ra_l.md` section 4.
+Drop-in sentences were pre-drafted in `docs/literature_synthesis_ra_l.md` section 4. Session expanded beyond originally-scoped 3 items to also include literature research (URSim precedent, static-vs-dynamic debate) and the URSim vs Gazebo decision.
 
-- [ ] §II.A / §II.B / §II.C Related Work expansion → paste from synthesis §4.3 (closes W10 #10)
-- [ ] §VII.B.9 static-analyzer-recall sub-subsection → paste from synthesis §4.7 (reviewer-critical)
-- [ ] §V methods footnote on H6 threshold rationale → paste from synthesis §4.4
+**Paper editorial (originally scoped):**
+- [x] §II.A / §II.B / §II.C Related Work expansion (commit `53bcb17`)
+- [x] §VII.B.9 static-analyzer-recall sub-subsection (commit `05d1433`)
+- [x] §V.F threshold rationale subsection (commit `0db953c`; became full subsection, not footnote)
+- [x] Test count cleanup 708 → 740 across paper + OSF (commit `ba4db4b`)
+
+**Literature research + synthesis (scope expansion):**
+- [x] Literature review: +6 papers, +6 gap rows (commit `472b498`) — URSim precedent (Le & Le 2025), RA-L precedent (Hu et al. CodeBotler 2024), static analyzer threats (adversarial_secure_code_2026, secure_code_eval_rethink_2025), alternative LLM-robot safety paradigms (roboguard_2025, reachability_llm_safety_2025)
+- [x] §4.9 Simulator choice rationale synthesis (commit `fa4481f`) — two-paragraph drop-in for §V.B
+
+**Infrastructure scope correction:**
+- [x] Gazebo → URSim replacement in `THREAT_MODEL.md` (ASCII box + prose) and `iso_clause_mapping.md` (evidence table) (commit `d2726eb`). `OSF_PREREGISTRATION.md` line 59 deliberately untouched; to be handled via Amendment 3 once Amendment 2 is cleared by Georgios.
+
+**Deferred to S21 (bounded Excel patch task):**
 - [ ] Add Kumar 2024 COLM paper to `docs/literature_review.xlsx` Papers sheet (identity resolved via `literature_notes.md` ref [2]: "Certifying LLM Safety against Adversarial Prompting", arXiv:2309.02705, Kumar A., Agarwal C., Srinivas S., Li A.J., Feizi S., Lakkaraju H.)
 
-Discipline: grep paper for current §VII.B sub-subsection count before adding §VII.B.9; replace `[CITE:paper_id]` placeholders with BibTeX keys.
+**Key S20 decision:** Gazebo/Isaac Sim deferred to post-project paper with real-robot integration. URSim 5.12.6 LTS + ROS2 Humble + ur_robot_driver selected as runtime-validation stack for ENFIELD Phase 3-4. Rationale in synthesis §4.9 (controller fidelity + scope alignment + reproducibility). Le & Le 2025 EAI provides academic precedent; CodeBotler 2024 RA-L provides venue precedent for execution-trace evaluation without physics. Gazebo stretch deliberately excluded from paper scope unless S23 go/no-go decision (below) says otherwise.
 
-### Session 21 — H7/H8 integration + paper opening/closing
+### Session 21 — H7/H8 integration + paper opening/closing + URSim sprint kickoff
 
-Estimated ~3 hours.
+Two parallel lanes: paper editorial (~3 hours) and URSim infrastructure sprint start. URSim sprint runs across S21-S22 as parallel-to-paper work, paper editorial unblocks arXiv preprint target (June 2026).
 
+**Paper editorial lane:**
 - [ ] §VI.K exploratory hypothesis subsection (H7 ceiling, H8 refusal) → paste from synthesis §4.5
 - [ ] Abstract ISO 2025 cybersecurity framing → paste from synthesis §4.1
 - [ ] §I Introduction reframe → paste from synthesis §4.2
 - [ ] §VIII Conclusion closing → paste from synthesis §4.8
+- [ ] Add Kumar 2024 COLM paper to `docs/literature_review.xlsx` Papers sheet (deferred from S20; bounded Excel patch using existing `last_data_row()` pattern)
+
+**URSim sprint lane (parallel, infrastructure):**
+- [ ] Georgios async email: Gazebo drop decision + URSim selection rationale (pre-kickoff notification; arguments from synthesis §4.9)
+- [ ] URSim 5.12.6 LTS Docker container pull on PC1 (Ubuntu 22, RTX 5080) — smoke test teach pendant GUI access via VNC/HTTP
+- [ ] `ur_robot_driver` ROS2 Humble package integration — verify RTDE port 30002 reachable from PC1 container
+- [ ] URScript batch execution harness design document (input: gate-passing subset from `results/e1_e2_e3_full/`, output: `/joint_states` + `/tcp_speed` telemetry CSV per run)
+- [ ] §V.G Execution Setup subsection skeleton in `paper/draft_v0.1.md` (paper text placeholder, to be filled S22-S23 with actual URSim run data)
+
+**S23 decision gate — Gazebo stretch go/no-go:**
+- [ ] Review buffer at S22 end. If ≥4 weeks until arXiv freeze and URSim integration clean, revisit Gazebo stretch (§VI.L or Appendix D, 1-2 paragraphs + 1 figure). If <4 weeks, Gazebo stays out of ENFIELD paper, goes to post-project extension paper.
 
 ### Session 22 — Figures part 1
 
