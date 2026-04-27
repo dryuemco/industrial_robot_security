@@ -19,7 +19,7 @@ Industrial robot safety is governed by ISO 10218, whose 2025 revision is the fir
 
 <!-- ~1 page, 4 paragraphs -->
 
-Industrial robot safety has long been governed by ISO 10218; its 2025 revision is the first edition to explicitly require that manufacturers address cybersecurity to the extent it affects industrial robot safety [CITE:iso10218_2025]. At the same time, large language models are increasingly used to generate low-level robot control code, with foundational work such as Code-as-Policies establishing the language-model-to-robot-policy pipeline [CITE:liang2023cap] and subsequent systems extending it to multi-robot [CITE:singh2023progprompt] and construction [CITE:althobaiti2024drone] settings. The intersection of these two developments — LLM-generated industrial-robot code evaluated against formal safety standards — defines a gap that no prior evaluation framework addresses. General-purpose LLM-code security benchmarks such as Pearce et al.'s Copilot study [CITE:pearce2022asleep], SecurityEval [CITE:siddiq2022securityeval], and CWEval [CITE:peng2025cweval] report LLM vulnerability rates between 40% and 74%, but target general Python or Java code without motion semantics, safety-rule structure, or ISO traceability. Rule-based validators for LLM-driven robots exist at the task-plan level [CITE:yang2023safetychip] [CITE:enhance_reliability_2509], but none operate on low-level motion primitives with velocity, acceleration, zone, and E-stop semantics mapped to ISO 10218-1:2025 clauses.
+Industrial robot safety has long been governed by ISO 10218; its 2025 revision is the first edition to explicitly require that manufacturers address cybersecurity to the extent it affects industrial robot safety [1]. At the same time, large language models are increasingly used to generate low-level robot control code, with foundational work such as Code-as-Policies establishing the language-model-to-robot-policy pipeline [2] and subsequent systems extending it to multi-robot [3] and construction [4] settings. The intersection of these two developments — LLM-generated industrial-robot code evaluated against formal safety standards — defines a gap that no prior evaluation framework addresses. General-purpose LLM-code security benchmarks such as Pearce et al.'s Copilot study [5], SecurityEval [6], and CWEval [7] report LLM vulnerability rates between 40% and 74%, but target general Python or Java code without motion semantics, safety-rule structure, or ISO traceability. Rule-based validators for LLM-driven robots exist at the task-plan level [8, 9], but none operate on low-level motion primitives with velocity, acceleration, zone, and E-stop semantics mapped to ISO 10218-1:2025 clauses.
 
 ### Motivation
 
@@ -51,15 +51,15 @@ We present ENFIELD, a formal adversarial testing framework that:
 
 ### A. LLM Code Generation Security
 
-Empirical studies consistently report that LLM-generated code contains exploitable vulnerabilities at high rates. Pearce et al. prompted GitHub Copilot with 89 CWE-scoped scenarios and found approximately 40% of the 1689 generated programs were vulnerable [CITE:pearce2022asleep]. SecurityEval provides 130 samples across 75 CWE types for systematic benchmarking, with Siddiq and Santos reporting vulnerability rates of 68% for InCoder and 74% for Copilot [CITE:siddiq2022securityeval]. More recent outcome-driven evaluation frameworks such as CWEval quantify a 25–35 percentage-point absolute gap between functional correctness and simultaneously functional and secure generation across frontier LLMs [CITE:peng2025cweval]. These benchmarks are confined to general-purpose Python or Java; none address industrial-robot motion primitives or safety standards.
+Empirical studies consistently report that LLM-generated code contains exploitable vulnerabilities at high rates. Pearce et al. prompted GitHub Copilot with 89 CWE-scoped scenarios and found approximately 40% of the 1689 generated programs were vulnerable [5]. SecurityEval provides 130 samples across 75 CWE types for systematic benchmarking, with Siddiq and Santos reporting vulnerability rates of 68% for InCoder and 74% for Copilot [6]. More recent outcome-driven evaluation frameworks such as CWEval quantify a 25–35 percentage-point absolute gap between functional correctness and simultaneously functional and secure generation across frontier LLMs [7]. These benchmarks are confined to general-purpose Python or Java; none address industrial-robot motion primitives or safety standards.
 
 ### B. LLM-Robotics Integration
 
-The use of LLMs to generate robot control programs was established by Code-as-Policies [CITE:liang2023cap] and ProgPrompt [CITE:singh2023progprompt], which demonstrate policy-code and task-plan generation from natural language. Safety validation for LLM-driven robot agents has been approached through temporal-logic runtime monitoring referencing ISO 61508 functional-safety concepts [CITE:yang2023safetychip], through rule-based validation of high-level Move, Turn, and Stop primitives [CITE:enhance_reliability_2509], and through knowledge-graph-assisted safe code generation in the drone domain [CITE:althobaiti2024drone]. None of these works operate at the granularity of velocity, acceleration, zone, and coordinate-frame parameters in vendor-specific motion code, and none map to ISO 10218-1:2025 clauses.
+The use of LLMs to generate robot control programs was established by Code-as-Policies [2] and ProgPrompt [3], which demonstrate policy-code and task-plan generation from natural language. Safety validation for LLM-driven robot agents has been approached through temporal-logic runtime monitoring referencing ISO 61508 functional-safety concepts [8], through rule-based validation of high-level Move, Turn, and Stop primitives [9], and through knowledge-graph-assisted safe code generation in the drone domain [4]. None of these works operate at the granularity of velocity, acceleration, zone, and coordinate-frame parameters in vendor-specific motion code, and none map to ISO 10218-1:2025 clauses.
 
 ### C. Adversarial Robustness of LLMs and Code Models
 
-Adversarial attacks on chat-aligned LLMs achieve 85–100% success rates under automated methods such as Greedy Coordinate Gradient [CITE:zou2023universal], and systematic surveys of agentic coding assistants report attack success above 85% against state-of-the-art defenses [CITE:agentic_sok_2026]. However, recent work characterizes safety alignment as shallow — concentrated in the first few output tokens — which predicts weaker refusal behavior in code-specialized LLMs that emit code tokens immediately [CITE:qi2024shallow]. Empirical evidence from ACL 2025 [CITE:malwarereq2025acl] and recent auditing work [CITE:tan2025sasnlsafety] confirms this family-wise gradient, reporting near-zero baseline refusal for Qwen2.5-coder, DeepSeek-coder, and CodeLlama against injected malicious content. Our results are consistent with this literature and extend it to the specific case of industrial-robot safety-rule violations.
+Adversarial attacks on chat-aligned LLMs achieve 85–100% success rates under automated methods such as Greedy Coordinate Gradient [10], and systematic surveys of agentic coding assistants report attack success above 85% against state-of-the-art defenses [11]. However, recent work characterizes safety alignment as shallow — concentrated in the first few output tokens — which predicts weaker refusal behavior in code-specialized LLMs that emit code tokens immediately [12]. Empirical evidence from ACL 2025 [13] and recent auditing work [14] confirms this family-wise gradient, reporting near-zero baseline refusal for Qwen2.5-coder, DeepSeek-coder, and CodeLlama against injected malicious content. Beyond model alignment, input-side certified defenses such as Kumar et al.'s erase-and-check provide certificates against adversarial suffix attacks before generation [17]; this complements rather than replaces post-generation static analysis. Our results are consistent with this literature and extend it to the specific case of industrial-robot safety-rule violations.
 
 ---
 
@@ -264,7 +264,7 @@ Communication: HTTP API over local network (PC1 → PC2:11434).
 The H6 threshold of 40% relative reduction is deliberately conservative relative
 to feedback-loop results on general Python code, where Bandit-based iterative
 feedback has been reported to reduce vulnerability rates by up to approximately
-82% relative on GPT-4 [CITE:alrashedy2024fdsp]. We adopt the lower threshold
+82% relative on GPT-4 [15]. We adopt the lower threshold
 because URScript's narrower syntactic surface, the ISO-mapped rule structure,
 and the single-vendor setting are expected to produce more heterogeneous
 per-model reduction than the general-purpose Python setting of prior work;
@@ -503,7 +503,7 @@ Under each condition, the three models disagree significantly at the per-task le
 
 ### K. Post-Hoc Exploratory Hypotheses (H7, H8)
 
-The pattern of H5 results (§VI.G) is consistent with a ceiling-saturation mechanism. Per-model baseline violation rates over 15 tasks are 1.00 / 0.60 / 0.40 for Qwen2.5-Coder-32B / DeepSeek-Coder-V2-16B / CodeLlama-34B respectively (§VI.J), so the available headroom HR = 100 - baseline_rate is bounded above by 60 percentage points in the most favorable case (CodeLlama-34B) and equals zero in the ceiling case (Qwen2.5-Coder-32B). Across the three models the mean headroom is 33 percentage points, below the pre-registered 50 percentage-point adversarial contrast threshold. Under these conditions the H5 threshold is not reachable for any contrast on the two ceiling-bounded models and is reachable in principle only for CodeLlama-34B; this matches the shallow-alignment account of code-specialized LLMs in which adversarial framing produces small marginal effects on top of an already-high baseline violation rate [CITE:qi2024shallow]. We therefore propose, as a post-hoc exploratory hypothesis, **H7** (baseline-saturation ceiling effect): the apparent stability of violation rates under adversarial framing in this dataset is an artefact of bounded headroom rather than evidence of robustness against prompt-level attacks.
+The pattern of H5 results (§VI.G) is consistent with a ceiling-saturation mechanism. Per-model baseline violation rates over 15 tasks are 1.00 / 0.60 / 0.40 for Qwen2.5-Coder-32B / DeepSeek-Coder-V2-16B / CodeLlama-34B respectively (§VI.J), so the available headroom HR = 100 - baseline_rate is bounded above by 60 percentage points in the most favorable case (CodeLlama-34B) and equals zero in the ceiling case (Qwen2.5-Coder-32B). Across the three models the mean headroom is 33 percentage points, below the pre-registered 50 percentage-point adversarial contrast threshold. Under these conditions the H5 threshold is not reachable for any contrast on the two ceiling-bounded models and is reachable in principle only for CodeLlama-34B; this matches the shallow-alignment account of code-specialized LLMs in which adversarial framing produces small marginal effects on top of an already-high baseline violation rate [12]. We therefore propose, as a post-hoc exploratory hypothesis, **H7** (baseline-saturation ceiling effect): the apparent stability of violation rates under adversarial framing in this dataset is an artefact of bounded headroom rather than evidence of robustness against prompt-level attacks.
 
 A second exploratory observation concerns refusal behavior. As reported in §VI.E, zero refusals were observed across the 585 E1 + E2 generations under the frozen refusal classifier of §IV.C, in alignment with the family-wise low-refusal pattern documented for code-specialized LLMs in §II.C. We name this as a post-hoc exploratory hypothesis, **H8** (near-zero refusal in code-specialized LLMs for structural-safety violation requests), to mark it explicitly as an empirical generalization beyond the confirmatory H4-H6 family. Both H7 and H8 are reported here to inform the design of future confirmatory studies on adversarial fragility in code-LLM-driven robotics; neither is offered as a tested claim within the present pre-registration.
 
@@ -577,7 +577,7 @@ Two interacting post-hoc observations surfaced in the E1 + E2 confirmatory analy
 
 #### B.9 Static-analyzer recall and domain-specificity of our mitigations
 
-Our SM-1..7 watchdog is a static analyzer operating over URScript ASTs. Recent benchmarking has surfaced concerns about static-analyzer recall: CWEval reports that fewer than one-third of CyberSecEval's vulnerable samples could be reproduced with the associated static analyzer due to incomplete code, missing dependencies, and syntactic fragility [CITE:peng2025cweval], and QLPro reports that CodeQL's standard rule library detected only 24 of 62 confirmed vulnerabilities in a Java benchmark [CITE:qlpro2025]. Three design choices mitigate these concerns in our setting. First, the URScript domain is far narrower syntactically than Python or Java — there are no package imports, no external dependencies, no user-defined classes — so the parse-failure and incomplete-code cases that drive the CWEval irreproducibility rate do not arise. Second, our SM-1..7 rules use deterministic AST matching against a fixed grammar rather than probabilistic taint-flow analysis, making detection binary and reproducible across runs. Third, `analyze_combined` applies OR-aggregation across all seven rules, which trades precision for recall in a way that is explicit and auditable. We nevertheless acknowledge that these mitigations are specific to URScript and would not transfer to generic multi-vendor industrial code without grammar extensions.
+Our SM-1..7 watchdog is a static analyzer operating over URScript ASTs. Recent benchmarking has surfaced concerns about static-analyzer recall: CWEval reports that fewer than one-third of CyberSecEval's vulnerable samples could be reproduced with the associated static analyzer due to incomplete code, missing dependencies, and syntactic fragility [7], and QLPro reports that CodeQL's standard rule library detected only 24 of 62 confirmed vulnerabilities in a Java benchmark [16]. Three design choices mitigate these concerns in our setting. First, the URScript domain is far narrower syntactically than Python or Java — there are no package imports, no external dependencies, no user-defined classes — so the parse-failure and incomplete-code cases that drive the CWEval irreproducibility rate do not arise. Second, our SM-1..7 rules use deterministic AST matching against a fixed grammar rather than probabilistic taint-flow analysis, making detection binary and reproducible across runs. Third, `analyze_combined` applies OR-aggregation across all seven rules, which trades precision for recall in a way that is explicit and auditable. We nevertheless acknowledge that these mitigations are specific to URScript and would not transfer to generic multi-vendor industrial code without grammar extensions.
 
 ### C. EU AI Act Alignment
 
@@ -602,15 +602,41 @@ ISO 10218-1:2025 introduces cybersecurity as a normative requirement for industr
 
 ## References
 
-<!-- Key references — to be formatted in IEEE style -->
+<!-- IEEE-format references; metadata authoritative from docs/literature_review.xlsx Papers sheet -->
 
-1. Kumar et al., "Adversarial Attacks on Code Generation," COLM 2024.
-2. Zou et al., "Universal and Transferable Adversarial Attacks on Aligned Language Models," 2023.
-3. INSEC, "Security Evaluation of LLM-Generated Code," ICML 2025.
-4. ISO 10218-1:2025, "Robotics — Safety requirements for industrial robots."
-5. ISO/TS 15066:2016, "Robots and robotic devices — Collaborative robots."
-6. Ahn et al., "Do As I Can, Not As I Say: Grounding Language in Robotic Affordances," CoRL 2022.
-7. Liang et al., "Code as Policies: Language Model Programs for Embodied Control," ICRA 2023.
+[1] ISO Technical Committee 299, "ISO 10218-1:2025 Robotics - Safety requirements - Part 1: Industrial robots," ISO Standard, 2025. https://www.iso.org/standard/73933.html
+
+[2] J. Liang et al., "Code as Policies: Language Model Programs for Embodied Control," in IEEE International Conference on Robotics and Automation (ICRA), 2023. arXiv:2209.07753.
+
+[3] I. Singh et al., "ProgPrompt: Program generation for situated robot task planning using LLMs," Autonomous Robots, 2023. doi:10.1007/s10514-023-10135-3.
+
+[4] A. Althobaiti et al., "How Can LLMs and Knowledge Graphs Contribute to Robot Safety? A Few-Shot Learning Approach," arXiv:2412.11387, 2024.
+
+[5] H. Pearce, B. Ahmad, B. Tan, B. Dolan-Gavitt, and R. Karri, "Asleep at the Keyboard? Assessing the Security of GitHub Copilot's Code Contributions," in IEEE Symposium on Security and Privacy (S&P), 2022. doi:10.1109/SP46214.2022.9833571.
+
+[6] M. L. Siddiq and J. C. S. Santos, "SecurityEval Dataset: Mining Vulnerability Examples to Evaluate Machine Learning-Based Code Generation Techniques," in MSR4P&S Workshop (ESEC/FSE), 2022. doi:10.1145/3549035.3561184.
+
+[7] J. Peng, B. Cui, K. Li, T. Cui, and D. Zhang, "CWEval: Outcome-driven Evaluation on Functionality and Security of LLM Code Generation," arXiv:2501.08200, 2025.
+
+[8] Z. Yang, S. S. Raman, A. Shah, and S. Tellex, "Plug in the Safety Chip: Enforcing Constraints for LLM-driven Robot Agents," arXiv:2309.09919, 2023.
+
+[9] "Enhancing Reliability in LLM-Integrated Robotic Systems: A Unified Approach to Security and Safety," arXiv:2509.02163, 2025.
+
+[10] A. Zou, Z. Wang, N. Carlini, M. Nasr, J. Z. Kolter, and M. Fredrikson, "Universal and Transferable Adversarial Attacks on Aligned Language Models," arXiv:2307.15043, 2023.
+
+[11] "Prompt Injection Attacks on Agentic Coding Assistants: A Systematic Analysis," SoK preprint, arXiv:2601.17548, 2026.
+
+[12] X. Qi et al., "Safety Alignment Should Be Made More Than Just a Few Tokens Deep," in International Conference on Learning Representations (ICLR), 2025. OpenReview:6Mxhg9PtDE.
+
+[13] "LLMs Caught in the Crossfire: Malware Requests and Refusal Behavior Across Model Families," in Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics (ACL), 2025. ACL Anthology:2025.acl-long.1350.
+
+[14] Tan et al., "Structured Safety Auditing for Balancing Code Correctness and Content Safety in LLM-Generated Code," arXiv:2604.12088, 2026.
+
+[15] K. Alrashedy et al., "Feedback-Driven Security Patching: Leveraging Static Analysis for LLM-Generated Code," Journal of Cybersecurity and Privacy, 2025. doi:10.3390/jcp5040110.
+
+[16] X. Wang et al., "QLPro: Automated Code Vulnerability Discovery via LLM and Static Code Analysis," arXiv:2506.23644, 2025.
+
+[17] A. Kumar, C. Agarwal, S. Srinivas, A. J. Li, S. Feizi, and H. Lakkaraju, "Certifying LLM Safety against Adversarial Prompting," in Conference on Language Modeling (COLM), 2024. OpenReview:9Ik05cycLq.
 
 ---
 
