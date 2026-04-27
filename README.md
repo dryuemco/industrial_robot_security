@@ -114,6 +114,40 @@ PYTHONPATH=enfield_watchdog_static:enfield_tasks python3 scripts/run_experiment.
   --output results/
 ```
 
+## Runtime Stack & Simulation Environment
+
+Runtime validation of the static watchdog uses Universal Robots' official URSim e-Series simulator. URSim PolyScope and the underlying URControl interfaces are bit-identical to a physical UR controller; the entire study runs in this simulation environment, consistent with the preregistered scope. See paper section V.G for the full execution-setup write-up.
+
+**Pinned runtime versions** (validated 2026-04-27):
+
+| Component | Version | Source |
+|-----------|---------|--------|
+| URSim e-Series | 5.12.8 | `universalrobots/ursim_e-series:5.12` (digest `sha256:b7ad69f5bfa45ffab07788480ad43c753595ce35fcbfe4a3f420725f51764d51`) |
+| Docker Engine | 29.4.1 | `download.docker.com/linux/ubuntu jammy stable` |
+| ROS 2 distribution | Humble Hawksbill | `packages.ros.org/ros2/ubuntu jammy` |
+| `ur_robot_driver` | 2.12.0 | `ros-humble-ur` apt meta-package |
+| `ur_client_library` | 2.7.0 | dependency of `ur_robot_driver` |
+
+**Bring-up sequence** (deterministic, scripted):
+
+```bash
+# 1. Start URSim container with the standard port mapping
+docker run --rm -d --name ursim \
+  -p 5900:5900 -p 6080:6080 -p 29999:29999 -p 30001-30004:30001-30004 \
+  universalrobots/ursim_e-series:5.12
+
+# 2. Power on + brake release via Dashboard server
+(echo 'power on'; sleep 4; echo 'brake release') | nc -w 8 127.0.0.1 29999
+
+# 3. Launch ur_robot_driver in headless mode
+source /opt/ros/humble/setup.bash
+ros2 launch ur_robot_driver ur_control.launch.py \
+  ur_type:=ur5e robot_ip:=127.0.0.1 \
+  launch_rviz:=false headless_mode:=true
+```
+
+**Telemetry channels** consumed by the watchdog: `/joint_states`, `/tcp_pose_broadcaster/pose`, `/speed_scaling_state_broadcaster/speed_scaling`, `/io_and_status_controller/robot_mode`, `/io_and_status_controller/safety_mode`. Cartesian TCP velocity is derived from joint velocities via the URDF forward kinematics chain (no first-class topic in `ur_robot_driver` 2.12.0).
+
 ## Baseline Tasks (15)
 
 | ID | Category | Mode | Tool | Speed (mm/s) | Payload (kg) | Key Features |
