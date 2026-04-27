@@ -2,7 +2,7 @@
 
 **Authoritative forward-looking tracker.** Supersedes `WEEK10_TODO.md` and `WEEK11_SPRINT.md` (both in `docs/archive/`).
 
-**Last updated:** Session 22 close (paper editorial finalization + Kumar Excel), 2026-04-27.
+**Last updated:** Session 23 close (paper text-complete + URSim sprint reactivation + replication kit infrastructure), 2026-04-27.
 **Tests:** 740 passing.
 **Phase:** Paper editorial (data-complete; remaining is writing + figures). URSim runtime-validation sprint in S21+ as parallel lane.
 
@@ -62,40 +62,44 @@ S22 deferred to S23:
 - Figures part 1 (architecture diagram + per-model chart + T002 oscillation) — shifted from S22 plan
 - URSim sprint lane (all 5 items + S23 decision gate) — shifted from S21 plan
 
-### Session 23 — §VIII full refresh + figures part 1 + bib tur + URSim sprint reactivation
+### Session 23 — Paper text-complete + URSim sprint reactivation + replication kit (CLOSED 2026-04-27)
 
-Three parallel lanes inherited from S21/S22 deferral. Estimated 4-5 hours total.
+Six commits, two major lanes closed atomically.
 
-**Paper editorial lane (~2 hours):**
-- [ ] §VIII Conclusion full refresh — multi-paragraph structure (3-finding paragraph + future-work paragraph: URSim sim-to-real, disclaimer language analysis for H8, follow-up N≥4 LLM panel) + ISO 2025 closing
-- [ ] Synthesis §7 Kumar gap retroactive close note (resolved via S22 C4)
-- [ ] Bib tur — 16 unique [CITE:*] placeholders → numeric IEEE References list; paper L601 plaintext "Adversarial Attacks on Code Generation" corrected to Kumar "Certifying LLM Safety against Adversarial Prompting" + 15 other entries; multi-cite `[CITE:a] [CITE:b]` → `[1, 2]` sed conversion
+**Paper editorial lane (Lane 1) — DONE:**
+- [x] §VIII Conclusion full refresh (commit `c5fdd63`): 4-paragraph structure with framework recap, three findings, future work axes, ISO 2025 closing.
+- [x] Synthesis §7 Kumar gap retroactive close (commit `d0561f6`): Aounon Kumar et al. "Certifying LLM Safety against Adversarial Prompting" COLM 2024 resolved.
+- [x] Bib tur (commit `8069556`): 17 [CITE:*] placeholders → IEEE numeric [N] references; §II.C Kumar inline cite added; §I L22 adjacent multi-cite [8] [9] → [8, 9]; References block fully rewritten in IEEE format with metadata authoritative from `docs/literature_review.xlsx` Papers sheet (rows R002-R026); paper L601 plaintext "Adversarial Attacks on Code Generation" entry corrected. Paper draft is text-complete (0 unresolved citations).
 
-**Figures lane (~1.5 hours, was S22 plan):**
-- [ ] Architecture diagram (Mermaid or TikZ)
-- [ ] Per-model violation rate chart (source: `results/stats_e3_full/cochran_results.csv`, 4 rows × 3 models = 12 data points)
-- [ ] T002 trajectory oscillation visualization (15→4→15→4 byte-identical two-state oscillation from §VI.H)
+**URSim sprint lane (Lane 3) — DONE (paper + repo + drift):**
+- [x] Docker Engine 29.4.1 installed on PC1 from official APT repo; `docker compose` plugin verified; sudoless docker via `usermod -aG docker yunus`.
+- [x] URSim e-Series pulled: `universalrobots/ursim_e-series:5.12` (image internal version 5.12.8, digest `sha256:b7ad69f5bfa45ffab07788480ad43c753595ce35fcbfe4a3f420725f51764d51`, 3.37 GB).
+- [x] `ros-humble-ur` apt meta-package installed: `ur_robot_driver` 2.12.0, `ur_client_library` 2.7.0, plus MoveIt2 stack as transitive dependency.
+- [x] Smoke test passed: URSim → Dashboard `power on` + `brake release` → `Robotmode: RUNNING`, `Safetystatus: NORMAL`; `ur_control.launch.py headless_mode:=true` connected via RTDE port 30004; `/joint_states` and `/tcp_pose_broadcaster/pose` topics verified live.
+- [x] Paper §V.G "Execution Setup" sub-subsection added (commit `8b13398`); §VIII URSim version drift fixed: "5.12.6 LTS" → "5.12.8", `/tcp_speed` → `/tcp_pose_broadcaster/pose`, "ROS2" → "ROS 2".
+- [x] README "Runtime Stack & Simulation Environment" section + replication kit table rows in `docs/open_science_release.md` (commit `8e5aff4`).
+- [x] Test count cascade fix in `docs/open_science_release.md` (commit `97c8643`): 38 → 95, 23 → 132, 574 → 740.
 
-**URSim sprint lane (~1.5 hours, was S21-S22 plan):**
-- [ ] Georgios async email: Gazebo drop decision + URSim selection rationale (pre-kickoff notification; arguments from synthesis §4.9)
-- [ ] URSim 5.12.6 LTS Docker container pull on PC1 (Ubuntu 22, RTX 5080) — smoke test teach pendant GUI access via VNC/HTTP
-- [ ] `ur_robot_driver` ROS2 Humble package integration — verify RTDE port 30002 reachable from PC1 container
-- [ ] URScript batch execution harness design document (input: gate-passing subset from `results/e1_e2_e3_full/`, output: `/joint_states` + `/tcp_speed` telemetry CSV per run)
-- [ ] §V.G Execution Setup subsection skeleton in `paper/draft_v0.1.md`
+**Lane 1 deferral that became Lane 3 by-product:**
+- Georgios "async email" item: rendered optional. Verbal approval was already given for the URSim direction during pre-S23 conversation; a written follow-up can ride along with the S24 NTNU Visit 1 demo-deck prep if useful.
+
+**Items NOT done in S23 (moved to S24):**
+- [ ] Figures part 1 (architecture diagram, per-model violation rate chart, T002 trajectory oscillation visualization). Moved to S24 because the demo deck consumes the same figures; producing them once for both targets avoids duplicate work.
+- [ ] URScript batch execution harness design document. Promoted from sketch to full design now that the URSim + `ur_robot_driver` stack is validated.
 
 **S24 decision gate — Gazebo stretch go/no-go:**
-- [ ] Review buffer at S23 end. If ≥4 weeks until arXiv freeze and URSim integration clean, revisit Gazebo stretch (§VI.L or Appendix D, 1-2 paragraphs + 1 figure). If <4 weeks, Gazebo stays out of ENFIELD paper, goes to post-project extension paper.
+- [ ] Review buffer at S24 end. If ≥4 weeks until arXiv freeze and URSim integration clean, revisit Gazebo stretch (§VI.L or Appendix D, 1-2 paragraphs + 1 figure). If <4 weeks, Gazebo stays out of ENFIELD paper, goes to post-project extension paper.
 
 **Polish + cross-ref audit deferred to S25+ (post-NTNU Visit 1):**
-- [ ] Second-pass figure refinement
-- [ ] Table audit (Table II ISO mapping verification, Table III-naive caveat, Table VI refusal per-rule)
-- [ ] Reference consistency sweep (BibTeX keys match cite commands) — partially handled by S23 bib tur
-- [ ] Paper-internal cross-reference audit (§ numbers, figure numbers, H4-H8 references all consistent)
-- [ ] Paper §V.E H6 "alongside... and" parse ambiguity fix (W10 #13, low-priority stylistic)
-- [ ] Paper line ~291 "Zero refusals across all models and conditions" FIXME — verify against §VI.I refusal data + Table VI from Session 16 (likely resolved by commit `20dbe9a`; confirm and either update prose or strip FIXME marker)
-- [ ] `THREAT_MODEL.md` line ~91 A8 range drift check (A8.1-A8.6 vs A8.1-A8.8 — align with paper Table I after Session 8 #15 fix)
-- [ ] Fix `tests/test_mcnemar_analysis.py::TestH5::test_large_effect_significant` "if a66:" guard test hygiene weakness (W10 #14) — assert match exists instead of silently passing on no-match
-
+- [ ] Second-pass figure refinement.
+- [ ] Table audit (Table II ISO mapping verification, Table III-naive caveat, Table VI refusal per-rule).
+- [ ] Paper-internal cross-reference audit (§ numbers, figure numbers, H4-H8 references all consistent).
+- [ ] Paper §V.E H6 "alongside... and" parse ambiguity fix (W10 #13, low-priority stylistic).
+- [ ] Paper line ~291 "Zero refusals across all models and conditions" FIXME — verify against §VI.I + Table VI.
+- [ ] `THREAT_MODEL.md` line ~91 A8 range drift check (A8.1-A8.6 vs A8.1-A8.8).
+- [ ] Fix `tests/test_mcnemar_analysis.py::TestH5::test_large_effect_significant` "if a66:" guard hygiene.
+- [ ] `docs/open_science_release.md` enfield_llm breakdown footer (5+14+12+7=38 → enumerate 95 components).
+- [ ] `docs/open_science_release.md` line 84 `[REPLICATE.md](http://REPLICATE.md)` autolink artefact cleanup.
 ### Session 24 — Georgios demo deck prep
 
 Estimated ~3 hours. Closes W10 #9. For NTNU Visit 1 (May 11-25).
