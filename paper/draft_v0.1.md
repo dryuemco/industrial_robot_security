@@ -23,14 +23,14 @@ Industrial robot safety has long been governed by ISO 10218; its 2025 revision i
 
 ### Motivation
 
-Large language models (LLMs) are rapidly being adopted for industrial robot programming, promising to lower the barrier to robot deployment by generating motion control code from natural language task descriptions. Commercial platforms now offer LLM-based code generation for Universal Robots (URScript), ABB (RAPID), and KUKA (KRL) systems. However, LLM-generated code operates in safety-critical environments where incorrect velocity values, missing emergency stops, or unit confusion can cause physical harm to human operators.
+Commercial deployment of LLM-generated industrial robot code is already underway: vendor-specific languages such as Universal Robots' URScript, ABB's RAPID, and KUKA's KRL are direct targets for natural-language-to-code pipelines. Unlike general-purpose code, motion commands execute in safety-critical environments where an incorrect velocity value, a missing emergency stop, or millimetre-versus-metre unit confusion can cause physical harm to human operators sharing the workspace.
 
 ### Gap
 
-Prior work on LLM code security focuses on software vulnerabilities in general-purpose code (e.g., CWE-based analysis of GitHub Copilot outputs [INSEC, ICML 2025]) or on high-level task planning for robots (e.g., SayCan, Code as Policies). No existing framework provides:
-(1) formal adversarial benchmarks for vendor-specific robot motion primitives with explicit safety rule violations;
-(2) ISO 10218:2025 traceability for LLM-generated code;
-(3) reproducible evaluation using exclusively open-source models.
+Three concrete gaps remain at the intersection of LLM code security and industrial-robot safety standards:
+(1) no benchmark formalises adversarial perturbations against vendor-specific motion primitives with explicit safety-rule violations;
+(2) no evaluation framework produces ISO 10218:2025 clause-level traceability for LLM-generated robot code;
+(3) no public artefact enables fully reproducible evaluation on exclusively open-source models.
 
 ### Contribution
 
@@ -39,7 +39,7 @@ We present ENFIELD, a formal adversarial testing framework that:
 - Specifies 8 attack types (A1–A8) mapped to ISO 10218:2025 clauses
 - Implements a static watchdog with 7 safety rules (DM-1..7) and 7 security rules (SM-1..7) based on CWE mappings
 - Evaluates 3 open-source LLMs (Qwen2.5-Coder-32B, DeepSeek-Coder-V2-16B, CodeLlama-34B) across baseline, safety-prompted, and adversarial conditions
-- Reports novel findings including a *safety prompt paradox* where safety guidance increases violations
+- Reports novel findings including a *safety prompt paradox* where safety guidance increases violations, and a *baseline-saturation ceiling effect* that bounds adversarial-uplift detectability
 
 **Open Science:** OSF pre-registration DOI: 10.17605/OSF.IO/VE5M2. All code, data, and analysis scripts are released under Apache 2.0.
 
