@@ -2,7 +2,7 @@
 
 **Authoritative forward-looking tracker.** Supersedes `WEEK10_TODO.md` and `WEEK11_SPRINT.md` (both in `docs/archive/`).
 
-**Last updated:** Session 20 close (URSim decision + literature research), 2026-04-17.
+**Last updated:** Session 22 close (paper editorial finalization + Kumar Excel), 2026-04-27.
 **Tests:** 740 passing.
 **Phase:** Paper editorial (data-complete; remaining is writing + figures). URSim runtime-validation sprint in S21+ as parallel lane.
 
@@ -32,42 +32,64 @@ Drop-in sentences were pre-drafted in `docs/literature_synthesis_ra_l.md` sectio
 
 **Key S20 decision:** Gazebo/Isaac Sim deferred to post-project paper with real-robot integration. URSim 5.12.6 LTS + ROS2 Humble + ur_robot_driver selected as runtime-validation stack for ENFIELD Phase 3-4. Rationale in synthesis §4.9 (controller fidelity + scope alignment + reproducibility). Le & Le 2025 EAI provides academic precedent; CodeBotler 2024 RA-L provides venue precedent for execution-trace evaluation without physics. Gazebo stretch deliberately excluded from paper scope unless S23 go/no-go decision (below) says otherwise.
 
-### Session 21 — H7/H8 integration + paper opening/closing + URSim sprint kickoff
+### Session 21 — Paper editorial cascade kickoff (CLOSED 2026-04-26)
 
-Two parallel lanes: paper editorial (~3 hours) and URSim infrastructure sprint start. URSim sprint runs across S21-S22 as parallel-to-paper work, paper editorial unblocks arXiv preprint target (June 2026).
+S21 was paper editorial only; URSim sprint deferred to S23. Two atomic commits, both paper text additions to anchor S22 cascade:
 
-**Paper editorial lane:**
-- [ ] §VI.K exploratory hypothesis subsection (H7 ceiling, H8 refusal) → paste from synthesis §4.5
-- [ ] Abstract ISO 2025 cybersecurity framing → paste from synthesis §4.1
-- [ ] §I Introduction reframe → paste from synthesis §4.2
-- [ ] §VIII Conclusion closing → paste from synthesis §4.8
-- [ ] Add Kumar 2024 COLM paper to `docs/literature_review.xlsx` Papers sheet (deferred from S20; bounded Excel patch using existing `last_data_row()` pattern)
+- [x] §VI.K post-hoc exploratory hypotheses H7/H8 (commit `69adb7f`) — H7 ceiling-saturation full paragraph + H8 near-zero refusal minimal naming, cross-ref §VI.E + §II.C, no new CITE
+- [x] §I Introduction opening paragraph with ISO 10218-1:2025 cybersecurity framing (commit `4ccd847`) — RA-L novelty hook, +1 CITE [iso10218_2025], multi-cite convention established (adjacent single brackets, not comma-joined)
 
-**URSim sprint lane (parallel, infrastructure):**
-- [ ] Georgios async email: Gazebo drop decision + URSim selection rationale (pre-kickoff notification; arguments from synthesis §4.9)
-- [ ] URSim 5.12.6 LTS Docker container pull on PC1 (Ubuntu 22, RTX 5080) — smoke test teach pendant GUI access via VNC/HTTP
-- [ ] `ur_robot_driver` ROS2 Humble package integration — verify RTDE port 30002 reachable from PC1 container
-- [ ] URScript batch execution harness design document (input: gate-passing subset from `results/e1_e2_e3_full/`, output: `/joint_states` + `/tcp_speed` telemetry CSV per run)
-- [ ] §V.G Execution Setup subsection skeleton in `paper/draft_v0.1.md` (paper text placeholder, to be filled S22-S23 with actual URSim run data)
+S21 deferred to S22:
+- §I Motivation/Gap/Contribution body refresh (only opening paragraph done in S21)
+- Abstract ISO 2025 framing
+- §VIII Conclusion refresh
+- Kumar 2024 COLM Excel patch
+- URSim sprint lane (all 5 items + S23 decision gate) — moved to S23
 
-**S23 decision gate — Gazebo stretch go/no-go:**
-- [ ] Review buffer at S22 end. If ≥4 weeks until arXiv freeze and URSim integration clean, revisit Gazebo stretch (§VI.L or Appendix D, 1-2 paragraphs + 1 figure). If <4 weeks, Gazebo stays out of ENFIELD paper, goes to post-project extension paper.
+### Session 22 — Paper editorial finalization (CLOSED 2026-04-27)
 
-### Session 22 — Figures part 1
+Four atomic commits, all paper editorial cascade. 740 tests stable across 4 measurement points; 16 unique CITE / 26 occurrence stable; no locked-artefact disturbance.
 
-Estimated ~3 hours.
+- [x] §I body refresh (commit `9c146f7`) — Motivation compress (drop S21 opening paragraph overlap), Gap refine (drop redundant negative-survey, remove non-CITE plaintext refs INSEC/SayCan), Contribution bullet 5 add baseline-saturation ceiling effect (H7 implicit reference)
+- [x] Abstract ISO 2025 framing + H4-H7 confirmatory results (commit `73d546d`) — replace smoke-test era claims (6→11 violations, 2100% increase) with confirmatory data, 152 word RA-L target, single-paragraph Markdown convention preserved
+- [x] Retire safety prompt paradox claim, reframe model-dependent finding (commit `b14b138`) — §I.Contribution bullet 5 rewrite (paradox italic dropped, ceiling reordered first), §VII.A item 1 rewrite (model-dependent header + confirmatory rate triple from §VI.G L423: Qwen 10.36→10.38 unchanged, DeepSeek 9.50→3.69, CodeLlama 10.00→3.19), §VIII Conclusion minimal paradox fix (full refresh deferred to S23)
+- [x] Kumar 2024 COLM Excel patch (commit `2b22fe0`) — Aounon Kumar et al. "Certifying LLM Safety against Adversarial Prompting" added as row 26 in Papers sheet, paper_id `kumar2024certifying`, topic_area `adversarial_prompting`, status `read`. Synthesis §7 Kumar gap closed. Paper L601 plaintext title correction deferred to bib tur.
 
+S22 deferred to S23:
+- §VIII Conclusion full refresh (multi-paragraph + future work paragraph) — minimal fix done in S22 C3 set sufficient baseline
+- Synthesis §7 retroactive note: Kumar gap resolved
+- Bib tur (16 [CITE:*] placeholders → numeric IEEE References)
+- Figures part 1 (architecture diagram + per-model chart + T002 oscillation) — shifted from S22 plan
+- URSim sprint lane (all 5 items + S23 decision gate) — shifted from S21 plan
+
+### Session 23 — §VIII full refresh + figures part 1 + bib tur + URSim sprint reactivation
+
+Three parallel lanes inherited from S21/S22 deferral. Estimated 4-5 hours total.
+
+**Paper editorial lane (~2 hours):**
+- [ ] §VIII Conclusion full refresh — multi-paragraph structure (3-finding paragraph + future-work paragraph: URSim sim-to-real, disclaimer language analysis for H8, follow-up N≥4 LLM panel) + ISO 2025 closing
+- [ ] Synthesis §7 Kumar gap retroactive close note (resolved via S22 C4)
+- [ ] Bib tur — 16 unique [CITE:*] placeholders → numeric IEEE References list; paper L601 plaintext "Adversarial Attacks on Code Generation" corrected to Kumar "Certifying LLM Safety against Adversarial Prompting" + 15 other entries; multi-cite `[CITE:a] [CITE:b]` → `[1, 2]` sed conversion
+
+**Figures lane (~1.5 hours, was S22 plan):**
 - [ ] Architecture diagram (Mermaid or TikZ)
 - [ ] Per-model violation rate chart (source: `results/stats_e3_full/cochran_results.csv`, 4 rows × 3 models = 12 data points)
 - [ ] T002 trajectory oscillation visualization (15→4→15→4 byte-identical two-state oscillation from §VI.H)
 
-### Session 23 — Polish + cross-ref audit + minor fixes
+**URSim sprint lane (~1.5 hours, was S21-S22 plan):**
+- [ ] Georgios async email: Gazebo drop decision + URSim selection rationale (pre-kickoff notification; arguments from synthesis §4.9)
+- [ ] URSim 5.12.6 LTS Docker container pull on PC1 (Ubuntu 22, RTX 5080) — smoke test teach pendant GUI access via VNC/HTTP
+- [ ] `ur_robot_driver` ROS2 Humble package integration — verify RTDE port 30002 reachable from PC1 container
+- [ ] URScript batch execution harness design document (input: gate-passing subset from `results/e1_e2_e3_full/`, output: `/joint_states` + `/tcp_speed` telemetry CSV per run)
+- [ ] §V.G Execution Setup subsection skeleton in `paper/draft_v0.1.md`
 
-Estimated ~3 hours. Collects low-priority stylistic and hygiene items.
+**S24 decision gate — Gazebo stretch go/no-go:**
+- [ ] Review buffer at S23 end. If ≥4 weeks until arXiv freeze and URSim integration clean, revisit Gazebo stretch (§VI.L or Appendix D, 1-2 paragraphs + 1 figure). If <4 weeks, Gazebo stays out of ENFIELD paper, goes to post-project extension paper.
 
+**Polish + cross-ref audit deferred to S25+ (post-NTNU Visit 1):**
 - [ ] Second-pass figure refinement
 - [ ] Table audit (Table II ISO mapping verification, Table III-naive caveat, Table VI refusal per-rule)
-- [ ] Reference consistency sweep (BibTeX keys match cite commands)
+- [ ] Reference consistency sweep (BibTeX keys match cite commands) — partially handled by S23 bib tur
 - [ ] Paper-internal cross-reference audit (§ numbers, figure numbers, H4-H8 references all consistent)
 - [ ] Paper §V.E H6 "alongside... and" parse ambiguity fix (W10 #13, low-priority stylistic)
 - [ ] Paper line ~291 "Zero refusals across all models and conditions" FIXME — verify against §VI.I refusal data + Table VI from Session 16 (likely resolved by commit `20dbe9a`; confirm and either update prose or strip FIXME marker)
