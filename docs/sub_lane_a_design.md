@@ -1,7 +1,8 @@
 # Sub-lane A Design: URScript Live Execution Pipeline
 
 **Session:** S24 (NTNU Visit 1 demo prep)
-**Status:** initial design; T001 single-task smoke validated; batch
+**Status:** S24 — pipeline functional through telemetry capture; live joint motion blocked by URSim URCap dependency, deferred to NTNU on-site work (see "Known limitation" section below).
+**Updated:** 2026-04-27 batch
 harness deferred to S25 or NTNU on-site work.
 
 ## Architecture
@@ -100,6 +101,90 @@ Live URSim CI is deferred (requires GPU-less x86_64 runner with
 ~4 GB VRAM-equivalent CPU memory and Docker socket access).
 Offline tests for both nodes (publisher + recorder) run on every
 push under the existing `colcon test` job.
+
+## Known limitation: URSim URCap dependency
+
+T001 smoke validates the URScript publish path end-to-end:
+
+1. Translator emits a deterministic 59-line URScript program from the
+   Task IR JSON.
+2. The publisher node loads the URScript and publishes to
+   `/urscript_interface/script_command` (`std_msgs/String`,
+   1737 bytes for T001).
+3. The `ur_robot_driver` subscribes and forwards the script to URSim.
+4. The telemetry recorder captures `/joint_states` (~125 Hz) and
+   `/tcp_pose_broadcaster/pose` (~500 Hz) for the configured duration.
+
+In the S24 baseline configuration, URSim does not move when the
+script arrives. Investigation (S24-04-27) traced the cause to a
+Universal Robots driver workflow requirement: the driver delivers
+URScript through the **External Control URCap**, which must be
+installed inside PolyScope and the corresponding `external_control.urp`
+program must be loaded and in the PLAYING state. Vanilla
+`universalrobots/ursim_e-series:5.12` Docker image ships without this
+URCap, and PolyScope does not auto-install URCaps from a mounted
+`/ursim/.urcaps/` directory at boot. URCap installation appears to
+require interaction with the PolyScope web UI rather than being
+scriptable through the Dashboard interface.
+
+Mount paths tested without success:
+
+- `/tmp/.../urcaps:/urcaps`
+- `/tmp/.../urcaps:/ursim/GUI/bundle/urcaps`
+- `/tmp/.../urcaps:/ursim/.urcaps`
+
+In each case `externalcontrol-1.0.5.urcap` (35287 bytes, sourced from
+`/opt/ros/humble/share/ur_robot_driver/resources/`) was visible inside
+the container but the Felix OSGi bundle cache showed no install
+artifacts and no `external_control.urp` template was generated.
+
+This is a known limitation of vanilla URSim and is **not specific to
+ENFIELD**. UR's official `start_ursim.sh` (in
+`ur_client_library` package) downloads the URCap from GitHub and
+mounts it the same way; from inspection of the script there is no
+explicit auto-install hook beyond the volume mount, suggesting that
+production users complete URCap installation interactively through
+the PolyScope UI.
+
+### Resolution scope
+
+Resolving this requires one of:
+
+1. Switching to a custom URSim image that ships with the URCap
+   pre-installed (loses the upstream digest pin and reproducibility
+   guarantees in their current form).
+2. Driving the PolyScope web UI programmatically (Selenium / VNC
+   automation) to install the URCap and create the program — high
+   complexity, fragile across PolyScope versions.
+3. Using the UR Primary interface (port 30002) directly with full
+   `def...end` programs and bypassing the URCap path. Tested in S24
+   and observed to send the script but not start program execution
+   without an active program slot, suggesting URSim e-Series 5.12
+   requires PolyScope to be in a runnable program state regardless
+   of script delivery channel.
+
+Resolution is deferred to the NTNU exchange visit (2026-06-01 to
+2026-07-31) where the URCap installation workflow can be solved
+collaboratively with the host supervisor.
+
+### Current S24 deliverable
+
+What is delivered and reproducible at HEAD:
+
+- The full software pipeline from Task IR through translator,
+  publisher, driver, and telemetry recorder.
+- A 59012-row CSV captured during a 60 s window confirming that
+  `/joint_states` and `/tcp_pose_broadcaster/pose` are streamed and
+  recorded with stable schema and matched QoS settings (the joints
+  remain at the home pose throughout because URSim never enters
+  PLAYING state, but the recorder behaviour is correct).
+- All 8 offline tests pass on every push.
+- An idempotent smoke wrapper that brings up URSim, the driver,
+  and the telemetry pipeline reliably.
+
+The paper Section V.G "Execution Setup" remains accurate as a setup
+declaration; the URCap-blocked motion outcome is acknowledged as
+future work.
 
 ## Reproducibility commitments (open-science)
 

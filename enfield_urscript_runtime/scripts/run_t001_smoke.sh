@@ -81,7 +81,10 @@ echo "[smoke]   safety: $safety"
 
 # === Step 3: ur_control.launch.py background ===
 echo "[smoke] step 3: ur_robot_driver"
+# ROS setup.bash references unbound vars; relax 'set -u' around it
+set +u
 source /opt/ros/humble/setup.bash
+set -u
 if ros2 node list 2>/dev/null | grep -q '^/controller_manager$'; then
   echo "[smoke]   controller_manager already up - skip launch"
 else
@@ -111,7 +114,9 @@ echo "[smoke]   task_ir_path=$T001_PATH"
 echo "[smoke]   output_csv=$OUTPUT_CSV"
 echo "[smoke]   duration_s=$DURATION_S"
 [[ -f "$T001_PATH" ]] || { echo "FATAL: T001 IR not found"; exit 4; }
+set +u
 source ~/ros2_ws/install/setup.bash
+set -u
 ros2 launch enfield_urscript_runtime t001_smoke.launch.py \
   task_ir_path:="$T001_PATH" \
   output_csv:="$OUTPUT_CSV" \
