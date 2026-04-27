@@ -39,7 +39,7 @@ We present ENFIELD, a formal adversarial testing framework that:
 - Specifies 8 attack types (A1–A8) mapped to ISO 10218:2025 clauses
 - Implements a static watchdog with 7 safety rules (DM-1..7) and 7 security rules (SM-1..7) based on CWE mappings
 - Evaluates 3 open-source LLMs (Qwen2.5-Coder-32B, DeepSeek-Coder-V2-16B, CodeLlama-34B) across baseline, safety-prompted, and adversarial conditions
-- Reports novel findings including a *safety prompt paradox* where safety guidance increases violations, and a *baseline-saturation ceiling effect* that bounds adversarial-uplift detectability
+- Reports novel findings including a *baseline-saturation ceiling effect* that bounds adversarial-uplift detectability, and a model-dependent safety-prompt response in which safety guidance reduces violation count for two of three models while leaving the third unchanged
 
 **Open Science:** OSF pre-registration DOI: 10.17605/OSF.IO/VE5M2. All code, data, and analysis scripts are released under Apache 2.0.
 
@@ -515,7 +515,7 @@ A second exploratory observation concerns refusal behavior. As reported in §VI.
 
 ### A. Implications for LLM-Robot Code Deployment
 
-1. **Safety prompting requires unit-aware templates.** Generic safety guidance ("keep speed below 250 mm/s") is dangerous when the target language uses different units. Prompts must specify units in the target language's convention.
+1. **Safety prompting helps two of three models, but is not universally protective.** At confirmatory scale (270 E1 calls across baseline and safety conditions), a generic safety preamble reduces mean per-call violation count for DeepSeek-Coder-V2-16B (9.50 → 3.69) and CodeLlama-34B (10.00 → 3.19) but leaves Qwen2.5-Coder-32B essentially unchanged (10.36 → 10.38). The Week 9 smoke test against Qwen had observed a count *increase* under safety prompting, traced to mm/s vs m/s unit confusion in URScript; that single-task observation did not replicate at scale, but it illustrates a real failure mode for unit-naive safety prompts and motivates the recommendation that prompts specify units in the target language's convention.
 
 2. **Adversarial robustness varies unpredictably across models.** HumanEval scores do not predict adversarial vulnerability. A model with 73% HumanEval (DeepSeek) was far more susceptible to A8.6 than one with 92.7% (Qwen2.5-Coder).
 
@@ -590,7 +590,7 @@ ENFIELD's approach directly supports EU AI Act Article 15 requirements for high-
 
 ## VIII. Conclusion
 
-We presented ENFIELD, the first formal adversarial testing framework for LLM-generated industrial robot code. Our smoke test across three open-source models reveals three key findings: (1) safety prompting can paradoxically increase violations through unit confusion; (2) adversarial susceptibility is highly model-dependent; and (3) low violation counts can mask syntactically invalid code. Full experimental results with statistical analysis across 15 tasks, 8 attack types, and 3 models will be reported in the final version.
+We presented ENFIELD, the first formal adversarial testing framework for LLM-generated industrial robot code. Our confirmatory experiments across three open-source code-specialized LLMs and 585 generations reveal three key findings: (1) safety-prompt response is model-dependent — guidance reduces violations in two of three models and leaves the third unchanged; (2) adversarial uplift fails the preregistered 50-percentage-point threshold under a baseline-saturation ceiling, suggesting headroom rather than alignment as the limiting factor for detectable harm; and (3) low violation counts can mask syntactically invalid code, motivating a URScript validity gate as a primary metric component.
 
 ---
 
