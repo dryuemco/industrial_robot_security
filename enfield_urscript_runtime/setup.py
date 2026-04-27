@@ -10,6 +10,10 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        ('share/' + package_name + '/launch',
+            ['launch/t001_smoke.launch.py']),
+        ('share/' + package_name + '/scripts',
+            ['scripts/run_t001_smoke.sh']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -25,5 +29,7 @@ setup(
     entry_points={'console_scripts': [
         'urscript_publisher = '
         'enfield_urscript_runtime.urscript_publisher_node:main',
+        'telemetry_recorder = '
+        'enfield_urscript_runtime.telemetry_recorder_node:main',
     ]},
 )
