@@ -2,9 +2,9 @@
 
 **Authoritative forward-looking tracker.** Supersedes `WEEK10_TODO.md` and `WEEK11_SPRINT.md` (both in `docs/archive/`).
 
-**Last updated:** Session 23 close (paper text-complete + URSim sprint reactivation + replication kit infrastructure), 2026-04-27.
-**Tests:** 740 passing.
-**Phase:** Paper editorial (data-complete; remaining is writing + figures). URSim runtime-validation sprint in S21+ as parallel lane.
+**Last updated:** Session 24 close (URSim integration partially blocked + figure suite + paper audit verify), 2026-04-27.
+**Tests:** 748 passing (740 baseline + 8 offline publisher/telemetry tests in S24-A).
+**Phase:** Paper editorial (data + figures complete; latency + vendor-language audit closed). Pre-NTNU sprint in S25 covers URSim URCap unblock + demo deck + sim-to-real validation. NTNU Visit 1 scoped to paper editing only.
 
 ---
 
@@ -100,44 +100,79 @@ Six commits, two major lanes closed atomically.
 - [ ] Fix `tests/test_mcnemar_analysis.py::TestH5::test_large_effect_significant` "if a66:" guard hygiene.
 - [ ] `docs/open_science_release.md` enfield_llm breakdown footer (5+14+12+7=38 → enumerate 95 components).
 - [ ] `docs/open_science_release.md` line 84 `[REPLICATE.md](http://REPLICATE.md)` autolink artefact cleanup.
-### Session 24 — NTNU Visit 1 demo: URSim live task execution + figures + paper audit verify
+### Session 24 — NTNU Visit 1 demo: URSim live task execution + figures + paper audit verify (CLOSED 2026-04-27)
 
-Estimated ~6-8 hours, broken into four sub-lanes. For NTNU exchange visit (2026-06-01 to 2026-07-31, 9 weeks). Yunus's decision: demo Georgios with **live URSim task execution**, not slide-only.
+Closed with **8 commits**, ~5-6 hours work. Sub-lanes B and D fully closed; Sub-lane A frozen on URCap install blocker; Sub-lane C deferred to S25 per new pre-NTNU strategy (see Session 25 below).
 
-**Sub-lane A — URSim live task execution pipeline (PRIMARY, ~3 hours):**
-- [ ] URScript publisher harness: small Python ROS 2 node that publishes `std_msgs/String` to `/urscript_interface/script_command`; consumes translator output, sends to driver -> URSim execution.
-- [ ] End-to-end smoke on T001 (collaborative pick-place, low speed): IR -> translator -> URScript -> publish -> URSim joint motion -> telemetry CSV (`/joint_states` + `/tcp_pose_broadcaster/pose`).
-- [ ] 15-task batch execution script (gate-passing subset): drive all valid task IRs through URSim, capture per-task telemetry CSVs.
-- [ ] URScript batch execution harness design document (extension to paper §V.G).
+**Sub-lane A — URSim live task execution pipeline (FROZEN at S24 close, URCap blocker):**
+- [x] URScript publisher harness `enfield_urscript_runtime/urscript_publisher_node.py` + 7 offline tests (commit `0ed5feb`).
+- [x] colcon `ament_pytest` test discovery fix (commit `87318aa`).
+- [x] Telemetry recorder `telemetry_recorder_node.py` + T001 smoke launch + design doc (commits `b46b474`, `797e4b6`).
+- [blocked] End-to-end T001 motion: software pipeline functional (publisher OK, driver OK, recorder OK) but URSim e-Series 5.12 vanilla image lacks External Control URCap; three URCap mount strategies attempted, none triggered Felix OSGi install. 60-s T001 smoke confirmed joint_pos range = 0. **RESOLUTION DEFERRED to S25 Lane 2** (custom Dockerfile / Selenium-driven PolyScope install / runtime install API research).
+- [deferred-S25] 15-task batch execution script (gate-passing subset).
+- [deferred-S25] URScript batch execution harness design document (paper §V.G extension).
 
-**Sub-lane B — Figures part 1 (~1.5 hours, carry-over from S22-S23):**
-- [ ] Architecture diagram (Mermaid or TikZ).
-- [ ] Per-model violation rate chart (source: `results/stats_e3_full/cochran_results.csv`, 4 rows × 3 models = 12 data points).
-- [ ] T002 trajectory oscillation visualization (15->4->15->4 byte-identical two-state oscillation from §VI.H).
-- Note: figures double-duty as paper figures and demo deck content.
+**Sub-lane B — Figure suite (~1.5 hours, CLOSED):**
+- [x] Figure 1: per-model violation rate chart (commit `f9480b0`). Source: `results/stats_e3_full/cochran_results.csv`. 4 conditions × 3 models grouped bars; H4 threshold reference line.
+- [x] Figure 2: architecture diagram via Graphviz DOT (commit `2649eb4`). `scripts/plot/architecture.dot` + `render_architecture.sh` + `paper/figures/architecture.{pdf,png}`. Top-to-bottom pipeline overview; URSim cluster labelled "telemetry only".
+- [x] Figure 3: retry trajectories — 4-panel small multiples (T002 strict 2-state oscillation 15→4→15→4, T010 monotonic, T013 improve+regress, T003 invariant) from `results/e3_confirmatory/e3_results.csv` (commit `4a0ec2c`).
 
-**Sub-lane C — Demo deck (~2 hours):**
-- [ ] Deck structure: problem -> ISO 10218-1:2025 cybersecurity framing -> methodology -> H4-H6 confirmatory + H7-H8 exploratory -> URSim live demo -> next steps.
-- [ ] Reuse Q&A skeleton from archived `georgios_week10_demo.md` (11 questions; update post-E1 answers).
-- [ ] Add new literature synthesis findings (H7/H8 framing, FDSP comparison, static-analyzer threat).
-- [ ] Embed 1-2 screen captures from Sub-lane A's live execution as demo evidence.
+**Sub-lane C — Demo deck (DEFERRED to S25 Lane 1):**
+- [deferred-S25] All sub-items deferred. URSim status updated to "telemetry-only, motion blocked on URCap" pending S25 Lane 2 unblock.
+
+**Sub-lane D — Paper audit verify (~30 min, CLOSED):**
+- [x] §V.D Detection latency added with measured numbers (commit `9bb2038`): **mean 0.648 ms**, 95 % CI [0.638, 0.658] ms, median 0.603 ms, p95 1.046 ms, p99 1.080 ms (1500 timed calls; n_pairs=15 × iter=100 after 5-call warm-up). Proposal commitment "≤300 ms / ±15 ms" met by 463× and 1500× margins.
+- [x] §IV.C "Vendor language selection" added with three-factor URScript-vs-RAPID rationale: open-source ROS 2 driver + URSim availability, permissive licensing vs RAPID/KRL IP encumbrance, single robot family stable instruction set (commit `9bb2038`).
+- [x] `scripts/watchdog_microbenchmark.py` reproducible at zero cost; `paper_block` JSON summary on stdout for downstream patching.
+
+**S24 commit summary (HEAD: `9bb2038`):**
+- Sub-lane A: `0ed5feb`, `87318aa`, `b46b474`, `797e4b6`
+- Sub-lane B: `f9480b0`, `2649eb4`, `4a0ec2c`
+- Sub-lane D: `9bb2038`
+
+**Strategic decision recorded at S24 close:** NTNU Visit 1 (2026-06-01 to 2026-07-31) is now scoped to **paper editing only**. arXiv preprint (June 2026) and IEEE RA-L submission (July 2026) finalize at NTNU. All infrastructure / experiment / URSim work — including S24-A URCap unblock — must complete in S25 before 2026-06-01.
+
+**Rolled into S25 (originally S24 optional follow-ups):**
+- [deferred-S25] Written status update to Georgios consolidating S20-S24 progress.
+- [deferred-S25] OSF Amendment 3 draft (URSim selection + H7/H8 exploratory). Blocked by Amendment 2 (`d251c15`) pending Georgios acknowledgment.
+
+### Session 25 — Pre-NTNU sprint: demo deck + URCap unblock + LLM URSim validation
+
+**Strategic constraint (NEW at S24 close):** NTNU Visit 1 (2026-06-01 to 2026-07-31, 9 weeks) is scoped to **paper editing / revision / submission only**. arXiv preprint (June 2026) and IEEE RA-L submission (July 2026) finalize at NTNU. No infrastructure / experiment / URSim work at NTNU — all such work must complete in S25 before 2026-06-01.
+
+Estimated ~6-10 hours over 1-2 sessions. Five lanes; Lanes 1-4 are pre-NTNU mandatory, Lane 5 is the original S25 scope (preserved as carry-over, deferrable to post-NTNU if S25 budget exhausts).
+
+**Lane 1 — Demo deck (~2 hours, carried over from S24-C):**
+- [ ] Format choice: Markdown→pandoc→PDF / Reveal.js HTML / Beamer LaTeX. Decision before drafting.
+- [ ] Deck structure: problem → ISO 10218-1:2025 cybersecurity framing → methodology → H4-H6 confirmatory + H7-H8 exploratory → URSim live demo (post-Lane-2 unblock) → next steps.
+- [ ] Reuse Q&A skeleton from archived `docs/georgios_week10_demo.md` (11 questions; post-E1 answers).
+- [ ] Embed Figures 1-3 from `paper/figures/`.
+- [ ] Add literature synthesis findings (H7/H8 framing, FDSP comparison, static-analyzer threat).
+- [ ] If Lane 2 unblocks before deck finalization, swap "telemetry-only" caveat for live execution screenshots; otherwise keep honest "telemetry pipeline functional, motion pending URCap" framing.
 - [ ] Dry run with Yunus before sending Georgios.
 
-**Sub-lane D — Paper audit verify (proposal commitment check, ~30 min):**
-- [ ] Verify paper §V.D Metrics + §VI reports detection latency with confidence interval (proposal claim: "calibrated detection latency ±15 ms, 95% CI" / "mean detection latency ≤300 ms"). If absent, add a 1-2 paragraph note in §V.D documenting AST-parse + rule-evaluation timing for the static watchdog (typical microsecond-millisecond range; report mean + 95% CI from a microbenchmark).
-- [ ] Verify paper §IV.C explicitly justifies the URScript-over-RAPID vendor choice (proposal said "EBNF grammar specifications for RAPID syntax"; ENFIELD chose URScript per S20 decision). If implicit, add a 1-paragraph rationale (Universal Robots open-source ecosystem, ROS 2 driver maturity, URSim availability).
+**Lane 2 — URCap install local workflow (~2-4 hours, S24-A reactivation):**
+- [ ] Approach 1 (preferred): custom URSim Dockerfile pre-installing `externalcontrol-1.0.5.urcap` into PolyScope OSGi cache. Trade-off: loses upstream digest pin `sha256:b7ad69f5...51`; mitigated by pinning the new derived image's digest and committing the Dockerfile.
+- [ ] Approach 2 (fallback): Selenium/VNC automation of PolyScope web UI URCap install workflow. Brittle but preserves vanilla URSim image.
+- [ ] Approach 3 (research): runtime install API or undocumented hook investigation.
+- [ ] Goal: T001 deterministic translator output → URSim live → robot moves; telemetry CSV joint_pos range > 0.
+- [ ] Pre-experiment gate: re-run `tests/test_runner_mock_smoke.py` before any further URSim experiment (mandatory rule per S20 lesson).
 
-**Optional follow-ups (non-blocking):**
-- [ ] Written status update to Georgios consolidating S20-S23 progress (verbal approval already given for URSim direction; written form useful for audit trail).
-- [ ] OSF Amendment 3 draft (URSim selection + H7/H8 exploratory). Blocked by Amendment 2 (`d251c15`) pending Georgios acknowledgment - NTNU Visit conversation is the natural unblock point.
+**Lane 3 — LLM-generated URScript live execution (~2 hours, post-Lane-2):**
+- [ ] Step 1: Translator T001 → URSim live → telemetry capture. Validates paper §V.G as empirical anchor (sub-lane A's original deliverable).
+- [ ] Step 2 (stretch goal): LLM-generated URScript (qwen baseline rep=1 retry=0) → URSim live → observe outcome (PROTECTIVE_STOP? safety violation? successful execution?). DeepSeek 60% violation rate URSim'de gerçekten zarar verir mi?
+- [ ] If LLM outputs reach URSim: 3 models × 1-3 tasks × baseline = 3-9 live executions, capture telemetry CSVs. Sim-to-real validation finding for paper §V.G or §VII.A.
+- [ ] If sim-to-real result is publishable, add 1-paragraph subsection to paper §V.G before arXiv freeze cutoff.
 
-### Session 25 — Proposal-deliverable polish (CycloneDX SBOM + model SHA-256)
+**Lane 4 — Communication & administrative (~1-2 hours):**
+- [ ] Status update email to Georgios: S20-S24 commits, paper §V.D + §IV.C audit additions, figure suite, URCap blocker + S25 unblock plan. Include §V.D detection latency numbers (mean 0.648 ms, CI [0.638, 0.658]).
+- [ ] OSF Amendment 2 ack chase (`d251c15` pending). Once cleared, file Amendment 3 (URSim simulator selection + H7/H8 exploratory hypotheses).
 
-Estimated ~2 hours. Closes the two pending items from the proposal-vs-delivered audit (Hafta 12, post-S23). Schedule: any time during the NTNU exchange (most natural after a CI run that produces a fresh CycloneDX artefact).
-
+**Lane 5 — Original S25 carry-overs (~2 hours, deferrable to post-NTNU if S25 budget exhausts):**
 - [ ] **CycloneDX SBOM as packaged deliverable.** CI's `sbom-and-scan` job already generates the artefact; commit a snapshot to `docs/sbom/enfield-cyclonedx.json` (or upload to OSF as a release asset) so the replication kit "SBOM artifact (CycloneDX JSON)" row in `docs/open_science_release.md` flips from `Pending` to `Done`.
-- [ ] **Ollama model weights SHA-256 hash chain.** The proposal commits to "SHA-256 hash chains for model weights and environment". Environment is covered (Docker image digest pinned in S23 C5: `sha256:b7ad69f5...51`). Models are not. Generate `docs/replication/MODEL_DIGESTS.txt` with the three model digests via `ollama show <model> --modelfile | grep digest` (or equivalent) for `qwen2.5-coder:32b`, `deepseek-coder-v2:16b`, `codellama:34b`. Reference from README Runtime Stack section and `docs/open_science_release.md` Replication Package table.
+- [ ] **Ollama model weights SHA-256 hash chain.** The proposal commits to "SHA-256 hash chains for model weights and environment". Environment is covered (Docker image digest pinned in S23 C5: `sha256:b7ad69f5...51`). Models are not. Generate `docs/replication/MODEL_DIGESTS.txt` with the three model digests via `ollama show <model> --modelfile | grep digest` for `qwen2.5-coder:32b`, `deepseek-coder-v2:16b`, `codellama:34b`. Reference from README Runtime Stack section and `docs/open_science_release.md` Replication Package table.
 - [ ] Verify both deliverables appear in the OSF deposit checklist (Hafta 20-24 release).
+
 ---
 
 ## Async items (no session gate)
