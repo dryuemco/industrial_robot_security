@@ -93,9 +93,9 @@ New hypotheses (H4–H6) and the Refusal Rate (RR) metric were registered via OS
 | enfield_attacks | 149 | Done |
 | enfield_translators | 81 | Done |
 | enfield_watchdog_static | 114 | Done |
-| enfield_llm | 38 | Done |
-| experiment runner | 23 | Done |
-| **Total** | **574** | Done |
+| enfield_llm | 95 | Done |
+| experiment runner | 132 | Done |
+| **Total** | **740** | Done |
 
 > enfield_tasks breakdown: 79 static + 90 parametrized (TestAllTasksSchemaValid: 6 × 15 tasks).
 > enfield_llm breakdown: 5 base client + 14 prompt builder + 12 code parser + 7 factory tests.
