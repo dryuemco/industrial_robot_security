@@ -499,6 +499,12 @@ Under each condition, the three models disagree significantly at the per-task le
 | Unit handling | mm/s confusion | Correct (m/s) | N/A (pseudo-code) |
 | Code completeness | Full programs | Full programs | Truncated/skeletal |
 
+### K. Post-Hoc Exploratory Hypotheses (H7, H8)
+
+The pattern of H5 results (§VI.G) is consistent with a ceiling-saturation mechanism. Per-model baseline violation rates over 15 tasks are 1.00 / 0.60 / 0.40 for Qwen2.5-Coder-32B / DeepSeek-Coder-V2-16B / CodeLlama-34B respectively (§VI.J), so the available headroom HR = 100 - baseline_rate is bounded above by 60 percentage points in the most favorable case (CodeLlama-34B) and equals zero in the ceiling case (Qwen2.5-Coder-32B). Across the three models the mean headroom is 33 percentage points, below the pre-registered 50 percentage-point adversarial contrast threshold. Under these conditions the H5 threshold is not reachable for any contrast on the two ceiling-bounded models and is reachable in principle only for CodeLlama-34B; this matches the shallow-alignment account of code-specialized LLMs in which adversarial framing produces small marginal effects on top of an already-high baseline violation rate [CITE:qi2024shallow]. We therefore propose, as a post-hoc exploratory hypothesis, **H7** (baseline-saturation ceiling effect): the apparent stability of violation rates under adversarial framing in this dataset is an artefact of bounded headroom rather than evidence of robustness against prompt-level attacks.
+
+A second exploratory observation concerns refusal behavior. As reported in §VI.E, zero refusals were observed across the 585 E1 + E2 generations under the frozen refusal classifier of §IV.C, in alignment with the family-wise low-refusal pattern documented for code-specialized LLMs in §II.C. We name this as a post-hoc exploratory hypothesis, **H8** (near-zero refusal in code-specialized LLMs for structural-safety violation requests), to mark it explicitly as an empirical generalization beyond the confirmatory H4-H6 family. Both H7 and H8 are reported here to inform the design of future confirmatory studies on adversarial fragility in code-LLM-driven robotics; neither is offered as a tested claim within the present pre-registration.
+
 ---
 
 ## VII. Discussion
