@@ -100,15 +100,44 @@ Six commits, two major lanes closed atomically.
 - [ ] Fix `tests/test_mcnemar_analysis.py::TestH5::test_large_effect_significant` "if a66:" guard hygiene.
 - [ ] `docs/open_science_release.md` enfield_llm breakdown footer (5+14+12+7=38 → enumerate 95 components).
 - [ ] `docs/open_science_release.md` line 84 `[REPLICATE.md](http://REPLICATE.md)` autolink artefact cleanup.
-### Session 24 — Georgios demo deck prep
+### Session 24 — NTNU Visit 1 demo: URSim live task execution + figures + paper audit verify
 
-Estimated ~3 hours. Closes W10 #9. For NTNU Visit 1 (May 11-25).
+Estimated ~6-8 hours, broken into four sub-lanes. For NTNU exchange visit (2026-06-01 to 2026-07-31, 9 weeks). Yunus's decision: demo Georgios with **live URSim task execution**, not slide-only.
 
-- [ ] Deck structure: problem → ISO 10218-1:2025 cybersecurity framing → methodology → H4-H6 confirmatory + H7-H8 exploratory → next steps
-- [ ] Reuse Q&A skeleton from archived `georgios_week10_demo.md` (11 questions; update post-E1 answers)
-- [ ] Add new literature synthesis findings (H7/H8 framing, FDSP comparison, static-analyzer threat)
-- [ ] Dry run with Yunus before sending Georgios
+**Sub-lane A — URSim live task execution pipeline (PRIMARY, ~3 hours):**
+- [ ] URScript publisher harness: small Python ROS 2 node that publishes `std_msgs/String` to `/urscript_interface/script_command`; consumes translator output, sends to driver -> URSim execution.
+- [ ] End-to-end smoke on T001 (collaborative pick-place, low speed): IR -> translator -> URScript -> publish -> URSim joint motion -> telemetry CSV (`/joint_states` + `/tcp_pose_broadcaster/pose`).
+- [ ] 15-task batch execution script (gate-passing subset): drive all valid task IRs through URSim, capture per-task telemetry CSVs.
+- [ ] URScript batch execution harness design document (extension to paper §V.G).
 
+**Sub-lane B — Figures part 1 (~1.5 hours, carry-over from S22-S23):**
+- [ ] Architecture diagram (Mermaid or TikZ).
+- [ ] Per-model violation rate chart (source: `results/stats_e3_full/cochran_results.csv`, 4 rows × 3 models = 12 data points).
+- [ ] T002 trajectory oscillation visualization (15->4->15->4 byte-identical two-state oscillation from §VI.H).
+- Note: figures double-duty as paper figures and demo deck content.
+
+**Sub-lane C — Demo deck (~2 hours):**
+- [ ] Deck structure: problem -> ISO 10218-1:2025 cybersecurity framing -> methodology -> H4-H6 confirmatory + H7-H8 exploratory -> URSim live demo -> next steps.
+- [ ] Reuse Q&A skeleton from archived `georgios_week10_demo.md` (11 questions; update post-E1 answers).
+- [ ] Add new literature synthesis findings (H7/H8 framing, FDSP comparison, static-analyzer threat).
+- [ ] Embed 1-2 screen captures from Sub-lane A's live execution as demo evidence.
+- [ ] Dry run with Yunus before sending Georgios.
+
+**Sub-lane D — Paper audit verify (proposal commitment check, ~30 min):**
+- [ ] Verify paper §V.D Metrics + §VI reports detection latency with confidence interval (proposal claim: "calibrated detection latency ±15 ms, 95% CI" / "mean detection latency ≤300 ms"). If absent, add a 1-2 paragraph note in §V.D documenting AST-parse + rule-evaluation timing for the static watchdog (typical microsecond-millisecond range; report mean + 95% CI from a microbenchmark).
+- [ ] Verify paper §IV.C explicitly justifies the URScript-over-RAPID vendor choice (proposal said "EBNF grammar specifications for RAPID syntax"; ENFIELD chose URScript per S20 decision). If implicit, add a 1-paragraph rationale (Universal Robots open-source ecosystem, ROS 2 driver maturity, URSim availability).
+
+**Optional follow-ups (non-blocking):**
+- [ ] Written status update to Georgios consolidating S20-S23 progress (verbal approval already given for URSim direction; written form useful for audit trail).
+- [ ] OSF Amendment 3 draft (URSim selection + H7/H8 exploratory). Blocked by Amendment 2 (`d251c15`) pending Georgios acknowledgment - NTNU Visit conversation is the natural unblock point.
+
+### Session 25 — Proposal-deliverable polish (CycloneDX SBOM + model SHA-256)
+
+Estimated ~2 hours. Closes the two pending items from the proposal-vs-delivered audit (Hafta 12, post-S23). Schedule: any time during the NTNU exchange (most natural after a CI run that produces a fresh CycloneDX artefact).
+
+- [ ] **CycloneDX SBOM as packaged deliverable.** CI's `sbom-and-scan` job already generates the artefact; commit a snapshot to `docs/sbom/enfield-cyclonedx.json` (or upload to OSF as a release asset) so the replication kit "SBOM artifact (CycloneDX JSON)" row in `docs/open_science_release.md` flips from `Pending` to `Done`.
+- [ ] **Ollama model weights SHA-256 hash chain.** The proposal commits to "SHA-256 hash chains for model weights and environment". Environment is covered (Docker image digest pinned in S23 C5: `sha256:b7ad69f5...51`). Models are not. Generate `docs/replication/MODEL_DIGESTS.txt` with the three model digests via `ollama show <model> --modelfile | grep digest` (or equivalent) for `qwen2.5-coder:32b`, `deepseek-coder-v2:16b`, `codellama:34b`. Reference from README Runtime Stack section and `docs/open_science_release.md` Replication Package table.
+- [ ] Verify both deliverables appear in the OSF deposit checklist (Hafta 20-24 release).
 ---
 
 ## Async items (no session gate)
@@ -143,8 +172,7 @@ Estimated ~3 hours. Closes W10 #9. For NTNU Visit 1 (May 11-25).
 
 | Date | Milestone | Notes |
 |---|---|---|
-| 2026-05-11 to 2026-05-25 | NTNU Visit 1 | Yunus in Trondheim. Demo deck + Georgios paper review. |
-| 2026-06-08 to 2026-07-31 | NTNU extended visit | ~8 week stay. Main writing + submission work. |
+| 2026-06-01 to 2026-07-31 | NTNU exchange visit | 9 weeks in Trondheim. Demo deck + Georgios paper review + main writing + submission work. |
 | 2026-06 | arXiv preprint upload | After Georgios review feedback incorporated. |
 | 2026-07 | IEEE RA-L submission | Target venue per revised plan v2.1. |
 
