@@ -82,6 +82,8 @@ New hypotheses (H4–H6) and the Refusal Rate (RR) metric were registered via OS
 | Experiment runner + reports | Done | `scripts/run_experiment.py` |
 | Statistical analysis scripts | Pending | McNemar + Holm-Bonferroni + Cochran's Q |
 | Run instructions | Pending | `REPLICATE.md` needed |
+| URSim runtime image | Done | `universalrobots/ursim_e-series:5.12` (digest `sha256:b7ad69f5...51`); validated 2026-04-27 |
+| ROS 2 driver stack | Done | `ur_robot_driver` 2.12.0 + `ur_client_library` 2.7.0 on ROS 2 Humble; bring-up documented in README |
 
 ### Current Test Summary
 
