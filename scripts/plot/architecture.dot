@@ -1,0 +1,144 @@
+/* SPDX-License-Identifier: Apache-2.0 */
+/* ENFIELD architecture diagram - Figure 2.
+ *
+ * Render with:
+ *   dot -Tpdf architecture.dot -o ../../paper/figures/architecture.pdf
+ *   dot -Tpng -Gdpi=300 architecture.dot -o ../../paper/figures/architecture.png
+ *
+ * Or use scripts/plot/render_architecture.sh for both formats at once.
+ */
+
+digraph ENFIELD {
+    rankdir=TB;
+    bgcolor="transparent";
+    splines=true;
+    nodesep=0.45;
+    ranksep=0.55;
+    margin=0.10;
+    compound=true;
+
+    /* Default node and edge styles */
+    node [
+        shape=box, style="rounded,filled",
+        fontname="Times-Roman", fontsize=10,
+        height=0.40, margin="0.10,0.05",
+    ];
+    edge [
+        fontname="Times-Roman", fontsize=8,
+        color="#333333", arrowsize=0.7,
+    ];
+
+    /* === Input === */
+    ir [
+        label="Task IR (JSON)\n15 tasks, 5 categories",
+        fillcolor="#D6E5F4", color="#4477AA",
+    ];
+
+    /* === Translation pipelines === */
+    subgraph cluster_translation {
+        label="Translation";
+        labelloc="b";
+        fontname="Times-Italic"; fontsize=9;
+        color="#888888"; style="dashed";
+        margin=14;
+
+        translator [
+            label="IRToURScriptTranslator\n(deterministic)",
+            fillcolor="#D5EBD9", color="#228833",
+        ];
+        prompt [
+            label="PromptBuilder",
+            fillcolor="#FBE5E5", color="#EE6677",
+        ];
+        llm [
+            label="LLM (Ollama, T=0.0)\nQwen / DeepSeek / CodeLlama",
+            fillcolor="#FBE5E5", color="#EE6677",
+        ];
+        parser [
+            label="CodeParser.extract",
+            fillcolor="#FBE5E5", color="#EE6677",
+        ];
+    }
+
+    /* === URScript artefacts === */
+    urs_det [
+        label="URScript (deterministic)\nground-truth baseline",
+        fillcolor="#EEF7EE", color="#228833",
+    ];
+    urs_llm [
+        label="URScript (LLM-generated)\nE1/E2/E3 outputs",
+        fillcolor="#FCEEEE", color="#EE6677",
+    ];
+
+    /* === Watchdog === */
+    watchdog [
+        label="Static Watchdog\nDM-1..7 (safety) | SM-1..7 (CWE)\n7 ISO 10218:2025 clauses",
+        fillcolor="#FFE9CC", color="#CC6600",
+        height=0.65,
+    ];
+
+    /* === Outcomes === */
+    outcomes [
+        label="Outcomes\nCombined VR | McNemar | Cochran's Q\nH4 / H5 / H6 / H7 / H8",
+        fillcolor="#E8DDF2", color="#7733AA",
+        height=0.65,
+    ];
+
+    /* === E3 feedback === */
+    feedback [
+        label="Watchdog feedback\n(E3 retry loop)",
+        fillcolor="#FFF5D6", color="#AA8822", style="rounded,filled,dashed",
+    ];
+
+    /* === URSim execution (deferred) === */
+    subgraph cluster_ursim {
+        label="URSim live execution (S24: telemetry only)";
+        labelloc="t";
+        fontname="Times-Italic"; fontsize=8;
+        color="#999999"; style="dashed"; bgcolor="#F4F4F4";
+        margin=18;
+
+        publisher [
+            label="URScriptPublisherNode",
+            fillcolor="#EEEEEE", color="#777777", style="rounded,filled,dashed",
+        ];
+        driver [
+            label="ur_robot_driver",
+            fillcolor="#EEEEEE", color="#777777", style="rounded,filled,dashed",
+        ];
+        ursim [
+            label="URSim e-Series 5.12\n(digest-pinned)",
+            fillcolor="#EEEEEE", color="#777777", style="rounded,filled,dashed",
+        ];
+        recorder [
+            label="TelemetryRecorderNode\n/joint_states + /tcp_pose",
+            fillcolor="#EEEEEE", color="#777777", style="rounded,filled,dashed",
+        ];
+    }
+
+    /* === Edges === */
+    /* splines=true routes edge labels properly; plain `label=` is fine. */
+    ir -> translator [label="deterministic", fontsize=8];
+    ir -> prompt;
+    prompt -> llm;
+    llm -> parser;
+
+    translator -> urs_det;
+    parser -> urs_llm;
+
+    urs_det -> watchdog;
+    urs_llm -> watchdog;
+
+    watchdog -> outcomes;
+
+    /* E3 feedback - back-edge, dashed */
+    watchdog -> feedback [style=dashed, color="#AA8822"];
+    feedback -> prompt [style=dashed, color="#AA8822", constraint=false];
+
+    /* URSim branch - dashed */
+    urs_det -> publisher [style=dashed, color="#777777"];
+    publisher -> driver [style=dashed, color="#777777"];
+    driver -> ursim [style=dashed, color="#777777"];
+    driver -> recorder [style=dashed, color="#777777", label="telemetry", fontsize=8];
+    ursim -> recorder [style=dashed, color="#777777"];
+}
