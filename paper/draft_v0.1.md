@@ -17,7 +17,9 @@ Large language models are increasingly used to generate industrial robot control
 
 ## I. Introduction
 
-<!-- ~1 page, 3 paragraphs -->
+<!-- ~1 page, 4 paragraphs -->
+
+Industrial robot safety has long been governed by ISO 10218; its 2025 revision is the first edition to explicitly require that manufacturers address cybersecurity to the extent it affects industrial robot safety [CITE:iso10218_2025]. At the same time, large language models are increasingly used to generate low-level robot control code, with foundational work such as Code-as-Policies establishing the language-model-to-robot-policy pipeline [CITE:liang2023cap] and subsequent systems extending it to multi-robot [CITE:singh2023progprompt] and construction [CITE:althobaiti2024drone] settings. The intersection of these two developments — LLM-generated industrial-robot code evaluated against formal safety standards — defines a gap that no prior evaluation framework addresses. General-purpose LLM-code security benchmarks such as Pearce et al.'s Copilot study [CITE:pearce2022asleep], SecurityEval [CITE:siddiq2022securityeval], and CWEval [CITE:peng2025cweval] report LLM vulnerability rates between 40% and 74%, but target general Python or Java code without motion semantics, safety-rule structure, or ISO traceability. Rule-based validators for LLM-driven robots exist at the task-plan level [CITE:yang2023safetychip] [CITE:enhance_reliability_2509], but none operate on low-level motion primitives with velocity, acceleration, zone, and E-stop semantics mapped to ISO 10218-1:2025 clauses.
 
 ### Motivation
 
