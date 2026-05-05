@@ -1,8 +1,18 @@
 # SPDX-License-Identifier: Apache-2.0
 """URScript publisher node.
 
-Loads a Task IR file, translates to URScript via enfield_translators,
-and injects it into URSim by one of two transports:
+Loads a URScript program by one of two routes:
+
+* ``task_ir_path`` -- Task IR JSON run through enfield_translators to
+  produce vendor-specific URScript output.
+* ``urscript_path`` -- load a URScript file verbatim. Intended for
+  replaying LLM-generated URScript or other pre-translated payloads
+  without round-tripping through the IR translator (S26 Lane 3).
+
+Exactly one of the two parameters must be set; both empty or both set
+fails fast at startup.
+
+Injects the resulting program into URSim by one of two transports:
 
 * ``inject_mode='topic'`` (default, backward compatible) — publishes once
   to ``/urscript_interface/script_command`` (std_msgs/String). Requires the
@@ -40,6 +50,43 @@ from enfield_translators.urscript_translator import IRToURScriptTranslator
 
 VALID_INJECT_MODES = ('topic', 'primary_tcp')
 
+
+def _load_script(task_ir_path: str, urscript_path: str) -> str:
+    """Load URScript text via one of two routes.
+
+    Exactly one of ``task_ir_path`` / ``urscript_path`` must be non-empty:
+
+    * ``task_ir_path``  -> Task IR JSON, run through IRToURScriptTranslator
+    * ``urscript_path`` -> raw URScript file (e.g. LLM-generated output)
+                           loaded verbatim, no translation step
+
+    Raises:
+        ValueError: if neither or both arguments are non-empty.
+        FileNotFoundError: if the referenced path does not exist.
+    """
+    if not task_ir_path and not urscript_path:
+        raise ValueError(
+            'exactly one of task_ir_path / urscript_path is required'
+        )
+    if task_ir_path and urscript_path:
+        raise ValueError(
+            'task_ir_path and urscript_path are mutually exclusive'
+        )
+    if urscript_path:
+        p = Path(urscript_path)
+        if not p.is_file():
+            raise FileNotFoundError(
+                f'urscript_path does not exist: {urscript_path}'
+            )
+        return p.read_text(encoding='utf-8')
+    p = Path(task_ir_path)
+    if not p.is_file():
+        raise FileNotFoundError(
+            f'task_ir_path does not exist: {task_ir_path}'
+        )
+    return IRToURScriptTranslator().translate_file(task_ir_path)
+
+
 # Trailing entry-point call pattern emitted by the IR -> URScript
 # translator (e.g. "task_T001()") sitting on its own line, optionally
 # preceded by a comment line such as "# Entry point". URSim's Secondary
@@ -63,6 +110,7 @@ class URScriptPublisherNode(Node):
 
         # Parameters
         self.declare_parameter('task_ir_path', '')
+        self.declare_parameter('urscript_path', '')
         self.declare_parameter(
             'topic', '/urscript_interface/script_command'
         )
@@ -77,6 +125,10 @@ class URScriptPublisherNode(Node):
 
         task_ir_path = (
             self.get_parameter('task_ir_path')
+            .get_parameter_value().string_value
+        )
+        urscript_path = (
+            self.get_parameter('urscript_path')
             .get_parameter_value().string_value
         )
         topic = (
@@ -118,22 +170,21 @@ class URScriptPublisherNode(Node):
             )
             raise SystemExit(2)
 
-        if not task_ir_path:
-            self.get_logger().fatal('task_ir_path parameter is required')
+        try:
+            self._script = _load_script(task_ir_path, urscript_path)
+        except (ValueError, FileNotFoundError) as exc:
+            self.get_logger().fatal(str(exc))
             raise SystemExit(2)
-        if not Path(task_ir_path).is_file():
-            self.get_logger().fatal(
-                f'task_ir_path does not exist: {task_ir_path}'
-            )
-            raise SystemExit(2)
-
-        # Translate
-        translator = IRToURScriptTranslator()
-        self._script = translator.translate_file(task_ir_path)
         line_count = self._script.count('\n') + 1
-        self.get_logger().info(
-            f'Translated {task_ir_path} -> {line_count} lines URScript'
-        )
+        if urscript_path:
+            self.get_logger().info(
+                f'Loaded URScript from {urscript_path} '
+                f'-> {line_count} lines (verbatim, no translation)'
+            )
+        else:
+            self.get_logger().info(
+                f'Translated {task_ir_path} -> {line_count} lines URScript'
+            )
 
         # Optional disk dump for traceability (full unstripped form)
         if save_script_path:

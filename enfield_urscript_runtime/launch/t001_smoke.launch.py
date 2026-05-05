@@ -19,6 +19,7 @@ from launch_ros.actions import Node
 
 def generate_launch_description() -> LaunchDescription:
     task_ir_path = LaunchConfiguration('task_ir_path')
+    urscript_path = LaunchConfiguration('urscript_path')
     output_csv = LaunchConfiguration('output_csv')
     duration_s = LaunchConfiguration('duration_s')
     publish_delay_s = LaunchConfiguration('publish_delay_s')
@@ -45,6 +46,7 @@ def generate_launch_description() -> LaunchDescription:
         output='screen',
         parameters=[{
             'task_ir_path': task_ir_path,
+            'urscript_path': urscript_path,
             'publish_delay_s': 0.5,
             'save_script_path': save_script_path,
             'inject_mode': inject_mode,
@@ -62,7 +64,20 @@ def generate_launch_description() -> LaunchDescription:
     return LaunchDescription([
         DeclareLaunchArgument(
             'task_ir_path',
-            description='Absolute path to Task IR JSON file',
+            default_value='',
+            description=(
+                'Absolute path to Task IR JSON file. Mutually exclusive '
+                'with urscript_path; exactly one must be set.'
+            ),
+        ),
+        DeclareLaunchArgument(
+            'urscript_path',
+            default_value='',
+            description=(
+                'Absolute path to a pre-translated URScript file (e.g. '
+                'LLM-generated output). Mutually exclusive with '
+                'task_ir_path; exactly one must be set.'
+            ),
         ),
         DeclareLaunchArgument(
             'output_csv',
