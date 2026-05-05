@@ -26,6 +26,7 @@ from rclpy.qos import (
 )
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import PoseStamped
+from ur_dashboard_msgs.msg import SafetyMode, RobotMode
 
 from enfield_urscript_runtime.telemetry_recorder_node import (
     CSV_HEADER, TelemetryRecorderNode,
@@ -50,6 +51,17 @@ class _FakePublishers(Node):
         self._tcp_pub = self.create_publisher(
             PoseStamped, '/tcp_pose_broadcaster/pose', tcp_qos
         )
+        # safety_mode + robot_mode share the same TRANSIENT_LOCAL QoS
+        self._safety_pub = self.create_publisher(
+            SafetyMode,
+            '/io_and_status_controller/safety_mode',
+            tcp_qos,
+        )
+        self._robot_pub = self.create_publisher(
+            RobotMode,
+            '/io_and_status_controller/robot_mode',
+            tcp_qos,
+        )
 
     def publish_joint(self, i: int) -> None:
         m = JointState()
@@ -70,6 +82,16 @@ class _FakePublishers(Node):
         m.pose.position.z = 0.2 + 0.01 * i
         m.pose.orientation.w = 1.0
         self._tcp_pub.publish(m)
+
+    def publish_safety(self, mode: int) -> None:
+        m = SafetyMode()
+        m.mode = mode
+        self._safety_pub.publish(m)
+
+    def publish_robot(self, mode: int) -> None:
+        m = RobotMode()
+        m.mode = mode
+        self._robot_pub.publish(m)
 
 
 @pytest.fixture
@@ -125,6 +147,14 @@ def test_recorder_csv_schema_and_capture(csv_path: Path) -> None:
             publishers.publish_joint(i)
             publishers.publish_tcp(i)
             time.sleep(0.05)
+        # Drive a NORMAL -> PROTECTIVE_STOP -> RECOVERY transition
+        publishers.publish_robot(RobotMode.RUNNING)
+        publishers.publish_safety(SafetyMode.NORMAL)
+        time.sleep(0.05)
+        publishers.publish_safety(SafetyMode.PROTECTIVE_STOP)
+        time.sleep(0.05)
+        publishers.publish_safety(SafetyMode.RECOVERY)
+        time.sleep(0.05)
         time.sleep(0.5)  # drain
     finally:
         exec_.shutdown()
@@ -160,11 +190,39 @@ def test_recorder_csv_schema_and_capture(csv_path: Path) -> None:
     assert 'tcp_pose' in sources, (
         f'No tcp_pose rows captured (sources={sources})'
     )
+    assert 'safety_mode' in sources, (
+        f'No safety_mode rows captured (sources={sources})'
+    )
+    assert 'robot_mode' in sources, (
+        f'No robot_mode rows captured (sources={sources})'
+    )
 
-    # Numeric parse sanity on at least one tcp row
-    tcp_rows = [r for r in data_rows if r[2] == 'tcp_pose']
-    assert tcp_rows, 'No tcp_pose rows for numeric check'
+    # Numeric parse sanity on at least one tcp row.
+    # Filter to our fake publisher's stamps (sec 2000..2099) to avoid
+    # picking up TRANSIENT_LOCAL latched messages from any external
+    # ur_robot_driver / controller_manager process running in the same
+    # DDS domain. Without this filter the test is non-deterministic:
+    # discovery races between fake and external publishers can put the
+    # external pose at index 0 (observed UR5e home tcp_x ~= -0.109).
+    tcp_rows = [
+        r for r in data_rows
+        if r[2] == 'tcp_pose'
+        and r[0].isdigit() and 2000 <= int(r[0]) <= 2099
+    ]
+    assert tcp_rows, (
+        'No tcp_pose rows from fake publisher captured '
+        '(check stamp filter and DDS isolation)'
+    )
     sample = tcp_rows[0]
     # tcp_x at index 16, tcp_qw at index 22
     assert float(sample[16]) == pytest.approx(0.4)
     assert float(sample[22]) == pytest.approx(1.0)
+
+    # safety_mode column at index 23, robot_mode at index 24
+    safety_rows = [r for r in data_rows if r[2] == 'safety_mode']
+    assert safety_rows, 'No safety_mode rows for value check'
+    safety_modes = {int(r[23]) for r in safety_rows if r[23] != ''}
+    assert SafetyMode.PROTECTIVE_STOP in safety_modes, (
+        f'PROTECTIVE_STOP transition not captured '
+        f'(observed safety modes={safety_modes})'
+    )
