@@ -148,6 +148,12 @@ ros2 launch ur_robot_driver ur_control.launch.py \
 
 **Telemetry channels** consumed by the watchdog: `/joint_states`, `/tcp_pose_broadcaster/pose`, `/speed_scaling_state_broadcaster/speed_scaling`, `/io_and_status_controller/robot_mode`, `/io_and_status_controller/safety_mode`. Cartesian TCP velocity is derived from joint velocities via the URDF forward kinematics chain (no first-class topic in `ur_robot_driver` 2.12.0).
 
+## Known Limitations
+
+### `telemetry_recorder` requires float `duration_s`
+
+On rclpy Humble, the `telemetry_recorder` node accepts `duration_s` only as a float literal (e.g. `60.0`). Integer overrides via `--ros-args -p duration_s:=N` raise `InvalidParameterTypeException` at parameter declaration, regardless of `ParameterDescriptor` type or read-site type coercion (both routes were attempted in S25 and reverted at commit `14e4d8d`). The smoke wrapper `run_t001_smoke.sh` enforces float format via the `DURATION_S` environment variable (default `60.0`); manual `ros2 run` invocations must pass `N.0`. To be revisited on ROS2 Iron upgrade.
+
 ## Baseline Tasks (15)
 
 | ID | Category | Mode | Tool | Speed (mm/s) | Payload (kg) | Key Features |
