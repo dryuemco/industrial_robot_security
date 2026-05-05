@@ -9,10 +9,15 @@ row per incoming message.
 CSV schema:
     stamp_sec, stamp_nsec, source, frame_id,
     j0_pos..j5_pos, j0_vel..j5_vel,
-    tcp_x, tcp_y, tcp_z, tcp_qx, tcp_qy, tcp_qz, tcp_qw
+    tcp_x, tcp_y, tcp_z, tcp_qx, tcp_qy, tcp_qz, tcp_qw,
+    safety_mode, robot_mode
 
 JointState rows fill joint columns; pose columns blank.
 PoseStamped rows fill pose columns; joint columns blank.
+SafetyMode/RobotMode rows fill the corresponding mode column;
+all other columns blank. The recorder logs INFO on every state
+transition (e.g. NORMAL -> PROTECTIVE_STOP) for offline post-mortem
+of motion-induced safety events.
 
 Recorder shuts down after `duration_s` seconds.
 Simulation-only.
@@ -34,6 +39,7 @@ from rclpy.qos import (
 )
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import PoseStamped
+from ur_dashboard_msgs.msg import SafetyMode, RobotMode
 
 
 CSV_HEADER = [
@@ -42,7 +48,40 @@ CSV_HEADER = [
     'j0_vel', 'j1_vel', 'j2_vel', 'j3_vel', 'j4_vel', 'j5_vel',
     'tcp_x', 'tcp_y', 'tcp_z',
     'tcp_qx', 'tcp_qy', 'tcp_qz', 'tcp_qw',
+    'safety_mode', 'robot_mode',
 ]
+
+
+# Decoded names for INFO-level transition logs only. Raw integer codes
+# are written to CSV; downstream consumers decode using the
+# ur_dashboard_msgs constants directly.
+_SAFETY_MODE_NAMES = {
+    1: 'NORMAL',
+    2: 'REDUCED',
+    3: 'PROTECTIVE_STOP',
+    4: 'RECOVERY',
+    5: 'SAFEGUARD_STOP',
+    6: 'SYSTEM_EMERGENCY_STOP',
+    7: 'ROBOT_EMERGENCY_STOP',
+    8: 'VIOLATION',
+    9: 'FAULT',
+    10: 'VALIDATE_JOINT_ID',
+    11: 'UNDEFINED_SAFETY_MODE',
+    12: 'AUTOMATIC_MODE_SAFEGUARD_STOP',
+    13: 'SYSTEM_THREE_POSITION_ENABLING_STOP',
+}
+_ROBOT_MODE_NAMES = {
+    -1: 'NO_CONTROLLER',
+    0: 'DISCONNECTED',
+    1: 'CONFIRM_SAFETY',
+    2: 'BOOTING',
+    3: 'POWER_OFF',
+    4: 'POWER_ON',
+    5: 'IDLE',
+    6: 'BACKDRIVE',
+    7: 'RUNNING',
+    8: 'UPDATING_FIRMWARE',
+}
 
 
 class TelemetryRecorderNode(Node):
@@ -55,6 +94,14 @@ class TelemetryRecorderNode(Node):
         self.declare_parameter('joint_topic', '/joint_states')
         self.declare_parameter(
             'tcp_topic', '/tcp_pose_broadcaster/pose'
+        )
+        self.declare_parameter(
+            'safety_mode_topic',
+            '/io_and_status_controller/safety_mode',
+        )
+        self.declare_parameter(
+            'robot_mode_topic',
+            '/io_and_status_controller/robot_mode',
         )
         self.declare_parameter('duration_s', 30.0)
 
@@ -73,6 +120,14 @@ class TelemetryRecorderNode(Node):
         duration_s = (
             self.get_parameter('duration_s')
             .get_parameter_value().double_value
+        )
+        safety_mode_topic = (
+            self.get_parameter('safety_mode_topic')
+            .get_parameter_value().string_value
+        )
+        robot_mode_topic = (
+            self.get_parameter('robot_mode_topic')
+            .get_parameter_value().string_value
         )
 
         out_path = Path(output_csv)
@@ -109,9 +164,32 @@ class TelemetryRecorderNode(Node):
             PoseStamped, tcp_topic, self._on_tcp_pose, tcp_qos
         )
 
+        # SafetyMode + RobotMode are latched (TRANSIENT_LOCAL) on the
+        # ur_robot_driver side; subscriber QoS must match.
+        mode_qos = QoSProfile(
+            depth=1,
+            reliability=QoSReliabilityPolicy.RELIABLE,
+            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+            history=QoSHistoryPolicy.KEEP_LAST,
+        )
+        self.create_subscription(
+            SafetyMode, safety_mode_topic,
+            self._on_safety_mode, mode_qos,
+        )
+        self.create_subscription(
+            RobotMode, robot_mode_topic,
+            self._on_robot_mode, mode_qos,
+        )
+
+        # Last-seen state for transition logging.
+        self._last_safety_mode: int | None = None
+        self._last_robot_mode: int | None = None
+
         self.get_logger().info(
             f'Recording to {out_path} '
             f'(joint={joint_topic}, tcp={tcp_topic}, '
+            f'safety_mode={safety_mode_topic}, '
+            f'robot_mode={robot_mode_topic}, '
             f'duration={duration_s:.1f}s)'
         )
 
@@ -130,6 +208,7 @@ class TelemetryRecorderNode(Node):
             'joint_state', msg.header.frame_id or '',
             *positions[:6], *velocities[:6],
             '', '', '', '', '', '', '',
+            '', '',
         ]
         self._write_row(row)
 
@@ -142,6 +221,48 @@ class TelemetryRecorderNode(Node):
             '', '', '', '', '', '',
             '', '', '', '', '', '',
             p.x, p.y, p.z, o.x, o.y, o.z, o.w,
+            '', '',
+        ]
+        self._write_row(row)
+
+    def _on_safety_mode(self, msg: SafetyMode) -> None:
+        mode = int(msg.mode)
+        if mode != self._last_safety_mode:
+            prev = self._last_safety_mode
+            self.get_logger().info(
+                f'safety_mode transition: {prev} -> {mode} '
+                f'({_SAFETY_MODE_NAMES.get(mode, "UNKNOWN")})'
+            )
+            self._last_safety_mode = mode
+        # SafetyMode has no header stamp; use ROS clock for the row.
+        now = self.get_clock().now().to_msg()
+        row = [
+            now.sec, now.nanosec,
+            'safety_mode', '',
+            '', '', '', '', '', '',
+            '', '', '', '', '', '',
+            '', '', '', '', '', '', '',
+            mode, '',
+        ]
+        self._write_row(row)
+
+    def _on_robot_mode(self, msg: RobotMode) -> None:
+        mode = int(msg.mode)
+        if mode != self._last_robot_mode:
+            prev = self._last_robot_mode
+            self.get_logger().info(
+                f'robot_mode transition: {prev} -> {mode} '
+                f'({_ROBOT_MODE_NAMES.get(mode, "UNKNOWN")})'
+            )
+            self._last_robot_mode = mode
+        now = self.get_clock().now().to_msg()
+        row = [
+            now.sec, now.nanosec,
+            'robot_mode', '',
+            '', '', '', '', '', '',
+            '', '', '', '', '', '',
+            '', '', '', '', '', '', '',
+            '', mode,
         ]
         self._write_row(row)
 
