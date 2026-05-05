@@ -1,0 +1,42 @@
+ENFIELD vendored third-party software notice
+==============================================
+
+This directory vendors the External Control URCap, a binary OSGi bundle
+distributed by Universal Robots / FZI Forschungszentrum Informatik for
+use with the ROS / ROS 2 drivers.
+
+------------------------------------------------------------------------
+
+File:        externalcontrol-1.0.5.urcap
+Size:        35287 bytes
+SHA-256:     21ee6c9b4d8a64cf47ce2446233627deec0d2999a0440f4261155d79223b4901
+Version:     1.0.5
+Released:    March 2021
+License:     Apache License, Version 2.0 (see LICENSE-Apache-2.0)
+Copyright:   2019 FZI Forschungszentrum Informatik
+Source:      https://github.com/UniversalRobots/Universal_Robots_ExternalControl_URCap
+             release tag v1.0.5
+Local copy:  /opt/ros/humble/share/ur_robot_driver/resources/externalcontrol-1.0.5.urcap
+
+------------------------------------------------------------------------
+
+Why vendored
+------------
+ENFIELD's reproducibility commitment requires deterministic URSim image
+builds. The custom URSim image (docker/ursim/Dockerfile) bakes this URCap
+into the OSGi bundle directory so live URScript execution works without
+PolyScope GUI interaction. Vendoring fixes the binary to a known SHA-256
+across all reviewer build environments.
+
+License compliance
+------------------
+The Apache License 2.0 (Sections 4(a) and 4(c)) explicitly permits
+redistribution provided that the license text accompanies the binary and
+attribution notices are preserved. The full license text is in
+LICENSE-Apache-2.0. Copyright attribution to FZI Forschungszentrum
+Informatik is preserved here and remains intact in the URCap source code
+(in-tree LICENSE BLOCK headers in the upstream repository).
+
+Modifications
+-------------
+None. The binary is bit-identical to the upstream v1.0.5 release.

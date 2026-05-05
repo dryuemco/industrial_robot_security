@@ -1,0 +1,4 @@
+# Staged URCap binary — created by scripts/build_ursim_image.sh during
+# build, removed afterward via cleanup trap. Source of truth lives in
+# third_party/urcap/externalcontrol-1.0.5.urcap.
+externalcontrol-*.urcap
