@@ -97,3 +97,6 @@ results/*.json
 .env.*
 !.env.example
 results/
+
+# Build artifacts (demo deck PDFs, S25 Lane 1)
+docs/build/
