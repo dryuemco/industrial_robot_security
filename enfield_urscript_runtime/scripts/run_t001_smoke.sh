@@ -4,26 +4,37 @@
 # T001 URSim live smoke wrapper. Idempotent.
 #
 # Steps:
-#   1. URSim health check
+#   1. URSim container health check
 #   2. Dashboard power-on + brake release (skip if already RUNNING)
 #   3. ur_control.launch.py background (skip if controller_manager up)
-#   4. T001 smoke launch foreground
+#   4. T001 smoke launch foreground (telemetry recorder + URScript inject)
 #   5. Telemetry CSV summary
 #
 # Env:
-#   URSIM_HOST   default 127.0.0.1
-#   T001_PATH    default <repo>/enfield_tasks/ir/tasks/T001_pick_place_collab.json
-#   OUTPUT_CSV   default /tmp/telemetry_T001.csv
-#   DURATION_S   default 60.0
+#   URSIM_HOST          default 172.17.0.2 (Docker bridge container IP)
+#   T001_PATH           default <repo>/enfield_tasks/ir/tasks/T001_pick_place_collab.json
+#   OUTPUT_CSV          default /tmp/telemetry_T001.csv
+#   DURATION_S          default 60.0
+#   INJECT_MODE         default primary_tcp (Phase 3 / Lane 2 closure)
+#   URSIM_PRIMARY_PORT  default 30002 (URSim Secondary client interface)
+#
+# Phase 3 (Lane 2) note: inject_mode=primary_tcp writes URScript directly
+# to URSim's Secondary client (port 30002). This bypasses the ROS2 driver's
+# /urscript_interface/script_command topic and the External Control URCap
+# loop, which were observed (S25 Phase 3.D diagnostic, 2026-05-05) to
+# accept the script but not execute physical motion in our setup. Topic
+# mode is preserved for backward compatibility (INJECT_MODE=topic).
 set -euo pipefail
 
-URSIM_HOST="${URSIM_HOST:-127.0.0.1}"
+URSIM_HOST="${URSIM_HOST:-172.17.0.2}"
 DASHBOARD_PORT=29999
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 T001_PATH="${T001_PATH:-$REPO_ROOT/enfield_tasks/ir/tasks/T001_pick_place_collab.json}"
 OUTPUT_CSV="${OUTPUT_CSV:-/tmp/telemetry_T001.csv}"
 DURATION_S="${DURATION_S:-60.0}"
+INJECT_MODE="${INJECT_MODE:-primary_tcp}"
+URSIM_PRIMARY_PORT="${URSIM_PRIMARY_PORT:-30002}"
 UR_CONTROL_LOG="/tmp/ur_control.log"
 UR_CONTROL_PID_FILE="/tmp/ur_control.pid"
 
@@ -50,14 +61,15 @@ dashboard_send() {
 }
 
 # === Step 1: URSim health ===
+# Direct docker (assumes user is in docker group; the container must already
+# be running before this wrapper is invoked).
 echo "[smoke] step 1: URSim health"
-if ! sg docker -c "docker ps --filter name=ursim --format '{{.Names}}'" \
-     | grep -q '^ursim$'; then
+if ! docker ps --filter name=ursim --format "{{.Names}}" | grep -q '^ursim$'; then
   echo "FATAL: URSim container not running."
-  echo "  Restart hint:"
-  echo "  sg docker -c \"docker run --rm -d --name ursim \\"
-  echo "    -p 5900:5900 -p 6080:6080 -p 29999:29999 -p 30001-30004:30001-30004 \\"
-  echo "    universalrobots/ursim_e-series@sha256:b7ad69f5bfa45ffab07788480ad43c753595ce35fcbfe4a3f420725f51764d51\""
+  echo "  Start it with the ENFIELD custom URSim image:"
+  echo "    docker run -d --name ursim -e ROBOT_MODEL=UR5 \\"
+  echo "      enfield-ursim:5.12-urcap-1.0.5 polyscope_log"
+  echo "  (Build via: bash scripts/build_ursim_image.sh)"
   exit 1
 fi
 echo "[smoke]   URSim up"
@@ -113,6 +125,9 @@ echo "[smoke] step 4: T001 smoke launch"
 echo "[smoke]   task_ir_path=$T001_PATH"
 echo "[smoke]   output_csv=$OUTPUT_CSV"
 echo "[smoke]   duration_s=$DURATION_S"
+echo "[smoke]   inject_mode=$INJECT_MODE"
+echo "[smoke]   ursim_primary_host=$URSIM_HOST"
+echo "[smoke]   ursim_primary_port=$URSIM_PRIMARY_PORT"
 [[ -f "$T001_PATH" ]] || { echo "FATAL: T001 IR not found"; exit 4; }
 set +u
 source ~/ros2_ws/install/setup.bash
@@ -120,7 +135,10 @@ set -u
 ros2 launch enfield_urscript_runtime t001_smoke.launch.py \
   task_ir_path:="$T001_PATH" \
   output_csv:="$OUTPUT_CSV" \
-  duration_s:="$DURATION_S"
+  duration_s:="$DURATION_S" \
+  inject_mode:="$INJECT_MODE" \
+  ursim_primary_host:="$URSIM_HOST" \
+  ursim_primary_port:="$URSIM_PRIMARY_PORT"
 
 # === Step 5: Telemetry summary ===
 echo "[smoke] step 5: telemetry summary"
