@@ -57,13 +57,12 @@ class TelemetryRecorderNode(Node):
         self.declare_parameter(
             'tcp_topic', '/tcp_pose_broadcaster/pose'
         )
-        self.declare_parameter(
-            'duration_s', 30.0,
-            ParameterDescriptor(
-                type=ParameterType.PARAMETER_DOUBLE,
-                description='Telemetry recording duration in seconds',
-            ),
-        )
+        # Implicit float default. ParameterDescriptor with explicit type
+        # is intentionally NOT set: rclpy humble enforces strict type
+        # match when the descriptor type is declared, which would reject
+        # integer launch overrides. We accept either DOUBLE or INTEGER
+        # at the read site below.
+        self.declare_parameter('duration_s', 30.0)
 
         output_csv = (
             self.get_parameter('output_csv')
@@ -77,10 +76,23 @@ class TelemetryRecorderNode(Node):
             self.get_parameter('tcp_topic')
             .get_parameter_value().string_value
         )
-        duration_s = (
-            self.get_parameter('duration_s')
-            .get_parameter_value().double_value
+        # Manual DOUBLE/INTEGER fallback so that launch wrappers can
+        # pass either ``duration_s:=30`` (INTEGER) or ``duration_s:=30.0``
+        # (DOUBLE). This works around rclpy humble's lack of int->double
+        # coercion for declared parameters.
+        duration_param = (
+            self.get_parameter('duration_s').get_parameter_value()
         )
+        if duration_param.type == ParameterType.PARAMETER_DOUBLE:
+            duration_s = duration_param.double_value
+        elif duration_param.type == ParameterType.PARAMETER_INTEGER:
+            duration_s = float(duration_param.integer_value)
+        else:
+            self.get_logger().fatal(
+                f'duration_s must be DOUBLE or INTEGER, got type '
+                f'{duration_param.type}'
+            )
+            raise SystemExit(2)
 
         out_path = Path(output_csv)
         out_path.parent.mkdir(parents=True, exist_ok=True)
