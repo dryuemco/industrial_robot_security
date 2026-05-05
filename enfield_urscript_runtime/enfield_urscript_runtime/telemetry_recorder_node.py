@@ -32,6 +32,7 @@ from rclpy.qos import (
     QoSReliabilityPolicy,
     QoSHistoryPolicy,
 )
+from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import PoseStamped
 
@@ -56,7 +57,13 @@ class TelemetryRecorderNode(Node):
         self.declare_parameter(
             'tcp_topic', '/tcp_pose_broadcaster/pose'
         )
-        self.declare_parameter('duration_s', 30.0)
+        self.declare_parameter(
+            'duration_s', 30.0,
+            ParameterDescriptor(
+                type=ParameterType.PARAMETER_DOUBLE,
+                description='Telemetry recording duration in seconds',
+            ),
+        )
 
         output_csv = (
             self.get_parameter('output_csv')
