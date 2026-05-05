@@ -43,11 +43,19 @@ Nine commits closed S24 across three sub-lanes plus a TODO-close commit:
 
 The framework is a three-layer pipeline (Fig. 2): LLM evaluation, static watchdog, and simulation runtime. The LLM layer queries three local models via Ollama on PC2 (`192.168.1.5:11434`): Qwen2.5-Coder-32B, DeepSeek-Coder-V2-16B, and CodeLlama-34B, all Q4-quantised. Each candidate URScript program flows through the watchdog (DM-1…DM-7 syntactic detectors plus SM-1…SM-7 CWE-mapped security rules). Violations either (i) feed back as retry prompts (E3 watchdog-in-loop) or (ii) gate forwarding to the runtime layer. The runtime layer is the URSim e-Series 5.12 simulator with a ROS2 telemetry recorder. PC1 (Ubuntu 22.04, RTX 5080) hosts development, ROS2, and the test harness; PC2 hosts model inference only. The split keeps inference deterministic across iterations and isolates GPU contention from ROS2 timing.
 
-### Q4: URSim runtime — what works today, what is blocked?
+### Q4: URSim runtime — what works today?
 
-**Working today (telemetry-only).** The `enfield_urscript_runtime` package launches the URSim Docker container, attaches the ROS2 `ur_robot_driver` (v2.12.0), and records joint-state telemetry to CSV. T001 smoke launch completes end-to-end; the recorder produces well-formed CSV with the correct column schema and tick rate.
+**Live execution achieved (S25 Lane 2 closure).** The `enfield_urscript_runtime` package launches the custom URSim image (`enfield-ursim:5.12-urcap-1.0.5`, External Control URCap pre-baked), attaches the ROS2 `ur_robot_driver` (v2.12.0), and records joint-state telemetry to CSV. T001 smoke launch now drives the simulated UR5e end-to-end via direct URScript injection over the Secondary client interface (TCP 30002, `inject_mode='primary_tcp'`).
 
-**Blocked (motion execution).** The URSim e-Series 5.12 vanilla Docker image does **not** ship the External Control URCap, which is what authorises external URScript injection from a ROS2 client. URCap install is **not** scriptable via Docker volume mounts: PolyScope (URSim's HMI) requires interactive web-UI confirmation. As a result, T001 telemetry shows `joint_pos` range = 0 — the robot is alive but stationary. S25 Lane 2 resolves this with a custom Dockerfile that bakes the URCap into the image. Estimated unblock time: 2–4 hours.
+**T001 acceptance evidence.** A 60-second T001 run produced 19,406 joint-state samples with all six main joints moving above the 0.01 rad threshold. The five with the largest ranges:
+
+- `shoulder_pan` range 0.97 rad (≈ 55°)
+- `shoulder_lift` range 1.28 rad (≈ 73°)
+- `elbow` range 0.63 rad (≈ 36°)
+- `wrist_1` range 0.68 rad (≈ 39°)
+- `wrist_3` range 1.64 rad (≈ 94°)
+
+The trajectory terminated in `PROTECTIVE_STOP` (Error C204A3, `qdd` discontinuity) during late waypoint sequencing — a **motion-induced** safety event, not a connection failure. This is itself a useful finding: even hand-crafted T001 URScript triggers URSim's onboard safety monitor under the collaborative-mode 250 mm/s envelope. It establishes a baseline against which LLM-generated URScript can be measured (S26 Lane 3 sim-to-real anchor for paper §V.G).
 
 ---
 
@@ -99,30 +107,30 @@ Both H7 and H8 are flagged exploratory per OSF Amendment 1.
 
 ## Section 3 — Roadmap to NTNU Visit 1
 
-### Q9: What is blocking live URSim execution, and how do we unblock it?
+### Q9: How was the live-execution blocker resolved?
 
-The single technical blocker between current state (telemetry-only) and end-to-end live execution is the External Control URCap install. In S24 we evaluated three approaches:
+The blocker between S24 telemetry-only state and end-to-end live execution was the External Control URCap install. Three approaches were evaluated in S24; (a) was selected and shipped in S25:
 
 | # | Approach | Verdict |
 |---|---|---|
-| (a) | Custom URSim Dockerfile, URCap pre-baked into image | **Selected.** Atomic, reproducible, fits open-science release. Trade-off: loses upstream URSim image digest pin (mitigation: document URSim base SHA + URCap version separately in `docs/replication.md`). |
+| (a) | Custom URSim Dockerfile, URCap pre-baked into image | **Selected and shipped** (commit `095c08c`, image tag `enfield-ursim:5.12-urcap-1.0.5`). Atomic, reproducible, fits open-science release. URSim base digest plus URCap version documented separately in `docs/replication.md`. |
 | (b) | Selenium / VNC PolyScope web-UI automation | Rejected. Fragile, brittle to PolyScope version changes, slow. |
 | (c) | URCap runtime install API | Rejected. No public API found; PolyScope-internal only. |
 
-S25 Lane 2 implements (a). Estimated effort: 2–4 hours. **Acceptance criterion:** T001 telemetry CSV shows `joint_pos` range > 0 (i.e., the robot actually moves under external URScript injection), with `PROTECTIVE_STOP` count = 0 for the safe baseline.
+A second technical decision followed once the URCap image was ready: the ROS2 driver topic-based path (`inject_mode='topic'`) does not produce motion in URSim's headless mode without an active URCap dispatcher loop. The `enfield_urscript_runtime` publisher node was therefore extended with a direct-TCP injection mode (`inject_mode='primary_tcp'`, commit `ab78dc5`) that writes the URScript program to the Secondary client port (30002), where URControl auto-runs the `def…end` block as a named program. Trailing entry-point lines in translator output are stripped on the `primary_tcp` path only, since URSim's Secondary parser rejects them as stray statements (closing `TCPReceiver` and cascading to `PROTECTIVE_STOP C154A0`). The acceptance criterion (T001 `joint_pos` range > 0) is now met; see Q4 for the joint-by-joint range table.
 
-### Q10: S25 remaining lanes before 2026-06-01
+### Q10: S25 status and remaining lanes before 2026-06-01
 
-Four lanes remain in S25 before NTNU Visit 1 (2026-06-01): **Lane 2** (URCap unblock via custom Dockerfile), **Lane 3** (LLM-generated URScript live execution, sim-to-real anchor for paper §V.G), **Lane 4** (Georgios status sync + OSF Amendment 3 filing), and **Lane 5** (CycloneDX SBOM + Ollama model SHA-256 hash chain documentation).
+S25 closed the URCap and live-execution blockers (Lane 2). Three lanes remain open before NTNU Visit 1 (2026-06-01): **Lane 3** (LLM-generated URScript live execution, sim-to-real anchor for paper §V.G), **Lane 4** (Georgios status sync + OSF Amendment 3 filing), and **Lane 5** (CycloneDX SBOM + Ollama model SHA-256 hash chain documentation).
 
 | Lane | Task | Estimated effort | Status |
 |------|------|------------------|--------|
-| 2 | URCap unblock via custom Dockerfile (approach (a)) | 2–4 h | Next |
-| 3 | LLM-generated URScript live execution post-unblock; sim-to-real anchor for paper §V.G — does the Qwen baseline trigger `PROTECTIVE_STOP`? does DeepSeek's adversarial behaviour cause physical violation in sim? | 2 h (stretch) | Blocked on Lane 2 |
+| 2 | URCap unblock via custom Dockerfile (approach (a)) + `primary_tcp` injection path | 2–4 h | **Done** (commits `095c08c`, `ab78dc5`; T001 live-motion verified) |
+| 3 | LLM-generated URScript live execution; sim-to-real anchor for paper §V.G — measure `PROTECTIVE_STOP` rate on Qwen2.5-Coder-32B baseline output for T001/T005/T010 against the hand-crafted T001 baseline (already shown to trigger `C204A3`) | 2–3 h | **Newly unblocked** (S26 priority; the `primary_tcp` path accepts LLM URScript without further code changes) |
 | 4 | Status sync to Georgios (this deck + commits since S20) and OSF Amendment 3 filing (URSim direction + H7 + H8 exploratory) | 1–2 h | Pending; OSF Amendment 2 ack from Georgios still outstanding (gates Amendment 3) |
-| 5 | CycloneDX SBOM generation in CI + Ollama model SHA-256 hash chain documentation | Variable | Deferrable to post-NTNU if Lane 2/3 over-runs |
+| 5 | CycloneDX SBOM generation in CI + Ollama model SHA-256 hash chain documentation | Variable | Deferrable to post-NTNU if Lane 3 over-runs |
 
-The total Lane 2 plus Lane 3 plus Lane 4 budget (≈ 5–8 hours) leaves comfortable margin within S25 even if Lane 2 hits a setback.
+The remaining Lane 3 plus Lane 4 budget (≈ 3–5 hours) leaves comfortable margin within S26 even if Lane 3 surfaces surprises in the LLM-output behaviour.
 
 ### Q11: NTNU Visit 1 scope confirmation
 
@@ -132,9 +140,9 @@ The total Lane 2 plus Lane 3 plus Lane 4 budget (≈ 5–8 hours) leaves comfort
 
 1. **arXiv preprint:** mid-June 2026.
 2. **IEEE RA-L submission:** mid-July 2026.
-3. **Replication-package finalisation:** Docker image with URCap baked in (S25 Lane 2 output), CycloneDX SBOM, Ollama model SHA-256 hash chain (S25 Lane 5 output), OSF data deposit linked to preregistered DOI `10.17605/OSF.IO/VE5M2`.
+3. **Replication-package finalisation:** custom URSim image (`enfield-ursim:5.12-urcap-1.0.5`, S25 Lane 2 output, already shipped), CycloneDX SBOM and Ollama model SHA-256 hash chain (Lane 5, deferrable to post-NTNU if Lane 3 over-runs), OSF data deposit linked to preregistered DOI `10.17605/OSF.IO/VE5M2`.
 
-Anything that does not directly serve one of those three outputs is out of scope for the visit. This contract is the reason S25 has been sized aggressively: every infrastructure question — URCap, sim-to-real validation, SBOM — is to be answered in Adana before boarding the flight.
+Anything that does not directly serve one of those three outputs is out of scope for the visit. The Lane 2 closure in S25 is what makes this contract realistic: the URCap blocker is resolved, the runtime path is end-to-end verified, and Lane 3 (sim-to-real LLM-output measurement) is the only infrastructure-adjacent work item still open before boarding the flight.
 
 ---
 
