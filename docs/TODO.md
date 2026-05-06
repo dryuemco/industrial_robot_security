@@ -136,52 +136,84 @@ Closed with **8 commits**, ~5-6 hours work. Sub-lanes B and D fully closed; Sub-
 - [deferred-S25] Written status update to Georgios consolidating S20-S24 progress.
 - [deferred-S25] OSF Amendment 3 draft (URSim selection + H7/H8 exploratory). Blocked by Amendment 2 (`d251c15`) pending Georgios acknowledgment.
 
-### Session 25 — Pre-NTNU sprint: demo deck + URCap unblock + LLM URSim validation
+### Session 25 — Pre-NTNU sprint: demo deck + URCap unblock (CLOSED 2026-05-04)
 
 **Strategic constraint (NEW at S24 close):** NTNU Visit 1 (2026-06-01 to 2026-07-31, 9 weeks) is scoped to **paper editing / revision / submission only**. arXiv preprint (June 2026) and IEEE RA-L submission (July 2026) finalize at NTNU. No infrastructure / experiment / URSim work at NTNU — all such work must complete in S25 before 2026-06-01.
 
 Estimated ~6-10 hours over 1-2 sessions. Five lanes; Lanes 1-4 are pre-NTNU mandatory, Lane 5 is the original S25 scope (preserved as carry-over, deferrable to post-NTNU if S25 budget exhausts).
 
-**Lane 1 — Demo deck (~2 hours, carried over from S24-C):**
-- [ ] Format choice: Markdown→pandoc→PDF / Reveal.js HTML / Beamer LaTeX. Decision before drafting.
-- [ ] Deck structure: problem → ISO 10218-1:2025 cybersecurity framing → methodology → H4-H6 confirmatory + H7-H8 exploratory → URSim live demo (post-Lane-2 unblock) → next steps.
-- [ ] Reuse Q&A skeleton from archived `docs/georgios_week10_demo.md` (11 questions; post-E1 answers).
-- [ ] Embed Figures 1-3 from `paper/figures/`.
-- [ ] Add literature synthesis findings (H7/H8 framing, FDSP comparison, static-analyzer threat).
-- [ ] If Lane 2 unblocks before deck finalization, swap "telemetry-only" caveat for live execution screenshots; otherwise keep honest "telemetry pipeline functional, motion pending URCap" framing.
-- [ ] Dry run with Yunus before sending Georgios.
+**Lane 1 — Demo deck (~2 hours, CLOSED):**
+- [x] Format choice: Markdown → pandoc → xelatex PDF (commit `7fd813d`).
+- [x] Deck structure: 11-question scaffold derived from archived `docs/georgios_week10_demo.md`; sections — Project Status (Q1-Q4), Empirical Findings (Q5-Q8), Roadmap to NTNU Visit 1 (Q9-Q11) (commit `b5a2f17`).
+- [x] Reuse Q&A skeleton from archived `docs/georgios_week10_demo.md`.
+- [x] Embed Figures 1-3 from `paper/figures/`.
+- [x] Add literature synthesis findings (H7/H8 framing surfaces in Q8; ceiling-saturation written into the empirical narrative).
+- [x] Lane 2 unblocked before deck finalization; "telemetry-only" caveat replaced with live URScript execution evidence in S26 commit `fdc19ef` (Q4/Q9-Q11 update; T001 trajectory range table + C204A3 PROTECTIVE_STOP framing).
+- [ ] Dry run with Yunus before sending Georgios. **Pending — gates send to Georgios in Lane 4.**
 
-**Lane 2 — URCap install local workflow (~2-4 hours, S24-A reactivation):**
-- [ ] Approach 1 (preferred): custom URSim Dockerfile pre-installing `externalcontrol-1.0.5.urcap` into PolyScope OSGi cache. Trade-off: loses upstream digest pin `sha256:b7ad69f5...51`; mitigated by pinning the new derived image's digest and committing the Dockerfile.
-- [ ] Approach 2 (fallback): Selenium/VNC automation of PolyScope web UI URCap install workflow. Brittle but preserves vanilla URSim image.
-- [ ] Approach 3 (research): runtime install API or undocumented hook investigation.
-- [ ] Goal: T001 deterministic translator output → URSim live → robot moves; telemetry CSV joint_pos range > 0.
-- [ ] Pre-experiment gate: re-run `tests/test_runner_mock_smoke.py` before any further URSim experiment (mandatory rule per S20 lesson).
+**Lane 2 — URCap install local workflow (~2-4 hours, CLOSED):**
+- [x] Approach 1 shipped: custom URSim Dockerfile bakes `externalcontrol-1.0.5.urcap` into the image (commit `095c08c`, image tag `enfield-ursim:5.12-urcap-1.0.5`). Upstream digest pin lost; new derived image documented in `docs/replication.md`.
+- [skipped] Approach 2 (Selenium/VNC) — not needed; Approach 1 succeeded.
+- [skipped] Approach 3 (runtime install API) — no public hook found during S24 investigation.
+- [x] Goal met: T001 trajectory live execution verified — joint_pos range > 0 across all 6 joints; range table in S26 demo deck Q4 (commit `fdc19ef`). Trajectory terminated in `PROTECTIVE_STOP` (Error C204A3, qdd discontinuity) under collaborative-mode 250 mm/s envelope; this is itself a useful baseline for Lane 3 sim-to-real anchor.
+- [x] Pre-experiment gate held: 740 tests stable across all S25 commits.
+- [x] Beyond Approach 1: ROS2 driver topic-mode path did not produce motion in URSim headless mode without an active URCap dispatcher loop. Publisher node extended with direct-TCP injection mode (`inject_mode='primary_tcp'`, commit `ab78dc5`). Trailing entry-point lines stripped on the `primary_tcp` path only (URSim Secondary parser rejects them otherwise; closes `TCPReceiver` and cascades to `PROTECTIVE_STOP C154A0`).
+- [x] Telemetry recorder `duration_s` integer/float ROS2 Humble strict-type bug investigated (`a47e199`, `65d84c6` attempts) and reverted to source-pristine state (`14e4d8d`). Wrapper-level workaround documented in S26 README "Known Limitations" (commit `5c7be5e`).
 
-**Lane 3 — LLM-generated URScript live execution (~2 hours, post-Lane-2):**
-- [ ] Step 1: Translator T001 → URSim live → telemetry capture. Validates paper §V.G as empirical anchor (sub-lane A's original deliverable).
-- [ ] Step 2 (stretch goal): LLM-generated URScript (qwen baseline rep=1 retry=0) → URSim live → observe outcome (PROTECTIVE_STOP? safety violation? successful execution?). DeepSeek 60% violation rate URSim'de gerçekten zarar verir mi?
-- [ ] If LLM outputs reach URSim: 3 models × 1-3 tasks × baseline = 3-9 live executions, capture telemetry CSVs. Sim-to-real validation finding for paper §V.G or §VII.A.
-- [ ] If sim-to-real result is publishable, add 1-paragraph subsection to paper §V.G before arXiv freeze cutoff.
+**Lane 3 — LLM-generated URScript live execution (DEFERRED to S26):**
+- [deferred-S26] Step 1 closed inside Lane 2 (hand-crafted T001 already executed live; trajectory + C204A3 baseline observed).
+- [deferred-S26] Step 2 (LLM-generated URScript live exec) — promoted to S26 priority. New infrastructure shipped in S26: telemetry recorder `safety_mode` + `robot_mode` subscriptions (commit `3da634d`), publisher `urscript_path` parameter for verbatim LLM URScript injection + generic `run_urscript_pilot.sh` wrapper (commit `d72022e`).
+- [deferred-S26] Pilot scope: T001 + T004 + T005 (collaborative-mode only, brutal-recommended; matches hand-crafted T001 safety envelope). Paper §VI sim-to-real preliminary subsection. Faz B/C in S26 (currently in-progress).
 
-**Lane 4 — Communication & administrative (~1-2 hours):**
-- [ ] Status update email to Georgios: S20-S24 commits, paper §V.D + §IV.C audit additions, figure suite, URCap blocker + S25 unblock plan. Include §V.D detection latency numbers (mean 0.648 ms, CI [0.638, 0.658]).
-- [ ] OSF Amendment 2 ack chase (`d251c15` pending). Once cleared, file Amendment 3 (URSim simulator selection + H7/H8 exploratory hypotheses).
+**Lane 4 — Communication & administrative (DEFERRED to S26):**
+- [deferred-S26] Status update email to Georgios — gated on Lane 1 dry-run (above) and Lane 3 sim-to-real result (below); all three close in S26.
+- [deferred-S26] OSF Amendment 2 ack chase + Amendment 3 filing — scope expanded in S26 to also cover IP drift documentation (see async items below).
 
-**Lane 5 — Original S25 carry-overs (~2 hours, deferrable to post-NTNU if S25 budget exhausts):**
+**Lane 5 — Original S25 carry-overs (DEFERRED to post-NTNU; was already declared deferrable):**
 - [ ] **CycloneDX SBOM as packaged deliverable.** CI's `sbom-and-scan` job already generates the artefact; commit a snapshot to `docs/sbom/enfield-cyclonedx.json` (or upload to OSF as a release asset) so the replication kit "SBOM artifact (CycloneDX JSON)" row in `docs/open_science_release.md` flips from `Pending` to `Done`.
 - [ ] **Ollama model weights SHA-256 hash chain.** The proposal commits to "SHA-256 hash chains for model weights and environment". Environment is covered (Docker image digest pinned in S23 C5: `sha256:b7ad69f5...51`). Models are not. Generate `docs/replication/MODEL_DIGESTS.txt` with the three model digests via `ollama show <model> --modelfile | grep digest` for `qwen2.5-coder:32b`, `deepseek-coder-v2:16b`, `codellama:34b`. Reference from README Runtime Stack section and `docs/open_science_release.md` Replication Package table.
 - [ ] Verify both deliverables appear in the OSF deposit checklist (Hafta 20-24 release).
 
+**S25 commit summary (HEAD `14e4d8d`):**
+- Lane 1 deck (Sub-lane C): `7fd813d`, `b5a2f17`
+- Lane 2 URCap + injection: `095c08c`, `ab78dc5`
+- Telemetry duration_s investigation: `a47e199` (descriptor attempt), `65d84c6` (read-site fallback), `14e4d8d` (revert to pristine; see "RE-ATTEMPTED ROUTES" guidance in S26 handoff)
+
 ---
 
-## Async items (no session gate)
+### Session 26 — Lane 3 sim-to-real pilot + Demo deck refresh + README discipline (IN PROGRESS)
+
+**Strategic position:** S25 unblocked URSim live execution; S26 promotes Lane 3 to priority and threads three smaller administrative commits around it. Pre-NTNU sprint window remains (2026-05-05 to 2026-05-31, ~26 days).
+
+**Closed in S26 so far (HEAD `d72022e`):**
+- [x] Demo deck Q4/Q9-Q11 update reflecting Lane 2 closure (commit `fdc19ef`). Q4 swapped from "telemetry-only blocked" to live execution with T001 joint range table + C204A3 framing; Q9 reframed past-tense as resolved; Q10/Q11 lane status table updated; replication-package row points at `enfield-ursim:5.12-urcap-1.0.5`.
+- [x] README "Known Limitations" section documenting `telemetry_recorder` `duration_s` float-only requirement under rclpy Humble (commit `5c7be5e`). Closes the editorial gap left by S25 revert `14e4d8d`. Marker for ROS2 Iron upgrade revisit.
+- [x] Telemetry recorder `safety_mode` + `robot_mode` subscriptions (commit `3da634d`). CSV schema extended from 23 to 25 columns (`safety_mode`, `robot_mode` raw integer codes); INFO-level transition logging on every state change. `ur_dashboard_msgs` added to `package.xml`. Test cascade fix included a defensive filter on the fake-publisher stamp range (sec 2000-2099) to make the offline test resilient against latched messages from any external `ur_robot_driver` controller in the same DDS domain — pre-existing `run_tests.sh` coverage gap (urscript_runtime not in CI list) had hidden this latent bug for two weeks.
+- [x] Publisher `urscript_path` parameter + generic pilot wrapper (commit `d72022e`). Module-level `_load_script` helper dispatches IR translation vs verbatim file read; `task_ir_path` and `urscript_path` are mutually exclusive (validation early-return). Launch arg added with `default_value=''` (backward compat preserved). New `enfield_urscript_runtime/scripts/run_urscript_pilot.sh` wrapper takes `URSCRIPT_PATH` env, threads it through `t001_smoke.launch.py`, and reports `PROTECTIVE_STOP` row count in step-5 summary. New unit-test file with 6 cases covering both paths and validation errors. **8 → 14 colcon tests in this package; 740/740 still green via `run_tests.sh --fast`.**
+
+**Open lanes — S26 priority order:**
+
+**Lane 3 (continued) — sim-to-real pilot (in-progress, ~3-5 hours remaining):**
+- [x] Faz A1: telemetry recorder safety_mode + robot_mode (commit `3da634d`).
+- [x] Faz A2: publisher urscript_path mode + pilot wrapper (commit `d72022e`).
+- [x] Determinism check (this session): `qwen2.5-coder:32b` Q4_K_M under temperature=0.0 is bit-deterministic for the T001 baseline prompt; same prompt produces identical SHA-256 across two consecutive calls. **However**, the current digest `b92d6a0b...` (modified 2026-05-05) differs from the digest active during session 12 (2026-04-15), so the historical `e1_pilot_session12` artifacts cannot be bit-reproduced. Lane 3 pilot therefore generates fresh baselines under the pinned current digest rather than reusing rep1 files (decision: B-fresh).
+- [ ] Faz B: regenerate T001+T004+T005 collaborative baselines via `qwen2.5-coder:32b` (3 LLM calls, ~3 minutes), write to `results/lane3_pilot/code/` with provenance (model, digest, temperature, host, timestamp) front-matter and a top-level `manifest.json`.
+- [ ] Faz B: run `run_urscript_pilot.sh` over the 3 fresh baselines (3 live executions, ~3 minutes each). Capture telemetry CSV + `PROTECTIVE_STOP` row count per run.
+- [ ] Faz C: paper §VI insertion (likely §VI.J or new §VI.L) — preliminary sim-to-real subsection with N=3 collab pilot, framed against hand-crafted T001 baseline (also triggered C204A3 under same envelope).
+
+**Lane 4 (continued from S25) — Georgios sync + OSF Amendment 3 (~1-2 hours):**
+- [ ] Status update email draft (private, not committed): consolidates S20-S26 commits, attach demo deck PDF, attach S25/S26 figure suite, request Amendment 2 acknowledgment.
+- [ ] OSF Amendment 3 draft expanded: URSim direction + H7/H8 + IP drift documentation entry (see async item).
+
+**TODO refresh (this commit):** S25 close + S26 in-progress entry + 6 new async items (below).
+
+
 
 ### Requires Georgios input
 
 - [ ] **Phase 3d decision: H1-H3 reporting strategy.** Original prereg covers H1-H3 (DM-only AST watchdog claims); current paper centers H4-H6 (LLM family). Options per `georgios_week10_demo.md` Q7 and `h_numbering_audit_2026_04_11.md` §5.4: dedicated §VI subsection / deferred appendix / separate companion report. Critical for paper completeness and Appendix A coherence.
 - [ ] **OSF Amendment 2** (candidate `d251c15`) Georgios acknowledgment nudge — scope: 8→7 A8 subtypes.
-- [ ] **OSF Amendment 3** (H7/H8 exploratory) — draft in synthesis §5; submit after Amendment 2 clears.
+- [ ] **OSF Amendment 3** (H7/H8 exploratory) — draft in synthesis §5; submit after Amendment 2 clears. **Scope expanded in S26**: also document model digest drift (session 12 artifacts `qwen2.5-coder:32b` digest at 2026-04-15 is unrecoverable; current digest `b92d6a0b...` modified 2026-05-05) and Ollama host IP drift (PC2 was `192.168.1.5`, now `192.168.1.4` after DHCP refresh; OSF preregistration table at line 315 reads "Previous (v2.1) `192.168.1.4` | Updated (Amendment 1) `192.168.1.5`" which is now historically inverted — will be clarified by Amendment 3 rather than back-edited).
 
 ### Reference enrichment
 
@@ -195,6 +227,11 @@ Estimated ~6-10 hours over 1-2 sessions. Five lanes; Lanes 1-4 are pre-NTNU mand
 - [ ] Code-level A6.* → A8.* rename (editorial-only per paper §IV.D Note; deferred post-submission per `georgios_week10_demo.md` Q5)
 - [ ] URScript validity-gate FPR measurement on hand-curated safe URScript corpus (`georgios_week10_demo.md` Q9 — committed to update by "next meeting"; update paper §IV.B.3 if numbers available)
 - [ ] Post-approval OSF clarification note (optional) describing refusal classifier implementation (commits `ad88356` + `7c76025`) and Cochran's Q exploratory status (`h_numbering_audit_2026_04_11.md` §5.5)
+- [ ] **`scripts/llm_experiment_runner.py` IP drift in docstring** — four `OLLAMA_HOST=http://192.168.1.5:11434` usage examples in the module header docstring point at the old PC2 IP. Pure documentation; runtime is `OLLAMA_HOST` env-driven, so functional impact is zero. Single-replace patch when next touching the file.
+- [ ] **`docs/georgios_s25_demo.md` Q3 architecture paragraph** still names PC2 IP as `192.168.1.5:11434`. Cosmetic; the IP is referenced inside a one-paragraph architecture description, not used by code. Can fold into the next demo deck patch if any.
+- [ ] **`enfield_llm/factory.py` `seed` parameter mock-only bug** — `create_client(..., seed=N)` accepts the kwarg in the live-provider path but only forwards it to `mock_kwargs`; the Ollama client never sees the seed. Functional impact today is zero (temperature=0 already gives bit-identical output for fixed weights — verified S26 determinism check). Becomes a real bug if any future experiment intentionally requests sampling at temperature > 0 with seed control. Fix scope: small — wire the seed through `OpenAICompatibleClient` to Ollama's `seed` request param.
+- [ ] **`scripts/run_tests.sh` orphan: `enfield_urscript_runtime` not in CI test list** — surfaced in S26 when the telemetry test broke under the new `safety_mode` cascade and `--fast` reported 740/740 green. The package's tests only run via direct `colcon test --packages-select enfield_urscript_runtime`. Add a `run_suite "enfield_urscript_runtime" "enfield_urscript_runtime" "enfield_urscript_runtime/test/"` line (line 80-85 region) when next touching the script.
+- [ ] **README `run_t001_smoke.sh` reference path** — README "Known Limitations" mentions the wrapper by basename; the actual location is `enfield_urscript_runtime/scripts/run_t001_smoke.sh` (not the repo-root `scripts/`). Cosmetic; can be expanded with explicit relative path on the next README pass.
 
 ### Logged paper limitations (not blocking; documented in §VII.B)
 
