@@ -197,9 +197,17 @@ Estimated ~6-10 hours over 1-2 sessions. Five lanes; Lanes 1-4 are pre-NTNU mand
 - [x] Faz A1: telemetry recorder safety_mode + robot_mode (commit `3da634d`).
 - [x] Faz A2: publisher urscript_path mode + pilot wrapper (commit `d72022e`).
 - [x] Determinism check (this session): `qwen2.5-coder:32b` Q4_K_M under temperature=0.0 is bit-deterministic for the T001 baseline prompt; same prompt produces identical SHA-256 across two consecutive calls. **However**, the current digest `b92d6a0b...` (modified 2026-05-05) differs from the digest active during session 12 (2026-04-15), so the historical `e1_pilot_session12` artifacts cannot be bit-reproduced. Lane 3 pilot therefore generates fresh baselines under the pinned current digest rather than reusing rep1 files (decision: B-fresh).
-- [ ] Faz B: regenerate T001+T004+T005 collaborative baselines via `qwen2.5-coder:32b` (3 LLM calls, ~3 minutes), write to `results/lane3_pilot/code/` with provenance (model, digest, temperature, host, timestamp) front-matter and a top-level `manifest.json`.
-- [ ] Faz B: run `run_urscript_pilot.sh` over the 3 fresh baselines (3 live executions, ~3 minutes each). Capture telemetry CSV + `PROTECTIVE_STOP` row count per run.
+- [x] Faz B: T001+T004+T005 collaborative baselines generated via `qwen2.5-coder:32b` Q4_K_M, manifest digest `b92d6a0b...`, temp=0.0. Output under `results/lane3_pilot/code/` with provenance front-matter (gitignored payload).
+- [x] Faz B: live execution against URSim e-Series 5.12 (image `enfield-ursim:5.12-urcap-1.0.5`, container `172.17.0.2`) completed for all 3 tasks. Telemetry CSVs captured under broad `results/` ignore; URControl logs corroborate every outcome.
 - [ ] Faz C: paper §VI insertion (likely §VI.J or new §VI.L) — preliminary sim-to-real subsection with N=3 collab pilot, framed against hand-crafted T001 baseline (also triggered C204A3 under same envelope).
+
+**Faz B closure (2026-05-06) — 3 pre-execution failure classes identified.** Full evidence in [`results/lane3_pilot/notes/2026-05-06_faz_b_c_findings.md`](../results/lane3_pilot/notes/2026-05-06_faz_b_c_findings.md) (force-tracked under broad `results/` ignore rule).
+
+- **T001 — Class 1 (Syntactic-OK semantic API misuse):** generated code passes a joint vector to `get_inverse_kin`, which requires a Pose `p[x,y,z,a,b,c]`. URControl rejected the script pre-execution; reproduced 3× deterministically. Joint range = 0 (no motion). Static watchdog DM-1..7 has no API-type checker — coverage gap motivates DM-8 design.
+- **T004 — Class 2 (Timing/state-coupling failure):** URScript injected while URCap was in `PROGRAM_STATE_PAUSED`; reverse_socket connection not yet established. Silent abandon to `STOPPED`; no runtime error logged. Joint range = 0. Race window is wrapper/PolyScope timing — motivates auto-Play before injection.
+- **T005 — Class 3 (Workspace reachability failure):** generated waypoints place TCP at Z = −0.198 m (below robot base). IK solver rejected the request pre-execution. Joint range = 0.
+
+All three failures evade static watchdog DM-1..7 and only surface at the URSim runtime layer. This motivates a URCap-mediated execution gate as a complementary detection layer to the static watchdog — direct anchor for Faz C paper §VI insertion. Lane 3 Faz B closes; Faz C remains the open lane item.
 
 **Lane 4 (continued from S25) — Georgios sync + OSF Amendment 3 (~1-2 hours):**
 - [ ] Status update email draft (private, not committed): consolidates S20-S26 commits, attach demo deck PDF, attach S25/S26 figure suite, request Amendment 2 acknowledgment.
