@@ -7,12 +7,13 @@
 
 ## Summary of Changes
 
-Amendment 3 introduces two changes to the analysis plan:
+Amendment 3 introduces two analysis-plan changes and one operational disclosure:
 
 - **H7 (confirmatory methodological update):** Locks the execution-side simulator selection to URSim e-Series 5.12.8 + ROS2 Humble + `ur_robot_driver` 2.12.0, replacing the Gazebo placeholder named in the v1 prereg. This is a methodological clarification, not a hypothesis change.
 - **H8 (exploratory):** Adds an exploratory subgroup analysis examining whether per-task Task Complexity Score (TCS) is associated with per-task violation outcomes from E1, E2, and E3.
+- **Operational Disclosures (non-hypothesis):** Clarifies that the Ollama host IP recorded in Amendment 1 is operational metadata rather than a protocol parameter, and discloses the model-digest drift between the Session-12 exploratory pilot and the confirmatory runs.
 
-**Neither change affects H1–H6.** The primary McNemar and Cochran's Q analyses, the watchdog-in-loop H6 test, and all confirmatory conclusions registered in Amendment 1 remain unchanged.
+**No change affects H1–H6.** The primary McNemar and Cochran's Q analyses, the watchdog-in-loop H6 test, and all confirmatory conclusions registered in Amendment 1 remain unchanged.
 
 ---
 
@@ -93,6 +94,32 @@ Outputs to be deposited at Month-6 OSF release:
 - `results/complexity_correlation/spearman_summary.csv` (one row per stratum per metric)
 - `results/complexity_correlation/tertile_cvr_summary.csv` (tertile-stratified means + CIs)
 - `results/complexity_correlation/manifest.json` (analysis run manifest)
+
+---
+
+## Operational Disclosures (Non-Hypothesis)
+
+This section documents two operational drifts that have occurred since the v1 pre-registration and Amendment 1, neither of which affects the H1–H8 protocol or the confirmatory analysis. They are filed here for transparency and to clarify the historical record of operational metadata.
+
+### Ollama Host IP — Clarification
+
+The Amendment 1 table records the Ollama host IP as `192.168.1.5:11434`, replacing the v2.1 value of `192.168.1.4:11434`. The actual IP allocated to PC2 has subsequently drifted back to `192.168.1.4` following a routine DHCP refresh (observed 2026-05-05), inverting the direction of change recorded in Amendment 1.
+
+We clarify here that the Ollama host IP is **operational metadata**, not a protocol parameter. All inference calls use the `OLLAMA_HOST` environment variable and are insensitive to the specific IP assigned to PC2 at any given moment. The values listed in the Amendment 1 table reflect the IP active on the dates of those amendments and should be read as a historical log, not as constraints fixed by the protocol. No retroactive edit of Amendment 1 will be performed; the inverted-direction record is preserved as part of the project's transparent change history.
+
+A replicator using a different Ollama host (different IP, different machine, or even a local-machine Ollama instance) is operating within protocol. The run manifest for every confirmatory run records the IP in effect at the time of that run, but only as a debugging-aid field.
+
+### Model Digest Drift — Disclosure
+
+Ollama tracks pulled models by an internal manifest digest. The digest active during the Session-12 exploratory E1 pilot (2026-04-15) for `qwen2.5-coder:32b` Q4_K_M is no longer recoverable from the local Ollama store; the current model digest, `b92d6a0b...` (last modified 2026-05-05), is what has been used for all subsequent runs including the full confirmatory E1, E2, and E3 and the Lane-3 URSim execution pilot reported in paper §VI.L.
+
+**Impact on the confirmatory analysis.** None. The full E1, E2, and E3 confirmatory runs were generated under the current pinned digest. The Session-12 artefacts in `results/e1_pilot_session12/` are an exploratory pilot only; they were never part of the H4–H6 confirmatory family or of any registered analysis.
+
+**Impact on the Lane-3 URSim pilot.** The pilot (§VI.L) was generated freshly under the current pinned digest rather than reusing Session-12 baselines. The decision is recorded in `docs/TODO.md` (S25/S26 Faz B, "decision: B-fresh"). Bit-reproduction of Session-12 outputs is therefore not possible; bit-reproduction of the confirmatory outputs and of the Lane-3 pilot outputs is possible against the current digest.
+
+**Replication commitment.** The current digest `b92d6a0b...` will be deposited in `docs/replication/MODEL_DIGESTS.txt` at the Month-6 OSF release, together with the corresponding digests for `deepseek-coder-v2:16b` and `codellama:34b`. The replication package will instruct replicators to `ollama pull` the named tags and verify the locally pulled digests against the recorded values; should a future Ollama tag-to-digest mapping drift, the recorded digests in `MODEL_DIGESTS.txt` are the authoritative reference, not the tag string.
+
+**Future drift policy.** Any further model-digest drift observed before the Month-6 release will be disclosed in a subsequent OSF amendment rather than retroactively edited into Amendment 3 or earlier records.
 
 ---
 
