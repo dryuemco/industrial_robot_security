@@ -2,9 +2,9 @@
 
 **Authoritative forward-looking tracker.** Supersedes `WEEK10_TODO.md` and `WEEK11_SPRINT.md` (both in `docs/archive/`).
 
-**Last updated:** S27 closed (Lane 3 Faz C + Amendment 3 Operational Disclosures expand + locked-artefact cosmetic-only override precedent + Appendix B integrity fix), 2026-05-11.
+**Last updated:** S28 closed (Tier 0 fulfilment: TODO sync + MODEL_DIGESTS.txt; Tier 1.5 4/5: Q4 audit resolution, responsible_disclosure.md stub, SBOM scope doc, RA-L anonymity verdict), 2026-05-11.
 **Tests:** 788 passing (740 baseline + 14 urscript_runtime + 18 task_complexity + 16 complexity_correlation; +48 from S26 Lane 6).
-**Phase:** Paper editorial (data + figures complete; latency + vendor-language audit closed). Pre-NTNU sprint in S25 covers URSim URCap unblock + demo deck + sim-to-real validation. NTNU Visit 1 scoped to paper editing only.
+**Phase:** Proposal-defensibility hardening. S27 + S28 swept the end-of-S27 audit hits via 10 atomic commits across paper / README / OSF Amendment 3 / replication artefacts (MODEL_DIGESTS.txt, responsible_disclosure.md, open_science_release.md Supply Chain Transparency subsection). NTNU Visit 1 (2026-06-01) scope: paper editorial pass + anonymized RA-L submission derivative on `submission/ral-2026` branch + replication kit dry-run + Appendix B expansion or `docs/REPLICATION.md`.
 
 ---
 
@@ -235,7 +235,20 @@ Four atomic commits. Lane 3 fully closed; Lane 4 email sent (awaiting reply); co
 - S27 closure commit (this commit).
 - `docs/replication/MODEL_DIGESTS.txt` populate — blocked: PC2 (`192.168.1.4:11434`) unreachable during S27 audit and again during S28 probe (HTTP 000). Deferred to S29 once PC2 is back up.
 
-### Session 28 — End-of-S27 audit followups carried forward
+### Session 28 — Tier 0 fulfilment + Tier 1.5 sweep + Q4 audit resolution (CLOSED 2026-05-11)
+
+Six atomic commits closed S28:
+
+- [x] `64e9acd` — S27 closure cleanup (TODO sync, S28 audit followups recorded).
+- [x] `bf2626e` — Tier 0 #3: `docs/replication/MODEL_DIGESTS.txt` populate. Three model pins (qwen2.5-coder:32b Q4_K_M, deepseek-coder-v2:16b Q4_0, codellama:34b Q4_0). Q4 quantization mismatch flagged for Tier 1.5 followup.
+- [x] `5678f5a` — Tier 1.5 (bonus): Q4 quantization audit RESOLVED via documentation correction. Eight edits across four files (paper §V.A Table III + §VII.B.4 + §VII.B.7 prose, README.md table, OSF Amendment 3 new Quantization Documentation Drift subsection — third operational disclosure). No re-pull, no re-run; OSF_PREREGISTRATION.md L321-323 not back-edited.
+- [x] `1d409b2` — Tier 1.5 #1: `docs/responsible_disclosure.md` v0.1 stub (117 lines, 6 sections). Three-tier access (public / verified researcher / vendor) + 90-day vendor advance-notice timeline + reporting channel. v1.0 revision items deferred to Month-6 OSF release.
+- [x] `a200cfe` — Tier 1.5 #2: SBOM scope documentation. New Supply Chain Transparency subsection in `docs/open_science_release.md` (4 mechanisms: CycloneDX SBOM, Trivy scan, MODEL_DIGESTS.txt, URSim digest pin) + scope gaps + replicator guidance. Pre-existing internal inconsistency at L74 fixed (Pending→Done).
+- [x] `90f7e08` — Tier 1.5 #3: RA-L anonymity verdict (web-confirmed: RA-L IS double-blind per IEEE RAS Feb 2025 policy). Workflow decision: arXiv preprint = named, RA-L submission = anonymized derivative on `submission/ral-2026` branch. Pre-submission anonymization pass queued in Tier 2 with six explicit edit categories.
+
+**Carried forward to S29:** Tier 1.5 #4 (Appendix B expansion or `docs/REPLICATION.md`, ~30-60 min); Tier 2 NTNU Visit 1 prep (3 items, including the new pre-submission anonymization); Lane 4 Georgios reply pending (blocks Amendment 3 OSF filing).
+
+**Tests:** 788 stable across all six commits. **Paper:** 755 lines (one editorial commit at 5678f5a; data + claims unchanged). **New artefacts in repo:** `docs/replication/MODEL_DIGESTS.txt`, `docs/responsible_disclosure.md`, Supply Chain Transparency subsection in `docs/open_science_release.md`, Quantization Documentation Drift subsection in `docs/OSF_AMENDMENT_3_DRAFT.md`.
 
 Six audit hits, categorized by tier. Tier 0 fulfils Amendment 3 wording; Tier 1.5 advances proposal-commitment integrity; Tier 2 is NTNU Visit 1 prep (lands 2026-06-01); Tier 3 is post-NTNU backlog.
 
