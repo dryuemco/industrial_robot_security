@@ -1,0 +1,37 @@
+# ENFIELD Model Digest Pins (Ollama)
+#
+# Generated: 2026-05-11 (Session 28)
+# Source:    Ollama /api/tags endpoint, PC2 Windows host, RTX 5090
+# Purpose:   Fulfils OSF Amendment 3 Operational Disclosures commitment
+#            (model digest drift transparency).
+#
+# Format: <model_tag>  <quantization>  sha256:<digest>  <modified_at>
+#
+# REPLICATION NOTE
+# ----------------
+# `ollama pull <tag>` may yield a different digest if upstream has been
+# retagged since this manifest was recorded. To verify a replication is
+# bit-identical to the ENFIELD experimental setup, after pulling each
+# model run:
+#
+#   curl -s http://<ollama_host>:11434/api/tags | python3 -m json.tool \
+#     | grep -A1 '"<model_tag>"' | grep digest
+#
+# and confirm the digest string matches the value below.
+#
+# QUANTIZATION DRIFT NOTE (Important for replicators and reviewers)
+# -----------------------------------------------------------------
+# The project proposal and `docs/ENFIELD_Revised_Plan_v2_1.md` documented
+# all three models at Q4_K_M. Current PC2 manifest state shows Q4_0 for
+# deepseek-coder-v2:16b and codellama:34b. Only qwen2.5-coder:32b matches
+# the documented Q4_K_M quantization.
+#
+# Investigation pending; see `docs/TODO.md` Tier 1.5 "Q4 quantization
+# audit" for the resolution path. Replicators should use the
+# quantization listed below to reproduce ENFIELD experimental outputs;
+# documentation correction (or supplementary amendment) is planned
+# before paper submission.
+
+qwen2.5-coder:32b          Q4_K_M  sha256:b92d6a0bd47ee79114298de0177bf920c05a706d12633950b3936778492bef41  2026-05-05T21:40:10+03:00
+deepseek-coder-v2:16b      Q4_0    sha256:63fb193b3a9b4322a18e8c6b250ca2e70a5ff531e962dbf95ba089b2566f2fa5  2026-04-03T01:40:23+03:00
+codellama:34b              Q4_0    sha256:685be00e1532e01f795e04bc59c67bc292d9b1f80b5136d4fbdebe6830402132  2026-03-25T21:47:49+03:00
