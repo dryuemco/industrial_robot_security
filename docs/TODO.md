@@ -2,7 +2,7 @@
 
 **Authoritative forward-looking tracker.** Supersedes `WEEK10_TODO.md` and `WEEK11_SPRINT.md` (both in `docs/archive/`).
 
-**Last updated:** S26 in progress, Lane 6 Task Complexity Characterization closed at commit `8a1f31f`, 2026-05-11.
+**Last updated:** S27 closed (Lane 3 Faz C + Amendment 3 Operational Disclosures expand + locked-artefact cosmetic-only override precedent + Appendix B integrity fix), 2026-05-11.
 **Tests:** 788 passing (740 baseline + 14 urscript_runtime + 18 task_complexity + 16 complexity_correlation; +48 from S26 Lane 6).
 **Phase:** Paper editorial (data + figures complete; latency + vendor-language audit closed). Pre-NTNU sprint in S25 covers URSim URCap unblock + demo deck + sim-to-real validation. NTNU Visit 1 scoped to paper editing only.
 
@@ -181,7 +181,7 @@ Estimated ~6-10 hours over 1-2 sessions. Five lanes; Lanes 1-4 are pre-NTNU mand
 
 ---
 
-### Session 26 — Lane 3 sim-to-real pilot + Demo deck refresh + README discipline (IN PROGRESS)
+### Session 26 — Lane 3 sim-to-real pilot + Demo deck refresh + README discipline + Lane 6 Task Complexity (CLOSED 2026-05-11)
 
 **Strategic position:** S25 unblocked URSim live execution; S26 promotes Lane 3 to priority and threads three smaller administrative commits around it. Pre-NTNU sprint window remains (2026-05-05 to 2026-05-31, ~26 days).
 
@@ -201,7 +201,7 @@ Estimated ~6-10 hours over 1-2 sessions. Five lanes; Lanes 1-4 are pre-NTNU mand
 - [x] Determinism check (this session): `qwen2.5-coder:32b` Q4_K_M under temperature=0.0 is bit-deterministic for the T001 baseline prompt; same prompt produces identical SHA-256 across two consecutive calls. **However**, the current digest `b92d6a0b...` (modified 2026-05-05) differs from the digest active during session 12 (2026-04-15), so the historical `e1_pilot_session12` artifacts cannot be bit-reproduced. Lane 3 pilot therefore generates fresh baselines under the pinned current digest rather than reusing rep1 files (decision: B-fresh).
 - [x] Faz B: T001+T004+T005 collaborative baselines generated via `qwen2.5-coder:32b` Q4_K_M, manifest digest `b92d6a0b...`, temp=0.0. Output under `results/lane3_pilot/code/` with provenance front-matter (gitignored payload).
 - [x] Faz B: live execution against URSim e-Series 5.12 (image `enfield-ursim:5.12-urcap-1.0.5`, container `172.17.0.2`) completed for all 3 tasks. Telemetry CSVs captured under broad `results/` ignore; URControl logs corroborate every outcome.
-- [ ] Faz C: paper §VI insertion (likely §VI.J or new §VI.L) — preliminary sim-to-real subsection with N=3 collab pilot, framed against hand-crafted T001 baseline (also triggered C204A3 under same envelope).
+- [x] Faz C (S27 commit `638e12a`): paper §VI.L "URSim Pre-Execution Failure Modes" inserted; §VIII (i) future-work refreshed in same commit. N=3 collab pilot documents three pre-execution failure classes (C1 API misuse, C2 URCap orchestration race, C3 reachability) all evading static watchdog DM-1..7. Paper 743 -> 755 lines.
 
 **Faz B closure (2026-05-06) — 3 pre-execution failure classes identified.** Full evidence in [`results/lane3_pilot/notes/2026-05-06_faz_b_c_findings.md`](../results/lane3_pilot/notes/2026-05-06_faz_b_c_findings.md) (force-tracked under broad `results/` ignore rule).
 
@@ -212,12 +212,54 @@ Estimated ~6-10 hours over 1-2 sessions. Five lanes; Lanes 1-4 are pre-NTNU mand
 All three failures evade static watchdog DM-1..7 and only surface at the URSim runtime layer. This motivates a URCap-mediated execution gate as a complementary detection layer to the static watchdog — direct anchor for Faz C paper §VI insertion. Lane 3 Faz B closes; Faz C remains the open lane item.
 
 **Lane 4 (continued from S25) — Georgios sync + OSF Amendment 3 (~1-2 hours):**
-- [ ] Status update email draft (private, not committed): consolidates S20-S26 commits, attach demo deck PDF, attach S25/S26 figure suite, request Amendment 2 acknowledgment.
-- [x] OSF Amendment 3 draft committed at `d5cc83b` (`docs/OSF_AMENDMENT_3_DRAFT.md`): H7 URSim simulator lock + H8 complexity-stratified exploratory analysis (non-directional). **Filing blocked on Amendment 2 ack from Georgios.** Scope expansion (IP drift, model digest drift) to be added in S27 before filing.
+- [x] Status update email sent end of S27 (Variant 1 "Steady", three attachments). Two open asks: (1) Amendment 2 acknowledgment chase, (2) Amendment 3 review. **Awaiting Georgios reply.**
+- [x] OSF Amendment 3 draft committed at `d5cc83b` (`docs/OSF_AMENDMENT_3_DRAFT.md`): H7 URSim simulator lock + H8 complexity-stratified exploratory analysis (non-directional). Operational Disclosures section (IP drift + model digest drift) appended in S27 commit `6a323b4`. **Filing blocked on Amendment 2 ack from Georgios.**
 
 **TODO refresh (this commit):** S25 close + S26 in-progress entry + 6 new async items (below).
 
 
+
+### Session 27 — Lane 3 Faz C + Amendment 3 expand + locked-artefact cosmetic override + Appendix B fix (CLOSED 2026-05-11)
+
+Four atomic commits. Lane 3 fully closed; Lane 4 email sent (awaiting reply); cosmetic-only override of locked artefact §VI.H precedented.
+
+- [x] `638e12a` — `docs(paper)`: insert §VI.L URSim live-exec pilot + refresh §VIII (i). Paper 743 -> 755 lines.
+- [x] `6a323b4` — `docs(osf)`: expand Amendment 3 draft with Operational Disclosures (IP drift + model digest drift).
+- [x] `a3c83ce` — `docs(paper)`: strip emoji from §VI.H H5 decision tables (IEEE RA-L compliance). **First locked-artefact cosmetic-only override** with explicit Yunus approval; establishes precedent for non-semantic touches (emoji removal, typo correction, formatting consistency, test-count updates) on locked content. Semantic changes remain blocked.
+- [x] `b0dd4b2` — `docs(paper)`: Appendix B integrity fix (test count 740 -> 788 + duplicate prose removal). Surfaced by end-of-S27 brutal audit; establishes audit pattern of checking Appendix B + README for stale test counts whenever commits change the count.
+
+**Tests:** 788 stable across all four commits.
+
+**S27 deferred to S28:**
+- TODO.md update (this commit).
+- S27 closure commit (this commit).
+- `docs/replication/MODEL_DIGESTS.txt` populate — blocked: PC2 (`192.168.1.4:11434`) unreachable during S27 audit and again during S28 probe (HTTP 000). Deferred to S29 once PC2 is back up.
+
+### Session 28 — End-of-S27 audit followups carried forward
+
+Six audit hits, categorized by tier. Tier 0 fulfils Amendment 3 wording; Tier 1.5 advances proposal-commitment integrity; Tier 2 is NTNU Visit 1 prep (lands 2026-06-01); Tier 3 is post-NTNU backlog.
+
+**Tier 0 — Amendment 3 fulfilment (this sprint):**
+- [x] TODO.md update (this commit).
+- [x] S27 closure commit (this commit).
+- [ ] `docs/replication/MODEL_DIGESTS.txt` populate. Blocked on PC2 reachability; deferred to S29. Once PC2 is up, run: `mkdir -p docs/replication && for m in qwen2.5-coder:32b deepseek-coder-v2:16b codellama:34b; do OLLAMA_HOST=http://192.168.1.4:11434 ollama show $m --modelfile | grep -iE "^FROM|^# Modelfile generated" | head -2 | sed "s/^/[$m] /"; done > docs/replication/MODEL_DIGESTS.txt`. Verify 3 non-empty lines, commit. Fulfils Amendment 3 Operational Disclosures wording.
+
+**Tier 1.5 — Proposal-commitment integrity (advance opportunistically):**
+- [ ] `docs/responsible_disclosure.md` stub. Three tiers (public / verified researcher / vendor), 90-day vendor advance-notice clause, contact channel. ~30-60 min.
+- [ ] SBOM scope documentation in `docs/open_science_release.md`. Current `sbom-and-scan` CI job covers Python deps (`requirements.txt`); document that model weights are tracked via `MODEL_DIGESTS.txt` and URSim image is digest-pinned. ~15 min.
+- [ ] Appendix B expansion or `docs/REPLICATION.md`. Current Appendix B covers smoke test only; E1/E2/E3 confirmatory reproduction commands needed. ~30-60 min.
+- [ ] Anonymity check for IEEE RA-L submission. Paper Appendix B contains literal `https://github.com/dryuemco/industrial_robot_security`; verify against RA-L 2026 double-blind policy. If anonymization required, replace with anonymous-mirror or `[anonymized]` before submission.
+
+**Tier 2 — NTNU Visit 1 prep (3 weeks out):**
+- [ ] `scripts/build_paper_pdf.sh`. Replace S27 `/tmp` ad-hoc pandoc with repo'd script; xelatex + DejaVu Serif + DejaVu Sans Mono pinned; output to `paper/build/`.
+- [ ] Replication kit dry-run. Fresh clone -> tests -> results bit-reproducible.
+
+**Tier 3 — Post-NTNU backlog:**
+- [ ] DM-8 API-type checker design doc (closes §VI.L C1 gap).
+- [ ] Lane 3 model matrix expansion (T001/T004/T005 for DeepSeek-Coder-V2-16B + CodeLlama-34B).
+- [ ] TCS sensitivity analysis (0.7/0.3 + 0.3/0.7 blends, Amendment 3 H8 commitment).
+- [ ] CycloneDX SBOM scope extension (model weights + URSim image layers).
+- [ ] Wrapper auto-Play (C2 race window remedy).
 
 ### Requires Georgios input
 
