@@ -477,19 +477,19 @@ Confirmatory analysis from `results/e3_confirmatory` (2026-04-16, 339 LLM calls:
 
 | Model | N | Baseline rate | Watchdog rate | Δpp (Newcombe 95% CI) | rel | b/c | p (Holm-adj) | H6 |
 |---|---|---|---|---|---|---|---|---|
-| Qwen2.5-Coder-32B | 45 | 100.0% | 100.0% | 0.0 [0.0, 0.0] | 0.0% | 0/0 | 1.000 | ❌ (ceiling) |
-| DeepSeek-Coder-V2-16B | 45 | 42.2% | 6.7% | −35.6 [−51.7, −19.4] | −84.2% | 1/17 | <0.001 | ✅ SUPPORTED |
-| CodeLlama-34B | 45 | 40.0% | 20.0% | −20.0 [−38.5, −1.5] | −50.0% | 0/9 | 0.008 | ✅ SUPPORTED |
-| Pooled | 135 | 60.7% | 42.2% | −18.5 [−30.2, −6.8] | −30.5% | 1/26 | <0.001 | ❌ (below threshold) |
+| Qwen2.5-Coder-32B | 45 | 100.0% | 100.0% | 0.0 [0.0, 0.0] | 0.0% | 0/0 | 1.000 | NOT SUPPORTED (ceiling) |
+| DeepSeek-Coder-V2-16B | 45 | 42.2% | 6.7% | −35.6 [−51.7, −19.4] | −84.2% | 1/17 | <0.001 | SUPPORTED |
+| CodeLlama-34B | 45 | 40.0% | 20.0% | −20.0 [−38.5, −1.5] | −50.0% | 0/9 | 0.008 | SUPPORTED |
+| Pooled | 135 | 60.7% | 42.2% | −18.5 [−30.2, −6.8] | −30.5% | 1/26 | <0.001 | NOT SUPPORTED (below threshold) |
 
 **Table V(b) — Gate-passing contrast (both rows valid URScript).**
 
 | Model | N | Baseline rate | Watchdog rate | Δpp (Newcombe 95% CI) | rel | b/c | p (Holm-adj) | H6 |
 |---|---|---|---|---|---|---|---|---|
-| Qwen2.5-Coder-32B | 45 | 100.0% | 100.0% | 0.0 [0.0, 0.0] | 0.0% | 0/0 | 1.000 | ❌ (ceiling) |
-| DeepSeek-Coder-V2-16B | 2 | 100.0% | 100.0% | 0.0 [0.0, 0.0] | 0.0% | 0/0 | 1.000 | ❌ (ceiling) |
-| CodeLlama-34B | 9 | 100.0% | 100.0% | 0.0 [0.0, 0.0] | 0.0% | 0/0 | 1.000 | ❌ (ceiling) |
-| Pooled | 56 | 100.0% | 100.0% | 0.0 [0.0, 0.0] | 0.0% | 0/0 | 1.000 | ❌ (ceiling) |
+| Qwen2.5-Coder-32B | 45 | 100.0% | 100.0% | 0.0 [0.0, 0.0] | 0.0% | 0/0 | 1.000 | NOT SUPPORTED (ceiling) |
+| DeepSeek-Coder-V2-16B | 2 | 100.0% | 100.0% | 0.0 [0.0, 0.0] | 0.0% | 0/0 | 1.000 | NOT SUPPORTED (ceiling) |
+| CodeLlama-34B | 9 | 100.0% | 100.0% | 0.0 [0.0, 0.0] | 0.0% | 0/0 | 1.000 | NOT SUPPORTED (ceiling) |
+| Pooled | 56 | 100.0% | 100.0% | 0.0 [0.0, 0.0] | 0.0% | 0/0 | 1.000 | NOT SUPPORTED (ceiling) |
 
 **H6 decision.** Under the naive contrast, H6 is **SUPPORTED** for DeepSeek-Coder-V2-16B (rel=−84.2%, p_adj<0.001) and for CodeLlama-34B (rel=−50.0%, p_adj=0.008); both clear the preregistered 40% relative-reduction threshold after Holm–Bonferroni correction within the per-model family. H6 is **not testable** for Qwen2.5-Coder-32B under either contrast: Qwen produces at least one violating call on every (model, task, rep) triple in both the baseline and watchdog conditions, so the binary `has_violation` flag saturates at 100% on both arms and no discordant pair is available for McNemar (this is the same binary-ceiling pattern that bounds H5 in §VII.B.8). The pooled contrast is statistically significant (p_adj<0.001) but below the effect-size threshold (rel=−30.5% > −40%), and is therefore reported as "statistically significant but below the pre-specified effect-size threshold", consistent with the dispatch rule in §V.E. The gate-passing contrast is uninformative for all three models: within the pairs where both the baseline and the watchdog call pass the URScript validity gate, every single call violates at least one SM rule, yielding an all-saturated table identical to the H5 gate-passing result (§VI.G, Table IV(b)).
 
