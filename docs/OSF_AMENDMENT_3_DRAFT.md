@@ -99,7 +99,7 @@ Outputs to be deposited at Month-6 OSF release:
 
 ## Operational Disclosures (Non-Hypothesis)
 
-This section documents two operational drifts that have occurred since the v1 pre-registration and Amendment 1, neither of which affects the H1–H8 protocol or the confirmatory analysis. They are filed here for transparency and to clarify the historical record of operational metadata.
+This section documents three operational drifts that have occurred since the v1 pre-registration and Amendment 1, none of which affects the H1–H8 protocol or the confirmatory analysis. They are filed here for transparency and to clarify the historical record of operational metadata.
 
 ### Ollama Host IP — Clarification
 
@@ -120,6 +120,24 @@ Ollama tracks pulled models by an internal manifest digest. The digest active du
 **Replication commitment.** The current digest `b92d6a0b...` will be deposited in `docs/replication/MODEL_DIGESTS.txt` at the Month-6 OSF release, together with the corresponding digests for `deepseek-coder-v2:16b` and `codellama:34b`. The replication package will instruct replicators to `ollama pull` the named tags and verify the locally pulled digests against the recorded values; should a future Ollama tag-to-digest mapping drift, the recorded digests in `MODEL_DIGESTS.txt` are the authoritative reference, not the tag string.
 
 **Future drift policy.** Any further model-digest drift observed before the Month-6 release will be disclosed in a subsequent OSF amendment rather than retroactively edited into Amendment 3 or earlier records.
+
+### Quantization Documentation Drift — Disclosure
+
+The pre-registration model table (mirrored in `docs/OSF_PREREGISTRATION.md` lines 321–323) lists all three Ollama models under the **Q4_K_M** quantization. A Session-28 audit of the live Ollama `/api/tags` endpoint on PC2 (2026-05-11) recorded the actual quantization level of each pulled model and surfaced a discrepancy:
+
+| Model | Documented | As-deployed (Ollama `/api/tags`) |
+|-------|------------|----------------------------------|
+| `qwen2.5-coder:32b` | Q4_K_M | Q4_K_M (matches) |
+| `deepseek-coder-v2:16b` | Q4_K_M | **Q4_0** |
+| `codellama:34b` | Q4_K_M | **Q4_0** |
+
+**Drift timeline.** The `modified_at` timestamps recorded in `docs/replication/MODEL_DIGESTS.txt` show that `codellama:34b` has not been re-pulled since 2026-03-25 and `deepseek-coder-v2:16b` has not been re-pulled since 2026-04-03; both predate any pre-registration assertion of Q4_K_M and were never on PC2 in a Q4_K_M form. The discrepancy is a documentation error introduced during plan-versus-implementation drafting, not a protocol change. The Ollama default tags for `deepseek-coder-v2:16b` and `codellama:34b` resolve to Q4_0 quantizations; obtaining Q4_K_M variants for these two models would have required explicit Q4_K_M tag specification at `ollama pull` time, which was not done.
+
+**Impact on the confirmatory analysis.** None. The E1, E2, and E3 confirmatory runs were executed against the actually-pulled model manifests (Qwen Q4_K_M, DeepSeek Q4_0, CodeLlama Q4_0). The reported H4–H6 statistics reflect the as-deployed quantizations. We treat Q4-class quantization as a fixed part of the protocol per the §VII.B.4 measurement-validity discussion in the paper; the protocol does not contrast across quantization levels, and no statistical inference depends on which Q4 variant was used.
+
+**Documentation correction.** Paper §V.A Table III, paper §VII.B.4 and §VII.B.7 prose, and `README.md` have been corrected in the commit that accompanies the filing of this Amendment to reflect the as-deployed quantizations. The pre-registration table at `docs/OSF_PREREGISTRATION.md` lines 321–323 is not retroactively edited; this Amendment 3 disclosure is the authoritative correction.
+
+**Replicator guidance.** `docs/replication/MODEL_DIGESTS.txt` records the authoritative `(model, quantization, digest)` tuple. A replicator running `ollama pull deepseek-coder-v2:16b` or `ollama pull codellama:34b` will obtain the upstream default tag (currently Q4_0); a replicator who wishes to attempt a Q4_K_M variant must explicitly pull the corresponding `*-q4_K_M` tag (where one exists), and should expect digest divergence and a non-replication of the ENFIELD as-deployed protocol.
 
 ---
 

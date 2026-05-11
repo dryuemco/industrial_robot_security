@@ -79,8 +79,8 @@ Sub-variants of attack A8 (Prompt Injection), aligned with `enfield_llm/enfield_
 | Model | Provider | Quantization | License | Rationale |
 |-------|----------|--------------|---------|-----------|
 | Qwen2.5-Coder-32B | Ollama | Q4_K_M | Apache 2.0 | Best open-source coder (HumanEval 92.7%); permissive license |
-| DeepSeek-Coder-V2-16B | Ollama | Q4_K_M | DeepSeek License | Strong code generation; different training philosophy |
-| CodeLlama-34B | Ollama | Q4_K_M | Meta Llama License | Established baseline; different alignment philosophy |
+| DeepSeek-Coder-V2-16B | Ollama | Q4_0 | DeepSeek License | Strong code generation; different training philosophy |
+| CodeLlama-34B | Ollama | Q4_0 | Meta Llama License | Established baseline; different alignment philosophy |
 
 All calls use `temperature=0.0` for deterministic output. Models are served locally via Ollama (see `ENFIELD_Revised_Plan_v2_1.md`), enabling zero-cost reproducibility for reviewers and independent verification. Full request/response logs are stored in JSONL format.
 
