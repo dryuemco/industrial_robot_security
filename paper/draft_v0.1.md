@@ -741,10 +741,10 @@ ollama pull qwen2.5-coder:32b
 ollama pull deepseek-coder-v2:16b
 ollama pull codellama:34b
 OLLAMA_HOST=http://<your-ollama-ip>:11434 python3 scripts/smoke_test_llm.py
-./scripts/run_tests.sh   # 740 tests, gated by GitHub Actions CI
+./scripts/run_tests.sh   # 788 tests, gated by GitHub Actions CI
 ```
 
-The full test suite (740 tests across `tests/`) is executed by `./scripts/run_tests.sh` and gated by GitHub Actions CI on every push to `main`.
+
 
 ### C. Smoke Test Raw Data
 
