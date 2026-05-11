@@ -2,8 +2,8 @@
 
 **Authoritative forward-looking tracker.** Supersedes `WEEK10_TODO.md` and `WEEK11_SPRINT.md` (both in `docs/archive/`).
 
-**Last updated:** Session 24 close (URSim integration partially blocked + figure suite + paper audit verify), 2026-04-27.
-**Tests:** 748 passing (740 baseline + 8 offline publisher/telemetry tests in S24-A).
+**Last updated:** S26 in progress, Lane 6 Task Complexity Characterization closed at commit `8a1f31f`, 2026-05-11.
+**Tests:** 788 passing (740 baseline + 14 urscript_runtime + 18 task_complexity + 16 complexity_correlation; +48 from S26 Lane 6).
 **Phase:** Paper editorial (data + figures complete; latency + vendor-language audit closed). Pre-NTNU sprint in S25 covers URSim URCap unblock + demo deck + sim-to-real validation. NTNU Visit 1 scoped to paper editing only.
 
 ---
@@ -185,11 +185,13 @@ Estimated ~6-10 hours over 1-2 sessions. Five lanes; Lanes 1-4 are pre-NTNU mand
 
 **Strategic position:** S25 unblocked URSim live execution; S26 promotes Lane 3 to priority and threads three smaller administrative commits around it. Pre-NTNU sprint window remains (2026-05-05 to 2026-05-31, ~26 days).
 
-**Closed in S26 so far (HEAD `d72022e`):**
+**Closed in S26 so far (HEAD `8a1f31f`):**
 - [x] Demo deck Q4/Q9-Q11 update reflecting Lane 2 closure (commit `fdc19ef`). Q4 swapped from "telemetry-only blocked" to live execution with T001 joint range table + C204A3 framing; Q9 reframed past-tense as resolved; Q10/Q11 lane status table updated; replication-package row points at `enfield-ursim:5.12-urcap-1.0.5`.
 - [x] README "Known Limitations" section documenting `telemetry_recorder` `duration_s` float-only requirement under rclpy Humble (commit `5c7be5e`). Closes the editorial gap left by S25 revert `14e4d8d`. Marker for ROS2 Iron upgrade revisit.
 - [x] Telemetry recorder `safety_mode` + `robot_mode` subscriptions (commit `3da634d`). CSV schema extended from 23 to 25 columns (`safety_mode`, `robot_mode` raw integer codes); INFO-level transition logging on every state change. `ur_dashboard_msgs` added to `package.xml`. Test cascade fix included a defensive filter on the fake-publisher stamp range (sec 2000-2099) to make the offline test resilient against latched messages from any external `ur_robot_driver` controller in the same DDS domain — pre-existing `run_tests.sh` coverage gap (urscript_runtime not in CI list) had hidden this latent bug for two weeks.
 - [x] Publisher `urscript_path` parameter + generic pilot wrapper (commit `d72022e`). Module-level `_load_script` helper dispatches IR translation vs verbatim file read; `task_ir_path` and `urscript_path` are mutually exclusive (validation early-return). Launch arg added with `default_value=''` (backward compat preserved). New `enfield_urscript_runtime/scripts/run_urscript_pilot.sh` wrapper takes `URSCRIPT_PATH` env, threads it through `t001_smoke.launch.py`, and reports `PROTECTIVE_STOP` row count in step-5 summary. New unit-test file with 6 cases covering both paths and validation errors. **8 → 14 colcon tests in this package; 740/740 still green via `run_tests.sh --fast`.**
+
+- [x] **Lane 6 — Task Complexity Characterization (Georgios feedback) (CLOSED 2026-05-11).** Responds to host-supervisor question whether task complexity modulates the violation patterns reported under H4–H6. Six atomic commits `b979881` (TCS skeleton), `e5bc8e2` (schema-calibrated to task_ir_v1), `57f620b` (Spearman + tertile bootstrap CVR analysis), `3a0756d` (continuous metrics count/severity bypassing CVR ceiling), `d5cc83b` (TASK_COMPLEXITY_SPEC + OSF_AMENDMENT_3 drafts), `8a1f31f` (paper §IV.E + §VII.C anchor-based insertion). Built deterministic outcome-blind TCS from baseline Task IR (15 features, A1–A8 attack-surface aligned, frozen weights at `configs/tcs_weights.yaml`); joined per-task TCS to E1/E2/E3 outcomes; reported Spearman ρ + tertile-stratified mean with percentile bootstrap 95% CI for 3 outcome metrics (CVR binary, violation count, severity_max). **Three findings:** (1) CVR ceiling in 26/30 strata with constant CVR=1.0 (Spearman undefined); (2) counter-intuitive **negative** complexity-count correlation in 3 baseline strata (E3 Qwen2.5: ρ=−0.54, p=0.037, n=15; E3 DeepSeek: ρ=−0.53; E1 Qwen2.5: ρ=−0.45) + severity ρ=−0.64 (p=0.010) in E1 DeepSeek safety — reported as **exploratory conjecture**, NOT preregistered as directional; (3) E2 adversarial strata show no significant complexity-density association. Paper: §IV.E "Task Complexity Characterization" + §VII.C "Exploratory Complexity-Stratified Subgroup Analysis (H8)" inserted; §VII.C "EU AI Act Alignment" renamed to §VII.D. Docs: `docs/TASK_COMPLEXITY_SPEC.md` (reviewer-facing spec, frozen weight table, sensitivity-analysis plan); `docs/OSF_AMENDMENT_3_DRAFT.md` (H7 URSim simulator lock + H8 exploratory analysis, ready to file once Amendment 2 is acknowledged). Tests: 740 → 788 (+48 new, all passing).
 
 **Open lanes — S26 priority order:**
 
@@ -211,7 +213,7 @@ All three failures evade static watchdog DM-1..7 and only surface at the URSim r
 
 **Lane 4 (continued from S25) — Georgios sync + OSF Amendment 3 (~1-2 hours):**
 - [ ] Status update email draft (private, not committed): consolidates S20-S26 commits, attach demo deck PDF, attach S25/S26 figure suite, request Amendment 2 acknowledgment.
-- [ ] OSF Amendment 3 draft expanded: URSim direction + H7/H8 + IP drift documentation entry (see async item).
+- [x] OSF Amendment 3 draft committed at `d5cc83b` (`docs/OSF_AMENDMENT_3_DRAFT.md`): H7 URSim simulator lock + H8 complexity-stratified exploratory analysis (non-directional). **Filing blocked on Amendment 2 ack from Georgios.** Scope expansion (IP drift, model digest drift) to be added in S27 before filing.
 
 **TODO refresh (this commit):** S25 close + S26 in-progress entry + 6 new async items (below).
 
