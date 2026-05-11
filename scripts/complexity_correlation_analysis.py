@@ -2,31 +2,27 @@
 """complexity_correlation_analysis.py
 
 Exploratory subgroup analysis joining ENFIELD E1/E2/E3 outcomes to per-task
-Task Complexity Score (TCS) and reporting:
+Task Complexity Score (TCS) and reporting Spearman rho + tertile-stratified
+mean outcome with bootstrap CI.
 
-  1. Spearman rho between TCS_total and per-task CVR, computed within each
-     (experiment, model, condition_or_attack) stratum.
-  2. Tertile-stratified mean CVR with bootstrap percentile 95% CI.
-  3. Long-form per-scenario CSV ready for plotting (paper Fig 4 candidate).
+Outcome metrics (selectable via --outcome-metrics):
+  - cvr (default, binary):  total_violations > 0
+  - count (continuous):     total_violations
+  - severity (continuous):  severity_max
 
-Policies (locked, derived from prereg + S26 decisions):
-  - CVR (Combined Violation Rate): 1 if total_violations > 0, else 0.
-    Equivalent to (dm_violations + sm_violations > 0) by construction
-    in experiment_runner.
-  - E3 retry collapse: take MAX(retry) row per (model, task_id, rep,
-    condition) — this is the watchdog-in-loop FINAL state.
-  - rep aggregation: MEAN CVR across rep within (experiment, model,
-    task_id, condition), yielding values in {0, 1/3, 2/3, 1} for E1/E3
-    (3 reps) and {0, 1} for E2 (1 rep per attack).
+Multiple metrics can be combined in one run. Output CSVs use a long format
+with an `outcome_metric` column so each metric appears as its own block.
 
-This script reads outcome CSVs but does NOT modify them. The TCS CSV
-input is the descriptor produced by compute_task_complexity.py and is
-treated as a read-only join key.
+Policies (locked):
+  - E3 retry collapse: MAX(retry) per (model, task_id, rep, condition,
+    adversarial_type) -- watchdog-in-loop FINAL state.
+  - rep aggregation: MEAN of the chosen metric across reps within
+    (experiment, model, task_id, condition, adversarial_type).
+  - Bootstrap: 10000 resamples, percentile two-sided 95% CI, seed=42.
+  - Framing: EXPLORATORY (H8). No multiple-comparisons correction.
 
-Statistical framing:
-  EXPLORATORY. No multiple-comparisons correction is applied to the
-  reported Spearman p-values. Findings are reported under H8 in
-  OSF Amendment 3 and are not confirmatory.
+scipy.stats.spearmanr is used when available; otherwise an asymptotic
+t-normal approximation is used. The method is recorded in each row.
 
 Usage:
     python scripts/complexity_correlation_analysis.py \\
@@ -35,6 +31,7 @@ Usage:
         --e2-csv results/e2_confirmatory/e2_results.csv \\
         --e3-csv results/e3_confirmatory/e3_results.csv \\
         --output-dir results/complexity_correlation/ \\
+        --outcome-metrics cvr count severity \\
         --bootstrap 10000 --seed 42
 """
 from __future__ import annotations
@@ -54,22 +51,20 @@ from typing import Any
 
 LOG = logging.getLogger("ccor")
 
-# Try to import scipy for exact / asymptotic Spearman p-values. Fall back
-# to an asymptotic t-approximation if scipy is unavailable.
 try:
     from scipy.stats import spearmanr as _scipy_spearmanr  # type: ignore
     _HAVE_SCIPY = True
 except Exception:  # noqa: BLE001
     _HAVE_SCIPY = False
 
-# Model normalization for paper-ready labels. Keep original tag as a
-# secondary column for traceability.
 MODEL_DISPLAY: dict[str, str] = {
     "qwen2.5-coder:32b": "Qwen2.5-Coder-32B",
     "deepseek-coder-v2:16b": "DeepSeek-Coder-V2-16B",
     "deepseek-coder:33b": "DeepSeek-Coder-33B",
     "codellama:34b": "CodeLlama-34B",
 }
+
+SUPPORTED_METRICS = ("cvr", "count", "severity")
 
 
 # ---------------------------------------------------------------------------
@@ -87,12 +82,13 @@ class Scenario:
     rep: int
     retry: int
     refusal: bool
-    cvr: int  # 0 or 1
+    cvr: int
+    violation_count: int
+    severity_max: float
 
 
 @dataclass(frozen=True)
-class TaskCVR:
-    """Per-task CVR after rep aggregation."""
+class TaskOutcome:
     experiment: str
     model_raw: str
     model_display: str
@@ -100,7 +96,8 @@ class TaskCVR:
     adversarial_type: str
     task_id: str
     n_reps: int
-    cvr_mean: float  # 0..1
+    outcome_metric: str
+    value_mean: float
 
 
 # ---------------------------------------------------------------------------
@@ -113,9 +110,9 @@ def load_outcome_csv(path: Path, experiment_label: str) -> list[Scenario]:
         reader = csv.DictReader(f)
         for row in reader:
             if row.get("status") != "success":
-                # Skip non-successful runs; they have no codegen outcome.
                 continue
             total = _safe_int(row.get("total_violations"))
+            severity = _safe_float(row.get("severity_max"))
             cvr = 1 if total > 0 else 0
             model_raw = row.get("model", "").strip()
             out.append(Scenario(
@@ -129,6 +126,8 @@ def load_outcome_csv(path: Path, experiment_label: str) -> list[Scenario]:
                 retry=_safe_int(row.get("retry")),
                 refusal=row.get("refusal", "").lower() == "true",
                 cvr=cvr,
+                violation_count=total,
+                severity_max=severity,
             ))
     return out
 
@@ -155,6 +154,14 @@ def _safe_int(x: Any) -> int:
         return 0
 
 
+def _safe_float(x: Any) -> float:
+    try:
+        v = float(x)
+        return v if not math.isnan(v) else 0.0
+    except (TypeError, ValueError):
+        return 0.0
+
+
 def file_sha256(path: Path) -> str:
     h = hashlib.sha256()
     h.update(path.read_bytes())
@@ -166,8 +173,6 @@ def file_sha256(path: Path) -> str:
 # ---------------------------------------------------------------------------
 
 def collapse_e3_retries(scenarios: list[Scenario]) -> list[Scenario]:
-    """For E3 only, keep the row with MAX(retry) per
-    (model, task_id, rep, condition). E1/E2 pass through unchanged."""
     e3_groups: dict[tuple, Scenario] = {}
     keep: list[Scenario] = []
     for s in scenarios:
@@ -182,28 +187,40 @@ def collapse_e3_retries(scenarios: list[Scenario]) -> list[Scenario]:
     return keep
 
 
-def aggregate_reps(scenarios: list[Scenario]) -> list[TaskCVR]:
-    """Mean CVR across rep within (experiment, model, condition,
-    adversarial_type, task_id)."""
-    groups: dict[tuple, list[int]] = defaultdict(list)
-    meta: dict[tuple, tuple[str, str, str]] = {}
+def _metric_value(s: Scenario, metric: str) -> float:
+    if metric == "cvr":
+        return float(s.cvr)
+    if metric == "count":
+        return float(s.violation_count)
+    if metric == "severity":
+        return float(s.severity_max)
+    raise ValueError(f"Unknown outcome metric: {metric!r}")
+
+
+def aggregate_reps(
+    scenarios: list[Scenario],
+    metrics: tuple[str, ...],
+) -> list[TaskOutcome]:
+    groups: dict[tuple, list[Scenario]] = defaultdict(list)
     for s in scenarios:
         key = (s.experiment, s.model_raw, s.condition, s.adversarial_type, s.task_id)
-        groups[key].append(s.cvr)
-        meta[key] = (s.experiment, s.model_raw, s.model_display)
-    out: list[TaskCVR] = []
-    for (exp, model_raw, cond, adv, tid), values in groups.items():
-        mean = sum(values) / len(values)
-        out.append(TaskCVR(
-            experiment=exp,
-            model_raw=model_raw,
-            model_display=MODEL_DISPLAY.get(model_raw, model_raw),
-            condition=cond,
-            adversarial_type=adv,
-            task_id=tid,
-            n_reps=len(values),
-            cvr_mean=mean,
-        ))
+        groups[key].append(s)
+    out: list[TaskOutcome] = []
+    for (exp, model_raw, cond, adv, tid), rep_rows in groups.items():
+        for metric in metrics:
+            vals = [_metric_value(s, metric) for s in rep_rows]
+            mean = sum(vals) / len(vals)
+            out.append(TaskOutcome(
+                experiment=exp,
+                model_raw=model_raw,
+                model_display=MODEL_DISPLAY.get(model_raw, model_raw),
+                condition=cond,
+                adversarial_type=adv,
+                task_id=tid,
+                n_reps=len(rep_rows),
+                outcome_metric=metric,
+                value_mean=mean,
+            ))
     return out
 
 
@@ -212,8 +229,6 @@ def aggregate_reps(scenarios: list[Scenario]) -> list[TaskCVR]:
 # ---------------------------------------------------------------------------
 
 def spearman(xs: list[float], ys: list[float]) -> tuple[float, float, int]:
-    """Return (rho, p_value, n). Uses scipy if available; otherwise
-    asymptotic t-approximation. Ties are handled via average ranks."""
     n = len(xs)
     if n != len(ys):
         raise ValueError("length mismatch")
@@ -232,19 +247,15 @@ def spearman(xs: list[float], ys: list[float]) -> tuple[float, float, int]:
     if den_x == 0 or den_y == 0:
         return (float("nan"), float("nan"), n)
     rho = num / (den_x * den_y)
-    # asymptotic t-approx p (two-sided)
     if abs(rho) >= 1.0:
         p = 0.0
     else:
         t = rho * math.sqrt((n - 2) / (1 - rho * rho))
-        # Approximate two-sided p via standard normal (n is small, this
-        # is rough; scipy path is preferred when available).
         p = 2 * (1 - _phi(abs(t)))
     return (rho, p, n)
 
 
 def _rank_avg(values: list[float]) -> list[float]:
-    """Average-rank assignment (ties get mean rank)."""
     n = len(values)
     indexed = sorted(range(n), key=lambda i: values[i])
     ranks = [0.0] * n
@@ -253,7 +264,7 @@ def _rank_avg(values: list[float]) -> list[float]:
         j = i
         while j + 1 < n and values[indexed[j + 1]] == values[indexed[i]]:
             j += 1
-        avg = (i + j) / 2 + 1  # ranks are 1-based
+        avg = (i + j) / 2 + 1
         for k in range(i, j + 1):
             ranks[indexed[k]] = avg
         i = j + 1
@@ -261,7 +272,6 @@ def _rank_avg(values: list[float]) -> list[float]:
 
 
 def _phi(z: float) -> float:
-    """Standard normal CDF approximation (Abramowitz & Stegun 26.2.17)."""
     return 0.5 * (1.0 + math.erf(z / math.sqrt(2.0)))
 
 
@@ -271,7 +281,6 @@ def bootstrap_mean_ci(
     seed: int,
     alpha: float = 0.05,
 ) -> tuple[float, float, float]:
-    """Percentile bootstrap CI for the mean of a list of values."""
     if not values:
         return (float("nan"), float("nan"), float("nan"))
     mean = sum(values) / len(values)
@@ -295,16 +304,16 @@ def bootstrap_mean_ci(
 # ---------------------------------------------------------------------------
 
 def write_per_scenario_csv(
-    task_cvrs: list[TaskCVR],
+    outcomes: list[TaskOutcome],
     tcs: dict[str, dict[str, Any]],
     path: Path,
 ) -> int:
     path.parent.mkdir(parents=True, exist_ok=True)
     rows = []
-    for tc in task_cvrs:
+    for tc in outcomes:
         meta = tcs.get(tc.task_id)
         if meta is None:
-            LOG.warning("No TCS row for task_id=%s — skipping", tc.task_id)
+            LOG.warning("No TCS row for task_id=%s -- skipping", tc.task_id)
             continue
         rows.append({
             "experiment": tc.experiment,
@@ -320,7 +329,8 @@ def write_per_scenario_csv(
             "tcs_safety_z": round(meta["tcs_safety_z"], 6),
             "tertile": meta["tertile"],
             "n_reps": tc.n_reps,
-            "cvr_mean": round(tc.cvr_mean, 6),
+            "outcome_metric": tc.outcome_metric,
+            "value_mean": round(tc.value_mean, 6),
         })
     fieldnames = list(rows[0].keys()) if rows else []
     with path.open("w", newline="") as f:
@@ -331,31 +341,38 @@ def write_per_scenario_csv(
 
 
 def write_spearman_summary(
-    task_cvrs: list[TaskCVR],
+    outcomes: list[TaskOutcome],
     tcs: dict[str, dict[str, Any]],
     path: Path,
 ) -> int:
     strata: dict[tuple, list[tuple[float, float]]] = defaultdict(list)
-    for tc in task_cvrs:
+    for tc in outcomes:
         meta = tcs.get(tc.task_id)
         if meta is None:
             continue
-        # Group by (experiment, model_display, condition, adversarial_type)
-        key = (tc.experiment, tc.model_display, tc.condition, tc.adversarial_type)
-        strata[key].append((meta["tcs_total"], tc.cvr_mean))
+        key = (tc.experiment, tc.model_display, tc.condition,
+               tc.adversarial_type, tc.outcome_metric)
+        strata[key].append((meta["tcs_total"], tc.value_mean))
     rows = []
-    for (exp, model_disp, cond, adv), pairs in sorted(strata.items()):
+    n_constant = 0
+    for key, pairs in sorted(strata.items()):
+        exp, model_disp, cond, adv, metric = key
         xs = [p[0] for p in pairs]
         ys = [p[1] for p in pairs]
+        y_constant = (len(set(ys)) <= 1)
+        if y_constant:
+            n_constant += 1
         rho, p, n = spearman(xs, ys)
         rows.append({
             "experiment": exp,
             "model": model_disp,
             "condition": cond,
             "adversarial_type": adv,
+            "outcome_metric": metric,
             "n_tasks": n,
             "spearman_rho": _round_nan(rho, 6),
             "p_value": _round_nan(p, 6),
+            "y_is_constant": int(y_constant),
             "p_method": "scipy.spearmanr" if _HAVE_SCIPY else "asymptotic_t_normal_approx",
         })
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -364,35 +381,39 @@ def write_spearman_summary(
         w = csv.DictWriter(f, fieldnames=fieldnames)
         w.writeheader()
         w.writerows(rows)
+    LOG.info("Spearman: %d strata total, %d with constant outcome (rho undefined)",
+             len(rows), n_constant)
     return len(rows)
 
 
 def write_tertile_summary(
-    task_cvrs: list[TaskCVR],
+    outcomes: list[TaskOutcome],
     tcs: dict[str, dict[str, Any]],
     path: Path,
     n_boot: int,
     seed: int,
 ) -> int:
     strata: dict[tuple, list[float]] = defaultdict(list)
-    for tc in task_cvrs:
+    for tc in outcomes:
         meta = tcs.get(tc.task_id)
         if meta is None:
             continue
         key = (tc.experiment, tc.model_display, tc.condition,
-               tc.adversarial_type, meta["tertile"])
-        strata[key].append(tc.cvr_mean)
+               tc.adversarial_type, tc.outcome_metric, meta["tertile"])
+        strata[key].append(tc.value_mean)
     rows = []
-    for (exp, model_disp, cond, adv, tertile), values in sorted(strata.items()):
+    for key, values in sorted(strata.items()):
+        exp, model_disp, cond, adv, metric, tertile = key
         mean, lo, hi = bootstrap_mean_ci(values, n_boot=n_boot, seed=seed)
         rows.append({
             "experiment": exp,
             "model": model_disp,
             "condition": cond,
             "adversarial_type": adv,
+            "outcome_metric": metric,
             "tertile": tertile,
             "n_tasks": len(values),
-            "mean_cvr": _round_nan(mean, 6),
+            "value_mean": _round_nan(mean, 6),
             "ci_lo_95": _round_nan(lo, 6),
             "ci_hi_95": _round_nan(hi, 6),
             "ci_method": "percentile_bootstrap",
@@ -425,6 +446,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--e2-csv", type=Path, required=False)
     parser.add_argument("--e3-csv", type=Path, required=False)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument(
+        "--outcome-metrics",
+        nargs="+",
+        choices=SUPPORTED_METRICS,
+        default=["cvr"],
+        help="One or more outcome metrics (default: cvr). cvr=binary; "
+             "count=total_violations; severity=severity_max.",
+    )
     parser.add_argument("--bootstrap", type=int, default=10000)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("-v", "--verbose", action="store_true")
@@ -438,6 +467,9 @@ def main(argv: list[str] | None = None) -> int:
     if not (args.e1_csv or args.e2_csv or args.e3_csv):
         LOG.error("At least one of --e1-csv, --e2-csv, --e3-csv is required")
         return 2
+
+    metrics = tuple(args.outcome_metrics)
+    LOG.info("Outcome metrics: %s", metrics)
 
     tcs = load_tcs_csv(args.tcs_csv)
     LOG.info("Loaded TCS for %d tasks", len(tcs))
@@ -457,20 +489,21 @@ def main(argv: list[str] | None = None) -> int:
     scenarios = collapse_e3_retries(scenarios)
     LOG.info("After E3 retry collapse: %d scenarios", len(scenarios))
 
-    task_cvrs = aggregate_reps(scenarios)
-    LOG.info("After rep aggregation: %d (experiment,model,condition,task) cells", len(task_cvrs))
+    outcomes = aggregate_reps(scenarios, metrics=metrics)
+    LOG.info("After rep aggregation: %d (model,condition,task,metric) rows",
+             len(outcomes))
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     per_scen_path = args.output_dir / "per_scenario_joined.csv"
     spear_path = args.output_dir / "spearman_summary.csv"
     tertile_path = args.output_dir / "tertile_cvr_summary.csv"
 
-    n_scen = write_per_scenario_csv(task_cvrs, tcs, per_scen_path)
-    n_spear = write_spearman_summary(task_cvrs, tcs, spear_path)
-    n_tert = write_tertile_summary(task_cvrs, tcs, tertile_path,
+    n_scen = write_per_scenario_csv(outcomes, tcs, per_scen_path)
+    n_spear = write_spearman_summary(outcomes, tcs, spear_path)
+    n_tert = write_tertile_summary(outcomes, tcs, tertile_path,
                                    n_boot=args.bootstrap, seed=args.seed)
 
-    LOG.info("Wrote %d joined scenario rows -> %s", n_scen, per_scen_path)
+    LOG.info("Wrote %d joined rows -> %s", n_scen, per_scen_path)
     LOG.info("Wrote %d Spearman rows -> %s", n_spear, spear_path)
     LOG.info("Wrote %d tertile rows -> %s", n_tert, tertile_path)
 
@@ -485,9 +518,12 @@ def main(argv: list[str] | None = None) -> int:
         "e3_csv_sha256": file_sha256(args.e3_csv) if args.e3_csv else None,
         "script_sha256": file_sha256(Path(__file__)),
         "scipy_available": _HAVE_SCIPY,
+        "outcome_metrics": list(metrics),
         "policy_e3_retry": "max_retry_per_rep",
-        "policy_rep_aggregation": "mean_cvr_across_reps",
+        "policy_rep_aggregation": "mean_of_metric_across_reps",
         "policy_cvr_definition": "total_violations > 0",
+        "policy_count_definition": "total_violations",
+        "policy_severity_definition": "severity_max",
         "framing": "exploratory_H8_no_multiple_comparisons_correction",
         "bootstrap_n": args.bootstrap,
         "bootstrap_seed": args.seed,
