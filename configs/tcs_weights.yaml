@@ -1,0 +1,42 @@
+# Task Complexity Score (TCS) weight specification.
+#
+# FROZEN at commit time. The SHA-256 hash of this file is recorded in
+# docs/TASK_COMPLEXITY_SPEC.md and in the OSF Amendment 3 H8 block.
+#
+# Weights were selected BEFORE any outcome data (E1/E2/E3 CSV) was inspected
+# for complexity-stratified results. Rationale documented in
+# docs/TASK_COMPLEXITY_SPEC.md §3 ("Weight selection rationale").
+#
+# Conservative defaults:
+#   - Structural features: uniform weights. Each structural dimension
+#     contributes one unit per item, so a task with more waypoints,
+#     more motion commands, more frames, more branches, or more distinct
+#     motion types scores proportionally higher.
+#   - Safety features: mode_strictness receives weight 3.0 because
+#     ISO 10218:2025 places its strongest cybersecurity and human-proximity
+#     requirements on collaborative mode (strictness=3); other safety
+#     features are uniform.
+#   - Blend: 0.5 / 0.5 (equal contribution of structural and safety axes).
+#
+# Sensitivity analysis: §VII.C reports tertile-stratified CVR for at least
+# one alternate blend (0.7/0.3 favoring safety) to verify findings are
+# not artifacts of the 0.5/0.5 choice.
+
+version: "1.0"
+
+weights:
+  structural:
+    waypoint_count: 1.0
+    motion_command_count: 1.0
+    distinct_frame_count: 1.0
+    control_flow_branches: 1.0
+    distinct_motion_types: 1.0
+  safety:
+    mode_strictness: 3.0
+    applicable_iso_clause_count: 1.0
+    applicable_dm_count: 1.0
+    e_stop_required: 1.0
+    payload_constraint_present: 1.0
+  blend:
+    struct: 0.5
+    safety: 0.5
