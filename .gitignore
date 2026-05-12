@@ -100,3 +100,6 @@ results/
 
 # Build artifacts (demo deck PDFs, S25 Lane 1)
 docs/build/
+
+# Generated paper artefacts (build via ./scripts/build_paper_pdf.sh)
+paper/build/
