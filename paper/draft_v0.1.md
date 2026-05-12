@@ -733,16 +733,7 @@ Cochran's Q across the three models is reported as exploratory only
 
 ### B. Reproducibility
 
-All experiments can be replicated at zero cost:
-
-```bash
-git clone https://github.com/dryuemco/industrial_robot_security
-ollama pull qwen2.5-coder:32b
-ollama pull deepseek-coder-v2:16b
-ollama pull codellama:34b
-OLLAMA_HOST=http://<your-ollama-ip>:11434 python3 scripts/smoke_test_llm.py
-./scripts/run_tests.sh   # 788 tests, gated by GitHub Actions CI
-```
+The complete replication guide is `docs/REPLICATION.md` in the project repository. It covers environment setup, the deterministic static-watchdog pipeline (H1–H3), the three LLM confirmatory experiments E1/E2/E3 (H4–H6), McNemar / exact-binomial / Newcombe statistical analysis, the H8 complexity-stratified exploratory analysis, the URSim live-execution pilot (H7), and the 788-test regression suite gated by GitHub Actions CI. Model weights are pinned by `(tag, quantization, sha256 manifest digest)` tuples in `docs/replication/MODEL_DIGESTS.txt`, and the URSim image is pinned by digest label in the project `Dockerfile`. The OSF data deposit at `https://osf.io/ve5m2/` mirrors the `results/` directory layout described in the replication guide.
 
 
 
