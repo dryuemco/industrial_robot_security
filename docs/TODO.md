@@ -368,4 +368,21 @@ End-of-S29 state:
 
 Observation 2 from S28 closure: `scripts/llm_experiment_runner.py` docstring IP is currently accidentally accurate after the 2026-05-11 DHCP refresh back to `.5`. Retired from the async items list with this commit.
 
-Brutal-mode commit cap reminder: target six substantive commits per session. S29 to-date: two substantive (`5147bca` + this Lane 4 closure). Four substantive slots remain for S29 if energy permits; otherwise resume in S30.
+**S29 final commit log (six substantive + one closure):**
+
+1. `5147bca` — `docs(s29)`: append 2026-05-11 DHCP drift to Amendment 3 IP clarification (Obs 1 from S28 closure).
+2. `72c7133` — `docs(s29)`: close Lane 4 (Georgios Am-2 ack received, Am-3 filed to OSF moderator queue).
+3. `107d70d` — `docs(s29)`: split Appendix B reproduction to `docs/REPLICATION.md` (Tier 1.5 #4, split-and-pointer pattern; new replication guide is 305 lines across 14 sections).
+4. `f36dbbb` — `build(s29)`: add `scripts/build_paper_pdf.sh` deterministic paper PDF builder (Tier 2.1). xelatex + DejaVu Serif + DejaVu Sans Mono, output to `paper/build/draft_v0.1.pdf`.
+5. `238ce4d` — `fix(s29)`: pipefail-safe font check in `build_paper_pdf.sh` (first fix attempt — capture fc-list output to variable; insufficient).
+6. `7998616` — `fix(s29)`: bash builtin pattern match for font check (definitive fix — replaces `echo $FONT_LIST | grep -q` pipeline with `[[ "${FONT_LIST,,}" != *needle* ]]`, eliminating SIGPIPE/pipefail interaction).
+7. `docs(s29-closure)` — this commit. TODO refresh only.
+
+**Carried forward to S30 (Tier 2 NTNU Visit 1 prep, both remaining):**
+
+- Tier 2.2 — Replication kit dry-run: fresh clone of the public repo → `./scripts/run_tests.sh --fast` → reproduce a single E1 cell → verify bit-identical output against the committed manifest. Effort: 60–90 min if everything works first try.
+- Tier 2.3 — Pre-submission anonymization pass for RA-L on the `submission/ral-2026` branch (six edit categories: Appendix B GitHub URL, author/supervisor names, affiliations, funding acknowledgment, ENFIELD project-name handling, third-person own-work citations). Effort: 1–2 hours. Strategy sign-off with Georgios during the NTNU exchange visit.
+
+Both items are pure-doc, low-risk, and unblocked. NTNU Visit 1 lands 2026-06-01; ample time in S30 + S31.
+
+**Patch discipline learning (S29, build_paper_pdf font check saga).** Two fix-attempts were needed to retire the font-check false-positive in `build_paper_pdf.sh`. The first (commit `238ce4d`) moved `fc-list` output into a shell variable but kept the `echo "$VAR" | grep -q` pipeline; this preserved the underlying SIGPIPE-under-pipefail bug because grep -q early-exits on first match and SIGPIPEs the upstream echo with the 81 KB FONT_LIST. The pipeline exit code becomes 141, the leading `!` inverts it to 0, and the if-body runs with a false "not installed" error. The bug is non-deterministic on identical input — two consecutive script runs reported different fonts as missing — because the SIGPIPE/early-exit race is timing-dependent. The definitive fix (commit `7998616`) eliminated the pipeline entirely by using bash built-in pattern matching: `[[ "${FONT_LIST,,}" != *needle* ]]`. No subprocess, no pipe, no SIGPIPE, no pipefail interaction, deterministic. **Discipline takeaway:** under `set -o pipefail`, `cmd | grep -q PATTERN` against a large variable is a known bug pattern even when the variable is pre-captured. Prefer `[[ "$VAR" == *PATTERN* ]]` or `[[ "${VAR,,}" == *patternlower* ]]` for case-insensitive matching. This is now patch-discipline rule #9 (joining the eight rules carried in memory).
