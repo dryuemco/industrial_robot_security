@@ -59,10 +59,14 @@ PANDOC_VERSION="$(pandoc --version | head -1 | awk '{print $2}')"
 XELATEX_VERSION="$(xelatex --version | head -1 | awk '{print $2}')"
 
 # Font availability check (DejaVu Serif + DejaVu Sans Mono)
-if ! fc-list | grep -qi "DejaVu Serif"; then
+# Capture fc-list output once into a variable; grepping a pipeline directly
+# triggers SIGPIPE on fc-list when grep -q early-exits, and under pipefail
+# this produces a false-positive "not installed" error.
+FONT_LIST="$(fc-list)"
+if ! echo "$FONT_LIST" | grep -qi "DejaVu Serif"; then
     err "DejaVu Serif font not installed. Install with: sudo apt install fonts-dejavu"
 fi
-if ! fc-list | grep -qi "DejaVu Sans Mono"; then
+if ! echo "$FONT_LIST" | grep -qi "DejaVu Sans Mono"; then
     err "DejaVu Sans Mono font not installed. Install with: sudo apt install fonts-dejavu"
 fi
 
