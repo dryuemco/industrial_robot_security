@@ -103,7 +103,7 @@ This section documents three operational drifts that have occurred since the v1 
 
 ### Ollama Host IP — Clarification
 
-The Amendment 1 table records the Ollama host IP as `192.168.1.5:11434`, replacing the v2.1 value of `192.168.1.4:11434`. The actual IP allocated to PC2 has subsequently drifted back to `192.168.1.4` following a routine DHCP refresh (observed 2026-05-05), inverting the direction of change recorded in Amendment 1.
+The Amendment 1 table records the Ollama host IP as `192.168.1.5:11434`, replacing the v2.1 value of `192.168.1.4:11434`. The actual IP allocated to PC2 has subsequently drifted back to `192.168.1.4` following a routine DHCP refresh (observed 2026-05-05), inverting the direction of change recorded in Amendment 1. A subsequent DHCP refresh on 2026-05-11 returned PC2 to `192.168.1.5`; further drift is expected and will continue to be treated as part of the same historical log, not as a protocol change.
 
 We clarify here that the Ollama host IP is **operational metadata**, not a protocol parameter. All inference calls use the `OLLAMA_HOST` environment variable and are insensitive to the specific IP assigned to PC2 at any given moment. The values listed in the Amendment 1 table reflect the IP active on the dates of those amendments and should be read as a historical log, not as constraints fixed by the protocol. No retroactive edit of Amendment 1 will be performed; the inverted-direction record is preserved as part of the project's transparent change history.
 
