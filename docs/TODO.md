@@ -134,7 +134,7 @@ Closed with **8 commits**, ~5-6 hours work. Sub-lanes B and D fully closed; Sub-
 
 **Rolled into S25 (originally S24 optional follow-ups):**
 - [deferred-S25] Written status update to Georgios consolidating S20-S24 progress.
-- [deferred-S25] OSF Amendment 3 draft (URSim selection + H7/H8 exploratory). Blocked by Amendment 2 (`d251c15`) pending Georgios acknowledgment.
+- [x] OSF Amendment 3 draft (URSim selection + H7/H8 exploratory). Filed to OSF 2026-05-12 (S29); Amendment 2 acknowledged by Georgios 2026-05-12.
 
 ### Session 25 — Pre-NTNU sprint: demo deck + URCap unblock (CLOSED 2026-05-04)
 
@@ -212,8 +212,8 @@ Estimated ~6-10 hours over 1-2 sessions. Five lanes; Lanes 1-4 are pre-NTNU mand
 All three failures evade static watchdog DM-1..7 and only surface at the URSim runtime layer. This motivates a URCap-mediated execution gate as a complementary detection layer to the static watchdog — direct anchor for Faz C paper §VI insertion. Lane 3 Faz B closes; Faz C remains the open lane item.
 
 **Lane 4 (continued from S25) — Georgios sync + OSF Amendment 3 (~1-2 hours):**
-- [x] Status update email sent end of S27 (Variant 1 "Steady", three attachments). Two open asks: (1) Amendment 2 acknowledgment chase, (2) Amendment 3 review. **Awaiting Georgios reply.**
-- [x] OSF Amendment 3 draft committed at `d5cc83b` (`docs/OSF_AMENDMENT_3_DRAFT.md`): H7 URSim simulator lock + H8 complexity-stratified exploratory analysis (non-directional). Operational Disclosures section (IP drift + model digest drift) appended in S27 commit `6a323b4`. **Filing blocked on Amendment 2 ack from Georgios.**
+- [x] Status update email sent end of S27 (Variant 1 "Steady", three attachments). Two open asks: (1) Amendment 2 acknowledgment chase, (2) Amendment 3 review. **Reply received 2026-05-12: Amendment 2 acknowledged, Amendment 3 approved.**
+- [x] OSF Amendment 3 draft committed at `d5cc83b` (`docs/OSF_AMENDMENT_3_DRAFT.md`): H7 URSim simulator lock + H8 complexity-stratified exploratory analysis (non-directional). Operational Disclosures section (IP drift + model digest drift) appended in S27 commit `6a323b4`. Quantization Documentation Drift subsection appended in S28 commit `5678f5a`. IP drift wording updated for 2026-05-11 DHCP refresh in S29 commit `5147bca`. **Filed to OSF 2026-05-12 (S29), revision id `6a02e67cf944b975e74bbdbd`, awaiting admin moderator approval (48h SLA).**
 
 **TODO refresh (this commit):** S25 close + S26 in-progress entry + 6 new async items (below).
 
@@ -246,7 +246,7 @@ Six atomic commits closed S28:
 - [x] `a200cfe` — Tier 1.5 #2: SBOM scope documentation. New Supply Chain Transparency subsection in `docs/open_science_release.md` (4 mechanisms: CycloneDX SBOM, Trivy scan, MODEL_DIGESTS.txt, URSim digest pin) + scope gaps + replicator guidance. Pre-existing internal inconsistency at L74 fixed (Pending→Done).
 - [x] `90f7e08` — Tier 1.5 #3: RA-L anonymity verdict (web-confirmed: RA-L IS double-blind per IEEE RAS Feb 2025 policy). Workflow decision: arXiv preprint = named, RA-L submission = anonymized derivative on `submission/ral-2026` branch. Pre-submission anonymization pass queued in Tier 2 with six explicit edit categories.
 
-**Carried forward to S29:** Tier 1.5 #4 (Appendix B expansion or `docs/REPLICATION.md`, ~30-60 min); Tier 2 NTNU Visit 1 prep (3 items, including the new pre-submission anonymization); Lane 4 Georgios reply pending (blocks Amendment 3 OSF filing).
+**Carried forward to S29:** Tier 1.5 #4 (Appendix B expansion or `docs/REPLICATION.md`, ~30-60 min); Tier 2 NTNU Visit 1 prep (3 items, including the new pre-submission anonymization). Lane 4 closed in S29 (Georgios reply received 2026-05-12; Amendment 3 filed to OSF moderator queue).
 
 **Tests:** 788 stable across all six commits. **Paper:** 755 lines (one editorial commit at 5678f5a; data + claims unchanged). **New artefacts in repo:** `docs/replication/MODEL_DIGESTS.txt`, `docs/responsible_disclosure.md`, Supply Chain Transparency subsection in `docs/open_science_release.md`, Quantization Documentation Drift subsection in `docs/OSF_AMENDMENT_3_DRAFT.md`.
 
@@ -279,8 +279,8 @@ Six audit hits, categorized by tier. Tier 0 fulfils Amendment 3 wording; Tier 1.
 ### Requires Georgios input
 
 - [ ] **Phase 3d decision: H1-H3 reporting strategy.** Original prereg covers H1-H3 (DM-only AST watchdog claims); current paper centers H4-H6 (LLM family). Options per `georgios_week10_demo.md` Q7 and `h_numbering_audit_2026_04_11.md` §5.4: dedicated §VI subsection / deferred appendix / separate companion report. Critical for paper completeness and Appendix A coherence.
-- [ ] **OSF Amendment 2** (candidate `d251c15`) Georgios acknowledgment nudge — scope: 8→7 A8 subtypes.
-- [ ] **OSF Amendment 3** (H7/H8 exploratory) — draft in synthesis §5; submit after Amendment 2 clears. **Scope expanded in S26**: also document model digest drift (session 12 artifacts `qwen2.5-coder:32b` digest at 2026-04-15 is unrecoverable; current digest `b92d6a0b...` modified 2026-05-05) and Ollama host IP drift (PC2 was `192.168.1.5`, now `192.168.1.4` after DHCP refresh; OSF preregistration table at line 315 reads "Previous (v2.1) `192.168.1.4` | Updated (Amendment 1) `192.168.1.5`" which is now historically inverted — will be clarified by Amendment 3 rather than back-edited).
+- [x] **OSF Amendment 2** (candidate `d251c15`) Georgios acknowledgment **received 2026-05-12** (S29) — scope: 8→7 A8 subtypes.
+- [x] **OSF Amendment 3** (H7/H8 exploratory) — **filed to OSF 2026-05-12** (S29), revision id `6a02e67cf944b975e74bbdbd`, awaiting admin moderator approval (48h SLA). Operational Disclosures expanded across S26-S29 to cover three categories: (1) model digest drift (session 12 `qwen2.5-coder:32b` digest unrecoverable; confirmatory-run digest `b92d6a0b...` pinned for Month-6 deposit); (2) Ollama host IP drift (PC2 `.5`-`.4`-`.5` across 2026-05-05 and 2026-05-11 DHCP refreshes; IP framed as operational metadata, not protocol parameter); (3) Q4 quantization documentation drift (deepseek-coder-v2:16b and codellama:34b pulled as Q4_0 not Q4_K_M; S28 commit `5678f5a` corrected paper §V.A Table III + §VII.B.4 + §VII.B.7 + README; OSF_PREREGISTRATION.md L321-323 preserved unedited per no-retroactive-edit policy).
 
 ### Reference enrichment
 
@@ -344,3 +344,28 @@ Patch discipline (8 rules in memory #6), commit directly to main, ASCII commit m
 - Paper Appendix A H5 description
 - OSF preregistration Amendment 1 block
 - Paper §VI.H watchdog-via-invalidation paragraph
+
+
+---
+
+### Session 29 — Lane 4 closure + Amendment 3 OSF filing (2026-05-12)
+
+Single-thread sprint focused on the long-running Lane 4 blocker. Georgios reply arrived end of 2026-05-11 / start of 2026-05-12: Amendment 2 explicitly acknowledged, Amendment 3 draft approved, no other action items. Amendment 3 IP wording updated for the 2026-05-11 DHCP refresh and filed to OSF on 2026-05-12.
+
+Commits this session (chronological):
+
+- [x] `5147bca` — `docs(s29)`: append 2026-05-11 DHCP drift to Amendment 3 IP clarification (Obs 1 from S28 closure followups).
+- [x] OSF Amendment 3 filed via web UI on 2026-05-12. Revision id `6a02e67cf944b975e74bbdbd`. Form steps 1-8 (Justification + Overview + Research Design + Sampling + Variables + Analysis Plan + Other + Review) populated cumulatively; updated registration questions: Research questions/hypotheses, Study design, Data collection procedures, Starting and stopping rules, Indices, Additional blinding, Sample size, Transformations, Inference criteria, Manipulated variables, Explanation of foreknowledge, Other planned analysis, Sample size rationale, Context and additional information, Data inclusion and exclusion, Missing data, Measured variables, Statistical models. Admin moderator approval pending (48h SLA from filing timestamp).
+- [x] `docs(s29)`: this commit. Lane 4 closure documentation across `docs/TODO.md`.
+
+End-of-S29 state:
+
+- OSF Amendment 3: filed, in admin moderator queue, no further action required from us until OSF returns an approval or rejection notification.
+- Lane 4 (Georgios sync + OSF Amendment 3 filing): **CLOSED** after spanning S25 (deferred) → S26 (deferred) → S27 (email sent, awaiting reply) → S29 (reply received, Amendment 3 filed). Total elapsed: ~4 sessions, blocked on async supervisor response throughout.
+- Tier 1.5 #4 (Appendix B expansion / `docs/REPLICATION.md`): **OPEN, next**.
+- Tier 2 NTNU Visit 1 prep (3 items: `build_paper_pdf.sh`, replication kit dry-run, pre-submission anonymization pass): **OPEN, lands 2026-06-01**.
+- Tier 3 backlog (DM-8, model matrix expansion, TCS sensitivity, SBOM scope extension, wrapper auto-Play): **DEFERRED to post-NTNU + remote experimentation window**.
+
+Observation 2 from S28 closure: `scripts/llm_experiment_runner.py` docstring IP is currently accidentally accurate after the 2026-05-11 DHCP refresh back to `.5`. Retired from the async items list with this commit.
+
+Brutal-mode commit cap reminder: target six substantive commits per session. S29 to-date: two substantive (`5147bca` + this Lane 4 closure). Four substantive slots remain for S29 if energy permits; otherwise resume in S30.
