@@ -58,15 +58,16 @@ command -v xelatex >/dev/null 2>&1 || err "xelatex not installed. Install with: 
 PANDOC_VERSION="$(pandoc --version | head -1 | awk '{print $2}')"
 XELATEX_VERSION="$(xelatex --version | head -1 | awk '{print $2}')"
 
-# Font availability check (DejaVu Serif + DejaVu Sans Mono)
-# Capture fc-list output once into a variable; grepping a pipeline directly
-# triggers SIGPIPE on fc-list when grep -q early-exits, and under pipefail
-# this produces a false-positive "not installed" error.
+# Font availability check (DejaVu Serif + DejaVu Sans Mono).
+# Use bash built-in pattern match instead of an echo/grep pipeline: pipefail
+# + SIGPIPE on the 81 KB fc-list output combined with grep -q early-exit
+# produces a false-positive "not installed" error non-deterministically.
+# Built-in [[ ]] has no subprocess and no pipe, so the issue cannot recur.
 FONT_LIST="$(fc-list)"
-if ! echo "$FONT_LIST" | grep -qi "DejaVu Serif"; then
+if [[ "${FONT_LIST,,}" != *"dejavu serif"* ]]; then
     err "DejaVu Serif font not installed. Install with: sudo apt install fonts-dejavu"
 fi
-if ! echo "$FONT_LIST" | grep -qi "DejaVu Sans Mono"; then
+if [[ "${FONT_LIST,,}" != *"dejavu sans mono"* ]]; then
     err "DejaVu Sans Mono font not installed. Install with: sudo apt install fonts-dejavu"
 fi
 
