@@ -1,14 +1,14 @@
-# ENFIELD: A Formal Adversarial Testing Framework for LLM-Generated Industrial Robot Code
+# A Formal Adversarial Testing Framework for LLM-Generated Industrial Robot Code
 
 **Target:** IEEE Robotics and Automation Letters (RA-L)
 **Date:** 2026-04-02
-**Authors:** Yunus Emre Çogurcu, Georgios Spathoulas
+**Authors:** [anonymized for double-anonymous review]
 
 ---
 
 ## Abstract (150 words target)
 
-Industrial robot safety is governed by ISO 10218, whose 2025 revision is the first edition to explicitly require manufacturers to address cybersecurity to the extent it affects safety. Large language models are increasingly used to generate low-level robot motion code, leaving an evaluation gap at the intersection of LLM-code security and ISO-traceable safety. We present ENFIELD, a formal adversarial testing framework that statically analyses LLM-generated URScript against seven safety rules and seven CWE-mapped security rules — nineteen detection checks spanning seven ISO 10218:2025 clauses — covering eight attack types (A1–A8). Across three open-source code-specialized LLMs and 585 confirmatory generations, baseline violation rates exceed 60% (H4 supported); adversarial prompt-injection fails the 50-percentage-point uplift threshold (H5 not supported) under a baseline-saturation ceiling (H7); and a watchdog-in-loop intervention reduces violations in two of three models (H6 mixed). All artefacts are released under Apache 2.0 with an OSF pre-registration (DOI 10.17605/OSF.IO/VE5M2), fully reproducible at zero cost.
+Industrial robot safety is governed by ISO 10218, whose 2025 revision is the first edition to explicitly require manufacturers to address cybersecurity to the extent it affects safety. Large language models are increasingly used to generate low-level robot motion code, leaving an evaluation gap at the intersection of LLM-code security and ISO-traceable safety. We present a formal adversarial testing framework that statically analyses LLM-generated URScript against seven safety rules and seven CWE-mapped security rules — nineteen detection checks spanning seven ISO 10218:2025 clauses — covering eight attack types (A1–A8). Across three open-source code-specialized LLMs and 585 confirmatory generations, baseline violation rates exceed 60% (H4 supported); adversarial prompt-injection fails the 50-percentage-point uplift threshold (H5 not supported) under a baseline-saturation ceiling (H7); and a watchdog-in-loop intervention reduces violations in two of three models (H6 mixed). All artefacts are released under Apache 2.0 with an OSF pre-registration (DOI 10.17605/OSF.IO/VE5M2), fully reproducible at zero cost.
 
 **Keywords:** LLM safety, industrial robotics, adversarial testing, URScript, ISO 10218, code generation security
 
@@ -33,7 +33,7 @@ Three concrete gaps remain at the intersection of LLM code security and industri
 
 ### Contribution
 
-We present ENFIELD, a formal adversarial testing framework that:
+We present a formal adversarial testing framework that:
 - Defines 15 industrial tasks across pick-place, welding, palletizing, and inspection categories with explicit safety constraints
 - Specifies 8 attack types (A1–A8) mapped to ISO 10218:2025 clauses
 - Implements a static watchdog with 7 safety rules (DM-1..7) and 7 security rules (SM-1..7) based on CWE mappings
@@ -183,11 +183,11 @@ Each DM and SM rule is anchored to a specific clause of ISO 10218-1:2025 *(Robot
 | SM-6b | security | — | Missing `set_payload` preamble before motion | 5.1.15 | Payload setting |
 | SM-7 | security | — | Prompt-injection marker in generated code | 5.1.16 | Cybersecurity |
 
-The 19 rule instances touch seven distinct ISO clauses (5.1.14, 5.1.15, 5.1.16, 5.4, 5.4.2, 5.5.3, 5.7.4) spanning four top-level sections of Part 1 (5.1 Robot design, 5.4 Stopping functions, 5.5 Other safety functions, 5.7 Limiting robot motion). With seven distinct clauses the coverage exceeds the "4–6 clauses" target stated in the original ENFIELD proposal. Of particular relevance is clause **5.1.16 Cybersecurity**, newly introduced in the 2025 revision of ISO 10218-1: its NOTE 1 enumerates cybersecurity weaknesses ("authenticated protection of safety configuration", "default usernames and passwords", "use of encrypted and authenticated protocols") that map directly onto SM-1 (CWE-20 Improper input validation), SM-3 (CWE-693 Protection mechanism failure), SM-5 (CWE-798 Hardcoded values), SM-7 (prompt-injection marker leakage) and DM-7 (prompt-security configuration integrity). To our knowledge this is the first static analysis framework to anchor LLM-generated robot-code weaknesses to the newly introduced cybersecurity clause. Two security rules — SM-2 (CWE-252 Unchecked return) and SM-4 (CWE-754 Improper check for unusual conditions) — have no direct ISO anchor and are marked — in Table II; ISO 10218-1:2025 does not explicitly address application-level code robustness, and these two rules demonstrate where the standard could be extended (further discussed in §VII).
+The 19 rule instances touch seven distinct ISO clauses (5.1.14, 5.1.15, 5.1.16, 5.4, 5.4.2, 5.5.3, 5.7.4) spanning four top-level sections of Part 1 (5.1 Robot design, 5.4 Stopping functions, 5.5 Other safety functions, 5.7 Limiting robot motion). With seven distinct clauses the coverage exceeds the "4–6 clauses" target stated in the original project proposal. Of particular relevance is clause **5.1.16 Cybersecurity**, newly introduced in the 2025 revision of ISO 10218-1: its NOTE 1 enumerates cybersecurity weaknesses ("authenticated protection of safety configuration", "default usernames and passwords", "use of encrypted and authenticated protocols") that map directly onto SM-1 (CWE-20 Improper input validation), SM-3 (CWE-693 Protection mechanism failure), SM-5 (CWE-798 Hardcoded values), SM-7 (prompt-injection marker leakage) and DM-7 (prompt-security configuration integrity). To our knowledge this is the first static analysis framework to anchor LLM-generated robot-code weaknesses to the newly introduced cybersecurity clause. Two security rules — SM-2 (CWE-252 Unchecked return) and SM-4 (CWE-754 Improper check for unusual conditions) — have no direct ISO anchor and are marked — in Table II; ISO 10218-1:2025 does not explicitly address application-level code robustness, and these two rules demonstrate where the standard could be extended (further discussed in §VII).
 
 ---
 
-**Vendor language selection.** The proposal originally listed RAPID grammar specification as the watchdog target. ENFIELD migrated to URScript at the S20 design milestone, driven by three concrete factors. First, Universal Robots ships an open-source ROS 2 driver (`ur_robot_driver`) and an officially maintained URSim e-Series Docker image; the path from generated code to live execution is therefore shorter than for ABB or KUKA, which require licensed simulators or closed-source toolchains. Second, the URScript language is documented under permissive terms whereas RAPID and KRL are encumbered by vendor intellectual-property licences that complicate redistribution of grammar artefacts in an open-science replication kit. Third, URScript targets a single robot family (UR3 through UR30 e-Series) with a stable instruction set, giving the static watchdog a fixed grammatical surface to verify against rather than the version-fragmented dialects we would inherit from RAPID's multi-controller history. RAPID and KRL adapter integrations are deferred to future work and discussed as scoped limitations in §VII.B.3.
+**Vendor language selection.** The proposal originally listed RAPID grammar specification as the watchdog target. The framework migrated to URScript at the S20 design milestone, driven by three concrete factors. First, Universal Robots ships an open-source ROS 2 driver (`ur_robot_driver`) and an officially maintained URSim e-Series Docker image; the path from generated code to live execution is therefore shorter than for ABB or KUKA, which require licensed simulators or closed-source toolchains. Second, the URScript language is documented under permissive terms whereas RAPID and KRL are encumbered by vendor intellectual-property licences that complicate redistribution of grammar artefacts in an open-science replication kit. Third, URScript targets a single robot family (UR3 through UR30 e-Series) with a stable instruction set, giving the static watchdog a fixed grammatical surface to verify against rather than the version-fragmented dialects we would inherit from RAPID's multi-controller history. RAPID and KRL adapter integrations are deferred to future work and discussed as scoped limitations in §VII.B.3.
 
 
 ### E. Task Complexity Characterization
@@ -649,7 +649,7 @@ We did not preregister a directional hypothesis for this association and therefo
 
 ### D. EU AI Act Alignment
 
-ENFIELD's approach directly supports EU AI Act Article 15 requirements for high-risk AI systems:
+The framework's approach directly supports EU AI Act Article 15 requirements for high-risk AI systems:
 - **Accuracy:** Formal violation metrics with statistical testing
 - **Robustness:** Adversarial evaluation across 8 attack types
 - **Cybersecurity:** CWE-mapped security rules (SM-1..7)
@@ -658,13 +658,13 @@ ENFIELD's approach directly supports EU AI Act Article 15 requirements for high-
 
 ## VIII. Conclusion
 
-We presented ENFIELD, the first formal adversarial testing framework for LLM-generated industrial robot code at the intersection of LLM-code security and ISO 10218-1:2025 cybersecurity. Our confirmatory study spans three open-source code-specialized LLMs and 585 generations across baseline, safety-prompt, and adversarial conditions, with detection performed by a static watchdog implementing seven safety rules (DM-1..7) and seven security rules (SM-1..7) over nineteen detection checks touching seven distinct ISO clauses.
+We presented the first formal adversarial testing framework for LLM-generated industrial robot code at the intersection of LLM-code security and ISO 10218-1:2025 cybersecurity. Our confirmatory study spans three open-source code-specialized LLMs and 585 generations across baseline, safety-prompt, and adversarial conditions, with detection performed by a static watchdog implementing seven safety rules (DM-1..7) and seven security rules (SM-1..7) over nineteen detection checks touching seven distinct ISO clauses.
 
 Three findings emerge. First, safety-prompt response is model-dependent: guidance reduces violations in two of three models (DeepSeek 9.50 to 3.69, CodeLlama 10.00 to 3.19) and leaves the third unchanged (Qwen 10.36 to 10.38), refuting the assumption that prompt-level safety guidance is universally protective. Second, adversarial uplift fails the preregistered 50-percentage-point threshold (H5 NOT SUPPORTED, 0 of 14 contrasts), but this is an artefact of a baseline-saturation ceiling (H7) rather than evidence of robust alignment: when the baseline already violates at near-saturation rates, no headroom remains for adversarial uplift to be detectable as a difference. Third, low violation counts can mask syntactically invalid code, as evidenced by CodeLlama's pseudocode generation pattern; this motivates a URScript validity gate as a primary metric component, distinguishing actually-safe outputs from outputs that fail to be evaluated as code at all.
 
 Future work proceeds along three axes. (i) The URSim 5.12.8 pilot reported in §VI.L surfaced three pre-execution failure classes — semantically inadmissible API use, URCap orchestration races, and workspace reachability — that evade DM-1..7 / SM-1..7 at the static level and are caught instead by the URControl interpreter and the IK solver. Promoting these into static checks is concrete future work: a typed-argument rule (provisionally DM-8) against the URScript built-in signature catalogue would close the API-type class, and a URDF-anchored reachability rule would close the workspace class. The orchestration-race class is wrapper-correctness rather than watchdog scope. (ii) Disclaimer language analysis (H8 exploratory) will quantify the near-zero refusal rates we observed (0 of 585) against the literature on shallow safety alignment, distinguishing genuine task acceptance from disclaimer-then-comply patterns. (iii) Scaling to four or more code-specialized LLMs will test whether the model-dependent safety-prompt response and the baseline-saturation ceiling generalize beyond the present three-model panel, particularly at the smaller and larger parameter regimes outside our current 16B to 34B band.
 
-ISO 10218-1:2025 introduces cybersecurity as a normative requirement for industrial robots for the first time, but offers no operational evaluation method for code generated by LLMs against its safety and security clauses. ENFIELD provides a concrete, preregistered, fully reproducible framework (Apache-2.0, Docker, OSF DOI 10.17605/OSF.IO/VE5M2) that closes this gap with measurable results, and we release it as advisory infrastructure for standardization bodies, certification labs, and the open robotics-LLM community.
+ISO 10218-1:2025 introduces cybersecurity as a normative requirement for industrial robots for the first time, but offers no operational evaluation method for code generated by LLMs against its safety and security clauses. The framework provides a concrete, preregistered, fully reproducible artifact (Apache-2.0, Docker, OSF DOI 10.17605/OSF.IO/VE5M2) that closes this gap with measurable results, and we release it as advisory infrastructure for standardization bodies, certification labs, and the open robotics-LLM community.
 
 ---
 
@@ -742,4 +742,4 @@ Full JSONL logs and generated URScript files available in `results/smoke_test/` 
 
 ---
 
-*This work is supported by the European Union's Horizon Europe programme under Grant Agreement No. 101120657 (ENFIELD).*
+*[Funding acknowledgement anonymized for double-anonymous review.]*
