@@ -1,7 +1,6 @@
 # ENFIELD: A Formal Adversarial Testing Framework for LLM-Generated Industrial Robot Code
 
 **Target:** IEEE Robotics and Automation Letters (RA-L)
-**Draft version:** 0.1 (Smoke Test Data)
 **Date:** 2026-04-02
 **Authors:** Yunus Emre Çogurcu, Georgios Spathoulas
 
