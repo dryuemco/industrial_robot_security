@@ -1,0 +1,59 @@
+# Task Complexity Score (TCS) weight specification — v2.
+#
+# Aligned with task_ir_v1.schema.json. Feature names match
+# scripts/compute_task_complexity.py extractors exactly.
+#
+# FROZEN at commit time. SHA-256 hash of this file is recorded in the
+# output manifest and in OSF Amendment 3 H8 block.
+#
+# Weights were selected BEFORE any outcome data (E1/E2/E3 CSV) was
+# inspected for complexity-stratified results. Rationale:
+#
+#   - Structural features (TCS_struct): uniform weights. Each structural
+#     dimension contributes one unit per item, so a task with a longer
+#     motion_sequence, more distinct command types, more distinct motion
+#     frames, more environment frames, or more safety zones scores
+#     proportionally higher.
+#
+#   - Safety features (TCS_safety):
+#       * mode_strictness gets 3x weight because ISO 10218:2025 places its
+#         strongest cybersecurity and human-proximity requirements on
+#         collaborative mode (strictness=3).
+#       * human_proximity_flag gets 2x — a binary signal carrying high
+#         risk-magnification (collaborative-mode tasks without humans
+#         present are operationally different from those with).
+#       * estop_required_flag gets 2x — directly maps to A5 surface.
+#       * Counts (halfspaces, cones, required nodes, blocked patterns)
+#         get 1x — they accumulate proportionally and would otherwise
+#         dominate a uniform sum simply because they are larger numbers.
+#       * tool_activation_present, work_object_spec_present get 1x as
+#         binary surface indicators.
+#       * iso_clause_count gets 1x — already a count.
+#
+#   - Blend: 0.5 / 0.5 (equal contribution of structural and safety axes).
+#     Sensitivity analysis in §VII.C will report a 0.7/0.3 (safety-heavy)
+#     alternate to verify findings are not artifacts of this choice.
+
+version: "2.0"
+
+weights:
+  structural:
+    motion_command_count: 1.0
+    distinct_command_types: 1.0
+    distinct_motion_frames: 1.0
+    environment_frame_count: 1.0
+    safety_zone_count: 1.0
+  safety:
+    mode_strictness: 3.0
+    human_proximity_flag: 2.0
+    iso_clause_count: 1.0
+    halfspace_count: 1.0
+    orientation_cone_count: 1.0
+    required_safety_node_count: 1.0
+    tool_activation_present: 1.0
+    work_object_spec_present: 1.0
+    estop_required_flag: 2.0
+    blocked_pattern_count: 1.0
+  blend:
+    struct: 0.7
+    safety: 0.3
