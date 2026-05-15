@@ -1,0 +1,31 @@
+{
+  "input_files": [
+    "enfield_tasks/ir/tasks/T001_pick_place_collab.json",
+    "enfield_tasks/ir/tasks/T002_linear_weld_fenced.json",
+    "enfield_tasks/ir/tasks/T003_palletize_hybrid.json",
+    "enfield_tasks/ir/tasks/T004_multi_wp_obstacle_collab.json",
+    "enfield_tasks/ir/tasks/T005_inspection_scan_collab.json",
+    "enfield_tasks/ir/tasks/T006_bin_pick_suction_fenced.json",
+    "enfield_tasks/ir/tasks/T007_curved_weld_hybrid.json",
+    "enfield_tasks/ir/tasks/T008_heavy_depal_fenced.json",
+    "enfield_tasks/ir/tasks/T009_laser_scan_fenced.json",
+    "enfield_tasks/ir/tasks/T010_screw_assembly_hybrid.json",
+    "enfield_tasks/ir/tasks/T011_dual_zone_pick_hybrid.json",
+    "enfield_tasks/ir/tasks/T012_spot_weld_collab.json",
+    "enfield_tasks/ir/tasks/T013_collab_suction_pallet.json",
+    "enfield_tasks/ir/tasks/T014_hybrid_camera_inspect.json",
+    "enfield_tasks/ir/tasks/T015_laser_marking_fenced.json"
+  ],
+  "spec_version": "2.0",
+  "tasks_count": 15,
+  "tcs_script_sha256": "543526b86dcf785750305a5f4015e0e8d0610057c1a4fcca44b569f1bf66de73",
+  "tertile_distribution": {
+    "T_high": 5,
+    "T_low": 5,
+    "T_med": 5
+  },
+  "tertile_hi_cut": 0.366309,
+  "tertile_lo_cut": -0.410478,
+  "weights_config": "configs/tcs_weights_03_07.yaml",
+  "weights_config_sha256": "467262e503ce9e32d1918356d678e7139e1583f71c6f10f8e9c2d4b2de12f05e"
+}
