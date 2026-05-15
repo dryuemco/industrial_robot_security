@@ -54,6 +54,8 @@ Before running any experiment, confirm the regression suite is green:
 
 Expected: `788 tests in ~5s ... ALL TESTS PASSED` across six packages (`enfield_tasks` 169, `enfield_attacks` 149, `enfield_translators` 81, `enfield_watchdog_static` 114, `enfield_llm` 95, `experiment_runner` 180). A red test gate blocks any confirmatory run.
 
+**Verification log.** Replicated on a fresh clone on 2026-05-15 (HEAD `c02b81f`): 788/788 tests passed in 4 seconds across all six packages. No environment-specific drift observed.
+
 ---
 
 ## 4. Static-Watchdog Pipeline (H1–H3, ~5 minutes)
