@@ -386,3 +386,43 @@ Observation 2 from S28 closure: `scripts/llm_experiment_runner.py` docstring IP 
 Both items are pure-doc, low-risk, and unblocked. NTNU Visit 1 lands 2026-06-01; ample time in S30 + S31.
 
 **Patch discipline learning (S29, build_paper_pdf font check saga).** Two fix-attempts were needed to retire the font-check false-positive in `build_paper_pdf.sh`. The first (commit `238ce4d`) moved `fc-list` output into a shell variable but kept the `echo "$VAR" | grep -q` pipeline; this preserved the underlying SIGPIPE-under-pipefail bug because grep -q early-exits on first match and SIGPIPEs the upstream echo with the 81 KB FONT_LIST. The pipeline exit code becomes 141, the leading `!` inverts it to 0, and the if-body runs with a false "not installed" error. The bug is non-deterministic on identical input — two consecutive script runs reported different fonts as missing — because the SIGPIPE/early-exit race is timing-dependent. The definitive fix (commit `7998616`) eliminated the pipeline entirely by using bash built-in pattern matching: `[[ "${FONT_LIST,,}" != *needle* ]]`. No subprocess, no pipe, no SIGPIPE, no pipefail interaction, deterministic. **Discipline takeaway:** under `set -o pipefail`, `cmd | grep -q PATTERN` against a large variable is a known bug pattern even when the variable is pre-captured. Prefer `[[ "$VAR" == *PATTERN* ]]` or `[[ "${VAR,,}" == *patternlower* ]]` for case-insensitive matching. This is now patch-discipline rule #9 (joining the eight rules carried in memory).
+
+
+---
+
+### Session 30 — Paper-positive pre-NTNU sprint (CLOSED 2026-05-16)
+
+**Strategic position:** Final pre-NTNU sprint. NEXT_SESSION_PROMPT Option B (item-combining for brutal-cap compliance). Five substantive commits on `main` + one on `submission/ral-2026` + this closure. Lane 3 expanded from N=1 pilot to full E1+E2+E3 confirmatory matrix (855 calls) via overnight chained run. OSF Amendment 2 filed.
+
+**S30 commit log (five substantive + one branch + closure):**
+
+1. `351e8c4` — `docs(s30)`: remove "Draft 0.1 (Smoke Test Data)" self-title from paper L4. Pre-submission hygiene; filename retained for build_paper_pdf.sh compatibility, rename deferred to NTNU.
+2. `b4bacc2` — `feat(s30-B)`: TCS sensitivity blends 0.7/0.3 + 0.3/0.7. Configs + computed CSVs + manifests under `docs/tcs_sensitivity/`. Findings: Spearman rho across blends +0.757 to +0.929 (rank order strongly stable); 4/15 tasks (T001, T003, T007, T014) reassign at the T_med tertile boundary under one extreme blend; **no T_low <-> T_high transitions**. Qualitative H8 direction preserved; re-verification on confirmatory CVR deferred to NTNU.
+3. `0ce3083` — `docs(s30-C)`: DM-8 API-type checker design doc (`docs/DM8_DESIGN.md`, 279 lines). Design-only closure path for the paper VI.L C1 complementarity gap (URControl get_inverse_kin arg-type mismatch). 15-entry URScript signature catalogue, AST-visitor algorithm, conservative FP posture. Implementation in 8-item post-NTNU backlog.
+4. `9a8f234` — `docs(s30-E)`: replication kit dry-run verification log. Fresh clone of public repo at HEAD `c02b81f`: `./scripts/run_tests.sh --fast` -> 788/788 passed in 4 seconds, no drift. REPLICATION.md section 3 verification-log line appended. Preempts the "tried to reproduce, failed" RA-L reviewer objection for the static-analysis subset.
+5. `a55ed6a` — `feat(s30-A)`: E1+E2+E3 confirmatory run summaries and manifest. Overnight chained run (`/tmp/enfield_chain.sh`, 2026-05-15 19:12 -> 2026-05-16 02:34, ~7.4h, `results/chain.log` finished cleanly). Summaries + SHA256 manifest under `docs/confirmatory_results/`; raw CSVs + JSONL gitignored, OSF Month-6 deposit.
+6. `ad157f4` — `submission(ral-2026)`: pre-submission anonymization pass for IEEE RAS double-blind (branch `submission/ral-2026` only, NEVER merged to main). 11 string replacements: title generic, authors placeholder, funding placeholder, 7 ENFIELD project-name -> "the framework". Verified zero forbidden-term grep hits in paper/draft_v0.1.md.
+7. `docs(s30-closure)` — this commit. TODO refresh only.
+
+**Confirmatory findings (paper-positive; NTNU rewrite anchors):**
+
+- **Substantive watchdog-pass rate 1/191 E1 (0.52%), 0/453 E2+E3.** Of 8 nominal E1 passes, 7 are *vacuous* (`has_motion=False` — comment/skeleton code with no robot action; all CodeLlama safety-prompt). The single substantive pass is DeepSeek-Coder-V2-16B, T009, neutral prompt, 24 lines, has_motion=True. "Floor not ceiling" framing strengthened: the substantive negative result is sharper than the 3-task pilot's 0/38.
+- **Qwen2.5-Coder-32B: zero invalid_pseudocode across all 375 calls (E1 90 + E2 105 + E3 180), CVR=100%.** Produces valid-but-unsafe code consistently.
+- **DeepSeek + CodeLlama collapse to invalid_pseudocode under all conditions** (E1: DeepSeek 27/90, CodeLlama 42/90; persists in E2 and E3). Reinforces paper VI.H watchdog-via-invalidation artefact with full confirmatory evidence across three experiments.
+- **E3 watchdog-in-loop does NOT reduce invalid_pseudocode rate** (DeepSeek 27->37, CodeLlama stays ~32-42 across E1->E3). H6 null result reinforced; feedback drives invalidation rather than safety.
+- **CodeLlama-34B 16 timeout failures** (300s limit, long-context concentrated, e.g. T015/T003). Deployment-readiness gap orthogonal to safety alignment; paper VI.L usability footnote.
+
+**OSF status:**
+- Amendment 2 (8->7 A8 sub-variant scope; H5 Holm-Bonferroni family 24->21) **submitted to OSF moderator queue 2026-05-15**, 48h SLA -> approval expected ~2026-05-17. Foreknowledge Explanation field carries both Am-3 and Am-2 timing-disclosure notes. Justification + Statistical Models + Inference Criteria sub-questions edited (A6->A8 rename, 24->21, 8->7).
+- Amendment 3 (URSim lock + H7/H8) **already approved 2026-05-12** (confirmed via OSF email + Updates dropdown showing Original / Update 1 / Latest).
+
+**Carried forward to S31 (NTNU Visit 1 paper-only window, opens 2026-06-01):**
+
+- **Paper rewrite (NTNU, with Georgios buy-in):** title hook ("The Floor, Not the Ceiling" or equivalent), abstract rewrite around the 1/191 + 0/453 central negative result, §VI.L 1-program URSim pilot (DeepSeek T009 substantive pass; optionally execute on URSim), §VI.H reinforcement with E1+E2+E3 invalid-collapse evidence, H5/H6 confirmatory tables from `docs/confirmatory_results/`, §VII.C TCS sensitivity footnote (ρ stability + 4/15 T_med reassign), §VII.B + §VIII DM-8 forward references. Non-anonymized version on `main`; anonymized derivative on `submission/ral-2026`.
+- OSF Amendment 2 approval confirmation (independent async; no project-side action; check OSF Updates dropdown / email ~2026-05-17).
+- Optional pre-paper: execute the single DeepSeek T009 substantive watchdog-pass program on URSim to populate §VI.L with N=1 runtime evidence (the honest "we found exactly one and we ran it" posture).
+- Sample Size / Variables / Indices OSF sub-questions still carry Amendment-1-era A6.x / 24-cell / 1170-call text by design (locked-section policy); sync via follow-up commit only after Amendment 2 approval.
+
+**Brutal-mode assessment (S30 end-state):** Overnight 855-call confirmatory matrix landed cleanly. H5 null + H6 null + VI.H watchdog-via-invalidation now triple-confirmed with full data. Substantive watchdog-pass 1/191 + 0/453 is a strong, defensible negative headline. Estimated RA-L acceptance probability lifted from ~25-35% (S29 end) to ~65-72% conditional on the NTNU paper rewrite executing the "floor not ceiling" reframe. Fallback ladder unchanged (arXiv June always achievable; RA-L July revise-and-resubmit; CoRL/ICRA backup).
+
+**Patch discipline (S30):** No new rules. Chained-nohup overnight orchestration validated as a safe pattern when guarded with `set -e` + `set -u` + per-phase output-existence checks + pre-existing-dir backup. systemd-inhibit --mode=block confirmed as the correct anti-suspend mechanism (XFCE; gsettings power keys are GNOME-only and were not the active path).
