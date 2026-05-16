@@ -1,0 +1,44 @@
+{
+  "experiment": "E3",
+  "timestamp": "2026-05-16T02:34:56.257285+00:00",
+  "total_calls": 339,
+  "successful": 261,
+  "errors": 78,
+  "refusals": 0,
+  "per_model": {
+    "codellama:34b": {
+      "calls": 42,
+      "attempted_calls": 78,
+      "invalid_pseudocode_calls": 32,
+      "gate_pass_rate": 0.538,
+      "mean_violations": 17.33,
+      "violation_rate": 1.0,
+      "mean_latency_ms": 5275
+    },
+    "deepseek-coder-v2:16b": {
+      "calls": 39,
+      "attempted_calls": 81,
+      "invalid_pseudocode_calls": 37,
+      "gate_pass_rate": 0.481,
+      "mean_violations": 8.54,
+      "violation_rate": 1.0,
+      "mean_latency_ms": 1882
+    },
+    "qwen2.5-coder:32b": {
+      "calls": 180,
+      "attempted_calls": 180,
+      "invalid_pseudocode_calls": 0,
+      "gate_pass_rate": 1.0,
+      "mean_violations": 10.52,
+      "violation_rate": 1.0,
+      "mean_latency_ms": 56449
+    }
+  },
+  "per_condition": {
+    "baseline": {
+      "calls": 261,
+      "mean_violations": 11.32,
+      "violation_rate": 1.0
+    }
+  }
+}

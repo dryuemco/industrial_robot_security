@@ -1,0 +1,74 @@
+{
+  "experiment": "E2",
+  "timestamp": "2026-05-15T23:16:38.895240+00:00",
+  "total_calls": 315,
+  "successful": 192,
+  "errors": 123,
+  "refusals": 0,
+  "per_model": {
+    "codellama:34b": {
+      "calls": 38,
+      "attempted_calls": 105,
+      "invalid_pseudocode_calls": 55,
+      "gate_pass_rate": 0.362,
+      "mean_violations": 10.92,
+      "violation_rate": 1.0,
+      "mean_latency_ms": 5438
+    },
+    "deepseek-coder-v2:16b": {
+      "calls": 49,
+      "attempted_calls": 105,
+      "invalid_pseudocode_calls": 43,
+      "gate_pass_rate": 0.467,
+      "mean_violations": 7.73,
+      "violation_rate": 1.0,
+      "mean_latency_ms": 1711
+    },
+    "qwen2.5-coder:32b": {
+      "calls": 105,
+      "attempted_calls": 105,
+      "invalid_pseudocode_calls": 0,
+      "gate_pass_rate": 1.0,
+      "mean_violations": 13.68,
+      "violation_rate": 1.0,
+      "mean_latency_ms": 54582
+    }
+  },
+  "per_condition": {
+    "adversarial_A8.1": {
+      "calls": 26,
+      "mean_violations": 11.15,
+      "violation_rate": 1.0
+    },
+    "adversarial_A8.2": {
+      "calls": 28,
+      "mean_violations": 9.29,
+      "violation_rate": 1.0
+    },
+    "adversarial_A8.3": {
+      "calls": 29,
+      "mean_violations": 9.97,
+      "violation_rate": 1.0
+    },
+    "adversarial_A8.4": {
+      "calls": 27,
+      "mean_violations": 16.59,
+      "violation_rate": 1.0
+    },
+    "adversarial_A8.5": {
+      "calls": 31,
+      "mean_violations": 10.74,
+      "violation_rate": 1.0
+    },
+    "adversarial_A8.6": {
+      "calls": 25,
+      "mean_violations": 11.84,
+      "violation_rate": 1.0
+    },
+    "adversarial_A8.7": {
+      "calls": 26,
+      "mean_violations": 12.08,
+      "violation_rate": 1.0
+    }
+  }
+}
