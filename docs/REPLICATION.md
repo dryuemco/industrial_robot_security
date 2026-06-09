@@ -34,6 +34,15 @@ cd industrial_robot_security
 
 The repository is licensed under Apache-2.0. The `main` branch is the canonical replication target; for the IEEE RA-L double-anonymous submission derivative, see the `submission/ral-2026` branch.
 
+Install the Python dependencies (required for the static-watchdog pipeline, the LLM experiments, the statistical analysis, and the test suite). Python 3.10 matches the reference setup:
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+`requirements.txt` pins every package the codebase imports plus the statistical-analysis dependencies (`scipy`, `statsmodels`) and the test runner (`pytest`); all ship Python 3.10 wheels for Linux (x86_64) and macOS (arm64/x86_64). No ROS2 installation is required for static analysis, the LLM experiments, the statistical analysis, or the test suite.
+
 Build the ROS2 workspace (required for the URSim live-execution pilot in Section 8; not needed for static analysis or LLM experiments):
 
 ```bash

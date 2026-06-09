@@ -17,3 +17,10 @@ lark-parser>=0.12
 
 # --- LLM API clients ---
 httpx>=0.25.0
+
+# --- Statistical analysis (scripts/mcnemar_analysis.py: McNemar, Cochran's Q) ---
+scipy>=1.10
+statsmodels>=0.14
+
+# --- Test runner (required by scripts/run_tests.sh and tests/) ---
+pytest>=7.0

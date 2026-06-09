@@ -58,8 +58,14 @@ run_suite() {
 
     local last_line passed=0 failed=0
     last_line=$(echo "$output" | tail -1)
-    passed=$(echo "$last_line" | grep -oP '\d+(?= passed)' || echo 0)
-    failed=$(echo "$last_line" | grep -oP '\d+(?= failed)' || echo 0)
+    # Portable count extraction (GNU + BSD/macOS awk). Grabs the integer
+    # immediately before the "passed"/"failed" token, tolerating a trailing
+    # comma (pytest writes "3 passed, 1 failed"). Replaces grep -oP, whose
+    # -P (PCRE) and lookahead assertions are GNU-only and absent on macOS.
+    passed=$(echo "$last_line" | awk '{for (i=1;i<=NF;i++) if ($i ~ /^passed,?$/) print $(i-1)}')
+    failed=$(echo "$last_line" | awk '{for (i=1;i<=NF;i++) if ($i ~ /^failed,?$/) print $(i-1)}')
+    [[ -z "$passed" ]] && passed=0
+    [[ -z "$failed" ]] && failed=0
 
     TOTAL_PASSED=$((TOTAL_PASSED + passed))
     TOTAL_FAILED=$((TOTAL_FAILED + failed))

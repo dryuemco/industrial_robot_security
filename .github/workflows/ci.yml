@@ -185,7 +185,7 @@ jobs:
             --tb=short
 
   # ---------------------------------------------------------------------------
-  # Job 7: Experiment runner tests (132 tests)
+  # Job 7: Experiment runner tests (180 tests: full tests/ directory)
   # ---------------------------------------------------------------------------
   test-experiment-runner:
     runs-on: ubuntu-22.04
@@ -201,13 +201,13 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pytest
+          pip install -r requirements.txt
 
       - name: Run experiment runner tests
         run: |
           cd $GITHUB_WORKSPACE
           PYTHONPATH=enfield_watchdog_static:enfield_tasks python3 -m pytest \
-            test/test_experiment_runner.py -v \
+            tests/ -v \
             --tb=short
 
   # ---------------------------------------------------------------------------
