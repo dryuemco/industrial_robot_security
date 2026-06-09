@@ -103,3 +103,4 @@ docs/build/
 
 # Generated paper artefacts (build via ./scripts/build_paper_pdf.sh)
 paper/build/
+.env
