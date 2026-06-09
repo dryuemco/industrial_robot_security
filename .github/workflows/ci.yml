@@ -33,6 +33,11 @@ jobs:
             python3-pip \
             python3-pytest
           pip3 install --no-cache-dir -r requirements.txt
+          # ROS2 Humble and ament target the Ubuntu 22.04 pytest; keep the
+          # colcon/ament test run on a pytest they support. The modern
+          # pytest in requirements.txt is for the pure-Python jobs and the
+          # local gate, not for this ROS workspace.
+          pip3 install --no-cache-dir "pytest<8"
 
       - name: Build workspace
         run: |
