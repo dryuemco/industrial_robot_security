@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 OPENAI_BASE_URL = "https://api.openai.com/v1"
 XAI_BASE_URL = "https://api.x.ai/v1"
 OLLAMA_BASE_URL = "http://localhost:11434/v1"
+IDUN_BASE_URL = "https://llm.hpc.ntnu.no/v1"  # NTNU Idun HPC gateway (LiteLLM, OpenAI-compatible)
 
 
 class OpenAICompatibleClient(LLMClient):
@@ -176,5 +177,26 @@ def create_ollama_client(
         model=model,
         base_url=base_url,
         provider="ollama",
+        **kwargs,
+    )
+
+
+def create_idun_client(
+    api_key: str,
+    model: str = "zai-org/GLM-4.7-FP8",
+    base_url: str = IDUN_BASE_URL,
+    **kwargs,
+) -> OpenAICompatibleClient:
+    """Factory for the NTNU Idun HPC LLM gateway (OpenAI-compatible).
+
+    Open-weight frontier models (gpt-oss-120b, GLM-4.7, Mistral-Large-3,
+    Kimi-K2.x, ...) served locally on NTNU Idun. Reachable only from the
+    NTNU network or VPN. Uses Bearer auth like any non-Ollama provider.
+    """
+    return OpenAICompatibleClient(
+        api_key=api_key,
+        model=model,
+        base_url=base_url,
+        provider="idun",
         **kwargs,
     )

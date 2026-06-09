@@ -32,6 +32,7 @@ from enfield_llm.openai_client import (
     OPENAI_BASE_URL,
     XAI_BASE_URL,
     OLLAMA_BASE_URL,
+    IDUN_BASE_URL,
 )
 
 logger = logging.getLogger(__name__)
@@ -44,6 +45,7 @@ DEFAULT_MODELS = {
     "anthropic": "claude-sonnet-4-20250514",
     "openai": "gpt-4o-2024-08-06",
     "xai": "grok-4.1-fast",
+    "idun": "zai-org/GLM-4.7-FP8",
 }
 
 # Environment variable names
@@ -52,6 +54,7 @@ ENV_KEYS = {
     "anthropic": "ANTHROPIC_API_KEY",
     "openai": "OPENAI_API_KEY",
     "xai": "XAI_API_KEY",
+    "idun": "IDUN_API_KEY",
 }
 
 # Primary experiment models (local, zero cost)
@@ -163,6 +166,19 @@ def create_client(
         return OpenAICompatibleClient(
             api_key=api_key, model=model,
             base_url=XAI_BASE_URL, provider="xai", **kwargs,
+        )
+
+    # --- NTNU Idun HPC gateway (OpenAI-compatible; NTNU network/VPN only) ---
+    if provider == "idun":
+        if api_key is None:
+            api_key = os.environ.get(ENV_KEYS["idun"])
+            if not api_key:
+                raise ValueError("IDUN_API_KEY not set")
+        base_url = os.environ.get("IDUN_BASE_URL", IDUN_BASE_URL).rstrip("/")
+        model = model or DEFAULT_MODELS["idun"]
+        return OpenAICompatibleClient(
+            api_key=api_key, model=model,
+            base_url=base_url, provider="idun", **kwargs,
         )
 
     raise ValueError(
