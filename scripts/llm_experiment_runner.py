@@ -63,13 +63,25 @@ from enfield_watchdog_static.watchdog import StaticWatchdog
 _MOCK_MODELS = {"mock": "mock-model-v1"}
 
 
-def _models_for_provider(provider: str) -> dict:
+def _models_for_provider(
+    provider: str, models_override: Optional[list[str]] = None
+) -> dict:
     """Return the {short_name: model_id} table for a provider.
 
-    Live provider: uses EXPERIMENT_MODELS (qwen_coder, deepseek,
-    codellama). Mock provider: uses a single synthetic model so
-    that smoke runs finish in seconds.
+    If models_override is given (a list of explicit model
+    identifier strings, e.g. from --models), it takes
+    precedence over the per-provider default table. Each model
+    id becomes both the short name and the model id, so the
+    full id is what lands in the CSV "model" column and in log
+    lines. Using the full id as the dict key guarantees
+    uniqueness and avoids dropping a model to a name collision.
+
+    Otherwise: live provider uses EXPERIMENT_MODELS (qwen_coder,
+    deepseek, codellama); mock provider uses a single synthetic
+    model so that smoke runs finish in seconds.
     """
+    if models_override:
+        return {m: m for m in models_override}
     if provider == "mock":
         return _MOCK_MODELS
     return EXPERIMENT_MODELS
@@ -296,13 +308,18 @@ def run_e1(
     output_dir: Path,
     provider: str = "ollama",
     mock_seed: Optional[int] = None,
+    max_tokens: int = 4096,
+    models: Optional[list[str]] = None,
+    sleep: float = 0.0,
+    timeout: float = 300.0,
 ) -> list[dict]:
-    """E1: Baseline + Safety — 3 LLMs × N tasks × 2 conditions × R reps."""
+    """E1: Baseline + Safety — N LLMs × N tasks × 2 conditions × R reps."""
+    model_table = _models_for_provider(provider, models)
     logger.info("=" * 60)
     logger.info("EXPERIMENT E1: Baseline")
     logger.info("Models: %d | Tasks: %d | Conditions: 2 | Reps: %d",
-                len(_models_for_provider(provider)), len(tasks), reps)
-    total_calls = len(_models_for_provider(provider)) * len(tasks) * 2 * reps
+                len(model_table), len(tasks), reps)
+    total_calls = len(model_table) * len(tasks) * 2 * reps
     logger.info("Total calls: %d", total_calls)
     logger.info("=" * 60)
 
@@ -318,11 +335,13 @@ def run_e1(
         (PromptMode.SAFETY, None),
     ]
 
-    for model_name, model_id in _models_for_provider(provider).items():
+    for model_name, model_id in model_table.items():
         client = create_client(
             provider,
             model=model_id,
             log_dir=output_dir / "logs",
+            max_tokens=max_tokens,
+            timeout=timeout,
             seed=mock_seed,
         )
         logger.info("\n--- Model: %s (%s) ---", model_name, model_id)
@@ -348,6 +367,8 @@ def run_e1(
                     viols = row["total_violations"]
                     ms = row["latency_ms"]
                     logger.info("  → %s | %d violations | %dms", status, viols, ms)
+                    if sleep and provider != "mock":
+                        time.sleep(sleep)
 
     return results
 
@@ -648,12 +669,38 @@ def main() -> int:
     ap.add_argument("--output", type=str, default=None,
                     help="Output directory (default: results/<experiment>)")
     ap.add_argument("--provider", type=str, default="ollama",
-                    choices=["ollama", "mock"],
+                    choices=["ollama", "mock", "idun"],
                     help="LLM provider (default: ollama). 'mock' uses a "
-                         "deterministic offline client for smoke testing.")
+                         "deterministic offline client for smoke testing. "
+                         "'idun' targets the NTNU Idun OpenAI-compatible "
+                         "gateway (needs IDUN_API_KEY/IDUN_BASE_URL and "
+                         "NTNU network/VPN).")
+    ap.add_argument("--models", type=str, default=None,
+                    help="Comma-separated explicit model ids overriding "
+                         "the per-provider default table (E1 only). Each "
+                         "id is used verbatim as the CSV 'model' value. "
+                         "Example: --models 'openai/gpt-oss-120b,"
+                         "zai-org/GLM-4.7-FP8'.")
+    ap.add_argument("--max-tokens", type=int, default=4096,
+                    help="Max output tokens per generation (E1 only; "
+                         "default: 4096). Frontier reasoning models (GLM, "
+                         "gpt-oss) need a larger budget (e.g. 8192) so "
+                         "reasoning is not truncated into empty/invalid "
+                         "output.")
     ap.add_argument("--mock-seed", type=int, default=42,
                     help="Seed for MockLLMClient template rotation "
                          "(only used when --provider=mock; default: 42).")
+    ap.add_argument("--sleep", type=float, default=0.0,
+                    help="Seconds to sleep between live calls (E1 only; "
+                         "default: 0.0 = no delay). Use e.g. 6 for the "
+                         "Idun gateway to stay under 20 RPM / 60k TPM. "
+                         "Ignored for --provider=mock.")
+    ap.add_argument("--timeout", type=float, default=300.0,
+                    help="Per-request HTTP timeout in seconds (E1 + idun "
+                         "only; default: 300). Idun reasoning models "
+                         "(e.g. GLM) can take 60-120s on complex tasks; "
+                         "use e.g. 600 so a slow generation is not cut "
+                         "into a timeout error.")
 
     args = ap.parse_args()
     experiment = args.experiment
@@ -663,10 +710,14 @@ def main() -> int:
     logger.info("Experiment: %s", experiment)
     logger.info("Output: %s", output_dir)
 
-    # Check Ollama (live provider only)
+    # Provider banner
     if args.provider == "ollama":
         ollama_host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
         logger.info("Ollama host: %s", ollama_host)
+    elif args.provider == "idun":
+        idun_base = os.environ.get("IDUN_BASE_URL", "(factory default)")
+        logger.info("Provider: idun (online gateway: %s, max_tokens=%d)",
+                    idun_base, args.max_tokens)
     else:
         logger.info("Provider: %s (offline, seed=%d)",
                     args.provider, args.mock_seed)
@@ -681,12 +732,20 @@ def main() -> int:
     start = time.time()
 
     if experiment == "E1":
+        models_override = (
+            [m.strip() for m in args.models.split(",") if m.strip()]
+            if args.models else None
+        )
         results = run_e1(
             tasks,
             reps=args.reps,
             output_dir=output_dir,
             provider=args.provider,
             mock_seed=args.mock_seed,
+            max_tokens=args.max_tokens,
+            models=models_override,
+            sleep=args.sleep,
+            timeout=args.timeout,
         )
     elif experiment == "E2":
         results = run_e2(

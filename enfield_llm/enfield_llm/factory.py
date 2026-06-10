@@ -82,6 +82,7 @@ def create_client(
     log_dir: Optional[Path] = None,
     temperature: float = 0.0,
     max_tokens: int = 4096,
+    timeout: float = 300.0,
     seed: Optional[int] = None,
 ) -> LLMClient:
     """Create an LLM client for the given provider.
@@ -178,7 +179,8 @@ def create_client(
         model = model or DEFAULT_MODELS["idun"]
         return OpenAICompatibleClient(
             api_key=api_key, model=model,
-            base_url=base_url, provider="idun", **kwargs,
+            base_url=base_url, provider="idun",
+            timeout=timeout, **kwargs,
         )
 
     raise ValueError(
