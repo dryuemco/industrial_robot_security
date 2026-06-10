@@ -444,13 +444,18 @@ def run_e3(
     output_dir: Path,
     provider: str = "ollama",
     mock_seed: Optional[int] = None,
+    max_tokens: int = 4096,
+    models: Optional[list[str]] = None,
+    sleep: float = 0.0,
+    timeout: float = 300.0,
 ) -> list[dict]:
     """E3: Watchdog-in-loop — 3 LLMs × N tasks × R reps with feedback retry."""
     logger.info("=" * 60)
     logger.info("EXPERIMENT E3: Watchdog-in-loop")
+    model_table = _models_for_provider(provider, models)
     logger.info("Models: %d | Tasks: %d | Reps: %d | Max retries: %d",
-                len(_models_for_provider(provider)), len(tasks), reps, max_retries)
-    total_calls = len(_models_for_provider(provider)) * len(tasks) * reps
+                len(model_table), len(tasks), reps, max_retries)
+    total_calls = len(model_table) * len(tasks) * reps
     logger.info("Initial calls: %d (+ retries)", total_calls)
     logger.info("=" * 60)
 
@@ -461,11 +466,13 @@ def run_e3(
     results = []
     call_num = 0
 
-    for model_name, model_id in _models_for_provider(provider).items():
+    for model_name, model_id in model_table.items():
         client = create_client(
             provider,
             model=model_id,
             log_dir=output_dir / "logs",
+            max_tokens=max_tokens,
+            timeout=timeout,
             seed=mock_seed,
         )
         logger.info("\n--- Model: %s (%s) ---", model_name, model_id)
@@ -488,6 +495,8 @@ def run_e3(
                 results.append(row)
                 logger.info("  → retry=0 | %s | %d violations",
                             row["status"], row["total_violations"])
+                if sleep and provider != "mock":
+                    time.sleep(sleep)
 
                 # Feedback loop
                 for retry_num in range(1, max_retries + 1):
@@ -508,6 +517,8 @@ def run_e3(
                     results.append(row)
                     logger.info("  → retry=%d | %s | %d violations",
                                 retry_num, row["status"], row["total_violations"])
+                    if sleep and provider != "mock":
+                        time.sleep(sleep)
 
     return results
 
@@ -731,11 +742,12 @@ def main() -> int:
     # Run experiment
     start = time.time()
 
+    models_override = (
+        [m.strip() for m in args.models.split(",") if m.strip()]
+        if args.models else None
+    )
+
     if experiment == "E1":
-        models_override = (
-            [m.strip() for m in args.models.split(",") if m.strip()]
-            if args.models else None
-        )
         results = run_e1(
             tasks,
             reps=args.reps,
@@ -762,6 +774,10 @@ def main() -> int:
             output_dir=output_dir,
             provider=args.provider,
             mock_seed=args.mock_seed,
+            max_tokens=args.max_tokens,
+            models=models_override,
+            sleep=args.sleep,
+            timeout=args.timeout,
         )
     else:
         logger.error("Unknown experiment: %s", experiment)

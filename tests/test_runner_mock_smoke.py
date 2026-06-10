@@ -508,3 +508,73 @@ class TestSummaryJSON:
         # mean_violations and violation_rate are conditioned on success
         assert stats["mean_violations"] == 3.0
         assert stats["violation_rate"] == 1.0
+
+
+class TestRunE3IdunParity:
+    """Coverage for the E3 idun-parity parameters (mirrored from E1):
+    models override, max_tokens, sleep, timeout. All four default to
+    the pre-patch behaviour, so the seven pre-existing E3 tests above
+    double as a no-regression net; these tests pin the new paths."""
+
+    def test_models_override_flows_to_model_column(self, two_tasks, output_dir):
+        """The --models override must land verbatim in the CSV 'model'
+        column via model_table, and no default-table model may leak in.
+        This is the same contract the E1 frontier spot-check relied on."""
+        override = ["org/frontier-model-a", "org/frontier-model-b"]
+        results = runner.run_e3(
+            tasks=two_tasks, reps=1, max_retries=1,
+            output_dir=output_dir, provider="mock", mock_seed=42,
+            models=override,
+        )
+        seen = {row["model"] for row in results}
+        assert seen == set(override), (
+            f"model column {seen} != override set {set(override)}"
+        )
+        # Two models doubles the initial-call count: 2 * 2 tasks * 1 rep.
+        initial = [r for r in results if r["retry"] == 0]
+        assert len(initial) == 4, (
+            f"expected 4 initial calls with 2-model override, got {len(initial)}"
+        )
+
+    def test_parity_kwargs_accepted_and_mock_skips_sleep(
+        self, two_tasks, output_dir
+    ):
+        """max_tokens/sleep/timeout must be accepted on the E3 path and
+        must not change results under mock. sleep is guarded by
+        provider != 'mock', so even sleep=5.0 must not slow the run:
+        a 4-call mock run sleeping 5s/call would take >20s; assert the
+        wall clock stays far below that."""
+        import time as _time
+
+        t0 = _time.monotonic()
+        results = runner.run_e3(
+            tasks=two_tasks, reps=2, max_retries=2,
+            output_dir=output_dir, provider="mock", mock_seed=42,
+            max_tokens=8192, sleep=5.0, timeout=600.0,
+        )
+        elapsed = _time.monotonic() - t0
+        assert elapsed < 10.0, (
+            f"mock E3 took {elapsed:.1f}s; sleep guard for mock provider broken?"
+        )
+        assert 4 <= len(results) <= 12
+
+    def test_parity_kwargs_do_not_change_results(self, two_tasks, output_dir):
+        """With identical seed, results must be byte-equal whether the
+        parity kwargs are left at defaults or set explicitly: the new
+        parameters affect transport behaviour only, never content."""
+        r_default = runner.run_e3(
+            tasks=two_tasks, reps=2, max_retries=2,
+            output_dir=output_dir, provider="mock", mock_seed=42,
+        )
+        r_explicit = runner.run_e3(
+            tasks=two_tasks, reps=2, max_retries=2,
+            output_dir=output_dir, provider="mock", mock_seed=42,
+            max_tokens=8192, sleep=0.0, timeout=600.0,
+        )
+        stable = [
+            "experiment", "model", "task_id", "condition", "rep", "retry",
+            "status", "refusal", "total_violations", "violation_types",
+        ]
+        a = [{k: row[k] for k in stable} for row in r_default]
+        b = [{k: row[k] for k in stable} for row in r_explicit]
+        assert a == b, "parity kwargs changed mock E3 content"
