@@ -1,0 +1,82 @@
+{
+  "experiment": "E3_rich_feedback_probe",
+  "status": "exploratory_not_preregistered",
+  "description": "Kademe-1 single-arm rich-feedback probe: deterministic static-rich watchdog feedback (rule definitions + offending lines + expected-fix template, no critic-LLM) vs the minimal-feedback confirmatory/frontier E3 protocol. Tests whether STELP-level feedback richness transfers to safety-semantic violations.",
+  "provenance": {
+    "runner_commit": "54049f4",
+    "runner_flag": "--feedback-mode rich",
+    "provider": "idun",
+    "model": "openai/gpt-oss-120b",
+    "tasks": 15,
+    "reps": 1,
+    "max_retries": 3,
+    "temperature": 0.0,
+    "raw_data_location": "results/E3_rich_probe/ and results/E3_rich_mini/ (gitignored)",
+    "tarball": {
+      "name": "enfield_E3_rich_probe_S32_20260610.tar.gz",
+      "sha256": "8785a3193d1055ecf8e56df92ed183abe14e6de5c32de30459aca94e305bf0f9",
+      "storage": "Google Drive"
+    },
+    "classifier": "scripts/e3_trajectory_analysis.py"
+  },
+  "runs": {
+    "mini": {
+      "purpose": "pre-flight smoke (T001-T002) before full probe",
+      "runner_summary": {
+        "timestamp": "2026-06-10T15:47:58.493981+00:00",
+        "total_calls": 8,
+        "successful": 8,
+        "errors": 0,
+        "refusals": 0,
+        "gate_pass_rate": 1.0,
+        "invalid_pseudocode_calls": 0,
+        "mean_violations": 3.75,
+        "violation_rate": 1.0,
+        "mean_latency_ms": 6422
+      },
+      "trajectory_classes": {
+        "cells": 2,
+        "unique_trajectories": 2,
+        "retry_calls_total": 6,
+        "mean_retries_used": 3.0,
+        "remediated_to_zero": 0,
+        "clean_first_try": 0,
+        "oscillation_or_mixed": 1,
+        "monotone_decrease_nonzero": 1
+      },
+      "wall_clock": "2026-06-10 15:46:24 -> 15:47:52 (0:01:27.755594)"
+    },
+    "probe": {
+      "purpose": "full single-arm probe, 15 tasks",
+      "runner_summary": {
+        "timestamp": "2026-06-10T16:04:33.263907+00:00",
+        "total_calls": 59,
+        "successful": 59,
+        "errors": 0,
+        "refusals": 0,
+        "gate_pass_rate": 1.0,
+        "invalid_pseudocode_calls": 0,
+        "mean_violations": 4.92,
+        "violation_rate": 0.983,
+        "mean_latency_ms": 7459
+      },
+      "trajectory_classes": {
+        "cells": 15,
+        "unique_trajectories": 15,
+        "retry_calls_total": 44,
+        "mean_retries_used": 2.93,
+        "remediated_to_zero": 1,
+        "clean_first_try": 0,
+        "oscillation_or_mixed": 13,
+        "monotone_decrease_nonzero": 1
+      },
+      "wall_clock": "2026-06-10 15:51:24 -> 16:04:27 (0:13:03.196621)"
+    }
+  },
+  "interpretation": {
+    "headline": "remediated_to_zero 1/15; the single pass (T008: 11->6->0, has_motion=True) is a checker artefact: zero reached via Lua-style pcall(...) wrappers + if/then conditionals that are not URScript (Sec. VI.L pre-execution class, Sec. VI.M hallucinated-API pattern).",
+    "verdict": "satisfies the checker, not the language",
+    "contrast_vs_minimal_feedback": "monotone_increase 4/15 -> 0/15; per-call mean violations 5.0 -> 4.9; SM-2 present in 14/15 final programs. Feedback richness is sensitivity-transferring at the margin, but the margin itself is a checker artefact; no remediation.",
+    "paper_section": "Sec. VI.N (repair-loop dynamics across scale)"
+  }
+}
