@@ -61,9 +61,9 @@ Before running any experiment, confirm the regression suite is green:
 ./scripts/run_tests.sh --fast
 ```
 
-Expected: `788 tests in ~5s ... ALL TESTS PASSED` across six packages (`enfield_tasks` 169, `enfield_attacks` 149, `enfield_translators` 81, `enfield_watchdog_static` 114, `enfield_llm` 95, `experiment_runner` 180). A red test gate blocks any confirmatory run.
+Expected: `796 tests in ~5s ... ALL TESTS PASSED` across six packages (`enfield_tasks` 169, `enfield_attacks` 149, `enfield_translators` 81, `enfield_watchdog_static` 114, `enfield_llm` 95, `experiment_runner` 188). A red test gate blocks any confirmatory run.
 
-**Verification log.** Replicated on a fresh clone on 2026-05-15 (HEAD `c02b81f`): 788/788 tests passed in 4 seconds across all six packages. No environment-specific drift observed.
+**Verification log.** Replicated on a fresh clone on 2026-05-15 (HEAD `c02b81f`): 788/788 tests passed in 4 seconds across all six packages. No environment-specific drift observed. Re-verified on a fresh clone on 2026-06-11 (HEAD `cf4f030`, post-S36): 796/796 tests passed in 11 seconds across all six packages on a containerized Ubuntu 24 environment.
 
 ---
 
