@@ -40,6 +40,7 @@ import logging
 import os
 import sys
 import time
+from functools import lru_cache
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
@@ -51,7 +52,12 @@ sys.path.insert(0, str(REPO_DIR / "enfield_tasks"))
 sys.path.insert(0, str(REPO_DIR / "enfield_watchdog_static"))
 
 from enfield_llm.factory import create_client, EXPERIMENT_MODELS
-from enfield_llm.prompt_builder import PromptBuilder, PromptMode, AdversarialType
+from enfield_llm.prompt_builder import (
+    PromptBuilder,
+    PromptMode,
+    AdversarialType,
+    EditMode,
+)
 from enfield_llm.code_parser import CodeParser
 from enfield_llm.base_client import ResponseStatus
 from enfield_watchdog_static.watchdog import StaticWatchdog
@@ -267,6 +273,40 @@ def load_tasks(task_filter: str | None = None) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
+# E4-T (exploratory): validated-safe template loader
+# ---------------------------------------------------------------------------
+# Templates are the canonical IR->URScript translator outputs (zero static
+# violations by construction). The manifest maps each task_id to its .script
+# file. Loaded read-only and embedded verbatim into the editing prompt; the
+# runner never rewrites a template.
+
+_URSCRIPT_DIR = REPO_DIR / "enfield_translators" / "generated" / "urscript"
+
+
+@lru_cache(maxsize=None)
+def _template_index() -> dict[str, str]:
+    """Return {task_id: output_filename} from the URScript manifest."""
+    manifest_path = _URSCRIPT_DIR / "manifest.json"
+    with manifest_path.open(encoding="utf-8") as f:
+        entries = json.load(f)
+    return {e["task_id"]: e["output"] for e in entries}
+
+
+def load_template(task_id: str) -> str:
+    """Load the validated-safe URScript template for a task.
+
+    Raises:
+        KeyError: task_id absent from the manifest.
+        FileNotFoundError: manifest entry present but .script missing.
+    """
+    index = _template_index()
+    if task_id not in index:
+        raise KeyError(f"no URScript template for task {task_id!r}")
+    script_path = _URSCRIPT_DIR / index[task_id]
+    return script_path.read_text(encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
 # Single call
 # ---------------------------------------------------------------------------
 
@@ -284,6 +324,8 @@ def run_single_call(
     retry: int = 0,
     feedback: str | None = None,
     capture_violations: bool = False,
+    edit_mode: EditMode | None = None,
+    template: str | None = None,
 ) -> dict[str, Any]:
     """Execute one LLM call and analyze the result."""
     task_id = task_ir["task"]["id"]
@@ -291,7 +333,15 @@ def run_single_call(
     op_mode = task_ir["task"].get("operating_mode", "")
 
     # Build prompt
-    if feedback:
+    if edit_mode is not None:
+        # E4-T editing condition: revise a validated-safe template.
+        if template is None:
+            raise ValueError("template required when edit_mode is set")
+        system_prompt, user_prompt = builder.build_edit(
+            task_ir, template, edit_mode
+        )
+        condition = edit_mode.value
+    elif feedback:
         system_prompt, user_prompt = builder.build(
             task_ir, mode=mode, adversarial_type=adv_type
         )
@@ -301,11 +351,12 @@ def run_single_call(
             task_ir, mode=mode, adversarial_type=adv_type
         )
 
-    # Condition label
-    if mode == PromptMode.ADVERSARIAL and adv_type:
-        condition = f"adversarial_{adv_type.value}"
-    else:
-        condition = mode.value
+    # Condition label (generation modes; edit modes label themselves above)
+    if edit_mode is None:
+        if mode == PromptMode.ADVERSARIAL and adv_type:
+            condition = f"adversarial_{adv_type.value}"
+        else:
+            condition = mode.value
 
     # Call LLM
     response = client.generate(system_prompt, user_prompt)
@@ -648,6 +699,108 @@ def run_e3(
 
 
 # ---------------------------------------------------------------------------
+# E4-T (exploratory): template-editing probe
+# ---------------------------------------------------------------------------
+
+def run_e4(
+    tasks: list[dict],
+    reps: int,
+    output_dir: Path,
+    provider: str = "idun",
+    mock_seed: Optional[int] = None,
+    max_tokens: int = 4096,
+    models: Optional[list[str]] = None,
+    sleep: float = 0.0,
+    timeout: float = 300.0,
+) -> list[dict]:
+    """E4-T: template-editing probe (exploratory, not preregistered).
+
+    N models x N tasks x 4 conditions x R reps. Conditions:
+      A            = task-only control, no template (generation BASELINE).
+      B-lazy       = template + minimal "improve" instruction.
+      B-descriptive= template + detailed edit instruction (no safety reminder).
+      B-perf       = template + benign cycle-time request.
+
+    Each B-* condition supplies the validated-safe URScript template for the
+    task; the dependent variable is violations introduced during editing. No
+    cross-comparison with E1-E3 is made (different deployment). See
+    docs/E4T_framing.md for the pre-registered framing.
+    """
+    model_table = _models_for_provider(provider, models)
+    logger.info("=" * 60)
+    logger.info("EXPERIMENT E4-T: Template-editing probe (exploratory)")
+    logger.info("Models: %d | Tasks: %d | Conditions: 4 | Reps: %d",
+                len(model_table), len(tasks), reps)
+    total_calls = len(model_table) * len(tasks) * 4 * reps
+    logger.info("Total calls: %d", total_calls)
+    logger.info("=" * 60)
+
+    code_dir = output_dir / "code"
+    builder = PromptBuilder()
+    parser = CodeParser()
+    watchdog = StaticWatchdog()
+    results = []
+    call_num = 0
+
+    # (label, edit_mode). A uses edit_mode=None -> generation BASELINE.
+    conditions: list[tuple[str, EditMode | None]] = [
+        ("A_control", None),
+        ("B_lazy", EditMode.LAZY),
+        ("B_descriptive", EditMode.DESCRIPTIVE),
+        ("B_perf", EditMode.PERF),
+    ]
+
+    for model_name, model_id in model_table.items():
+        client = create_client(
+            provider,
+            model=model_id,
+            log_dir=output_dir / "logs",
+            max_tokens=max_tokens,
+            timeout=timeout,
+            seed=mock_seed,
+        )
+        logger.info("\n--- Model: %s (%s) ---", model_name, model_id)
+
+        for task_ir in tasks:
+            task_id = task_ir["task"]["id"]
+            template = load_template(task_id)
+
+            for label, edit_mode in conditions:
+                for rep in range(1, reps + 1):
+                    call_num += 1
+                    logger.info("[%d/%d] %s | %s | %s | rep=%d",
+                                call_num, total_calls,
+                                model_id, task_id, label, rep)
+
+                    row = run_single_call(
+                        client, builder, parser, watchdog,
+                        task_ir,
+                        PromptMode.BASELINE,  # only used when edit_mode is None
+                        None,
+                        code_dir,
+                        experiment="E4",
+                        rep=rep,
+                        edit_mode=edit_mode,
+                        template=(None if edit_mode is None else template),
+                    )
+                    # Consistent E4 condition labels (A_control vs B_*),
+                    # distinguishing the editing control from a real E1
+                    # baseline row.
+                    row["condition"] = label
+                    results.append(row)
+
+                    status = row["status"]
+                    viols = row["total_violations"]
+                    ms = row["latency_ms"]
+                    logger.info("  → %s | %d violations | %dms",
+                                status, viols, ms)
+                    if sleep and provider != "mock":
+                        time.sleep(sleep)
+
+    return results
+
+
+# ---------------------------------------------------------------------------
 # Output
 # ---------------------------------------------------------------------------
 
@@ -793,8 +946,9 @@ def main() -> int:
         description="ENFIELD LLM Experiment Runner (E1/E2/E3)",
     )
     ap.add_argument("--experiment", type=str, required=True,
-                    choices=["E1", "E2", "E3"],
-                    help="Experiment to run")
+                    choices=["E1", "E2", "E3", "E4"],
+                    help="Experiment to run (E4 = exploratory "
+                         "template-editing probe)")
     ap.add_argument("--tasks", type=str, default=None,
                     help="Task filter: T001-T005 or T001,T003 (default: all 15)")
     ap.add_argument("--reps", type=int, default=3,
@@ -904,6 +1058,18 @@ def main() -> int:
             reps=args.reps,
             max_retries=args.max_retries,
             feedback_mode=args.feedback_mode,
+            output_dir=output_dir,
+            provider=args.provider,
+            mock_seed=args.mock_seed,
+            max_tokens=args.max_tokens,
+            models=models_override,
+            sleep=args.sleep,
+            timeout=args.timeout,
+        )
+    elif experiment == "E4":
+        results = run_e4(
+            tasks,
+            reps=args.reps,
             output_dir=output_dir,
             provider=args.provider,
             mock_seed=args.mock_seed,

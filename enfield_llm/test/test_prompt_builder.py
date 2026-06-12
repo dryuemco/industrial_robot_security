@@ -153,3 +153,88 @@ class TestAdversarialPrompts:
     def test_get_all_adversarial_types(self, builder):
         types = builder.get_all_adversarial_types()
         assert len(types) == 7
+
+
+# Sample validated-safe URScript template (abbreviated T001-style baseline)
+SAMPLE_TEMPLATE = """\
+# Task: T001 — Simple collaborative pick-place
+# Max TCP speed: 0.250 m/s
+def task_T001():
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+  movel(p[0.400000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.2000, r=0.0100)
+  set_digital_out(0, True)
+end
+task_T001()
+"""
+
+
+class TestBuildEdit:
+    """Tests for the template-editing path (E4-T conditions)."""
+
+    def test_edit_mode_has_three_members(self):
+        from enfield_llm.prompt_builder import EditMode
+        assert len(list(EditMode)) == 3
+
+    def test_uses_edit_system_prompt(self, builder):
+        from enfield_llm.prompt_builder import EditMode, SYSTEM_PROMPT_EDIT
+        system, _ = builder.build_edit(SAMPLE_TASK_IR, SAMPLE_TEMPLATE,
+                                       EditMode.LAZY)
+        assert system == SYSTEM_PROMPT_EDIT
+
+    def test_edit_system_differs_from_generation(self, builder):
+        from enfield_llm.prompt_builder import EditMode
+        edit_system, _ = builder.build_edit(SAMPLE_TASK_IR, SAMPLE_TEMPLATE,
+                                            EditMode.LAZY)
+        gen_system, _ = builder.build(SAMPLE_TASK_IR, PromptMode.BASELINE)
+        assert edit_system != gen_system
+
+    def test_template_embedded_verbatim(self, builder):
+        from enfield_llm.prompt_builder import EditMode
+        for mode in EditMode:
+            _, user = builder.build_edit(SAMPLE_TASK_IR, SAMPLE_TEMPLATE, mode)
+            # Every non-empty source line must survive unmodified.
+            for line in SAMPLE_TEMPLATE.strip().splitlines():
+                assert line in user, f"{mode}: lost line {line!r}"
+
+    def test_code_fence_markers_intact(self, builder):
+        from enfield_llm.prompt_builder import EditMode
+        _, user = builder.build_edit(SAMPLE_TASK_IR, SAMPLE_TEMPLATE,
+                                     EditMode.PERF)
+        assert "```urscript" in user
+        assert user.rstrip().endswith("```")
+
+    def test_each_mode_includes_its_instruction(self, builder):
+        from enfield_llm.prompt_builder import EditMode, EDIT_INSTRUCTIONS
+        for mode in EditMode:
+            _, user = builder.build_edit(SAMPLE_TASK_IR, SAMPLE_TEMPLATE, mode)
+            assert EDIT_INSTRUCTIONS[mode].strip() in user
+
+    def test_modes_produce_distinct_prompts(self, builder):
+        from enfield_llm.prompt_builder import EditMode
+        prompts = {
+            mode: builder.build_edit(SAMPLE_TASK_IR, SAMPLE_TEMPLATE, mode)[1]
+            for mode in EditMode
+        }
+        assert len(set(prompts.values())) == 3
+
+    def test_perf_is_benign_no_exceed_language(self, builder):
+        """B-perf must not instruct the model to exceed any limit."""
+        from enfield_llm.prompt_builder import EditMode, EDIT_INSTRUCTIONS
+        perf = EDIT_INSTRUCTIONS[EditMode.PERF].lower()
+        for forbidden in ("exceed", "maximum speed", "highest speed",
+                          "ignore", "remove safety", "as fast as possible"):
+            assert forbidden not in perf
+
+    def test_empty_template_raises(self, builder):
+        from enfield_llm.prompt_builder import EditMode
+        with pytest.raises(ValueError):
+            builder.build_edit(SAMPLE_TASK_IR, "   ", EditMode.LAZY)
+
+    def test_generation_path_unaffected(self, builder):
+        """build() BASELINE must still work after adding build_edit."""
+        system, user = builder.build(SAMPLE_TASK_IR, PromptMode.BASELINE)
+        assert system == SYSTEM_PROMPT_BASELINE
+        assert len(user) > 0

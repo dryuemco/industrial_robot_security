@@ -657,3 +657,87 @@ class TestFeedbackModes:
         a = [{k: row[k] for k in stable} for row in r_default]
         b = [{k: row[k] for k in stable} for row in r_minimal]
         assert a == b, "explicit minimal feedback_mode changed mock E3 content"
+
+
+class TestE4MockSmoke:
+    """Smoke coverage for run_e4() — the exploratory template-editing
+    probe. Exercises the build_edit() branch, template loading, watchdog
+    scoring, and CSV-schema export under the offline mock client, so the
+    four hidden-bug class of failures cannot reach a frontier run."""
+
+    def test_run_e4_returns_nonempty_result_list(self, two_tasks, output_dir):
+        results = runner.run_e4(
+            tasks=two_tasks,
+            reps=1,
+            output_dir=output_dir,
+            provider="mock",
+            mock_seed=42,
+        )
+        assert isinstance(results, list)
+        # 1 mock model * 2 tasks * 4 conditions * 1 rep
+        assert len(results) == 8
+
+    def test_run_e4_rows_have_required_schema(self, two_tasks, output_dir):
+        results = runner.run_e4(
+            tasks=two_tasks, reps=1, output_dir=output_dir,
+            provider="mock", mock_seed=42,
+        )
+        for row in results:
+            missing = REQUIRED_COLUMNS - row.keys()
+            assert not missing, f"row missing columns: {missing}"
+
+    def test_run_e4_emits_all_four_conditions(self, two_tasks, output_dir):
+        results = runner.run_e4(
+            tasks=two_tasks, reps=1, output_dir=output_dir,
+            provider="mock", mock_seed=42,
+        )
+        conditions = {row["condition"] for row in results}
+        assert conditions == {
+            "A_control", "B_lazy", "B_descriptive", "B_perf"
+        }
+
+    def test_run_e4_experiment_tag(self, two_tasks, output_dir):
+        results = runner.run_e4(
+            tasks=two_tasks, reps=1, output_dir=output_dir,
+            provider="mock", mock_seed=42,
+        )
+        assert all(row["experiment"] == "E4" for row in results)
+
+    def test_run_e4_status_values_are_expected(self, two_tasks, output_dir):
+        results = runner.run_e4(
+            tasks=two_tasks, reps=1, output_dir=output_dir,
+            provider="mock", mock_seed=42,
+        )
+        allowed = {
+            "success", "refusal", "parse_failure",
+            "invalid_pseudocode", "error",
+        }
+        for row in results:
+            assert row["status"] in allowed, f"unexpected status {row['status']}"
+
+    def test_run_e4_is_deterministic_across_runs(self, two_tasks, output_dir):
+        r1 = runner.run_e4(
+            tasks=two_tasks, reps=1, output_dir=output_dir / "a",
+            provider="mock", mock_seed=42,
+        )
+        r2 = runner.run_e4(
+            tasks=two_tasks, reps=1, output_dir=output_dir / "b",
+            provider="mock", mock_seed=42,
+        )
+        stable = [
+            "experiment", "model", "task_id", "condition", "rep",
+            "status", "refusal", "total_violations", "violation_types",
+        ]
+        a = [{k: row[k] for k in stable} for row in r1]
+        b = [{k: row[k] for k in stable} for row in r2]
+        assert a == b, "mock E4 content changed across identical runs"
+
+    def test_load_template_returns_safe_baseline(self):
+        """Template loader must return non-empty URScript for every task."""
+        for tid in ("T001", "T008", "T015"):
+            tpl = runner.load_template(tid)
+            assert "def task_" in tpl and len(tpl) > 0
+
+    def test_load_template_unknown_task_raises(self):
+        with pytest.raises(KeyError):
+            runner.load_template("T999")
