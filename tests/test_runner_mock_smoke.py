@@ -741,3 +741,76 @@ class TestE4MockSmoke:
     def test_load_template_unknown_task_raises(self):
         with pytest.raises(KeyError):
             runner.load_template("T999")
+
+
+class TestE5MockSmoke:
+    """Smoke coverage for run_e5() — the safety-representation fragility probe.
+    Exercises template-variant generation, the B-perf editing branch, the
+    preservation analyzer, and CSV export of the extra E5 columns under the
+    offline mock client."""
+
+    def test_run_e5_returns_expected_count(self, two_tasks, output_dir):
+        results = runner.run_e5(
+            tasks=two_tasks, reps=1, output_dir=output_dir,
+            provider="mock", mock_seed=42,
+        )
+        # 1 mock model * 2 tasks * 4 representations * 1 rep
+        assert len(results) == 8
+
+    def test_run_e5_emits_four_representations(self, two_tasks, output_dir):
+        results = runner.run_e5(
+            tasks=two_tasks, reps=1, output_dir=output_dir,
+            provider="mock", mock_seed=42,
+        )
+        reps = {r["representation"] for r in results}
+        assert reps == {"R1_implicit", "R2_comment", "R3_named", "R4_guard"}
+
+    def test_run_e5_has_preservation_columns(self, two_tasks, output_dir):
+        results = runner.run_e5(
+            tasks=two_tasks, reps=1, output_dir=output_dir,
+            provider="mock", mock_seed=42,
+        )
+        for r in results:
+            for col in ("tcp_safe", "mechanism_survived", "effective_max_tcp",
+                        "max_movej_joint", "tcp_cap", "representation"):
+                assert col in r, f"missing E5 column {col}"
+
+    def test_run_e5_experiment_tag(self, two_tasks, output_dir):
+        results = runner.run_e5(
+            tasks=two_tasks, reps=1, output_dir=output_dir,
+            provider="mock", mock_seed=42,
+        )
+        assert all(r["experiment"] == "E5" for r in results)
+
+    def test_run_e5_tcp_safe_only_on_success(self, two_tasks, output_dir):
+        results = runner.run_e5(
+            tasks=two_tasks, reps=1, output_dir=output_dir,
+            provider="mock", mock_seed=42,
+        )
+        for r in results:
+            if r["status"] != "success":
+                assert r["tcp_safe"] is None
+            else:
+                assert r["tcp_safe"] in (True, False)
+
+    def test_run_e5_csv_writes_extra_columns(self, two_tasks, output_dir):
+        import csv
+        results = runner.run_e5(
+            tasks=two_tasks, reps=1, output_dir=output_dir,
+            provider="mock", mock_seed=42,
+        )
+        runner.write_results(results, output_dir, "E5")
+        with open(output_dir / "e5_results.csv") as f:
+            header = next(csv.reader(f))
+        for col in ("tcp_safe", "representation", "mechanism_survived"):
+            assert col in header
+
+    def test_run_e5_is_deterministic(self, two_tasks, output_dir):
+        a = runner.run_e5(tasks=two_tasks, reps=1, output_dir=output_dir / "a",
+                          provider="mock", mock_seed=42)
+        b = runner.run_e5(tasks=two_tasks, reps=1, output_dir=output_dir / "b",
+                          provider="mock", mock_seed=42)
+        keys = ["task_id", "representation", "status", "tcp_safe",
+                "mechanism_survived", "effective_max_tcp"]
+        assert [{k: r[k] for k in keys} for r in a] == \
+               [{k: r[k] for k in keys} for r in b]

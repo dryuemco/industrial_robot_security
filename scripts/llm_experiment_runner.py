@@ -326,6 +326,7 @@ def run_single_call(
     capture_violations: bool = False,
     edit_mode: EditMode | None = None,
     template: str | None = None,
+    attach_code: bool = False,
 ) -> dict[str, Any]:
     """Execute one LLM call and analyze the result."""
     task_id = task_ir["task"]["id"]
@@ -464,6 +465,8 @@ def run_single_call(
         row["_violation_details"] = [
             v.to_dict() for v in combined_report.violations
         ]
+    if attach_code:
+        row["_generated_code"] = parse_result.code
     return row
 
 
@@ -801,6 +804,120 @@ def run_e4(
 
 
 # ---------------------------------------------------------------------------
+# E5 (exploratory): safety-representation fragility probe
+# ---------------------------------------------------------------------------
+
+def run_e5(
+    tasks: list[dict],
+    reps: int,
+    output_dir: Path,
+    provider: str = "idun",
+    mock_seed: Optional[int] = None,
+    max_tokens: int = 4096,
+    models: Optional[list[str]] = None,
+    sleep: float = 0.0,
+    timeout: float = 300.0,
+) -> list[dict]:
+    """E5: does the representation form of a safety constraint govern its
+    survival under a benign performance-framed edit?
+
+    For each task, the validated-safe baseline's TCP-speed cap is re-encoded in
+    four representational forms (R1 implicit / R2 comment / R3 named constant +
+    clamp / R4 runtime guard), holding behaviour constant. Each variant is then
+    subjected to the B-perf editing request (EditMode.PERF). The dependent
+    variable is preservation of the cap, measured by analyze_preservation
+    against the task's OWN cap, separating Cartesian (movel/movec, m/s) from
+    joint (movej, rad/s) motion -- independent of the aggregate watchdog. The
+    watchdog aggregate is also retained per row for cross-reference.
+
+    No cross-comparison with E1-E4 is made (different deployment / oracle).
+    See docs/E4T_framing.md and the E5 framing note for the pre-registered
+    design and the explicit measurement-only positioning.
+    """
+    from enfield_llm.template_variants import Representation, make_variant, parse_cap
+    import sys as _sys
+    _sd = str(Path(__file__).resolve().parent)
+    if _sd not in _sys.path:
+        _sys.path.insert(0, _sd)
+    import e5_preservation as _e5
+
+    model_table = _models_for_provider(provider, models)
+    logger.info("=" * 60)
+    logger.info("EXPERIMENT E5: Safety-representation fragility (exploratory)")
+    logger.info("Models: %d | Tasks: %d | Representations: 4 | Reps: %d",
+                len(model_table), len(tasks), reps)
+    total_calls = len(model_table) * len(tasks) * 4 * reps
+    logger.info("Total calls: %d", total_calls)
+    logger.info("=" * 60)
+
+    code_dir = output_dir / "code"
+    builder = PromptBuilder()
+    parser = CodeParser()
+    watchdog = StaticWatchdog()
+    results: list[dict] = []
+    call_num = 0
+
+    representations = [r.value for r in Representation]
+
+    for model_name, model_id in model_table.items():
+        client = create_client(
+            provider, model=model_id, log_dir=output_dir / "logs",
+            max_tokens=max_tokens, timeout=timeout, seed=mock_seed,
+        )
+        logger.info("\n--- Model: %s (%s) ---", model_name, model_id)
+
+        for task_ir in tasks:
+            task_id = task_ir["task"]["id"]
+            baseline = load_template(task_id)
+            cap = parse_cap(baseline)
+
+            for repr_name in representations:
+                variant = make_variant(baseline,
+                                       Representation(repr_name), cap)
+                for rep in range(1, reps + 1):
+                    call_num += 1
+                    logger.info("[%d/%d] %s | %s | %s | cap=%.3f | rep=%d",
+                                call_num, total_calls, model_id, task_id,
+                                repr_name, cap, rep)
+
+                    row = run_single_call(
+                        client, builder, parser, watchdog, task_ir,
+                        PromptMode.BASELINE, None, code_dir,
+                        experiment="E5", rep=rep,
+                        edit_mode=EditMode.PERF, template=variant,
+                        attach_code=True,
+                    )
+                    row["condition"] = repr_name
+                    row["representation"] = repr_name
+                    row["tcp_cap"] = cap
+
+                    code = row.pop("_generated_code", "")
+                    if row.get("status") == "success" and code:
+                        pres = _e5.analyze_preservation(code, repr_name, cap)
+                        row["tcp_safe"] = pres.tcp_safe
+                        row["mechanism_survived"] = pres.mechanism_survived
+                        row["effective_max_tcp"] = pres.effective_max_tcp
+                        row["max_movej_joint"] = pres.max_movej_joint
+                        row["cap_const"] = pres.cap_const
+                    else:
+                        row["tcp_safe"] = None
+                        row["mechanism_survived"] = None
+                        row["effective_max_tcp"] = None
+                        row["max_movej_joint"] = None
+                        row["cap_const"] = None
+                    results.append(row)
+
+                    logger.info("  -> %s | tcp_safe=%s mech=%s eff_max=%s | "
+                                "SM=%s", row["status"], row["tcp_safe"],
+                                row["mechanism_survived"],
+                                row["effective_max_tcp"], row.get("sm_violations"))
+                    if sleep and provider != "mock":
+                        time.sleep(sleep)
+
+    return results
+
+
+# ---------------------------------------------------------------------------
 # Output
 # ---------------------------------------------------------------------------
 
@@ -810,11 +927,19 @@ def write_results(results: list[dict], output_dir: Path, experiment: str):
 
     # CSV
     csv_path = output_dir / f"{experiment.lower()}_results.csv"
+    # Base schema plus any extra keys present in rows (e.g. E5 preservation
+    # columns), preserving base order and appending extras deterministically.
+    extra = []
+    for r in results:
+        for k in r.keys():
+            if k not in CSV_FIELDS and k not in extra and not k.startswith("_"):
+                extra.append(k)
+    fieldnames = list(CSV_FIELDS) + extra
     with open(csv_path, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=CSV_FIELDS)
+        writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(results)
-    logger.info("CSV: %s (%d rows)", csv_path, len(results))
+    logger.info("CSV: %s (%d rows, %d cols)", csv_path, len(results), len(fieldnames))
 
     # Summary
     summary = compute_summary(results, experiment)
@@ -946,7 +1071,7 @@ def main() -> int:
         description="ENFIELD LLM Experiment Runner (E1/E2/E3)",
     )
     ap.add_argument("--experiment", type=str, required=True,
-                    choices=["E1", "E2", "E3", "E4"],
+                    choices=["E1", "E2", "E3", "E4", "E5"],
                     help="Experiment to run (E4 = exploratory "
                          "template-editing probe)")
     ap.add_argument("--tasks", type=str, default=None,
@@ -1068,6 +1193,18 @@ def main() -> int:
         )
     elif experiment == "E4":
         results = run_e4(
+            tasks,
+            reps=args.reps,
+            output_dir=output_dir,
+            provider=args.provider,
+            mock_seed=args.mock_seed,
+            max_tokens=args.max_tokens,
+            models=models_override,
+            sleep=args.sleep,
+            timeout=args.timeout,
+        )
+    elif experiment == "E5":
+        results = run_e5(
             tasks,
             reps=args.reps,
             output_dir=output_dir,
