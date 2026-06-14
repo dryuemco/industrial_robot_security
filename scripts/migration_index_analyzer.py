@@ -256,6 +256,62 @@ def nested_monotonicity(records: list[dict]) -> dict[str, Any]:
     return {"available": True, "series": series, "spearman_k_vs_hidden_share": rho}
 
 
+def _channel_index(per_class: dict[str, dict], prefix: str) -> float:
+    """Migration index restricted to one channel (prefix 'A' or 'SM')."""
+    deltas = [v["delta"] for c, v in per_class.items()
+              if c.startswith(prefix) and not np.isnan(v["delta"])]
+    return float(np.mean(deltas)) if deltas else float("nan")
+
+
+def cross_property_analysis(records: list[dict]) -> dict[str, Any]:
+    """Does verifier pressure on one channel displace error into the other?
+
+    Over parseable finals, compares the residual rate of channel Y when channel
+    X is EXPOSED vs HIDDEN. Positive 'X_to_Y' delta => pushing on X displaces
+    error into Y (cross-property migration). Requires safety_classes /
+    security_classes in records and an ablation universe spanning both channels.
+    """
+    finals = [r for r in _finals(records)
+              if r.get("parseable") and "safety_classes" in r
+              and "security_classes" in r]
+    if not finals:
+        return {"available": False, "reason": "no dual-channel final records"}
+    universe: set[str] = set()
+    for r in finals:
+        universe.update(r["ablation_set"])
+    if not (any(c.startswith("A") for c in universe)
+            and any(c.startswith("SM") for c in universe)):
+        return {"available": False, "reason": "ablation universe is single-channel"}
+
+    def _rate(pred, channel_key) -> tuple[float, int]:
+        sel = [r for r in finals if pred(r)]
+        if not sel:
+            return float("nan"), 0
+        return sum(1 for r in sel if r[channel_key]) / len(sel), len(sel)
+
+    saf_hidden = lambda r: any(c.startswith("A") for c in r["hidden"])
+    sec_hidden = lambda r: any(c.startswith("SM") for c in r["hidden"])
+
+    s2s_exp, n1 = _rate(lambda r: not saf_hidden(r), "security_classes")
+    s2s_hid, n2 = _rate(saf_hidden, "security_classes")
+    sec2s_exp, n3 = _rate(lambda r: not sec_hidden(r), "safety_classes")
+    sec2s_hid, n4 = _rate(sec_hidden, "safety_classes")
+
+    return {
+        "available": True,
+        "safety_to_security": {
+            "security_rate_when_safety_exposed": s2s_exp, "n_exposed": n1,
+            "security_rate_when_safety_hidden": s2s_hid, "n_hidden": n2,
+            "delta": (s2s_exp - s2s_hid) if (n1 and n2) else float("nan"),
+        },
+        "security_to_safety": {
+            "safety_rate_when_security_exposed": sec2s_exp, "n_exposed": n3,
+            "safety_rate_when_security_hidden": sec2s_hid, "n_hidden": n4,
+            "delta": (sec2s_exp - sec2s_hid) if (n3 and n4) else float("nan"),
+        },
+    }
+
+
 def analyze(path: Path, n_perm: int = 2000, seed: int = 42) -> dict[str, Any]:
     records = load_records(path)
     classes = _ablation_classes(records)
@@ -269,8 +325,11 @@ def analyze(path: Path, n_perm: int = 2000, seed: int = 42) -> dict[str, Any]:
         "escape_modes": escape_mode_summary(records),
         "per_class_residual": per_class,
         "migration_index": _migration_index(per_class),
+        "migration_index_sound_A": _channel_index(per_class, "A"),
+        "migration_index_unsound_SM": _channel_index(per_class, "SM"),
         "null_test": permutation_null(finals, classes, n_perm=n_perm, seed=seed),
         "nested_monotonicity": nested_monotonicity(records),
+        "cross_property": cross_property_analysis(records),
     }
     return result
 
@@ -297,10 +356,25 @@ def _fmt(result: dict[str, Any]) -> str:
     mi = result["migration_index"]
     nt = result["null_test"]
     L.append(f"-- migration index = {mi:.4f}  (mean_r [P(viol|hidden) - P(viol|exposed)]) --")
+    L.append(f"   sound channel (A)  = {result['migration_index_sound_A']!s:8.8}"
+             f"   unsound channel (SM) = {result['migration_index_unsound_SM']!s:8.8}")
     L.append(f"   null: mean={nt.get('null_mean', float('nan')):.4f}"
              f"  z={nt.get('z', float('nan'))!s:7.7}"
              f"  p(one-sided, H1: index>0)={nt.get('p_value', float('nan'))!s:7.7}"
              f"  [{nt.get('n_perm_valid', 0)} valid perms]")
+    cp = result["cross_property"]
+    if cp.get("available"):
+        s2s = cp["safety_to_security"]
+        sec2s = cp["security_to_safety"]
+        L.append("-- cross-property migration (does pressure on one channel push to the other?) --")
+        L.append(f"   safety->security: P(sec viol| safety exposed)={s2s['security_rate_when_safety_exposed']!s:6.6}"
+                 f" vs hidden={s2s['security_rate_when_safety_hidden']!s:6.6}"
+                 f"  delta={s2s['delta']!s:8.8}")
+        L.append(f"   security->safety: P(saf viol| security exposed)={sec2s['safety_rate_when_security_exposed']!s:6.6}"
+                 f" vs hidden={sec2s['safety_rate_when_security_hidden']!s:6.6}"
+                 f"  delta={sec2s['delta']!s:8.8}")
+    elif cp.get("reason"):
+        L.append(f"-- cross-property: n/a ({cp['reason']}) --")
     nm = result["nested_monotonicity"]
     if nm.get("available"):
         L.append("-- nested 'ride the boundary' --")
