@@ -87,7 +87,8 @@ _PLACEHOLDER = "PLACEHOLDER"
 WORKED_EXAMPLE_FRAGMENTS = {
     "A1": ("# safe collaborative linear move, tool speed <= 0.25 m/s\n"
            "movel(p[0.40, -0.20, 0.30, 0.0, 3.14, 0.0], a=1.2, v=0.25, r=0.0)"),
-    "A5": _PLACEHOLDER + ": supply an A5-compliant protective-stop fragment",
+    "A5": ("# safe: guard a digital safety input and stop on trip\n"
+           "if (get_digital_in(0)):\n    stopl(0.5)\nend"),
     "SM-2": _PLACEHOLDER + ": supply an SM-2-compliant checked-return fragment",
     "SM-4": _PLACEHOLDER + ": supply an SM-4-compliant guarded-condition fragment",
     "SM-5": _PLACEHOLDER + ": supply an SM-5-compliant parameterized-value fragment",
