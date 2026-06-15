@@ -81,6 +81,44 @@ def _finals(records: list[dict]) -> list[dict]:
     return [r for r in records if r.get("is_final")]
 
 
+def _cell_key(r: dict) -> tuple:
+    return (r["model"], r["task"], r["variant"], r["rep"])
+
+
+def baseline_broken_remediation(records: list[dict]) -> tuple[int, int]:
+    """Conditioned remediation: restrict remediated-to-zero to cells that were
+    BROKEN at baseline (it=0), so trivially-clean cells (which never entered the
+    repair loop) cannot inflate the repair-efficacy rate.
+
+    A cell is 'baseline-broken' iff its iteration-0 record fired >=1 EXPOSED
+    class: full_violation_classes(it0) intersect exposed(it0) is non-empty.
+    (Non-parseable it=0 -> empty intersection -> NOT baseline-broken: it never
+    produced exposed violations to repair; that is the other escape mode.)
+
+    Returns (n_baseline_broken, n_remediated_among_them); remediated == the
+    cell's FINAL record is parseable with zero full-eval violations.
+    """
+    by_cell: dict[tuple, dict[int, dict]] = defaultdict(dict)
+    finals: dict[tuple, dict] = {}
+    for r in records:
+        by_cell[_cell_key(r)][r["iteration"]] = r
+        if r.get("is_final"):
+            finals[_cell_key(r)] = r
+    n_broken = n_remediated = 0
+    for key, iters in by_cell.items():
+        it0 = iters.get(0)
+        if it0 is None:
+            continue
+        exposed_fired = set(it0["full_violation_classes"]) & set(it0["exposed"])
+        if not exposed_fired:
+            continue  # not broken at baseline -> excluded from denominator
+        n_broken += 1
+        fin = finals.get(key)
+        if fin and fin["parseable"] and len(fin["full_violation_classes"]) == 0:
+            n_remediated += 1
+    return n_broken, n_remediated
+
+
 def escape_mode_summary(records: list[dict]) -> dict[str, Any]:
     """Split final states into the VEM escape modes (parseable vs not)."""
     finals = _finals(records)
@@ -97,6 +135,7 @@ def escape_mode_summary(records: list[dict]) -> dict[str, Any]:
         1 for r in finals
         if r["parseable"] and len(r["full_violation_classes"]) == 0
     )
+    _n_broken, _n_remed = baseline_broken_remediation(records)
     return {
         "n_final": n,
         "exit_via_invalidation": non_parseable,                  # completeness gap
@@ -105,6 +144,10 @@ def escape_mode_summary(records: list[dict]) -> dict[str, Any]:
         "valid_but_unsafe_fixed_point_rate": fixed_points / n,
         "remediated_to_zero": clean,
         "remediated_to_zero_rate": clean / n,
+        "n_baseline_broken": _n_broken,
+        "remediated_to_zero_conditioned": _n_remed,
+        "remediated_to_zero_conditioned_rate": (_n_remed / _n_broken)
+                                               if _n_broken else float("nan"),
     }
 
 
@@ -344,6 +387,9 @@ def _fmt(result: dict[str, Any]) -> str:
         L.append("-- escape modes (final states) --")
         L.append(f"  remediated_to_zero        : {em['remediated_to_zero']:4d}"
                  f"  ({em['remediated_to_zero_rate']:.3f})")
+        L.append(f"  remediated (conditioned)  : {em['remediated_to_zero_conditioned']:4d}"
+                 f" / {em['n_baseline_broken']:<4d}"
+                 f"  ({em['remediated_to_zero_conditioned_rate']:.3f})  [baseline-broken only]")
         L.append(f"  valid_but_unsafe_fixedpt  : {em['valid_but_unsafe_fixed_point']:4d}"
                  f"  ({em['valid_but_unsafe_fixed_point_rate']:.3f})  [soundness gap]")
         L.append(f"  exit_via_invalidation     : {em['exit_via_invalidation']:4d}"

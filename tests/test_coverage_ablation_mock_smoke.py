@@ -146,3 +146,28 @@ def test_code_dir_namespaced_per_arm(tmp_path):
         assert (shared / "code" / arm).is_dir()
     # output landed under per-arm subdirs, NOT the flat collision path
     assert not list((shared / "code").glob("*.urscript"))
+
+
+def test_baseline_broken_remediation_excludes_never_broken():
+    # BUG: pooled remediated_to_zero counts cells never broken at baseline.
+    # Conditioned metric restricts the denominator to cells whose it=0 fired >=1
+    # exposed class. Hand-built records make the pooled-vs-conditioned gap explicit.
+    EXP = ["A1", "A5"]
+    def rec(task, it, final, parseable, full):
+        return {"model": "m", "task": task, "variant": "full", "rep": 1,
+                "iteration": it, "is_final": final, "parseable": parseable,
+                "full_violation_classes": full, "exposed": EXP,
+                "ablation_set": EXP, "hidden": []}
+    recs = [
+        rec("T1", 0, False, True, ["A1"]), rec("T1", 1, True, True, []),    # broken -> remediated
+        rec("T2", 0, True, True, []),                                       # NEVER broken, clean
+        rec("T3", 0, False, True, ["A5"]), rec("T3", 3, True, True, ["A5"]),# broken -> fixed point
+        rec("T4", 0, True, False, []),                                      # non-parseable it0
+    ]
+    n_broken, n_remed = MIA.baseline_broken_remediation(recs)
+    assert n_broken == 2 and n_remed == 1            # T1,T3 broken; only T1 remediated
+    em = MIA.escape_mode_summary(recs)
+    assert em["n_baseline_broken"] == 2
+    assert em["remediated_to_zero"] == 2             # POOLED counts T1 + T2 (the inflation)
+    assert em["remediated_to_zero_conditioned"] == 1 # conditioned excludes T2
+    assert abs(em["remediated_to_zero_conditioned_rate"] - 0.5) < 1e-9
