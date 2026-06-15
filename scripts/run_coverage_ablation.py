@@ -240,7 +240,8 @@ def run_ablation(
     model_table = R._models_for_provider(provider, models)
     builder, parser = R.PromptBuilder(), R.CodeParser()
     out_dir = out_jsonl.parent
-    code_dir = out_dir / "code"
+    code_dir = out_dir / "code" / arm
+    code_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"[ICSE-ablation] models={list(model_table)} tasks={len(tasks)} "
           f"variants={[v.name for v in variants]} reps={reps} "

@@ -128,3 +128,21 @@ def test_analyzer_dual_channel_runs(mock_jsonl):
     # cross-property should be available (universe spans both channels)
     assert res["cross_property"].get("available") is True
     assert isinstance(MIA._fmt(res), str)
+
+
+def test_code_dir_namespaced_per_arm(tmp_path):
+    # regression (BUG: code-dir collision) -- arms that share ONE parent dir must
+    # NOT share code/. Reproduces the collision scenario (two arms, one out_dir)
+    # and asserts disjoint per-arm subdirs + nothing left in the flat path.
+    shared = tmp_path / "run"
+    shared.mkdir()
+    for iv, arm in [(None, "legacy_minimal"), ("socratic", "socratic")]:
+        ABL.run_ablation(
+            ABLATION, families=["full"], tasks_filter="T001-T001",
+            reps=1, max_retries=1, provider="mock", models=None,
+            seed=42, max_tokens=512, timeout=60.0, feedback_mode="minimal",
+            intervention=iv, adversarial=None, out_jsonl=shared / (arm + ".jsonl"),
+        )
+        assert (shared / "code" / arm).is_dir()
+    # output landed under per-arm subdirs, NOT the flat collision path
+    assert not list((shared / "code").glob("*.urscript"))
