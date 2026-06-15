@@ -174,9 +174,14 @@ task_T001()
 class TestBuildEdit:
     """Tests for the template-editing path (E4-T conditions)."""
 
-    def test_edit_mode_has_three_members(self):
+    def test_edit_mode_includes_e4t_trio(self):
         from enfield_llm.prompt_builder import EditMode
-        assert len(list(EditMode)) == 3
+        # E4-T (RA-L) requires exactly these three editing conditions; later
+        # additive (Track-2) modes must not remove or alter them.
+        trio = {EditMode.LAZY, EditMode.DESCRIPTIVE, EditMode.PERF}
+        assert trio <= set(EditMode)
+        assert (EditMode.LAZY.value, EditMode.DESCRIPTIVE.value,
+                EditMode.PERF.value) == ("edit_lazy", "edit_descriptive", "edit_perf")
 
     def test_uses_edit_system_prompt(self, builder):
         from enfield_llm.prompt_builder import EditMode, SYSTEM_PROMPT_EDIT
@@ -218,7 +223,7 @@ class TestBuildEdit:
             mode: builder.build_edit(SAMPLE_TASK_IR, SAMPLE_TEMPLATE, mode)[1]
             for mode in EditMode
         }
-        assert len(set(prompts.values())) == 3
+        assert len(set(prompts.values())) == len(prompts)
 
     def test_perf_is_benign_no_exceed_language(self, builder):
         """B-perf must not instruct the model to exceed any limit."""
