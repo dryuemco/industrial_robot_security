@@ -1,8 +1,8 @@
-# Responsible Disclosure — ENFIELD Project
+# Responsible Disclosure — FACT Project
 
 **Status:** Draft stub (v0.1, Session 28, 2026-05-11). Subject to revision pending host-supervisor sign-off and operational refinement before the Month-6 OSF release. The 90-day vendor advance-notice commitment in §3 and the tiered access framework in §§1–2 are the operative commitments of this document; specific contact channels (project alias, PGP), Tier 2 verification workflow templates, and the vendor contact directory will be finalised in v1.0.
 
-**Project:** ENFIELD — Formal Adversarial Testing of LLM-Generated Code for Industrial Robots
+**Project:** FACT — Formal Adversarial Testing of LLM-Generated Code for Industrial Robots
 **Funding:** European Union Horizon Europe Research and Innovation Programme, Grant Agreement No. 101120657
 **Repository:** https://github.com/dryuemco/industrial_robot_security
 **Pre-registration:** OSF DOI [10.17605/OSF.IO/VE5M2](https://doi.org/10.17605/OSF.IO/VE5M2)
@@ -11,7 +11,7 @@
 
 ## Why this policy exists
 
-ENFIELD produces three classes of artefact:
+FACT produces three classes of artefact:
 
 1. **Scientific outputs** — the paper, the aggregated experimental results, the detection-mechanism descriptions, the statistical analyses, the pre-registration. These have no dual-use sensitivity and are openly available.
 2. **Adversarial test artefacts** — the A8 adversarial prompt family targeting LLM-generated industrial-robot control code, the per-task confirmatory-run outputs in `results/`, and detailed bypass-class descriptions. These are intended for security research, but a complete enumeration of working attack instances against named LLMs and named robot controllers can also serve as a ready-made offensive corpus.
@@ -23,9 +23,9 @@ Class 2 artefacts are the reason this policy exists. We balance open-science rep
 
 ## §1. Tier 1 — Public (default)
 
-Everything in the public ENFIELD GitHub repository is Tier 1. This currently includes:
+Everything in the public FACT GitHub repository is Tier 1. This currently includes:
 
-- The paper draft (`paper/draft_v0.1.md`) and pre-registration (`docs/OSF_PREREGISTRATION.md`, OSF Amendments 1–3).
+- The pre-registration (`docs/OSF_PREREGISTRATION.md`, OSF Amendments 1–3).
 - The threat-model document (`docs/THREAT_MODEL.md`) describing the A1–A8 attack categories at a methodological level, including the A8 sub-taxonomy.
 - All detection-rule definitions and unit tests in `enfield_watchdog_static/` (DM-1..7, SM-1..7).
 - All baseline Task IRs in `enfield_tasks/` and the IR-to-URScript translator in `enfield_translators/`.
@@ -78,14 +78,14 @@ When the project identifies a class of issue that materially affects a specific 
 
 ## §4. How to report a security issue
 
-If you have identified a security issue **in the ENFIELD codebase itself** — for example, a vulnerability in the watchdog evaluation pipeline, the experiment runner, the URSim Docker integration, or the CI/CD workflows — please contact us privately rather than opening a public GitHub issue.
+If you have identified a security issue **in the FACT codebase itself** — for example, a vulnerability in the watchdog evaluation pipeline, the experiment runner, the URSim Docker integration, or the CI/CD workflows — please contact us privately rather than opening a public GitHub issue.
 
-- **Email:** yunusemrecogurcu@gmail.com (project lead). Subject line prefix: `[ENFIELD security]`.
+- **Email:** yunusemrecogurcu@gmail.com (project lead). Subject line prefix: `[FACT security]`.
 - **PGP:** to be published before the Month-6 OSF release; until then, please contact via email and we will arrange an encrypted channel if the report contents warrant it.
 
 We aim to acknowledge security reports within 5 working days and to provide an initial triage response within 14 working days.
 
-Reports of issues in **upstream LLM products** (Qwen, DeepSeek-Coder, CodeLlama) or in **upstream simulator / controller products** (URSim, PolyScope, URCaps) should be sent to the respective vendor's security channel directly. The ENFIELD project is happy to act as a technical relay if the report concerns a specific bypass observed through our framework and the reporter wishes us to facilitate the vendor handoff.
+Reports of issues in **upstream LLM products** (Qwen, DeepSeek-Coder, CodeLlama) or in **upstream simulator / controller products** (URSim, PolyScope, URCaps) should be sent to the respective vendor's security channel directly. The FACT project is happy to act as a technical relay if the report concerns a specific bypass observed through our framework and the reporter wishes us to facilitate the vendor handoff.
 
 ---
 
@@ -93,7 +93,7 @@ Reports of issues in **upstream LLM products** (Qwen, DeepSeek-Coder, CodeLlama)
 
 The following are explicitly out of scope for this disclosure policy:
 
-- Reports describing **how the documented attack categories work**. The A1–A8 taxonomy is an intentional research output documented in the threat model and the paper, not a vulnerability in the ENFIELD framework.
+- Reports describing **how the documented attack categories work**. The A1–A8 taxonomy is an intentional research output documented in the threat model and the paper, not a vulnerability in the FACT framework.
 - Reports about LLM **hallucination, factual error, low quality of generated code, or stylistic preference**. These are model-behaviour observations, not security issues, and they belong with the upstream LLM provider's feedback channel rather than this policy.
 - Performance issues, non-security bugs, build failures, or feature requests — please use public GitHub issues.
 
@@ -114,4 +114,4 @@ Until v1.0 is filed, this stub represents the project's operative commitments to
 ---
 
 *Document version: v0.1 (S28 stub, 2026-05-11).*
-*Authoritative location:* `docs/responsible_disclosure.md` *in the ENFIELD GitHub repository.*
+*Authoritative location:* `docs/responsible_disclosure.md` *in the FACT GitHub repository.*

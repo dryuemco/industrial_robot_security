@@ -1,15 +1,15 @@
-# Formal Adversarial Testing of LLM-Generated Code for Industrial Robots
+# FACT: Formal Adversarial Testing of LLM-Generated Code for Industrial Robots
 
 [![ROS2](https://img.shields.io/badge/ROS2-Humble-blue)](https://docs.ros.org/en/humble/index.html)
 [![Docker](https://img.shields.io/badge/Docker-Enabled-2496ED)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green)](LICENSE)
 [![OSF Prereg](https://img.shields.io/badge/OSF-10.17605%2FOSF.IO%2FVE5M2-lightblue)](https://doi.org/10.17605/OSF.IO/VE5M2)
-[![ENFIELD](https://img.shields.io/badge/ENFIELD-Exchange%20Scheme-orange)](https://www.enfield-project.eu/)
+[![ENFIELD](https://img.shields.io/badge/ENFIELD-Open%20Call%20oc4--2025--TES--02-orange)](https://www.enfield-project.eu/)
 [![Tests](https://img.shields.io/badge/Tests-740%20passing-brightgreen)]()
 [![Status](https://img.shields.io/badge/Status-Week%2011%20of%2024-yellow)]()
 
-> **ENFIELD Exchange Scheme** | Challenge T-AI.7: LLM Safety and Security
-> Horizon Europe Grant Agreement No 101120657
+> **ENFIELD Open Call** oc4-2025-TES-02 | Challenge T-AI.7: LLM Safety and Security
+> Funded by the European Union — Horizon Europe Grant Agreement No 101120657
 
 ## Overview
 
@@ -82,7 +82,7 @@ Sub-variants of attack A8 (Prompt Injection), aligned with `enfield_llm/enfield_
 | DeepSeek-Coder-V2-16B | Ollama | Q4_0 | DeepSeek License | Strong code generation; different training philosophy |
 | CodeLlama-34B | Ollama | Q4_0 | Meta Llama License | Established baseline; different alignment philosophy |
 
-All calls use `temperature=0.0` for deterministic output. Models are served locally via Ollama (see `ENFIELD_Revised_Plan_v2_1.md`), enabling zero-cost reproducibility for reviewers and independent verification. Full request/response logs are stored in JSONL format.
+All calls use `temperature=0.0` for deterministic output. Models are served locally via Ollama, enabling zero-cost reproducibility for reviewers and independent verification. Full request/response logs are stored in JSONL format.
 
 ## Quick Start
 
@@ -239,9 +239,9 @@ See [`docs/open_science_release.md`](docs/open_science_release.md) for the full 
 ### Citing This Work
 
 ```bibtex
-@software{cogurcu2026enfield,
+@software{cogurcu2026fact,
   author       = {Cogurcu, Yunus Emre and Spathoulas, Georgios},
-  title        = {{ENFIELD: Formal Adversarial Testing of LLM-Generated
+  title        = {{FACT: Formal Adversarial Testing of LLM-Generated
                    Code for Industrial Robots}},
   year         = {2026},
   publisher    = {GitHub},
@@ -251,9 +251,32 @@ See [`docs/open_science_release.md`](docs/open_science_release.md) for the full 
 }
 ```
 
+## Contributing
+
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) for the branch strategy, commit conventions, code standards, and Open Science requirements before opening a pull request.
+
+- **Branches:** `main` (stable) · `develop` (integration) · `feature/*` · `fix/*` · `docs/*`
+- **Commits:** [Conventional Commits](https://www.conventionalcommits.org/)
+- **Tests:** `colcon build` and the full `pytest` suite must pass (see [Test Summary](#test-summary))
+- **Scope:** simulation-only — no physical-robot deployment code
+
+Report bugs and feature requests via [GitHub Issues](https://github.com/dryuemco/industrial_robot_security/issues).
+
 ## Acknowledgements
 
-This project has received funding from the European Union's Horizon Europe Research and Innovation Programme under Grant Agreement No 101120657 ([ENFIELD](https://www.enfield-project.eu/)).
+<!--
+  EU funding compliance (Horizon Europe / ENFIELD cascade funding — FSTP).
+  - Recommended: display the official EU emblem next to this statement.
+    Emblem + rules: https://commission.europa.eu/funding-tenders/managing-your-project/communicating-and-raising-eu-visibility_en
+  - Confirm the exact required disclaimer wording in your ENFIELD
+    sub-grant agreement; the text below is the standard Horizon Europe form.
+-->
+
+The **Formal Adversarial Testing of LLM-Generated Code for Industrial Robots** project has received funding from the European Union, via the oc4-2025-TES-02 issued and implemented by the ENFIELD project, under the grant agreement No 101120657.
+
+> **Disclaimer.** Views and opinions expressed are those of the author(s) only and do not necessarily reflect those of the European Union or the European Commission. Neither the European Union nor the granting authority can be held responsible for them.
+
+Carried out under the [ENFIELD Exchange Scheme](https://www.enfield-project.eu/) — Challenge T-AI.7: LLM Safety and Security.
 
 ## License
 

@@ -1,6 +1,6 @@
-# Contributing to ENFIELD
+# Contributing to FACT
 
-Thank you for your interest in contributing to the ENFIELD project. This document outlines the guidelines for contributing code, documentation, and other improvements.
+Thank you for your interest in contributing to this project. This document outlines the guidelines for contributing code, documentation, and other improvements.
 
 ## Project Context
 

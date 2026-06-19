@@ -1,6 +1,6 @@
 # enfield_tasks
 
-Vendor-neutral Task Intermediate Representation (IR) for the ENFIELD adversarial testing framework.
+Vendor-neutral Task Intermediate Representation (IR) for the FACT adversarial testing framework.
 
 ## Overview
 

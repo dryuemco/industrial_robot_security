@@ -1,13 +1,13 @@
 # ISO 10218:2025 Traceability Matrix
 
-**Project:** ENFIELD — Formal Adversarial Testing of LLM-Generated Code for Industrial Robots  
+**Project:** FACT — Formal Adversarial Testing of LLM-Generated Code for Industrial Robots  
 **Version:** 1.0  
 **Date:** 2026-02-28  
 **Author:** Yunus Emre Çogurcu, PhD (Çukurova University)  
 **Supervisor:** Assoc. Prof. Georgios Spathoulas (NTNU)  
 **Status:** Draft for supervisor review  
 
-**Purpose:** This document provides a bidirectional traceability matrix between ISO 10218-1:2025 safety clauses and the ENFIELD adversarial attack taxonomy (A1–A8). Each row maps an ISO clause to the attacks that target it, the detection mechanisms that enforce it, and the evidence artifacts that demonstrate compliance testing.
+**Purpose:** This document provides a bidirectional traceability matrix between ISO 10218-1:2025 safety clauses and the FACT adversarial attack taxonomy (A1–A8). Each row maps an ISO clause to the attacks that target it, the detection mechanisms that enforce it, and the evidence artifacts that demonstrate compliance testing.
 
 > **⚠ Decision Point (Weeks 22–24):** Final ISO clause selection for the paper (4–6 items). This matrix covers all mapped clauses; the paper will focus on the subset with strongest evidence.
 
@@ -178,4 +178,4 @@ The following clauses are the strongest candidates for inclusion in the final pa
 
 ---
 
-*This document is part of the ENFIELD project's threat model (v1.1). Cross-reference with `THREAT_MODEL.md`, `attack_definitions_A1_A4.md`, and `attack_definitions_A5_A8.md`.*
+*This document is part of the FACT project's threat model (v1.1). Cross-reference with `THREAT_MODEL.md`, `attack_definitions_A1_A4.md`, and `attack_definitions_A5_A8.md`.*

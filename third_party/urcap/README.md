@@ -1,7 +1,7 @@
 # third_party/urcap — Vendored External Control URCap
 
 This directory vendors the **Universal Robots External Control URCap**
-binary used by `docker/ursim/Dockerfile` to build the ENFIELD custom
+binary used by `docker/ursim/Dockerfile` to build the FACT custom
 URSim image (Lane 2, S25).
 
 ## File
@@ -20,7 +20,7 @@ See [`NOTICE`](NOTICE) for full attribution and license-compliance notes.
 
 ## Why is this binary in the repo?
 
-ENFIELD's open-science commitment (see `docs/open_science_release.md`)
+FACT's open-science commitment (see `docs/open_science_release.md`)
 requires fully deterministic image builds. Vendoring the URCap binary
 fixes its SHA-256 across every reviewer's environment, so anyone
 building `docker/ursim/Dockerfile` produces a bit-identical image

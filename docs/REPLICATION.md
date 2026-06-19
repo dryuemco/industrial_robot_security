@@ -1,6 +1,6 @@
-# ENFIELD Replication Guide
+# FACT Replication Guide
 
-This document is the canonical reference for reproducing the experimental results reported in the ENFIELD paper. Appendix B of the paper points here.
+This document is the canonical reference for reproducing the experimental results reported in the FACT paper. Appendix B of the paper points here.
 
 The guide covers (1) environment setup, (2) the deterministic static-watchdog pipeline supporting H1–H3, (3) the three LLM confirmatory experiments E1/E2/E3 supporting H4/H5/H6, (4) statistical analysis, (5) the H8 complexity-stratified exploratory analysis, (6) the URSim live-execution pilot supporting H7, and (7) test-suite verification. All commands assume the repository root as the working directory.
 

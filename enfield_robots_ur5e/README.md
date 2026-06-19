@@ -1,6 +1,6 @@
 # enfield_robots_ur5e
 
-UR5e robot adapter for the ENFIELD adversarial testing framework.
+UR5e robot adapter for the FACT adversarial testing framework.
 
 ## Robot Adapter Contract
 
