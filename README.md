@@ -235,7 +235,7 @@ Per-attack:
 |-----------|--------|--------|
 | OSI License | Apache-2.0 | ✅ Done |
 | OSF Pre-registration + DOI | Month 2 (March 2026) | ✅ Done — [10.17605/OSF.IO/VE5M2](https://doi.org/10.17605/OSF.IO/VE5M2) |
-| GitHub Public Release | Month 6 (July 2026) | ✅ Public — v1.0 tag pending |
+| GitHub Public Release | Month 6 (June 2026) | ✅ Released — v1.0.0 |
 | OSF Replication Package | Month 6 (July 2026) | Planned |
 
 See [`docs/open_science_release.md`](docs/open_science_release.md) for the full release checklist.
