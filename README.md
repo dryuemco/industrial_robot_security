@@ -5,8 +5,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-green)](LICENSE)
 [![OSF Prereg](https://img.shields.io/badge/OSF-10.17605%2FOSF.IO%2FVE5M2-lightblue)](https://doi.org/10.17605/OSF.IO/VE5M2)
 [![ENFIELD](https://img.shields.io/badge/ENFIELD-Open%20Call%20oc4--2025--TES--02-orange)](https://www.enfield-project.eu/)
-[![Tests](https://img.shields.io/badge/Tests-740%20passing-brightgreen)]()
-[![Status](https://img.shields.io/badge/Status-Week%2011%20of%2024-yellow)]()
+[![Tests](https://img.shields.io/badge/Tests-919%20passing-brightgreen)]()
 
 > **ENFIELD Open Call** oc4-2025-TES-02 | Challenge T-AI.7: LLM Safety and Security
 > Funded by the European Union — Horizon Europe Grant Agreement No 101120657
@@ -19,7 +18,7 @@ This repository contains a formal adversarial testing framework for detecting sa
 - **Vendor-neutral Task IR** — 15 baseline tasks across 5 categories, 3 operating modes, 6 tool types
 - **Attack variant generator** producing 120 adversarial variants (15 tasks × 8 attacks) with deterministic seeds
 - **IR → URScript translator** converting Task IR to UR5e-executable URScript with automatic unit conversions
-- **Static watchdog** with safety rules (DM-1 through DM-7) and security rules (SM-1 through SM-7) achieving 95% detection rate at 0% false positives
+- **Static watchdog** with safety rules (DM-1 through DM-7) and security rules (SM-1 through SM-7) achieving 95% detection at 0% false positives on the deterministic A1–A8 variant suite
 - **LLM code generation client** supporting Qwen2.5-Coder-32B (Apache 2.0), DeepSeek-Coder-V2-16B (DeepSeek License), and CodeLlama-34B (Llama License) via Ollama with adversarial prompt injection testing (A8.1–A8.7)
 - **Experiment runner** producing structured CSV/JSON reports for statistical analysis
 - **Reproducibility pipeline** with Docker, SBOM (CycloneDX), and CI/CD (9 jobs)
@@ -99,7 +98,10 @@ docker compose run --rm dev
 colcon build --symlink-install
 source install/setup.bash
 
-# Run all tests
+# Run the full test suite (canonical gate)
+./scripts/run_tests.sh --fast
+
+# Or run a single package's tests directly:
 PYTHONPATH=enfield_tasks pytest enfield_tasks/test/ -v
 PYTHONPATH=enfield_attacks:enfield_tasks pytest enfield_attacks/test/ -v
 PYTHONPATH=enfield_translators:enfield_tasks pytest enfield_translators/test/ -v
@@ -116,7 +118,7 @@ PYTHONPATH=enfield_watchdog_static:enfield_tasks python3 scripts/run_experiment.
 
 ## Runtime Stack & Simulation Environment
 
-Runtime validation of the static watchdog uses Universal Robots' official URSim e-Series simulator. URSim PolyScope and the underlying URControl interfaces are bit-identical to a physical UR controller; the entire study runs in this simulation environment, consistent with the preregistered scope. See paper section V.G for the full execution-setup write-up.
+Runtime validation of the static watchdog uses Universal Robots' official URSim e-Series simulator. URSim PolyScope and the underlying URControl interfaces are bit-identical to a physical UR controller; the entire study runs in this simulation environment, consistent with the preregistered scope.
 
 **Pinned runtime versions** (validated 2026-04-27):
 
@@ -191,10 +193,10 @@ On rclpy Humble, the `telemetry_recorder` node accepts `duration_s` only as a fl
 | enfield_tasks | 169 | `PYTHONPATH=enfield_tasks pytest enfield_tasks/test/ -v` |
 | enfield_attacks | 149 | `PYTHONPATH=enfield_attacks:enfield_tasks pytest enfield_attacks/test/ -v` |
 | enfield_translators | 81 | `PYTHONPATH=enfield_translators:enfield_tasks pytest enfield_translators/test/ -v` |
-| enfield_watchdog_static | 114 | `PYTHONPATH=enfield_watchdog_static:enfield_tasks pytest enfield_watchdog_static/test/ -v` |
-| enfield_llm | 95 | `PYTHONPATH=enfield_llm:enfield_tasks pytest enfield_llm/test/ -v` |
-| runner + analysis + smoke | 132 | `PYTHONPATH=enfield_watchdog_static:enfield_tasks pytest tests/ -v` |
-| **Total** | **740** | |
+| enfield_watchdog_static | 126 | `PYTHONPATH=enfield_watchdog_static:enfield_tasks pytest enfield_watchdog_static/test/ -v` |
+| enfield_llm | 147 | `PYTHONPATH=enfield_llm:enfield_tasks pytest enfield_llm/test/ -v` |
+| runner + analysis + smoke | 247 | `PYTHONPATH=enfield_watchdog_static:enfield_tasks pytest tests/ -v` |
+| **Total** | **919** | |
 
 > **enfield_tasks breakdown:** 79 static tests (T001–T005 detailed, schema integrity,
 > negative/semantic) + 90 parametrized tests (`TestAllTasksSchemaValid`: 6 checks × 15 tasks).
@@ -212,7 +214,9 @@ test-task-ir ──┬── test-attacks ──┬── test-watchdog-static �
 docker-build ──── sbom-and-scan
 ```
 
-## Experiment Results (15 tasks, 120 variants)
+## Watchdog Validation (deterministic A1–A8 variants)
+
+These figures are the static watchdog's detection rates on the 15 baseline tasks and the 120 hand-crafted deterministic A1–A8 variants (RQ1). The LLM-generation study (RQ2–RQ4) is reported in the paper, not in this repository.
 
 ```
 Baselines: 15/15 safe (FP rate: 0.0%)
@@ -231,7 +235,7 @@ Per-attack:
 |-----------|--------|--------|
 | OSI License | Apache-2.0 | ✅ Done |
 | OSF Pre-registration + DOI | Month 2 (March 2026) | ✅ Done — [10.17605/OSF.IO/VE5M2](https://doi.org/10.17605/OSF.IO/VE5M2) |
-| GitHub Public Release v1.0 | Month 6 (July 2026) | Planned |
+| GitHub Public Release | Month 6 (July 2026) | ✅ Public — v1.0 tag pending |
 | OSF Replication Package | Month 6 (July 2026) | Planned |
 
 See [`docs/open_science_release.md`](docs/open_science_release.md) for the full release checklist.
