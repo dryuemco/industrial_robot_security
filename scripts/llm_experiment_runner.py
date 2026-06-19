@@ -481,6 +481,7 @@ def run_e1(
     provider: str = "ollama",
     mock_seed: Optional[int] = None,
     max_tokens: int = 4096,
+    temperature: float = 0.0,
     models: Optional[list[str]] = None,
     sleep: float = 0.0,
     timeout: float = 300.0,
@@ -513,6 +514,7 @@ def run_e1(
             model=model_id,
             log_dir=output_dir / "logs",
             max_tokens=max_tokens,
+            temperature=temperature,
             timeout=timeout,
             seed=mock_seed,
         )
@@ -617,6 +619,7 @@ def run_e3(
     provider: str = "ollama",
     mock_seed: Optional[int] = None,
     max_tokens: int = 4096,
+    temperature: float = 0.0,
     models: Optional[list[str]] = None,
     sleep: float = 0.0,
     timeout: float = 300.0,
@@ -646,6 +649,7 @@ def run_e3(
             model=model_id,
             log_dir=output_dir / "logs",
             max_tokens=max_tokens,
+            temperature=temperature,
             timeout=timeout,
             seed=mock_seed,
         )
@@ -712,6 +716,7 @@ def run_e4(
     provider: str = "idun",
     mock_seed: Optional[int] = None,
     max_tokens: int = 4096,
+    temperature: float = 0.0,
     models: Optional[list[str]] = None,
     sleep: float = 0.0,
     timeout: float = 300.0,
@@ -759,6 +764,7 @@ def run_e4(
             model=model_id,
             log_dir=output_dir / "logs",
             max_tokens=max_tokens,
+            temperature=temperature,
             timeout=timeout,
             seed=mock_seed,
         )
@@ -814,6 +820,7 @@ def run_e5(
     provider: str = "idun",
     mock_seed: Optional[int] = None,
     max_tokens: int = 4096,
+    temperature: float = 0.0,
     models: Optional[list[str]] = None,
     sleep: float = 0.0,
     timeout: float = 300.0,
@@ -862,7 +869,7 @@ def run_e5(
     for model_name, model_id in model_table.items():
         client = create_client(
             provider, model=model_id, log_dir=output_dir / "logs",
-            max_tokens=max_tokens, timeout=timeout, seed=mock_seed,
+            max_tokens=max_tokens, temperature=temperature, timeout=timeout, seed=mock_seed,
         )
         logger.info("\n--- Model: %s (%s) ---", model_name, model_id)
 
@@ -1101,6 +1108,12 @@ def main() -> int:
                          "gpt-oss) need a larger budget (e.g. 8192) so "
                          "reasoning is not truncated into empty/invalid "
                          "output.")
+    ap.add_argument("--temperature", type=float, default=0.0,
+                    help="Sampling temperature for live generation "
+                         "(E1/E3/E4/E5; default: 0.0 = greedy / "
+                         "deterministic). Use e.g. 0.2 or 0.7 for a "
+                         "robustness sweep. Ignored for --provider=mock; "
+                         "E2 stays at 0.0.")
     ap.add_argument("--mock-seed", type=int, default=42,
                     help="Seed for MockLLMClient template rotation "
                          "(only used when --provider=mock; default: 42).")
@@ -1166,6 +1179,7 @@ def main() -> int:
             provider=args.provider,
             mock_seed=args.mock_seed,
             max_tokens=args.max_tokens,
+            temperature=args.temperature,
             models=models_override,
             sleep=args.sleep,
             timeout=args.timeout,
@@ -1187,6 +1201,7 @@ def main() -> int:
             provider=args.provider,
             mock_seed=args.mock_seed,
             max_tokens=args.max_tokens,
+            temperature=args.temperature,
             models=models_override,
             sleep=args.sleep,
             timeout=args.timeout,
@@ -1199,6 +1214,7 @@ def main() -> int:
             provider=args.provider,
             mock_seed=args.mock_seed,
             max_tokens=args.max_tokens,
+            temperature=args.temperature,
             models=models_override,
             sleep=args.sleep,
             timeout=args.timeout,
@@ -1211,6 +1227,7 @@ def main() -> int:
             provider=args.provider,
             mock_seed=args.mock_seed,
             max_tokens=args.max_tokens,
+            temperature=args.temperature,
             models=models_override,
             sleep=args.sleep,
             timeout=args.timeout,

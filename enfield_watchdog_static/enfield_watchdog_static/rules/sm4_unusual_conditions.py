@@ -49,7 +49,7 @@ def check_sm4_unusual_conditions(code: str) -> list[Violation]:
     if not has_condition_check:
         violations.append(Violation(
             attack_type="SM-4",
-            iso_clause="—",
+            iso_clause="none",
             detection_mechanism="SM-4",
             description=(
                 "Motion commands present without any workspace boundary, "
