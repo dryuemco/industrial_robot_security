@@ -118,7 +118,7 @@ PYTHONPATH=enfield_watchdog_static:enfield_tasks python3 scripts/run_experiment.
 
 ## Runtime Stack & Simulation Environment
 
-Runtime validation of the static watchdog uses Universal Robots' official URSim e-Series simulator. URSim PolyScope and the underlying URControl interfaces are bit-identical to a physical UR controller; the entire study runs in this simulation environment, consistent with the preregistered scope.
+Runtime validation of the static watchdog uses Universal Robots' official URSim e-Series simulator. URSim runs the same controller software as a physical e-Series controller and exposes the same network interfaces, so it behaves almost identically to a real robot over the network; physical effects such as force control and collision response are not simulated. The entire study runs in this simulation environment, consistent with the preregistered scope.
 
 **Pinned runtime versions** (validated 2026-04-27):
 
@@ -244,7 +244,7 @@ See [`docs/open_science_release.md`](docs/open_science_release.md) for the full 
 
 ```bibtex
 @software{cogurcu2026fact,
-  author       = {Cogurcu, Yunus Emre and Spathoulas, Georgios},
+  author       = {Cogurcu, Yunus Emre and Akbarzadeh, Aida and Spathoulas, Georgios},
   title        = {{FACT: Formal Adversarial Testing of LLM-Generated
                    Code for Industrial Robots}},
   year         = {2026},
