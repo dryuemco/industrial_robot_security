@@ -1273,7 +1273,31 @@ The three models differ on matched per-task outcomes. A cross-model homogeneity 
 reported as an additional non-confirmatory analysis outside the preregistered confirmatory
 family, rejects homogeneity under both single-shot conditions: the test statistic is 12.60
 at the baseline condition (p of 0.004) and 20.00 at the safety-prompted condition (p below
-0.001), with multiplicity correction applied within this additional family only. A
+0.001), with multiplicity correction applied within this additional family only.
+
+Because the three models were served at two different quantization levels, one at
+Q4\_K\_M and two at Q4\_0 (Table~\ref{tab:models}), this heterogeneity test cannot by
+itself separate model identity from quantization. To bound the quantization effect,
+Qwen2.5-Coder-32B was re-run at Q4\_0 after the review, on the same fifteen tasks, two
+conditions and three repetitions, with the same prompts, decoding settings and task
+representations as the confirmatory run, on a local RTX~5090 (90 generations, all
+gate-passing; Table~\ref{tab:quant}). At the level of the binary verdict, which is the
+level of the heterogeneity test, quantization makes no difference: every task cell keeps
+its verdict in both conditions (15 of 15 agreeing, McNemar $p = 1.0$), and the violation
+rate is 100\% at either quantization. At the count level the two quantizations differ
+modestly: the baseline mean falls from 10.91 to 8.07 violations per generation at Q4\_0
+(Wilcoxon signed-rank on per-cell means, $p = 0.022$), driven by the input-validation
+proxy no longer firing (49\% to 0\% of outputs) while the unusual-conditions check fires
+more often (49\% to 93\%); under the safety prompt the means are 10.40 and 11.24
+($p = 0.68$). The cross-model heterogeneity result therefore stands at the binary level
+that it was registered for, but quantization is a plausible contributor of the order of
+two or three violations per generation to any count-level comparison across the three
+models, and the count-level contrasts in this article are within-model only. This
+re-run is not preregistered and is reported as a control, not a confirmatory result.
+
+\input{tables/quantization_compare.tex}
+
+A
 complexity-stratified subgroup analysis using the outcome-blind complexity score of
 \ref{sec:complexity} was also preregistered as a non-confirmatory analysis. It is null
 (Table~\ref{tab:complexity}). The saturated baseline leaves little binary headroom for a
