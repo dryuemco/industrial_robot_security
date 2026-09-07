@@ -10,11 +10,12 @@
       "motion_sequence[1].speed_mm_s",
       "motion_sequence[2].speed_mm_s",
       "motion_sequence[3].speed_mm_s",
-      "motion_sequence[6].speed_mm_s",
+      "motion_sequence[4].speed_mm_s",
       "motion_sequence[7].speed_mm_s",
       "motion_sequence[8].speed_mm_s",
-      "motion_sequence[11].speed_mm_s",
-      "motion_sequence[12].speed_mm_s"
+      "motion_sequence[9].speed_mm_s",
+      "motion_sequence[12].speed_mm_s",
+      "motion_sequence[13].speed_mm_s"
     ],
     "file": "T001_A1_pick_place_collab.json"
   },
@@ -26,7 +27,7 @@
     "description": "Waypoint pushed 150.0 mm outside safeguarded space",
     "severity": 150.0,
     "mutated_fields": [
-      "motion_sequence[2].target_pose.position.x"
+      "motion_sequence[3].target_pose.position.x"
     ],
     "file": "T001_A2_pick_place_collab.json"
   },
@@ -38,12 +39,12 @@
     "description": "All orientations set to violate cone 'upward'",
     "severity": 45,
     "mutated_fields": [
-      "motion_sequence[2].target_pose.orientation",
       "motion_sequence[3].target_pose.orientation",
-      "motion_sequence[6].target_pose.orientation",
+      "motion_sequence[4].target_pose.orientation",
       "motion_sequence[7].target_pose.orientation",
       "motion_sequence[8].target_pose.orientation",
-      "motion_sequence[11].target_pose.orientation"
+      "motion_sequence[9].target_pose.orientation",
+      "motion_sequence[12].target_pose.orientation"
     ],
     "file": "T001_A3_pick_place_collab.json"
   },
@@ -130,9 +131,10 @@
       "motion_sequence[1].speed_mm_s",
       "motion_sequence[2].speed_mm_s",
       "motion_sequence[3].speed_mm_s",
-      "motion_sequence[7].speed_mm_s",
-      "motion_sequence[11].speed_mm_s",
-      "motion_sequence[12].speed_mm_s"
+      "motion_sequence[4].speed_mm_s",
+      "motion_sequence[8].speed_mm_s",
+      "motion_sequence[12].speed_mm_s",
+      "motion_sequence[13].speed_mm_s"
     ],
     "file": "T002_A1_linear_weld_fenced.json"
   },
@@ -144,7 +146,7 @@
     "description": "Waypoint pushed 150.0 mm outside safeguarded space",
     "severity": 150.0,
     "mutated_fields": [
-      "motion_sequence[2].target_pose.position.x"
+      "motion_sequence[3].target_pose.position.x"
     ],
     "file": "T002_A2_linear_weld_fenced.json"
   },
@@ -156,10 +158,10 @@
     "description": "All orientations set to violate cone 'Torch must not point upward (operator/ceiling hazard)'",
     "severity": 45.0,
     "mutated_fields": [
-      "motion_sequence[2].target_pose.orientation",
       "motion_sequence[3].target_pose.orientation",
-      "motion_sequence[7].target_pose.orientation",
-      "motion_sequence[11].target_pose.orientation"
+      "motion_sequence[4].target_pose.orientation",
+      "motion_sequence[8].target_pose.orientation",
+      "motion_sequence[12].target_pose.orientation"
     ],
     "file": "T002_A3_linear_weld_fenced.json"
   },
@@ -488,13 +490,14 @@
       "motion_sequence[1].speed_mm_s",
       "motion_sequence[2].speed_mm_s",
       "motion_sequence[3].speed_mm_s",
-      "motion_sequence[5].speed_mm_s",
+      "motion_sequence[4].speed_mm_s",
       "motion_sequence[6].speed_mm_s",
       "motion_sequence[7].speed_mm_s",
       "motion_sequence[8].speed_mm_s",
       "motion_sequence[9].speed_mm_s",
-      "motion_sequence[11].speed_mm_s",
-      "motion_sequence[12].speed_mm_s"
+      "motion_sequence[10].speed_mm_s",
+      "motion_sequence[12].speed_mm_s",
+      "motion_sequence[13].speed_mm_s"
     ],
     "file": "T005_A1_inspection_scan_collab.json"
   },
@@ -506,7 +509,7 @@
     "description": "Waypoint pushed 150.0 mm outside safeguarded space",
     "severity": 150.0,
     "mutated_fields": [
-      "motion_sequence[2].target_pose.position.x"
+      "motion_sequence[3].target_pose.position.x"
     ],
     "file": "T005_A2_inspection_scan_collab.json"
   },
@@ -518,14 +521,14 @@
     "description": "All orientations set to violate cone 'Camera must point downward; upward tilt beyond 30° forbidden'",
     "severity": 30.0,
     "mutated_fields": [
-      "motion_sequence[2].target_pose.orientation",
       "motion_sequence[3].target_pose.orientation",
-      "motion_sequence[5].target_pose.orientation",
+      "motion_sequence[4].target_pose.orientation",
       "motion_sequence[6].target_pose.orientation",
       "motion_sequence[7].target_pose.orientation",
       "motion_sequence[8].target_pose.orientation",
       "motion_sequence[9].target_pose.orientation",
-      "motion_sequence[11].target_pose.orientation"
+      "motion_sequence[10].target_pose.orientation",
+      "motion_sequence[12].target_pose.orientation"
     ],
     "file": "T005_A3_inspection_scan_collab.json"
   },
@@ -730,10 +733,11 @@
       "motion_sequence[1].speed_mm_s",
       "motion_sequence[2].speed_mm_s",
       "motion_sequence[3].speed_mm_s",
-      "motion_sequence[7].speed_mm_s",
+      "motion_sequence[4].speed_mm_s",
       "motion_sequence[8].speed_mm_s",
-      "motion_sequence[12].speed_mm_s",
-      "motion_sequence[13].speed_mm_s"
+      "motion_sequence[9].speed_mm_s",
+      "motion_sequence[13].speed_mm_s",
+      "motion_sequence[14].speed_mm_s"
     ],
     "file": "T007_A1_curved_weld_hybrid.json"
   },
@@ -745,7 +749,7 @@
     "description": "Waypoint pushed 150.0 mm outside safeguarded space",
     "severity": 150.0,
     "mutated_fields": [
-      "motion_sequence[2].target_pose.position.x"
+      "motion_sequence[3].target_pose.position.x"
     ],
     "file": "T007_A2_curved_weld_hybrid.json"
   },
@@ -757,11 +761,11 @@
     "description": "All orientations set to violate cone 'Torch must not point upward'",
     "severity": 35.0,
     "mutated_fields": [
-      "motion_sequence[2].target_pose.orientation",
       "motion_sequence[3].target_pose.orientation",
-      "motion_sequence[7].target_pose.orientation",
+      "motion_sequence[4].target_pose.orientation",
       "motion_sequence[8].target_pose.orientation",
-      "motion_sequence[12].target_pose.orientation"
+      "motion_sequence[9].target_pose.orientation",
+      "motion_sequence[13].target_pose.orientation"
     ],
     "file": "T007_A3_curved_weld_hybrid.json"
   },
@@ -968,15 +972,16 @@
       "motion_sequence[1].speed_mm_s",
       "motion_sequence[2].speed_mm_s",
       "motion_sequence[3].speed_mm_s",
-      "motion_sequence[5].speed_mm_s",
+      "motion_sequence[4].speed_mm_s",
       "motion_sequence[6].speed_mm_s",
       "motion_sequence[7].speed_mm_s",
       "motion_sequence[8].speed_mm_s",
       "motion_sequence[9].speed_mm_s",
       "motion_sequence[10].speed_mm_s",
       "motion_sequence[11].speed_mm_s",
-      "motion_sequence[13].speed_mm_s",
-      "motion_sequence[14].speed_mm_s"
+      "motion_sequence[12].speed_mm_s",
+      "motion_sequence[14].speed_mm_s",
+      "motion_sequence[15].speed_mm_s"
     ],
     "file": "T009_A1_laser_scan_fenced.json"
   },
@@ -988,7 +993,7 @@
     "description": "Waypoint pushed 150.0 mm outside safeguarded space",
     "severity": 150.0,
     "mutated_fields": [
-      "motion_sequence[2].target_pose.position.x"
+      "motion_sequence[3].target_pose.position.x"
     ],
     "file": "T009_A2_laser_scan_fenced.json"
   },
@@ -1000,16 +1005,16 @@
     "description": "All orientations set to violate cone 'Laser must point down; upward emission forbidden (eye safety)'",
     "severity": 25.0,
     "mutated_fields": [
-      "motion_sequence[2].target_pose.orientation",
       "motion_sequence[3].target_pose.orientation",
-      "motion_sequence[5].target_pose.orientation",
+      "motion_sequence[4].target_pose.orientation",
       "motion_sequence[6].target_pose.orientation",
       "motion_sequence[7].target_pose.orientation",
       "motion_sequence[8].target_pose.orientation",
       "motion_sequence[9].target_pose.orientation",
       "motion_sequence[10].target_pose.orientation",
       "motion_sequence[11].target_pose.orientation",
-      "motion_sequence[13].target_pose.orientation"
+      "motion_sequence[12].target_pose.orientation",
+      "motion_sequence[14].target_pose.orientation"
     ],
     "file": "T009_A3_laser_scan_fenced.json"
   },
@@ -1336,11 +1341,12 @@
       "motion_sequence[1].speed_mm_s",
       "motion_sequence[2].speed_mm_s",
       "motion_sequence[3].speed_mm_s",
-      "motion_sequence[7].speed_mm_s",
+      "motion_sequence[4].speed_mm_s",
       "motion_sequence[8].speed_mm_s",
       "motion_sequence[9].speed_mm_s",
-      "motion_sequence[13].speed_mm_s",
-      "motion_sequence[14].speed_mm_s"
+      "motion_sequence[10].speed_mm_s",
+      "motion_sequence[14].speed_mm_s",
+      "motion_sequence[15].speed_mm_s"
     ],
     "file": "T012_A1_spot_weld_collab.json"
   },
@@ -1352,7 +1358,7 @@
     "description": "Waypoint pushed 150.0 mm outside safeguarded space",
     "severity": 150.0,
     "mutated_fields": [
-      "motion_sequence[2].target_pose.position.x"
+      "motion_sequence[3].target_pose.position.x"
     ],
     "file": "T012_A2_spot_weld_collab.json"
   },
@@ -1364,12 +1370,12 @@
     "description": "All orientations set to violate cone 'Torch must not point up (operator nearby)'",
     "severity": 40.0,
     "mutated_fields": [
-      "motion_sequence[2].target_pose.orientation",
       "motion_sequence[3].target_pose.orientation",
-      "motion_sequence[7].target_pose.orientation",
+      "motion_sequence[4].target_pose.orientation",
       "motion_sequence[8].target_pose.orientation",
       "motion_sequence[9].target_pose.orientation",
-      "motion_sequence[13].target_pose.orientation"
+      "motion_sequence[10].target_pose.orientation",
+      "motion_sequence[14].target_pose.orientation"
     ],
     "file": "T012_A3_spot_weld_collab.json"
   },
@@ -1575,10 +1581,11 @@
     "mutated_fields": [
       "motion_sequence[1].speed_mm_s",
       "motion_sequence[2].speed_mm_s",
-      "motion_sequence[6].speed_mm_s",
-      "motion_sequence[10].speed_mm_s",
-      "motion_sequence[14].speed_mm_s",
-      "motion_sequence[15].speed_mm_s"
+      "motion_sequence[3].speed_mm_s",
+      "motion_sequence[7].speed_mm_s",
+      "motion_sequence[11].speed_mm_s",
+      "motion_sequence[15].speed_mm_s",
+      "motion_sequence[16].speed_mm_s"
     ],
     "file": "T014_A1_hybrid_camera_inspect.json"
   },
@@ -1590,7 +1597,7 @@
     "description": "Waypoint pushed 150.0 mm outside safeguarded space",
     "severity": 150.0,
     "mutated_fields": [
-      "motion_sequence[2].target_pose.position.x"
+      "motion_sequence[3].target_pose.position.x"
     ],
     "file": "T014_A2_hybrid_camera_inspect.json"
   },
@@ -1602,10 +1609,10 @@
     "description": "All orientations set to violate cone 'Camera must not point straight up'",
     "severity": 35.0,
     "mutated_fields": [
-      "motion_sequence[2].target_pose.orientation",
-      "motion_sequence[6].target_pose.orientation",
-      "motion_sequence[10].target_pose.orientation",
-      "motion_sequence[14].target_pose.orientation"
+      "motion_sequence[3].target_pose.orientation",
+      "motion_sequence[7].target_pose.orientation",
+      "motion_sequence[11].target_pose.orientation",
+      "motion_sequence[15].target_pose.orientation"
     ],
     "file": "T014_A3_hybrid_camera_inspect.json"
   },
@@ -1690,13 +1697,14 @@
       "motion_sequence[1].speed_mm_s",
       "motion_sequence[2].speed_mm_s",
       "motion_sequence[3].speed_mm_s",
-      "motion_sequence[5].speed_mm_s",
+      "motion_sequence[4].speed_mm_s",
       "motion_sequence[6].speed_mm_s",
       "motion_sequence[7].speed_mm_s",
       "motion_sequence[8].speed_mm_s",
       "motion_sequence[9].speed_mm_s",
-      "motion_sequence[11].speed_mm_s",
-      "motion_sequence[12].speed_mm_s"
+      "motion_sequence[10].speed_mm_s",
+      "motion_sequence[12].speed_mm_s",
+      "motion_sequence[13].speed_mm_s"
     ],
     "file": "T015_A1_laser_marking_fenced.json"
   },
@@ -1708,7 +1716,7 @@
     "description": "Waypoint pushed 150.0 mm outside safeguarded space",
     "severity": 150.0,
     "mutated_fields": [
-      "motion_sequence[2].target_pose.position.x"
+      "motion_sequence[3].target_pose.position.x"
     ],
     "file": "T015_A2_laser_marking_fenced.json"
   },
@@ -1720,14 +1728,14 @@
     "description": "All orientations set to violate cone 'Laser must point strictly down (Class 4 hazard)'",
     "severity": 20.0,
     "mutated_fields": [
-      "motion_sequence[2].target_pose.orientation",
       "motion_sequence[3].target_pose.orientation",
-      "motion_sequence[5].target_pose.orientation",
+      "motion_sequence[4].target_pose.orientation",
       "motion_sequence[6].target_pose.orientation",
       "motion_sequence[7].target_pose.orientation",
       "motion_sequence[8].target_pose.orientation",
       "motion_sequence[9].target_pose.orientation",
-      "motion_sequence[11].target_pose.orientation"
+      "motion_sequence[10].target_pose.orientation",
+      "motion_sequence[12].target_pose.orientation"
     ],
     "file": "T015_A3_laser_marking_fenced.json"
   },

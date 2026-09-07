@@ -35,6 +35,25 @@ T005_PATH = TASKS_DIR / "T005_inspection_scan_collab.json"
 
 
 # ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def first_move_linear(task: dict) -> dict:
+    """Return the first move_linear command of a task's motion_sequence.
+
+    Tests that perturb a Cartesian waypoint must select it by type rather than
+    by a fixed motion_sequence index: the sequences carry joint-space
+    pre-approach moves whose position shifts whenever a task gains or loses a
+    step, and indexing past one silently changes what a test exercises.
+    """
+    for command in task["motion_sequence"]:
+        if command.get("type") == "move_linear" and "target_pose" in command:
+            return command
+    raise AssertionError("task has no move_linear command with a target_pose")
+
+
+# ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
@@ -272,7 +291,7 @@ class TestSemanticWarnings:
 
     def test_waypoint_outside_safeguarded_space(self, t001_data):
         bad = copy.deepcopy(t001_data)
-        bad["motion_sequence"][2]["target_pose"]["position"]["x"] = 900.0
+        first_move_linear(bad)["target_pose"]["position"]["x"] = 900.0
         result = validate_task_ir(bad)
         assert result.valid
         assert any("A2" in w for w in result.semantic_warnings)
@@ -288,7 +307,7 @@ class TestSemanticWarnings:
 
     def test_undefined_frame_reference(self, t001_data):
         bad = copy.deepcopy(t001_data)
-        bad["motion_sequence"][2]["frame_id"] = "nonexistent_frame"
+        first_move_linear(bad)["frame_id"] = "nonexistent_frame"
         result = validate_task_ir(bad)
         assert result.valid
         assert any("A6" in w for w in result.semantic_warnings)

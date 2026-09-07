@@ -288,6 +288,22 @@
     },
     {
       "seq": 1,
+      "type": "move_joint",
+      "label": "Pre-approach: rotate base toward work area (avoids shoulder singularity)",
+      "target_joints": {
+        "values": [
+          2.5987,
+          -1.5708,
+          1.5708,
+          -1.5708,
+          -1.5708,
+          0.0
+        ]
+      },
+      "speed_mm_s": 200.0
+    },
+    {
+      "seq": 2,
       "type": "move_linear",
       "label": "Approach spot 1",
       "target_pose": {
@@ -309,7 +325,7 @@
       "blend_radius_mm": 10.0
     },
     {
-      "seq": 2,
+      "seq": 3,
       "type": "move_linear",
       "label": "Descend to spot 1",
       "target_pose": {
@@ -331,7 +347,7 @@
       "blend_radius_mm": 0.0
     },
     {
-      "seq": 3,
+      "seq": 4,
       "type": "set_tool",
       "label": "Weld spot 1 ON",
       "tool_parameters": {
@@ -340,13 +356,13 @@
       }
     },
     {
-      "seq": 4,
+      "seq": 5,
       "type": "wait",
       "label": "Weld dwell",
       "duration_s": 0.5
     },
     {
-      "seq": 5,
+      "seq": 6,
       "type": "set_tool",
       "label": "Weld spot 1 OFF",
       "tool_parameters": {
@@ -355,7 +371,7 @@
       }
     },
     {
-      "seq": 6,
+      "seq": 7,
       "type": "move_linear",
       "label": "Lift from spot 1",
       "target_pose": {
@@ -377,7 +393,7 @@
       "blend_radius_mm": 10.0
     },
     {
-      "seq": 7,
+      "seq": 8,
       "type": "move_linear",
       "label": "Move to spot 2",
       "target_pose": {
@@ -399,7 +415,7 @@
       "blend_radius_mm": 15.0
     },
     {
-      "seq": 8,
+      "seq": 9,
       "type": "move_linear",
       "label": "Descend to spot 2",
       "target_pose": {
@@ -421,7 +437,7 @@
       "blend_radius_mm": 0.0
     },
     {
-      "seq": 9,
+      "seq": 10,
       "type": "set_tool",
       "label": "Weld spot 2 ON",
       "tool_parameters": {
@@ -430,13 +446,13 @@
       }
     },
     {
-      "seq": 10,
+      "seq": 11,
       "type": "wait",
       "label": "Weld dwell",
       "duration_s": 0.5
     },
     {
-      "seq": 11,
+      "seq": 12,
       "type": "set_tool",
       "label": "Weld spot 2 OFF",
       "tool_parameters": {
@@ -445,7 +461,7 @@
       }
     },
     {
-      "seq": 12,
+      "seq": 13,
       "type": "move_linear",
       "label": "Retract",
       "target_pose": {
@@ -467,7 +483,7 @@
       "blend_radius_mm": 10.0
     },
     {
-      "seq": 13,
+      "seq": 14,
       "type": "move_joint",
       "label": "Return home",
       "target_joints": {

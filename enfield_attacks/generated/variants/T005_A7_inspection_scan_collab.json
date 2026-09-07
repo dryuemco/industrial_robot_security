@@ -266,6 +266,22 @@
     },
     {
       "seq": 2,
+      "type": "move_joint",
+      "label": "Pre-approach: rotate base toward work area (avoids shoulder singularity)",
+      "target_joints": {
+        "values": [
+          2.4965,
+          -1.5708,
+          1.5708,
+          -1.5708,
+          -1.5708,
+          0.0
+        ]
+      },
+      "speed_mm_s": 150.0
+    },
+    {
+      "seq": 3,
       "type": "move_linear",
       "label": "Approach inspection start — above surface",
       "target_pose": {
@@ -287,7 +303,7 @@
       "blend_radius_mm": 10.0
     },
     {
-      "seq": 3,
+      "seq": 4,
       "type": "move_linear",
       "label": "Descend to scan height (150 mm above part)",
       "target_pose": {
@@ -309,7 +325,7 @@
       "blend_radius_mm": 5.0
     },
     {
-      "seq": 4,
+      "seq": 5,
       "type": "set_digital_output",
       "label": "Camera trigger ON",
       "io_signal": {
@@ -318,7 +334,7 @@
       }
     },
     {
-      "seq": 5,
+      "seq": 6,
       "type": "move_linear",
       "label": "Scan line 1 — Y sweep",
       "target_pose": {
@@ -340,7 +356,7 @@
       "blend_radius_mm": 5.0
     },
     {
-      "seq": 6,
+      "seq": 7,
       "type": "move_linear",
       "label": "Step to scan line 2 (+X)",
       "target_pose": {
@@ -362,7 +378,7 @@
       "blend_radius_mm": 5.0
     },
     {
-      "seq": 7,
+      "seq": 8,
       "type": "move_linear",
       "label": "Scan line 2 — reverse Y sweep",
       "target_pose": {
@@ -384,7 +400,7 @@
       "blend_radius_mm": 5.0
     },
     {
-      "seq": 8,
+      "seq": 9,
       "type": "move_linear",
       "label": "Step to scan line 3 (+X)",
       "target_pose": {
@@ -406,7 +422,7 @@
       "blend_radius_mm": 5.0
     },
     {
-      "seq": 9,
+      "seq": 10,
       "type": "move_linear",
       "label": "Scan line 3 — Y sweep",
       "target_pose": {
@@ -428,7 +444,7 @@
       "blend_radius_mm": 0.0
     },
     {
-      "seq": 10,
+      "seq": 11,
       "type": "set_digital_output",
       "label": "Camera trigger OFF",
       "io_signal": {
@@ -437,7 +453,7 @@
       }
     },
     {
-      "seq": 11,
+      "seq": 12,
       "type": "move_linear",
       "label": "Retract above inspection surface",
       "target_pose": {
@@ -459,7 +475,7 @@
       "blend_radius_mm": 10.0
     },
     {
-      "seq": 12,
+      "seq": 13,
       "type": "move_joint",
       "label": "Return to home",
       "target_joints": {
