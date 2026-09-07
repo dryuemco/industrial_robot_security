@@ -104,3 +104,7 @@ docs/build/
 # Generated paper artefacts (build via ./scripts/build_paper_pdf.sh)
 paper/build/
 .env
+
+# Overleaf exports of the paper (source lives on Overleaf, not in this repo)
+docs/Overleaf*.zip
+docs/*.zip
