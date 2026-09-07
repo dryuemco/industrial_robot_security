@@ -108,3 +108,6 @@ paper/build/
 # Overleaf exports of the paper (source lives on Overleaf, not in this repo)
 docs/Overleaf*.zip
 docs/*.zip
+
+# Editor correspondence (contains private submission URLs and e-mail addresses)
+docs/review/*.eml
