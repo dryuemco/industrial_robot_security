@@ -37,7 +37,15 @@ These facts were verified against the repository and the shipped data. They shap
 
 ## 1. Decisions the authors must make first
 
-These change what gets built. Each blocks the items listed.
+**Resolved 07 Sep 2026 (corresponding author):**
+- D1 → (a): preregistered SM-5 stays confirmatory; corrected SM-5 reported as a non-preregistered sensitivity re-scoring.
+- D2 → full set: 15 translator programs, translator + safety preamble, vendor/community URScript examples where licensing permits.
+- D3 → human second rater to be recruited by the authors; a rater guide is provided in `docs/review/PRECISION_AUDIT_RATER_GUIDE.md`.
+- D4 → keep the title; move the scope sentence to the top of the abstract.
+- D5 → paper versioned under `paper/` on this branch; **branch stays local, is not pushed, and is not merged to `main`** while the repository is public.
+
+Original decision text kept below for the record.
+
 
 **D1 — Scoring basis for the revision (blocks R2-1, R2-3 partly, R1-3, Table 5/7).**
 Options:
@@ -68,7 +76,7 @@ Status legend: `todo` / `doing` / `done` / `rebut` (counter-argue, no change) / 
 |----|---------|--------|-------|--------|--------|
 | R1-1 | Abstract blurs confirmatory (3 models, prereg) with exploratory (frontier, 1 rep). 70% construct-removal reads like a finding. | Restructure abstract: confirmatory findings first, then one sentence explicitly labelled "exploratory, single repetition" for frontier/construct-removal. Remove the 70% figure from the abstract or attach "exploratory, n=1 per cell". | abstract; §I contributions | S | todo |
 | R1-2 | Rule checker only validated on author-built variants; no independent validation. | Add to Future Work: independent validation against externally sourced violations (e.g. CVE-like URScript incidents, vendor safety bulletins). Cross-reference Appendix C caveat. The translator comparator (R2-1) also partly addresses this: it is independent of the variant generator. | §VII-D threats; §VIII | S | todo |
-| R1-3 | Precision audit rests on 8–12 firings per rule, CI 55–99% for SM-5. | Enlarge audit (D3): ≥20 firings per rule, two raters, κ. Recompute Table 7 with tighter CIs. Add a main-text caveat sentence wherever "high-precision" is claimed if intervals remain wide. | Table 7; §VI-A | M | blocked(D3) |
+| R1-3 | Precision audit rests on 8–12 firings per rule, CI 55–99% for SM-5. | Enlarge audit (D3): ≥20 firings per rule, two raters, κ. Recompute Table 7 with tighter CIs. Add a main-text caveat sentence wherever "high-precision" is claimed if intervals remain wide. | Table 7; §VI-A | M | todo (rater 2 pending) |
 | R1-4 | Scope condition (cybersecurity, not motion safety) buried in abstract. | Move to sentence 2 of the abstract and to the first paragraph of §I. Same fix serves R2-2. | abstract; §I | S | todo |
 | R1-5 | Refs 53, 54 look like arXiv preprints; confirm status. | Ref 53 is ISTAS 2025 (DOI present): keep, fix formatting. Ref 54: check for a peer-reviewed version; if none, keep as arXiv and soften the dependent sentence in §II-D. | bibliography; §II-D | S | todo |
 | R1-6 | Fig. 4 distinguishes four trajectory types by line style only; fails in grayscale. | Regenerate Fig. 4 with distinct markers + line styles + direct labels; verify in grayscale. Also quantify the regimes (see R2-M5). | `scripts/figures/fig_repair_trajectory.py` (new) | S | todo |
@@ -77,8 +85,8 @@ Status legend: `todo` / `doing` / `done` / `rebut` (counter-argue, no change) / 
 
 | ID | Concern | Action | Where | Effort | Status |
 |----|---------|--------|-------|--------|--------|
-| R2-1 | Add a non-LLM comparator (~15 human/vendor URScript programs). | New script `scripts/comparator_urscript.py`: score (i) 15 translator programs, (ii) translator + safety preamble, (iii) vendor examples per D2, under preregistered rules and under corrected SM-5. New subsection §VI-A "Non-LLM comparator" with a table (per-rule firing counts, per-program violation count). State plainly that the reference translation fails SM-4/SM-6 by construction and SM-5 through the movej unit conflation, and that after the corrected SM-5 the comparator separates from the LLM outputs on the rules that remain. This turns 98.8% into an interpretable number. | new script; §VI-A; Table 5 | M | blocked(D1,D2) |
-| R2-2 | Rescope title/abstract to code security; motion-safety half fires 0/585 by design. | Abstract and §I rewrite per R1-4/D4. In §IV-C rename "motion-safety pass" to make clear it is a specification check that is invariant across conditions, and say in the abstract that only the security pass carries signal. Consider dropping the motion-safety rows from the results narrative into a one-line protocol statement. | abstract; §I; §IV-C; §VI-A | S | blocked(D4) |
+| R2-1 | Add a non-LLM comparator (~15 human/vendor URScript programs). | New script `scripts/comparator_urscript.py`: score (i) 15 translator programs, (ii) translator + safety preamble, (iii) vendor examples per D2, under preregistered rules and under corrected SM-5. New subsection §VI-A "Non-LLM comparator" with a table (per-rule firing counts, per-program violation count). State plainly that the reference translation fails SM-4/SM-6 by construction and SM-5 through the movej unit conflation, and that after the corrected SM-5 the comparator separates from the LLM outputs on the rules that remain. This turns 98.8% into an interpretable number. | new script; §VI-A; Table 5 | M | todo |
+| R2-2 | Rescope title/abstract to code security; motion-safety half fires 0/585 by design. | Abstract and §I rewrite per R1-4/D4. In §IV-C rename "motion-safety pass" to make clear it is a specification check that is invariant across conditions, and say in the abstract that only the security pass carries signal. Consider dropping the motion-safety rows from the results narrative into a one-line protocol statement. | abstract; §I; §IV-C; §VI-A | S | todo |
 | R2-3a | §V-C arithmetic: "three repetitions, for 315 generations". | Change to "one repetition, for 315 generations (45 model-task cells × 7 strategies)". Explain why E2 has one rep (deterministic decoding; reps in E1 were identical). Check Table 4 and Appendix A consistency. | §V-C | S | todo |
 | R2-3b | 10.37 vs 6.38 baseline means unreconciled. | State denominators explicitly: 10.37 = mean over 83 gate-passing baseline outputs; 6.38 = mean over all 135 with invalid outputs scored 0. Recompute the E2 contrast on the gate-passing subset so §VI-B uses the same basis as §VI-A, and report both. | §VI-A; §VI-B; Table 5 | S | todo |
 | R2-4 | "Grammar-anchored" / "parsed URScript grammar" overstates a regex. | Replace throughout with "lexical, regex-based rule checker"; describe the gate precisely (list the call names or cite the regex); remove "parsed" and "grammar". Check §I, §IV, §IV-C, §VII, conclusion. | global | S | todo |
@@ -95,7 +103,7 @@ Status legend: `todo` / `doing` / `done` / `rebut` (counter-argue, no change) / 
 | ID | Concern | Action | Where | Effort | Status |
 |----|---------|--------|-------|--------|--------|
 | R2-M1 | Detector validation circular. | Same as R1-2 + R2-1: comparator and future-work statement. Add an explicit "what the 114/120 does and does not show" sentence to Appendix C. | App. C; §VII-D | S | todo |
-| R2-M2 | Manual audit single rater, no agreement statistic. | D3 / R1-3. | Table 7 | M | blocked(D3) |
+| R2-M2 | Manual audit single rater, no agreement statistic. | D3 / R1-3. | Table 7 | M | todo (rater 2 pending) |
 | R2-M3 | Preregistered thresholds untestable. | Already framed as a lesson. Add one sentence: the confirmatory arm for H5 is reported as voided by ceiling, and the count/severity contrasts are labelled post hoc. No further change. | §VI-B | S | todo |
 | R2-M4 | Repair-trajectory regimes never quantified for local models. | From `E3_full`: classify each of the 135 cells into the four regimes (repaired / oscillating / degraded-to-invalid / unchanged) by rule; report a small table; Fig. 4 shows real examples with counts in the legend. | §VI-C; Fig. 4 | M | todo |
 | R2-M5 | Complexity-stratified analysis punted. | Run `scripts/complexity_correlation_analysis.py` on E1/E3; report the tertile-stratified rates and the (likely null) test in a short paragraph + appendix table. | §VI-D; appendix | S | todo |
