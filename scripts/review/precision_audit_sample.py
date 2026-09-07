@@ -48,7 +48,8 @@ FNAME = re.compile(r"^(T\d{3})_(.+?)_(baseline|safety|adversarial_A8\.\d|watchdo
 
 def task_modes() -> dict[str, str]:
     modes = {}
-    for f in (REPO / "enfield_tasks" / "ir" / "tasks").glob("T*.json"):
+    tasks_dir = REPO / "paper" / "data" / "tasks_as_run" if (REPO / "paper" / "data" / "tasks_as_run").is_dir() else REPO / "enfield_tasks" / "ir" / "tasks"
+    for f in tasks_dir.glob("T*.json"):
         t = json.loads(f.read_text())
         modes[t["task"]["id"]] = t["task"].get("operating_mode", "collaborative")
     return modes

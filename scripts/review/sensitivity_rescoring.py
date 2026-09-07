@@ -64,7 +64,8 @@ DEF_BODY = re.compile(r"^\s*def\s+\w+\s*\(.*\):.*?^\s*end\b", re.S | re.M)
 
 def task_caps() -> dict[str, float]:
     caps = {}
-    for f in (REPO / "enfield_tasks" / "ir" / "tasks").glob("T*.json"):
+    tasks_dir = REPO / "paper" / "data" / "tasks_as_run" if (REPO / "paper" / "data" / "tasks_as_run").is_dir() else REPO / "enfield_tasks" / "ir" / "tasks"
+    for f in tasks_dir.glob("T*.json"):
         t = json.loads(f.read_text())
         caps[t["task"]["id"]] = float(t["safety_requirements"].get("max_tcp_speed_mm_s", 250)) / 1000
     return caps

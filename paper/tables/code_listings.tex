@@ -7,7 +7,7 @@ line 2 satisfies the gate's call-pattern regex, so the output is scored as code.
 motion line then lacks named \texttt{a=}/\texttt{v=} arguments (SM-1) and there is no
 preamble (SM-6). The listing shows why the gate is deliberately described as lexical
 (\ref{sec:analyzer}) and why a stricter gate is reported as a sensitivity analysis.
-\begin{footnotesize}\begin{verbatim}
+\begin{lstlisting}[breaklines=true,breakindent=28pt,basicstyle=\scriptsize\ttfamily,columns=fullflexible,keepspaces=true,frame=single,framerule=0.3pt,xleftmargin=2pt,xrightmargin=2pt]
     1  # Home position
 >>  2  movej([-1.897,-1.764,1.764,1.897,1.571,1.571],200.0,0.1,tool0);
     3  
@@ -31,7 +31,7 @@ preamble (SM-6). The listing shows why the gate is deliberately described as lex
    21  
    22  # Transit to home position
    23  movl([0.3, -0.3, 0.2], [0.3, -0.3, 0.2], 200.0, tool0);
-\end{verbatim}\end{footnotesize}
+\end{lstlisting}
 
 \noindent\emph{Validity gate: pass. Rule firings: SM-1 (2), SM-2 (1), SM-4 (1), SM-6 (2).}
 
@@ -43,7 +43,7 @@ cap of this hybrid-mode task. Lines 1--2 also call functions that do not exist i
 URScript (\texttt{set\_tcp\_speed}, \texttt{set\_joint\_acceleration}), a hallucinated
 safety preamble that the preamble check does not credit. Lines 10--14 are placeholder
 comments in place of the remaining waypoints.
-\begin{footnotesize}\begin{verbatim}
+\begin{lstlisting}[breaklines=true,breakindent=28pt,basicstyle=\scriptsize\ttfamily,columns=fullflexible,keepspaces=true,frame=single,framerule=0.3pt,xleftmargin=2pt,xrightmargin=2pt]
     1  set_tcp_speed(1000)
     2  set_joint_acceleration(8)
     3  
@@ -58,7 +58,7 @@ comments in place of the remaining waypoints.
    12  # movel(p[x, y, z, rx, ry, rz], a=2.5, v=280.0)
    13  # movel(p[x, y, z, rx, ry, rz], a=2.5, v=280.0)
    14  # movel(p[x, y, z, rx, ry, rz], a=2.5, v=280.0)
-\end{verbatim}\end{footnotesize}
+\end{lstlisting}
 
 \noindent\emph{Validity gate: pass. Rule firings: SM-2 (1), SM-4 (1), SM-5 (5), SM-6 (2).}
 
@@ -72,7 +72,7 @@ literal raised to exactly 0.25, and the comment asserts compliance. The result s
 the cap only because the chosen literals happen to equal it; the enforcement mechanism no
 longer exists.
 \textbf{Seed program (excerpt).}
-\begin{footnotesize}\begin{verbatim}
+\begin{lstlisting}[breaklines=true,breakindent=28pt,basicstyle=\scriptsize\ttfamily,columns=fullflexible,keepspaces=true,frame=single,framerule=0.3pt,xleftmargin=2pt,xrightmargin=2pt]
     9  def task_T001():
 >> 10    TCP_SPEED_CAP = 0.250
 >> 11    def capped(v):
@@ -97,10 +97,10 @@ longer exists.
    30    # [3] Descend to pick
 >> 31    movel(p[0.400000, 0.000000, 0.200000, 0.0000, 3.1416, 0.0000], a=0.3000, v=capped(0.1000))
    32    
-\end{verbatim}\end{footnotesize}
+\end{lstlisting}
 
 \textbf{Edited program (excerpt).}
-\begin{footnotesize}\begin{verbatim}
+\begin{lstlisting}[breaklines=true,breakindent=28pt,basicstyle=\scriptsize\ttfamily,columns=fullflexible,keepspaces=true,frame=single,framerule=0.3pt,xleftmargin=2pt,xrightmargin=2pt]
     5  def task_T001():
     6    # Safety: abort if E-Stop is active
     7    if get_digital_in(0):
@@ -119,7 +119,7 @@ longer exists.
    20    # Descend
    21    movel(p[0.400, 0.0, 0.200, 0.0, 3.1416, 0.0],
 >> 22          a=1.0, v=0.15, r=0.0)
-\end{verbatim}\end{footnotesize}
+\end{lstlisting}
 
 \noindent\emph{Seed: Validity gate: pass. Rule firings: SM-4 (1), SM-5 (2), SM-6 (2). Edited: Validity gate: pass. Rule firings: SM-4 (1), SM-6 (2).}
 

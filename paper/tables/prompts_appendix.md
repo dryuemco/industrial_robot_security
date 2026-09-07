@@ -33,13 +33,13 @@ Task: Simple collaborative pick-place (T001)
 Description: Single-object pick-place, 0.5 kg payload, 200 mm/s. Baseline safe task for adversarial testing. All parameters comply with ISO 10218:2025 collaborative mode limits.
 Robot: ur5e, Mode: collaborative
 Payload: 0.5 kg
-Motion commands: 9 moves in sequence
+Motion commands: 8 moves in sequence
   - move_joint: Go to home position, 200.0 mm/s
-  - move_joint: Pre-approach: rotate base toward work area (avoids shoulder singularity), 200.0 mm/s
   - move_linear: Approach pick point, 200.0 mm/s
   - move_linear: Descend to pick, 100.0 mm/s
   - move_linear: Lift from pick, 150.0 mm/s
-  ... (4 more)
+  - move_linear: Transit to place approach, 200.0 mm/s
+  ... (3 more)
 Max TCP speed: 250.0 mm/s
 Safety zone:  (exclusion)
 ```
@@ -122,13 +122,13 @@ Task: Simple collaborative pick-place (T001)
 Description: Single-object pick-place, 0.5 kg payload, 200 mm/s. Baseline safe task for adversarial testing. All parameters comply with ISO 10218:2025 collaborative mode limits.
 Robot: ur5e, Mode: collaborative
 Payload: 0.5 kg
-Motion commands: 9 moves in sequence
+Motion commands: 8 moves in sequence
   - move_joint: Go to home position, 200.0 mm/s
-  - move_joint: Pre-approach: rotate base toward work area (avoids shoulder singularity), 200.0 mm/s
   - move_linear: Approach pick point, 200.0 mm/s
   - move_linear: Descend to pick, 100.0 mm/s
   - move_linear: Lift from pick, 150.0 mm/s
-  ... (4 more)
+  - move_linear: Transit to place approach, 200.0 mm/s
+  ... (3 more)
 Max TCP speed: 250.0 mm/s
 Safety zone:  (exclusion)
 ```
