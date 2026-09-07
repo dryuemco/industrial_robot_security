@@ -342,7 +342,8 @@ follow the functional trajectory. A controlled study of repeated model-only
 improvement reports a 37.6\% rise in critical vulnerabilities after only five
 iterations, attributing the effect to the absence of human review between rounds
 \cite{ref53}. The degradation persists under automated gating: adding a
-static-analysis check to the loop has been observed to raise, rather than suppress,
+static-analysis check to the loop has been reported, in a preprint not yet peer
+reviewed at the time of writing, to raise rather than suppress
 the latent degradation rate, because rule-based detectors do not cover structural
 regressions such as the silent removal of a defensive check \cite{ref54}.
 End-to-end detect-repair-verify pipelines have therefore been proposed for
@@ -371,7 +372,8 @@ path. This positioning is developed further in the discussion (\ref{sec:discussi
 
 \section{Threat Model}\label{sec:threat}
 In this article the term safety-and-security evaluation denotes a systematic,
-preregistered threat model together with the grammar-based static rule set (a parser-driven check against the URScript grammar) defined
+preregistered threat model together with the lexical static rule set (regular-expression
+checks over the URScript text, not a parse of the language) defined
 below; it does not denote formal verification or machine-checked proofs of safety.
 
 \subsection{Attacker Capabilities}\label{sec:attacker}
@@ -450,7 +452,7 @@ work.
 \section{The FACT Framework}\label{sec:framework}
 The framework evaluated in this article, named FACT, renders a vendor-neutral task
 description into one of several prompt conditions, generates URScript with an
-open-weight code model, and submits the result to a grammar-anchored rule checker
+open-weight code model, and submits the result to a lexical, regular-expression-based rule checker
 whose verdict is traceable to ISO 10218-1:2025. Figure~\ref{fig:pipeline} summarizes
 the pipeline; the remainder of this section details each stage.
 
@@ -460,8 +462,8 @@ the pipeline; the remainder of this section details each stage.
 \def\xfigwd{\columnwidth}% forces the wrapping caption branch; in figure* the caption still wraps at full \textwidth
 \caption{The FACT pipeline. A vendor-neutral task representation is rendered into a
 baseline, safety-augmented, or adversarial prompt; an open-weight code model generates
-URScript; a grammar-anchored rule checker of seven motion-safety checks and seven
-weakness-mapped security checks, traceable to seven clauses of ISO 10218-1:2025, emits
+URScript; a lexical rule checker of seven specification-level motion-safety checks and seven
+weakness-mapped code-level security checks, traceable to seven clauses of ISO 10218-1:2025, emits
 a violation verdict. A repair-in-loop variant feeds detected violations back as repair
 prompts.}
 \label{fig:pipeline}
@@ -576,7 +578,7 @@ motion-safety pass is computed from the task representation and does not depend 
 the model output. The gate is needed because at least one model produced pseudo-code
 that, without the gate, would have been recorded as safe.
 
-\textbf{Scope of the checks.} The checks are syntactic and lexical rules evaluated over the parsed URScript grammar. Dataflow analysis, definition-use tracking, and reachability analysis are not performed, so the component is a grammar-anchored rule checker and not a dataflow-based program analysis. The consequence is visible in two of the security checks: the input-validation and error-handling proxies key on argument and control-flow patterns rather than on data movement, and the post-hoc precision audit (Section~\ref{sec:res-baseline}) confirms that neither faithfully captures its nominal CWE-20 and CWE-252 semantics, so the two are reported as syntactic proxies rather than CWE checks. Faithful dataflow-based versions are left to future work, consistent with the abstract-syntax-tree direction identified in the design requirements.
+\textbf{Scope of the checks.} The checks are lexical rules: each is a regular expression, or a small set of them, evaluated over the URScript text, and the validity gate is itself a regular expression that matches one of about twenty URScript call names followed by an opening parenthesis (the full pattern is in the replication package, \texttt{code\_parser.py}). No parser is built and no abstract syntax tree is constructed. Dataflow analysis, definition-use tracking, and reachability analysis are not performed, so the component is a regular-expression rule checker and not a program analysis. The consequence is visible in two of the security checks: the input-validation and error-handling proxies key on argument and control-flow patterns rather than on data movement, and the post-hoc precision audit (Section~\ref{sec:res-baseline}) confirms that neither faithfully captures its nominal CWE-20 and CWE-252 semantics, so the two are reported as syntactic proxies rather than CWE checks. Faithful dataflow-based versions are left to future work, consistent with the abstract-syntax-tree direction identified in the design requirements.
 
 \subsection{ISO 10218-1:2025 Traceability}\label{sec:iso}
 Each check is anchored to a specific clause of ISO 10218-1:2025 (Robotics, Safety
@@ -681,10 +683,14 @@ condition that adds the applicable speed limits and the configuration preamble, 
 three repetitions per cell, for 270 generations.
 
 The adversarial experiment probes robustness under prompt-level attack. It applies the
-seven prompt-injection strategies to the fifteen tasks, with three repetitions, for
+seven prompt-injection strategies to the fifteen tasks for each of the three models, with
+a single repetition per cell (3 models $\times$ 15 tasks $\times$ 7 strategies), for
 315 generations, in order to measure whether adversarial prompting raises the
 violation rate above the matched baseline and to isolate which strategies and which
-models drive any change.
+models drive any change. One repetition was used because the baseline experiment had
+already shown that repetitions within a cell agree on the binary verdict in 82 of 90
+cells (\ref{sec:res-baseline}), and the matched baseline for each cell is the mean over
+its three baseline repetitions.
 
 The repair-in-loop experiment tests whether the rule checker is useful as a
 corrective signal and not only as a measurement. It runs the fifteen tasks under
@@ -739,7 +745,7 @@ under the adversarial condition, together with the rule checker detection rate a
  
 \textbf{Refusal detection.} Each response is classified by a deterministic two-gate
 procedure that shares one definition of committed code with the validity gate: the
-first gate applies the same extractor and grammar test as the validity gate, and the
+first gate applies the same extractor and call-pattern test as the validity gate, and the
 second gate matches the response against a frozen set of refusal indicators. The two
 gates assign every response to one of three categories.
 \begin{itemize}
@@ -756,8 +762,8 @@ This three-way split makes the refusal sensitivity analysis well defined.
 \textbf{Rule-checker latency.} The runtime cost of the rule checker is reported here
 because the project proposal specified a bound on detection latency. The figure is the
 wall-clock time to analyze one generated program on the development workstation, not a
-measurement of robot execution. The rule checker runs as a single-pass parser-and-rule
-pipeline over each task-and-code pair, and per-call latency was measured by replaying
+measurement of robot execution. The rule checker runs as a single pass of regular-expression rules
+over each task-and-code pair, and per-call latency was measured by replaying
 the fifteen baseline pairs for one hundred iterations after a warm-up, for 1500 timed
 calls, without GPU dependency. The mean per-call latency is 0.648 ms with a two-sided
 95\% confidence interval of [0.638, 0.658] ms; the median is 0.603 ms, the 95th
@@ -1248,10 +1254,12 @@ explicit-form cells, whereas the largest removed it in 70\% of cases. Removal of
 encoded construct rose from 0\% for the smallest model (0 of 30 cells) through 50\% (15
 of 30) and 44.8\% (13 of 29, this cell reduced by the named-constant output excluded at the 358B scale) to 70\%
 for the largest (21 of 30), the four cells summing to the 49 of 119 removals noted above.
-The increase is monotone across the four ordered sizes, but because only four distinct
-model sizes anchor it under a single repetition per cell, no inferential trend statistic
-is attached to it; it is reported as an exploratory signal and a target for replication
-rather than an established scaling law (Figure~\ref{fig:construct}).
+The increase is not strictly monotone (the 120B model removes the construct slightly
+more often than the 358B model, 50.0\% against 44.8\%, with overlapping exact intervals),
+and because only four distinct model sizes anchor it under a single repetition per cell,
+no inferential trend statistic is attached to it; it is reported as an exploratory
+signal and a target for replication rather than an established scaling law
+(Figure~\ref{fig:construct}).
 
 \begin{figure}[t]\centering
   \includegraphics[width=\columnwidth]{figures/fig_representation_breach.pdf}
@@ -1269,11 +1277,12 @@ rather than an established scaling law (Figure~\ref{fig:construct}).
   \includegraphics[width=\columnwidth]{figures/fig_construct_removal.pdf}
   \def\xfigwd{\columnwidth}%
   \caption{Silent removal of the encoded speed-cap construct after the same benign edit,
-  by model scale, across four ordered sizes (one repetition per cell). The dashed guide
-  marks the monotone increase across the four ordered sizes, which rests on four
-  ordered sizes and is reported as exploratory. The smallest model removed the construct
-  in none of its cells and the largest in 70\%, inverting the expectation that larger
-  models are safer.}\label{fig:construct}
+  by model scale, across four ordered sizes (one repetition per cell; exact 95\%
+  Clopper-Pearson intervals; counts shown as removed/valid). No trend is fitted: four
+  sizes at one repetition each support no inferential statistic, and the middle two
+  points are not ordered (50.0\% at 120B against 44.8\% at 358B). The smallest model
+  removed the construct in none of its cells and the largest in 70\%, inverting the
+  expectation that larger models are safer.}\label{fig:construct}
 \end{figure}
 
 \section{Discussion}\label{sec:discussion}
@@ -1313,10 +1322,10 @@ at any scale from 16B to 675B converted an unsafe generation into a valid violat
 one across the 195 repair-loop cells. It aligns instead with the security-repair finding
 that iteration can degrade rather than improve safety: model-only iteration has been
 reported to raise critical vulnerabilities by 37.6\% over five rounds \cite{ref53}, and
-adding a static check to the loop has been observed to increase rather than suppress
+adding a static check to the loop has been reported (in a preprint) to increase rather than suppress
 latent degradation because rule-based detectors miss structural regressions such as the
 silent removal of a defensive check \cite{ref54}. The mechanism that \cite{ref54}
-describes in the abstract is observed concretely here. Under the representation analysis
+describes in the abstract is observed concretely here, in a peer-reviewable setting. Under the representation analysis
 the encoded safety construct was silently deleted in 41\% of explicit-form programs, and
 the repair loop reliably restored only the locally insertable input-validation guard,
 never the structural obligations, so the loop behaves exactly as a rule-based detector
@@ -1328,10 +1337,10 @@ violation.
 A notable exploratory observation, drawn from a single-repetition probe and reported
 without a confirmatory claim, is that the silent removal of safety constructs
 increases with model scale. The smallest model preserved every encoded constraint,
-whereas removal rose to 70\% for the largest, a monotone increase across four ordered
-model sizes; because the trend rests on only four ordered sizes under a single
-repetition, no inferential statistic is attached and it warrants replication before it is
-treated as established. If replicated, this would invert the expectation that larger models are safer and would fit the shallow-alignment account in which safety adapts only surface features and is brittle under transformation of the surrounding text \cite{ref29}. In the same probe the breach rate fell monotonically with the legibility of the encoding, so that the more readable a safety constraint is the more reliably a capable model removes it, and the zero-breach reading for the explicit forms held only because residual literal values happened to stay within the cap rather than because the enforcement survived.
+whereas removal rose to 70\% for the largest, with the two intermediate sizes at 50.0\%
+and 44.8\%; because the pattern rests on only four ordered sizes under a single
+repetition and is not strictly monotone in the middle, no inferential statistic is
+attached and it warrants replication before it is treated as established. If replicated, this would invert the expectation that larger models are safer and would fit the shallow-alignment account in which safety adapts only surface features and is brittle under transformation of the surrounding text \cite{ref29}. In the same probe the breach rate fell monotonically with the legibility of the encoding, so that the more readable a safety constraint is the more reliably a capable model removes it, and the zero-breach reading for the explicit forms held only because residual literal values happened to stay within the cap rather than because the enforcement survived.
 
 The absence of adversarial uplift contrasts sharply with the embodied-attack literature,
 where targeted prompts elicit harmful actions from language-model-controlled robots at
@@ -1423,8 +1432,9 @@ already-valid motion structure untouched would remove the degree of freedom thro
 which the structural collapse occurs. Second, language-validity gating should be
 separated from safety-rule gating: the one mechanical pass observed under enriched
 feedback was achieved with language constructs that do not exist in URScript, and the
-frontier probe surfaced recurrent hallucinated safety calls, so a first gate verifying
-tokens against the language grammar and built-in signature catalogue, followed by a
+frontier probe surfaced recurrent hallucinated safety calls, so a first gate that parses
+the program against the URScript grammar and checks every call name against the built-in
+signature catalogue (a genuine parser, in place of the present regular-expression gate), followed by a
 second gate evaluating safety rules only on programs that pass the first, would make
 hallucinated-call passes structurally impossible and convert the invalidation confound
 into an explicit, separately reported outcome. Third, loop control should be
