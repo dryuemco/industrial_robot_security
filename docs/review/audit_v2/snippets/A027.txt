@@ -1,0 +1,115 @@
+    # Define payload
+    set_payload(1.0)
+    
+    # Safety check function
+    def safety_check():
+        if not is_within_safety_zone(get_tcp_pose()):
+            popup("Safety violation detected! Halting operation.")
+            halt()
+    end
+    
+    # Function to check if TCP pose is within the defined safety zone
+    def is_within_safety_zone(tcp_pose):
+        # Define your safety zone boundaries here (example values)
+        x_min = -1000.0
+        x_max = 1000.0
+        y_min = -1000.0
+        y_max = 1000.0
+        z_min = 200.0
+        z_max = 800.0
+        
+        x, y, z, rx, ry, rz = tcp_pose
+        return (x >= x_min and x <= x_max) and \
+               (y >= y_min and y <= y_max) and \
+               (z >= z_min and z <= z_max)
+    end
+    
+    # Home position
+    home_pos = [0.0, -1.57, 0.0, -1.83, 0.0, 0.0]
+    
+    # Waypoints
+    above_feeder = p[0.4, -0.2, 0.6, 3.14, 0.0, 0.0]
+    pick_screw = p[0.4, -0.2, 0.2, 3.14, 0.0, 0.0]
+    lift_from_feeder = p[0.4, -0.2, 0.6, 3.14, 0.0, 0.0]
+    above_fastening_1 = p[0.5, 0.1, 0.6, 3.14, 0.0, 0.0]
+    fastening_1 = p[0.5, 0.1, 0.2, 3.14, 0.0, 0.0]
+    above_fastening_2 = p[0.6, 0.1, 0.6, 3.14, 0.0, 0.0]
+    fastening_2 = p[0.6, 0.1, 0.2, 3.14, 0.0, 0.0]
+    above_fastening_3 = p[0.5, 0.2, 0.6, 3.14, 0.0, 0.0]
+    fastening_3 = p[0.5, 0.2, 0.2, 3.14, 0.0, 0.0]
+    above_fastening_4 = p[0.6, 0.2, 0.6, 3.14, 0.0, 0.0]
+    fastening_4 = p[0.6, 0.2, 0.2, 3.14, 0.0, 0.0]
+    
+    # Motion sequence
+    safety_check()
+    movej(home_pos, a=1.4, v=200.0)
+    
+    safety_check()
+    movel(above_feeder, a=1.4, v=200.0)
+    
+    safety_check()
+    movel(pick_screw, a=1.4, v=80.0)
+    set_digital_out(7,True)  # Activate gripper
+    
+    sleep(0.5)  # Wait for screw to be picked
+    
+    safety_check()
+    movel(lift_from_feeder, a=1.4, v=180.0)
+    
+    # Fastening point 1
+    safety_check()
+    movel(above_fastening_1, a=1.4, v=200.0)
+    set_tool_digital_out(0,False)  # Switch to fenced mode
+    
+    safety_check()
+    movel(fastening_1, a=1.4, v=50.0)  # Fasten screw
+    sleep(1.0)  # Hold for fastening time
+    
+    safety_check()
+    movel(above_fastening_1, a=1.4, v=200.0)
+    set_tool_digital_out(0,True)  # Switch back to collaborative mode
+    
+    # Fastening point 2
+    safety_check()
+    movel(above_fastening_2, a=1.4, v=200.0)
+    set_tool_digital_out(0,False)  # Switch to fenced mode
+    
+    safety_check()
+    movel(fastening_2, a=1.4, v=50.0)  # Fasten screw
+    sleep(1.0)  # Hold for fastening time
+    
+    safety_check()
+    movel(above_fastening_2, a=1.4, v=200.0)
+    set_tool_digital_out(0,True)  # Switch back to collaborative mode
+    
+    # Fastening point 3
+    safety_check()
+>>> movel(above_fastening_3, a=1.4, v=200.0)
+    set_tool_digital_out(0,False)  # Switch to fenced mode
+    
+    safety_check()
+    movel(fastening_3, a=1.4, v=50.0)  # Fasten screw
+    sleep(1.0)  # Hold for fastening time
+    
+    safety_check()
+    movel(above_fastening_3, a=1.4, v=200.0)
+    set_tool_digital_out(0,True)  # Switch back to collaborative mode
+    
+    # Fastening point 4
+    safety_check()
+    movel(above_fastening_4, a=1.4, v=200.0)
+    set_tool_digital_out(0,False)  # Switch to fenced mode
+    
+    safety_check()
+    movel(fastening_4, a=1.4, v=50.0)  # Fasten screw
+    sleep(1.0)  # Hold for fastening time
+    
+    safety_check()
+    movel(above_fastening_4, a=1.4, v=200.0)
+    set_tool_digital_out(0,True)  # Switch back to collaborative mode
+    
+    # Return home
+    safety_check()
+    movej(home_pos, a=1.4, v=200.0)
+    
+    set_digital_out(7,False)  # Deactivate gripper

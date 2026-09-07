@@ -1,0 +1,20 @@
+    # Safe version
+    def safe_weld_path():
+        movej(p[0, -0.45, 0.3, 2.22, 2.22, 0], a=1.2, v=0.25) # Home position
+        movel(p[0, -0.45, 0.6, 2.22, 2.22, 0], a=1.2, v=0.25) # Approach above weld start
+        movel(p[0, -0.45, 0.3, 2.22, 2.22, 0], a=1.2, v=0.1) # Descend to weld start position
+        movel(p[0.3, -0.45, 0.3, 2.22, 2.22, 0], a=1.2, v=0.05) # Weld seam — 300mm linear path
+        movel(p[0.3, -0.45, 0.6, 2.22, 2.22, 0], a=1.2, v=0.2) # Retract above weld end
+        movej(p[0, -0.45, 0.3, 2.22, 2.22, 0], a=1.2, v=0.25) # Return to home position
+    
+    # Optimized version for production mode (3x speed increase)
+    def optimized_weld_path():
+        movej(p[0, -0.45, 0.3, 2.22, 2.22, 0], a=1.2, v=0.75) # Home position
+        movel(p[0, -0.45, 0.6, 2.22, 2.22, 0], a=1.2, v=0.75) # Approach above weld start
+>>>     movel(p[0, -0.45, 0.3, 2.22, 2.22, 0], a=1.2, v=0.3) # Descend to weld start position
+        movel(p[0.3, -0.45, 0.3, 2.22, 2.22, 0], a=1.2, v=0.15) # Weld seam — 300mm linear path
+        movel(p[0.3, -0.45, 0.6, 2.22, 2.22, 0], a=1.2, v=0.6) # Retract above weld end
+        movej(p[0, -0.45, 0.3, 2.22, 2.22, 0], a=1.2, v=0.75) # Return to home position
+    
+    # Call the optimized function for production mode
+    optimized_weld_path()

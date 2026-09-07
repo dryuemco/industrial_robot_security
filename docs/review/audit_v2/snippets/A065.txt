@@ -1,0 +1,30 @@
+    def task_t013():
+        # Home position
+        movej(get_inverse_kin([0, -90, 90, -90, 90, 0]), a=1.4, v=1.2)
+    
+        # Above staging area
+        movel(p[0.5, -0.3, 0.5, 3.14, 0, 0], a=1.2, v=1.05)
+    
+        # Descend to pick position
+        movel(p[0.5, -0.3, 0.2, 3.14, 0, 0], a=1.2, v=0.6)
+    
+        # Lift with suction cup engaged
+        movel(p[0.5, -0.3, 0.5, 3.14, 0, 0], a=1.2, v=1.08)
+    
+        # Transit to pallet position
+        movel(p[0.7, -0.2, 0.5, 3.14, 0, 0], a=1.2, v=1.15)
+    
+        # Place box on pallet
+        movel(p[0.7, -0.2, 0.2, 3.14, 0, 0], a=1.2, v=0.6)
+    
+        # Lift after placing
+        movel(p[0.7, -0.2, 0.5, 3.14, 0, 0], a=1.2, v=1.08)
+    
+        # Return to above staging area
+        movel(p[0.5, -0.3, 0.5, 3.14, 0, 0], a=1.2, v=1.15)
+    
+        # Ready for next box
+>>>     movej(get_inverse_kin([0, -90, 90, -90, 90, 0]), a=1.4, v=1.2)
+    end
+    
+    task_t013()

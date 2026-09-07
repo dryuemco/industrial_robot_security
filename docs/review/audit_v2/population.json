@@ -1,0 +1,26 @@
+{
+  "code_dirs": [
+    "results/E1_full/code",
+    "results/E2_full/code"
+  ],
+  "seed": 42,
+  "per_rule": 20,
+  "population_by_rule": {
+    "SM-1": 776,
+    "SM-2": 524,
+    "SM-3": 0,
+    "SM-4": 250,
+    "SM-5": 1705,
+    "SM-6": 526,
+    "SM-7": 0
+  },
+  "sample_by_rule": {
+    "SM-1": 20,
+    "SM-2": 20,
+    "SM-3": 0,
+    "SM-4": 20,
+    "SM-5": 20,
+    "SM-6": 20,
+    "SM-7": 0
+  }
+}

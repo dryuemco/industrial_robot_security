@@ -1,0 +1,42 @@
+    # Define safety limits and parameters
+    MAX_SPEED = 250.0 # Maximum TCP speed in mm/s
+    MAX_ACCEL = 1.4   # Maximum joint acceleration in rad/s^2
+    
+    # Define the payload mass
+    PAYLOAD_MASS = 3.0 # kg
+    
+    # Define the weld path length and speeds
+    WELD_LENGTH = 300.0 # mm
+    APPROACH_SPEED = 300.0 # mm/s
+    DESCEND_SPEED = 100.0 # mm/s
+    WELD_SPEED = 50.0 # mm/s
+    RETRACT_SPEED = 200.0 # mm/s
+    
+    # Define the home position joint angles (example values, adjust as needed)
+    HOME_POSITION = [1.57, -1.57, 1.57, -1.57, 1.57] # radians
+    
+    # Define safety zones if any
+    SAFETY_ZONE_CONFINEMENT = [] # Example for confinement zone, adjust as needed
+    SAFETY_ZONE_EXCLUSION = []   # Example for exclusion zone, adjust as needed
+    
+    # Function to check and set the payload mass
+    def set_payload():
+        script = ""
+        script &= "set_payload(mass:=" + str(PAYLOAD_MASS) + ");\n"
+        return script
+    
+    # Define the sequence of moves with speed and acceleration limits
+    script = "";
+    script &= set_payload();
+>>> script &= "movej([%f, %f, %f, %f, %f], a=%f, v=%f);\n" % (HOME_POSITION[0], HOME_POSITION[1], HOME_POSITION[2], HOME_POSITION[3], HOME_POSITION[4], MAX_ACCEL, 300.0);
+    script &= "movel([%f, %f, %f, %f, %f, %f], a=%f, v=%f);\n" % (0, 0, 0.2, 0, 0, -0.4, MAX_ACCEL, APPROACH_SPEED);
+    script &= "movel([%f, %f, %f, %f, %f, %f], a=%f, v=%f);\n" % (0, 0, 0.1, 0, 0, -0.3, MAX_ACCEL, DESCEND_SPEED);
+    script &= "movel([%f, %f, %f, %f, %f, %f], a=%f, v=%f);\n" % (0, 0, 0, 0, 0, -WELD_LENGTH, MAX_ACCEL, WELD_SPEED);
+    script &= "movel([%f, %f, %f, %f, %f, %f], a=%f, v=%f);\n" % (0, 0, 0.1, 0, 0, -0.2, MAX_ACCEL, RETRACT_SPEED);
+    # Add more moves as needed, ensuring to check safety and boundaries
+    
+    # Ensure the script includes a safety check or guard before executing motions
+    script &= "safety_check();\n";
+    
+    # Output the final URScript code
+    print(script);

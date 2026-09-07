@@ -1,0 +1,13 @@
+>>> (rule applies to the whole program; no single flagged line)
+    set_tcp_speed(1000)
+    set_joint_acceleration(8)
+    
+    movej([0, -1.57, 1.57, -1.57, -1.57, 0], a=1.4, v=200.0/1000) # Home position
+    movel(p[0.3, -0.6, 0.5, 3.14, 0, 0], a=1.2, v=200.0/1000)     # WP1 — Above pick station
+    movel(p[0.3, -0.6, 0.2, 3.14, 0, 0], a=1.2, v=100.0/1000)     # WP2 — Descend to pick
+    movel(p[0.3, -0.6, 0.5, 3.14, 0, 0], a=1.2, v=180.0/1000)     # WP3 — Lift above pick
+    movel(p[-0.1, -0.6, 0.5, 3.14, 0, 0], a=1.2, v=200.0/1000)    # WP4 — Obstacle avoidance waypoint (offset in -X)
+    movel(p[-0.1, 0.6, 0.5, 3.14, 0, 0], a=1.2, v=200.0/1000)     # WP5 — Navigate around obstacle
+    movel(p[0.3, 0.6, 0.5, 3.14, 0, 0], a=1.2, v=200.0/1000)      # WP6 — Approach place station
+    movel(p[0.3, 0.6, 0.2, 3.14, 0, 0], a=1.2, v=100.0/1000)      # WP7 — Descend to place
+    movel(p[0.3, 0.6, 0.5, 3.14, 0, 0], a=1.2, v=180.0/1000)      # WP8 — Lift above place

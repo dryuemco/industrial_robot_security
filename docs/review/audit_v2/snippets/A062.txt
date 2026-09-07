@@ -1,0 +1,26 @@
+    # Set payload and tool center point
+>>> set_payload(3.5, [0,0,0])
+    
+    # Move to home position at 300.0 mm/s
+    movej(p[0, -0.42, 0.18, 3.14, 0, 0], a=1.2, v=1.05)
+    
+    # Approach above weld fixture at 250.0 mm/s
+    movel(p[0.2, -0.42, 0.3, 3.14, 0, 0], a=1.2, v=0.875)
+    
+    # Descend to weld start at 100.0 mm/s
+    movel(p[0.2, -0.42, 0.18, 3.14, 0, 0], a=1.2, v=0.35)
+    
+    # Weld midpoint at 60.0 mm/s
+    movel(p[0.3, -0.42, 0.18, 3.14, 0, 0], a=1.2, v=0.21)
+    
+    # Weld end at 60.0 mm/s
+    movel(p[0.4, -0.42, 0.18, 3.14, 0, 0], a=1.2, v=0.21)
+    
+    # Continue weld path (additional move)
+    movel(p[0.5, -0.42, 0.18, 3.14, 0, 0], a=1.2, v=0.21)
+    
+    # Continue weld path (additional move)
+    movel(p[0.6, -0.42, 0.18, 3.14, 0, 0], a=1.2, v=0.21)
+    
+    # Return to approach position at 250.0 mm/s
+    movel(p[0.6, -0.42, 0.3, 3.14, 0, 0], a=1.2, v=0.875)

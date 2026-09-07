@@ -1,0 +1,22 @@
+    # Define the waypoints and speeds
+    waypoint1 := [0.3, -0.4, 0.3]; # Above pick station
+    waypoint2 := [0.3, -0.4, 0.15]; # Descend to pick
+    waypoint3 := [0.3, -0.4, 0.2]; # Lift above pick
+    waypoint4 := [0.2, -0.4, 0.2]; # Obstacle avoidance waypoint (offset in -X)
+    # Define the rest of the waypoints...
+    
+    # Set up the robot mode and payload
+    set_payload(1.5);
+>>> set_tcp([0, 0, 0.1, 0, 0, 0]); # TCP offset for picking
+    
+    # Move to home position
+    movej [0.3, -0.4, 0.3, -1.82, -1.57, 0], t=200.0;
+    
+    # Sequence of moves with obstacle avoidance and speed control
+    move_linear waypoint1, v=200.0; # Above pick station
+    move_linear waypoint2, v=100.0; # Descend to pick
+    move_linear waypoint3, v=180.0; # Lift above pick
+    move_linear waypoint4, v=200.0; # Obstacle avoidance waypoint (offset in -X)
+    # Continue with the rest of the moves...
+    
+    # End of script

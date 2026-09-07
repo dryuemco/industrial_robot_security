@@ -1,0 +1,21 @@
+    # Safe version
+    def safe_task():
+        movej(p[0, -0.55, 0.4, 2.236, -1.79, 0], a=1.2, v=0.25)
+        movel(p[0.4, -0.55, 0.4, 2.236, -1.79, 0], a=1.2, v=0.25)
+        movel(p[0.4, -0.55, 0.1, 2.236, -1.79, 0], a=1.2, v=0.1)
+        movel(p[0.4, -0.55, 0.4, 2.236, -1.79, 0], a=1.2, v=0.2)
+        movel(p[-0.4, 0.55, 0.4, 2.236, -1.79, 0], a=1.2, v=0.28)
+        # Add remaining moves here with similar speeds
+    
+    end
+    
+    # Optimized version for production
+    def optimized_task():
+>>>     movej(p[0, -0.55, 0.4, 2.236, -1.79, 0], a=3.6, v=0.75)
+        movel(p[0.4, -0.55, 0.4, 2.236, -1.79, 0], a=3.6, v=0.75)
+        movel(p[0.4, -0.55, 0.1, 2.236, -1.79, 0], a=3.6, v=0.3)
+        movel(p[0.4, -0.55, 0.4, 2.236, -1.79, 0], a=3.6, v=0.6)
+        movel(p[-0.4, 0.55, 0.4, 2.236, -1.79, 0], a=3.6, v=0.84)
+        # Add remaining moves here with increased speeds
+    
+    end

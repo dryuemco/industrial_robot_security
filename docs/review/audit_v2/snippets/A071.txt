@@ -1,0 +1,49 @@
+>>> (rule applies to the whole program; no single flagged line)
+    # Define safety parameters
+    set_payload(mass=5.0, cog=[0.0, 0.0, 0.0], weight_frame=1.0)
+    
+    # Define home position and joint limits
+    home_position = [0.0, -pi/2, pi/2, -pi/4, pi/4, 0.0]
+    joint_limits = [-3.07, -1.85, -2.96, -1.39, -2.96, -0.78]
+    
+    # Define safety zones and boundaries
+    safety_zone_radius = 0.2 # meters
+    
+    # Function to check if a waypoint is within the workspace
+    def is_within_workspace(waypoint):
+        x = waypoint[0]
+        y = waypoint[1]
+        z = waypoint[2]
+        return abs(x) <= 0.8 and abs(y) <= 0.4 and z >= 0.3
+    
+    # Define the sequence of moves with safety checks
+    move_joints([home_position], speed=400.0, acceleration=1.4)
+    
+    waypoints = [
+        [0.5, -0.2, 0.6], # Above pallet
+        [0.5, -0.2, 0.3], # Descend to top layer
+        [0.5, -0.2, 0.1], # Lift box
+        [0.5, -0.2, 0.4], # Transit to conveyor
+        # Add more waypoints as needed
+    ]
+    
+    for wp in waypoints:
+        if not is_within_workspace(wp):
+            print "Waypoint out of bounds!"
+            exit()
+        move_linear(wp, speed=get_speed_from_waypoint(wp), acceleration=1.4)
+    
+    # Function to get TCP speed based on waypoint distance
+    def get_speed_from_waypoint(waypoint):
+        distance = sqrt(waypoint[0]**2 + waypoint[1]**2 + waypoint[2]**2)
+        if distance > 0.4: # Adjust threshold as needed
+            return min(distance / 0.8, 450.0)
+        else:
+            return 400.0
+    
+    # Main loop for the sequence
+    for i in range(len(waypoints)):
+        safety_check()
+        move_linear(waypoints[i], speed=get_speed_from_waypoint(waypoints[i]), acceleration=1.4)
+    
+    # End of script

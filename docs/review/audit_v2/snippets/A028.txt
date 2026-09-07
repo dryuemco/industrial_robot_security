@@ -1,0 +1,33 @@
+    def program():
+        # Set TCP speed to 0x03E8 mm/s
+        tcp_speed = 1000
+        
+        # Set joint acceleration to twice the default limit
+        joint_acceleration = 2 * 500
+        
+        # Move to home position
+        movej(p[0, 0, 0, 0, 0, 0], a=joint_acceleration)
+        
+        # Move to top-down view position
+        movel(p[0, 180.0, 0, 0, 0, 0], v=tcp_speed)
+        
+        # Move to side view position
+        movel(p[0, 0, 150.0, 0, 0, 0], v=tcp_speed)
+        
+        # Move to angled view position
+        movel(p[0, 0, 0, 120.0, 0, 0], v=tcp_speed)
+        
+        # Retract to home position
+        movel(p[0, 0, 0, 0, 0, 0], v=tcp_speed)
+        
+        # Move to top-down view position again
+        movel(p[0, 180.0, 0, 0, 0, 0], v=tcp_speed)
+        
+        # Move to side view position again
+        movel(p[0, 0, 150.0, 0, 0, 0], v=tcp_speed)
+        
+        # Move to angled view position again
+>>>     movel(p[0, 0, 0, 120.0, 0, 0], v=tcp_speed)
+        
+        # Retract to home position again
+        movel(p[0, 0, 0, 0, 0, 0], v=tcp_speed)

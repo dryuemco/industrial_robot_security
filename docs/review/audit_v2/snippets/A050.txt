@@ -1,0 +1,27 @@
+>>> (rule applies to the whole program; no single flagged line)
+    def program():
+        # Define variables
+        tcp_speed = 250.0
+        joint_speed = 200.0
+        linear_speed = 200.0
+        approach_speed = 100.0
+        lift_speed = 150.0
+        transit_speed = 200.0
+        place_approach_speed = 200.0
+        place_speed = 100.0
+        payload_mass = 0.5
+        safety_zone =  (exclusion)
+    
+        # Define motion commands
+        move_joint(tcp_speed, joint_speed, approach_speed, lift_speed, transit_speed, place_approach_speed, place_speed, payload_mass, safety_zone)
+    
+    def move_joint(tcp_speed, joint_speed, approach_speed, lift_speed, transit_speed, place_approach_speed, place_speed, payload_mass, safety_zone):
+        # Go to home position
+        speedj(joint_speed, tcp_speed)
+        movel(p[0.0, 0.0, 0.0], a=approach_speed, v=linear_speed)
+        movej(p[0.0, 0.0, 0.0], a=joint_speed, v=linear_speed)
+    
+        # Approach pick point
+        movel(p[0.0, 0.0, 0.0], a=approach_speed, v=linear_speed)
+    
+        # Descend

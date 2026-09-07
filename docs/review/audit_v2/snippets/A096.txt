@@ -1,0 +1,31 @@
+    # Set the robot to hybrid mode
+    set_mode(1); # Mode: Hybrid
+    
+    # Define payload mass in kg
+    payload_mass := 4.5;
+    
+    # Set maximum TCP speed
+    set_tcp_speed(300.0);
+    
+    # Home position joint speeds (rad/s)
+    home_joint_speeds := [1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
+    
+    # Move to home position with specified speed
+    movej([0.0, -pi/4, pi/2, -pi/4, pi/2, 0.0], home_joint_speeds, 250.0, 3);
+    
+    # Define linear speeds in mm/s
+    linear_speeds := [250.0, 100.0, 200.0, 280.0];
+    
+    # Move linearly to approach the conveyor pick above
+>>> movej([0.0, -pi/4, pi/2, -pi/4, pi/2, 0.0], linear_speeds[1], 250.0, 3);
+    
+    # Descend to pick position with specified speed
+    movej([0.0, -pi/4, pi/2, -pi/4, pi/2, 0.0], linear_speeds[2], 100.0, 3);
+    
+    # Lift from conveyor with specified speed
+    movej([0.0, -pi/4, pi/2, -pi/4, pi/2, 0.0], linear_speeds[3], 200.0, 3);
+    
+    # Transit to pallet position (0,0) with specified speed
+    movej([0.0, -pi/4, pi/2, -pi/4, pi/2, 0.0], linear_speeds[4], 280.0, 3);
+    
+    # Continue with the remaining moves...

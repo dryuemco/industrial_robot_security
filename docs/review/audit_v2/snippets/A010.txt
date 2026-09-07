@@ -1,0 +1,41 @@
+    # Define safety parameters
+    set_tool_payload(0.6); # Set payload to 0.6 kg
+    
+    # Define safety zones
+    safety_zone([[0, 0, 0], [1, 1, 1]]); # Example safety zone (adjust as needed)
+    
+    # Define emergency stop handler
+    def safe_stop():
+        set_digital_out(0, False); # Deactivate laser if in use
+        movej([0.3, -1.5, 1.5, -2, 1.5, 0], 350.0, 1.4, relative=False); # Move to safe position
+    
+    # Define waypoints for the task
+    waypoints = [
+        [0.3, -1.5, 1.5, -2, 1.5, 0], # Home position
+        [0.3, -1.5, 1.7, -2, 1.5, 0], # Above marking surface
+        [0.3, -1.5, 1.6, -2, 1.5, 0], # Descend to marking height
+        [0.3, -1.5, 1.65, -2, 1.5, 0], # Mark line 1
+        [0.3, -1.5, 1.62, -2, 1.5, 0], # Step to line 2
+        # Add more waypoints as needed
+    ];
+    
+    # Validate waypoints within workspace boundaries
+    for wp in waypoints:
+        if not check_waypoint(wp):
+            print "Waypoint out of bounds";
+            exit();
+    
+    # Define speed and acceleration for each move
+    speeds = [350.0, 300.0, 100.0, 60.0, 80.0]; # Example speeds (adjust as needed)
+    accelerations = [1.4, 1.4, 1.4, 1.4, 1.4]; # Example accelerations
+    
+    # Execute the motion commands with safety checks
+    for i in range(len(waypoints)):
+        if i > 0:
+            movej(waypoints[i], speeds[i], accelerations[i], relative=False);
+        else:
+>>>         movej(waypoints[i], speeds[i], accelerations[i], relative=True);
+    
+    # Safety check before each move
+    for wp in waypoints:
+        safety_check();

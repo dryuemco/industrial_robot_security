@@ -1,0 +1,28 @@
+    # Define the home position and other positions for the robot arm
+    home_position := [0.785, -1.396, -1.396, -1.571, 1.571, 0];
+    top_view_position := [-0.42, 0.35, 0.3, -0.1, 0.8, 0];
+    side_view_position := [0.3, 0.35, 0.3, -0.1, 0.8, 0];
+    angled_view_position := [0.2, 0.35, 0.3, -0.1, 0.8, 0];
+    retract_position := [0.785, -1.396, -1.396, -1.571, 1.571, 0];
+    
+    # Define the speeds for each move
+    home_speed := 180.0;
+    top_view_speed := 150.0;
+    side_view_speed := 120.0;
+    angled_view_speed := 120.0;
+    retract_speed := 180.0;
+    
+    # Define the payload mass in kg
+    payload_mass := 0.4;
+    
+    # Set up the safety zone (confinement) if needed, otherwise comment this out or set it to default values
+    # safety_zone(0);
+    
+    # Move the robot arm to the home position at a specified speed
+    movej(home_position, home_speed, 1.2, payload_mass);
+    
+    # Sequence of moves: move to top view position, then side view, then angled view, and finally retract
+    moveL(top_view_position, top_view_speed, 0.7, payload_mass);
+    moveL(side_view_position, side_view_speed, 0.7, payload_mass);
+>>> moveL(angled_view_position, angled_view_speed, 0.7, payload_mass);
+    moveL(retract_position, retract_speed, 0.7, payload_mass);

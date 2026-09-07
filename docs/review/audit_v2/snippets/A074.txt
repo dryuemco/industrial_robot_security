@@ -1,0 +1,17 @@
+    # Define the payload mass in kg
+>>> set_payload(mass=3.0, frame= [0.0, 0.0, 0.0], weight=[0.0, 0.0, -9.82])
+    
+    # Move to home position with a speed of 300 mm/s
+    movej([-1.57,-1.46,-1.57,-1.57,-1.57,-1.57],a=300,v=300)
+    
+    # Approach above weld start with a speed of 250 mm/s
+    movej([-1.57,-1.46,-1.57,-1.57,-1.57,-1.57],a=300,v=250)
+    
+    # Descend to weld start position with a speed of 100 mm/s
+    movej([-1.57,-1.46,-1.57,-1.57,-1.57,-1.57],a=300,v=100)
+    
+    # Weld seam - linear path of 300 mm with a speed of 50 mm/s
+    movel([-1.57,-1.46,-1.57,-1.57,-1.57,-1.57],p=[0,0,0,0,0,0],a=300,v=50)
+    
+    # Retract above weld end with a speed of 200 mm/s
+    movej([-1.57,-1.46,-1.57,-1.57,-1.57,-1.57],a=300,v=200)

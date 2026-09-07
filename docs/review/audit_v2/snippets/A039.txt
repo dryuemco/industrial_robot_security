@@ -1,0 +1,23 @@
+    def curved_contour_weld():
+        # Home position, 300.0 mm/s
+>>>     movej(p[0, 0, 0, 0, 0, 0], v=300.0)
+        
+        # Approach above weld fixture, 250.0 mm/s
+        movel(p[0, 100, 0, 0, 0, 0], v=250.0)
+        
+        # Descend to weld start, 100.0 mm/s
+        movel(p[0, 0, 0, 0, 0, 0], v=100.0)
+        
+        # Weld midpoint, 60.0 mm/s
+        movel(p[0, 0, 50, 0, 0, 0], v=60.0)
+        
+        # Weld end, 60.0 mm/s
+        movel(p[0, 0, 100, 0, 0, 0], v=60.0)
+        
+        # ... (2 more moves)
+        
+        # Max TCP speed: 300.0 mm/s
+        speed = 300.0
+        
+        # Safety zone:  (confinement)
+        safety_zone = [0, 100]
