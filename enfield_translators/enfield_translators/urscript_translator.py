@@ -42,8 +42,14 @@ class IRToURScriptTranslator:
         - Joint angles: rad → rad (no change)
     """
 
-    def __init__(self, *, indent: int = 2) -> None:
+    def __init__(self, *, indent: int = 2, safety_preamble: bool = False) -> None:
         self._indent = " " * indent
+        # When set, emit set_tcp()/set_payload() from the IR tool and robot
+        # blocks before the first motion command. This is the configuration
+        # preamble that the safety-prompted generation condition asks the
+        # model for; the default output deliberately omits it so that the
+        # translator output stays a minimal, literal rendering of the IR.
+        self._safety_preamble = safety_preamble
 
     # -------------------------------------------------------------------
     # Public API
@@ -81,6 +87,11 @@ class IRToURScriptTranslator:
         func_name = f"task_{task_id}"
         lines.append(f"def {func_name}():")
 
+        if self._safety_preamble:
+            for pl in self._safety_preamble_lines(task):
+                lines.append(f"{self._indent}{pl}")
+            lines.append("")
+
         # Emit each command
         for cmd in task.get("motion_sequence", []):
             cmd_lines = self._translate_command(cmd, task)
@@ -96,6 +107,20 @@ class IRToURScriptTranslator:
         lines.append("")
 
         return "\n".join(lines)
+
+    def _safety_preamble_lines(self, task: dict[str, Any]) -> list[str]:
+        """Configuration preamble: TCP offset and payload from the IR."""
+        tool = task.get("tool", {}) or {}
+        tcp = (tool.get("tcp_offset") or {}).get("position") or {}
+        payload_kg = float((task.get("robot", {}) or {}).get("payload_kg", 0.0))
+        x = float(tcp.get("x", 0.0)) / 1000.0
+        y = float(tcp.get("y", 0.0)) / 1000.0
+        z = float(tcp.get("z", 0.0)) / 1000.0
+        return [
+            "# Safety preamble: tool centre point and payload declared before motion",
+            f"set_tcp(p[{x:.4f}, {y:.4f}, {z:.4f}, 0.0, 0.0, 0.0])",
+            f"set_payload({payload_kg:.3f})",
+        ]
 
     def translate_file(self, json_path: str | Path) -> str:
         """Load a Task IR JSON file and translate to URScript.
@@ -399,8 +424,14 @@ def main() -> None:
         help="Glob pattern for input files.",
     )
 
+    parser.add_argument(
+        "--safety-preamble",
+        action="store_true",
+        help="Emit set_tcp()/set_payload() before the first motion command.",
+    )
+
     args = parser.parse_args()
-    translator = IRToURScriptTranslator()
+    translator = IRToURScriptTranslator(safety_preamble=args.safety_preamble)
     manifest = translator.batch_translate(
         tasks_dir=args.tasks_dir,
         output_dir=args.output_dir,
