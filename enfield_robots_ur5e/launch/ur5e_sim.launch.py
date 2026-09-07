@@ -15,13 +15,19 @@
 """Launch UR5e in Gazebo Ignition with ros2_control controllers."""
 
 import os
-from ament_index_python.packages import get_package_share_directory
+from ament_index_python.packages import (
+    PackageNotFoundError,
+    get_package_prefix,
+    get_package_share_directory,
+)
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
     ExecuteProcess,
     RegisterEventHandler,
+    SetEnvironmentVariable,
 )
+from launch.conditions import IfCondition, UnlessCondition
 from launch.event_handlers import OnProcessExit
 from launch.substitutions import (
     Command,
@@ -30,6 +36,28 @@ from launch.substitutions import (
 )
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
+
+
+# Ignition resolves `<plugin filename="ign_ros2_control-system">` (declared in
+# ur5e_enfield.urdf.xacro) against IGN_GAZEBO_SYSTEM_PLUGIN_PATH only. The ROS
+# install ships libign_ros2_control-system.so under <prefix>/lib, which is not
+# on that path by default, so the plugin fails to load with "couldn't find
+# shared library" and no controller_manager is ever created.
+#
+# Returns None when ign_ros2_control is absent, so that importing this launch
+# file (e.g. during ament linting) does not fail on a non-simulation install.
+def _ign_system_plugin_path():
+    """Build the IGN_GAZEBO_SYSTEM_PLUGIN_PATH value for ign_ros2_control."""
+    try:
+        plugin_dir = os.path.join(get_package_prefix('ign_ros2_control'), 'lib')
+    except PackageNotFoundError:
+        return None
+    existing = os.environ.get('IGN_GAZEBO_SYSTEM_PLUGIN_PATH', '')
+    if not existing:
+        return plugin_dir
+    if plugin_dir in existing.split(os.pathsep):
+        return existing
+    return os.pathsep.join([existing, plugin_dir])
 
 
 def generate_launch_description():
@@ -45,6 +73,16 @@ def generate_launch_description():
     gz_world_arg = DeclareLaunchArgument(
         'gz_world', default_value='empty.sdf',
         description='Gazebo Ignition world file',
+    )
+    headless_arg = DeclareLaunchArgument(
+        'headless', default_value='false',
+        description=(
+            'Run Gazebo as a server-only process (ign gazebo -s), with no GUI. '
+            'Required on machines without an OpenGL-capable display (CI, '
+            'containers, SSH sessions): the GUI aborts on GL context creation '
+            'and takes the Gazebo server down with it, so the robot never '
+            'reaches controller_manager.'
+        ),
     )
 
     # ----- Robot description (xacro -> URDF) -----
@@ -70,13 +108,24 @@ def generate_launch_description():
         parameters=[robot_description, {'use_sim_time': True}],
     )
 
-    # Gazebo Ignition
+    # Gazebo Ignition. Two variants rather than a conditional argv entry: an
+    # empty string in cmd would be passed to ign as an empty positional arg.
     gz_sim = ExecuteProcess(
         cmd=[
             'ign', 'gazebo', '-r', '-v', '4',
             LaunchConfiguration('gz_world'),
         ],
         output='screen',
+        condition=UnlessCondition(LaunchConfiguration('headless')),
+    )
+
+    gz_sim_headless = ExecuteProcess(
+        cmd=[
+            'ign', 'gazebo', '-s', '-r', '-v', '4',
+            LaunchConfiguration('gz_world'),
+        ],
+        output='screen',
+        condition=IfCondition(LaunchConfiguration('headless')),
     )
 
     # Spawn robot entity in Gazebo
@@ -137,13 +186,28 @@ def generate_launch_description():
         )
     )
 
-    return LaunchDescription([
+    actions = [
         use_sim_time_arg,
         gz_world_arg,
+        headless_arg,
+    ]
+
+    plugin_path = _ign_system_plugin_path()
+    if plugin_path is not None:
+        actions.append(
+            SetEnvironmentVariable(
+                'IGN_GAZEBO_SYSTEM_PLUGIN_PATH', plugin_path
+            )
+        )
+
+    actions += [
         robot_state_publisher,
         gz_sim,
+        gz_sim_headless,
         gz_spawn_entity,
         gz_bridge,
         delay_jsb_after_spawn,
         delay_jtc_after_jsb,
-    ])
+    ]
+
+    return LaunchDescription(actions)
