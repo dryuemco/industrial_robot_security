@@ -23,7 +23,19 @@ from enfield_watchdog_static import StaticWatchdog
 
 REPO = Path(__file__).resolve().parents[1]
 TASKS_DIR = REPO / "enfield_tasks" / "ir" / "tasks"
-CODE_DIR = REPO / "results" / "e3_confirmatory" / "code"
+
+# E3 generated-code directory. "E3_full" is how the confirmatory run ships in
+# this repository; the other two names are accepted so that trees laid out per
+# REPLICATION.md section 8, and the older "e3_confirmatory" path this script
+# used to hardcode, both still resolve. First existing candidate wins.
+CODE_DIR_CANDIDATES = (
+    REPO / "results" / "E3_full" / "code",
+    REPO / "results" / "E3" / "code",
+    REPO / "results" / "e3_confirmatory" / "code",
+)
+CODE_DIR = next(
+    (d for d in CODE_DIR_CANDIDATES if d.is_dir()), CODE_DIR_CANDIDATES[0]
+)
 
 WARMUP = 5
 ITER = 100

@@ -48,7 +48,7 @@ import logging
 import sys
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
@@ -927,24 +927,68 @@ def generate_demo_data() -> pd.DataFrame:
 # Data loading
 # ---------------------------------------------------------------------------
 
+# Confirmatory experiment directories, named as the repository ships them.
+#
+# Do NOT replace this with a recursive sweep of results_dir. The tree also
+# carries frontier-model runs (E1_frontier, E3_frontier), temperature
+# robustness runs (exploratory/temp_robustness/*), ICSE probes, pilot
+# subsets and a mock fixture (E1) — 29 *_results.csv files in total. Folding
+# any of those into this family silently corrupts the H4-H6 estimates,
+# because they use different models, temperatures or prompt sets.
+CONFIRMATORY_DIRS = ("E1_full", "E2_full", "E3_full")
+
+# Identifies a per-call experiment CSV. Matching on these columns rather than
+# on the file name keeps arbitrary result file names working, while excluding
+# the other CSVs that sit in results/ -- the static-pipeline verdicts and
+# detection matrix, and the task-complexity scores -- none of which carry the
+# per-call factors and all of which used to abort the run with a confusing
+# "Missing columns" error when they were picked up by a bare "*.csv" glob.
+RESULT_MARKER_COLUMNS = {"model", "task_id", "condition", "rep"}
+
+
+def discover_result_csvs(results_dir: Path) -> List[Path]:
+    """Collect candidate experiment result CSVs under results_dir."""
+    # Flat layout (CSVs directly in results_dir) stays supported.
+    found = sorted(results_dir.glob("*.csv"))
+    for sub in CONFIRMATORY_DIRS:
+        found.extend(sorted((results_dir / sub).glob("*.csv")))
+
+    unique: List[Path] = []
+    seen = set()
+    for f in found:
+        key = f.resolve()
+        if key not in seen:
+            seen.add(key)
+            unique.append(f)
+    return unique
+
+
 def load_results(results_dir: Path, experiment: Optional[str] = None) -> pd.DataFrame:
-    """Load all CSV result files from results_dir."""
-    pattern = "*.csv"
-    files = list(results_dir.glob(pattern))
-    if not files:
-        raise FileNotFoundError(
-            f"No CSV files found in {results_dir}. "
-            "Run experiments first or use --demo flag."
-        )
+    """Load the confirmatory E1/E2/E3 result CSVs from results_dir."""
+    candidates = discover_result_csvs(results_dir)
 
     dfs = []
-    for f in files:
+    for f in candidates:
+        label = f"{f.parent.name}/{f.name}"
         try:
             df = pd.read_csv(f)
-            dfs.append(df)
-            log.info("Loaded %s (%d rows)", f.name, len(df))
         except Exception as exc:
-            log.warning("Skipping %s: %s", f.name, exc)
+            log.warning("Skipping %s: %s", label, exc)
+            continue
+        if not RESULT_MARKER_COLUMNS.issubset(df.columns):
+            log.debug("Skipping %s: not a per-call experiment CSV", label)
+            continue
+        dfs.append(df)
+        log.info("Loaded %s (%d rows)", label, len(df))
+
+    if not dfs:
+        raise FileNotFoundError(
+            f"No experiment result CSVs found under {results_dir}. "
+            f"Looked directly in that directory and in "
+            f"{', '.join(CONFIRMATORY_DIRS)}; a result CSV must carry the "
+            f"columns {sorted(RESULT_MARKER_COLUMNS)}. "
+            "Run experiments first or use --demo flag."
+        )
 
     combined = pd.concat(dfs, ignore_index=True)
 
