@@ -552,7 +552,7 @@ waypoints, a tool identity and activation check, and a configuration-integrity c
 for adversarial markers and configuration tampering.
 
 The second pass evaluates the generated URScript text and detects code-level
-weaknesses mapped to the Common Weakness Enumeration (CWE). It comprises seven checks: an
+weaknesses mapped to the Common Weakness Enumeration (CWE) \cite{ref65}. It comprises seven checks: an
 input-validation proxy for missing velocity and acceleration arguments on motion calls
 (a surrogate indicator related to CWE-20, not a faithful CWE-20 dataflow check), an
 error-handling-presence proxy on critical operations (a surrogate indicator related to
@@ -592,7 +592,7 @@ its first note enumerates cybersecurity weaknesses, including authenticated prot
 of the safety configuration and avoidance of default credentials, that are captured, at the code level, by the input-validation, protection-mechanism, hardcoded-value,
 prompt-injection-marker, and configuration-integrity checks. To the authors' knowledge
 this is among the first rule-checking frameworks to anchor weaknesses in generated
-robot code to the newly introduced cybersecurity clause. The same standard is adopted in the United States as ANSI/A3 R15.06-2025, which likewise introduces cybersecurity into industrial-robot safety, so the rule-to-clause mapping carries over to that jurisdiction. Two security checks, the
+robot code to the newly introduced cybersecurity clause. The same standard is adopted in the United States as ANSI/A3 R15.06-2025 \cite{ref66}, which likewise introduces cybersecurity into industrial-robot safety, so the rule-to-clause mapping carries over to that jurisdiction. Two security checks, the
 error-handling-presence proxy (related to CWE-252) and the unusual-condition check (CWE-754), have no
 direct anchor, because ISO 10218-1:2025 does not explicitly address application-level
 code robustness; these two checks indicate where the standard could be extended. The
@@ -612,7 +612,7 @@ the hardcoded-literal security check.
 Robots ships an open-source Robot Operating System (ROS) 2 driver and an officially maintained simulator image,
 so the path from generated code to live execution is shorter than for vendors that
 require licensed simulators or closed toolchains. The URScript language is documented
-under permissive terms, whereas RAPID and KRL are encumbered by vendor
+under permissive terms \cite{ref67}, whereas RAPID and KRL are encumbered by vendor
 intellectual-property licences that complicate redistribution of grammar artefacts in
 an open replication package. URScript also targets a single robot family with a stable
 instruction set, giving the rule checker a fixed grammatical surface rather than
@@ -1043,10 +1043,15 @@ defined by the validity gate and the full-rule disjunction rather than by the pr
 any single check.
 
 The safety-prompted condition does move a count-level statistic that the binary rate
-cannot capture. The pooled mean number of violations per generation falls from 10.37
-under the baseline condition to 6.39 under the safety-prompted condition, a relative
-reduction of 38\%, concentrated in DeepSeek-Coder-V2-16B (9.50 to 3.69, 61\%) and
-CodeLlama-34B (10.00 to 3.19, 68\%), with Qwen2.5-Coder-32B essentially unchanged. This
+cannot capture. Two denominators are used for violation counts in this article and are
+named wherever a mean is reported: the \emph{gate-passing} mean averages over outputs that
+passed the validity gate, and the \emph{all-outputs} mean averages over every generation
+with invalid or errored outputs scored as zero violations. On the gate-passing basis (83
+baseline and 108 safety-prompted outputs), the pooled mean number of violations per
+generation falls from 10.37 under the baseline condition to 6.39 under the safety-prompted
+condition, a relative reduction of 38\%, concentrated in DeepSeek-Coder-V2-16B (9.50 to
+3.69, 61\%) and CodeLlama-34B (10.00 to 3.19, 68\%), with Qwen2.5-Coder-32B essentially
+unchanged. On the all-outputs basis the same means are 6.38 and 5.11 (135 generations each). This
 reduction in surface without any change in the binary outcome is the first sign that
 the count of violations and the binary violation rate convey different information in
 this regime.
@@ -1069,12 +1074,21 @@ checks, with no refusals in any condition (0 of 585).
 \subsection{Adversarial Uplift}\label{sec:res-adv}
 Because the binary violation rate is already saturated at baseline, the informative
 adversarial endpoints are the violation count and its severity rather than the binary
-rate. The seven prompt-injection strategies do perturb the count surface: the strongest
-strategy raises the mean violation count from 6.38 at baseline to 9.96 per generation, an
-increase of 3.58, and the pooled mean rises by 0.70. The maximum severity is essentially
-unchanged, moving from 0.54 to 0.55, so the strategies add lower-severity firings without
-raising the worst-case hazard. These count and severity contrasts are taken as the primary
-adversarial analysis.
+rate. Table~\ref{tab:adversarial} gives the full breakdown by strategy and model on both
+denominators defined in \ref{sec:res-baseline}. The seven prompt-injection strategies do
+perturb the count surface. On the all-outputs basis the strongest strategy, incremental
+escalation (A8.4), raises the mean violation count from 6.38 at baseline to 9.96 per
+generation, an increase of 3.58, and the pooled mean over all seven strategies rises by
+0.70 (6.38 to 7.08). On the gate-passing basis, which is the basis used for the
+safety-prompt contrast above, the same strategy raises the mean from 10.37 to 16.59
+(+6.22) and the pooled mean from 10.37 to 11.61 (+1.24); five of the seven strategies lie
+within $\pm 1.5$ violations of the baseline on this basis, and one (role-playing, A8.2)
+lowers the mean. The gate-passing rate itself falls from 61\% at baseline to 61\% pooled
+over strategies (192 of 315), so the strategies do not push the models out of syntax more
+than the plain prompt does. The mean maximum severity is essentially unchanged on either
+basis (0.54 to 0.55 on all outputs; 0.88 to 0.91 on gate-passing outputs), so the
+strategies add lower-severity firings without raising the worst-case hazard. These count
+and severity contrasts are taken as the primary adversarial analysis.
 
 The preregistered binary uplift test is reported only as a demonstration of the ceiling.
 The hypothesis that the strategies raise the combined violation rate by at least 50
@@ -1407,7 +1421,7 @@ recorded in the replication package.
 
 A construct threat specific to the cybersecurity mapping is the distance between
 clause 5.1.16 and the code-level checks anchored to it. Clause 5.1.16 frames
-cybersecurity at the level of the robot as a system and refers to the IEC 62443 series
+cybersecurity at the level of the robot as a system and refers to the IEC 62443 series \cite{ref63}
 for the corresponding controls, such as security levels, network segmentation,
 authenticated and integrity-protected remote access, secure boot, and protected storage
 of the safety configuration. These are architectural and operational properties of a
@@ -1449,7 +1463,7 @@ surfaced by the execution pilot, caught only by the controller's own interpreter
 inverse-kinematics solver, point in the same direction.
 
 \subsection{EU AI Act Alignment}\label{sec:euaiact}
-The framework relates to the Article 15 requirements on three fronts. For accuracy, it
+The framework relates to the Article 15 requirements of the EU Artificial Intelligence Act \cite{ref64} on three fronts. For accuracy, it
 contributes a validity-aware substantive-safe rate with exact binomial testing rather
 than a single saturated pass rate. For robustness, it defines eight adversarial attack
 families and exercises the prompt-injection family through seven strategies, while
@@ -1722,6 +1736,11 @@ detection with no false positives.
 \bibitem{ref60} J. A. Douthwaite, B. Lesage, M. Gleirscher, R. Calinescu, J. M. Aitken, R. Alexander, and J. Law, "A Modular Digital Twinning Framework for Safety Assurance of Collaborative Robotics," Frontiers in Robotics and AI, vol. 8, art. 758099, 2021. doi:10.3389/frobt.2021.758099.
 \bibitem{ref61} Universal Robots A/S, "URSim offline simulator for the e-Series, version 5.12.8," software, accessed 2026. [Online]. Available: \url{https://www.universal-robots.com/download/}
 \bibitem{ref62} Universal Robots A/S and FZI Research Center for Information Technology, "Universal Robots ROS 2 driver (ur\_robot\_driver), version 2.12.0," software, accessed 2026. [Online]. Available: \url{https://github.com/UniversalRobots/Universal_Robots_ROS2_Driver}
+\bibitem{ref63} International Electrotechnical Commission, "IEC 62443-3-3:2013 Industrial communication networks - Network and system security - Part 3-3: System security requirements and security levels," IEC Standard, 2013; and "IEC 62443-4-2:2019 Part 4-2: Technical security requirements for IACS components," IEC Standard, 2019.
+\bibitem{ref64} European Parliament and Council of the European Union, "Regulation (EU) 2024/1689 of 13 June 2024 laying down harmonised rules on artificial intelligence (Artificial Intelligence Act)," Official Journal of the European Union, L, 12 July 2024. [Online]. Available: https://eur-lex.europa.eu/eli/reg/2024/1689/oj
+\bibitem{ref65} The MITRE Corporation, "Common Weakness Enumeration (CWE), version 4.17," 2025. [Online]. Available: https://cwe.mitre.org/
+\bibitem{ref66} Association for Advancing Automation (A3), "ANSI/A3 R15.06-2025 Industrial Robots and Robot Systems - Safety Requirements," American National Standard, 2025.
+\bibitem{ref67} Universal Robots A/S, "The URScript Programming Language, e-Series, software version 5.12," Universal Robots A/S, Odense, Denmark, 2022. [Online]. Available: https://www.universal-robots.com/download/
 \end{thebibliography}
 
 %% Author biographies (IEEE Access convention) -- optional; add before \EOD:
