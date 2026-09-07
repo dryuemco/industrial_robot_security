@@ -154,6 +154,17 @@ Each step ends with a commit on `review/access-r1`; the status column above is u
 
 ---
 
+## 3a. Post-hoc task-IR change: assessment (asked by the corresponding author, 07 Sep 2026)
+
+**Question.** The pre-approach `move_joint` added to eight tasks on 2026-09-07 (e6b5ffb) post-dates every experiment. Should the change be reverted and the comparisons redone, or should the experiments be re-run on the changed tasks?
+
+**Assessment.** Neither. The stored results are not contaminated: every generation, verdict and log in `results/` was produced from the task IR at 7c67b68 (= cc71721 = tag `v1.0.0`), and that IR is preserved verbatim in `paper/data/tasks_as_run/`. The only things the edit could have contaminated were derived artefacts generated from the live directory (task table, prompts appendix, translator comparator, per-task caps); those now read the snapshot (cab136d). The edit does not change any safety verdict on the baselines (15/15 safe before and after) or the variant detection rate (114/120 before and after), because the added step is a joint move at the task's own speed inside the safeguarded space.
+
+- Reverting would discard a genuine execution fix (URSim shoulder-singularity) and gain nothing, since the paper's numbers never depended on the live directory.
+- Re-running E1–E3 on the changed tasks (~925 local generations, roughly 8–15 GPU-hours) would sever the link to the OSF preregistration, which registered the task set, and would make the revision a new study rather than a revised one. It is not what the reviewers asked for.
+
+**Action.** Keep both states, and make the provenance explicit: the manuscript cites tag `v1.0.0` as the state under which all experiments ran, the replication appendix notes the later pre-approach refinement and that it is verdict-neutral, and the release accompanying the revision carries the `tasks_as_run` snapshot. Any *new* generation done for the revision (X10) uses the snapshot via `ENFIELD_TASKS_DIR=paper/data/tasks_as_run`.
+
 ## 3b. Additional low-cost analyses (offline, already computed unless marked)
 
 All of these use stored outputs; none needs a new LLM call. Proposed for inclusion; the corresponding author decides which go into the manuscript.
@@ -169,9 +180,9 @@ All of these use stored outputs; none needs a new LLM call. Proposed for inclusi
 | X7 | Rule-interaction note: preamble satisfies SM-6 but trips SM-2 | explains part of the 98.8% as a rule-set property; strengthens the "measurement hazard" contribution | computed (F13) | text only |
 | X8 | Frontier re-scoring under corrected SM-5 / high-precision set | caveats the frontier "100%" (drops to 75.8%) | computed | `sensitivity_e1_frontier.tex` |
 | X9 | Precision audit v2, two raters, κ | R1-3, R2-M2 | tooling done; needs rater 2 | `audit_v2/` |
-| X10 | Qwen at Q4_0 (135 generations) to test the quantization confound | R2-7a | not run; needs Ollama host, ~1 h | — |
+| X10 | Qwen at Q4_0 (90 generations: 15 tasks × 2 conditions × 3 reps) to test the quantization confound | R2-7a | in progress on the local RTX 5090 (user-space Ollama) | `scripts/review/quantization_compare.py` |
 | X11 | Stricter-gate substantive-safe rate (structural gate) | complements X2; 38/130 pass, 0–1 substantive-safe | computed | in X2 tables |
-| X12 | Per-model × per-rule firing heat-map (E1 baseline vs safety) | visual replacement for Table 6 counts; cheap | not built | — |
+| X12 | Per-model × per-rule firing heat-map (E1 baseline vs safety, plus translator and vendor rows) | visual replacement for Table 6 counts | computed | `fig_rule_heatmap.pdf` |
 
 ## 4. Open questions for the authors
 
