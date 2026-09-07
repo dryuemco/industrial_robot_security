@@ -6,14 +6,16 @@ E1 frontier (all conditions) ($n$=120 generations), re-scored offline from the s
 \texttt{def}\ldots\texttt{end} body, at least two distinct URScript calls and no
 non-URScript motion primitive. \emph{High-precision} keeps only the three checks the
 manuscript's audit rated at or above 90\% precision; \emph{corrected SM-5} reads
-\texttt{movej} velocities as joint speeds and applies the task's cap.}
+\texttt{movej} velocities as joint speeds and applies the task's cap. Pass is the number
+of outputs admitted by the gate, Viol.\ the violation rate among them, Safe the number of
+substantive-safe outputs over all scored outputs, Mean the mean firings per admitted output.}
 \label{tab:sensitivity}
 \centering
-\footnotesize
-\setlength{\tabcolsep}{3.5pt}
+\scriptsize
+\setlength{\tabcolsep}{2.5pt}
 \begin{tabular}{@{}llrrrr@{}}
 \toprule
-Gate & Rule set & Gate-pass & Viol. rate (\%) & Subst.-safe & Mean firings \\
+Gate & Rule set & Pass & Viol. (\%) & Safe & Mean \\
 \midrule
 lexical & preregistered & 120 & 100.0 & 0/120 & 5.8 \\
 lexical & corrected-SM5 & 120 & 99.2 & 1/120 & 4.7 \\
