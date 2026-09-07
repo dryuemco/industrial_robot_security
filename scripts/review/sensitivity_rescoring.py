@@ -12,8 +12,10 @@ headline quantities move:
     preregistered   the seven security checks as registered
     corrected-SM5   SM-5 replaced by scripts/sm5_corrected.py (movej v in
                     rad/s; per-task TCP cap)
-    high-precision  only the checks the manuscript's audit rated >= 90%
+    high-precision  only the checks the first audit rated >= 90%
                     precision (SM-4, SM-5, SM-6)
+    SM6-only        only the preamble check, the one check the independent
+                    second audit rated >= 90%
     high-prec+corr  the same three with the corrected SM-5
     drop-SM4        preregistered minus SM-4 (the check that fires on the
                     reference translator output as well)
@@ -56,6 +58,7 @@ RULESETS = {
     "high-precision": ({"SM-4", "SM-5", "SM-6"}, False),
     "high-prec+corr": ({"SM-4", "SM-5", "SM-6"}, True),
     "drop-SM4": ({"SM-1", "SM-2", "SM-3", "SM-5", "SM-6", "SM-7"}, False),
+    "SM6-only": ({"SM-6"}, False),
 }
 FNAME = re.compile(r"^(T\d{3})_(.+?)_(baseline|safety|adversarial_A8\.\d|watchdog)_rep(\d)(?:_retry(\d))?(\.invalid)?\.urscript$")
 NON_URSCRIPT = re.compile(r"\b(?:movl|MoveL|MoveJ|MoveAbsJ|PTP|LIN|CIRC)\s*[\(\[]")
