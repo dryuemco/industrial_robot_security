@@ -121,7 +121,7 @@ Status legend: `todo` / `doing` / `done` / `rebut` (counter-argue, no change) / 
 
 ## 3. Execution order
 
-_Status 07 Sep 2026, evening: Phases 0-3 done except the two items that wait on external input (rater 2 labels; X10 run finishing). Phase 4 started: response letter drafted with placeholders. Revised manuscript compiles to 26 pages (submitted: 22)._
+_Status 07 Sep 2026, evening: Phases 0-3 done except the two items that wait on external input (rater 2 labels; X10 run finishing). Phase 4 started: response letter drafted with placeholders. Revised manuscript compiles to 26 pages._
 
 Each step ends with a commit on `review/access-r1`; the status column above is updated in the same commit.
 
