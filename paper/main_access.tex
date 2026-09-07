@@ -921,8 +921,14 @@ pseudo-code that evaded pattern-based detection, which motivated the validity ga
 
 Across the baseline experiment, the pooled combined violation rate is 60.7\%. Because
 temperature-zero decoding makes the three repetitions within a model-task cell nearly
-identical, the 45 model-task cells rather than the 135 calls are the conservative
-independent unit (\ref{sec:stats}); the cell-level 95\% interval, taken here as primary,
+identical at the level of the verdict, the 45 model-task cells rather than the 135 calls
+are the conservative independent unit (\ref{sec:stats}). How identical the repetitions
+are is measured rather than assumed (Table~\ref{tab:reps}): the three repetitions agree on
+the binary verdict in 82 of 90 cells and on the validity status in 78, but are
+byte-identical in only 14 and agree on the violation count in 59, with
+DeepSeek-Coder-V2-16B agreeing on the count in only 10 of its 30 cells. Greedy decoding on
+the serving stack is therefore reproducible at the verdict level but not bit-reproducible,
+which is a further reason to treat the cell rather than the call as the unit; the cell-level 95\% interval, taken here as primary,
 is approximately [46\%, 73\%], wider than the call-level Wilson interval of
 [52.3\%, 68.6\%]. Restricted to outputs that pass the validity gate, the pooled rate is
 98.8\% [93.5\%, 99.8\%] at the call level, and the per-model
@@ -1076,6 +1082,8 @@ reduction in surface without any change in the binary outcome is the first sign 
 the count of violations and the binary violation rate convey different information in
 this regime.
 
+\input{tables/rep_reproducibility.tex}
+
 \textbf{Summary.} The baseline results support four conclusions.
 \begin{itemize}
 \item Generated URScript fails the checks pervasively: the naive combined violation
@@ -1090,6 +1098,64 @@ of 135 (0.7\%), since of the 83 gate-passing outputs only one triggers no check.
 zero of all 585 generations and the combined signal is carried entirely by the security
 checks, with no refusals in any condition (0 of 585).
 \end{itemize}
+
+\textbf{Non-LLM comparator.} A violation rate near 99\% is interpretable only against
+programs that no language model wrote. Table~\ref{tab:comparator} applies the same checker
+to three such sets: the deterministic reference translation of each task produced by the
+framework's own IR-to-URScript renderer (\ref{sec:task-ir}); the same translation with the
+\texttt{set\_tcp}/\texttt{set\_payload} preamble that the safety-prompted condition asks
+for; and nine vendor and community example programs redistributed under their own licences
+in the replication package. The comparator is deliberately unflattering to the
+instrument. Under the preregistered rule set the reference translation is flagged on all
+fifteen tasks: the unusual-conditions check (SM-4) and the preamble check (SM-6) fire on
+every reference program because the minimal rendering carries neither a workspace check
+nor a preamble, and the hardcoded-value check (SM-5) fires on every reference program
+solely because the registered rule reads the \texttt{v} argument of \texttt{movej}, a
+joint speed in rad/s, against the 0.25~m/s Cartesian limit. Adding the preamble clears
+SM-6 but trips the error-handling proxy (SM-2) on every program, because that rule treats
+\texttt{set\_tcp} and \texttt{set\_payload} as critical operations that require a guard
+within three lines; two checks therefore pull in opposite directions and the reference
+idiom cannot satisfy the full rule set without a contrived guard. Three consequences
+follow. First, the binary flag is uninformative as an absolute: SM-4 and SM-6 are
+properties of the idiom that the rule set rewards, not of the model, which is why the
+substantive-safe rate is reported with its rule composition rather than alone. Second, the
+count and the rule profile do separate generated code from the reference: gate-passing
+generated code fires on 10.4 checks per program against 5.7 for the reference translation,
+and it fires on the input-validation and error-handling proxies (52 and 82 of 83 programs)
+on which the reference never fires (Figure~\ref{fig:heatmap}). Third, correcting the SM-5
+unit reading (Table~\ref{tab:comparator}, corrected SM-5) removes every SM-5 firing from the
+reference translation but only 8 of the 54 SM-5 firings from generated code, so the
+generated code's speed violations are predominantly genuine Cartesian-speed excesses
+rather than the unit artefact. The vendor programs, most of which are I/O and
+communication libraries with no motion, are flagged on 5 of 9 and never on SM-4 or SM-5.
+
+\begin{figure}[t]\centering
+  \includegraphics[width=\columnwidth]{figures/fig_rule_heatmap.pdf}
+  \caption{Share of gate-passing outputs on which each security check fires, by model and
+  condition in the baseline experiment, with the reference translation and the vendor and
+  community programs as comparison rows. The protection-mechanism (SM-3) and
+  prompt-injection-marker (SM-7) checks never fire on generated code.}\label{fig:heatmap}
+\end{figure}
+
+\input{tables/comparator_summary.tex}
+
+\textbf{Sensitivity of the headline rates to the instrument.} Because the rule set and the
+validity gate are both author-defined, Table~\ref{tab:sensitivity} re-scores the stored
+baseline outputs offline under alternative definitions: the corrected SM-5; the three
+checks the audit rated at or above 90\% precision (SM-4, SM-5, SM-6) alone and with the
+corrected SM-5; the rule set without SM-4; and a stricter, structural validity gate that
+additionally requires a \texttt{def}\ldots\texttt{end} program body, at least two distinct
+URScript calls, and no non-URScript motion primitive. The gate-passing violation rate moves
+from 98.8\% to no lower than 91.6\%, and the substantive-safe count from 1 to at most 7 of
+130 scored outputs, under any of these choices; the structural gate admits 38 rather than
+83 outputs and leaves at most one of them violation-free. The first finding is therefore
+not an artefact of a single rule or of the lexical gate. The same re-scoring applied to
+the frontier run of \ref{sec:res-explore} is less stable (Table~\ref{tab:sensitivity} is
+accompanied by its frontier counterpart in the replication package): the frontier
+violation rate of 100\% falls to 75.8\% under the high-precision set with the corrected
+SM-5, so the frontier figure is reported with that caveat.
+
+\input{tables/sensitivity_e1_baseline.tex}
 
 \subsection{Adversarial Uplift}\label{sec:res-adv}
 Because the binary violation rate is already saturated at baseline, the informative
@@ -1109,6 +1175,8 @@ than the plain prompt does. The mean maximum severity is essentially unchanged o
 basis (0.54 to 0.55 on all outputs; 0.88 to 0.91 on gate-passing outputs), so the
 strategies add lower-severity firings without raising the worst-case hazard. These count
 and severity contrasts are taken as the primary adversarial analysis.
+
+\input{tables/adversarial_table.tex}
 
 The preregistered binary uplift test is reported only as a demonstration of the ceiling.
 The hypothesis that the strategies raise the combined violation rate by at least 50
@@ -1162,8 +1230,24 @@ transient improvement followed by regression, and an invariant trajectory
   the one model that maintains valid output throughout, showing total violations against
   retry index, one curve per regime. The curves illustrate the recurring regimes: monotone reduction that
   does not reach zero, two-state oscillation in which each retry undoes the previous fix,
-  transient improvement followed by regression, and an invariant trajectory.}\label{fig:retry}
+  transient improvement followed by regression, and an invariant trajectory. Each curve
+  is a real cell of Table~\ref{tab:regimes}, drawn with its own marker and line style.}\label{fig:retry}
 \end{figure}
+
+The regimes are counted rather than only illustrated. Table~\ref{tab:regimes}
+classifies every one of the 135 local-model cells by the shape of its violation-count
+sequence. Of the 135 cells, 78 leave the loop by dropping out of valid syntax, 52 of them
+already at the first generation so that no feedback is ever issued, and 57 remain valid
+through all three retries; none of the 57 reaches zero violations. Among the valid cells
+the count falls monotonically in 11, falls with one reversal in 6, rises monotonically in
+12, oscillates in 14, and shows a transient improvement that is undone in 12; the mean
+count is 10.4 at the first generation and 13.2 at the last retry. At the rule level, each
+valid retry step clears 0.26 checks and introduces 0.29 on average, so feedback
+redistributes firings across rules roughly as often as it removes them. The regimes are
+model-specific: all 45 Qwen2.5-Coder-32B cells remain valid, whereas DeepSeek-Coder-V2-16B
+and CodeLlama-34B drop out in 42 and 36 of 45 cells respectively.
+
+\input{tables/e3_regimes.tex}
 
 \subsection{Sensitivity and Cross-Model Heterogeneity}\label{sec:res-sens}
 The three models differ on matched per-task outcomes. A cross-model homogeneity test,
@@ -1172,9 +1256,18 @@ family, rejects homogeneity under both single-shot conditions: the test statisti
 at the baseline condition (p of 0.004) and 20.00 at the safety-prompted condition (p below
 0.001), with multiplicity correction applied within this additional family only. A
 complexity-stratified subgroup analysis using the outcome-blind complexity score of
-\ref{sec:complexity} was also preregistered as a non-confirmatory analysis; the saturated baseline
-leaves little binary headroom for a subgroup effect, and the analysis is reported for
-completeness in the replication package.
+\ref{sec:complexity} was also preregistered as a non-confirmatory analysis. It is null
+(Table~\ref{tab:complexity}). The saturated baseline leaves little binary headroom for a
+subgroup effect: the gate-passing violation rate is 92\%, 100\% and 100\% across the low,
+medium and high complexity tertiles at baseline, and the mean violation count does not
+order with complexity (9.1, 11.0 and 10.3). Of the nine per-model Spearman correlations
+between complexity score and violation count across experiments and conditions, one is
+nominally significant before correction (Qwen2.5-Coder-32B under the safety prompt,
+$\rho = 0.52$, $p = 0.04$, $n = 15$) and the others span $-0.53$ to $+0.44$ with $p \geq
+0.11$; with fifteen tasks and no correction for multiplicity the analysis is descriptive
+and supports no complexity effect.
+
+\input{tables/complexity_table.tex}
 
 \subsection{Additional Analyses: Frontier, Robustness, and Representation}\label{sec:res-explore}
 The confirmatory experiments cover three locally hosted models in the 16B to 34B range.
