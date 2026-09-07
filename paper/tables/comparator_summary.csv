@@ -1,0 +1,9 @@
+set,basis,n,gate,flagged,mean_total,SM-1,SM-2,SM-3,SM-4,SM-5,SM-6,SM-7
+Translator,pre,15,15,15,6.266666666666667,0,0,0,15,15,15,0
+Translator,corr,15,15,15,3.0,0,0,0,15,0,15,0
+Translator + preamble,pre,15,15,15,6.266666666666667,0,15,0,15,15,0,0
+Translator + preamble,corr,15,15,15,3.0,0,15,0,15,0,0,0
+Vendor / community examples,pre,9,8,5,2.5555555555555554,2,5,2,0,0,3,0
+Vendor / community examples,corr,9,8,5,2.5555555555555554,2,5,2,0,0,3,0
+"LLM baseline (E1, gate-passing)",pre,83,83,82,10.373493975903614,52,82,0,54,54,74,0
+"LLM baseline (E1, gate-passing)",corr,83,83,82,9.843373493975903,52,82,0,54,46,74,0
