@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""ABB RAPID parser — Lark-based PoC for speed violation detection (A1).
+"""
+ABB RAPID parser — Lark-based PoC for speed violation detection (A1).
 
 Retained for future RAPID backend and real-robot validation against ABB
 controllers. Not currently imported by the URScript-focused pipeline
