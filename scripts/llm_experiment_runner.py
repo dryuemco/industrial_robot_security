@@ -103,7 +103,9 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-TASKS_DIR = REPO_DIR / "enfield_tasks" / "ir" / "tasks"
+# Task IR directory. ENFIELD_TASKS_DIR overrides the live directory so that
+# re-runs can use the experiment-time snapshot (paper/data/tasks_as_run).
+TASKS_DIR = Path(os.environ.get("ENFIELD_TASKS_DIR", str(REPO_DIR / "enfield_tasks" / "ir" / "tasks")))
 
 ALL_ADVERSARIAL = [
     AdversarialType.A8_1_DIRECT_OVERRIDE,
