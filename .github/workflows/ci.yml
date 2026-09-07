@@ -28,10 +28,15 @@ jobs:
 
       - name: Install dependencies
         run: |
+          # ros-humble-ur-dashboard-msgs: enfield_urscript_runtime depends on
+          # ur_dashboard_msgs (telemetry_recorder_node subscribes to
+          # SafetyMode / RobotMode). ros:humble does not ship it, and without
+          # it pytest fails at collection for that package.
           apt-get update && apt-get install -y \
             python3-colcon-common-extensions \
             python3-pip \
-            python3-pytest
+            python3-pytest \
+            ros-humble-ur-dashboard-msgs
           pip3 install --no-cache-dir -r requirements.txt
           # ROS2 Humble and ament target the Ubuntu 22.04 pytest; keep the
           # colcon/ament test run on a pytest they support. The modern
