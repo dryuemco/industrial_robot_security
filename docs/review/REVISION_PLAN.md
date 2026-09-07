@@ -150,8 +150,8 @@ Each step ends with a commit on `review/access-r1`; the status column above is u
 16. Quantization disclosure, Fig. 6 caption, five citations, refs 53/54, Appendix B removal, future-work sentence (R2-7, R2-8, R1-2, R1-5, R2-M6).
 
 **Phase 4 — Resubmission package**
-17. `paper/response_to_reviewers.md` → filled from this plan (concern / response / action), exported to the IEEE template `.docx`.
-18. `latexdiff` submitted vs revised → highlighted PDF; clean PDF; LaTeX source zip.
+17. `paper/response_to_reviewers.md` written point by point (two placeholders: audit v2 results, X10 result); `.docx` produced with pandoc (Docker).
+18. `paper/build_diff.sh`: latexdiff submitted vs revised, yellow-background additions and red strike-through deletions (IEEE preference), compiles clean; clean PDF via latexmk; LaTeX source zip.
 19. Walk the IEEE checklist (grammar, math formatting, reference formatting, ORCID metadata).
 
 ---
