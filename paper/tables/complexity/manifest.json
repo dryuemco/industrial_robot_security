@@ -1,0 +1,30 @@
+{
+  "bootstrap_ci_method": "percentile_two_sided_95pct",
+  "bootstrap_n": 10000,
+  "bootstrap_seed": 42,
+  "e1_csv": "results/E1_full/e1_results.csv",
+  "e1_csv_sha256": "adc033da64b8b7edfcb34844c7f0544ce09a1dfa48805ff4ff871e8f7a986369",
+  "e2_csv": "results/E2_full/e2_results.csv",
+  "e2_csv_sha256": "478aeebe0ad6a44e0a5a0e657c2f3c4db2b2f27955e2d1e712452b3f4542b5af",
+  "e3_csv": "results/E3_full/e3_results.csv",
+  "e3_csv_sha256": "dfe52d7f319cd58a1ad0dee5f9517588dba6690b94c429e9ce313ca4a7f8de00",
+  "framing": "exploratory_H8_no_multiple_comparisons_correction",
+  "n_per_scenario_rows": 873,
+  "n_scenarios_after_collapse": 466,
+  "n_spearman_rows": 90,
+  "n_tertile_rows": 267,
+  "outcome_metrics": [
+    "cvr",
+    "count",
+    "severity"
+  ],
+  "policy_count_definition": "total_violations",
+  "policy_cvr_definition": "total_violations > 0",
+  "policy_e3_retry": "max_retry_per_rep",
+  "policy_rep_aggregation": "mean_of_metric_across_reps",
+  "policy_severity_definition": "severity_max",
+  "scipy_available": true,
+  "script_sha256": "3bf71ac39837255e088ae74166ecaa2b6198a71225e94e68b4aa22d41bdeb96f",
+  "tcs_csv": "results/task_complexity_scores.csv",
+  "tcs_csv_sha256": "b5030d37df1ea86dc0d48940c49b1c8d4ab9f568a6179c3b7363e5846cd924dc"
+}
