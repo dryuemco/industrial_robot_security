@@ -87,6 +87,29 @@ Determinism: all adversarial variants are generated with `seed=42`; the static w
 
 ---
 
+## Result directory layout
+
+`results/` holds several runs that share the same file names (`e1_results.csv`,
+`e2_results.csv`, `e3_results.csv`) but are **not** interchangeable — they differ in
+models, temperature or prompt set. The suffix is what distinguishes them:
+
+| Directory | Contents | Used for |
+|-----------|----------|----------|
+| `E1_full`, `E2_full`, `E3_full` | Confirmatory run, the three pinned local models (270 / 315 / 339 rows) | H4, H5, H6 — the paper's principal results |
+| `E1_frontier`, `E3_frontier`, `*_frontier_probe` | Frontier models, 24B–675B | Additional analyses (not preregistered) |
+| `exploratory/temp_robustness/temp0p2`, `temp0p7` | Temperature sensitivity, 180 rows each | Additional analyses |
+| `ICSE/`, `icse_confirm/`, `*_probe`, `*_mini`, `pilot_*` | Probes and pilot subsets | Excluded from confirmatory analyses per the pre-registration's pilot-data exclusion rule |
+| `E1_mock` | Two-row fixture with synthetic models `mock-a` / `mock-b` | Runner smoke-testing only — never an analysis input |
+| `static_pipeline` | Deterministic watchdog outputs (Section 4) | H1–H3 |
+| `stats` | Statistical analysis products (Section 9) | — |
+
+`scripts/mcnemar_analysis.py` therefore reads only `E1_full`, `E2_full` and `E3_full`
+(plus any `e[123]_results.csv` placed directly in `--results-dir`). It deliberately
+does **not** recurse: a recursive sweep would fold frontier, temperature-robustness,
+probe and mock rows into the confirmatory family and silently corrupt H4–H6.
+
+---
+
 ## 5. LLM Smoke Test (Infrastructure Validation, 9 calls)
 
 Pull the three pinned models on PC2:
@@ -127,11 +150,15 @@ OLLAMA_HOST=http://<your-ollama-host>:11434 python3 scripts/llm_experiment_runne
     --experiment E1 --reps 3
 ```
 
-Outputs:
+Outputs (the runner defaults to `results/<experiment>`; override with `--output`):
 - `results/E1/e1_results.csv` — per-call results (experiment, model, task_id, condition, rep, has_violation, violation_count, violations_json, timestamp)
 - `results/E1/e1_summary.json` — aggregate statistics
 - `results/E1/code/` — generated URScript files
 - `results/E1/logs/` — full JSONL request/response logs
+
+The confirmatory data shipped with this repository is written to `results/E1_full/`
+rather than the bare default, so that it is not confused with the other runs that
+share the same file names — see [Result directory layout](#result-directory-layout).
 
 ---
 
@@ -146,7 +173,8 @@ OLLAMA_HOST=http://<your-ollama-host>:11434 python3 scripts/llm_experiment_runne
     --experiment E2
 ```
 
-Outputs follow the same structure as E1, under `results/E2/`.
+Outputs follow the same structure as E1, under `results/E2/` (shipped confirmatory
+data: `results/E2_full/`).
 
 ---
 
@@ -161,6 +189,10 @@ OLLAMA_HOST=http://<your-ollama-host>:11434 python3 scripts/llm_experiment_runne
 
 The E3 watchdog-in-loop final state per (model, task, rep, condition, adversarial_type) is the MAX(retry) row of `e3_results.csv`; the McNemar matched-pair analysis collapses retries before contrasting against the no-feedback baseline (see Section 9).
 
+Outputs follow the same structure as E1, under `results/E3/` (shipped confirmatory
+data: `results/E3_full/`). `scripts/watchdog_microbenchmark.py` reads the generated
+URScript from this directory.
+
 ---
 
 ## 9. Statistical Analysis (H4/H5/H6)
@@ -170,6 +202,10 @@ After E1/E2/E3 finish, run the McNemar / exact-binomial / Newcombe pipeline:
 ```bash
 python3 scripts/mcnemar_analysis.py --results-dir results/
 ```
+
+This reads the confirmatory directories only (`E1_full`, `E2_full`, `E3_full`); see
+[Result directory layout](#result-directory-layout) for why the other runs under
+`results/` are excluded.
 
 Outputs:
 - `results/stats/mcnemar_results.csv` — per-comparison test statistics, p-values, effect sizes, and Holm–Bonferroni adjusted decisions
