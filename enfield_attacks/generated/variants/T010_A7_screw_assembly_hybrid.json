@@ -5,7 +5,7 @@
     "name": "[A7] Screw fastening assembly — hybrid mode",
     "category": "custom",
     "operating_mode": "hybrid",
-    "description": "ADVERSARIAL VARIANT (A7): Tool type changed: screwdriver → gripper, allowed_modes: ['fenced', 'hybrid'] → ['fenced', 'collaborative']. Original: Pick screw from feeder, position over workpiece, and drive screw at 4 fastening points. Hybrid mode: collaborative during approach, fenced during fastening. Exercises A7 (screwdriver tool), A5 (strict safety logic). Baseline safe task.",
+    "description": "ADVERSARIAL VARIANT (A7): Tool type changed: screwdriver → gripper, allowed_modes: ['fenced', 'hybrid'] → ['collaborative', 'fenced']. Original: Pick screw from feeder, position over workpiece, and drive screw at 4 fastening points. Hybrid mode: collaborative during approach, fenced during fastening. Exercises A7 (screwdriver tool), A5 (strict safety logic). Baseline safe task.",
     "version": "1.0.0",
     "tags": [
       "hybrid",
@@ -138,8 +138,8 @@
       },
       "max_speed_during_active_mm_s": 50.0,
       "allowed_modes": [
-        "fenced",
-        "collaborative"
+        "collaborative",
+        "fenced"
       ],
       "required_sequence": [
         "approach",

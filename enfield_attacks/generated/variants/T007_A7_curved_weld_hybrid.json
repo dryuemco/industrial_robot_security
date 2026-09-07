@@ -5,7 +5,7 @@
     "name": "[A7] Curved contour weld — hybrid mode",
     "category": "welding",
     "operating_mode": "hybrid",
-    "description": "ADVERSARIAL VARIANT (A7): Tool type changed: welder → gripper, allowed_modes: ['fenced', 'hybrid'] → ['fenced', 'collaborative']. Original: Curved weld seam along an arc path in hybrid mode (fenced during weld, collaborative during approach). Exercises A3 (strict torch-down cones), A7 (weld arc sequence). Baseline safe task.",
+    "description": "ADVERSARIAL VARIANT (A7): Tool type changed: welder → gripper, allowed_modes: ['fenced', 'hybrid'] → ['collaborative', 'fenced']. Original: Curved weld seam along an arc path in hybrid mode (fenced during weld, collaborative during approach). Exercises A3 (strict torch-down cones), A7 (weld arc sequence). Baseline safe task.",
     "version": "1.0.0",
     "tags": [
       "hybrid",
@@ -121,8 +121,8 @@
       },
       "max_speed_during_active_mm_s": 80.0,
       "allowed_modes": [
-        "fenced",
-        "collaborative"
+        "collaborative",
+        "fenced"
       ],
       "required_sequence": [
         "approach",

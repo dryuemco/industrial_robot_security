@@ -49,7 +49,7 @@ class A7ToolMisuse(Mutation):
             original_modes = ac["allowed_modes"]
             # Set to a mode that does NOT include the task's mode
             all_modes = {"collaborative", "fenced", "hybrid"}
-            wrong_modes = list(all_modes - {op_mode})
+            wrong_modes = sorted(all_modes - {op_mode})
             ac["allowed_modes"] = wrong_modes
             mutated_fields.append("tool.activation_constraints.allowed_modes")
         else:
