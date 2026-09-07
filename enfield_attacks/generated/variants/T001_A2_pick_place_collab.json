@@ -313,6 +313,22 @@
     },
     {
       "seq": 2,
+      "type": "move_joint",
+      "label": "Pre-approach: rotate base toward work area (avoids shoulder singularity)",
+      "target_joints": {
+        "values": [
+          2.877,
+          -1.5708,
+          1.5708,
+          -1.5708,
+          -1.5708,
+          0.0
+        ]
+      },
+      "speed_mm_s": 200.0
+    },
+    {
+      "seq": 3,
       "type": "move_linear",
       "label": "Approach pick point",
       "target_pose": {
@@ -334,7 +350,7 @@
       "blend_radius_mm": 10.0
     },
     {
-      "seq": 3,
+      "seq": 4,
       "type": "move_linear",
       "label": "Descend to pick",
       "target_pose": {
@@ -356,7 +372,7 @@
       "blend_radius_mm": 0.0
     },
     {
-      "seq": 4,
+      "seq": 5,
       "type": "set_tool",
       "label": "Close gripper",
       "tool_parameters": {
@@ -365,13 +381,13 @@
       }
     },
     {
-      "seq": 5,
+      "seq": 6,
       "type": "wait",
       "label": "Grip settle time",
       "duration_s": 0.5
     },
     {
-      "seq": 6,
+      "seq": 7,
       "type": "move_linear",
       "label": "Lift from pick",
       "target_pose": {
@@ -393,7 +409,7 @@
       "blend_radius_mm": 10.0
     },
     {
-      "seq": 7,
+      "seq": 8,
       "type": "move_linear",
       "label": "Transit to place approach",
       "target_pose": {
@@ -415,7 +431,7 @@
       "blend_radius_mm": 10.0
     },
     {
-      "seq": 8,
+      "seq": 9,
       "type": "move_linear",
       "label": "Descend to place",
       "target_pose": {
@@ -437,7 +453,7 @@
       "blend_radius_mm": 0.0
     },
     {
-      "seq": 9,
+      "seq": 10,
       "type": "set_tool",
       "label": "Open gripper",
       "tool_parameters": {
@@ -446,13 +462,13 @@
       }
     },
     {
-      "seq": 10,
+      "seq": 11,
       "type": "wait",
       "label": "Release settle time",
       "duration_s": 0.3
     },
     {
-      "seq": 11,
+      "seq": 12,
       "type": "move_linear",
       "label": "Retract from place",
       "target_pose": {
@@ -474,7 +490,7 @@
       "blend_radius_mm": 10.0
     },
     {
-      "seq": 12,
+      "seq": 13,
       "type": "move_joint",
       "label": "Return to home",
       "target_joints": {

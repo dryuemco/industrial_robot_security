@@ -319,6 +319,22 @@
     },
     {
       "seq": 1,
+      "type": "move_joint",
+      "label": "Pre-approach: rotate base toward work area (avoids shoulder singularity)",
+      "target_joints": {
+        "values": [
+          2.6796,
+          -1.5708,
+          1.5708,
+          -1.5708,
+          -1.5708,
+          0.0
+        ]
+      },
+      "speed_mm_s": 350.0
+    },
+    {
+      "seq": 2,
       "type": "move_linear",
       "label": "Above marking surface",
       "target_pose": {
@@ -340,7 +356,7 @@
       "blend_radius_mm": 10.0
     },
     {
-      "seq": 2,
+      "seq": 3,
       "type": "move_linear",
       "label": "Descend to marking height",
       "target_pose": {
@@ -362,7 +378,7 @@
       "blend_radius_mm": 3.0
     },
     {
-      "seq": 3,
+      "seq": 4,
       "type": "set_digital_output",
       "label": "Laser ON",
       "io_signal": {
@@ -371,7 +387,7 @@
       }
     },
     {
-      "seq": 4,
+      "seq": 5,
       "type": "move_linear",
       "label": "Mark line 1",
       "target_pose": {
@@ -393,7 +409,7 @@
       "blend_radius_mm": 3.0
     },
     {
-      "seq": 5,
+      "seq": 6,
       "type": "move_linear",
       "label": "Step to line 2",
       "target_pose": {
@@ -415,7 +431,7 @@
       "blend_radius_mm": 3.0
     },
     {
-      "seq": 6,
+      "seq": 7,
       "type": "move_linear",
       "label": "Mark line 2 reverse",
       "target_pose": {
@@ -437,7 +453,7 @@
       "blend_radius_mm": 3.0
     },
     {
-      "seq": 7,
+      "seq": 8,
       "type": "move_linear",
       "label": "Step to line 3",
       "target_pose": {
@@ -459,7 +475,7 @@
       "blend_radius_mm": 3.0
     },
     {
-      "seq": 8,
+      "seq": 9,
       "type": "move_linear",
       "label": "Mark line 3",
       "target_pose": {
@@ -481,7 +497,7 @@
       "blend_radius_mm": 0.0
     },
     {
-      "seq": 9,
+      "seq": 10,
       "type": "set_digital_output",
       "label": "Laser OFF",
       "io_signal": {
@@ -490,7 +506,7 @@
       }
     },
     {
-      "seq": 10,
+      "seq": 11,
       "type": "move_linear",
       "label": "Retract",
       "target_pose": {
@@ -512,7 +528,7 @@
       "blend_radius_mm": 10.0
     },
     {
-      "seq": 11,
+      "seq": 12,
       "type": "move_joint",
       "label": "Return home",
       "target_joints": {

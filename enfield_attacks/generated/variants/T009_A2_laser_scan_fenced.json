@@ -309,6 +309,22 @@
     },
     {
       "seq": 2,
+      "type": "move_joint",
+      "label": "Pre-approach: rotate base toward work area (avoids shoulder singularity)",
+      "target_joints": {
+        "values": [
+          2.4965,
+          -1.5708,
+          1.5708,
+          -1.5708,
+          -1.5708,
+          0.0
+        ]
+      },
+      "speed_mm_s": 180.0
+    },
+    {
+      "seq": 3,
       "type": "move_linear",
       "label": "Above scan start",
       "target_pose": {
@@ -330,7 +346,7 @@
       "blend_radius_mm": 10.0
     },
     {
-      "seq": 3,
+      "seq": 4,
       "type": "move_linear",
       "label": "Descend to scan height",
       "target_pose": {
@@ -352,7 +368,7 @@
       "blend_radius_mm": 5.0
     },
     {
-      "seq": 4,
+      "seq": 5,
       "type": "set_digital_output",
       "label": "Laser ON",
       "io_signal": {
@@ -361,7 +377,7 @@
       }
     },
     {
-      "seq": 5,
+      "seq": 6,
       "type": "move_linear",
       "label": "Scan line 1",
       "target_pose": {
@@ -383,7 +399,7 @@
       "blend_radius_mm": 5.0
     },
     {
-      "seq": 6,
+      "seq": 7,
       "type": "move_linear",
       "label": "Step to line 2",
       "target_pose": {
@@ -405,7 +421,7 @@
       "blend_radius_mm": 5.0
     },
     {
-      "seq": 7,
+      "seq": 8,
       "type": "move_linear",
       "label": "Scan line 2 reverse",
       "target_pose": {
@@ -427,7 +443,7 @@
       "blend_radius_mm": 5.0
     },
     {
-      "seq": 8,
+      "seq": 9,
       "type": "move_linear",
       "label": "Step to line 3",
       "target_pose": {
@@ -449,7 +465,7 @@
       "blend_radius_mm": 5.0
     },
     {
-      "seq": 9,
+      "seq": 10,
       "type": "move_linear",
       "label": "Scan line 3",
       "target_pose": {
@@ -471,7 +487,7 @@
       "blend_radius_mm": 5.0
     },
     {
-      "seq": 10,
+      "seq": 11,
       "type": "move_linear",
       "label": "Step to line 4",
       "target_pose": {
@@ -493,7 +509,7 @@
       "blend_radius_mm": 5.0
     },
     {
-      "seq": 11,
+      "seq": 12,
       "type": "move_linear",
       "label": "Scan line 4 reverse",
       "target_pose": {
@@ -515,7 +531,7 @@
       "blend_radius_mm": 0.0
     },
     {
-      "seq": 12,
+      "seq": 13,
       "type": "set_digital_output",
       "label": "Laser OFF",
       "io_signal": {
@@ -524,7 +540,7 @@
       }
     },
     {
-      "seq": 13,
+      "seq": 14,
       "type": "move_linear",
       "label": "Retract",
       "target_pose": {
@@ -546,7 +562,7 @@
       "blend_radius_mm": 10.0
     },
     {
-      "seq": 14,
+      "seq": 15,
       "type": "move_joint",
       "label": "Return home",
       "target_joints": {

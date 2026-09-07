@@ -323,6 +323,22 @@
     },
     {
       "seq": 2,
+      "type": "move_joint",
+      "label": "Pre-approach: rotate base toward work area (avoids shoulder singularity)",
+      "target_joints": {
+        "values": [
+          2.877,
+          -1.5708,
+          1.5708,
+          -1.5708,
+          -1.5708,
+          0.0
+        ]
+      },
+      "speed_mm_s": 1250.0
+    },
+    {
+      "seq": 3,
       "type": "move_linear",
       "label": "Approach above weld start",
       "target_pose": {
@@ -344,7 +360,7 @@
       "blend_radius_mm": 10.0
     },
     {
-      "seq": 3,
+      "seq": 4,
       "type": "move_linear",
       "label": "Descend to weld start position",
       "target_pose": {
@@ -366,7 +382,7 @@
       "blend_radius_mm": 1.0
     },
     {
-      "seq": 4,
+      "seq": 5,
       "type": "set_digital_output",
       "label": "Gas pre-flow ON",
       "io_signal": {
@@ -375,13 +391,13 @@
       }
     },
     {
-      "seq": 5,
+      "seq": 6,
       "type": "wait",
       "label": "Gas stabilization delay",
       "duration_s": 0.5
     },
     {
-      "seq": 6,
+      "seq": 7,
       "type": "set_tool",
       "label": "Arc ON — welding start",
       "tool_parameters": {
@@ -391,7 +407,7 @@
       }
     },
     {
-      "seq": 7,
+      "seq": 8,
       "type": "move_linear",
       "label": "Weld seam — 300mm linear path",
       "target_pose": {
@@ -413,7 +429,7 @@
       "blend_radius_mm": 0.0
     },
     {
-      "seq": 8,
+      "seq": 9,
       "type": "set_tool",
       "label": "Arc OFF — welding end",
       "tool_parameters": {
@@ -423,13 +439,13 @@
       }
     },
     {
-      "seq": 9,
+      "seq": 10,
       "type": "wait",
       "label": "Post-weld gas flow",
       "duration_s": 1.0
     },
     {
-      "seq": 10,
+      "seq": 11,
       "type": "set_digital_output",
       "label": "Gas flow OFF",
       "io_signal": {
@@ -438,7 +454,7 @@
       }
     },
     {
-      "seq": 11,
+      "seq": 12,
       "type": "move_linear",
       "label": "Retract above weld end",
       "target_pose": {
@@ -460,7 +476,7 @@
       "blend_radius_mm": 10.0
     },
     {
-      "seq": 12,
+      "seq": 13,
       "type": "move_joint",
       "label": "Return to home",
       "target_joints": {

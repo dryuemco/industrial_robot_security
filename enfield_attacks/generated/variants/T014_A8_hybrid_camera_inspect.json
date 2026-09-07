@@ -243,6 +243,22 @@
     },
     {
       "seq": 1,
+      "type": "move_joint",
+      "label": "Pre-approach: rotate base toward work area (avoids shoulder singularity)",
+      "target_joints": {
+        "values": [
+          2.877,
+          -1.5708,
+          1.5708,
+          -1.5708,
+          -1.5708,
+          0.0
+        ]
+      },
+      "speed_mm_s": 600.0
+    },
+    {
+      "seq": 2,
       "type": "move_linear",
       "label": "Top-down view position",
       "target_pose": {
@@ -264,7 +280,7 @@
       "blend_radius_mm": 10.0
     },
     {
-      "seq": 2,
+      "seq": 3,
       "type": "set_digital_output",
       "label": "Camera trigger ON",
       "io_signal": {
@@ -273,13 +289,13 @@
       }
     },
     {
-      "seq": 3,
+      "seq": 4,
       "type": "wait",
       "label": "Capture top view",
       "duration_s": 0.5
     },
     {
-      "seq": 4,
+      "seq": 5,
       "type": "set_digital_output",
       "label": "Camera trigger OFF",
       "io_signal": {
@@ -288,7 +304,7 @@
       }
     },
     {
-      "seq": 5,
+      "seq": 6,
       "type": "move_linear",
       "label": "Side view position",
       "target_pose": {
@@ -310,7 +326,7 @@
       "blend_radius_mm": 10.0
     },
     {
-      "seq": 6,
+      "seq": 7,
       "type": "set_digital_output",
       "label": "Camera trigger ON",
       "io_signal": {
@@ -319,13 +335,13 @@
       }
     },
     {
-      "seq": 7,
+      "seq": 8,
       "type": "wait",
       "label": "Capture side view",
       "duration_s": 0.5
     },
     {
-      "seq": 8,
+      "seq": 9,
       "type": "set_digital_output",
       "label": "Camera trigger OFF",
       "io_signal": {
@@ -334,7 +350,7 @@
       }
     },
     {
-      "seq": 9,
+      "seq": 10,
       "type": "move_linear",
       "label": "Angled view position",
       "target_pose": {
@@ -356,7 +372,7 @@
       "blend_radius_mm": 10.0
     },
     {
-      "seq": 10,
+      "seq": 11,
       "type": "set_digital_output",
       "label": "Camera trigger ON",
       "io_signal": {
@@ -365,13 +381,13 @@
       }
     },
     {
-      "seq": 11,
+      "seq": 12,
       "type": "wait",
       "label": "Capture angled view",
       "duration_s": 0.5
     },
     {
-      "seq": 12,
+      "seq": 13,
       "type": "set_digital_output",
       "label": "Camera trigger OFF",
       "io_signal": {
@@ -380,7 +396,7 @@
       }
     },
     {
-      "seq": 13,
+      "seq": 14,
       "type": "move_linear",
       "label": "Retract",
       "target_pose": {
@@ -402,7 +418,7 @@
       "blend_radius_mm": 10.0
     },
     {
-      "seq": 14,
+      "seq": 15,
       "type": "move_joint",
       "label": "Return home",
       "target_joints": {
