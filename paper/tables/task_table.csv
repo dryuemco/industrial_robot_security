@@ -1,16 +1,16 @@
 task_id,name,category,operating_mode,tool_type,payload_kg,max_tcp_speed_mm_s,human_proximity,n_commands,n_moves,n_linear,n_joint,n_tool_ops,tcs_total,tertile
-T001,Simple collaborative pick-place,pick_place,collaborative,gripper,0.5,250.0,True,14,9,6,3,2,0.201444,T_med
-T002,Linear weld path — fenced mode,welding,fenced,welder,3.0,500.0,False,14,7,4,3,4,-0.129666,T_med
+T001,Simple collaborative pick-place,pick_place,collaborative,gripper,0.5,250.0,True,13,8,6,2,2,0.201444,T_med
+T002,Linear weld path — fenced mode,welding,fenced,welder,3.0,500.0,False,13,6,4,2,4,-0.129666,T_med
 T003,EUR-pallet 2x2 layer — hybrid mode,palletizing,hybrid,gripper,4.5,300.0,True,14,8,6,2,2,0.609844,T_high
 T004,Multi-waypoint SSM pick-place with obstacle avoidance,pick_place,collaborative,gripper,1.5,250.0,True,14,9,7,2,2,1.191751,T_high
-T005,Visual inspection scan — collaborative mode,inspection,collaborative,none,0.3,150.0,True,14,11,8,3,2,-0.882058,T_low
+T005,Visual inspection scan — collaborative mode,inspection,collaborative,none,0.3,150.0,True,13,10,8,2,2,-0.882058,T_low
 T006,Bin picking with suction — fenced mode,pick_place,fenced,suction,2.0,400.0,False,13,8,6,2,2,-0.975252,T_low
-T007,Curved contour weld — hybrid mode,welding,hybrid,welder,3.5,300.0,True,15,8,5,3,4,0.346165,T_high
+T007,Curved contour weld — hybrid mode,welding,hybrid,welder,3.5,300.0,True,14,7,5,2,4,0.346165,T_high
 T008,Heavy depalletizing — fenced mode,palletizing,fenced,gripper,5.0,450.0,False,13,8,6,2,2,-0.975252,T_low
-T009,Laser surface scan — fenced mode,inspection,fenced,laser,0.5,200.0,False,16,13,10,3,2,-0.618379,T_low
+T009,Laser surface scan — fenced mode,inspection,fenced,laser,0.5,200.0,False,15,12,10,2,2,-0.618379,T_low
 T010,Screw fastening assembly — hybrid mode,custom,hybrid,screwdriver,1.0,250.0,True,14,8,6,2,3,0.834878,T_high
 T011,Dual-zone pick-place — hybrid mode,pick_place,hybrid,gripper,1.2,300.0,True,13,8,6,2,2,-0.129666,T_med
-T012,Collaborative spot welding — 3 points,welding,collaborative,welder,2.5,250.0,True,16,9,6,3,4,0.940954,T_high
+T012,Collaborative spot welding — 3 points,welding,collaborative,welder,2.5,250.0,True,15,8,6,2,4,0.940954,T_high
 T013,Collaborative suction palletizing — light boxes,palletizing,collaborative,suction,0.8,250.0,True,13,8,6,2,2,-0.02359,T_med
-T014,Hybrid multi-angle camera inspection,inspection,hybrid,none,0.4,200.0,True,17,7,4,3,6,0.240089,T_med
-T015,Laser marking — fenced mode,custom,fenced,laser,0.6,400.0,False,14,11,8,3,2,-0.631261,T_low
+T014,Hybrid multi-angle camera inspection,inspection,hybrid,none,0.4,200.0,True,16,6,4,2,6,0.240089,T_med
+T015,Laser marking — fenced mode,custom,fenced,laser,0.6,400.0,False,13,10,8,2,2,-0.631261,T_low

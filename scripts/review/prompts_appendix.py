@@ -36,14 +36,24 @@ A8_NAME = {
 }
 
 
+SANITIZE = {"\u2011": "-", "\u2014": "--", "\u2013": "-", "\u2192": "->", "\u201c": '"', "\u201d": '"',
+            "\u2019": "'", "\u00b2": "^2"}
+
+
 def verbatim(text: str) -> str:
+    """lstlisting block with automatic line breaking (requires \\usepackage{listings})."""
+    for k, v in SANITIZE.items():
+        text = text.replace(k, v)
     text = text.rstrip("\n")
-    return "\\begin{footnotesize}\\begin{verbatim}\n" + text + "\n\\end{verbatim}\\end{footnotesize}\n"
+    return ("\\begin{lstlisting}[breaklines=true,breakindent=0pt,basicstyle=\\scriptsize\\ttfamily,"
+            "columns=fullflexible,keepspaces=true,frame=single,framerule=0.3pt,xleftmargin=2pt,xrightmargin=2pt]\n"
+            + text + "\n\\end{lstlisting}\n")
 
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--task", type=Path, default=REPO / "enfield_tasks" / "ir" / "tasks" / "T001_pick_place_collab.json")
+    ap.add_argument("--task", type=Path, default=REPO / "paper" / "data" / "tasks_as_run" / "T001_pick_place_collab.json",
+                    help="task IR as used in the experiments (paper/data/tasks_as_run)")
     ap.add_argument("--out-dir", type=Path, default=REPO / "paper" / "tables")
     args = ap.parse_args()
 

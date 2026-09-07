@@ -49,7 +49,8 @@ from sm5_corrected import check_sm5_corrected  # noqa: E402
 from enfield_llm.code_parser import URSCRIPT_CALL_PATTERN  # noqa: E402
 
 RULES = ["SM-1", "SM-2", "SM-3", "SM-4", "SM-5", "SM-6", "SM-7"]
-TASKS_DIR = REPO / "enfield_tasks" / "ir" / "tasks"
+# Task IR as used in the experiments (snapshot); falls back to the live directory.
+TASKS_DIR = REPO / "paper" / "data" / "tasks_as_run" if (REPO / "paper" / "data" / "tasks_as_run").is_dir() else REPO / "enfield_tasks" / "ir" / "tasks"
 
 
 def load_task_caps() -> dict[str, float]:

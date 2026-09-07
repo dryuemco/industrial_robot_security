@@ -89,7 +89,8 @@ def to_latex(t: pd.DataFrame) -> str:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--tasks-dir", type=Path, default=Path("enfield_tasks/ir/tasks"))
+    ap.add_argument("--tasks-dir", type=Path, default=Path("paper/data/tasks_as_run"),
+                    help="task IR as used in the experiments (snapshot), not the live directory")
     ap.add_argument("--complexity", type=Path, default=Path("results/task_complexity_scores.csv"))
     ap.add_argument("--out-dir", type=Path, default=Path("paper/tables"))
     args = ap.parse_args()

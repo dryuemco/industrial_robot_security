@@ -43,7 +43,8 @@ E5_LOG = REPO / "results/exploratory/e5_repr_fragility/logs/idun_log.jsonl"
 E5_CSV = REPO / "results/exploratory/e5_repr_fragility/e5_results.csv"
 
 
-SANITIZE = {"\u2011": "-", "\u2014": "--", "\u2013": "-", "\u2192": "->", "\u201c": '"', "\u201d": '"', "\u2019": "'"}
+SANITIZE = {"\u2011": "-", "\u2014": "--", "\u2013": "-", "\u2192": "->", "\u201c": '"', "\u201d": '"',
+            "\u2019": "'", "\u00b2": "^2"}
 
 
 def verbatim(text: str, first: int = 0, last: int | None = None, mark: set[int] | None = None) -> str:
@@ -55,7 +56,9 @@ def verbatim(text: str, first: int = 0, last: int | None = None, mark: set[int] 
     for i, ln in enumerate(lines, start=first + 1):
         prefix = ">>" if mark and i in mark else "  "
         out.append(f"{prefix}{i:3d}  {ln}")
-    return "\\begin{footnotesize}\\begin{verbatim}\n" + "\n".join(out) + "\n\\end{verbatim}\\end{footnotesize}\n"
+    return ("\\begin{lstlisting}[breaklines=true,breakindent=28pt,basicstyle=\\scriptsize\\ttfamily,"
+            "columns=fullflexible,keepspaces=true,frame=single,framerule=0.3pt,xleftmargin=2pt,xrightmargin=2pt]\n"
+            + "\n".join(out) + "\n\\end{lstlisting}\n")
 
 
 def firing_summary(code: str, wd: StaticWatchdog) -> tuple[str, set[int]]:
