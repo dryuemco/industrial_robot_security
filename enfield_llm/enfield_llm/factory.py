@@ -125,6 +125,7 @@ def create_client(
             model=model,
             base_url=base_url,
             provider="ollama",
+            timeout=timeout,
             **kwargs,
         )
 
