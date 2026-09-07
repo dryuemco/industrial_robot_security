@@ -111,3 +111,13 @@ docs/*.zip
 
 # Editor correspondence (contains private submission URLs and e-mail addresses)
 docs/review/*.eml
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.bbl
+paper/*.blg
+paper/build.log
+paper/main_access.pdf
+paper/*_diff.pdf
