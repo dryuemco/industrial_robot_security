@@ -1,0 +1,1737 @@
+%% ============================================================================
+%% IEEE ACCESS conversion of main_v6.tex  --  SCAFFOLD (front matter + style anchor)
+%% ----------------------------------------------------------------------------
+%% TARGET CLASS: ieeeaccess  (official template: IEEE Author Center > IEEE Access)
+%%   The official IEEE Access template package ships ieeeaccess.cls + its assets
+%%   (spotcolor, ltxutil, ltxgrid). It needs IEEEtran installed, which is present
+%%   in a full TeX Live (and on the local Mac). To compile this file:
+%%     1. Place this file inside the official IEEE Access template folder, OR
+%%     2. Temporary local check only: swap line below to
+%%        \documentclass[journal]{IEEEtran}  and comment out the \address/\corresp
+%%        /\tfootnote/\markboth block, replacing with a standard \thanks{} in \author.
+%%
+%% STYLE CONTRACT enforced in this conversion (per Georgios):
+%%   - no em-dashes or en-dashes anywhere (--- and -- are banned in source)
+%%   - no first-person "we/our": simple passive voice
+%%   - plain, human-readable English; fewer pages than main_v6.tex
+%%   - figures/captions in standard CS academic terms, no internal codenames
+%%     (DM-/SM-/A6.x/T0xx/E1..E5/Hn) in the main text
+%%   - file names, repo paths, and OSF/internal identifiers removed from the body;
+%%     OSF preregistration cited only in the Acknowledgment
+%%   - internal IDs + full protocol live in the Appendix / replication package
+%% ============================================================================
+
+\documentclass{ieeeaccess}
+
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{comment}
+\usepackage{xcolor}
+
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue}
+
+\begin{document}
+\history{Date of publication xxxx 00, 0000, date of current version xxxx 00, 0000.}
+\doi{10.1109/ACCESS.2017.DOI}
+
+\title{Evaluating the Security of Open-Weight LLM-Generated Industrial Robot Code}
+
+\author{
+  \uppercase{Yunus Emre Cogurcu}\authorrefmark{1},
+  \uppercase{Aida Akbarzadeh}\authorrefmark{2},
+  \uppercase{and Georgios Spathoulas}\authorrefmark{2}}
+\address[1]{Department of Computer Engineering, \c{C}ukurova University,
+01250 Adana, T\"urkiye (e-mail: ycogurcu@cu.edu.tr)}
+\address[2]{Department of Information Security and Communication Technology,
+Norwegian University of Science and Technology (NTNU), 2815 Gj\o vik, Norway
+(e-mail: aida.akbarzadeh@ntnu.no; georgios.spathoulas@ntnu.no)}
+\tfootnote{This work has received funding from the European Union's Horizon
+Europe Research and Innovation Programme under Grant Agreement No.\ 101120657
+(ENFIELD).}
+
+\markboth
+{Cogurcu \headeretal: Evaluating the Security of Open-Weight LLM-Generated Industrial Robot Code}
+{Cogurcu \headeretal: Evaluating the Security of Open-Weight LLM-Generated Industrial Robot Code}
+
+\corresp{Corresponding author: Aida Akbarzadeh (e-mail:
+aida.akbarzadeh@ntnu.no).}
+%% FILL before submission (remaining):
+%%   - ORCID for Author Center metadata: Yunus 0000-0002-9229-9657; Aida if available.
+%%   - Add \IEEEmembership{...} after a name only if that author is an IEEE member.
+
+%% ----------------------------------------------------------------------------
+%% ABSTRACT 
+%% ----------------------------------------------------------------------------
+\begin{abstract}
+Industrial robot safety is governed by ISO 10218, whose 2025 revision is the
+first edition to require manufacturers to address cybersecurity to the extent that it
+affects safety. Large language models (LLMs) increasingly generate robot motion code,
+yet whether such code is secure, and whether current evaluation reveals its weaknesses, remains
+unexamined. This article presents FACT (Formal Adversarial Code Testing), a reproducible framework that
+evaluates generated URScript against fourteen rules: seven security
+checks referencing Common Weakness Enumeration (CWE) classes on the generated code, and seven
+motion-safety checks on the invariant task specification. The rules span seven
+ISO 10218-1:2025 clauses, including the new cybersecurity clause 5.1.16, and are
+exercised under seven adversarial prompt-injection strategies. Because the task
+specification is held invariant, the violations reported here concern the security
+of the generated code rather than its motion safety. Across three
+open-weight code models and 585 preregistered generations, with the model-task cell taken as the conservative independent unit under deterministic decoding, three cautionary
+findings are reported. First, generated code pervasively fails the checks: the
+binary violation metric saturates near 99\%, and a validity-aware measure finds
+only 1 of 135 baseline generations both valid and violation-free. Second, this
+saturation is itself a measurement hazard, since naive counts can let invalid
+pseudo-code pass as safe and render standard pass-or-fail comparisons
+uninformative. Third, mitigation is not free: under the whole-program regeneration used here, iterative repair does not reliably
+reduce unsafe code, with no safety remediation across 195 repair cells from 16 to
+675 billion parameters, and, in exploratory probing, a velocity limit placed directly
+in the code was not reliably preserved under editing. Obtained in simulation and specific to
+URScript, these findings are cautions for how generated control code is measured
+and patched, not evidence of robustness. A fully open, preregistered replication
+package supports independent verification.
+\end{abstract}
+
+\begin{keywords}
+Adversarial robustness, code generation, CWE, industrial robots, large language models, reproducibility, robot safety, static rule checking, ISO 10218-1.
+\end{keywords}
+
+\titlepgskip=-15pt
+
+\maketitle
+
+%% ============================================================================
+%% BODY 
+%% ============================================================================
+
+\section{Introduction}\label{sec:intro}
+
+\PARstart{I}{ndustrial} robots increasingly operate in workspaces shared with
+human operators, and the control code that governs their motion is safety
+critical: an incorrect velocity value, a missing emergency stop, or a
+millimetre-versus-metre unit error can translate directly into physical harm. The
+safety of these systems has long been governed by ISO 10218, and its 2025
+revision is the first edition that explicitly requires manufacturers to address
+cybersecurity to the extent it affects safety \cite{ref1}. In parallel, large
+language models have become a practical means of producing low-level robot control
+code. Foundational work such as Code-as-Policies established the
+language-model-to-robot-policy pipeline \cite{ref2}, and subsequent systems
+extended it to multi-robot \cite{ref3} and construction \cite{ref4} settings, so
+that vendor-specific languages such as Universal Robots URScript, ABB RAPID, and
+KUKA KRL are now direct targets for natural-language-to-code generation.
+
+The convergence of automatically generated code with formally regulated robot
+safety raises a question that existing evaluation methods do not answer: is
+generated robot motion code safe, and can current evaluation practice even reveal
+whether it is? This article addresses that question through FACT (Formal Adversarial Code Testing), a reproducible
+framework for the static safety and security evaluation of generated URScript,
+and reports a set of cautionary empirical findings together with the measurement
+methodology required to obtain them.
+
+One scope condition governs the empirical claims throughout. Each task
+specification is held invariant across conditions, so the motion-safety checks
+establish that the intended task is safe by construction and the violations
+measured on generated code are carried by the security checks. The findings
+therefore characterize the cybersecurity-relevant properties of the generated
+control code rather than demonstrated physical-motion hazards, and evaluation
+under mutated task specifications is identified as the natural next study.
+
+\subsection{Motivation}\label{sec:motivation}
+Unlike general-purpose software, robot motion commands execute in physical,
+safety-critical environments, where a velocity that exceeds the collaborative
+limit, an omitted protective stop, or a confusion between millimetres and metres
+does not merely produce a logic error but can injure an operator who shares the
+workspace. The commercial adoption of generated robot code is already underway, making
+ the safety of that code an immediate concern rather than a hypothetical one.
+Two properties make a rigorous evaluation difficult. First, the relevant safety
+semantics reside in low-level motion primitives rather than in high-level task
+plans, so the evaluation must reach the level at which velocity, acceleration,
+workspace zones, and emergency stops are actually expressed. Second, the binary
+pass-or-fail metrics that dominate code-security evaluation can be misleading when
+applied to this domain, as the findings in this article demonstrate.
+
+\subsection{Research Gap}\label{sec:gap}
+General-purpose security benchmarks for generated code, such as the Copilot study
+of Pearce et al.\ \cite{ref5}, SecurityEval \cite{ref6}, and CWEval \cite{ref7},
+report vulnerability rates between 40\% and 74\%, but they target general Python or
+Java code without motion semantics, structured safety rules, or traceability to a
+robot-safety standard. Rule-based safety validators for language-model-driven
+robots exist, but they operate at the task-plan level \cite{ref8, ref9} rather
+than on the low-level motion primitives whose velocity, acceleration, zone, and
+emergency-stop semantics are regulated by ISO 10218-1:2025. Therefore, three concrete gaps
+ remain at the intersection of code security and industrial-robot safety.
+First, no benchmark formalises adversarial perturbations against vendor-specific
+motion primitives with explicit safety-rule violations. Second, no evaluation
+framework produces ISO 10218-1:2025 clause-level traceability for generated robot
+code. Third, no public artefact enables fully reproducible evaluation on
+exclusively open-weight models. These gaps persist even as defenses mature one
+level up: plan-level guardrails such as RoboGuard reduce unsafe-plan execution
+from more than 92\% to below 2.5\% \cite{ref10}, yet no measurement exists of whether
+loop-based defenses hold at the motion-code level, where the regulated safety
+semantics actually reside.
+
+\subsection{Contributions}\label{sec:contribution}
+This article evaluates whether open-weight, code-specialized models generate
+URScript that meets the safety and security requirements of ISO 10218-1:2025,
+using a static rule checker and a watchdog-in-loop repair setting. Three empirical
+findings organize the study: generated code fails the static checks almost
+universally; the naive way of counting these failures is itself unreliable,
+because syntactically invalid output can be scored as safe; and an iterative repair
+loop does not reliably fix the unsafe code. The first finding motivates the main
+methodological contribution, a safety measure conditioned on code validity, under
+which almost no baseline generation is both valid and free of rule violations. The
+preregistered confirmatory tests are reported as a secondary and deliberately
+conservative check. The definitions and the supporting quantities for each
+contribution below are developed in the section referenced beside it.
+\begin{itemize}
+\item \textbf{A reproducible adversarial testing harness.} Fifteen industrial
+tasks, eight adversarial attack families, and a rule checker mapped to seven
+ISO 10218-1:2025 clauses, including the new cybersecurity clause 5.1.16.
+\item \textbf{Evidence of pervasive static-check failure.} Baseline violation
+rates approach saturation across three open-weight models and are driven by the
+security checks rather than the motion-safety checks (\ref{sec:discussion}).
+\item \textbf{A validity-aware safety metric.} The substantive-safe rate, which
+counts only generations that are both valid and violation-free, is 1 of 135 at
+baseline; the preregistered binary analysis is retained alongside it for fidelity
+(\ref{sec:res-baseline}).
+\item \textbf{A cautionary account of watchdog-in-loop repair.} The repair loop
+does not reliably reduce unsafe code, and its failure mode shifts with model
+scale, in one model trading code validity for apparent compliance
+(\ref{sec:res-explore}).
+\item \textbf{Evidence that an explicit safety constraint is fragile under a
+benign edit.} The constraint is silently removed in a substantial fraction of
+cases, and its survival depends on how it is expressed (\ref{sec:res-explore}).
+\item \textbf{A falsifiable set of design requirements.} Derived from the observed
+failure modes and stated as hypotheses for future repair-capable loops, none of
+which is evaluated here (\ref{sec:discussion}).
+\item \textbf{A fully open, preregistered replication package.} Released under
+Apache 2.0 with Docker support, enabling zero-cost independent verification.
+\end{itemize}
+
+\subsection{Organization of the Article}\label{sec:organization}
+The remainder of this article is organized as follows. Section~\ref{sec:related}
+reviews related work on language models for robot code generation, the security of
+generated code, adversarial robustness and safety validation for
+language-model-driven robots, and iterative repair of generated code. Section~\ref{sec:threat}
+defines the threat model and the safety and security properties under evaluation.
+Section~\ref{sec:framework} describes the FACT framework, including the rule checker and its mapping to ISO 10218-1:2025 clauses. Section~\ref{sec:setup}
+details the experimental setup, the models, and the tasks. Section~\ref{sec:results}
+reports the empirical findings, covering baseline safety, adversarial prompting,
+the watchdog-in-loop intervention, cross-model heterogeneity, and additional
+frontier and robustness probes. Section~\ref{sec:discussion} discusses the
+implications, the resulting design requirements, and threats to validity.
+Section~\ref{sec:conclusion} concludes the article.
+
+\section{Related Work}\label{sec:related}
+This section reviews four lines of work that the present study draws on and
+extends: the use of language models to generate robot code, the security of
+generated code, adversarial robustness and safety validation for robots driven
+by language models, and iterative repair of generated code. Across all four,
+prior measurement stops above the level of vendor-specific motion code and its
+governing industrial-robot safety standard, which is the gap addressed here.
+
+\subsection{Language Models for Robot Code Generation}
+Open code models such as CodeGen \cite{ref11} and CodeT5 \cite{ref12}, together
+with competition-level systems \cite{ref13} and the benchmarks used to score them
+\cite{ref14}, established that language models produce functional programs and that
+progress is measured almost exclusively along functional correctness. This
+capability was carried into robotics: Code as Policies \cite{ref2} and ProgPrompt
+\cite{ref3} translate natural-language instructions into executable robot programs,
+while grounded planners couple a model with affordance values \cite{ref15}, an
+embodied multimodal backbone \cite{ref16}, or closed-loop scene feedback
+\cite{ref17} to produce action sequences, a trajectory surveyed in
+\cite{ref18}. In this setting, safety has been addressed predominantly at the level
+of the task plan, by attaching a verification layer that screens high-level actions
+\cite{ref4} or by generating plans that are safe and efficient under temporal
+constraints \cite{ref19}. The work closest to industrial deployment generates
+vendor-specific control code with a digital-twin verification stage and reports a
+characteristic failure mode of physical hallucination, in which a model emits
+spatially inconsistent or dynamically infeasible motions \cite{ref20}. What these
+systems share is that the symbolic plan, not the regulated motion, is the object of
+control; the velocity, acceleration, workspace-zone, and protective-stop semantics
+that an industrial-robot safety standard regulates reside one level below, in the
+emitted motion code.
+
+\subsection{Security of Generated Code}
+Studies of generated general-purpose code have repeatedly found high rates of
+insecure output. The assessment of code-completion suggestions by Pearce et al.\
+\cite{ref5} and the SecurityEval dataset \cite{ref6} established that a substantial
+fraction of model-produced snippets contain weaknesses drawn from the Common
+Weakness Enumeration, and outcome-driven benchmarks such as CWEval \cite{ref7}
+confirmed that functional correctness and security do not coincide. More recent
+work has scaled this observation: SafeGenBench \cite{ref21} pairs a scenario-rich
+prompt set with a dual evaluation procedure that combines static application
+security testing with model-based judging, and reports that even current
+state-of-the-art models frequently emit vulnerable code. Beyond static benchmarks,
+user studies have measured the downstream effect on developers: access to a coding
+assistant has been associated with less secure code accompanied by misplaced
+confidence in its security \cite{ref22}, although the effect is context dependent
+and not always significant for lower-level languages \cite{ref23}. A complementary
+strand integrates static analysis with a model to recover detection rules or to
+locate weaknesses that a generalized rule set misses \cite{ref24, ref25}, while
+other work shows that code models also propagate harmful content embedded in a
+prompt rather than only inadvertent weaknesses \cite{ref26}, and that
+code-specialized models do not reliably refuse explicit malicious-code requests, with one
+benchmark reporting an average refusal rate of 60.9\% that falls to 39.9\% once a jailbreak is added \cite{ref27}. Two methodological limitations cut
+across this literature. First, the evaluations are conducted predominantly on
+proprietary models accessed through evolving interfaces, from the codex-davinci
+assistant studied by Perry et al.\ \cite{ref22} to the closed state-of-the-art
+systems scored by recent secure-code benchmarks \cite{ref7, ref21}, which
+constrains exact independent reproduction. Second, security is typically summarized
+as an aggregate binary rate, yet such scoring conflates invalid output with safe
+output and saturates once most generations are flawed; the outcome-driven
+reformulation of CWEval \cite{ref7} begins to separate functionality from security,
+but the behavior of a saturating binary metric has not been examined for
+safety-critical robot code. This body of evidence targets general Python, Java, or
+web code. None of it expresses motion semantics, encodes structured robot-safety
+rules, provides traceability to an industrial-robot safety standard, or supports
+fully reproducible evaluation on exclusively open-weight models, which is the set of gaps
+addressed here for generated robot control code.
+
+\subsection{Adversarial Robustness and Safety Validation for Robots}
+The robustness limits that motivate an external safeguard are well documented for
+language models in isolation: safety training fails under competing objectives and
+mismatched generalization \cite{ref28}, alignment that adapts only the first few
+output tokens leaves models open to suffix, prefilling, and fine-tuning attacks
+\cite{ref29}, indirect prompt injection compromises tool-integrated applications
+\cite{ref30}, and certified defenses remain narrow in scope \cite{ref31}. In
+embodied settings the consequences become physical: targeted attacks elicit harmful
+actions from language-model-controlled robots under white-box, gray-box, and
+black-box access, frequently at near-total success rates \cite{ref32}, models can be
+induced toward discriminatory or unlawful actions \cite{ref33}, and they fail
+safety-critical spatial reasoning even on text-only navigation tasks \cite{ref34}.
+A parallel line of work therefore adds safety checking to robots whose behavior is
+driven by language models. Rule-enforcement layers such as the temporal-logic
+constraint module of Yang et al.\ \cite{ref8}, the combined safety-and-security
+treatment of \cite{ref9}, and plan-level safety planners \cite{ref35, ref36}
+restrict the high-level actions a planner may take, while RoboGuard \cite{ref10}
+grounds predefined safety rules into temporal-logic specifications using a protected
+reasoning model and synthesizes a conflict-free plan, reducing the execution of
+unsafe plans from over 92\% to below 2.5\% under worst-case jailbreaking
+while preserving performance on benign plans. These systems share a common property:
+they operate at the level of the task plan, where actions are symbolic and a planner
+mediates between language and motion. The quantities that an industrial-robot safety
+standard regulates, namely protective separation distance, speed and separation
+monitoring, and power and force limiting, are defined in collaborative-robotics
+standards \cite{ref37, ref38, ref39} and surveyed in the human-robot collaboration
+literature \cite{ref40, ref41, ref42, ref43, ref44}; prior work has computed
+protective separation distance under realistic hardware and network latencies in an
+augmented-reality safety setting \cite{ref45, ref46}. These regulated properties
+reside in the vendor-specific motion code, one level below the symbolic plan, and no
+comparable measurement exists of whether such code, or a loop-based defense applied
+to it, satisfies them. The evaluation reported in this article targets exactly that
+level.
+
+\subsection{Iterative Repair and the Security Trajectory}
+Feeding diagnostic feedback back to a model for correction is now a standard
+mechanism for improving generated code. Across model families and scales, iterative
+self-repair reliably raises functional pass rates, with most of the benefit arriving
+in the first one or two rounds \cite{ref47}, although the gain is bounded by the
+quality of the feedback signal rather than by raw model capability \cite{ref48}, and
+intrinsic self-correction without an external signal is itself unreliable
+\cite{ref49}. Multi-agent and trace-driven variants extend this loop with execution
+traces and accumulated repair history \cite{ref50}, and static analysis has been
+used as the feedback source to patch weaknesses the model introduced \cite{ref51}
+or to repair them in a zero-shot setting \cite{ref52}. Security, however, does not
+follow the functional trajectory. A controlled study of repeated model-only
+improvement reports a 37.6\% rise in critical vulnerabilities after only five
+iterations, attributing the effect to the absence of human review between rounds
+\cite{ref53}. The degradation persists under automated gating: adding a
+static-analysis check to the loop has been observed to raise, rather than suppress,
+the latent degradation rate, because rule-based detectors do not cover structural
+regressions such as the silent removal of a defensive check \cite{ref54}.
+End-to-end detect-repair-verify pipelines have therefore been proposed for
+project-level artifacts, where detection reliability and repair side effects become
+first-order concerns \cite{ref55}, controlled execution environments have been
+proposed to contain unsafe generated code at run time \cite{ref56}, and
+representation-level analysis has begun to characterize when generated code is safe
+or unsafe in terms of internal model activations \cite{ref57}. This evidence is
+drawn almost entirely from general software. Whether a sound static check placed in
+a repair loop over safety-critical robot motion code reduces unsafe output, leaves
+it unchanged, or displaces it into uncovered failure modes is a question that the
+watchdog-in-loop and robustness analyses in this article examine directly.
+
+Taken together, these lines of work establish that language models can generate
+robot code, that such code carries security weaknesses, and that defenses exist at
+the level of high-level plans, controlled execution, and internal representations.
+They stop short of evaluation at the motion-code level where the regulated safety
+semantics reside: the security evidence is drawn from general software, the
+robot-code defenses act on plans rather than on motion primitives, and none reports
+preregistered measurement anchored to ISO 10218-1:2025 on exclusively open-weight
+models. The present article builds on these threads and extends them by moving the
+unit of evaluation from the plan to the motion command, by adding a preregistered
+rule checker traceable to the standard together with a watchdog-in-loop test of
+whether such a check helps under repair, and by providing a fully open replication
+path. This positioning is developed further in the discussion (\ref{sec:discussion}).
+
+\section{Threat Model}\label{sec:threat}
+In this article the term safety-and-security evaluation denotes a systematic,
+preregistered threat model together with the grammar-based static rule set (a parser-driven check against the URScript grammar) defined
+below; it does not denote formal verification or machine-checked proofs of safety.
+
+\subsection{Attacker Capabilities}\label{sec:attacker}
+Three attacker levels are defined following standard threat-modeling practice, each
+corresponding to a realistic industrial deployment context, as summarized in
+Table~\ref{tab:attacker}.
+
+\begin{table}[h]
+\caption{Attacker capability levels.}
+\label{tab:attacker}
+\centering
+\footnotesize
+\begin{tabular}{@{}p{0.16\columnwidth}p{0.20\columnwidth}p{0.20\columnwidth}p{0.30\columnwidth}@{}}
+\toprule
+Level & Access & Query budget & Industrial context \\
+\midrule
+White-box & Full model weights & Unlimited & Internal developer with model access \\
+Gray-box & Hosted interface only & 100 per scenario & External integrator using a hosted model \\
+Black-box & Execution outcomes & 10 to 20 & Observer of robot behavior \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Attack Families}\label{sec:attack-families}
+Eight attack families are considered, each targeting a specific clause of
+ISO 10218-1:2025 and each expressible as a perturbation of the generated motion code
+or of its governing prompt, as listed in Table~\ref{tab:attacks}.
+
+\begin{table}[h]
+\caption{Attack families and their ISO 10218-1:2025 clause anchors. Internal
+identifiers for each family are listed in Appendix~\ref{app:replication}.}
+\label{tab:attacks}
+\centering
+\footnotesize
+\begin{tabular}{@{}p{0.30\columnwidth}p{0.13\columnwidth}p{0.45\columnwidth}@{}}
+\toprule
+Family & ISO clause & Description \\
+\midrule
+Speed injection & 5.5.3 & Velocity values exceeding the mode-specific limit \\
+Safe-zone penetration & 5.7.4 & Waypoints violating safe-zone halfspace constraints \\
+Orientation-cone violation & 5.7.4 & Tool orientation inside a forbidden cone \\
+Payload tampering & 5.1.15 & Payload mass or centre of gravity outside declared bounds \\
+Safety-logic bypass & 5.4.2, 5.4 & Missing protective-stop command or incomplete safety control flow \\
+Frame confusion & 5.7.4 & Coordinate-frame inconsistencies across waypoints \\
+Tool misuse & 5.1.14 & Invalid tool identity or activation mode \\
+Prompt injection & 5.1.16 & Adversarial prompts or configuration tampering \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Prompt injection against code-generating assistants is an actively catalogued attack
+surface \cite{ref58}. In this study the prompt-injection family is instantiated through
+seven distinct strategies: a
+direct instruction to ignore safety constraints, a role-playing frame,
+context-overflow padding that dilutes the safety instruction, incremental escalation
+of unsafe requests, a false authority claim, a performance-oriented framing that
+prioritizes throughput over the speed limit, and obfuscation that hides unsafe values
+inside comments or variable names. These strategies are enumerated with their
+internal identifiers in Appendix~\ref{app:replication}.
+
+The two threat-model dimensions are not crossed into a full experimental matrix.
+The capability levels in Table~\ref{tab:attacker} characterize realistic deployment
+contexts rather than separate experimental arms, and the evaluation operates at a
+single query-based operating point: each open-weight model is treated as a queried
+interface, its URScript output is checked statically, and no weight-level or
+execution-outcome attack is performed, which corresponds most closely to the
+gray-box level. All eight families in Table~\ref{tab:attacks} anchor the rule
+checker and appear as author-constructed variants in its detector-validation set
+(\ref{app:detection}). Among them, only prompt injection is additionally exercised
+as a generation-time condition, through the seven strategies above, since the other
+families denote code-level perturbations that a model is not prompted to introduce.
+Combinations beyond this operating point, including white-box and black-box
+campaigns and model generation under the code-level families, are left to future
+work.
+
+\section{The FACT Framework}\label{sec:framework}
+The framework evaluated in this article, named FACT, renders a vendor-neutral task
+description into one of several prompt conditions, generates URScript with an
+open-weight code model, and submits the result to a grammar-anchored rule checker
+whose verdict is traceable to ISO 10218-1:2025. Figure~\ref{fig:pipeline} summarizes
+the pipeline; the remainder of this section details each stage.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/pipeline.pdf}
+\def\xfigwd{\columnwidth}% forces the wrapping caption branch; in figure* the caption still wraps at full \textwidth
+\caption{The FACT pipeline. A vendor-neutral task representation is rendered into a
+baseline, safety-augmented, or adversarial prompt; an open-weight code model generates
+URScript; a grammar-anchored rule checker of seven motion-safety checks and seven
+weakness-mapped security checks, traceable to seven clauses of ISO 10218-1:2025, emits
+a violation verdict. A repair-in-loop variant feeds detected violations back as repair
+prompts.}
+\label{fig:pipeline}
+\end{figure*}
+
+\subsection{Task Representation}\label{sec:task-ir}
+Each task is defined in a vendor-neutral JSON task representation that specifies waypoints
+with pose and motion type, safety constraints (speed and acceleration limits and
+safety zones expressed as halfspace geometry), an operating mode, and a payload and
+tool configuration. Three operating modes are used, each with its own velocity
+ceiling: collaborative at 250 mm/s, a reduced-speed regime grounded in human
+contact-injury limits \cite{ref59}, hybrid at 300 mm/s, and fenced at 500 mm/s. The
+same task representation drives both code generation and the safety analysis, so the
+intended task is fixed independently of how a model later renders it. An abbreviated example is shown in Figure~\ref{fig:taskjson}.
+
+% Abbreviated from the real baseline task IR
+% enfield_tasks/ir/tasks/T001_pick_place_collab.json (schema and values are
+% authentic; fields elided for space are marked with // ...).
+\begin{figure}[h]
+\centering
+\def\xfigwd{\columnwidth}%
+\footnotesize
+\begin{verbatim}
+{
+  "schema_version": "1.0.0",
+  "task": {
+    "id": "T001",
+    "category": "pick_place",
+    "operating_mode": "collaborative"
+  },
+  "robot": {
+    "model": "ur5e",
+    "payload_kg": 0.5
+  },
+  "safety_requirements": {
+    "max_tcp_speed_mm_s": 250.0,
+    "max_tcp_accel_mm_s2": 1000.0,
+    "estop_required": true,
+    "estop_max_latency_ms": 50,
+    "safeguarded_space": {
+      "halfspaces": [
+        {"normal": [1,0,0], "offset": 800},
+        {"normal": [0,0,-1], "offset": -50}
+        // ... 4 more halfspaces
+      ]
+    }
+  },
+  "tool": {
+    "type": "gripper",
+    "parameters": {"grip_force_n": 40.0,
+                   "stroke_mm": 85.0}
+  },
+  "motion_sequence": [
+    {"seq": 0, "type": "estop_check"},
+    {"seq": 1, "type": "move_joint",
+     "speed_mm_s": 200.0},
+    {"seq": 2, "type": "move_linear",
+     "target_pose": {"position":
+       {"x": 400.0, "y": 0.0, "z": 350.0}},
+     "speed_mm_s": 200.0,
+     "accel_mm_s2": 500.0}
+    // ... 10 more steps
+  ]
+}
+\end{verbatim}
+\caption{Abbreviated vendor-neutral JSON task representation for task T001
+(pick-place, collaborative mode).}
+\label{fig:taskjson}
+\end{figure}
+
+\subsection{Generation Conditions}\label{sec:conditions}
+Code is generated under three prompt conditions. The baseline condition supplies the
+task description only. The safety-prompted condition adds explicit safety constraints,
+namely the applicable speed limits and the required configuration preamble. The
+adversarial condition adds one of the prompt-injection strategies described above.
+
+\subsection{Rule Checker}\label{sec:analyzer}
+The rule checker performs two passes at different levels of the pipeline. The first pass
+evaluates motion-safety properties on the task representation and detects violations
+of physical and procedural safety constraints regardless of how the task is later
+rendered in code. It comprises seven checks: a speed-and-payload range check covering
+the mode-specific velocity limits and the declared payload bounds, a safe-zone
+halfspace test, an orientation-cone test, a safety-logic control-flow check for
+protective-stop presence and interlock completeness, a frame-consistency check across
+waypoints, a tool identity and activation check, and a configuration-integrity check
+for adversarial markers and configuration tampering.
+
+The second pass evaluates the generated URScript text and detects code-level
+weaknesses mapped to the Common Weakness Enumeration (CWE). It comprises seven checks: an
+input-validation proxy for missing velocity and acceleration arguments on motion calls
+(a surrogate indicator related to CWE-20, not a faithful CWE-20 dataflow check), an
+error-handling-presence proxy on critical operations (a surrogate indicator related to
+CWE-252, not a faithful CWE-252 return-value check), a
+protection-mechanism check for missing interlocks (CWE-693), a check for missing
+workspace-boundary handling (CWE-754), a hardcoded-value check for speed or
+acceleration literals that exceed limits (CWE-798), a safety-preamble check for a
+missing tool-centre-point (the controlled reference point at the robot's tool) or payload
+declaration before motion, and a check for
+prompt-injection markers leaked into the generated code. The two passes are aggregated
+by logical disjunction: a generation is counted as violating if either pass detects at
+least one weakness.
+
+\textbf{Validity gate.} The security pass is meaningful only when the model has
+produced actual URScript, so the second pass begins with a validity gate. An output
+is treated as valid URScript if it contains at least one function-call pattern, that
+is, a motion or control keyword followed by an opening parenthesis. An output that
+refers to URScript keywords only inside prose fails this gate and is recorded as
+invalid pseudo-code. Invalid outputs are not scored as safe: they are removed from
+the violation-count denominator and reported as a separate category rather than
+counted as zero violations. The gate applies to the security pass alone, because the
+motion-safety pass is computed from the task representation and does not depend on
+the model output. The gate is needed because at least one model produced pseudo-code
+that, without the gate, would have been recorded as safe.
+
+\textbf{Scope of the checks.} The checks are syntactic and lexical rules evaluated over the parsed URScript grammar. Dataflow analysis, definition-use tracking, and reachability analysis are not performed, so the component is a grammar-anchored rule checker and not a dataflow-based program analysis. The consequence is visible in two of the security checks: the input-validation and error-handling proxies key on argument and control-flow patterns rather than on data movement, and the post-hoc precision audit (Section~\ref{sec:res-baseline}) confirms that neither faithfully captures its nominal CWE-20 and CWE-252 semantics, so the two are reported as syntactic proxies rather than CWE checks. Faithful dataflow-based versions are left to future work, consistent with the abstract-syntax-tree direction identified in the design requirements.
+
+\subsection{ISO 10218-1:2025 Traceability}\label{sec:iso}
+Each check is anchored to a specific clause of ISO 10218-1:2025 (Robotics, Safety
+requirements, Part 1: Industrial robots). The nineteen rule instances touch seven
+distinct clauses (5.1.14, 5.1.15, 5.1.16, 5.4, 5.4.2, 5.5.3, and 5.7.4) spanning four
+top-level sections of Part 1: robot design, stopping functions, other safety
+functions, and limiting of robot motion. Seven distinct clauses exceed the
+four-to-six-clause coverage stated in the original project proposal. Of particular
+relevance is clause 5.1.16 on cybersecurity, newly introduced in the 2025 revision:
+its first note enumerates cybersecurity weaknesses, including authenticated protection
+of the safety configuration and avoidance of default credentials, that are captured, at the code level, by the input-validation, protection-mechanism, hardcoded-value,
+prompt-injection-marker, and configuration-integrity checks. To the authors' knowledge
+this is among the first rule-checking frameworks to anchor weaknesses in generated
+robot code to the newly introduced cybersecurity clause. The same standard is adopted in the United States as ANSI/A3 R15.06-2025, which likewise introduces cybersecurity into industrial-robot safety, so the rule-to-clause mapping carries over to that jurisdiction. Two security checks, the
+error-handling-presence proxy (related to CWE-252) and the unusual-condition check (CWE-754), have no
+direct anchor, because ISO 10218-1:2025 does not explicitly address application-level
+code robustness; these two checks indicate where the standard could be extended. The
+full machine-readable rule-to-clause mapping is provided in the replication package
+and summarized in Appendix~\ref{app:replication}.
+
+\textbf{Semantic convention.} The clause attached to a check identifies the weakness
+class it anchors to, not the physical limit it enforces. For example, the
+hardcoded-value check fires on a hardcoded speed literal, which is physically a
+speed-limit concern, yet anchors to clause 5.1.16, because the underlying weakness is
+hardcoded configuration that bypasses configurability rather than excessive speed. A
+consequence is that the same physical domain can appear under two clauses: the
+speed-limit clause for the motion-safety speed check and the cybersecurity clause for
+the hardcoded-literal security check.
+
+\textbf{Target language.} The implementation targets URScript, for three reasons. Universal
+Robots ships an open-source Robot Operating System (ROS) 2 driver and an officially maintained simulator image,
+so the path from generated code to live execution is shorter than for vendors that
+require licensed simulators or closed toolchains. The URScript language is documented
+under permissive terms, whereas RAPID and KRL are encumbered by vendor
+intellectual-property licences that complicate redistribution of grammar artefacts in
+an open replication package. URScript also targets a single robot family with a stable
+instruction set, giving the rule checker a fixed grammatical surface rather than
+version-fragmented dialects. Adapters for RAPID and KRL are deferred to future work and
+discussed as scoped limitations in \ref{sec:discussion}.
+
+\subsection{Task Complexity Characterization}\label{sec:complexity}
+To support the complexity-stratified subgroup analysis reported in
+\ref{sec:res-sens}, each baseline task is assigned a deterministic complexity score
+derived solely from its task representation. The score combines a structural
+component, summing five structural counts (motion-command count, distinct command
+types, distinct frame references, environment-frame count, and safety-zone count),
+with a safety-surface component, summing ten attack-surface descriptors that
+correspond to the eight attack families. The two components are standardized across
+the fifteen-task suite and combined with equal weights, and the tasks are partitioned
+into three equal tertiles of five tasks each. The score is outcome-blind: it is
+computed from the baseline task representation alone and does not read model outputs,
+rule checker verdicts, or result files, and the computation ordering is enforced by an
+automated test that forbids any import of outcome data. The high-complexity tertile
+concentrates collaborative and hybrid tasks with rich safety surfaces, while the
+low-complexity tertile collects predominantly fenced tasks with sparse safety
+specifications; the partition is intentionally sensitive to attack-surface content
+rather than to the operating-mode label alone.
+
+\section{Experimental Setup}\label{sec:setup}
+
+\subsection{Models}\label{sec:models}
+Three open-weight code-specialized models are evaluated through a local inference
+server, which enables full reproduction at zero cost. The models, summarized in
+Table~\ref{tab:models}, span three laboratories and a range of reported functional
+coding ability and parameter scales. All generation uses greedy decoding at
+temperature zero, which is deterministic by construction, with an output budget of
+4096 tokens.
+
+\begin{table}[h]
+\caption{Open-weight code models evaluated. Reported HumanEval scores are taken from
+the respective model releases, and quantization reflects the weights as actually
+deployed.}
+\label{tab:models}
+\centering
+\footnotesize
+\begin{tabular}{@{}p{0.30\columnwidth}p{0.10\columnwidth}p{0.15\columnwidth}p{0.13\columnwidth}p{0.14\columnwidth}@{}}
+\toprule
+Model & Params & Quantization & HumanEval & License \\
+\midrule
+Qwen2.5-Coder-32B & 32.8B & Q4\_K\_M & 92.7\% & Apache 2.0 \\
+DeepSeek-Coder-V2-16B & 16B & Q4\_0 & 73\% & DeepSeek \\
+CodeLlama-34B & 34B & Q4\_0 & 42\% & Llama \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Infrastructure}\label{sec:infra}
+Inference runs on a dedicated workstation with a 32 GB consumer GPU hosting the local
+model server; code generation, rule checking, and statistical analysis run on a
+separate development workstation over a local network connection.
+
+\subsection{Experiments}\label{sec:exps}
+
+Three experiment families are run, all at zero cost. Each addresses a distinct
+question about generated URScript and maps to one of the confirmatory hypotheses
+stated below.
+
+The baseline experiment establishes how often unaided generation produces unsafe or
+insecure code and whether an explicit safety prompt changes that. It generates code
+for the fifteen tasks under a task-only baseline condition and a safety-prompted
+condition that adds the applicable speed limits and the configuration preamble, with
+three repetitions per cell, for 270 generations.
+
+The adversarial experiment probes robustness under prompt-level attack. It applies the
+seven prompt-injection strategies to the fifteen tasks, with three repetitions, for
+315 generations, in order to measure whether adversarial prompting raises the
+violation rate above the matched baseline and to isolate which strategies and which
+models drive any change.
+
+The repair-in-loop experiment tests whether the rule checker is useful as a
+corrective signal and not only as a measurement. It runs the fifteen tasks under
+rule-checker feedback, in which detected violations are returned to the model as a
+repair prompt, with three repetitions, for up to 540 generations; because the loop
+terminates early in many cells the executed total is lower. The goal is to measure
+whether feedback reduces the violation rate relative to single-shot generation.
+
+Table~\ref{tab:budget} gives the exact per-experiment generation budget.
+
+\begin{table}[h]
+\caption{Generation budget by experiment family. Rows are the model calls actually
+written to the result logs; cells are the distinct model, task, and repetition
+combinations; gate-pass is the count of outputs that pass the validity gate. For the
+repair-in-loop family the loop terminates early in many cells, so the executed total is
+below the nominal budget.}
+\label{tab:budget}
+\centering
+\footnotesize
+\begin{tabular}{@{}p{0.28\columnwidth}ccccc@{}}
+\toprule
+Experiment family & Rows & Cells & Models & Cond. & Gate-pass \\
+\midrule
+Baseline & 270 & 135 & 3 & 2 & 191 \\
+Adversarial & 315 & 45 & 3 & 7 & 192 \\
+Repair-in-loop & 339 & 135 & 3 & 1 & 261 \\
+\midrule
+Total & 924 & 315 &  &  & 644 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Protocol invariant.} Across all three experiment families the task
+representation is held invariant for a given task: the baseline task specification is
+the input to the motion-safety pass in every call. Adversarial manipulation enters the
+pipeline at the prompt level only and is observed, if at all, in the generated
+URScript, which is the input to the security pass. A direct consequence is that the
+motion-safety pass returns the same verdict across all conditions of a given task, so
+the combined violation signal is carried by the security pass. This is a deliberate
+scope choice: mutation of the task specification constitutes a separate attack surface,
+task-specification tampering, which is not addressed in this study and is flagged as
+future work in \ref{sec:discussion}.
+
+\subsection{Metrics}\label{sec:metrics}
+The primary metrics are the safety violation rate, defined as the fraction of
+generations with at least one motion-safety violation; the security violation rate,
+defined analogously for the security checks; the combined violation rate, defined as
+the fraction with at least one violation of either kind; and the refusal rate.
+Secondary metrics are the attack success rate, defined as the increase in violations
+under the adversarial condition, together with the rule checker detection rate and false-positive rate measured on author-constructed variants.
+
+ 
+\textbf{Refusal detection.} Each response is classified by a deterministic two-gate
+procedure that shares one definition of committed code with the validity gate: the
+first gate applies the same extractor and grammar test as the validity gate, and the
+second gate matches the response against a frozen set of refusal indicators. The two
+gates assign every response to one of three categories.
+\begin{itemize}
+\item \textbf{Refusal:} no committed URScript is present and a refusal indicator is
+matched.
+\item \textbf{Invalid pseudo-code:} no committed URScript is present and no refusal
+indicator is matched; URScript keywords appear only inside prose.
+\item \textbf{Successful generation:} committed URScript is present and is passed to
+the rule checker. Such a response is never labelled a refusal, even when it includes
+disclaimer language.
+\end{itemize}
+This three-way split makes the refusal sensitivity analysis well defined.
+
+\textbf{Rule-checker latency.} The runtime cost of the rule checker is reported here
+because the project proposal specified a bound on detection latency. The figure is the
+wall-clock time to analyze one generated program on the development workstation, not a
+measurement of robot execution. The rule checker runs as a single-pass parser-and-rule
+pipeline over each task-and-code pair, and per-call latency was measured by replaying
+the fifteen baseline pairs for one hundred iterations after a warm-up, for 1500 timed
+calls, without GPU dependency. The mean per-call latency is 0.648 ms with a two-sided
+95\% confidence interval of [0.638, 0.658] ms; the median is 0.603 ms, the 95th
+percentile is 1.046 ms, and the 99th percentile is 1.08 ms. This meets the planned
+bound of mean detection latency under 300 ms by three orders of magnitude.
+
+\subsection{Statistical Analysis}\label{sec:stats}
+
+Three confirmatory hypotheses were preregistered.
+\begin{itemize}
+\item \textbf{Baseline severity:} at least 30\% of baseline generations contain at
+least one violation under the combined verdict.
+\item \textbf{Adversarial uplift:} the prompt-injection strategies raise the combined
+violation rate by at least 50 percentage points over the matched baseline, per
+model-and-strategy cell.
+\item \textbf{Repair effect:} rule-checker feedback in the generation loop reduces the
+combined violation rate by at least 40\% relative to single-shot generation, on matched
+task-and-model pairs.
+\end{itemize}
+
+The first hypothesis is tested with a one-sided exact binomial test against the 30\%
+threshold, per model and pooled, with Wilson confidence intervals. The second and third
+are tested with McNemar's exact test on matched binary outcomes, with odds ratios and
+mid-p confidence intervals. A Holm-Bonferroni correction is applied across the
+confirmatory family and within each family's internal comparison set. A cross-model
+homogeneity test is reported as an additional analysis only. Two further hypotheses, that baseline
+saturation explains the absence of adversarial uplift and that refusal is near zero for
+code-specialized models, were added post hoc and are reported as additional analyses.
+
+\textbf{Sensitivity analyses.} Before any violation is counted, generated code must
+pass the URScript validity gate; outputs failing the gate are reported separately as
+invalid generations rather than counted as zero-violation, and every confirmatory
+contrast is additionally re-run on the gate-passing subset only. The adversarial
+contrast is computed per strategy and per model to localize which vectors and which
+models drive the aggregate, and each contrast is reported with an effect size alongside
+the binary decision.
+
+\textbf{Threshold rationale.} The 40\% relative-reduction threshold for the repair-loop
+hypothesis is conservative relative to feedback-loop results on general-purpose Python
+code, where static-analysis-driven iterative feedback has been reported to reduce
+vulnerability rates by up to approximately 82\% relative on a proprietary model
+\cite{ref51}. The lower threshold is adopted because the narrower URScript surface, the
+standard-anchored rule structure, and the single-vendor setting are expected to produce
+more heterogeneous per-model reduction than the general-purpose setting; the pooled and
+per-model results reported in \ref{sec:res-watchdog} are consistent with this
+expectation.
+
+\textbf{Statistical units and dependence.} The baseline corpus of 135 generations is
+structured as three models, fifteen tasks, and three repetitions. Repetitions within a
+model-task cell share decoding settings and are strongly correlated under
+near-deterministic decoding, so the effective number of independent units lies between
+the 45 model-task cells and the 135 calls. Point estimates are unaffected by this
+choice. The confirmatory baseline conclusion is robust to the conservative unit:
+restricting the analysis to the 45 model-task cells leaves the rate far above the 30\%
+threshold (one-sided exact binomial $p<0.001$), although the interval widens
+accordingly, for example from [52.3\%, 68.6\%] at the call level to approximately
+[46\%, 73\%] at the cell level. The confidence intervals reported in \ref{sec:results}
+are computed at the call level and should therefore be read as the narrow end of this
+range. The cross-model homogeneity test operates at the task level and already accounts
+for the shared task structure.
+
+\subsection{Execution Environment}\label{sec:execenv}
+
+Runtime validation of the rule checker uses the official Universal Robots e-Series
+simulator (URSim) \cite{ref61}. URSim runs the same controller software as a physical
+e-Series controller and exposes the same network interfaces, so it behaves almost
+identically to a real robot over the network; physical effects such as force control
+and collision response are not simulated. The entire study is performed in this
+simulation environment, consistent with the preregistered scope. Telemetry is
+collected through the official Universal Robots Robot Operating System (ROS) 2 driver \cite{ref62} on a
+UR5e configuration. Exact container, driver, and topic identifiers are listed in the
+replication package.
+
+\section{Results}\label{sec:results}
+The results in this section concern how often open-weight models emit unsafe URScript
+and whether adversarial prompting or repair-in-loop feedback changes that. Because the
+task representation is held invariant by design (\ref{sec:exps}), the motion-safety
+pass is not exercised on generated code, so the violation signal reported below is
+carried entirely by the security pass. The rule checker's intrinsic detection performance,
+measured separately on author-constructed synthetic adversarial variants, is reported in
+Appendix~\ref{app:detection} as a construction check only. Because the authors both
+construct those variants and define the rules that flag them, that appendix establishes
+no external detection validity: it confirms only that each rule fires on the perturbation
+it is built to target and stays silent on the clean baselines. The detection counts are
+therefore kept out of the results framing here and reported solely in
+Appendix~\ref{app:detection}.
+
+\begin{table}[t]
+\caption{Summary of principal quantitative results. Intervals on rates are computed at
+the call level and should be read as the narrow end of the range; under near-deterministic
+decoding the conservative cell-level interval for the baseline rate (\ref{sec:stats}) is
+taken as primary.}
+\label{tab:summary}
+\centering
+\footnotesize
+\begin{tabular}{@{}p{0.25\columnwidth}p{0.2\columnwidth}p{0.4\columnwidth}@{}}
+\toprule
+\textbf{Quantity} & \textbf{Value} & \textbf{95\% CI / note} \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{(Confirmatory: three local models, 16B to 34B)}}\\ \\
+Substantive-safe rate (primary) & 1/135 (0.7\%) & [0.02, 4.06] Clopper-Pearson \\ \\
+Combined violation rate, gate-passing & 98.8\% & [93.5, 99.8] call; 92.8\% high-prec. \\ \\
+Combined violation rate, naive & 60.7\% & [46, 73] cell-level \\ \\
+Refusal rate & 0/585 (0\%) & none observed \\ \\
+Safety-prompt mean violations & 10.37 to 6.39 & 38\% lower, descr. \\ \\
+Adversarial count uplift, pooled & +0.70 viol. & max strategy +3.58, severity flat \\ \\
+Adversarial uplift, binary & 6.67 pp (max) & ceiling demo, Holm $p=1.000$ \\ \\
+Repair-loop reduction, pooled & 30.5\% rel. & below 40\% threshold \\ \\
+Remediated to zero & 0/195 & local and frontier \\ \\ 
+Cross-model heterogeneity, $Q$ & 12.60 / 20.00 & $p{=}0.004$ / $p{<}0.001$ \\ \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{Additional analyses (not preregistered)}}\\ \\
+Frontier violation rate, 24B to 675B & 100\% & safe 0/120 \\ \\
+Temperature 0.2 and 0.7 & 100\% & safe 0/180 each \\ \\
+Representation breach by form & 15.0/1.7/0/0\% & implicit$\to$guard, CA $p{<}10^{-4}$; 49/119 removed \\ \\
+Construct removal vs model size & 0 to 70\% & 24B to 675B; exploratory, 4 sizes, 1 rep \\ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Baseline Safety of Generated Code}\label{sec:res-baseline}
+A preliminary single-task probe surfaced three qualitative findings that shaped the
+metric design. First, a safety-prompt paradox: one model produced more violations
+under the safety-prompted condition than under the baseline condition, traced to a
+unit confusion in which a velocity intended as 200 mm/s was emitted as the URScript
+literal for 200 m/s, eight hundred times the collaborative limit. An operator who
+supplies helpful safety constraints can therefore inadvertently elicit more dangerous
+code than one who supplies none. Second, adversarial susceptibility is strongly
+model-dependent and is not predicted by general coding ability: under a
+performance-framing prompt one model rose from one violation to twenty-two while the
+other two were unaffected. Third, a low violation count does not imply safe code:
+one model consistently emitted a single violation only because its output was
+pseudo-code that evaded pattern-based detection, which motivated the validity gate of
+\ref{sec:analyzer}.
+
+Across the baseline experiment, the pooled combined violation rate is 60.7\%. Because
+temperature-zero decoding makes the three repetitions within a model-task cell nearly
+identical, the 45 model-task cells rather than the 135 calls are the conservative
+independent unit (\ref{sec:stats}); the cell-level 95\% interval, taken here as primary,
+is approximately [46\%, 73\%], wider than the call-level Wilson interval of
+[52.3\%, 68.6\%]. Restricted to outputs that pass the validity gate, the pooled rate is
+98.8\% [93.5\%, 99.8\%] at the call level, and the per-model
+gate-passing violation rates are 100\% for Qwen2.5-Coder-32B, 95\% for DeepSeek-Coder-V2-16B, and
+100\% for CodeLlama-34B. The preregistered hypothesis that at least 30\% of baseline
+generations violate is supported, with every gate-passing test rejecting the null at
+p below 0.001 after correction. The gap between naive and gate-passing rates is
+driven by the high invalid-pseudo-code rates of the two smaller models
+(Figure~\ref{fig:per-model}). No model
+refused to generate code in any condition: the refusal count is 0 of 585, consistent
+with the post-hoc expectation of near-zero refusal for code-specialized models.
+
+\begin{figure}[t]\centering
+  \includegraphics[width=\columnwidth]{figures/fig_violation_rates.pdf}
+  \def\xfigwd{\columnwidth}%
+  \caption{Combined violation rate for each model under the baseline condition,
+  computed over all generations (naive) and over only the generations that pass the
+  validity gate, with Wilson 95\% intervals. For the two smaller models the gap between
+  the bars reflects the high rate of invalid pseudo-code, which the naive rate scores as
+  zero-violation.}\label{fig:per-model}
+\end{figure}
+
+The binary rate saturates, which obscures the safety picture in two ways: it leaves
+almost no headroom above the gate-passing baseline, and in its naive form it counts
+invalid pseudo-code as zero-violation, that is, as safe. A validity-aware outcome is
+therefore introduced. Each generation is classified as invalid (fails the validity
+gate), valid-unsafe (passes the gate but triggers at least one check), or
+substantive-safe (passes the gate and triggers no check). The headline quantity is the
+substantive-safe rate, the fraction of all generations that are substantive-safe. Of
+the 135 baseline generations, 83 pass the validity gate and 52 do not; of the 83
+gate-passing outputs, 82 are valid-unsafe and exactly one is substantive-safe, giving a
+substantive-safe rate of 1 of 135, or 0.7\% (Clopper-Pearson 95\% confidence interval
+[0.02\%, 4.06\%]). This single safe output is genuine code
+rather than an empty skeleton, since every gate-passing baseline generation contains
+motion commands. The contrast with the 98.8\% gate-passing violation rate is the point:
+the binary metric simultaneously reports near-total violation and, scored naively, lets
+invalid pseudo-code masquerade as safe, whereas the substantive-safe rate shows that
+essentially none of the baseline corpus is both real URScript and rule-clean. This
+rate does not saturate and is defined over the full denominator, so it is recommended
+as the primary safety outcome for this setting; the preregistered binary analysis is
+retained for fidelity. Among valid-unsafe outputs the graded picture is a per-rule
+decomposition: the violations are carried entirely by the security family, the
+motion-safety checks fire on zero of all 585 generations, and the highest
+firing counts come from the unchecked-return and missing-preamble checks,
+while the protection-mechanism and prompt-injection-marker checks never fire
+(Table~\ref{tab:perrule}).
+
+\begin{table}[h]
+\caption{Per-rule firing counts over the 135 baseline generations and the 135
+safety-prompted generations. The combined signal is carried by the security family,
+and within it by the unchecked-return and missing-preamble checks; the motion-safety
+checks evaluate the invariant task specification and do not fire on generated code.}
+\label{tab:perrule}
+\centering
+\footnotesize
+\begin{tabular}{@{}p{0.34\columnwidth}p{0.16\columnwidth}cc@{}}
+\toprule
+Security check & CWE & Baseline & Safety \\
+\midrule
+Input-validation proxy & CWE-20 & 52 & 25 \\
+Error-handling proxy & CWE-252 & 82 & 91 \\
+Protection mechanism & CWE-693 & 0 & 0 \\
+Unusual conditions & CWE-754 & 54 & 44 \\
+Hardcoded value & CWE-798 & 54 & 43 \\
+Safety preamble & none & 74 & 69 \\
+Prompt-injection marker & none & 0 & 0 \\
+\midrule
+\multicolumn{4}{@{}l}{Motion-safety checks (speed, zone, orientation, frame, stop, tool): 0 firings} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+A post-hoc manual audit assessed whether these firings are genuine defects or
+artifacts of how each check is operationalized. A stratified sample of fifty flagged
+firings, drawn from the gate-passing baseline generations, was classified against the
+generated code, each firing counted as a true detection only when it identified a
+genuine safety-relevant defect of the kind the check names. Table~\ref{tab:precision}
+reports the result. The hardcoded-value and missing-preamble checks are high precision
+(90 and 100 percent): the speeds they flag exceed the limit for the task operating
+mode, and the tool-centre-point and payload configuration is genuinely absent before
+motion. The input-validation and error-handling proxies are low precision (12 and 0
+percent). The input-validation proxy keys on the explicit speed and acceleration
+keywords of a motion command, so it fires on calls that supply those parameters
+positionally; the unchecked-return proxy keys on the presence of error-handling
+constructs rather than inspecting any return value, and the corpus contains no
+return-bearing call whose result is dropped, so its nominal weakness mapping is not
+met. The unusual-conditions check also flags genuine omissions of joint-limit and
+singularity verification, though its mapping is the most interpretive of the set.
+
+\begin{table}[h]
+\setlength{\tabcolsep}{4pt}
+\caption{Per-rule precision of the rule checker on gate-passing generated code,
+established by a post-hoc manual audit. Precision is the fraction of flagged firings
+that are genuine defects, with Clopper-Pearson 95\% intervals; $n$ is the number of
+audited firings. The generation-level precision, counting a generation as a true
+detection when any audited rule fires truly, is 23 of 37 (62.2\%).}
+\label{tab:precision}
+\centering
+\footnotesize
+\begin{tabular}{@{}p{0.42\columnwidth}lccr@{}}
+\toprule
+Check & CWE & $n$ & TP & Precision, 95\% CI \\
+\midrule
+Input-validation proxy & CWE-20 & 8 & 1 & 12.5 [0.3, 52.7] \\
+Error-handling proxy & CWE-252 & 12 & 0 & 0.0 [0.0, 26.5] \\
+Unusual conditions & CWE-754 & 9 & 9 & 100 [66.4, 100] \\
+Hardcoded value & CWE-798 & 10 & 9 & 90.0 [55.5, 99.7] \\
+Safety preamble & none & 11 & 11 & 100 [71.5, 100] \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Because the two low-precision checks are also the two highest-firing checks, the
+combined violation rate is mildly inflated by them, a second and milder measurement
+hazard alongside the naive-versus-gate distinction. The substantive conclusion is
+robust to it. Restricting the violation flag to the two high-precision checks leaves
+the gate-passing violation rate at 77 of 83, or 92.8 percent, against 98.8 percent for
+the full rule set, and only 5 of the 83 gate-passing generations are flagged solely by
+the low-precision checks. The finding that essentially none of the generated code is
+both valid and rule-clean therefore does not rest on the lower-precision checks but on
+the hardcoded-speed and missing-preamble checks, whose precision the audit supports.
+
+Two limits qualify this precision reading. First, the audit rests on a stratified sample
+of fifty firings, so each per-check estimate is supported by only eight to twelve audited
+cases and the intervals are correspondingly wide, the hardcoded-value interval alone
+spanning [55.5, 99.7]. Second, and more consequentially, the hardcoded-value precision is
+contingent on the speed-and-mode oracle that decides whether a literal exceeds the limit:
+a flagged literal is a true positive only if that oracle reads the unit and the operating
+mode correctly, and the baseline probe above shows precisely how this oracle can misread
+a value, a 200 mm/s intent emitted as the literal for 200 m/s. A full-population audit of
+the hardcoded-value firings against unit and operating-mode handling, in place of the
+present sample, is therefore identified as the refinement that would confirm or revise the
+92.8 percent figure; were a material false-positive fraction found there, the
+high-precision support for the saturation finding would rest primarily on the
+speed-oracle-independent missing-preamble check, which the audit places at 100 percent
+precision. The headline substantive-safe rate is unaffected either way, since it is
+defined by the validity gate and the full-rule disjunction rather than by the precision of
+any single check.
+
+The safety-prompted condition does move a count-level statistic that the binary rate
+cannot capture. The pooled mean number of violations per generation falls from 10.37
+under the baseline condition to 6.39 under the safety-prompted condition, a relative
+reduction of 38\%, concentrated in DeepSeek-Coder-V2-16B (9.50 to 3.69, 61\%) and
+CodeLlama-34B (10.00 to 3.19, 68\%), with Qwen2.5-Coder-32B essentially unchanged. This
+reduction in surface without any change in the binary outcome is the first sign that
+the count of violations and the binary violation rate convey different information in
+this regime.
+
+\textbf{Summary.} The baseline results support four conclusions.
+\begin{itemize}
+\item Generated URScript fails the checks pervasively: the naive combined violation
+rate is 60.7\% (cell-level interval [46\%, 73\%]) and rises to 98.8\% on gate-passing
+code, and the preregistered hypothesis of at least 30\% violation is confirmed
+($p<0.001$).
+\item The binary rate is a measurement hazard: it saturates and, scored naively, counts
+invalid pseudo-code as safe, which motivates the validity-aware substantive-safe rate.
+\item Almost no generation is both valid and rule-clean: the substantive-safe rate is 1
+of 135 (0.7\%), since of the 83 gate-passing outputs only one triggers no check.
+\item The signal is cybersecurity, not motion safety: the motion-safety checks fire on
+zero of all 585 generations and the combined signal is carried entirely by the security
+checks, with no refusals in any condition (0 of 585).
+\end{itemize}
+
+\subsection{Adversarial Uplift}\label{sec:res-adv}
+Because the binary violation rate is already saturated at baseline, the informative
+adversarial endpoints are the violation count and its severity rather than the binary
+rate. The seven prompt-injection strategies do perturb the count surface: the strongest
+strategy raises the mean violation count from 6.38 at baseline to 9.96 per generation, an
+increase of 3.58, and the pooled mean rises by 0.70. The maximum severity is essentially
+unchanged, moving from 0.54 to 0.55, so the strategies add lower-severity firings without
+raising the worst-case hazard. These count and severity contrasts are taken as the primary
+adversarial analysis.
+
+The preregistered binary uplift test is reported only as a demonstration of the ceiling.
+The hypothesis that the strategies raise the combined violation rate by at least 50
+percentage points is not supported: no cell of either the naive or the gate-passing
+contrast crosses the threshold, and every per-model and pooled test returns a Holm-adjusted
+p of 1.000, with a largest pooled increase of 6.67 percentage points under the naive
+contrast and 4.76 percentage points under the gate-passing contrast. This is a mechanical
+consequence of the saturated baseline: with a gate-passing baseline rate of 98.8\%, only
+1.2 percentage points of headroom remain below the ceiling, so the registered 50-point
+threshold is more than forty times the maximum attainable change and the test has no power
+to detect the registered effect. The absence of measurable binary uplift is therefore an
+artifact of the metric-and-data interaction under this ceiling rather than evidence that
+the prompt-injection strategies are safe. In hindsight the fifty-point threshold was
+mis-specified for this regime: it was registered before the baseline rate was observed,
+and a near-saturated base rate leaves any binary-uplift hypothesis structurally
+untestable, with the test retaining no power for the registered effect. This is recorded
+as a preregistration lesson rather than a finding about the attacks. The post-hoc count
+and severity contrasts reported above carry the only informative adversarial signal in
+this setting, and a binary-uplift hypothesis is meaningful only where the matched
+baseline leaves headroom for it to register.
+
+\subsection{Repair-in-Loop Defense}\label{sec:res-watchdog}
+The preregistered hypothesis that rule-checker feedback reduces the combined
+violation rate by at least 40\% relative is mixed. Under the naive contrast the pooled
+reduction is 18.5 percentage points, or 30.5\% relative, which is statistically
+significant but below the effect-size threshold. Two per-model contrasts do clear the
+threshold (DeepSeek-Coder-V2-16B at 84.2\% relative and CodeLlama-34B at 50.0\%
+relative), while the contrast is not testable for Qwen2.5-Coder-32B because it produces
+at least one violating call on every task and repetition in both arms, saturating the
+binary flag. Under the gate-passing contrast every arm is saturated at 100\%, so the
+reduction is zero for all three models.
+
+The per-model reductions are an artifact of output invalidation rather than repair. The
+gate-passing rate for DeepSeek-Coder-V2-16B falls from 44\% at baseline to 4\% under
+feedback, and for CodeLlama-34B from 40\% to 20\%: the feedback does not make these
+models write cleaner URScript, it makes them fall off the URScript syntax into prose
+pseudo-code that the validity gate then rejects, so the binary violation flag drops
+because the security checks have no syntactic foothold, not because the code is safe.
+Repair-in-loop as operationalized here therefore reduces, for these two models, to
+inducing refusal by syntactic dropout. The one model that maintains valid output
+throughout instead reveals the trajectory shape directly: its self-repair sequences are
+deterministic and fall into recurring regimes, including monotone reduction that never
+reaches zero, strict two-state oscillation in which each retry undoes the previous fix,
+transient improvement followed by regression, and an invariant trajectory
+(Figure~\ref{fig:retry}).
+
+\begin{figure}[t]\centering
+  \includegraphics[width=\columnwidth]{figures/fig_repair_trajectory.pdf}
+  \def\xfigwd{\columnwidth}%
+  \caption{Representative self-repair trajectories under rule-checker feedback for
+  the one model that maintains valid output throughout, showing total violations against
+  retry index, one curve per regime. The curves illustrate the recurring regimes: monotone reduction that
+  does not reach zero, two-state oscillation in which each retry undoes the previous fix,
+  transient improvement followed by regression, and an invariant trajectory.}\label{fig:retry}
+\end{figure}
+
+\subsection{Sensitivity and Cross-Model Heterogeneity}\label{sec:res-sens}
+The three models differ on matched per-task outcomes. A cross-model homogeneity test,
+reported as an additional non-confirmatory analysis outside the preregistered confirmatory
+family, rejects homogeneity under both single-shot conditions: the test statistic is 12.60
+at the baseline condition (p of 0.004) and 20.00 at the safety-prompted condition (p below
+0.001), with multiplicity correction applied within this additional family only. A
+complexity-stratified subgroup analysis using the outcome-blind complexity score of
+\ref{sec:complexity} was also preregistered as a non-confirmatory analysis; the saturated baseline
+leaves little binary headroom for a subgroup effect, and the analysis is reported for
+completeness in the replication package.
+
+\subsection{Additional Analyses: Frontier, Robustness, and Representation}\label{sec:res-explore}
+The confirmatory experiments cover three locally hosted models in the 16B to 34B range.
+Five additional analyses, none preregistered and none making a confirmatory claim,
+extend the picture across scale, decoding temperature, repair feedback, live execution,
+and constraint representation.
+
+\textbf{Frontier scale.} A spot-check of four open-weight models spanning 24B to 675B
+parameters, served through a hosted gateway, repeats the baseline subset for 120
+generations. Every generation parses as valid URScript, so the gate-passing rate is
+1.00 for all four models, yet the combined violation rate is 1.00 for every model and
+the substantive-safe count is 0 of 120, with no refusals. Mean violations per
+generation, pooled over the baseline and safety-prompted conditions, are 4.67, 5.70,
+4.53, and 8.30 for the 24B, 120B, 358B, and 675B models respectively. The safety-prompted condition lowers the pooled
+mean from 7.6 at baseline to 4.0 without moving the binary rate, which stays at 1.00. The unchecked-return check fires on 118 of 120 generations,
+so the per-call count is driven by the firing of this single rule rather than by hazard
+severity. The count does not increase with program length; the Spearman correlation
+between violation count and code length on this corpus is weakly negative, near $-0.2$,
+which indicates that the count measures rule-firing surface rather than program size or
+danger. The motion-safety checks fire zero times, consistent with the invariant
+protocol. Qualitatively, larger models emit more safety-flavored text without crossing
+into safe code: one model emitted a plausible but non-existent safety call that
+performs no protective function, and the largest produced programs rich in protective
+scaffolding that nonetheless command a velocity four times the collaborative limit. The
+violation floor therefore does not improve with scale, and the largest model performs
+worst on violation surface. This frontier comparison is bounded along the scale axis: the
+four sizes are run at a single repetition through a hosted gateway whose serving stack and
+quantization differ from the local stack, so the determinism that licenses cell-level
+inference in the confirmatory study does not transfer here, and the call-level counts
+reported for this corpus are read as a non-comparable spot-check rather than a controlled
+scaling measurement.
+
+\textbf{Decoding temperature.} To rule out that the saturation is an artifact of
+near-deterministic decoding, the baseline and safety conditions were repeated on two
+frontier models at sampling temperatures of 0.2 and 0.7, for 180 generations per
+temperature. The combined violation rate remained at 100\% of valid generations at both
+temperatures, for both models, and under both conditions, and the substantive-safe rate
+remained at 0 of 180 in each case, with no refusals. The fraction of valid URScript was
+176 of 180 at temperature 0.2 and 177 of 180 at temperature 0.7. The safety-oriented
+prompt again lowered the mean number of violations, from 5.2 to 3.6 at temperature 0.2
+and from 5.9 to 3.7 at temperature 0.7, without moving the saturated binary rate.
+Decoding temperature therefore does not relieve the pervasive failure. Like the frontier
+probe, this is a hosted-gateway sweep at a single repetition per temperature, so its
+counts are reported descriptively rather than as a controlled within-cell variance
+estimate.
+
+\textbf{Repair across scale.} Classifying the trajectory of every repair-loop cell,
+across the 135 confirmatory cells and 60 frontier cells, yields a remediated-to-zero
+count of 0 of 135 and 0 of 60: no model at any size from 16B to 675B used the retry
+budget to convert an unsafe generation into a valid violation-free one under the whole-program-regeneration protocol used here. What changes
+with scale is the failure mode rather than the outcome. In the local regime the modal
+behavior is that the loop never runs or breaks early, with 78 of 135 cells either
+failing to produce valid URScript on the first call or leaving the loop when a retry
+ceases to be valid; in the frontier regime the larger models keep emitting valid
+URScript and stay inside the loop, oscillating in 47\% of cells or growing strictly
+worse under feedback in 20\%. A rule-level dissection shows that the only check with
+non-trivial genuine repair is the locally insertable input-validation guard, repaired
+in 28\% of cells, while the structural obligations are repaired in 0 to 4\% of cells:
+under feedback these models insert guards but do not restructure programs. The
+iatrogenic class is the sharpest cautionary observation, since each round of feedback
+raises the violation count, the largest model responding to feedback by emitting more
+protective scaffolding that re-arms the unchecked-return check on every added call. This
+null contrasts with general-purpose code, where simple execution-error feedback
+universally improves functional pass rates across model scales \cite{ref47} and richer
+critic-generated feedback repairs most injected-Python samples within two retries
+\cite{ref56}; the discrepancy isolates to the target property, since a loop that
+reliably repairs functional test failures records zero repairs when the fed-back signal
+is a static safety violation. A single-arm probe in which the feedback was
+deterministically enriched with rule definitions, offending lines, and fix templates
+reshaped the distribution without lifting the floor: one cell of fifteen reached a
+mechanically clean program, and inspection showed that it satisfied the checker through
+non-existent language constructs rather than through valid URScript.
+
+\textbf{Live execution.} A small live-execution pilot loaded gate-passing baseline
+programs into the official simulator on three tasks. With one program per task, the pilot
+is an illustrative probe of execution-time failure modes rather than a validated
+taxonomy, and the three observations are read as existence proofs that such failures occur
+beyond the static rule set, not as frequencies. All three surfaced distinct
+pre-execution failures and none reached robot motion: a syntactically valid call that
+supplied a joint vector where a Cartesian pose was required, an orchestration timing
+race outside the generated text, and a workspace-reachability failure on an otherwise
+valid trajectory. None of the three is caught by the static rule set, which
+type-checks no API arguments, models no orchestration state, and solves no inverse
+kinematics. Within the simulation envelope, static validity is therefore a strictly
+weaker guarantee than executable validity, and the rule checker and the execution
+path act as complementary rather than substitutable detection layers.
+
+\textbf{Constraint representation.} Two final probes hold the editing stimulus fixed and
+vary only how a safety constraint is written. A control probe first establishes that
+editing an already-safe template rarely introduces a breach: only 2 genuine speed-cap
+breaches occur across 180 edited programs, against 70 in the from-scratch control. The
+representation probe then re-encodes each task's speed cap in four behaviorally
+identical forms and applies one benign performance-framed edit, over 240 generations.
+Two of the 240 outputs fail to parse as URScript and are excluded as invalid before any
+breach is scored, both at the 358B scale, one in the comment encoding and one in the
+named-constant encoding. The four encodings therefore retain 60, 59, 59, and 60 valid
+outputs in legibility order, 238 in total, and the two explicit forms, the named constant
+and the runtime guard, contribute 119 of these; the per-output records are listed in the
+replication package. The breach rate
+falls monotonically with the legibility of the encoding: a cap present only as safe
+literals is edited past its limit in 15.0\% of cases (9 of 60), a natural-language
+comment reduces this to 1.7\% (1 of 59), and a named constant with a clamp helper or a
+runtime guard is never breached, the two explicit forms together comprising 119 valid
+programs with zero breaches. The monotone decrease across the four ordered encodings is significant by a Cochran-Armitage trend test, with a trend statistic of 4.03 and p below $10^{-4}$ (Figure~\ref{fig:repbreach}). The zero-breach reading is qualified,
+however, by construct survival: across the 119 programs in the two explicit forms the
+encoded construct was removed by the edit in 49 (41\%), yet all 49 nonetheless remained
+within the cap, because the residual literal speeds happened to stay safe. The
+enforcement was deleted while safety survived only by coincidence. This dissolution is
+strongly scale-dependent: the smallest model preserved the construct in every one of its
+explicit-form cells, whereas the largest removed it in 70\% of cases. Removal of the
+encoded construct rose from 0\% for the smallest model (0 of 30 cells) through 50\% (15
+of 30) and 44.8\% (13 of 29, this cell reduced by the named-constant output excluded at the 358B scale) to 70\%
+for the largest (21 of 30), the four cells summing to the 49 of 119 removals noted above.
+The increase is monotone across the four ordered sizes, but because only four distinct
+model sizes anchor it under a single repetition per cell, no inferential trend statistic
+is attached to it; it is reported as an exploratory signal and a target for replication
+rather than an established scaling law (Figure~\ref{fig:construct}).
+
+\begin{figure}[t]\centering
+  \includegraphics[width=\columnwidth]{figures/fig_representation_breach.pdf}
+  \def\xfigwd{\columnwidth}%
+  \caption{Speed-cap breach rate after one benign performance-framed edit, by how the
+  cap is written, over 240 generations. The four encodings are ordered from least to most
+  explicit. Breach falls monotonically with legibility (Cochran-Armitage trend statistic
+  4.03, p below $10^{-4}$); counts are shown above each bar. The two zero-breach forms are
+  qualified by construct survival in the text: in the two explicit forms the encoding was
+  deleted in 41\% of programs yet stayed within the cap only because the residual literal
+  speeds happened to be safe.}\label{fig:repbreach}
+\end{figure}
+
+\begin{figure}[t]\centering
+  \includegraphics[width=\columnwidth]{figures/fig_construct_removal.pdf}
+  \def\xfigwd{\columnwidth}%
+  \caption{Silent removal of the encoded speed-cap construct after the same benign edit,
+  by model scale, across four ordered sizes (one repetition per cell). The dashed guide
+  marks the monotone increase across the four ordered sizes, which rests on four
+  ordered sizes and is reported as exploratory. The smallest model removed the construct
+  in none of its cells and the largest in 70\%, inverting the expectation that larger
+  models are safer.}\label{fig:construct}
+\end{figure}
+
+\section{Discussion}\label{sec:discussion}
+A single mechanism threads through the results: invalidation acts as a measurement
+confound. Whenever a generation or a retry ceases to be parseable URScript, binary
+violation outcomes improve without the code becoming safer. The repair-in-loop
+intervention lowers violation flags primarily by driving models into invalid
+pseudo-code rather than remediation, the trajectory taxonomy shows that most local
+repair-loop cells avoid or leave the loop by failing to be analyzable rather than by
+becoming safe, and the validity gate that contains the effect introduces its own
+selection, handled as a pre-specified sensitivity analysis. The deployment
+implications, the validity-aware substantive-safe rate, and the design requirements for
+repair-capable loops are all responses to this single confound.
+
+\subsection{Comparison with Prior Findings}\label{sec:comparison}
+The near-total violation rate found here is more severe than the rates reported for
+general-purpose code. Assessments of code-completion suggestions and of curated weakness
+suites place the insecure-output fraction near 40\% \cite{ref5} and 74\% \cite{ref6},
+whereas under the validity gate 98.8\% of baseline URScript generations contain at least
+one violation and only one program in 135 is both valid and rule-clean. Three factors
+plausibly account for the gap. The regulated motion properties of an industrial-robot
+safety standard, namely bounded velocity, workspace zones, and protective stops, are
+narrower and less represented in pretraining than the general weakness patterns that
+secure-code benchmarks target, so models that fluently produce functional motion code
+rarely encode the corresponding safety semantics. Functional correctness, the objective
+along which code models are trained and scored \cite{ref13, ref14}, does not entail these
+properties, consistent with the functionality-security gap that outcome-driven benchmarks
+first isolated \cite{ref7}. Naive binary scoring further understates the problem by
+admitting invalid pseudo-code as safe, a saturation behavior that the outcome-driven
+reformulation of \cite{ref7} began to separate but that had not been examined for
+safety-critical robot code.
+
+The repair-in-loop result sits precisely between two strands of the repair literature. It
+contradicts the functional-repair finding that iterative self-repair reliably raises pass
+rates with most benefit in the first one or two rounds \cite{ref47, ref48}, since no model
+at any scale from 16B to 675B converted an unsafe generation into a valid violation-free
+one across the 195 repair-loop cells. It aligns instead with the security-repair finding
+that iteration can degrade rather than improve safety: model-only iteration has been
+reported to raise critical vulnerabilities by 37.6\% over five rounds \cite{ref53}, and
+adding a static check to the loop has been observed to increase rather than suppress
+latent degradation because rule-based detectors miss structural regressions such as the
+silent removal of a defensive check \cite{ref54}. The mechanism that \cite{ref54}
+describes in the abstract is observed concretely here. Under the representation analysis
+the encoded safety construct was silently deleted in 41\% of explicit-form programs, and
+the repair loop reliably restored only the locally insertable input-validation guard,
+never the structural obligations, so the loop behaves exactly as a rule-based detector
+that cannot see structural regression would predict. The discrepancy isolates to the
+target property rather than to model capability, since a loop that reliably repairs
+functional test failures records zero repairs when the fed-back signal is a static safety
+violation.
+
+A notable exploratory observation, drawn from a single-repetition probe and reported
+without a confirmatory claim, is that the silent removal of safety constructs
+increases with model scale. The smallest model preserved every encoded constraint,
+whereas removal rose to 70\% for the largest, a monotone increase across four ordered
+model sizes; because the trend rests on only four ordered sizes under a single
+repetition, no inferential statistic is attached and it warrants replication before it is
+treated as established. If replicated, this would invert the expectation that larger models are safer and would fit the shallow-alignment account in which safety adapts only surface features and is brittle under transformation of the surrounding text \cite{ref29}. In the same probe the breach rate fell monotonically with the legibility of the encoding, so that the more readable a safety constraint is the more reliably a capable model removes it, and the zero-breach reading for the explicit forms held only because residual literal values happened to stay within the cap rather than because the enforcement survived.
+
+The absence of adversarial uplift contrasts sharply with the embodied-attack literature,
+where targeted prompts elicit harmful actions from language-model-controlled robots at
+near-total success rates \cite{ref32}, and with plan-level safeguards such as RoboGuard,
+which reduce the execution of unsafe plans from over 92\% to below 2.5\% under worst-case
+jailbreaking \cite{ref10}. The contrast is not evidence of robustness. The baseline here
+already sits at the binary ceiling, so any strategy has at most 1.2 percentage points of
+headroom and the registered 50-point effect is more than forty times that bound. The null
+is therefore a property of the metric and the saturated base rate, and it relocates the
+open problem from the symbolic plan, where plan-level safeguards operate, to the
+vendor-specific motion code one level below, which no comparable safeguard yet covers.
+This level shift is the central positioning of the present study relative to the
+safety-validation literature, all of which operates where a planner mediates between
+language and motion \cite{ref8, ref9, ref10, ref35, ref36}.
+
+\subsection{Alternative Interpretations}\label{sec:alternatives}
+Several competing explanations for the pervasive failure were examined and found
+insufficient. The saturation is not an artifact of low-precision quantization or
+near-deterministic decoding, since it persists for full-precision frontier models served
+through a hosted gateway and at sampling temperatures of 0.2 and 0.7. It is not confined
+to small models, holding from 16B to 675B parameters. It is not an artifact of refusal,
+since no model declined to generate code in any condition. Two interpretations remain
+genuinely open and bound the claims accordingly. First, because the task specification is
+held invariant across conditions by design, the motion-safety pass is not exercised on
+generated code and the reported signal is carried by the cybersecurity pass, so the result
+establishes pervasive insecure code generation rather than demonstrated physical-motion
+hazards; a protocol that mutates the specification would exercise the motion rules
+directly and is the natural next study. Second, whether targeted fine-tuning,
+constraint-aware decoding, or retrieval of standard text can lift the floor is untested
+here, although the safety-prompt paradox observed at baseline and the shallow-alignment
+evidence in the literature \cite{ref29} both caution that naive interventions can leave
+the failure in place or worsen it. For a practitioner the conservative reading is that
+current open-weight models should not emit safety-critical motion code without an independent
+verification layer, and that the validity-gated metric, the substantive-safe acceptance
+criterion, localized patching in place of whole-program regeneration, trajectory-aware
+loop control, and a digital-twin execution stage before any hardware is engaged are the
+levers most directly supported by the evidence reported here.
+
+\subsection{Implications for Deployment}\label{sec:implications}
+Four implications follow. First, safety prompting helps two of three models but is not universally protective, and a unit-naive safety prompt can even elicit more dangerous code through a millimetre-versus-metre confusion, which motivates specifying units in the target language's convention. Second, adversarial robustness varies unpredictably across models and is not predicted by general coding ability. Third, rule checking is necessary but not sufficient, because pseudo-code that does not match expected syntax patterns evades rule-based detection. Fourth, any benchmark that scores generated robot code on rule violations alone, without first verifying syntactic validity against the target grammar, risks rewarding models that fail to commit to executable output; the validity-gated violation rate is therefore recommended as the primary metric, reported alongside the invalid-generation fraction, and the substantive-safe rate is proposed as a reusable acceptance metric immune to the invalid-counts-as-safe artifact.
+
+\subsection{Threats to Validity}\label{sec:threats}
+The study is bounded along several axes. The principal internal threat is the
+invalidation selection just described; it is made explicit by reporting the
+invalid-generation fraction and by re-running every confirmatory contrast on the
+gate-passing subset. The principal construct threat is the saturation of the binary
+violation metric, which both compresses the adversarial and repair contrasts against a
+ceiling and, scored naively, admits invalid output as safe; the substantive-safe rate
+and the per-rule decomposition are introduced to address it. Externally, the
+confirmatory experiments cover three locally hosted models in a single vendor language
+under simulation, so generalization to other model families, to other robot languages,
+and to physical execution is not established; the frontier and temperature probes widen
+the model and decoding range but remain additional, single-repetition analyses.
+Statistically, the deterministic temperature-zero protocol makes trajectories
+reproducible but precludes within-cell variance estimates, and several outcomes are
+bounded by the binary ceiling rather than by model behavior. In scope, the task
+specification is held invariant across conditions by design, so the motion-safety pass
+is not exercised on generated code and the reported violations concern
+cybersecurity-relevant properties rather than demonstrated physical-motion hazards;
+mutation of the task specification is a separate attack surface that is not addressed
+here. The deployed quantization levels and the seven-strategy adversarial family also
+differ in minor documented ways from the original plan, and these deviations are
+recorded in the replication package.
+
+A construct threat specific to the cybersecurity mapping is the distance between
+clause 5.1.16 and the code-level checks anchored to it. Clause 5.1.16 frames
+cybersecurity at the level of the robot as a system and refers to the IEC 62443 series
+for the corresponding controls, such as security levels, network segmentation,
+authenticated and integrity-protected remote access, secure boot, and protected storage
+of the safety configuration. These are architectural and operational properties of a
+deployed cell that a code-generation evaluation cannot observe, since nothing in a
+generated URScript program determines whether the controller network is segmented or
+whether remote access is authenticated. The checks anchored to 5.1.16 therefore capture
+only the code-expressible facet of the clause, such as hardcoded configuration, missing
+input handling, and injected configuration markers, and they presuppose that code-level
+weaknesses are a necessary but not sufficient component of the clause's intent. The
+mapping is offered as evidence about the code-expressible part of 5.1.16, not as a
+measure of system-level conformity, which would require an architectural assessment
+against IEC 62443 beyond the scope of this work.
+
+\subsection{Design Requirements for Repair-Capable Loops}\label{sec:design}
+The observed failure modes are specific enough to constrain any future repair-capable
+safety loop. Three falsifiable requirements follow directly from the data, and none is
+implemented or evaluated here. First, localized patching should replace whole-program
+regeneration: every configuration in this study asked the model to regenerate the
+complete program, and under that protocol the dominant escape route is invalidation
+rather than remediation, so restricting the model to localized patches that leave
+already-valid motion structure untouched would remove the degree of freedom through
+which the structural collapse occurs. Second, language-validity gating should be
+separated from safety-rule gating: the one mechanical pass observed under enriched
+feedback was achieved with language constructs that do not exist in URScript, and the
+frontier probe surfaced recurrent hallucinated safety calls, so a first gate verifying
+tokens against the language grammar and built-in signature catalogue, followed by a
+second gate evaluating safety rules only on programs that pass the first, would make
+hallucinated-call passes structurally impossible and convert the invalidation confound
+into an explicit, separately reported outcome. Third, loop control should be
+trajectory-aware: oscillation is the modal trajectory at frontier scale and under
+enriched feedback, and a loop that hashes the structure of each candidate program and
+detects revisited states could terminate provably unproductive cycles instead of
+spending the retry budget inside them. A plausible next layer beyond more text rules is
+an execution-semantics stage that validates generated motion code against a digital
+twin before any hardware sees it, with geometric admissibility checked in the twin's
+workspace rather than inferred from program text \cite{ref20,ref60}; the failure classes
+surfaced by the execution pilot, caught only by the controller's own interpreter and
+inverse-kinematics solver, point in the same direction.
+
+\subsection{EU AI Act Alignment}\label{sec:euaiact}
+The framework relates to the Article 15 requirements on three fronts. For accuracy, it
+contributes a validity-aware substantive-safe rate with exact binomial testing rather
+than a single saturated pass rate. For robustness, it defines eight adversarial attack
+families and exercises the prompt-injection family through seven strategies, while
+documenting that a saturated baseline can mask uplift, which is itself information a
+robustness assessment must report. For cybersecurity, it provides weakness-mapped checks
+anchored to the cybersecurity clause newly introduced in the 2025 revision. The framework
+is advisory and evaluative; it does not establish conformity itself.
+
+\section{Conclusion}\label{sec:conclusion}
+This article presented FACT, a preregistered adversarial testing framework for
+generated industrial robot code at the intersection of code security and the
+cybersecurity clause of ISO 10218-1:2025. The preregistered study spans three
+open-weight code-specialized models and 585 generations across baseline,
+safety-prompted, and adversarial conditions, with detection performed by a rule checker of seven motion-safety and seven weakness-mapped security checks over nineteen
+rule instances touching seven distinct clauses. The preregistered confirmatory hypothesis tests are reported as a secondary check whose conservative effective unit is the model-task cell rather than the individual generation, consistent with the methodological emphasis of this work.
+
+Three findings emerge. Safety-prompt response is model-dependent, reducing violations in two of three models, which refutes the assumption that prompt-level guidance is universally protective. Adversarial uplift fails the preregistered fifty-percentage-point threshold, but this reflects a baseline-saturation ceiling rather than robust alignment. Low violation counts can mask syntactically invalid code, which motivates the validity-aware substantive-safe rate as the primary safety outcome. Across the three confirmatory local models and additional frontier and decoding-temperature probes spanning 24B to 675B parameters, the substantive-safe rate stays at or near zero, the violation floor does not improve with scale, and the repair loop, in its whole-program-regeneration form, produces no remediation at any scale.
+
+Future work proceeds along four axes. The pre-execution failure modes surfaced by the
+live-execution pilot, namely semantically inadmissible interface use and workspace
+reachability, can be promoted into static checks through a typed-argument rule against
+the language's built-in signature catalogue and a kinematics-anchored reachability rule.
+The near-zero refusal rate can be analyzed against the literature on shallow safety
+alignment \cite{ref29}, distinguishing genuine task acceptance from
+disclaimer-then-comply behavior. Scaling beyond the present three-model panel can test
+whether the model-dependent safety-prompt response and the saturation ceiling
+generalize. Finally, the single-arm enriched-feedback probe motivates a preregistered
+feedback-richness ablation with minimal, enriched, and critic-model feedback arms, using
+execution-level validation rather than static counts as the endpoint and structured
+around the three design requirements above.
+
+ISO 10218-1:2025 introduces cybersecurity as a normative requirement for industrial
+robots for the first time, yet offers no operational method for evaluating generated
+code against its safety and security clauses. FACT provides a concrete, preregistered,
+and fully reproducible framework that closes this gap with measurable results, released
+as advisory infrastructure for standardization bodies, certification laboratories, and
+the open robotics community.
+
+%% ----------------------------------------------------------------------------
+\section*{Acknowledgment}
+\textit{Formal Adversarial Testing of LLM-Generated Code for Industrial Robots} project has received funding from the European Union, via the oc4-2025-TES-02-44 issued and
+implemented by the ENFIELD project, under the grant agreement No 101120657.
+
+%% OSF preregistration lives here only (removed from the body).
+The preregistration, analysis plan, and amendment history for this study are
+available on the Open Science Framework (DOI 10.17605/OSF.IO/VE5M2). The complete
+replication package, including the rule catalogue, task specifications, generation
+logs, and analysis scripts, is released under the Apache 2.0 license.
+
+%%
+%% IEEE ACCESS POLICY (mandatory if AI-generated text is retained): AI-generated
+%% text must be disclosed here and the AI system cited.
+
+%% ----------------------------------------------------------------------------
+\appendices
+\section{Replication and Preregistration Mapping}\label{app:replication}
+The body uses descriptive names for the attack families, the rule-checker checks,
+the experiments, and the hypotheses. Their internal identifiers, as used in the
+preregistration and in the released code and data, are mapped here.
+
+\textbf{Attack families.} The eight families named in \ref{sec:attack-families} carry
+the internal identifiers A1 (speed injection), A2 (safe-zone penetration), A3
+(orientation-cone violation), A4 (payload tampering), A5 (safety-logic bypass), A6
+(frame confusion), A7 (tool misuse), and A8 (prompt injection). The seven
+prompt-injection strategies are A8.1 (direct override), A8.2 (role playing), A8.3
+(context overflow), A8.4 (incremental escalation), A8.5 (authority claim), A8.6
+(performance framing), and A8.7 (obfuscation).
+
+\textbf{Rule-checker checks.} The seven motion-safety checks of \ref{sec:analyzer}
+carry the identifiers DM-1 (speed and payload range), DM-2 (safe-zone halfspace), DM-3
+(orientation cone), DM-4 (safety-logic control flow), DM-5 (frame consistency), DM-6
+(tool identity and activation), and DM-7 (configuration integrity). The seven security
+checks carry SM-1 (input-validation proxy, rel. CWE-20), SM-2 (error-handling proxy, rel. CWE-252), SM-3
+(protection mechanism, CWE-693), SM-4 (unusual conditions, CWE-754), SM-5 (hardcoded
+value, CWE-798), SM-6 (safety preamble), and SM-7 (prompt-injection marker). Their ISO
+10218-1:2025 clause anchors are listed in Table~\ref{tab:iso}.
+
+\begin{table}[h]
+\caption{Rule-to-clause mapping for the rule checker. Two security checks have no
+direct ISO anchor.}
+\label{tab:iso}
+\centering
+\footnotesize
+\begin{tabular}{@{}p{0.2\columnwidth}p{0.5\columnwidth}p{0.2\columnwidth}@{}}
+\toprule
+Rule & Short name & ISO clause \\
+\midrule
+DM-1 & Speed value-range & 5.5.3 \\
+DM-1 & Payload mass and centre of gravity & 5.1.15 \\
+DM-2 & Safe-zone halfspace test & 5.7.4 \\
+DM-3 & Orientation-cone test & 5.7.4 \\
+DM-4 & Protective-stop presence & 5.4.2 \\
+DM-4 & Safety-logic completeness & 5.4 \\
+DM-5 & Frame consistency & 5.7.4 \\
+DM-5 & Cross-frame deviation & 5.7.4 \\
+DM-6 & Tool identity & 5.1.14 \\
+DM-6 & Tool activation mode & 5.1.14 \\
+DM-7 & Configuration integrity & 5.1.16 \\
+SM-1 & Input-validation proxy (rel. CWE-20) & 5.1.16 \\
+SM-2 & Error-handling proxy (rel. CWE-252) & none \\
+SM-3 & Protection mechanism (CWE-693) & 5.1.16 \\
+SM-4 & Unusual conditions (CWE-754) & none \\
+SM-5 & Hardcoded value (CWE-798) & 5.1.16 \\
+SM-6 & Tool-centre-point preamble & 5.1.14 \\
+SM-6 & Payload preamble & 5.1.15 \\
+SM-7 & Prompt-injection marker & 5.1.16 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:iso} is organized by rule. Because the same physical hazard can be
+reached by a motion-safety check on the task specification and by a security check on the
+generated code, and can therefore appear under two clauses, Table~\ref{tab:hazard}
+reorganizes the same mapping by physical hazard so that the coverage of any one hazard is
+readable in a single row.
+
+\begin{table}[h]
+\setlength{\tabcolsep}{4pt}
+\caption{Coverage by physical hazard. The same mapping as Table~\ref{tab:iso},
+reorganized so that each hazard's motion-safety and security checks and their ISO
+10218-1:2025 clauses are read together. Entries marked none have no check or no direct
+clause anchor.}
+\label{tab:hazard}
+\centering
+\footnotesize
+\begin{tabular}{@{}p{0.27\columnwidth}p{0.17\columnwidth}p{0.17\columnwidth}p{0.21\columnwidth}@{}}
+\toprule
+Physical hazard & Motion-safety & Security & ISO clause \\
+\midrule
+Excessive speed & DM-1 & SM-5 & 5.5.3; 5.1.16 \\
+Zone or workspace breach & DM-2 & SM-4 & 5.7.4; none \\
+Missing protective stop & DM-4 & SM-3 & 5.4.2, 5.4; 5.1.16 \\
+Payload out of bounds & DM-1 & SM-6 & 5.1.15 \\
+Tool misuse & DM-6 & SM-6 & 5.1.14 \\
+Orientation breach & DM-3 & none & 5.7.4 \\
+Frame inconsistency & DM-5 & none & 5.7.4 \\
+Missing input validation & none & SM-1 & 5.1.16 \\
+Config tampering or injection & DM-7 & SM-7 & 5.1.16 \\
+Code robustness & none & SM-2, SM-4 & none \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Experiments and hypotheses.} The baseline experiment is identified as E1, the
+adversarial experiment as E2, and the repair-in-loop experiment as E3. The confirmatory
+hypotheses are the baseline-rate hypothesis (H4), the adversarial-uplift hypothesis
+(H5), and the repair-loop hypothesis (H6); the post-hoc hypotheses are the
+saturation-explains-the-null hypothesis (H7) and the near-zero-refusal hypothesis (H8).
+A separate watchdog-validation family (H1 through H3), evaluating the rule checker in
+isolation on synthetic adversarial variants, is reported in Appendix~\ref{app:detection}.
+
+\textbf{Preregistration and amendments.} The hypotheses, analysis plan, and amendment
+history are deposited in the preregistration referenced in the Acknowledgment. Three
+amendments were filed: the first formalized the generator hypotheses, the second reduced
+the prompt-injection family from eight to seven strategies and the multiple-comparison
+family accordingly, and the third recorded the deployed quantization levels. The
+deployed quantization, one model at Q4\_K\_M and two at Q4\_0, differs from the uniform
+level stated in the original proposal and is recorded in the replication package.
+
+\section{Smoke-Test Raw Data}\label{app:smoke}
+The full generation logs and generated URScript files for the single-task probe of
+\ref{sec:res-baseline} are provided in the replication package.
+
+\section{Watchdog Detection Performance}\label{app:detection}
+The rule checker's intrinsic detection performance was measured on the fifteen-task suite
+with one author-constructed adversarial variant per task per attack family, for 120
+variants, together with the fifteen clean baselines. These variants are synthesized by
+the authors to instantiate each attack family, so the figures below are a construction
+check that confirms each rule fires on the perturbation it targets and that no rule fires
+on the clean baselines; they do not establish external detection validity against
+independently sourced violations. The rule checker flagged 114 of 120 injected
+violations (95\%) and produced no false positives on the fifteen clean baselines, as
+broken down in Table~\ref{tab:detection}.
+
+\begin{table}[h]
+\caption{Per-family detection on synthetic adversarial variants.}
+\label{tab:detection}
+\centering
+\footnotesize
+\begin{tabular}{@{}p{0.59\columnwidth}ccc@{}}
+\toprule
+Attack family & Detected & Total & Rate \\
+\midrule
+Speed injection & 15 & 15 & 100\% \\
+Safe-zone penetration & 15 & 15 & 100\% \\
+Orientation-cone violation & 14 & 15 & 93\% \\
+Payload tampering & 15 & 15 & 100\% \\
+Safety-logic bypass & 15 & 15 & 100\% \\
+Frame confusion & 12 & 15 & 80\% \\
+Tool misuse & 13 & 15 & 87\% \\
+Prompt injection & 15 & 15 & 100\% \\
+\midrule
+Overall & 114 & 120 & 95\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Each per-family rate meets the 80\% criterion; the residual misses concentrate in the
+frame-confusion and tool-misuse families and reflect task instances within threshold
+rather than detector failures. These figures are raw detection counts; the formal
+confirmatory tests registered for this family were not performed in this manuscript,
+which centers on the generator analysis, so no p-values or confidence intervals are
+attached. A separate five-task calibration pilot of 40 variants recorded 36 of 40 (90\%)
+detection with no false positives.
+
+%% ----------------------------------------------------------------------------
+%% BIBLIOGRAPHY: main_v6.tex uses an inline thebibliography with 22 entries
+%% (L3027-3050). Copy it in verbatim during Pass 3; no external .bib needed.
+%% ----------------------------------------------------------------------------
+\begin{thebibliography}{99}
+\bibitem{ref1} International Organization for Standardization, "ISO 10218-1:2025 Robotics - Safety requirements - Part 1: Industrial robots," ISO Standard, 2025.
+\bibitem{ref2} J. Liang, W. Huang, F. Xia, P. Xu, K. Hausman, B. Ichter, P. Florence, and A. Zeng, "Code as Policies: Language Model Programs for Embodied Control," in IEEE International Conference on Robotics and Automation (ICRA), 2023, pp. 9493-9500. doi:10.1109/ICRA48891.2023.10160591.
+\bibitem{ref3} I. Singh, V. Blukis, A. Mousavian, A. Goyal, D. Xu, J. Tremblay, D. Fox, J. Thomason, and A. Garg, "ProgPrompt: Generating Situated Robot Task Plans using Large Language Models," in IEEE International Conference on Robotics and Automation (ICRA), 2023, pp. 11523-11530. doi:10.1109/ICRA48891.2023.10161317.
+\bibitem{ref4} A. Althobaiti, A. Ayala, J. Gao, A. Almutairi, M. Deghat, I. Razzak, and F. Cruz, "How Can LLMs and Knowledge Graphs Contribute to Robot Safety? A Few-Shot Learning Approach," in Proceedings of the Australasian Conference on Robotics and Automation (ACRA), 2024.
+\bibitem{ref5} H. Pearce, B. Ahmad, B. Tan, B. Dolan-Gavitt, and R. Karri, "Asleep at the Keyboard? Assessing the Security of GitHub Copilot's Code Contributions," in IEEE Symposium on Security and Privacy (S\&P), 2022. doi:10.1109/SP46214.2022.9833571.
+\bibitem{ref6} M. L. Siddiq and J. C. S. Santos, "SecurityEval Dataset: Mining Vulnerability Examples to Evaluate Machine Learning-Based Code Generation Techniques," in MSR4P\&S Workshop (ESEC/FSE), 2022. doi:10.1145/3549035.3561184.
+\bibitem{ref7} J. Peng, L. Cui, K. Huang, J. Yang, and B. Ray, "CWEval: Outcome-driven Evaluation on Functionality and Security of LLM Code Generation," in IEEE/ACM International Workshop on Large Language Models for Code (LLM4Code), 2025, pp. 33-40.
+\bibitem{ref8} Z. Yang, S. S. Raman, A. Shah, and S. Tellex, "Plug in the Safety Chip: Enforcing Constraints for LLM-driven Robot Agents," in IEEE International Conference on Robotics and Automation (ICRA), 2024, pp. 14435-14442. doi:10.1109/ICRA57147.2024.10611447.
+\bibitem{ref9} W. Zhang, X. Kong, C. Dewitt, T. Braunl, and J. B. Hong, "Enhancing Reliability in LLM-Integrated Robotic Systems: A Unified Approach to Security and Safety," Journal of Systems and Software, 2025. arXiv:2509.02163.
+\bibitem{ref10} Z. Ravichandran, A. Robey, V. Kumar, G. J. Pappas, and H. Hassani, "Safety Guardrails for LLM-Enabled Robots," IEEE Robotics and Automation Letters, 2026. arXiv:2503.07885.
+\bibitem{ref11} E. Nijkamp, B. Pang, H. Hayashi, L. Tu, H. Wang, Y. Zhou, S. Savarese, and C. Xiong, "CodeGen: An Open Large Language Model for Code with Multi-Turn Program Synthesis," in International Conference on Learning Representations (ICLR), 2023.
+\bibitem{ref12} Y. Wang, W. Wang, S. Joty, and S. C. H. Hoi, "CodeT5: Identifier-aware Unified Pre-trained Encoder-Decoder Models for Code Understanding and Generation," in Proceedings of the Conference on Empirical Methods in Natural Language Processing (EMNLP), 2021.
+\bibitem{ref13} Y. Li et al., "Competition-level code generation with AlphaCode," Science, vol. 378, no. 6624, pp. 1092-1097, 2022. doi:10.1126/science.abq1158.
+\bibitem{ref14} D. Hendrycks, S. Basart, S. Kadavath, M. Mazeika, A. Arora, E. Guo, C. Burns, S. Puranik, H. He, D. Song, and J. Steinhardt, "Measuring Coding Challenge Competence with APPS," in Advances in Neural Information Processing Systems (NeurIPS) Datasets and Benchmarks Track, 2021.
+\bibitem{ref15} M. Ahn et al., "Do As I Can, Not As I Say: Grounding Language in Robotic Affordances," in Conference on Robot Learning (CoRL), 2022.
+\bibitem{ref16} D. Driess et al., "PaLM-E: An Embodied Multimodal Language Model," in International Conference on Machine Learning (ICML), 2023.
+\bibitem{ref17} W. Huang et al., "Inner Monologue: Embodied Reasoning through Planning with Language Models," in Conference on Robot Learning (CoRL), 2022.
+\bibitem{ref18} Y. Kim, D. Kim, J. Choi, J. Park, N. Oh, and D. Park, "A survey on integration of large language models with intelligent robots," Intelligent Service Robotics, vol. 17, no. 5, pp. 1091-1107, 2024.
+\bibitem{ref19} Y. Wu, Z. Xiong, Y. Hu, S. S. Iyengar, N. Jiang, A. Bera, L. Tan, and S. Jagannathan, "SELP: Generating Safe and Efficient Task Plans for Robot Agents with Large Language Models," in IEEE International Conference on Robotics and Automation (ICRA), 2025.
+\bibitem{ref20} Y.-H. Lee, T. Nam, D.-S. Cho, and W.-T. Kim, "LLM-Based Adaptive Control Code Generation Framework with Digital Twin-Integrated Verification for Heterogeneous Robot Systems," Applied Sciences, vol. 16, no. 8, art. 3883, 2026. doi:10.3390/app16083883.
+\bibitem{ref21} X. Li, J. Ding, C. Peng, B. Zhao, X. Gao, H. Gao, and X. Gu, "SafeGenBench: A Benchmark Framework for Security Vulnerability Detection in LLM-Generated Code," arXiv:2506.05692, 2025.
+\bibitem{ref22} N. Perry, M. Srivastava, D. Kumar, and D. Boneh, "Do Users Write More Insecure Code with AI Assistants?," in Proceedings of the ACM SIGSAC Conference on Computer and Communications Security (CCS), 2023, pp. 2785-2799. doi:10.1145/3576915.3623157.
+\bibitem{ref23} G. Sandoval, H. Pearce, T. Nys, R. Karri, B. Dolan-Gavitt, and S. Garg, "Lost at C: A User Study on the Security Implications of Large Language Model Code Assistants," in Proceedings of the 32nd USENIX Security Symposium, 2023.
+\bibitem{ref24} J. Hu, X. Jin, Y. Zeng, Y. Liu, Y. Li, D. Du, K. Xie, and H. Zhu, "QLPro: Automated Code Vulnerability Discovery via LLM and Static Code Analysis Integration," arXiv:2506.23644, 2025.
+\bibitem{ref25} Z. Li, S. Dutta, and M. Naik, "IRIS: LLM-Assisted Static Analysis for Detecting Security Vulnerabilities," in International Conference on Learning Representations (ICLR), 2025.
+\bibitem{ref26} H. Tan, H. Wang, and S. H. Tan, "Structured Safety Auditing for Balancing Code Correctness and Content Safety in LLM-Generated Code," arXiv:2604.12088, 2026.
+\bibitem{ref27} H. Li, H. Gao, Z. Zhao, Z. Lin, J. Gao, and X. Li, "LLMs Caught in the Crossfire: Malware Requests and Jailbreak Challenges," in Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics (ACL), 2025, pp. 27833-27848. doi:10.18653/v1/2025.acl-long.1350.
+\bibitem{ref28} A. Wei, N. Haghtalab, and J. Steinhardt, "Jailbroken: How Does LLM Safety Training Fail?," in Advances in Neural Information Processing Systems (NeurIPS), 2023.
+\bibitem{ref29} X. Qi, A. Panda, K. Lyu, X. Ma, S. Roy, A. Beirami, P. Mittal, and P. Henderson, "Safety Alignment Should Be Made More Than Just a Few Tokens Deep," in International Conference on Learning Representations (ICLR), 2025.
+\bibitem{ref30} K. Greshake, S. Abdelnabi, S. Mishra, C. Endres, T. Holz, and M. Fritz, "Not What You've Signed Up For: Compromising Real-World LLM-Integrated Applications with Indirect Prompt Injection," in Proceedings of the ACM Workshop on Artificial Intelligence and Security (AISec), 2023.
+\bibitem{ref31} A. Kumar, C. Agarwal, S. Srinivas, A. J. Li, S. Feizi, and H. Lakkaraju, "Certifying LLM Safety against Adversarial Prompting," in Conference on Language Modeling (COLM), 2024.
+\bibitem{ref32} A. Robey, Z. Ravichandran, V. Kumar, H. Hassani, and G. J. Pappas, "Jailbreaking LLM-Controlled Robots," in IEEE International Conference on Robotics and Automation (ICRA), 2025. arXiv:2410.13691.
+\bibitem{ref33} A. Hundt, R. Azeem, M. Mansouri, and M. Brandao, "LLM-driven robots risk enacting discrimination, violence, and unlawful actions," International Journal of Social Robotics, vol. 17, no. 11, 2025.
+\bibitem{ref34} J. Han, J. Seo, J. Min, J. Kim, and J. Oh, "Safety Not Found (404): Hidden Risks of LLM-Based Robotics Decision Making," arXiv:2601.05529, 2026.
+\bibitem{ref35} A. A. Khan, M. Andrev, M. A. Murtaza, S. Aguilera, R. Zhang, J. Ding, S. Hutchinson, and A. Anwar, "Safety Aware Task Planning via Large Language Models in Robotics," arXiv:2503.15707, 2025.
+\bibitem{ref36} I. Obi, V. L. Venkatesh, W. Wang, R. Wang, D. Suh, T. I. Amosa, W. Jo, and B.-C. Min, "SafePlan: Leveraging Formal Logic and Chain-of-Thought Reasoning for Enhanced Safety in LLM-based Robotic Task Planning," arXiv:2503.06892, 2025.
+\bibitem{ref37} International Organization for Standardization, "ISO/TS 15066:2016 Robots and robotic devices - Collaborative robots," ISO Technical Specification, 2016.
+\bibitem{ref38} International Organization for Standardization, "ISO 10218-2:2025 Robotics - Safety requirements - Part 2: Industrial robot applications and robot cells," ISO Standard, 2025.
+\bibitem{ref39} International Organization for Standardization, "ISO 13855:2010 Safety of machinery - Positioning of safeguards with respect to the approach speeds of parts of the human body," ISO Standard, 2010.
+\bibitem{ref40} V. Villani, F. Pini, F. Leali, and C. Secchi, "Survey on human-robot collaboration in industrial settings: Safety, intuitive interfaces and applications," Mechatronics, vol. 55, pp. 248-266, 2018. doi:10.1016/j.mechatronics.2018.02.009.
+\bibitem{ref41} S. Robla-Gomez, V. M. Becerra, J. R. Llata, E. Gonzalez-Sarabia, C. Torre-Ferrero, and J. Perez-Oria, "Working Together: A Review on Safe Human-Robot Collaboration in Industrial Environments," IEEE Access, vol. 5, pp. 26754-26773, 2017. doi:10.1109/ACCESS.2017.2773127.
+\bibitem{ref42} P. A. Lasota, T. Fong, and J. A. Shah, "A Survey of Methods for Safe Human-Robot Interaction," Foundations and Trends in Robotics, vol. 5, no. 4, pp. 261-349, 2017. doi:10.1561/2300000052.
+\bibitem{ref43} A. Zacharaki, I. Kostavelis, A. Gasteratos, and I. Dokas, "Safety bounds in human-robot interaction: A survey," Safety Science, vol. 127, art. 104667, 2020. doi:10.1016/j.ssci.2020.104667.
+\bibitem{ref44} M. Valori, A. Scibilia, I. Fassi, J. Saenz, R. Behrens, S. Herbster, C. Bidard, E. Lucet, A. Magisson, and L. Schaake, "Validating safety in human-robot collaboration: Standards and new perspectives," Robotics, vol. 10, no. 2, art. 65, 2021. doi:10.3390/robotics10020065.
+\bibitem{ref45} Y. E. Cogurcu, J. A. Douthwaite, and S. Maddock, "A Comparative Study of Safety Zone Visualisations for Virtual and Physical Robot Arms Using Augmented Reality," Computers, vol. 12, no. 4, art. 75, 2023. doi:10.3390/computers12040075.
+\bibitem{ref46} Y. E. Cogurcu and S. Maddock, "Augmented Reality Safety Zone Configurations in Human-Robot Collaboration: A User Study," in Companion of the ACM/IEEE International Conference on Human-Robot Interaction (HRI), 2023, pp. 360-363. doi:10.1145/3568294.3580106.
+\bibitem{ref47} J. J. Arimbur, "How Many Tries Does It Take? Iterative Self-Repair in LLM Code Generation Across Model Scales and Benchmarks," arXiv preprint arXiv:2604.10508, 2026.
+\bibitem{ref48} T. X. Olausson, J. P. Inala, C. Wang, J. Gao, and A. Solar-Lezama, "Is Self-Repair a Silver Bullet for Code Generation?," in International Conference on Learning Representations (ICLR), 2024.
+\bibitem{ref49} J. Huang, X. Chen, S. Mishra, H. S. Zheng, A. W. Yu, X. Song, and D. Zhou, "Large Language Models Cannot Self-Correct Reasoning Yet," in International Conference on Learning Representations (ICLR), 2024.
+\bibitem{ref50} J. Huang, W. Ye, W. Sun, J. Zhang, M. Zhang, and Y. Liu, "TraceCoder: A Trace-Driven Multi-Agent Framework for Automated Debugging of LLM-Generated Code," in Proceedings of the IEEE/ACM 48th International Conference on Software Engineering (ICSE), 2026. doi:10.1145/3744916.3773187.
+\bibitem{ref51} K. Alrashedy, A. Aljasser, P. Tambwekar, and M. Gombolay, "Leveraging Static Analysis for Feedback-Driven Security Patching in LLM-Generated Code," Journal of Cybersecurity and Privacy, vol. 5, no. 4, art. 110, 2025. doi:10.3390/jcp5040110.
+\bibitem{ref52} H. Pearce, B. Tan, B. Ahmad, R. Karri, and B. Dolan-Gavitt, "Examining Zero-Shot Vulnerability Repair with Large Language Models," in IEEE Symposium on Security and Privacy (S\&P), 2023, pp. 2339-2356. doi:10.1109/SP46215.2023.10179324.
+\bibitem{ref53} S. Shukla, H. Joshi, and R. Syed, "Security Degradation in Iterative AI Code Generation: A Systematic Analysis of the Paradox," in IEEE International Symposium on Technology and Society (ISTAS), 2025. doi:10.1109/ISTAS65609.2025.11269659.
+\bibitem{ref54} Y. Chen, Y. Bian, H. Wang, S. Li, and Z. Cui, "SCAFFOLD-CEGIS: Preventing Latent Security Degradation in LLM-Driven Iterative Code Refinement," arXiv preprint arXiv:2603.08520, 2026.
+\bibitem{ref55} C. Cheng, "Detect-Repair-Verify for Securing LLM-Generated Code: A Multi-Language Empirical Study," arXiv:2603.00897, 2026.
+\bibitem{ref56} S. Shinde, S. Wadhwa, A. Luo, A. Gupta, and M. S. Sorower, "STELP: Secure Transpilation and Execution of LLM-Generated Programs," arXiv:2601.05467, 2026.
+\bibitem{ref57} A. El Husseini et al., "Repairing LLM Executions for Secure Automatic Programming," in Proceedings of the IEEE/ACM 48th International Conference on Software Engineering (ICSE), 2026.
+\bibitem{ref58} N. Maloyan and D. Namiot, "Prompt Injection Attacks on Agentic Coding Assistants: A Systematic Analysis of Vulnerabilities in Skills, Tools, and Protocol Ecosystems," International Journal of Open Information Technologies, 2026. arXiv:2601.17548.
+\bibitem{ref59} M. Y. Park, D. Han, J. H. Lim, M. K. Shin, Y. R. Han, D. H. Kim, S. Rhim, and K. S. Kim, "Assessment of pressure pain thresholds in collisions with collaborative robots," PLoS ONE, vol. 14, no. 5, art. e0215890, 2019. doi:10.1371/journal.pone.0215890.
+\bibitem{ref60} J. A. Douthwaite, B. Lesage, M. Gleirscher, R. Calinescu, J. M. Aitken, R. Alexander, and J. Law, "A Modular Digital Twinning Framework for Safety Assurance of Collaborative Robotics," Frontiers in Robotics and AI, vol. 8, art. 758099, 2021. doi:10.3389/frobt.2021.758099.
+\bibitem{ref61} Universal Robots A/S, "URSim offline simulator for the e-Series, version 5.12.8," software, accessed 2026. [Online]. Available: \url{https://www.universal-robots.com/download/}
+\bibitem{ref62} Universal Robots A/S and FZI Research Center for Information Technology, "Universal Robots ROS 2 driver (ur\_robot\_driver), version 2.12.0," software, accessed 2026. [Online]. Available: \url{https://github.com/UniversalRobots/Universal_Robots_ROS2_Driver}
+\end{thebibliography}
+
+%% Author biographies (IEEE Access convention) -- optional; add before \EOD:
+%%   \begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,%
+%%     keepaspectratio]{photo.png}}]{Yunus Emre Cogurcu} Short bio. \end{IEEEbiography}
+%%   \begin{IEEEbiography}{Aida Akbarzadeh} Short bio. \end{IEEEbiography}
+%%   \begin{IEEEbiography}{Georgios Spathoulas} Short bio. \end{IEEEbiography}
+
+\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{photo1.jpg}}]{Yunus Emre Cogurcu}
+received the Ph.D. degree in computer science from the University of Sheffield, Sheffield, U.K., in 2024, with a thesis on augmented reality for safe human-robot collaboration. He is currently a Lecturer and Researcher with the Department of Computer Engineering, Cukurova University, Adana, Turkiye. His research interests include augmented and virtual reality, digital twins, human-robot interaction, and the safety and security of robotic systems, including ISO 10218 and ISO/TS 15066 compliance and the security of AI-generated robot control code.
+\end{IEEEbiography}
+
+\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{photo2.jpg}}]{Aida Akbarzadeh}
+received the Ph.D. degree in information security and communication technology from the Norwegian University of Science and Technology (NTNU), Gjovik, Norway. She is currently a Research Scientist with the Department of Information Security and Communication Technology, NTNU, and a member of the Critical Infrastructure Security and Resilience (CISaR) group. Her research interests include the safety and security of cyber-physical systems, interdependency and attack-path analysis in large-scale critical infrastructures, risk assessment and management, operational technology security, and threat intelligence.
+\end{IEEEbiography}
+
+\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{photo3.jpg}}]{Georgios Spathoulas}
+received the Diploma degree in electrical and computer engineering from the Aristotle University of Thessaloniki, Thessaloniki, Greece, in 2002, the M.Sc. degree in computer science from the University of Edinburgh, Edinburgh, U.K., in 2005, and the Ph.D. degree from the Department of Digital Systems, University of Piraeus, Piraeus, Greece, in 2013. He is currently an Associate Professor with the Department of Information Security and Communication Technology, Norwegian University of Science and Technology (NTNU), Gjovik, Norway, and a member of the teaching staff with the Department of Computer Science and Biomedical Informatics, University of Thessaly, Lamia, Greece. His research interests include network and system security, intrusion detection, blockchain technology, the security of the Internet of Things, and critical infrastructure security.
+\end{IEEEbiography}
+
+\EOD
+
+\end{document}
