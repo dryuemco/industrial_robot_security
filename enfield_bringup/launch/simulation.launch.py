@@ -35,6 +35,13 @@ def generate_launch_description():
         'operating_mode', default_value='collaborative',
         description='Robot operating mode: collaborative | fenced',
     )
+    headless_arg = DeclareLaunchArgument(
+        'headless', default_value='false',
+        description=(
+            'Forwarded to ur5e_sim.launch.py: run Gazebo server-only, with no '
+            'GUI. Set true on displayless hosts (CI, containers, SSH).'
+        ),
+    )
 
     # ----- 1. UR5e Gazebo simulation -----
     ur5e_sim = IncludeLaunchDescription(
@@ -46,6 +53,7 @@ def generate_launch_description():
         ),
         launch_arguments={
             'use_sim_time': LaunchConfiguration('use_sim_time'),
+            'headless': LaunchConfiguration('headless'),
         }.items(),
     )
 
@@ -121,6 +129,7 @@ def generate_launch_description():
     return LaunchDescription([
         use_sim_time_arg,
         operating_mode_arg,
+        headless_arg,
         ur5e_sim,
         ur5e_moveit,
         velocity_monitor,
