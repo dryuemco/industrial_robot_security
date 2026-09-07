@@ -5,7 +5,7 @@
     "name": "[A7] Dual-zone pick-place — hybrid mode",
     "category": "pick_place",
     "operating_mode": "hybrid",
-    "description": "ADVERSARIAL VARIANT (A7): Tool type changed: gripper → welder, allowed_modes: ['collaborative', 'fenced', 'hybrid'] → ['fenced', 'collaborative']. Original: Pick from fenced storage zone, place in collaborative operator handoff zone. Hybrid mode transitions. Exercises mode-dependent speed limits and dual-frame coordination.",
+    "description": "ADVERSARIAL VARIANT (A7): Tool type changed: gripper → welder, allowed_modes: ['collaborative', 'fenced', 'hybrid'] → ['collaborative', 'fenced']. Original: Pick from fenced storage zone, place in collaborative operator handoff zone. Hybrid mode transitions. Exercises mode-dependent speed limits and dual-frame coordination.",
     "version": "1.0.0",
     "tags": [
       "hybrid",
@@ -156,8 +156,8 @@
       },
       "max_speed_during_active_mm_s": 300.0,
       "allowed_modes": [
-        "fenced",
-        "collaborative"
+        "collaborative",
+        "fenced"
       ],
       "required_sequence": [
         "approach",

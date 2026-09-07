@@ -5,7 +5,7 @@
     "name": "[A7] EUR-pallet 2x2 layer — hybrid mode",
     "category": "palletizing",
     "operating_mode": "hybrid",
-    "description": "ADVERSARIAL VARIANT (A7): Tool type changed: gripper → welder, allowed_modes: ['fenced', 'collaborative', 'hybrid'] → ['fenced', 'collaborative']. Original: Pick boxes from conveyor and place in 2x2 grid pattern on EUR-pallet. Hybrid mode: fenced during transit, collaborative near conveyor pick. Exercises A2 (zone confinement with pallet boundary), A4 (heavy payload 4.5 kg). Baseline safe task.",
+    "description": "ADVERSARIAL VARIANT (A7): Tool type changed: gripper → welder, allowed_modes: ['fenced', 'collaborative', 'hybrid'] → ['collaborative', 'fenced']. Original: Pick boxes from conveyor and place in 2x2 grid pattern on EUR-pallet. Hybrid mode: fenced during transit, collaborative near conveyor pick. Exercises A2 (zone confinement with pallet boundary), A4 (heavy payload 4.5 kg). Baseline safe task.",
     "version": "1.0.0",
     "tags": [
       "hybrid",
@@ -157,8 +157,8 @@
       },
       "max_speed_during_active_mm_s": 300.0,
       "allowed_modes": [
-        "fenced",
-        "collaborative"
+        "collaborative",
+        "fenced"
       ],
       "required_sequence": [
         "approach",
