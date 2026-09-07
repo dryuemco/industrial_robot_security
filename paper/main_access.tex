@@ -872,34 +872,51 @@ therefore kept out of the results framing here and reported solely in
 Appendix~\ref{app:detection}.
 
 \begin{table}[t]
-\caption{Summary of principal quantitative results. Intervals on rates are computed at
-the call level and should be read as the narrow end of the range; under near-deterministic
-decoding the conservative cell-level interval for the baseline rate (\ref{sec:stats}) is
-taken as primary.}
+\caption{Summary of the confirmatory results (three local models, 16B to 34B,
+preregistered). Intervals on rates are computed at the call level and should be read as
+the narrow end of the range; under near-deterministic decoding the conservative
+cell-level interval for the baseline rate (\ref{sec:stats}) is taken as primary. Means
+of violation counts are on the gate-passing basis unless stated.}
 \label{tab:summary}
 \centering
 \footnotesize
-\begin{tabular}{@{}p{0.25\columnwidth}p{0.2\columnwidth}p{0.4\columnwidth}@{}}
+\begin{tabular}{@{}p{0.30\columnwidth}p{0.17\columnwidth}p{0.42\columnwidth}@{}}
 \toprule
-\textbf{Quantity} & \textbf{Value} & \textbf{95\% CI / note} \\
+\textbf{Quantity} & \textbf{Value} & \textbf{95\% interval or note} \\
 \midrule
-\multicolumn{3}{@{}l}{\textit{(Confirmatory: three local models, 16B to 34B)}}\\ \\
-Substantive-safe rate (primary) & 1/135 (0.7\%) & [0.02, 4.06] Clopper-Pearson \\ \\
-Combined violation rate, gate-passing & 98.8\% & [93.5, 99.8] call; 92.8\% high-prec. \\ \\
-Combined violation rate, naive & 60.7\% & [46, 73] cell-level \\ \\
-Refusal rate & 0/585 (0\%) & none observed \\ \\
-Safety-prompt mean violations & 10.37 to 6.39 & 38\% lower, descr. \\ \\
-Adversarial count uplift, pooled & +0.70 viol. & max strategy +3.58, severity flat \\ \\
-Adversarial uplift, binary & 6.67 pp (max) & ceiling demo, Holm $p=1.000$ \\ \\
-Repair-loop reduction, pooled & 30.5\% rel. & below 40\% threshold \\ \\
-Remediated to zero & 0/195 & local and frontier \\ \\ 
-Cross-model heterogeneity, $Q$ & 12.60 / 20.00 & $p{=}0.004$ / $p{<}0.001$ \\ \\
+Substantive-safe rate (primary) & 1/135 (0.7\%) & [0.02, 4.06], Clopper-Pearson \\
+Combined violation rate, gate-passing outputs & 98.8\% & [93.5, 99.8], call level \\
+\quad restricted to the three high-precision checks & 92.8\% & SM-4, SM-5, SM-6 only \\
+\quad with the corrected SM-5 unit reading & 98.8\% & Table~\ref{tab:sensitivity} \\
+\quad under the structural validity gate & 100\% & 38 of 130 outputs admitted \\
+Combined violation rate, all outputs (naive) & 60.7\% & [46, 73], cell level \\
+Refusal rate & 0/585 & none observed \\
+Safety-prompt effect on mean violations & 10.37 to 6.39 & 38\% lower; descriptive, no test \\
+Adversarial uplift in mean violations, pooled & $+1.24$ & all-outputs basis $+0.70$; strongest strategy $+6.22$; severity unchanged \\
+Adversarial uplift, binary rate & $+6.67$ pp (max) & ceiling demonstration; Holm-adjusted $p=1.000$ \\
+Repair-loop reduction, pooled & 30.5\% relative & below the registered 40\% threshold \\
+Cells remediated to zero violations & 0/135 & Table~\ref{tab:regimes} \\
+Cross-model heterogeneity, Cochran $Q$ & 12.60 / 20.00 & $p{=}0.004$ / $p{<}0.001$; baseline / safety-prompted \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\caption{Summary of the additional analyses (not preregistered; single repetition per
+cell). These are reported as signals for replication, not as confirmed effects.}
+\label{tab:summary-extra}
+\centering
+\footnotesize
+\begin{tabular}{@{}p{0.30\columnwidth}p{0.17\columnwidth}p{0.42\columnwidth}@{}}
+\toprule
+\textbf{Quantity} & \textbf{Value} & \textbf{Note} \\
 \midrule
-\multicolumn{3}{@{}l}{\textit{Additional analyses (not preregistered)}}\\ \\
-Frontier violation rate, 24B to 675B & 100\% & safe 0/120 \\ \\
-Temperature 0.2 and 0.7 & 100\% & safe 0/180 each \\ \\
-Representation breach by form & 15.0/1.7/0/0\% & implicit$\to$guard, CA $p{<}10^{-4}$; 49/119 removed \\ \\
-Construct removal vs model size & 0 to 70\% & 24B to 675B; exploratory, 4 sizes, 1 rep \\ \\
+Frontier violation rate, four models 24B to 675B & 100\% & 0 of 120 safe; falls to 75.8\% under the high-precision checks with corrected SM-5 \\
+Cells remediated to zero, frontier & 0/60 & 0/195 pooled with the local models \\
+Sampling temperature 0.2 and 0.7 & 100\% & 0 of 180 safe at each temperature \\
+Speed-cap breach by encoding form & 15.0 / 1.7 / 0 / 0\% & implicit, comment, named constant, guard; Cochran-Armitage $p{<}10^{-4}$ \\
+Encoded construct silently removed & 49/119 (41\%) & two explicit forms pooled \\
+Construct removal by model size & 0 / 50 / 45 / 70\% & 24B, 120B, 358B, 675B; not monotone; no trend statistic \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1131,6 +1148,7 @@ communication libraries with no motion, are flagged on 5 of 9 and never on SM-4 
 
 \begin{figure}[t]\centering
   \includegraphics[width=\columnwidth]{figures/fig_rule_heatmap.pdf}
+  \def\xfigwd{\columnwidth}%
   \caption{Share of gate-passing outputs on which each security check fires, by model and
   condition in the baseline experiment, with the reference translation and the vendor and
   community programs as comparison rows. The protection-mechanism (SM-3) and
@@ -1193,10 +1211,11 @@ the prompt-injection strategies are safe. In hindsight the fifty-point threshold
 mis-specified for this regime: it was registered before the baseline rate was observed,
 and a near-saturated base rate leaves any binary-uplift hypothesis structurally
 untestable, with the test retaining no power for the registered effect. This is recorded
-as a preregistration lesson rather than a finding about the attacks. The post-hoc count
-and severity contrasts reported above carry the only informative adversarial signal in
-this setting, and a binary-uplift hypothesis is meaningful only where the matched
-baseline leaves headroom for it to register.
+as a preregistration lesson rather than a finding about the attacks. The confirmatory
+arm for this hypothesis is therefore reported as voided by the ceiling rather than as a
+negative result, and the count and severity contrasts reported above are post hoc and
+carry the only informative adversarial signal in this setting; a binary-uplift hypothesis
+is meaningful only where the matched baseline leaves headroom for it to register.
 
 \subsection{Repair-in-Loop Defense}\label{sec:res-watchdog}
 The preregistered hypothesis that rule-checker feedback reduces the combined
@@ -1521,15 +1540,29 @@ confirmatory experiments cover three locally hosted models in a single vendor la
 under simulation, so generalization to other model families, to other robot languages,
 and to physical execution is not established; the frontier and temperature probes widen
 the model and decoding range but remain additional, single-repetition analyses.
-Statistically, the deterministic temperature-zero protocol makes trajectories
-reproducible but precludes within-cell variance estimates, and several outcomes are
-bounded by the binary ceiling rather than by model behavior. In scope, the task
+Statistically, the temperature-zero protocol makes verdicts reproducible at the cell
+level but, as Table~\ref{tab:reps} shows, not bit-reproducible, so within-cell variation
+exists but is small relative to between-cell variation and is absorbed by taking the cell
+as the unit; several outcomes are bounded by the binary ceiling rather than by model
+behavior. In scope, the task
 specification is held invariant across conditions by design, so the motion-safety pass
 is not exercised on generated code and the reported violations concern
 cybersecurity-relevant properties rather than demonstrated physical-motion hazards;
 mutation of the task specification is a separate attack surface that is not addressed
-here. The deployed quantization levels and the seven-strategy adversarial family also
-differ in minor documented ways from the original plan, and these deviations are
+here.
+
+Two threats concern the instrument itself. First, the rule checker's detection
+performance (Appendix~\ref{app:detection}) is established only on author-constructed
+variants scored against author-written rules, and its precision on generated code rests
+on a manual audit; the non-LLM comparator and the sensitivity re-scoring of
+\ref{sec:res-baseline} bound the effect of the rule set on the headline rates but do not
+substitute for an independent validation set, which remains future work. Second, the
+three models were served at different quantization levels, one at Q4\_K\_M and two at
+Q4\_0 (Table~\ref{tab:models}), so the cross-model heterogeneity test of
+\ref{sec:res-sens} cannot separate model identity from quantization level; a re-run of
+Qwen2.5-Coder-32B at Q4\_0 on the same tasks and prompts, reported in
+\ref{sec:res-sens}, addresses this directly. The seven-strategy adversarial family also
+differs in minor documented ways from the original plan, and these deviations are
 recorded in the replication package.
 
 A construct threat specific to the cybersecurity mapping is the distance between
@@ -1800,7 +1833,14 @@ rather than detector failures. These figures are raw detection counts; the forma
 confirmatory tests registered for this family were not performed in this manuscript,
 which centers on the generator analysis, so no p-values or confidence intervals are
 attached. A separate five-task calibration pilot of 40 variants recorded 36 of 40 (90\%)
-detection with no false positives.
+detection with no false positives. What these figures do and do not establish should be
+read precisely: they show that each rule fires on the perturbation it was written to
+catch and stays silent on the clean specification, which is a construction check on
+author-written rules against author-constructed variants; they do not measure detection
+of independently sourced violations, and the only evidence on real-world precision is the
+manual audit of \ref{sec:res-baseline} and the non-LLM comparator reported there. An
+independent validation set, for example URScript programs with documented incidents or
+vendor safety-bulletin cases, is identified as future work in \ref{sec:threats}.
 
 %% ----------------------------------------------------------------------------
 %% BIBLIOGRAPHY: main_v6.tex uses an inline thebibliography with 22 entries
