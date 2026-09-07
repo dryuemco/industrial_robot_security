@@ -32,6 +32,12 @@ These facts were verified against the repository and the shipped data. They shap
 | F10 | Task complexity scores exist (`results/task_complexity_scores.csv`, tertiles T_low/T_med/T_high) and E1 CSV carries `task_category`, `operating_mode`. | Task table and the complexity-stratified analysis can be produced from shipped data. (R2-6, R2 "complexity punted") |
 | F11 | Ref 53 (Shukla et al.) is ISTAS 2025 with a DOI — published. Ref 54 (SCAFFOLD-CEGIS) is arXiv 2603.08520 (2026). | Check whether 54 has a venue; otherwise soften the sentence that leans on it. (R1-5) |
 | F12 | Precision audit (Table 7): 50 firings, single rater, SM-3 and SM-7 not audited. | R1-3 and R2 "single rater" need a larger, two-rater audit with agreement statistic. |
+| F13 | With the safety preamble added, the translator output clears SM-6 but SM-2 then fires 15/15: `set_tcp`/`set_payload` are "critical operations" that SM-2 wants wrapped by `popup`/`halt` within three lines. | Two checks pull in opposite directions; the rule set cannot be satisfied by the reference idiom without a contrived guard. Must be disclosed with the comparator. |
+| F14 | Corrected SM-5 removes every SM-5 firing on translator output (15 → 0 files) but only 54 → 46 of 83 on LLM output; gate-passing violation rate stays 98.8%. Under the three high-precision checks plus corrected SM-5: 91.6% (E1) but 75.8% (frontier E1), substantive-safe 29/120. | Headline for local models is robust to rule choice; the frontier "100%" is not and needs a caveat. (`paper/tables/sensitivity_e1_*.tex`) |
+| F15 | Temperature-zero repetitions are not identical: byte-identical output in 14/90 E1 cells, same binary verdict in 82/90, same violation count in 59/90; DeepSeek agrees on count in only 10/30 cells. | The paper's "nearly identical" claim holds at the verdict level only; report it (`rep_reproducibility.tex`) and keep the cell-level unit. |
+| F16 | Construct removal by model size (E5) is not monotone: 0/30, 15/30 (50.0%), 13/29 (44.8%), 21/30 (70.0%). | §VI-E and the Fig. 6 caption say "monotone increase"; correct to "rises from 0% to 70% with a non-monotone middle". |
+| F17 | All experiments used the task IR at 7c67b68 (= cc71721). The pre-approach edit of 2026-09-07 post-dates them. | Task-facing tables and prompts are generated from `paper/data/tasks_as_run/`; the replication appendix must say so. |
+| F18 | E3 regimes for the 135 local cells: 78 drop out of validity (52 at retry 0), 57 stay valid, 0 reach zero; rule churn per valid step 0.26 cleared vs 0.29 introduced. | Quantifies Fig. 4 (`e3_regimes.tex`). |
 
 ---
 
@@ -76,26 +82,26 @@ Status legend: `todo` / `doing` / `done` / `rebut` (counter-argue, no change) / 
 |----|---------|--------|-------|--------|--------|
 | R1-1 | Abstract blurs confirmatory (3 models, prereg) with exploratory (frontier, 1 rep). 70% construct-removal reads like a finding. | Restructure abstract: confirmatory findings first, then one sentence explicitly labelled "exploratory, single repetition" for frontier/construct-removal. Remove the 70% figure from the abstract or attach "exploratory, n=1 per cell". | abstract; §I contributions | S | todo |
 | R1-2 | Rule checker only validated on author-built variants; no independent validation. | Add to Future Work: independent validation against externally sourced violations (e.g. CVE-like URScript incidents, vendor safety bulletins). Cross-reference Appendix C caveat. The translator comparator (R2-1) also partly addresses this: it is independent of the variant generator. | §VII-D threats; §VIII | S | todo |
-| R1-3 | Precision audit rests on 8–12 firings per rule, CI 55–99% for SM-5. | Enlarge audit (D3): ≥20 firings per rule, two raters, κ. Recompute Table 7 with tighter CIs. Add a main-text caveat sentence wherever "high-precision" is claimed if intervals remain wide. | Table 7; §VI-A | M | todo (rater 2 pending) |
+| R1-3 | Precision audit rests on 8–12 firings per rule, CI 55–99% for SM-5. | Enlarge audit (D3): ≥20 firings per rule, two raters, κ. Recompute Table 7 with tighter CIs. Add a main-text caveat sentence wherever "high-precision" is claimed if intervals remain wide. | Table 7; §VI-A | M | tooling done (sampler, guide, analyzer); awaiting rater labels |
 | R1-4 | Scope condition (cybersecurity, not motion safety) buried in abstract. | Move to sentence 2 of the abstract and to the first paragraph of §I. Same fix serves R2-2. | abstract; §I | S | todo |
 | R1-5 | Refs 53, 54 look like arXiv preprints; confirm status. | Ref 53 is ISTAS 2025 (DOI present): keep, fix formatting. Ref 54: check for a peer-reviewed version; if none, keep as arXiv and soften the dependent sentence in §II-D. | bibliography; §II-D | S | todo |
-| R1-6 | Fig. 4 distinguishes four trajectory types by line style only; fails in grayscale. | Regenerate Fig. 4 with distinct markers + line styles + direct labels; verify in grayscale. Also quantify the regimes (see R2-M5). | `scripts/figures/fig_repair_trajectory.py` (new) | S | todo |
+| R1-6 | Fig. 4 distinguishes four trajectory types by line style only; fails in grayscale. | Regenerated with distinct markers + line styles + direct labels, legend carries regime counts. | `scripts/figures/fig_repair_trajectory.py` | S | done (figure); caption todo |
 
 ### Reviewer 2 — required items
 
 | ID | Concern | Action | Where | Effort | Status |
 |----|---------|--------|-------|--------|--------|
-| R2-1 | Add a non-LLM comparator (~15 human/vendor URScript programs). | New script `scripts/comparator_urscript.py`: score (i) 15 translator programs, (ii) translator + safety preamble, (iii) vendor examples per D2, under preregistered rules and under corrected SM-5. New subsection §VI-A "Non-LLM comparator" with a table (per-rule firing counts, per-program violation count). State plainly that the reference translation fails SM-4/SM-6 by construction and SM-5 through the movej unit conflation, and that after the corrected SM-5 the comparator separates from the LLM outputs on the rules that remain. This turns 98.8% into an interpretable number. | new script; §VI-A; Table 5 | M | todo |
+| R2-1 | Add a non-LLM comparator (~15 human/vendor URScript programs). | New script `scripts/comparator_urscript.py`: score (i) 15 translator programs, (ii) translator + safety preamble, (iii) vendor examples per D2, under preregistered rules and under corrected SM-5. New subsection §VI-A "Non-LLM comparator" with a table (per-rule firing counts, per-program violation count). State plainly that the reference translation fails SM-4/SM-6 by construction and SM-5 through the movej unit conflation, and that after the corrected SM-5 the comparator separates from the LLM outputs on the rules that remain. This turns 98.8% into an interpretable number. | new script; §VI-A; Table 5 | M | data done (`comparator_summary.tex`); text todo |
 | R2-2 | Rescope title/abstract to code security; motion-safety half fires 0/585 by design. | Abstract and §I rewrite per R1-4/D4. In §IV-C rename "motion-safety pass" to make clear it is a specification check that is invariant across conditions, and say in the abstract that only the security pass carries signal. Consider dropping the motion-safety rows from the results narrative into a one-line protocol statement. | abstract; §I; §IV-C; §VI-A | S | todo |
 | R2-3a | §V-C arithmetic: "three repetitions, for 315 generations". | Change to "one repetition, for 315 generations (45 model-task cells × 7 strategies)". Explain why E2 has one rep (deterministic decoding; reps in E1 were identical). Check Table 4 and Appendix A consistency. | §V-C | S | todo |
-| R2-3b | 10.37 vs 6.38 baseline means unreconciled. | State denominators explicitly: 10.37 = mean over 83 gate-passing baseline outputs; 6.38 = mean over all 135 with invalid outputs scored 0. Recompute the E2 contrast on the gate-passing subset so §VI-B uses the same basis as §VI-A, and report both. | §VI-A; §VI-B; Table 5 | S | todo |
+| R2-3b | 10.37 vs 6.38 baseline means unreconciled. | State denominators explicitly: 10.37 = mean over 83 gate-passing baseline outputs; 6.38 = mean over all 135 with invalid outputs scored 0. Recompute the E2 contrast on the gate-passing subset so §VI-B uses the same basis as §VI-A, and report both. | §VI-A; §VI-B; Table 5 | S | data done (`adversarial_table.tex`); text todo |
 | R2-4 | "Grammar-anchored" / "parsed URScript grammar" overstates a regex. | Replace throughout with "lexical, regex-based rule checker"; describe the gate precisely (list the call names or cite the regex); remove "parsed" and "grammar". Check §I, §IV, §IV-C, §VII, conclusion. | global | S | todo |
-| R2-5 | Adversarial experiment has no table; per-strategy × per-model breakdown missing. | New Table: rows A8.1–A8.7, columns per model + pooled; cells: gate-pass count, mean violations (gate-passing), max severity, binary rate. Generated by `scripts/adversarial_table.py` from `E2_full`. Also report the binary-uplift test per strategy in the appendix. | §VI-B; new table | S | todo |
-| R2-6a | No task table. | New Table: 15 tasks with ID, category, operating mode, tool, motion-command count, complexity tertile. From `enfield_tasks/ir/tasks` + `results/task_complexity_scores.csv`. | §IV-A | S | todo |
-| R2-6b | No prompt text. | New Appendix: baseline system prompt, safety system prompt, one full user prompt (T001), and all seven A8 suffixes verbatim from `prompt_builder.py`. | new appendix | S | todo |
-| R2-6c | No generated code listing. | New Appendix/figure: one annotated listing (before/after) showing the claimed phenomena: pseudo-code failing the gate; 200 mm/s emitted as 200 m/s; silent removal of the speed cap under repair. Pick from `results/E1_full/code` and `E3_full/code`; annotate rule firings in the margin. | new appendix | M | todo |
+| R2-5 | Adversarial experiment has no table; per-strategy × per-model breakdown missing. | New Table: rows A8.1–A8.7, columns per model + pooled; cells: gate-pass count, mean violations (gate-passing), max severity, binary rate. Generated by `scripts/adversarial_table.py` from `E2_full`. Also report the binary-uplift test per strategy in the appendix. | §VI-B; new table | S | data done (`adversarial_table.tex`); text todo |
+| R2-6a | No task table. | New Table: 15 tasks with ID, category, operating mode, tool, motion-command count, complexity tertile. From `enfield_tasks/ir/tasks` + `results/task_complexity_scores.csv`. | §IV-A | S | done (`task_table.tex`); insert todo |
+| R2-6b | No prompt text. | New Appendix: baseline system prompt, safety system prompt, one full user prompt (T001), and all seven A8 suffixes verbatim from `prompt_builder.py`. | new appendix | S | done (`prompts_appendix.tex`); insert todo |
+| R2-6c | No generated code listing. | New Appendix/figure: one annotated listing (before/after) showing the claimed phenomena: pseudo-code failing the gate; 200 mm/s emitted as 200 m/s; silent removal of the speed cap under repair. Pick from `results/E1_full/code` and `E3_full/code`; annotate rule firings in the margin. | new appendix | M | done (`code_listings.tex`); insert todo |
 | R2-7a | Quantization confound (Q4_K_M vs Q4_0) on heterogeneity claim. | Disclose in §V-A (Table 3 already lists it) and add a sentence in §VI-D and threats: heterogeneity test cannot separate model identity from quantization. Optional: re-run Qwen at Q4_0 (1 model × 135 gens, cheap) to test sensitivity. | §V-A; §VI-D; §VII-D | S (+M optional) | todo |
-| R2-7b | Remove trend guide from Fig. 6. | Regenerate Fig. 6 without the fitted line; show four points with exact-binomial CIs and n per point. | `scripts/figures/fig_construct_removal.py` (new) | S | todo |
+| R2-7b | Remove trend guide from Fig. 6. | Regenerate Fig. 6 without the fitted line; show four points with exact-binomial CIs and n per point. | `scripts/figures/fig_construct_removal.py` (new) | S | done (figure); caption todo |
 | R2-8 | Cite IEC 62443, EU AI Act, MITRE CWE, ANSI/A3 R15.06-2025, URScript reference. | Add five bibitems and cite at first mention in §IV-D, §VII-D, §VII-F, §IV-C. | bibliography | S | todo |
 
 ### Reviewer 2 — further gaps ("Missing" and "Problems" lists)
@@ -103,10 +109,10 @@ Status legend: `todo` / `doing` / `done` / `rebut` (counter-argue, no change) / 
 | ID | Concern | Action | Where | Effort | Status |
 |----|---------|--------|-------|--------|--------|
 | R2-M1 | Detector validation circular. | Same as R1-2 + R2-1: comparator and future-work statement. Add an explicit "what the 114/120 does and does not show" sentence to Appendix C. | App. C; §VII-D | S | todo |
-| R2-M2 | Manual audit single rater, no agreement statistic. | D3 / R1-3. | Table 7 | M | todo (rater 2 pending) |
+| R2-M2 | Manual audit single rater, no agreement statistic. | D3 / R1-3. | Table 7 | M | tooling done; awaiting rater labels |
 | R2-M3 | Preregistered thresholds untestable. | Already framed as a lesson. Add one sentence: the confirmatory arm for H5 is reported as voided by ceiling, and the count/severity contrasts are labelled post hoc. No further change. | §VI-B | S | todo |
-| R2-M4 | Repair-trajectory regimes never quantified for local models. | From `E3_full`: classify each of the 135 cells into the four regimes (repaired / oscillating / degraded-to-invalid / unchanged) by rule; report a small table; Fig. 4 shows real examples with counts in the legend. | §VI-C; Fig. 4 | M | todo |
-| R2-M5 | Complexity-stratified analysis punted. | Run `scripts/complexity_correlation_analysis.py` on E1/E3; report the tertile-stratified rates and the (likely null) test in a short paragraph + appendix table. | §VI-D; appendix | S | todo |
+| R2-M4 | Repair-trajectory regimes never quantified for local models. | From `E3_full`: classify each of the 135 cells into the four regimes (repaired / oscillating / degraded-to-invalid / unchanged) by rule; report a small table; Fig. 4 shows real examples with counts in the legend. | §VI-C; Fig. 4 | M | data done (`e3_regimes.tex`); text todo |
+| R2-M5 | Complexity-stratified analysis punted. | Run `scripts/complexity_correlation_analysis.py` on E1/E3; report the tertile-stratified rates and the (likely null) test in a short paragraph + appendix table. | §VI-D; appendix | S | data done (`complexity_table.tex`); text todo |
 | R2-M6 | Appendix B is a one-line stub. | Delete; move the pointer sentence into Appendix A. | App. B | S | todo |
 | R2-M7 | Table 5 mixes confirmatory and exploratory rows with cryptic notes. | Split into two tables (confirmatory / additional). Expand "descr.", "ceiling demo" into full words. | Table 5 | S | todo |
 | R2-M8 | Two highest-firing checks audit at 12.5% / 0% precision. | Already disclosed. Add the "restricted to high-precision rules" rate to Table 5 as its own row; after D1, report the corrected-SM-5 rate too. | Table 5; §VI-A | S | todo |
@@ -147,6 +153,25 @@ Each step ends with a commit on `review/access-r1`; the status column above is u
 19. Walk the IEEE checklist (grammar, math formatting, reference formatting, ORCID metadata).
 
 ---
+
+## 3b. Additional low-cost analyses (offline, already computed unless marked)
+
+All of these use stored outputs; none needs a new LLM call. Proposed for inclusion; the corresponding author decides which go into the manuscript.
+
+| # | Analysis | What it answers | Status | Where |
+|---|----------|-----------------|--------|-------|
+| X1 | Non-LLM comparator under two scorings (translator, translator+preamble, 9 vendor/community programs) | R2-1; shows which rules are idiom-level (SM-4, SM-6) vs code-level | computed | `comparator_summary.tex` |
+| X2 | Sensitivity of headline rates to rule set (5 variants) and gate (lexical vs structural), E1 and frontier | R2 "artefact" and "regex gate" critiques; bounds the headline | computed | `sensitivity_e1_baseline.tex`, `sensitivity_e1_frontier.tex` |
+| X3 | Repetition reproducibility at five levels (text/status/binary/count/rules) | supports the cell-level unit; documents that greedy decoding is not bit-stable on the serving stack | computed | `rep_reproducibility.tex` |
+| X4 | E3 trajectory regimes, all 135 cells, with rule churn (cleared vs introduced per step) | R2-M4; turns Fig. 4 from schematic into counts | computed | `e3_regimes.tex` |
+| X5 | Per-strategy × per-model adversarial table on both denominators | R2-5, R2-3b; A8.4 is the only strategy with a large effect (+6.2 on gate-passing basis) | computed | `adversarial_table.tex` |
+| X6 | Complexity-stratified rates and per-model Spearman ρ | R2-M5; null as expected (1 of 9 ρ nominally p<0.05, uncorrected) | computed | `complexity_table.tex` |
+| X7 | Rule-interaction note: preamble satisfies SM-6 but trips SM-2 | explains part of the 98.8% as a rule-set property; strengthens the "measurement hazard" contribution | computed (F13) | text only |
+| X8 | Frontier re-scoring under corrected SM-5 / high-precision set | caveats the frontier "100%" (drops to 75.8%) | computed | `sensitivity_e1_frontier.tex` |
+| X9 | Precision audit v2, two raters, κ | R1-3, R2-M2 | tooling done; needs rater 2 | `audit_v2/` |
+| X10 | Qwen at Q4_0 (135 generations) to test the quantization confound | R2-7a | not run; needs Ollama host, ~1 h | — |
+| X11 | Stricter-gate substantive-safe rate (structural gate) | complements X2; 38/130 pass, 0–1 substantive-safe | computed | in X2 tables |
+| X12 | Per-model × per-rule firing heat-map (E1 baseline vs safety) | visual replacement for Table 6 counts; cheap | not built | — |
 
 ## 4. Open questions for the authors
 
