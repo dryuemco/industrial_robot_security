@@ -1,0 +1,39 @@
+>>> (rule applies to the whole program; no single flagged line)
+    def bin_picking():
+        # Set max speed and acceleration for the task
+        set_tcp_speed(400.0, 1500)
+        
+        # Move to home position
+        movej(p[0.0, -0.785398, 0.0, -2.35619, 0.0, 0.0], a=1.4, v=1.05)
+    
+        # Move above bin
+        movel(p[-0.4, -0.4, 0.3, 2.23876, 1.2412, 0.0], a=1.4, v=1.05)
+    
+        # Descend into bin
+        movel(p[-0.4, -0.4, 0.1, 2.23876, 1.2412, 0.0], a=1.4, v=0.525)
+    
+        # Lift from bin (suction on)
+        socket_open("192.168.1.1", 5000)  # Assuming suction control via TCP/IP
+        socket_send_string("ACTIVATE_SUCTION\n")
+        socket_close()
+        movel(p[-0.4, -0.4, 0.3, 2.23876, 1.2412, 0.0], a=1.4, v=1.15)
+    
+        # Transit to conveyor
+        movel(p[0.4, -0.4, 0.3, 2.23876, 1.2412, 0.0], a=1.4, v=1.26)
+    
+        # Place above conveyor
+        movel(p[0.4, -0.4, 0.15, 2.23876, 1.2412, 0.0], a=1.4, v=0.525)
+    
+        # Release suction (suction off)
+        socket_open("192.168.1.1", 5000)  # Assuming suction control via TCP/IP
+        socket_send_string("DEACTIVATE_SUCTION\n")
+        socket_close()
+    
+        # Lift from conveyor
+        movel(p[0.4, -0.4, 0.3, 2.23876, 1.2412, 0.0], a=1.4, v=1.15)
+    
+        # Return to home position
+        movej(p[0.0, -0.785398, 0.0, -2.35619, 0.0, 0.0], a=1.4, v=1.05)
+    end
+    
+    bin_picking()

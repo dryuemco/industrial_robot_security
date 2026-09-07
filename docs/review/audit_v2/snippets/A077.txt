@@ -1,0 +1,9 @@
+>>> (rule applies to the whole program; no single flagged line)
+    def program():
+        # Home the robot
+        movej(p[0, 0, 0, 0, 0, 0], v=200.0)
+    
+        # Approach spot 1
+        movel(p[0, 0, 0, 0, 0, -200], v=200.0)
+    
+        # Descend

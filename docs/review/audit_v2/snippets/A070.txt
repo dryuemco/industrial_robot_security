@@ -1,0 +1,8 @@
+    def heavy_depalletizing():
+        # Home the robot
+>>>     movej(p[0, 0, 0, 0, 0, 0], v=400.0)
+    
+        # Move above the pallet
+        movel(p[0, 0, 150, 0, 0, 0], v=400.0)
+    
+        # Descend

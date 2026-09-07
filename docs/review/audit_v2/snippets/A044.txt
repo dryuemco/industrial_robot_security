@@ -1,0 +1,43 @@
+    def safety_check():
+        # Check if the robot is in fenced mode
+        if not robot.is_fenced():
+            popup("Robot must be in fenced mode for this task")
+            return False
+    
+        # Check if the payload is set correctly
+        if not robot.payload == 0.5:
+            popup("Payload must be set to 0.5 kg for this task")
+            return False
+    
+        # Check if the motion commands are within the workspace boundaries
+        if not (robot.tcp_pose[0] >= -180 and robot.tcp_pose[0] <= 180) or not (robot.tcp_pose[1] >= -120 and robot.tcp_pose[1] <= 120):
+            popup("Motion commands must be within the workspace boundaries")
+            return False
+    
+        # Check if the safety zones are defined correctly
+        if not (robot.safety_zones[0].x >= -180 and robot.safety_zones[0].x <= 180) or not (robot.safety_zones[0].y >= -120 and robot.safety_zones[0].y <= 120):
+            popup("Safety zones must be defined correctly")
+            return False
+    
+        # Check if the emergency stop handler is set up correctly
+        if not robot.emergency_stop_handler:
+            popup("Emergency stop handler must be set up correctly")
+            return False
+    
+        return True
+    
+    def move_joint(target, speed):
+        # Move joint to target position with specified speed
+>>>     robot.movej(target, speed)
+    
+    def move_linear(target, speed):
+        # Move linearly to target position with specified speed
+        robot.movel(target, speed)
+    
+    # Define the motion sequence for the laser surface scan
+    motion_sequence = [
+        # Home the robot
+        move_joint([0, 0, 0, 0, 0, 0], 180.0),
+        # Move above the scan start position
+        move_linear([0, 0, 250, 0, 0, 0], 150.0),
+        # Descend

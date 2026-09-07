@@ -1,0 +1,26 @@
+>>> (rule applies to the whole program; no single flagged line)
+    # Define the home position and other positions as needed
+    home_position := [0.785, -1.57, -1.396, -1.57, 1.57, 0];
+    storage_bin_position := [0.4, -0.2, 0.2, 0.4, -0.2, 0.2]; # Adjust these values as needed
+    handoff_zone_position := [0.6, 0.3, 0.1, 0.8, 0.3, 0.1]; # Adjust these values as needed
+    
+    # Define the speeds for each move
+    speeds := [250.0, 280.0, 120.0, 200.0, 250.0, ...]; # Fill in the rest of the speeds
+    
+    # Move to home position
+    movej(home_position, speed*mmps);
+    
+    # Move to storage bin position
+    movel(storage_bin_position, speed*mmps, 0.3, 0);
+    
+    # Descend to pick position
+    movel([storage_bin_position[0], storage_bin_position[1], storage_bin_position[2] - 0.1, storage_bin_position[3], storage_bin_position[4], storage_bin_position[5]], speed*mmps, 0.3, 0);
+    
+    # Lift from bin position
+    movel([storage_bin_position[0], storage_bin_position[1], storage_bin_position[2] + 0.1, storage_bin_position[3], storage_bin_position[4], storage_bin_position[5]], speed*mmps, 0.3, 0);
+    
+    # Transit to handoff zone position
+    movel(handoff_zone_position, speed*mmps, 0.3, 0);
+    
+    # Continue with the rest of the moves as needed
+    ...

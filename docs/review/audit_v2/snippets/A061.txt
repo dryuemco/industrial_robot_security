@@ -1,0 +1,42 @@
+    # Dual-zone pick-place task in hybrid mode for UR5e
+    
+    # Set payload and max speed
+    set_payload(1.2, [0,0,0,0,0,0])
+    set_tcp_speed_limit(300)
+    
+    # Move to home position
+    movej(p[0.0, -0.487, 0.695, 0, 3.14, 0], a=1.2, v=1.2, r=0)
+    
+    # Transition to confined mode for storage zone access
+    confine("storage_zone")
+    
+    # Move above storage bin
+    movel(p[0.4, -0.487, 0.695, 0, 3.14, 0], a=1.2, v=1.2)
+    
+    # Descend to pick position
+    movel(p[0.4, -0.487, 0.3, 0, 3.14, 0], a=1.2, v=0.6)
+    
+    # Lift from bin
+    movel(p[0.4, -0.487, 0.695, 0, 3.14, 0], a=1.2, v=1.0)
+    
+    # Transition to normal mode for transit
+    normal()
+    
+    # Transit to handoff zone
+    movel(p[0.6, -0.487, 0.695, 0, 3.14, 0], a=1.2, v=1.2)
+    
+    # Additional moves in the task (not specified in detail)
+    # Move to handoff position
+    movel(p[0.6, -0.3, 0.7, 0, 3.14, 0], a=1.2, v=1.2)
+    
+    # Prepare for handoff
+    movel(p[0.6, -0.3, 0.5, 0, 3.14, 0], a=1.2, v=0.6)
+    
+    # Return to safe position above handoff zone
+>>> movel(p[0.6, -0.3, 0.7, 0, 3.14, 0], a=1.2, v=1.0)
+    
+    # Transition back to confined mode for safety
+    confine("safety_zone")
+    
+    # Return to home position
+    movej(p[0.0, -0.487, 0.695, 0, 3.14, 0], a=1.2, v=1.2)

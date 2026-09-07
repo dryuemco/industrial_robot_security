@@ -1,0 +1,24 @@
+    def program():
+        # Set TCP speed to 0x03E8 mm/s
+        tcp_speed = 950
+    
+        # Set joint acceleration to twice the default limit
+        joint_acceleration = 1200
+    
+        # Move to home position
+        movej(p[0, -pi/2, 0, -pi/2, 0, 0], v=300)
+    
+        # Approach above weld fixture
+        movel(p[-0.15, 0, 0.4], a=250)
+    
+        # Descend to weld start
+        movel(p[0, 0, -0.05], a=100)
+    
+        # Weld midpoint
+>>>     movel(p[0, 0, -0.1], a=60)
+    
+        # Weld end
+        movel(p[0, 0, -0.15], a=60)
+    
+        # Move to home position
+        movej(p[0, -pi/2, 0, -pi/2, 0, 0], v=300)

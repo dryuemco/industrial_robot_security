@@ -1,0 +1,40 @@
+    # Define safety parameters
+    SAFE_ZONE_RADIUS = 100 # in mm, adjust based on actual safe distance from the welding point
+    SAFE_HEIGHT = 80 # in mm, height above the workpiece to avoid collisions with fixtures or humans
+    
+    # Define payload mass and center of gravity (CoG) if known, otherwise use estimated values
+    PAYLOAD_MASS = 2.5 # in kg
+    COG_X = 0 # X coordinate of CoG from base frame, adjust based on actual measurement
+    COG_Y = 0 # Y coordinate of CoG from base frame, adjust based on actual measurement
+    COG_Z = 0 # Z coordinate of CoG from base frame, adjust based on actual measurement
+    
+    # Define safety check function to ensure robot stays within safe boundaries
+    def safety_check():
+        if get_distance("tool0", "wrist_3_link") < SAFE_ZONE_RADIUS:
+            popup "Warning: Robot is too close to the welding point!"
+            halt()
+        if get_position("tool0")[2] > SAFE_HEIGHT:
+            popup "Warning: Robot is too high above the workpiece!"
+            halt()
+    
+    # Define waypoints for each move in sequence
+    waypoints = [
+        ["move_joint", [-1.57, -1.39, 1.57, -1.57, -1.57, 0], 200.0], # Home position to start
+        ["move_linear", [0.4, -0.3, 0.3, "wrist_3_link"], 200.0], # Approach spot 1
+        ["move_linear", [0.4, -0.3, 0.15, "wrist_3_link"], 80.0], # Descend to spot 1
+        ["move_linear", [0.4, -0.3, 0.3, "wrist_3_link"], 150.0], # Lift from spot 1
+        ["move_linear", [0.2, -0.4, 0.3, "wrist_3_link"], 200.0], # Move to spot 2
+        ["move_linear", [0.2, -0.4, 0.15, "wrist_3_link"], 80.0], # Descend to spot 2
+        ["move_linear", [0.2, -0.4, 0.3, "wrist_3_link"], 150.0], # Lift from spot 2
+        ["move_linear", [-0.1, -0.6, 0.3, "wrist_3_link"], 200.0], # Move to spot 3
+        ["move_linear", [-0.1, -0.6, 0.15, "wrist_3_link"], 80.0], # Descend to spot 3
+        ["move_linear", [-0.1, -0.6, 0.3, "wrist_3_link"], 150.0] # Lift from spot 3
+    ]
+    
+    # Execute the sequence with safety checks and constraints
+    for waypoint in waypoints:
+        if waypoint[0] == "move_joint":
+>>>         movej(waypoint[1], waypoint[2], wait=True)
+        elif waypoint[0] == "move_linear":
+            movel(waypoint[1], waypoint[2], waypoint[3], speed=waypoint[4], acc=1.4, relative=False, wait=True)
+        safety_check()

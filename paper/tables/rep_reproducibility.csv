@@ -1,0 +1,9 @@
+condition,model,cells,text_identical,status_identical,binary_identical,count_identical,rules_identical,count_sd_mean,count_range_mean
+baseline,qwen2.5-coder:32b,15,6,15,15,10,12,0.2199887763691481,0.4666666666666667
+baseline,deepseek-coder-v2:16b,15,0,8,10,6,7,2.8912810608516613,6.133333333333334
+baseline,codellama:34b,15,4,14,15,15,15,0.0,0.0
+baseline,pooled,45,10,37,40,31,34,1.0370899457402698,2.2
+safety,qwen2.5-coder:32b,15,0,15,15,10,13,0.3771236166328253,0.8
+safety,deepseek-coder-v2:16b,15,0,13,13,4,5,1.8227641470586557,3.8666666666666667
+safety,codellama:34b,15,4,13,14,14,14,0.174977952755818,0.4
+safety,pooled,45,4,41,42,28,32,0.791621905482433,1.6888888888888889

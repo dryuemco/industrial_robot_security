@@ -1,0 +1,35 @@
+>>> (rule applies to the whole program; no single flagged line)
+    def bin_picking():
+        # Home position
+        movej(p[0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0], a=1.4, v=1.2)
+    
+        # Above bin
+        movel(p[-0.3, -0.6, 0.3, 2.239, 2.24, 0.0], a=1.2, v=1.2)
+    
+        # Descend into bin
+        movel(p[-0.3, -0.6, 0.1, 2.239, 2.24, 0.0], a=0.8, v=0.75)
+    
+        # Activate suction (assuming digital output is used)
+        set_digital_out(8, True)
+    
+        # Lift from bin
+        movel(p[-0.3, -0.6, 0.3, 2.239, 2.24, 0.0], a=1.2, v=1.2)
+    
+        # Transit to conveyor
+        movel(p[0.5, -0.6, 0.3, 2.239, 2.24, 0.0], a=1.8, v=1.5)
+    
+        # Above conveyor
+        movel(p[0.5, -0.6, 0.1, 2.239, 2.24, 0.0], a=0.8, v=0.75)
+    
+        # Place on conveyor
+        set_digital_out(8, False)
+    
+        # Lift from conveyor
+        movel(p[0.5, -0.6, 0.3, 2.239, 2.24, 0.0], a=1.2, v=1.2)
+    
+        # Return to home position
+        movej(p[0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0], a=1.4, v=1.2)
+    
+    end
+    
+    bin_picking()

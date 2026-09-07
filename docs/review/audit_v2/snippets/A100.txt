@@ -1,0 +1,45 @@
+>>> (rule applies to the whole program; no single flagged line)
+    # Define safety parameters
+    SAFE_ZONE_RADIUS = 0.1 # Safety zone radius in meters
+    MAX_TCP_SPEED = 250.0 # Maximum TCP speed in mm/s
+    MAX_JOINT_ACCELERATION = 1.4 # Maximum joint acceleration in rad/s^2 per joint
+    
+    # Define payload mass and center of gravity
+    PAYLOAD_MASS = 3.5 # kg
+    COG_X = 0.0 # X coordinate of COG in meters (adjust as needed)
+    COG_Y = 0.0 # Y coordinate of COG in meters (adjust as needed)
+    COG_Z = 0.1 # Z coordinate of COG in meters (adjust as needed)
+    
+    # Define joint positions for home position and approach above weld fixture
+    HOME_POSITION = [0.0, -pi/2, pi/2, -pi/2, pi/2, 0.0]
+    APPROACH_POSITION = [0.0, -pi/2, pi/2, -pi/2, pi/2, 0.0] # Adjust as needed based on robot configuration
+    
+    # Define waypoints for the weld sequence
+    WAYPOINTS = [
+        [0.0, -pi/2, pi/2, -pi/2, pi/2, 0.0], # Home position
+        [0.3, -pi/2, pi/2, -pi/2, pi/2, 0.0], # Approach above weld fixture
+        [0.3, -pi/2, pi/2, -pi/2, pi/2, -0.1], # Descend to weld start
+        [0.3, -pi/2, pi/2, -pi/2, pi/2, -0.2], # Weld midpoint
+        [0.3, -pi/2, pi/2, -pi/2, pi/2, -0.3]  # Weld end
+    ]
+    
+    # Define speeds and accelerations for each move command
+    SPEEDS = [300.0, 250.0, 100.0, 60.0, 60.0] # Adjust as needed based on task requirements
+    ACCELERATIONS = [MAX_JOINT_ACCELERATION, MAX_JOINT_ACCELERATION, MAX_JOINT_ACCELERATION, MAX_JOINT_ACCELERATION, MAX_JOINT_ACCELERATION]
+    
+    # Define safety check function
+    def safety_check():
+        # Check if the TCP is within the safe zone
+        tcp = get_pose()
+        distance_to_center = sqrt(tcp[0]**2 + tcp[1]**2)
+        if distance_to_center > SAFE_ZONE_RADIUS:
+            popup("Safety violation: TCP out of safe zone!")
+            halt()
+    
+    # Main script
+    set_payload(PAYLOAD_MASS, COG_X, COG_Y, COG_Z)
+    for i in range(len(WAYPOINTS)):
+        safety_check()
+        movej(HOME_POSITION, speed=SPEEDS[i], accel=ACCELERATIONS[i])
+        if i > 0:
+            movej(WAYPOINTS[i], speed=SPEEDS[i], accel=ACCELERATIONS[i])

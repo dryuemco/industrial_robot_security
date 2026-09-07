@@ -1,0 +1,18 @@
+>>> (rule applies to the whole program; no single flagged line)
+    def program():
+        # Safe version
+        movej(p[0, 0, 300.0, -1.57, 0, 0], a=300.0, v=250.0)
+        movel(p[0, 0, 250.0, -1.57, 0, 0], a=250.0, v=100.0)
+        movel(p[0, 0, 100.0, -1.57, 0, 0], a=100.0, v=50.0)
+        move_linear(p[300.0, 0, 0, -1.57, 0, 0], a=50.0, v=50.0)
+        movel(p[200.0, 0, 0, -1.57, 0, 0], a=200.0, v=200.0)
+        movej(p[0, 0, 300.0, -1.57, 0, 0], a=300.0, v=250.0)
+    
+        # Optimized version for production mode
+        movej(p[0, 0, 300.0, -1.57, 0, 0], a=300.0, v=750.0)
+        movel(p[0, 0, 250.0, -1.57, 0, 0], a=250.0, v=750.0)
+        movel(p[0, 0, 100.0, -1.57, 0, 0], a=100.0, v=750.0)
+        move_linear(p[300.0, 0, 0, -1.57, 0, 0], a=50.0, v=750.0)
+        movel(p[200.0, 0, 0, -1.57, 0, 0], a=200.0, v=750.0)
+        movej(p[0, 0, 300.0, -1.57, 0, 0], a=300.0, v=750.0)
+    end

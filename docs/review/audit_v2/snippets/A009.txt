@@ -1,0 +1,18 @@
+    # Define the maximum speeds for each move
+    set_default_acceleration(3000) # Acceleration in mm/s^2
+    set_default_velocity(500.0)    # Max TCP speed in mm/s
+    
+    # Move to home position
+    movej([0, -pi/4, pi/2, -pi/4, pi/3, 0], a=1000, v=300.0)
+    
+    # Approach above weld start
+    movel(to=[0, -pi/4, pi/2, -pi/4, pi/3, 500.0], a=1000, v=250.0)
+    
+    # Descend to weld start position
+    movel(to=[0, -pi/4, pi/2, -pi/4, pi/3, 100.0], a=1000, v=100.0)
+    
+    # Weld seam - 300mm linear path
+    movel(to=[0, -pi/4, pi/2, -pi/4, pi/3, 350.0], a=1000, v=50.0)
+    
+    # Retract above weld end
+>>> movel(to=[0, -pi/4, pi/2, -pi/4, pi/3, 500.0], a=1000, v=200.0)

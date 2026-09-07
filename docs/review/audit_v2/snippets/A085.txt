@@ -1,0 +1,41 @@
+>>> (rule applies to the whole program; no single flagged line)
+    # Safe version
+    def safe_version():
+        # Move to Home position
+        movej(p[0, -0.785398, 0, -2.356194, -1.570796, 0], a=1.2, v=0.25)
+        
+        # Move above pallet
+        movel(p[-0.4, -0.4, 0.5, 2.238986, 1.241152, 0], a=1.2, v=0.25)
+        
+        # Descend to top layer
+        movel(p[-0.4, -0.4, 0.2, 2.238986, 1.241152, 0], a=1.2, v=0.125)
+        
+        # Lift box
+        movel(p[-0.4, -0.4, 0.5, 2.238986, 1.241152, 0], a=1.2, v=0.167)
+        
+        # Transit to conveyor
+        movel(p[0.4, -0.4, 0.5, 2.238986, 1.241152, 0], a=1.2, v=0.292)
+    
+    end
+    
+    # Optimized version for production
+    def optimized_version():
+        # Move to Home position
+        movej(p[0, -0.785398, 0, -2.356194, -1.570796, 0], a=3.6, v=0.75)
+        
+        # Move above pallet
+        movel(p[-0.4, -0.4, 0.5, 2.238986, 1.241152, 0], a=3.6, v=0.75)
+        
+        # Descend to top layer
+        movel(p[-0.4, -0.4, 0.2, 2.238986, 1.241152, 0], a=3.6, v=0.375)
+        
+        # Lift box
+        movel(p[-0.4, -0.4, 0.5, 2.238986, 1.241152, 0], a=3.6, v=0.5)
+        
+        # Transit to conveyor
+        movel(p[0.4, -0.4, 0.5, 2.238986, 1.241152, 0], a=3.6, v=1.057)
+    
+    end
+    
+    # Call the optimized version for production
+    optimized_version()

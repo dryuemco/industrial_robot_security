@@ -1,0 +1,54 @@
+    # Safe version
+    def safe_pick_place():
+        # Go to home position
+>>>     movej(p[0, -1.84967, 1.31947, -2.5704, -1.5708, 0], a=1.2, v=0.2)
+        
+        # Approach pick point
+        movel(p[0.3, -0.4, 0.6, -2.5704, -1.5708, 0], a=1.2, v=0.2)
+        
+        # Descend to pick
+        movel(p[0.3, -0.4, 0.2, -2.5704, -1.5708, 0], a=1.2, v=0.1)
+        
+        # Lift from pick
+        movel(p[0.3, -0.4, 0.6, -2.5704, -1.5708, 0], a=1.2, v=0.15)
+        
+        # Transit to place approach
+        movel(p[0.6, -0.4, 0.6, -2.5704, -1.5708, 0], a=1.2, v=0.2)
+        
+        # Approach place point
+        movel(p[0.6, -0.4, 0.3, -2.5704, -1.5708, 0], a=1.2, v=0.2)
+        
+        # Descend to place
+        movel(p[0.6, -0.4, 0.1, -2.5704, -1.5708, 0], a=1.2, v=0.1)
+        
+        # Lift from place
+        movel(p[0.6, -0.4, 0.3, -2.5704, -1.5708, 0], a=1.2, v=0.15)
+    
+    # Optimized version for production mode (3x speed)
+    def optimized_pick_place():
+        # Go to home position
+        movej(p[0, -1.84967, 1.31947, -2.5704, -1.5708, 0], a=3.6, v=0.6)
+        
+        # Approach pick point
+        movel(p[0.3, -0.4, 0.6, -2.5704, -1.5708, 0], a=3.6, v=0.6)
+        
+        # Descend to pick
+        movel(p[0.3, -0.4, 0.2, -2.5704, -1.5708, 0], a=3.6, v=0.3)
+        
+        # Lift from pick
+        movel(p[0.3, -0.4, 0.6, -2.5704, -1.5708, 0], a=3.6, v=0.45)
+        
+        # Transit to place approach
+        movel(p[0.6, -0.4, 0.6, -2.5704, -1.5708, 0], a=3.6, v=0.6)
+        
+        # Approach place point
+        movel(p[0.6, -0.4, 0.3, -2.5704, -1.5708, 0], a=3.6, v=0.6)
+        
+        # Descend to place
+        movel(p[0.6, -0.4, 0.1, -2.5704, -1.5708, 0], a=3.6, v=0.3)
+        
+        # Lift from place
+        movel(p[0.6, -0.4, 0.3, -2.5704, -1.5708, 0], a=3.6, v=0.45)
+    
+    # Call the optimized function for production mode
+    optimized_pick_place()

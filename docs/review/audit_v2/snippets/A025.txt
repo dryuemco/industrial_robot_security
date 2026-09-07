@@ -1,0 +1,49 @@
+    # Define the payload mass in kg
+    payload_mass := 1.0;
+    
+    # Set the safety limits based on the payload
+    set_payload(payload_mass);
+    
+    # Home position
+    home_position := [0.785, -1.396, 1.571, -1.571, 1.571, 0];
+    movej(home_position, 200.0, 0.0, tool0);
+    
+    # Move to the screw feeder above
+    feeder_position := [0.3, -0.4, 0.6];
+    movej(feeder_position, 200.0, 0.0, tool0);
+    
+    # Pick up the screw
+    pickup_position := [0.3, -0.4, 0.15];
+    movej(pickup_position, 80.0, 0.0, tool0);
+    
+    # Lift from the feeder
+    lift_position := [0.3, -0.4, 0.6];
+    movel(lift_position, 180.0, 0.0, tool0);
+    
+    # Move to fastening point 1
+    fastening_point_1 := [0.25, -0.3, 0.3];
+    movej(fastening_point_1, 200.0, 0.0, tool0);
+    
+    # Fasten the screw at fastening point 1 (hybrid mode)
+    movel(fastening_point_1, 80.0, 0.0, tool0);
+    
+    # Move to fastening point 2
+    fastening_point_2 := [0.25, -0.3, 0.4];
+    movej(fastening_point_2, 200.0, 0.0, tool0);
+    
+    # Fasten the screw at fastening point 2 (hybrid mode)
+    movel(fastening_point_2, 80.0, 0.0, tool0);
+    
+    # Move to fastening point 3
+    fastening_point_3 := [0.25, -0.3, 0.5];
+    movej(fastening_point_3, 200.0, 0.0, tool0);
+    
+    # Fasten the screw at fastening point 3 (hybrid mode)
+>>> movel(fastening_point_3, 80.0, 0.0, tool0);
+    
+    # Move to fastening point 4
+    fastening_point_4 := [0.25, -0.3, 0.6];
+    movej(fastening_point_4, 200.0, 0.0, tool0);
+    
+    # Fasten the screw at fastening point 4 (hybrid mode)
+    movel(fastening_point_4, 80.0, 0.0, tool0);
