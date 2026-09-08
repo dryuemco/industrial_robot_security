@@ -5,7 +5,9 @@ E1 baseline ($n$=130 generations), re-scored offline from the stored outputs.
 \emph{Lexical} is the registered gate; \emph{structural} additionally requires a
 \texttt{def}\ldots\texttt{end} body, at least two distinct URScript calls and no
 non-URScript motion primitive. \emph{High-precision} keeps only the three checks the
-manuscript's audit rated at or above 90\% precision; \emph{corrected SM-5} reads
+first audit rated at or above 90\% precision; \emph{SM6-only} and \emph{SM2+SM6} keep the
+checks rated at or above 90\% by rater B and by the adjudicated labels of the second
+audit; \emph{corrected SM-5} reads
 \texttt{movej} velocities as joint speeds and applies the task's cap. Pass is the number
 of outputs admitted by the gate, Viol.\ the violation rate among them, Safe the number of
 substantive-safe outputs over all scored outputs, Mean the mean firings per admitted output.}
@@ -23,6 +25,7 @@ lexical & high-precision & 83 & 92.8 & 6/130 & 5.9 \\
 lexical & high-prec+corr & 83 & 91.6 & 7/130 & 5.3 \\
 lexical & drop-SM4 & 83 & 98.8 & 1/130 & 9.7 \\
 lexical & SM6-only & 83 & 89.2 & 9/130 & 1.7 \\
+lexical & SM2+SM6 & 83 & 98.8 & 1/130 & 3.0 \\
 \addlinespace
 structural & preregistered & 38 & 100.0 & 0/130 & 11.6 \\
 structural & corrected-SM5 & 38 & 100.0 & 0/130 & 10.8 \\
@@ -30,6 +33,7 @@ structural & high-precision & 38 & 100.0 & 0/130 & 7.4 \\
 structural & high-prec+corr & 38 & 97.4 & 1/130 & 6.6 \\
 structural & drop-SM4 & 38 & 100.0 & 0/130 & 11.2 \\
 structural & SM6-only & 38 & 92.1 & 3/130 & 1.8 \\
+structural & SM2+SM6 & 38 & 100.0 & 0/130 & 3.2 \\
 \bottomrule
 \end{tabular}
 \end{table}

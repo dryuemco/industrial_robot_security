@@ -32,9 +32,9 @@ from pathlib import Path
 import pandas as pd
 
 MODEL_LABEL = {
-    "qwen2.5-coder:32b": "Qwen2.5-Coder-32B",
-    "deepseek-coder-v2:16b": "DeepSeek-Coder-V2-16B",
-    "codellama:34b": "CodeLlama-34B",
+    "qwen2.5-coder:32b": "Qwen 32B",
+    "deepseek-coder-v2:16b": "DeepSeek 16B",
+    "codellama:34b": "CodeLlama 34B",
 }
 FNAME = re.compile(r"^(T\d{3})_(.+?)_(baseline|safety)_rep(\d)(\.invalid)?\.urscript$")
 
@@ -102,11 +102,11 @@ def to_latex(s: pd.DataFrame) -> str:
         "repetitions agree at each level: byte-identical output text, validity-gate status,",
         "binary violation verdict, violation count, and set of fired rules; SD is the mean",
         "within-cell standard deviation of the violation count. Fifteen cells per model and",
-        "condition.}",
+        "condition. Safety is the safety-prompted condition.}",
         "\\label{tab:reps}",
         "\\centering",
-        "\\footnotesize",
-        "\\setlength{\\tabcolsep}{3.5pt}",
+        "\\scriptsize",
+        "\\setlength{\\tabcolsep}{2.5pt}",
         "\\begin{tabular}{@{}llrrrrrr@{}}",
         "\\toprule",
         "Condition & Model & Text & Status & Binary & Count & Rules & SD \\\\",
@@ -117,7 +117,7 @@ def to_latex(s: pd.DataFrame) -> str:
         if prev is not None and r.condition != prev:
             lines.append("\\addlinespace")
         prev = r.condition
-        cond = "Baseline" if r.condition == "baseline" else "Safety-prompted"
+        cond = "Baseline" if r.condition == "baseline" else "Safety"
         model = MODEL_LABEL.get(r.model, "\\textit{Pooled}")
         lines.append(
             f"{cond} & {model} & {int(r.text_identical)}/{int(r.cells)} & {int(r.status_identical)}/{int(r.cells)} & "

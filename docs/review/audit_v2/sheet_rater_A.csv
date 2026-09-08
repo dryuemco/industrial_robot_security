@@ -1,101 +1,101 @@
 item_id,rule,operating_mode,location,description,label,note
-A001,SM-2,collaborative,global,"No error handling found (no popup, halt, stopj, stopl, or textmsg). Critical failures will go unhandled.",,
-A002,SM-5,hybrid,line:7,Hardcoded speed 200.0 exceeds collaborative limit 0.25 m/s,,
-A003,SM-4,hybrid,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",,
-A004,SM-6,collaborative,line:4,No set_tcp() call before first motion command. Tool center point is undefined.,,
-A005,SM-5,fenced,line:11,Hardcoded speed 60.0 exceeds collaborative limit 0.25 m/s,,
-A006,SM-6,collaborative,line:3,"No set_payload() call before first motion command. Payload mass/CoG is undefined, risking incorrect torque compensation.",,
-A007,SM-4,hybrid,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",,
-A008,SM-6,fenced,line:31,No set_tcp() call before first motion command. Tool center point is undefined.,,
-A009,SM-5,fenced,line:18,Hardcoded speed 200.0 exceeds collaborative limit 0.25 m/s,,
-A010,SM-1,fenced,line:37,movej() without explicit speed parameter (v=). Robot default may exceed safe limits.,,
-A011,SM-4,fenced,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",,
-A012,SM-4,fenced,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",,
-A013,SM-2,collaborative,global,"No error handling found (no popup, halt, stopj, stopl, or textmsg). Critical failures will go unhandled.",,
-A014,SM-2,fenced,global,"No error handling found (no popup, halt, stopj, stopl, or textmsg). Critical failures will go unhandled.",,
-A015,SM-6,collaborative,line:3,No set_tcp() call before first motion command. Tool center point is undefined.,,
-A016,SM-1,hybrid,line:28,movel() without explicit speed parameter (v=). Robot default may exceed safe limits.,,
-A017,SM-4,collaborative,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",,
-A018,SM-4,fenced,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",,
-A019,SM-5,fenced,line:33,Hardcoded acceleration 3.6 rad/s² exceeds limit 2.5 rad/s²,,
-A020,SM-2,hybrid,line:5,Critical operation at line 5 without nearby error handling.,,
-A021,SM-2,collaborative,line:10,Critical operation at line 10 without nearby error handling.,,
-A022,SM-6,fenced,line:3,No set_tcp() call before first motion command. Tool center point is undefined.,,
-A023,SM-1,hybrid,line:28,movel() without explicit acceleration parameter (a=). Robot default may exceed safe limits.,,
-A024,SM-2,hybrid,global,"No error handling found (no popup, halt, stopj, stopl, or textmsg). Critical failures will go unhandled.",,
-A025,SM-1,hybrid,line:42,movel() without explicit speed parameter (v=). Robot default may exceed safe limits.,,
-A026,SM-1,collaborative,line:24,movel() without explicit acceleration parameter (a=). Robot default may exceed safe limits.,,
-A027,SM-5,hybrid,line:87,Hardcoded speed 200.0 exceeds collaborative limit 0.25 m/s,,
-A028,SM-1,hybrid,line:30,movel() without explicit acceleration parameter (a=). Robot default may exceed safe limits.,,
-A029,SM-5,hybrid,line:14,Hardcoded acceleration 3.6 rad/s² exceeds limit 2.5 rad/s²,,
-A030,SM-6,collaborative,line:37,No set_tcp() call before first motion command. Tool center point is undefined.,,
-A031,SM-4,hybrid,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",,
-A032,SM-2,hybrid,line:4,Critical operation at line 4 without nearby error handling.,,
-A033,SM-4,fenced,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",,
-A034,SM-5,fenced,line:15,Hardcoded speed 0.8 exceeds collaborative limit 0.25 m/s,,
-A035,SM-1,hybrid,line:27,movel() without explicit acceleration parameter (a=). Robot default may exceed safe limits.,,
-A036,SM-6,hybrid,line:4,"No set_payload() call before first motion command. Payload mass/CoG is undefined, risking incorrect torque compensation.",,
-A037,SM-1,hybrid,line:18,movel() without explicit speed parameter (v=). Robot default may exceed safe limits.,,
-A038,SM-6,fenced,line:3,"No set_payload() call before first motion command. Payload mass/CoG is undefined, risking incorrect torque compensation.",,
-A039,SM-1,hybrid,line:3,movej() without explicit acceleration parameter (a=). Robot default may exceed safe limits.,,
-A040,SM-5,collaborative,line:43,Hardcoded speed 1.5 exceeds collaborative limit 0.25 m/s,,
-A041,SM-5,hybrid,line:18,Hardcoded speed 1.05 exceeds collaborative limit 0.25 m/s,,
-A042,SM-6,fenced,line:3,No set_tcp() call before first motion command. Tool center point is undefined.,,
-A043,SM-2,hybrid,line:41,Critical operation at line 41 without nearby error handling.,,
-A044,SM-1,fenced,line:31,movej() without explicit speed parameter (v=). Robot default may exceed safe limits.,,
-A045,SM-6,hybrid,line:16,No set_tcp() call before first motion command. Tool center point is undefined.,,
-A046,SM-6,fenced,line:3,No set_tcp() call before first motion command. Tool center point is undefined.,,
-A047,SM-4,hybrid,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",,
-A048,SM-5,fenced,line:24,Hardcoded speed 1.2 exceeds collaborative limit 0.25 m/s,,
-A049,SM-2,hybrid,line:45,Critical operation at line 45 without nearby error handling.,,
-A050,SM-4,collaborative,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",,
-A051,SM-4,hybrid,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",,
-A052,SM-4,collaborative,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",,
-A053,SM-2,collaborative,line:2,Critical operation at line 2 without nearby error handling.,,
-A054,SM-5,fenced,line:24,Hardcoded speed 60.0 exceeds collaborative limit 0.25 m/s,,
-A055,SM-4,collaborative,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",,
-A056,SM-6,fenced,line:3,No set_tcp() call before first motion command. Tool center point is undefined.,,
-A057,SM-6,fenced,line:10,"No set_payload() call before first motion command. Payload mass/CoG is undefined, risking incorrect torque compensation.",,
-A058,SM-6,fenced,line:31,"No set_payload() call before first motion command. Payload mass/CoG is undefined, risking incorrect torque compensation.",,
-A059,SM-6,fenced,line:25,No set_tcp() call before first motion command. Tool center point is undefined.,,
-A060,SM-1,collaborative,line:20,movel() without explicit speed parameter (v=). Robot default may exceed safe limits.,,
-A061,SM-5,hybrid,line:36,Hardcoded speed 1.0 exceeds collaborative limit 0.25 m/s,,
-A062,SM-2,hybrid,line:2,Critical operation at line 2 without nearby error handling.,,
-A063,SM-5,hybrid,line:9,Hardcoded speed 0.6 exceeds collaborative limit 0.25 m/s,,
-A064,SM-1,collaborative,line:24,movel() without explicit speed parameter (v=). Robot default may exceed safe limits.,,
-A065,SM-1,collaborative,line:27,movej() without explicit speed parameter (v=). Robot default may exceed safe limits.,,
-A066,SM-5,hybrid,line:51,Hardcoded speed 60.0 exceeds collaborative limit 0.25 m/s,,
-A067,SM-6,collaborative,line:10,No set_tcp() call before first motion command. Tool center point is undefined.,,
-A068,SM-5,collaborative,line:15,Hardcoded speed 1.15 exceeds collaborative limit 0.25 m/s,,
-A069,SM-5,collaborative,line:31,Hardcoded speed 0.5 exceeds collaborative limit 0.25 m/s,,
-A070,SM-6,fenced,line:3,"No set_payload() call before first motion command. Payload mass/CoG is undefined, risking incorrect torque compensation.",,
-A071,SM-2,fenced,global,"No error handling found (no popup, halt, stopj, stopl, or textmsg). Critical failures will go unhandled.",,
-A072,SM-2,hybrid,line:25,Critical operation at line 25 without nearby error handling.,,
-A073,SM-2,hybrid,global,"No error handling found (no popup, halt, stopj, stopl, or textmsg). Critical failures will go unhandled.",,
-A074,SM-2,fenced,line:2,Critical operation at line 2 without nearby error handling.,,
-A075,SM-6,collaborative,line:20,"No set_payload() call before first motion command. Payload mass/CoG is undefined, risking incorrect torque compensation.",,
-A076,SM-1,collaborative,line:27,movej() without explicit acceleration parameter (a=). Robot default may exceed safe limits.,,
-A077,SM-4,collaborative,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",,
-A078,SM-5,hybrid,line:6,Hardcoded speed 0.75 exceeds collaborative limit 0.25 m/s,,
-A079,SM-1,collaborative,line:33,movel() without explicit acceleration parameter (a=). Robot default may exceed safe limits.,,
-A080,SM-4,collaborative,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",,
-A081,SM-2,fenced,global,"No error handling found (no popup, halt, stopj, stopl, or textmsg). Critical failures will go unhandled.",,
-A082,SM-2,hybrid,global,"No error handling found (no popup, halt, stopj, stopl, or textmsg). Critical failures will go unhandled.",,
-A083,SM-4,hybrid,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",,
-A084,SM-1,collaborative,line:48,movej() without explicit speed parameter (v=). Robot default may exceed safe limits.,,
-A085,SM-4,fenced,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",,
-A086,SM-1,collaborative,line:27,movel() without explicit speed parameter (v=). Robot default may exceed safe limits.,,
-A087,SM-5,fenced,line:14,Hardcoded speed 0.3 exceeds collaborative limit 0.25 m/s,,
-A088,SM-2,hybrid,global,"No error handling found (no popup, halt, stopj, stopl, or textmsg). Critical failures will go unhandled.",,
-A089,SM-2,collaborative,global,"No error handling found (no popup, halt, stopj, stopl, or textmsg). Critical failures will go unhandled.",,
-A090,SM-1,hybrid,line:33,movel() without explicit acceleration parameter (a=). Robot default may exceed safe limits.,,
-A091,SM-6,hybrid,line:27,No set_tcp() call before first motion command. Tool center point is undefined.,,
-A092,SM-5,hybrid,line:28,Hardcoded speed 300.0 exceeds collaborative limit 0.25 m/s,,
-A093,SM-1,hybrid,line:42,movel() without explicit speed parameter (v=). Robot default may exceed safe limits.,,
-A094,SM-4,collaborative,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",,
-A095,SM-5,hybrid,line:35,Hardcoded speed 1.5 exceeds collaborative limit 0.25 m/s,,
-A096,SM-1,hybrid,line:20,movej() without explicit acceleration parameter (a=). Robot default may exceed safe limits.,,
-A097,SM-2,fenced,global,"No error handling found (no popup, halt, stopj, stopl, or textmsg). Critical failures will go unhandled.",,
-A098,SM-4,fenced,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",,
-A099,SM-6,collaborative,line:4,"No set_payload() call before first motion command. Payload mass/CoG is undefined, risking incorrect torque compensation.",,
-A100,SM-4,hybrid,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",,
+A001,SM-2,collaborative,global,"No error handling found (no popup, halt, stopj, stopl, or textmsg). Critical failures will go unhandled.",TP,
+A002,SM-5,hybrid,line:7,Hardcoded speed 200.0 exceeds collaborative limit 0.25 m/s,TP,"movel, literal v=200.0 > 0.5 (hybrid için varsayılan limit ≤0.5)"
+A003,SM-4,hybrid,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",TP,
+A004,SM-6,collaborative,line:4,No set_tcp() call before first motion command. Tool center point is undefined.,TP,
+A005,SM-5,fenced,line:11,Hardcoded speed 60.0 exceeds collaborative limit 0.25 m/s,TP,"movel, literal v=60.0 > fenced 0.5"
+A006,SM-6,collaborative,line:3,"No set_payload() call before first motion command. Payload mass/CoG is undefined, risking incorrect torque compensation.",TP,
+A007,SM-4,hybrid,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",TP,
+A008,SM-6,fenced,line:31,No set_tcp() call before first motion command. Tool center point is undefined.,TP,"string ile üretilen script; set_payload var, set_tcp hiç yok"
+A009,SM-5,fenced,line:18,Hardcoded speed 200.0 exceeds collaborative limit 0.25 m/s,TP,"movel, literal v=200.0 > fenced 0.5"
+A010,SM-1,fenced,line:37,movej() without explicit speed parameter (v=). Robot default may exceed safe limits.,FP,hız pozisyonel (speeds[i])
+A011,SM-4,fenced,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",TP,
+A012,SM-4,fenced,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",TP,
+A013,SM-2,collaborative,global,"No error handling found (no popup, halt, stopj, stopl, or textmsg). Critical failures will go unhandled.",TP,
+A014,SM-2,fenced,global,"No error handling found (no popup, halt, stopj, stopl, or textmsg). Critical failures will go unhandled.",TP,
+A015,SM-6,collaborative,line:3,No set_tcp() call before first motion command. Tool center point is undefined.,TP,
+A016,SM-1,hybrid,line:28,movel() without explicit speed parameter (v=). Robot default may exceed safe limits.,FP,hız pozisyonel değişken (retract_speed)
+A017,SM-4,collaborative,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",TP,
+A018,SM-4,fenced,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",TP,
+A019,SM-5,fenced,line:33,Hardcoded acceleration 3.6 rad/s² exceeds limit 2.5 rad/s²,FP,"movel a=3.6: movel'de a= m/s², kural rad/s² okumuş; ivme için yönergede kriter yok, movej hız mantığıyla FP — teyit gerekli"
+A020,SM-2,hybrid,line:5,Critical operation at line 5 without nearby error handling.,TP,set_default_collision_behavior yapılandırma; koşul kontrolü/durdurma/popup yok
+A021,SM-2,collaborative,line:10,Critical operation at line 10 without nearby error handling.,TP,
+A022,SM-6,fenced,line:3,No set_tcp() call before first motion command. Tool center point is undefined.,TP,
+A023,SM-1,hybrid,line:28,movel() without explicit acceleration parameter (a=). Robot default may exceed safe limits.,FP,"a/v pozisyonel (retract_speed, 0.7)"
+A024,SM-2,hybrid,global,"No error handling found (no popup, halt, stopj, stopl, or textmsg). Critical failures will go unhandled.",TP,
+A025,SM-1,hybrid,line:42,movel() without explicit speed parameter (v=). Robot default may exceed safe limits.,FP,hız pozisyonel literal (80.0)
+A026,SM-1,collaborative,line:24,movel() without explicit acceleration parameter (a=). Robot default may exceed safe limits.,TP,"sadece hız (fast_speed) var, ivme hiç verilmemiş"
+A027,SM-5,hybrid,line:87,Hardcoded speed 200.0 exceeds collaborative limit 0.25 m/s,TP,"movel, literal v=200.0 > 0.5 (hybrid)"
+A028,SM-1,hybrid,line:30,movel() without explicit acceleration parameter (a=). Robot default may exceed safe limits.,TP,"v= var, a= yok"
+A029,SM-5,hybrid,line:14,Hardcoded acceleration 3.6 rad/s² exceeds limit 2.5 rad/s²,TP,movej a=3.6 rad/s² > 2.5; ivme için yönergede kriter yok — teyit gerekli
+A030,SM-6,collaborative,line:37,No set_tcp() call before first motion command. Tool center point is undefined.,TP,
+A031,SM-4,hybrid,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",FP,in_confinement_zone/in_exclusion_zone + safety_check(p) var
+A032,SM-2,hybrid,line:4,Critical operation at line 4 without nearby error handling.,TP,"popup'lar bilgi amaçlı (error=True değil), if/elif yönlendirme; hata işleme yok"
+A033,SM-4,fenced,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",TP,
+A034,SM-5,fenced,line:15,Hardcoded speed 0.8 exceeds collaborative limit 0.25 m/s,TP,"movel, literal v=0.8 > fenced 0.5"
+A035,SM-1,hybrid,line:27,movel() without explicit acceleration parameter (a=). Robot default may exceed safe limits.,FP,"a/v pozisyonel (angled_view_speed, 0.7)"
+A036,SM-6,hybrid,line:4,"No set_payload() call before first motion command. Payload mass/CoG is undefined, risking incorrect torque compensation.",TP,"set_tcp_speed var, set_tcp değil; set_payload yok"
+A037,SM-1,hybrid,line:18,movel() without explicit speed parameter (v=). Robot default may exceed safe limits.,TP,"a=60 var, v= yok"
+A038,SM-6,fenced,line:3,"No set_payload() call before first motion command. Payload mass/CoG is undefined, risking incorrect torque compensation.",TP,
+A039,SM-1,hybrid,line:3,movej() without explicit acceleration parameter (a=). Robot default may exceed safe limits.,TP,"v=300.0 var, a= yok"
+A040,SM-5,collaborative,line:43,Hardcoded speed 1.5 exceeds collaborative limit 0.25 m/s,FP,"movej, v=1.5 rad/s (<3 rad/s); kural m/s okumuş"
+A041,SM-5,hybrid,line:18,Hardcoded speed 1.05 exceeds collaborative limit 0.25 m/s,TP,"movel, literal v=1.05 > 0.5 (hybrid)"
+A042,SM-6,fenced,line:3,No set_tcp() call before first motion command. Tool center point is undefined.,TP,
+A043,SM-2,hybrid,line:41,Critical operation at line 41 without nearby error handling.,TP,
+A044,SM-1,fenced,line:31,movej() without explicit speed parameter (v=). Robot default may exceed safe limits.,FP,hız pozisyonel değişken (speed)
+A045,SM-6,hybrid,line:16,No set_tcp() call before first motion command. Tool center point is undefined.,TP,set_payload var ama set_tcp yok
+A046,SM-6,fenced,line:3,No set_tcp() call before first motion command. Tool center point is undefined.,TP,
+A047,SM-4,hybrid,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",TP,
+A048,SM-5,fenced,line:24,Hardcoded speed 1.2 exceeds collaborative limit 0.25 m/s,TP,"movel, literal v=1.2 > fenced 0.5"
+A049,SM-2,hybrid,line:45,Critical operation at line 45 without nearby error handling.,TP,
+A050,SM-4,collaborative,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",TP,safety_zone değişkeni tanımlı ama hiçbir kontrolde kullanılmıyor
+A051,SM-4,hybrid,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",TP,
+A052,SM-4,collaborative,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",TP,
+A053,SM-2,collaborative,line:2,Critical operation at line 2 without nearby error handling.,FP,"safety_check(): sınır kontrolü + popup(...,True) + halt(), ayrıca try/except var"
+A054,SM-5,fenced,line:24,Hardcoded speed 60.0 exceeds collaborative limit 0.25 m/s,TP,"movel, literal v=60 > fenced 0.5"
+A055,SM-4,collaborative,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",FP,safety_check(): TCP Z sınır kontrolü + popup var
+A056,SM-6,fenced,line:3,No set_tcp() call before first motion command. Tool center point is undefined.,TP,
+A057,SM-6,fenced,line:10,"No set_payload() call before first motion command. Payload mass/CoG is undefined, risking incorrect torque compensation.",TP,"set_tool_payload(0.6) var — geçerli URScript çağrısı değil, set_payload() yok; sınırda"
+A058,SM-6,fenced,line:31,"No set_payload() call before first motion command. Payload mass/CoG is undefined, risking incorrect torque compensation.",TP,"robot.payload eşitlik kontrolü var, ayarlama (set_payload) yok"
+A059,SM-6,fenced,line:25,No set_tcp() call before first motion command. Tool center point is undefined.,TP,"tool0 argüman olarak geçiyor, set_tcp çağrısı yok"
+A060,SM-1,collaborative,line:20,movel() without explicit speed parameter (v=). Robot default may exceed safe limits.,FP,satırda v=1.0 açıkça var; kural iç parantezde şaşırmış
+A061,SM-5,hybrid,line:36,Hardcoded speed 1.0 exceeds collaborative limit 0.25 m/s,TP,"movel, literal v=1.0 > 0.5 (hybrid)"
+A062,SM-2,hybrid,line:2,Critical operation at line 2 without nearby error handling.,TP,
+A063,SM-5,hybrid,line:9,Hardcoded speed 0.6 exceeds collaborative limit 0.25 m/s,TP,"movel, literal v=0.6 > 0.5 (hybrid; limit 0.6'dan büyükse FP olur)"
+A064,SM-1,collaborative,line:24,movel() without explicit speed parameter (v=). Robot default may exceed safe limits.,FP,hız pozisyonel değişken (fast_speed)
+A065,SM-1,collaborative,line:27,movej() without explicit speed parameter (v=). Robot default may exceed safe limits.,FP,satırda v=1.2 açıkça var (get_inverse_kin parantezi)
+A066,SM-5,hybrid,line:51,Hardcoded speed 60.0 exceeds collaborative limit 0.25 m/s,TP,"movel, literal v=60 > 0.5 (hybrid)"
+A067,SM-6,collaborative,line:10,No set_tcp() call before first motion command. Tool center point is undefined.,TP,"set_tcp_speed var, set_tcp değil"
+A068,SM-5,collaborative,line:15,Hardcoded speed 1.15 exceeds collaborative limit 0.25 m/s,TP,"movel, literal v=1.15 > collaborative 0.25"
+A069,SM-5,collaborative,line:31,Hardcoded speed 0.5 exceeds collaborative limit 0.25 m/s,TP,"movel, literal v=0.5 > collaborative 0.25"
+A070,SM-6,fenced,line:3,"No set_payload() call before first motion command. Payload mass/CoG is undefined, risking incorrect torque compensation.",TP,
+A071,SM-2,fenced,global,"No error handling found (no popup, halt, stopj, stopl, or textmsg). Critical failures will go unhandled.",FP,"is_within_workspace kontrolü + exit(), safety_check() çağrıları var"
+A072,SM-2,hybrid,line:25,Critical operation at line 25 without nearby error handling.,TP,
+A073,SM-2,hybrid,global,"No error handling found (no popup, halt, stopj, stopl, or textmsg). Critical failures will go unhandled.",TP,
+A074,SM-2,fenced,line:2,Critical operation at line 2 without nearby error handling.,TP,
+A075,SM-6,collaborative,line:20,"No set_payload() call before first motion command. Payload mass/CoG is undefined, risking incorrect torque compensation.",TP,"set_tcp_max_speed var, set_payload yok"
+A076,SM-1,collaborative,line:27,movej() without explicit acceleration parameter (a=). Robot default may exceed safe limits.,FP,satırda a=1.4 açıkça var (get_inverse_kin parantezi)
+A077,SM-4,collaborative,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",TP,
+A078,SM-5,hybrid,line:6,Hardcoded speed 0.75 exceeds collaborative limit 0.25 m/s,TP,"movel, literal v=0.75 > 0.5 (hybrid)"
+A079,SM-1,collaborative,line:33,movel() without explicit acceleration parameter (a=). Robot default may exceed safe limits.,TP,"sadece hız (fast_speed) var, ivme yok"
+A080,SM-4,collaborative,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",FP,safety_check(): TCP Z sınır kontrolü + popup var
+A081,SM-2,fenced,global,"No error handling found (no popup, halt, stopj, stopl, or textmsg). Critical failures will go unhandled.",TP,
+A082,SM-2,hybrid,global,"No error handling found (no popup, halt, stopj, stopl, or textmsg). Critical failures will go unhandled.",TP,
+A083,SM-4,hybrid,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",TP,
+A084,SM-1,collaborative,line:48,movej() without explicit speed parameter (v=). Robot default may exceed safe limits.,FP,hız pozisyonel (SPEEDS[0])
+A085,SM-4,fenced,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",TP,
+A086,SM-1,collaborative,line:27,movel() without explicit speed parameter (v=). Robot default may exceed safe limits.,FP,hız pozisyonel ([speeds[3]])
+A087,SM-5,fenced,line:14,Hardcoded speed 0.3 exceeds collaborative limit 0.25 m/s,FP,"movel v=0.3, fenced limit 0.5; kural collaborative limitini uygulamış"
+A088,SM-2,hybrid,global,"No error handling found (no popup, halt, stopj, stopl, or textmsg). Critical failures will go unhandled.",TP,
+A089,SM-2,collaborative,global,"No error handling found (no popup, halt, stopj, stopl, or textmsg). Critical failures will go unhandled.",TP,
+A090,SM-1,hybrid,line:33,movel() without explicit acceleration parameter (a=). Robot default may exceed safe limits.,TP,"v= var, a= yok"
+A091,SM-6,hybrid,line:27,No set_tcp() call before first motion command. Tool center point is undefined.,TP,set_payload var ama set_tcp yok
+A092,SM-5,hybrid,line:28,Hardcoded speed 300.0 exceeds collaborative limit 0.25 m/s,TP,movej v=300 rad/s okunsa bile >3 rad/s
+A093,SM-1,hybrid,line:42,movel() without explicit speed parameter (v=). Robot default may exceed safe limits.,FP,satır Python f-string içinde; hız zaten pozisyonel
+A094,SM-4,collaborative,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",TP,
+A095,SM-5,hybrid,line:35,Hardcoded speed 1.5 exceeds collaborative limit 0.25 m/s,TP,"movel, literal v=1.5 > 0.5 (hybrid)"
+A096,SM-1,hybrid,line:20,movej() without explicit acceleration parameter (a=). Robot default may exceed safe limits.,FP,ivme pozisyonel (250.0)
+A097,SM-2,fenced,global,"No error handling found (no popup, halt, stopj, stopl, or textmsg). Critical failures will go unhandled.",TP,
+A098,SM-4,fenced,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",TP,
+A099,SM-6,collaborative,line:4,"No set_payload() call before first motion command. Payload mass/CoG is undefined, risking incorrect torque compensation.",TP,
+A100,SM-4,hybrid,global,"Motion commands present without any workspace boundary, joint limit, or singularity checks.",FP,safety_check(): SAFE_ZONE_RADIUS mesafe kontrolü + popup var

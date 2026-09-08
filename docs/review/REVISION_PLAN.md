@@ -82,7 +82,7 @@ Status legend: `todo` / `doing` / `done` / `rebut` (counter-argue, no change) / 
 |----|---------|--------|-------|--------|--------|
 | R1-1 | Abstract blurs confirmatory (3 models, prereg) with exploratory (frontier, 1 rep). 70% construct-removal reads like a finding. | Restructure abstract: confirmatory findings first, then one sentence explicitly labelled "exploratory, single repetition" for frontier/construct-removal. Remove the 70% figure from the abstract or attach "exploratory, n=1 per cell". | abstract; §I contributions | S | done (abstract, contributions, Tables 6/7) |
 | R1-2 | Rule checker only validated on author-built variants; no independent validation. | Add to Future Work: independent validation against externally sourced violations (e.g. CVE-like URScript incidents, vendor safety bulletins). Cross-reference Appendix C caveat. The translator comparator (R2-1) also partly addresses this: it is independent of the variant generator. | §VII-D threats; §VIII | S | done (App. D paragraph, threats paragraph) |
-| R1-3 | Precision audit rests on 8–12 firings per rule, CI 55–99% for SM-5. | Enlarge audit (D3): ≥20 firings per rule, two raters, κ. Recompute Table 7 with tighter CIs. Add a main-text caveat sentence wherever "high-precision" is claimed if intervals remain wide. | Table 7; §VI-A | M | done with rater B (independent, n=100, Table 10); rater A sheet unfilled, so no κ is reported |
+| R1-3 | Precision audit rests on 8–12 firings per rule, CI 55–99% for SM-5. | Enlarge audit (D3): ≥20 firings per rule, two raters, κ. Recompute Table 7 with tighter CIs. Add a main-text caveat sentence wherever "high-precision" is claimed if intervals remain wide. | Table 7; §VI-A | M | done: raters A and B (n=100, Table 10), pooled κ = 0.55, 19 disagreements adjudicated under the guide (`audit_v2/sheet_adjudicated.csv`); headline bracketed 89.2–98.8% (Table 13, SM6-only vs SM2+SM6) |
 | R1-4 | Scope condition (cybersecurity, not motion safety) buried in abstract. | Move to sentence 2 of the abstract and to the first paragraph of §I. Same fix serves R2-2. | abstract; §I | S | done |
 | R1-5 | Refs 53, 54 look like arXiv preprints; confirm status. | Ref 53 is ISTAS 2025 (DOI present): keep, fix formatting. Ref 54: check for a peer-reviewed version; if none, keep as arXiv and soften the dependent sentence in §II-D. | bibliography; §II-D | S | done (ref 53 published; ref 54 preprint, softened) |
 | R1-6 | Fig. 4 distinguishes four trajectory types by line style only; fails in grayscale. | Regenerated with distinct markers + line styles + direct labels, legend carries regime counts. | `scripts/figures/fig_repair_trajectory.py` | S | done (Fig. 5 regenerated, caption updated) |
@@ -109,7 +109,7 @@ Status legend: `todo` / `doing` / `done` / `rebut` (counter-argue, no change) / 
 | ID | Concern | Action | Where | Effort | Status |
 |----|---------|--------|-------|--------|--------|
 | R2-M1 | Detector validation circular. | Same as R1-2 + R2-1: comparator and future-work statement. Add an explicit "what the 114/120 does and does not show" sentence to Appendix C. | App. C; §VII-D | S | done |
-| R2-M2 | Manual audit single rater, no agreement statistic. | D3 / R1-3. | Table 7 | M | done with rater B only; κ needs the rater A sheet |
+| R2-M2 | Manual audit single rater, no agreement statistic. | D3 / R1-3. | Table 7 | M | done: two raters, κ reported per rule and pooled, adjudication sheet in package |
 | R2-M3 | Preregistered thresholds untestable. | Already framed as a lesson. Add one sentence: the confirmatory arm for H5 is reported as voided by ceiling, and the count/severity contrasts are labelled post hoc. No further change. | §VI-B | S | done |
 | R2-M4 | Repair-trajectory regimes never quantified for local models. | From `E3_full`: classify each of the 135 cells into the four regimes (repaired / oscillating / degraded-to-invalid / unchanged) by rule; report a small table; Fig. 4 shows real examples with counts in the legend. | §VI-C; Fig. 4 | M | done (Table 14 + text) |
 | R2-M5 | Complexity-stratified analysis punted. | Run `scripts/complexity_correlation_analysis.py` on E1/E3; report the tertile-stratified rates and the (likely null) test in a short paragraph + appendix table. | §VI-D; appendix | S | done (Table 15 + text) |
@@ -121,7 +121,7 @@ Status legend: `todo` / `doing` / `done` / `rebut` (counter-argue, no change) / 
 
 ## 3. Execution order
 
-_Status 08 Sep 2026, morning: all phases done; response letter complete; manuscript compiles to 28 pages. Open: rater A sheet (κ), regenerate highlighted diff PDF and letter .docx after the last edit, OSF addendum decision, final grammar/reference pass per the resubmission checklist._
+_Status 08 Sep 2026, morning: all phases done; response letter complete; manuscript compiles to 28 pages. Rater A sheet returned 08 Sep, κ and adjudication in the manuscript. Open: regenerate highlighted diff PDF and letter .docx after the last edit, OSF addendum decision, final grammar/reference pass per the resubmission checklist._
 
 Each step ends with a commit on `review/access-r1`; the status column above is updated in the same commit.
 
@@ -181,7 +181,7 @@ All of these use stored outputs; none needs a new LLM call. Proposed for inclusi
 | X6 | Complexity-stratified rates and per-model Spearman ρ | R2-M5; null as expected (1 of 9 ρ nominally p<0.05, uncorrected) | computed | `complexity_table.tex` |
 | X7 | Rule-interaction note: preamble satisfies SM-6 but trips SM-2 | explains part of the 98.8% as a rule-set property; strengthens the "measurement hazard" contribution | computed (F13) | text only |
 | X8 | Frontier re-scoring under corrected SM-5 / high-precision set | caveats the frontier "100%" (drops to 75.8%) | computed | `sensitivity_e1_frontier.tex` |
-| X9 | Precision audit v2, two raters, κ | R1-3, R2-M2 | tooling done; needs rater 2 | `audit_v2/` |
+| X9 | Precision audit v2, two raters, κ | R1-3, R2-M2 | done, both raters returned 07–08 Sep 2026; adjudicated | `audit_v2/` |
 | X10 | Each model at the other quantization level (3 × 90 generations) to test the quantization confound | R2-7a | done: Qwen verdicts identical in 15/15 cells; DeepSeek and CodeLlama verdicts move (see Table 16); Cochran Q at all-Q4_K_M 8.67 / 7.82 (Holm p 0.026 / 0.020), at all-Q4_0 unchanged; Ollama client did not enforce the 4096-token budget (fixed 2026-09-08; confirmatory runs unaffected, max 1399 tokens), timed-out control cells regenerated with the fix | `scripts/review/quantization_summary.py`, `paper/tables/quantization_summary.tex`, `paper/data/X10_*/` |
 | X11 | Stricter-gate substantive-safe rate (structural gate) | complements X2; 38/130 pass, 0–1 substantive-safe | computed | in X2 tables |
 | X12 | Per-model × per-rule firing heat-map (E1 baseline vs safety, plus translator and vendor rows) | visual replacement for Table 6 counts | computed | `fig_rule_heatmap.pdf` |
