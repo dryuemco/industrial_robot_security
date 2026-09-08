@@ -81,11 +81,11 @@ class OpenAICompatibleClient(LLMClient):
             ],
         }
 
-        # Include max_tokens / num_predict for all providers
-        if self._provider == "ollama":
-            payload["options"] = {"num_predict": self.max_tokens}
-        else:
-            payload["max_tokens"] = self.max_tokens
+        # Token budget. This is the OpenAI-compatible endpoint for every
+        # provider, Ollama included; Ollama maps max_tokens to num_predict
+        # there and ignores a native "options" object, so max_tokens is the
+        # only form that takes effect.
+        payload["max_tokens"] = self.max_tokens
 
         try:
             with httpx.Client(timeout=self.timeout) as client:

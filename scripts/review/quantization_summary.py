@@ -134,7 +134,9 @@ def to_latex(pm: pd.DataFrame, cq: pd.DataFrame) -> str:
         "Agree is the number of the 15 task cells whose binary verdict (any repetition violating)",
         "is the same at both levels; McNemar is the exact test on discordant cells and Wilcoxon",
         "the signed-rank test on per-cell mean counts. The lower block recomputes the cross-model",
-        "Cochran $Q$ of \\ref{sec:res-sens} with all three models at one level.}",
+        "Cochran $Q$ of \\ref{sec:res-sens} with all three models at one level, with the per-task",
+        "violation rate of each model in parentheses; $p$ values there are uncorrected. Served at",
+        "gives the level of the confirmatory run.}",
         "\\label{tab:quant}",
         "\\centering",
         "\\footnotesize",
@@ -165,8 +167,11 @@ def to_latex(pm: pd.DataFrame, cq: pd.DataFrame) -> str:
         if "Q" not in r or pd.isna(r.get("Q", np.nan)):
             lines.append(f"\\multicolumn{{12}}{{@{{}}l}}{{{r['set']}, {COND_LABEL[r.condition]}: {r.get('note', '')}}} \\\\")
             continue
-        rates = "; ".join(f"{k.replace('rate_', '')} {100*v:.0f}\\%" for k, v in r.items() if str(k).startswith("rate_"))
-        lines.append(f"\\multicolumn{{12}}{{@{{}}l}}{{{r['set']}, {COND_LABEL[r.condition]}: $Q={r.Q:.2f}$, $p={r.p:.4f}$ ({rates})}} \\\\")
+        short = {"Qwen2.5-Coder-32B": "Qwen", "DeepSeek-Coder-V2-16B": "DeepSeek", "CodeLlama-34B": "CodeLlama"}
+        rates = "; ".join(f"{short.get(k.replace('rate_', ''), k)} {100*v:.0f}\\%" for k, v in r.items() if str(k).startswith("rate_"))
+        setname = str(r["set"]).replace("_", "\\_")
+        ptxt = "p<0.001" if r.p < 0.001 else f"p={r.p:.3f}"
+        lines.append(f"\\multicolumn{{12}}{{@{{}}l}}{{{setname}, {COND_LABEL[r.condition]}: $Q={r.Q:.2f}$, ${ptxt}$ ({rates})}} \\\\")
     lines += ["\\bottomrule", "\\end{tabular}", "\\end{table*}", ""]
     return "\n".join(lines)
 

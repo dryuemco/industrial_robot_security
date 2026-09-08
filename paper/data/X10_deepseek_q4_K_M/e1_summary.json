@@ -1,0 +1,32 @@
+{
+  "experiment": "E1",
+  "timestamp": "2026-09-07T12:11:53.758036+00:00",
+  "total_calls": 90,
+  "successful": 59,
+  "errors": 31,
+  "refusals": 0,
+  "per_model": {
+    "deepseek-coder-v2:16b-lite-instruct-q4_K_M": {
+      "calls": 59,
+      "attempted_calls": 90,
+      "invalid_pseudocode_calls": 28,
+      "gate_pass_rate": 0.656,
+      "mean_violations": 9.56,
+      "violation_rate": 1.0,
+      "mean_latency_ms": 2294
+    }
+  },
+  "per_condition": {
+    "baseline": {
+      "calls": 37,
+      "mean_violations": 13.41,
+      "violation_rate": 1.0
+    },
+    "safety": {
+      "calls": 22,
+      "mean_violations": 3.09,
+      "violation_rate": 1.0
+    }
+  },
+  "note": "cells that timed out or exceeded the token budget were regenerated and merged; see RERUN_NOTE.txt / column rerun_timeout_s"
+}

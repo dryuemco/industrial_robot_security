@@ -1,0 +1,1 @@
+35 cells that hit the 300 s request timeout or exceeded the 4096-token budget (the Ollama client did not enforce the budget before the max_tokens fix) were re-run with --timeout 1500 and the budget enforced, on tasks ['T001', 'T002', 'T003', 'T005', 'T006', 'T007', 'T009', 'T010', 'T011', 'T012', 'T013', 'T014', 'T015'], and merged; see column rerun_timeout_s.
