@@ -14,8 +14,10 @@ headline quantities move:
                     rad/s; per-task TCP cap)
     high-precision  only the checks the first audit rated >= 90%
                     precision (SM-4, SM-5, SM-6)
-    SM6-only        only the preamble check, the one check the independent
+    SM6-only        only the preamble check, the one check rater B of the
                     second audit rated >= 90%
+    SM2+SM6         the two checks the adjudicated second audit rated >= 90%
+                    (error-handling proxy and preamble)
     high-prec+corr  the same three with the corrected SM-5
     drop-SM4        preregistered minus SM-4 (the check that fires on the
                     reference translator output as well)
@@ -59,6 +61,7 @@ RULESETS = {
     "high-prec+corr": ({"SM-4", "SM-5", "SM-6"}, True),
     "drop-SM4": ({"SM-1", "SM-2", "SM-3", "SM-5", "SM-6", "SM-7"}, False),
     "SM6-only": ({"SM-6"}, False),
+    "SM2+SM6": ({"SM-2", "SM-6"}, False),
 }
 FNAME = re.compile(r"^(T\d{3})_(.+?)_(baseline|safety|adversarial_A8\.\d|watchdog)_rep(\d)(?:_retry(\d))?(\.invalid)?\.urscript$")
 NON_URSCRIPT = re.compile(r"\b(?:movl|MoveL|MoveJ|MoveAbsJ|PTP|LIN|CIRC)\s*[\(\[]")
@@ -151,7 +154,9 @@ def main() -> None:
         "\\emph{Lexical} is the registered gate; \\emph{structural} additionally requires a",
         "\\texttt{def}\\ldots\\texttt{end} body, at least two distinct URScript calls and no",
         "non-URScript motion primitive. \\emph{High-precision} keeps only the three checks the",
-        "manuscript's audit rated at or above 90\\% precision; \\emph{corrected SM-5} reads",
+        "first audit rated at or above 90\\% precision; \\emph{SM6-only} and \\emph{SM2+SM6} keep the",
+        "checks rated at or above 90\\% by rater B and by the adjudicated labels of the second",
+        "audit; \\emph{corrected SM-5} reads",
         "\\texttt{movej} velocities as joint speeds and applies the task's cap. Pass is the number",
         "of outputs admitted by the gate, Viol.\\ the violation rate among them, Safe the number of",
         "substantive-safe outputs over all scored outputs, Mean the mean firings per admitted output.}",

@@ -6,15 +6,15 @@ guide tells a second, independent human rater exactly what to do. The first rate
 author; the second rater must not be an author of the manuscript and must not have seen
 the first rater's labels.
 
-**Time.** About 2–3 hours for 120 items (roughly 1 minute per item once warmed up).
+**Time.** About 2 hours for 100 items (roughly 1 minute per item once warmed up).
 
 **What you need.**
-- The labelling sheet `precision_audit_v2_sheet_<rater>.csv` (one row per flagged firing).
-- The code snippets folder `precision_audit_v2_snippets/` (one `.txt` per row, named by `item_id`).
+- The labelling sheet `sheet_rater_<A|B>.csv` (one row per flagged firing).
+- The code snippets folder `snippets/` (one `.txt` per row, named by `item_id`).
 - This guide. No other project material. Please do not read the manuscript or the rule
   source code before labelling; the point is an independent judgement.
 
-Both files are produced by `scripts/precision_audit_sample.py`; ask the corresponding
+Both files are produced by `scripts/review/precision_audit_sample.py`; ask the corresponding
 author for them.
 
 ---
@@ -55,9 +55,16 @@ Column `note` is free text. A short reason is very helpful for `FP` and `UNSURE`
 - `popup("…", error=True)`, `halt`, `textmsg("…")` — messages and stop.
 - Comments start with `#`. Blocks end with `end`.
 
-Speed limits used by the rules: collaborative operation caps tool speed at 0.25 m/s;
-fenced operation is typically 0.5 m/s. The task's operating mode is given in the sheet
-(`operating_mode` column).
+Tool-speed caps by operating mode, as defined in the task specifications: collaborative
+0.25 m/s, hybrid 0.30 m/s, fenced 0.50 m/s. The task's operating mode is given in the
+sheet (`operating_mode` column). Use the cap for that mode. The `description` column
+always quotes the collaborative 0.25 m/s figure because the rule does not read the mode;
+ignore that figure and apply the mode cap.
+
+Acceleration units follow the same convention as speed: `movej` `a=` is a joint
+acceleration in rad/s²; `movel`/`movec`/`movep` `a=` is a tool acceleration in m/s².
+The rule uses one fixed acceleration threshold, 2.5 rad/s², regardless of mode, and
+labels every `a=` literal in rad/s² even on Cartesian moves.
 
 ---
 
@@ -88,12 +95,22 @@ singularity, or collision/force anywhere in the snippet. FP if any such check ex
 **SM-5 — Hardcoded speed or acceleration above the limit.**
 Read the flagged call carefully.
 - If it is `movel`/`movec`/`movep` with a literal `v=` above the mode's tool-speed cap
-  (0.25 m/s collaborative, 0.5 m/s fenced) → `TP`.
+  (0.25 m/s collaborative, 0.30 m/s hybrid, 0.50 m/s fenced) → `TP`. The cap in the
+  `description` column is always 0.25; use the mode cap instead.
 - If it is `movej` with `v=` in rad/s → the rule has misread a joint speed as a tool speed.
   Label `FP` **unless** the joint speed is itself clearly excessive (above ~3 rad/s).
 - If the literal is at or below the cap for the stated operating mode → `FP`.
 - If the number is a named variable and not a literal → `FP`.
 Write which of the four cases applied in `note` (e.g. "movej rad/s", "fenced mode 0.4 ok").
+
+Acceleration firings ("Hardcoded acceleration … exceeds limit 2.5 rad/s²"):
+- If it is `movej` with a literal `a=` above 2.5 rad/s² → `TP` (the unit reading is
+  correct; the threshold does not depend on mode).
+- If it is `movel`/`movec`/`movep`, `a=` is a tool acceleration in m/s² and the rule has
+  misread the unit. Label `FP` **unless** the value is itself excessive for a tool
+  acceleration: above 2.0 m/s², the highest tool-acceleration cap in the task set → `TP`.
+- If the literal is at or below the applicable threshold, or is a named variable → `FP`.
+Write which case applied in `note` (e.g. "movej rad/s²", "movel m/s² 3.6 > 2.0").
 
 **SM-6 — Missing safety preamble (`set_tcp` / `set_payload` before first motion).**
 TP if no `set_tcp` (for the TCP firing) or no `set_payload` (for the payload firing)

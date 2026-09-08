@@ -887,7 +887,8 @@ of violation counts are on the gate-passing basis unless stated.}
 Substantive-safe rate (primary) & 1/135 (0.7\%) & [0.02, 4.06], Clopper-Pearson \\
 Combined violation rate, gate-passing outputs & 98.8\% & [93.5, 99.8], call level \\
 \quad restricted to the checks rated $\geq$90\% in the first audit & 92.8\% & SM-4, SM-5, SM-6 only \\
-\quad restricted to the check rated $\geq$90\% in the second audit & 89.2\% & SM-6 only; 9 of 130 violation-free \\
+\quad restricted to the check rated $\geq$90\% by rater B of the second audit & 89.2\% & SM-6 only; 9 of 130 violation-free \\
+\quad restricted to the checks rated $\geq$90\% after adjudication & 98.8\% & SM-2 and SM-6; 1 of 130 violation-free \\
 \quad with the corrected SM-5 unit reading & 98.8\% & Table~\ref{tab:sensitivity} \\
 \quad under the structural validity gate & 100\% & 38 of 130 outputs admitted \\
 Combined violation rate, all outputs (naive) & 60.7\% & [46, 73], cell level \\
@@ -1074,35 +1075,58 @@ each per-check estimate is supported by only eight to twelve cases with correspo
 wide intervals, and it was performed by one author on the author's own instrument. A
 second audit was therefore conducted after the review (Table~\ref{tab:precision2}): 100
 firings, twenty per firing check, drawn with a fixed seed from the gate-passing outputs of
-the baseline and adversarial experiments and labelled by an independent rater who is not
-an author and had not seen the manuscript, the rule code or the first audit, following a
-written guide released with the replication package. The second audit is less favourable
-to the instrument than the first. It places the preamble check at 90\% precision
-[68, 99], the unusual-conditions check at 80\% [56, 94], the hardcoded-value check at
-55\% [32, 77], and the two proxies at 50\% [27, 73] and 45\% [23, 68]; pooled, 64 of 100
-audited firings are genuine. The rater's notes identify the false-positive mechanisms
-concretely, and they are the same mechanisms the comparator exposes: the hardcoded-value
-check applies the collaborative 0.25~m/s limit to fenced-mode tasks and reads
-\texttt{movej} joint speeds as Cartesian speeds; the error-handling proxy treats
-\texttt{set\_tcp} and \texttt{set\_payload} as failure-prone operations; the
-input-validation proxy misses positional and nested-call arguments; and the
-unusual-conditions check does not credit a minimal bounds test. The two audits disagree
-most on the hardcoded-value and unusual-conditions checks, which the first audit had
-placed at 90\% and 100\%; the second audit's larger sample and blind, non-author rater
-make it the estimate this article relies on.
+the baseline and adversarial experiments and labelled independently by two raters, blind
+to each other's labels, following a written guide released with the replication package.
+Rater A is an author; rater B is not an author and had not seen the manuscript, the rule
+code or the first audit. The raters agree on 81 of 100 labels, pooled Cohen's
+$\kappa=0.55$, with full agreement on the unusual-conditions check and the weakest
+agreement on the error-handling proxy ($\kappa=0.20$) and the hardcoded-value check
+($\kappa=0.35$); the $\kappa$ of 0.00 on the preamble check is an artefact of rater A
+labelling all twenty firings genuine, which leaves no variance for the statistic. Rater B
+is systematically less favourable to the instrument than rater A: pooled precision 64\%
+[54, 73] against 77\% [68, 85]. The 19 disagreements were resolved in a recorded
+adjudication under the written guide, performed by the author, and every one resolved to
+rater A's label, because each of rater B's departures applied the rule's own wording
+where the guide's criterion differs from it. The adjudicated column therefore coincides
+with rater A's, and the reader who prefers the non-author's judgement should read the
+rater B column as the conservative estimate. The disagreements fall into four groups, and
+each exposes a defect in the rule's wording rather than in the labelling. Eight
+error-handling firings name a \texttt{set\_tcp} or \texttt{set\_payload} call as the
+``critical operation''; the guide's program-level criterion (no handling anywhere in the
+program) makes them genuine, but the location claim is misleading. Six hardcoded-value
+firings quote the collaborative 0.25~m/s limit on fenced- or hybrid-mode tasks because
+the rule does not read the operating mode; five flag Cartesian speeds that also exceed the
+mode's own cap and one a \texttt{movej} joint speed of 300, excessive under either unit
+reading, so all six are genuine, but the stated limit is wrong. Three input-validation
+firings concern a speed passed positionally, which the guide counts as present and rater
+B, reading URScript's positional order in which the first numeric argument is the
+acceleration, does not. Two preamble firings concern non-URScript calls
+(\texttt{set\_tool\_frame}, \texttt{set\_tool\_payload}) that would not declare the TCP
+or payload on a controller. The false positives on which both raters agree are the same
+mechanisms the comparator exposes: the input-validation proxy misses positional and
+nested-call arguments (the check the two raters rate lowest, at 30\% and 45\%), the
+hardcoded-value check reads \texttt{movej} joint speeds as Cartesian speeds, and the
+unusual-conditions check does not credit a minimal bounds test. The second audit places
+the hardcoded-value and unusual-conditions checks at 85\% and 80\% after adjudication
+(55\% and 80\% for rater B), against 90\% and 100\% in the first audit; its larger sample
+and its second, non-author rater make it the estimate this article relies on.
 
-The consequence for the saturation finding is stated plainly. Under the second audit only
-the preamble check reaches 90\% precision, and restricting the violation flag to that one
-check leaves the gate-passing violation rate at 74 of 83, or 89.2\%, with 9 rather than 1
-of 130 baseline outputs violation-free (Table~\ref{tab:sensitivity}, SM-6 only). The
-finding that almost no generated program is both valid and free of a genuine weakness
-therefore survives, but its margin narrows from one check-set to another, and the
-substantive-safe rate of 1 of 135 must be read as a rate under the full registered rule set
-rather than under a set of verified high-precision checks. A rule-by-rule revision of the
-checker against these mechanisms, with a full-population re-audit, is identified as the
-first item of future work; the corrected hardcoded-value check of \ref{sec:analyzer} is
-the first step and is reported as a sensitivity analysis rather than adopted, so that the
-preregistered scoring is left intact.
+The consequence for the saturation finding is stated plainly, and it depends on which
+rater's threshold is applied. Under rater B's labels only the preamble check reaches 90\%
+precision, and restricting the violation flag to that one check leaves the gate-passing
+violation rate at 74 of 83, or 89.2\%, with 9 rather than 1 of 130 baseline outputs
+violation-free (Table~\ref{tab:sensitivity}, SM6-only). Under the adjudicated labels the
+error-handling proxy and the preamble check reach 90\%, and restricting the flag to those
+two leaves the rate at 98.8\% with 1 of 130 violation-free, the same as the registered
+rule set (Table~\ref{tab:sensitivity}, SM2+SM6). The finding that almost no generated
+program is both valid and free of a genuine weakness therefore survives under both
+readings, but its margin ranges from 89.2\% to 98.8\% across defensible check sets, and
+the substantive-safe rate of 1 of 135 must be read as a rate under the full registered
+rule set rather than under a set of verified high-precision checks. A rule-by-rule
+revision of the checker against the four wording defects above, with a full-population
+re-audit, is identified as the first item of future work; the corrected hardcoded-value
+check of \ref{sec:analyzer} is the first step and is reported as a sensitivity analysis
+rather than adopted, so that the preregistered scoring is left intact.
 
 \input{tables/precision_audit_v2.tex}
 
