@@ -913,7 +913,7 @@ cell). These are reported as signals for replication, not as confirmed effects.}
 \toprule
 \textbf{Quantity} & \textbf{Value} & \textbf{Note} \\
 \midrule
-Frontier violation rate, four models 24B to 675B & 100\% & 0 of 120 safe; falls to 75.8\% under the high-precision checks with corrected SM-5 \\
+Frontier violation rate, four models 24B to 675B & 100\% & 0 of 120 safe; falls to 75.8\% under the high-precision checks with corrected SM-5, 49.2\% under SM-6 only \\
 Cells remediated to zero, frontier & 0/60 & 0/195 pooled with the local models \\
 Sampling temperature 0.2 and 0.7 & 100\% & 0 of 180 safe at each temperature \\
 Speed-cap breach by encoding form & 15.0 / 1.7 / 0 / 0\% & implicit, comment, named constant, guard; Cochran-Armitage $p{<}10^{-4}$ \\
@@ -1205,18 +1205,21 @@ communication libraries with no motion, are flagged on 5 of 9 and never on SM-4 
 \textbf{Sensitivity of the headline rates to the instrument.} Because the rule set and the
 validity gate are both author-defined, Table~\ref{tab:sensitivity} re-scores the stored
 baseline outputs offline under alternative definitions: the corrected SM-5; the three
-checks the audit rated at or above 90\% precision (SM-4, SM-5, SM-6) alone and with the
-corrected SM-5; the rule set without SM-4; and a stricter, structural validity gate that
-additionally requires a \texttt{def}\ldots\texttt{end} program body, at least two distinct
-URScript calls, and no non-URScript motion primitive. The gate-passing violation rate moves
-from 98.8\% to no lower than 91.6\%, and the substantive-safe count from 1 to at most 7 of
-130 scored outputs, under any of these choices; the structural gate admits 38 rather than
-83 outputs and leaves at most one of them violation-free. The first finding is therefore
-not an artefact of a single rule or of the lexical gate. The same re-scoring applied to
-the frontier run of \ref{sec:res-explore} is less stable (Table~\ref{tab:sensitivity} is
+checks the first audit rated at or above 90\% precision (SM-4, SM-5, SM-6) alone and with
+the corrected SM-5; the rule set without SM-4; the one check rater B of the second audit
+rated at or above 90\% (SM-6) and the two the adjudicated labels do (SM-2, SM-6); and a
+stricter, structural validity gate that additionally requires a
+\texttt{def}\ldots\texttt{end} program body, at least two distinct URScript calls, and no
+non-URScript motion primitive. The gate-passing violation rate moves from 98.8\% to no
+lower than 89.2\%, and the substantive-safe count from 1 to at most 9 of 130 scored
+outputs, under any of these choices; the structural gate admits 38 rather than 83 outputs
+and leaves at most three of them violation-free. The first finding is therefore not an
+artefact of a single rule or of the lexical gate. The same re-scoring applied to the
+frontier run of \ref{sec:res-explore} is less stable (Table~\ref{tab:sensitivity} is
 accompanied by its frontier counterpart in the replication package): the frontier
 violation rate of 100\% falls to 75.8\% under the high-precision set with the corrected
-SM-5, so the frontier figure is reported with that caveat.
+SM-5 and to 49.2\% under rater B's single check, while it stays at 98.3\% under the
+adjudicated two-check set, so the frontier figure is reported with that caveat.
 
 \input{tables/sensitivity_e1_baseline.tex}
 
@@ -1649,7 +1652,7 @@ here.
 Two threats concern the instrument itself. First, the rule checker's detection
 performance (Appendix~\ref{app:detection}) is established only on author-constructed
 variants scored against author-written rules, and its precision on generated code rests
-on a manual audit; the non-LLM comparator and the sensitivity re-scoring of
+on manual audits, the second with two raters; the non-LLM comparator and the sensitivity re-scoring of
 \ref{sec:res-baseline} bound the effect of the rule set on the headline rates but do not
 substitute for an independent validation set, which remains future work. Second, the
 three models were served at different quantization levels, one at Q4\_K\_M and two at

@@ -121,7 +121,7 @@ Status legend: `todo` / `doing` / `done` / `rebut` (counter-argue, no change) / 
 
 ## 3. Execution order
 
-_Status 08 Sep 2026, morning: all phases done; response letter complete; manuscript compiles to 28 pages. Rater A sheet returned 08 Sep, κ and adjudication in the manuscript. Open: regenerate highlighted diff PDF and letter .docx after the last edit, OSF addendum decision, final grammar/reference pass per the resubmission checklist._
+_Status 08 Sep 2026, morning: all phases done; response letter complete; manuscript compiles to 28 pages. Rater A sheet returned 08 Sep, κ and adjudication in the manuscript. Diff PDF, letter .docx and audit_v2.zip regenerated 08 Sep afternoon. Open: OSF addendum decision, final grammar/reference pass per the resubmission checklist._
 
 Each step ends with a commit on `review/access-r1`; the status column above is updated in the same commit.
 
