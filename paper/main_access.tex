@@ -42,7 +42,7 @@
 \history{Date of publication xxxx 00, 0000, date of current version xxxx 00, 0000.}
 \doi{10.1109/ACCESS.2017.DOI}
 
-\title{Evaluating the Security of Open-Weight LLM-Generated Industrial Robot Code}
+\title{Evaluating the Code Security of Open-Weight LLM-Generated Industrial Robot Programs}
 
 \author{
   \uppercase{Yunus Emre Cogurcu}\authorrefmark{1},
@@ -58,8 +58,8 @@ Europe Research and Innovation Programme under Grant Agreement No.\ 101120657
 (ENFIELD).}
 
 \markboth
-{Cogurcu \headeretal: Evaluating the Security of Open-Weight LLM-Generated Industrial Robot Code}
-{Cogurcu \headeretal: Evaluating the Security of Open-Weight LLM-Generated Industrial Robot Code}
+{Cogurcu \headeretal: Evaluating the Code Security of Open-Weight LLM-Generated Industrial Robot Programs}
+{Cogurcu \headeretal: Evaluating the Code Security of Open-Weight LLM-Generated Industrial Robot Programs}
 
 \corresp{Corresponding author: Aida Akbarzadeh (e-mail:
 aida.akbarzadeh@ntnu.no).}
@@ -1077,15 +1077,16 @@ second audit was therefore conducted after the review (Table~\ref{tab:precision2
 firings, twenty per firing check, drawn with a fixed seed from the gate-passing outputs of
 the baseline and adversarial experiments and labelled independently by two raters, blind
 to each other's labels, following a written guide released with the replication package.
-Rater A is an author; rater B is not an author and had not seen the manuscript, the rule
-code or the first audit. The raters agree on 81 of 100 labels, pooled Cohen's
+Rater A is a consensus label agreed between two authors (the first and second authors)
+before rater B's sheet was opened; rater B is not an author and had not seen the
+manuscript, the rule code or the first audit. The raters agree on 81 of 100 labels, pooled Cohen's
 $\kappa=0.55$, with full agreement on the unusual-conditions check and the weakest
 agreement on the error-handling proxy ($\kappa=0.20$) and the hardcoded-value check
 ($\kappa=0.35$); the $\kappa$ of 0.00 on the preamble check is an artefact of rater A
 labelling all twenty firings genuine, which leaves no variance for the statistic. Rater B
 is systematically less favourable to the instrument than rater A: pooled precision 64\%
 [54, 73] against 77\% [68, 85]. The 19 disagreements were resolved in a recorded
-adjudication under the written guide, performed by the author, and every one resolved to
+adjudication under the written guide, performed by the two rater A authors, and every one resolved to
 rater A's label, because each of rater B's departures applied the rule's own wording
 where the guide's criterion differs from it. The adjudicated column therefore coincides
 with rater A's, and the reader who prefers the non-author's judgement should read the

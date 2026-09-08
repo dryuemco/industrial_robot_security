@@ -57,7 +57,7 @@ def kappa(a: pd.Series, b: pd.Series) -> tuple[float, float, int]:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--a", type=Path, default=None, help="rater A sheet (author); optional until returned")
+    ap.add_argument("--a", type=Path, default=None, help="rater A sheet (consensus of two authors); optional until returned")
     ap.add_argument("--b", type=Path, required=True, help="rater B sheet (independent, non-author)")
     ap.add_argument("--adjudicated", type=Path, default=None)
     ap.add_argument("--out-dir", type=Path, default=Path("paper/tables"))
@@ -139,7 +139,7 @@ def main() -> None:
     env = "table*" if has_adj else "table"
     cap_adj = (
         " Adjudicated is the label after a recorded resolution of every disagreement under"
-        " the written rater guide, performed by the author (rater A)."
+        " the written rater guide, performed by the two rater A authors."
         if has_adj else ""
     )
     colspec = "@{}lrrlrlrr" + ("rl" if has_adj else "") + "@{}"
@@ -154,8 +154,9 @@ def main() -> None:
         f"\\begin{{{env}}}[t]",
         "\\caption{Precision audit v2 of the rule checker on gate-passing generated code",
         "(E1 and E2): 100 firings, 20 per firing check, drawn with a fixed seed and labelled",
-        "independently by two raters blind to each other's labels (A: an author; B: not an",
-        "author, had not seen the manuscript, the rule code or the first audit). Precision is",
+        "independently by two raters blind to each other's labels (A: a consensus label of two",
+        "authors; B: not an author, had not seen the manuscript, the rule code or the first",
+        "audit). Precision is",
         "the share of audited firings judged genuine, with Clopper-Pearson 95\\% intervals;",
         "Agree is percent agreement and $\\kappa$ Cohen's kappa on the TP/FP decisions." + cap_adj,
         "The two checks that never fire (SM-3, SM-7) are not represented.}",

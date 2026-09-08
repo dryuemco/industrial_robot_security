@@ -2,9 +2,9 @@
 
 **Purpose.** Reviewers of manuscript Access-2026-32028 asked for a larger precision audit
 of the rule checker with more than one rater and an inter-rater agreement statistic. This
-guide tells a second, independent human rater exactly what to do. The first rater is an
-author; the second rater must not be an author of the manuscript and must not have seen
-the first rater's labels.
+guide tells a second, independent human rater exactly what to do. Rater A is a consensus
+label agreed between two authors; rater B must not be an author of the manuscript and must
+not have seen rater A's labels.
 
 **Time.** About 2 hours for 100 items (roughly 1 minute per item once warmed up).
 
