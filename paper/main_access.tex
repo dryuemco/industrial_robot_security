@@ -1298,25 +1298,51 @@ at the baseline condition (p of 0.004) and 20.00 at the safety-prompted conditio
 
 Because the three models were served at two different quantization levels, one at
 Q4\_K\_M and two at Q4\_0 (Table~\ref{tab:models}), this heterogeneity test cannot by
-itself separate model identity from quantization. To bound the quantization effect,
-Qwen2.5-Coder-32B was re-run at Q4\_0 after the review, on the same fifteen tasks, two
+itself separate model identity from quantization. To bound the quantization effect, each
+model was re-run after the review at the level it was \emph{not} served at,
+Qwen2.5-Coder-32B at Q4\_0 and the other two at Q4\_K\_M, on the same fifteen tasks, two
 conditions and three repetitions, with the same prompts, decoding settings and task
-representations as the confirmatory run, on a local RTX~5090 (90 generations, all
-gate-passing; Table~\ref{tab:quant}). At the level of the binary verdict, which is the
-level of the heterogeneity test, quantization makes no difference: every task cell keeps
-its verdict in both conditions (15 of 15 agreeing, McNemar $p = 1.0$), and the violation
-rate is 100\% at either quantization. At the count level the two quantizations differ
+representations as the confirmatory run, on a local RTX~5090 (270 generations;
+Table~\ref{tab:quant}). For Qwen2.5-Coder-32B quantization makes no difference at the
+level of the binary verdict, which is the level of the heterogeneity test: every task
+cell keeps its verdict in both conditions (15 of 15 agreeing, McNemar $p = 1.0$) and the
+violation rate is 100\% at either level. At the count level the two quantizations differ
 modestly: the baseline mean falls from 10.91 to 8.07 violations per generation at Q4\_0
 (Wilcoxon signed-rank on per-cell means, $p = 0.022$), driven by the input-validation
 proxy no longer firing (49\% to 0\% of outputs) while the unusual-conditions check fires
 more often (49\% to 93\%); under the safety prompt the means are 10.40 and 11.24
-($p = 0.68$). The cross-model heterogeneity result therefore stands at the binary level
-that it was registered for, but quantization is a plausible contributor of the order of
-two or three violations per generation to any count-level comparison across the three
-models, and the count-level contrasts in this article are within-model only. This
-re-run is not preregistered and is reported as a control, not a confirmatory result.
+($p = 0.68$).
 
-\input{tables/quantization_compare.tex}
+For the two smaller models quantization does move outcomes. DeepSeek-Coder-V2-16B at
+Q4\_K\_M passes the validity gate more often at baseline (37 against 20 of 45 outputs) and
+less often under the safety prompt (22 against 42); the binary verdict agrees in 11 of 15
+baseline cells ($p = 0.12$) and 9 of 15 safety-prompted cells ($p = 0.03$), and the
+gate-passing mean is 13.41 against 9.50 at baseline ($p = 0.003$) and 3.09 against 3.69
+under the safety prompt ($p = 0.03$); at Q4\_K\_M every gate-passing baseline output fires
+the same four checks (SM-1, SM-2, SM-4 and SM-6), whereas at Q4\_0 a quarter of them fire
+only the error-handling proxy. CodeLlama-34B passes the gate in 24 against 18 baseline and
+24 against 21 safety-prompted outputs; the verdict agrees in only 7 of 15 baseline and 4 of
+15 safety-prompted cells, but the discordant cells fall in both directions ($p = 0.73$ and
+$0.55$), the gate-passing violation rate under the safety prompt is 79\% against 67\%, and
+the means (22.00 against 10.00 at baseline, 1.08 against 3.19 under the safety prompt) do
+not differ significantly ($p = 0.10$ and $0.81$). Thirty of the 90 CodeLlama-34B outputs at
+Q4\_K\_M, 27 of them under the safety prompt, run to the 4096-token budget and are
+truncated; 17 fail the gate and 13 pass it. Recomputing the cross-model test with all
+three models at Q4\_K\_M gives Cochran $Q = 8.67$ at baseline and $7.82$ under the safety
+prompt (Holm-corrected $p = 0.026$ and $0.020$); with all three at Q4\_0 the as-served
+values are unchanged, because the only model served at Q4\_K\_M keeps every verdict at
+Q4\_0. The heterogeneity result therefore stands at the binary level that it was
+registered for at either uniform quantization, with a narrower margin at Q4\_K\_M, where
+CodeLlama-34B's per-task violation rate rises from 40\% to 53\% at baseline and from
+33\% to 53\% under the safety prompt. At the count level quantization shifts the mean of a
+single model by between one and twelve violations per generation, which is of the same
+order as the differences between models, so no count-level comparison is made across
+models and all count-level contrasts in this article are within-model. These re-runs are
+not preregistered and are reported as controls, not confirmatory results; the token
+budget and request timeout of the local host, and the cells that were regenerated because
+of them, are documented in Appendix~\ref{app:replication}.
+
+\input{tables/quantization_summary.tex}
 
 A
 complexity-stratified subgroup analysis using the outcome-blind complexity score of
@@ -1604,9 +1630,11 @@ on a manual audit; the non-LLM comparator and the sensitivity re-scoring of
 substitute for an independent validation set, which remains future work. Second, the
 three models were served at different quantization levels, one at Q4\_K\_M and two at
 Q4\_0 (Table~\ref{tab:models}), so the cross-model heterogeneity test of
-\ref{sec:res-sens} cannot separate model identity from quantization level; a re-run of
-Qwen2.5-Coder-32B at Q4\_0 on the same tasks and prompts, reported in
-\ref{sec:res-sens}, addresses this directly. The seven-strategy adversarial family also
+\ref{sec:res-sens} cannot separate model identity from quantization level; re-runs of
+all three models at the other level, reported in \ref{sec:res-sens}, show that the
+binary heterogeneity survives at either uniform level while the count-level outcomes of
+the two smaller models move with quantization, which is why no count-level contrast in
+this article crosses models. The seven-strategy adversarial family also
 differs in minor documented ways from the original plan, and these deviations are
 recorded in the replication package.
 
@@ -1733,6 +1761,20 @@ the synthetic variants (114 of 120 before and after). The replication package sh
 states, and the tables and prompts in this article are generated from the frozen snapshot.
 The generation logs and generated URScript files for every run, including the single-task
 probe of \ref{sec:res-baseline}, are provided in the same package.
+
+\textbf{Token budget and the quantization controls.} The client used for the local
+inference server sent the 4096-token output budget of \ref{sec:models} in a form that the
+server's OpenAI-compatible endpoint ignores, so the budget was not enforced in the local
+runs; this was noticed during the quantization controls of \ref{sec:res-sens} and is
+without consequence for the confirmatory experiments, whose longest output is 1399
+tokens. On the host of the controls, DeepSeek-Coder-V2-16B at Q4\_K\_M and CodeLlama-34B
+at Q4\_K\_M occasionally produced runaway generations that the budget should have
+stopped and that instead hit the 300~s request timeout (5 and 35 of 90 cells). After the
+client was corrected, the affected tasks were regenerated with the budget enforced and
+only the affected cells were replaced (6 and 35 cells; the extra DeepSeek cell had exceeded
+the budget without timing out); the replacement is recorded per row in the archived
+results, and the regenerated DeepSeek cells did not reproduce the runaway, which is
+consistent with the repetition analysis of Table~\ref{tab:reps}.
 
 \textbf{Rule-checker checks.} The seven motion-safety checks of \ref{sec:analyzer}
 carry the identifiers DM-1 (speed and payload range), DM-2 (safe-zone halfspace), DM-3
