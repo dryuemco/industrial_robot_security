@@ -428,11 +428,16 @@ registered text above; the sections above are kept as they were written.
 
 ### Filing dates
 
-| Amendment | Content | Filed on OSF (UTC) |
-|---|---|---|
-| 1 | Generator hypotheses H4–H6 | approved 2026-04-07 |
-| 3 | URSim simulator lock (H7), exploratory complexity analysis (H8), operational disclosures | 2026-05-12T09:05:08Z |
-| 2 | A8 family 8 → 7 strategies, H5 Holm family 24 → 21 | 2026-05-15T19:08:09Z |
+| Update | Content | Submitted on OSF (UTC) | OSF schema response id |
+|---|---|---|---|
+| original | Registration | 2026-03-22 | `69bff22a89bef16c2f3d56b9` |
+| Amendment 1 | Generator hypotheses H4–H6 | 2026-04-07T13:16:00Z (approved the same day) | `69d3c5c421a5eb766f7a850e` |
+| Amendment 3 | URSim simulator lock (H7), exploratory complexity analysis (H8), operational disclosures | 2026-05-12T09:05:08Z | `6a02e67cf944b975e74bbdbd` |
+| Amendment 2 | A8 family 8 → 7 strategies, H5 Holm family 24 → 21 | 2026-05-15T19:08:09Z | `6a076690b12b31eaddaaca6d` |
+| Record note | Data-collection timeline and five qualifications to Amendments 2 and 3 (text below); changes no hypothesis, test, sampling plan or analysis | 2026-09-21T20:47:54Z (approved the same day) | `6ab196ba288fe69e4d07a19f` |
+
+All five are in state `approved`. Source: `https://api.osf.io/v2/registrations/ve5m2/schema_responses/`
+(read 2026-09-21); a single response is at `https://api.osf.io/v2/schema_responses/<id>/`.
 
 The "Amendment 2 candidate" section above (2026-04-15) says the amendment is "NOT yet
 filed"; that was its state when written. It was filed on 2026-05-15, after Amendment 3.
@@ -483,15 +488,24 @@ GitHub by hash.
 | `5147bca` | 2026-05-12T08:33:00 | docs(s29): append 2026-05-11 DHCP drift to Amendment 3 IP clarification (Obs 1) | none (amendment draft) |
 | `b979881`, `e5bc8e2`, `57f620b`, `3a0756d` (Amendment 3, H8 pipeline) | 2026-05-11 | TCS extraction, schema alignment, H8 analysis, continuous metrics | `6dd1919`, `9a03c3d`, `e27561d`, `0a4222b` |
 
-### Record note for the OSF project page (final text, 2026-09-21)
+### Record note filed on OSF (2026-09-21, schema response `6ab196ba288fe69e4d07a19f`)
 
-An earlier version of this section (commit `9afd1c2`) quoted two sentences from the
-repository draft of Amendment 3 (`docs/OSF_AMENDMENT_3_DRAFT.md` at `5147bca`). The
-amendments as filed on OSF are worded differently, so that version is superseded. The
-quotations below are from the amendments as filed; they were read from the OSF record by
-the author and cannot be checked against this repository, which holds only the drafts.
-The note is posted on the OSF project page (wiki), not as a new amendment; there it ends
-with a link to this file at the commit that introduced this section.
+The note below was filed as an update of the registration, not as a wiki entry: it is the
+revision justification of schema response `6ab196ba288fe69e4d07a19f`, submitted
+2026-09-21T20:47:54Z and approved the same day. On OSF it is preceded by the sentence
+"This update changes no hypothesis, test, sampling plan or analysis; it adds the
+following note to the registration record.", and its last paragraph links to this file
+at commit `7ce550c1a395b112420e6606089aee444e9a0936`. The only registration field the
+update changes is the sample-size field, which gains one line: "Note (21 September
+2026): per Amendment 2, E2 uses seven subtypes (A8.1 to A8.7), 315 calls; references
+above to eight subtypes or 360 calls are superseded."
+
+Checked against the OSF API on 2026-09-21: the five quotations in the note occur verbatim
+in Amendment 3 (`6a02e67cf944b975e74bbdbd`) and Amendment 2 (`6a076690b12b31eaddaaca6d`)
+as filed, and the note as filed is identical to the text below apart from the link. An
+earlier version of this section (commit `9afd1c2`) quoted the repository draft of
+Amendment 3 (`docs/OSF_AMENDMENT_3_DRAFT.md` at `5147bca`), whose wording differs from
+the filed text; it is superseded.
 
 > Record note, 21 September 2026.
 >
