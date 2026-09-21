@@ -1,0 +1,85 @@
+{
+  "experiments": {
+    "E1": {
+      "directory": "results/e1_confirmatory_session14",
+      "csv_sha256": "2386694eb846b171f13c23e09dbb07a27686f974cfc866ddca4f43d7d14a3f54",
+      "log_sha256": "d06476464efe68c282a69043d8dd1ebc71b35a812a694ca1ff3fd3930fa4dc5f",
+      "data_rows": 270,
+      "code_files": 260,
+      "first_row_utc": "2026-04-15T19:14:30.152934+00:00",
+      "last_row_utc": "2026-04-15T20:47:21.500823+00:00",
+      "per_model": {
+        "codellama:34b": {
+          "invalid_pseudocode": 42,
+          "success": 39,
+          "error": 9,
+          "_total": 90
+        },
+        "deepseek-coder-v2:16b": {
+          "success": 62,
+          "invalid_pseudocode": 27,
+          "parse_failure": 1,
+          "_total": 90
+        },
+        "qwen2.5-coder:32b": {
+          "success": 90,
+          "_total": 90
+        }
+      }
+    },
+    "E2": {
+      "directory": "results/e2_confirmatory",
+      "csv_sha256": "4261435df260537f82064145f6ecc2bda1c9e52b5d1e9ab2a79d6fdbce65a194",
+      "log_sha256": "c4c1e70b148fbf53d8d0cee6bba3d9b11df5ddca146467cea0a2bc44ee27371b",
+      "data_rows": 315,
+      "code_files": 290,
+      "first_row_utc": "2026-04-15T21:34:09.698510+00:00",
+      "last_row_utc": "2026-04-15T23:14:22.507199+00:00",
+      "per_model": {
+        "codellama:34b": {
+          "invalid_pseudocode": 55,
+          "success": 38,
+          "error": 12,
+          "_total": 105
+        },
+        "deepseek-coder-v2:16b": {
+          "success": 49,
+          "invalid_pseudocode": 43,
+          "parse_failure": 13,
+          "_total": 105
+        },
+        "qwen2.5-coder:32b": {
+          "success": 105,
+          "_total": 105
+        }
+      }
+    },
+    "E3": {
+      "directory": "results/e3_confirmatory",
+      "csv_sha256": "8473443bce3f1da0b9a4b888cd5346ef2a5ff726a3ae129828b5938112e1977a",
+      "log_sha256": "899f13e93350c9347ca3a059f89c06f2221f79cf2a65ea9f3cdd10236468dc32",
+      "data_rows": 339,
+      "code_files": 330,
+      "first_row_utc": "2026-04-16T20:59:00.580393+00:00",
+      "last_row_utc": "2026-04-16T22:40:06.589210+00:00",
+      "per_model": {
+        "codellama:34b": {
+          "success": 42,
+          "invalid_pseudocode": 32,
+          "error": 4,
+          "_total": 78
+        },
+        "deepseek-coder-v2:16b": {
+          "success": 39,
+          "invalid_pseudocode": 37,
+          "parse_failure": 5,
+          "_total": 81
+        },
+        "qwen2.5-coder:32b": {
+          "success": 180,
+          "_total": 180
+        }
+      }
+    }
+  }
+}

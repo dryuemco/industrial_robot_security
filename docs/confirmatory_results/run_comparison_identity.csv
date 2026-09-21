@@ -1,0 +1,10 @@
+experiment,model,rows,rows_identical,status_identical,verdict_identical,code_files,code_files_byte_identical
+E1,codellama:34b,90,90,90,90,81,81
+E1,deepseek-coder-v2:16b,90,90,90,90,89,89
+E1,qwen2.5-coder:32b,90,37,90,90,90,12
+E2,codellama:34b,105,105,105,105,93,93
+E2,deepseek-coder-v2:16b,105,105,105,105,92,92
+E2,qwen2.5-coder:32b,105,66,105,105,105,33
+E3,codellama:34b,78,78,78,78,74,74
+E3,deepseek-coder-v2:16b,81,81,81,81,76,76
+E3,qwen2.5-coder:32b,180,59,180,180,180,25

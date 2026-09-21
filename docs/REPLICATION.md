@@ -95,7 +95,8 @@ models, temperature or prompt set. The suffix is what distinguishes them:
 
 | Directory | Contents | Used for |
 |-----------|----------|----------|
-| `E1_full`, `E2_full`, `E3_full` | Confirmatory run, the three pinned local models (270 / 315 / 339 rows) | H4, H5, H6 — the paper's principal results |
+| `E1_full`, `E2_full`, `E3_full` | Confirmatory run 2 (2026-05-15/16), the three pinned local models (270 / 315 / 339 rows); SHA-256 in `docs/confirmatory_results/MANIFEST.json` | H4, H5, H6 — the paper's principal results |
+| `e1_confirmatory_session14`, `e2_confirmatory`, `e3_confirmatory` | Confirmatory run 1 (2026-04-15/16), same matrix, same code path; SHA-256 in `docs/confirmatory_results/MANIFEST_run1_april.json` | Not an analysis input. Kept for the run-to-run comparison below |
 | `E1_frontier`, `E3_frontier`, `*_frontier_probe` | Frontier models, 24B–675B | Additional analyses (not preregistered) |
 | `exploratory/temp_robustness/temp0p2`, `temp0p7` | Temperature sensitivity, 180 rows each | Additional analyses |
 | `ICSE/`, `icse_confirm/`, `*_probe`, `*_mini`, `pilot_*` | Probes and pilot subsets | Excluded from confirmatory analyses per the pre-registration's pilot-data exclusion rule |
@@ -107,6 +108,39 @@ models, temperature or prompt set. The suffix is what distinguishes them:
 (plus any `e[123]_results.csv` placed directly in `--results-dir`). It deliberately
 does **not** recurse: a recursive sweep would fold frontier, temperature-robustness,
 probe and mock rows into the confirmatory family and silently corrupt H4–H6.
+
+### The two confirmatory runs
+
+The confirmatory matrix was generated twice. Run 1 was made on 2026-04-15/16 and was
+analysed at once (the H4–H6 outcomes were known from 2026-04-17). Run 2 was made on
+2026-05-15/16 as one chained overnight job, after the model digests had been pinned in
+`docs/replication/MODEL_DIGESTS.txt` (2026-05-11); the Qwen2.5-Coder-32B model on the
+inference host carries a modification date of 2026-05-05, and the digest in use during
+run 1 was not recorded. **The paper reports run 2**, and every table and figure script
+defaults to the `E*_full` directories.
+
+`scripts/review/compare_confirmatory_runs.py` compares the runs row by row and writes
+`docs/confirmatory_results/run_comparison_identity.csv`, `run_comparison_headline.csv`
+and `MANIFEST_run1_april.json`:
+
+```bash
+python3 scripts/review/compare_confirmatory_runs.py
+```
+
+Result: the generated programs of DeepSeek-Coder-V2-16B and CodeLlama-34B are
+byte-identical in the two runs (505 of 505 files); all differences are in
+Qwen2.5-Coder-32B (70 of 375 files byte-identical). Validity status and binary verdict
+agree on all 924 rows, so `scripts/mcnemar_analysis.py` produces byte-identical
+`mcnemar_results.csv`, `cochran_results.csv`, `contingency_tables.json` and
+`hypothesis_report.md` for the two runs; to check, copy the three run-1 CSVs into an
+empty directory and pass it as `--results-dir`. Count-level values differ slightly
+(gate-passing baseline mean 10.07 in run 1 against 10.37 in run 2).
+
+Timing relative to the pre-registration: Amendment 1 was approved on 2026-04-07, before
+both runs. The Amendment 2 change (eight to seven A8 strategies) was committed on
+2026-04-15 before the first run-1 generation but filed on OSF on 2026-05-15, after run 1
+had been analysed and about one hour into run 2 (before E2 of run 2 began). Amendment 3
+was filed on 2026-05-12, between the runs.
 
 ---
 
@@ -220,7 +254,7 @@ Cochran's Q across the three models is reported in the same output as explorator
 
 ## 10. H8 Exploratory: Task Complexity Stratification
 
-H8 is a Session-26 exploratory analysis added in Amendment 3, applied to the existing E1/E2/E3 dataset (no new observations). Two steps:
+H8 is a Session-26 exploratory analysis added in Amendment 3 (filed 2026-05-12). A first version was computed on the run-1 data on 2026-05-11, the day before the amendment was filed, so it is exploratory and is not reported as a preregistered test; the version in the paper is computed on run 2 (`paper/tables/complexity/manifest.json` pins the input hashes). Two steps:
 
 Step 1 — compute deterministic Task Complexity Scores from baseline IRs:
 
@@ -301,7 +335,10 @@ results/
 │   ├── summary.json
 │   └── detection_matrix.csv
 ├── smoke_test/                  (gitignored, OSF-deposited)
-├── E1/, E2/, E3/                (per-call CSV + JSONL + generated URScript)
+├── E1/, E2/, E3/                (per-call CSV + JSONL + generated URScript; the shipped
+│                                 confirmatory data are E1_full/, E2_full/, E3_full/ (run 2)
+│                                 and e1_confirmatory_session14/, e2_confirmatory/,
+│                                 e3_confirmatory/ (run 1), both OSF-deposited)
 ├── stats/
 │   ├── mcnemar_results.csv
 │   ├── hypothesis_report.md

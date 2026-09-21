@@ -27,9 +27,9 @@ t-normal approximation is used. The method is recorded in each row.
 Usage:
     python scripts/complexity_correlation_analysis.py \\
         --tcs-csv results/task_complexity_scores.csv \\
-        --e1-csv results/e1_confirmatory_session14/e1_results.csv \\
-        --e2-csv results/e2_confirmatory/e2_results.csv \\
-        --e3-csv results/e3_confirmatory/e3_results.csv \\
+        --e1-csv results/E1_full/e1_results.csv \\
+        --e2-csv results/E2_full/e2_results.csv \\
+        --e3-csv results/E3_full/e3_results.csv \\
         --output-dir results/complexity_correlation/ \\
         --outcome-metrics cvr count severity \\
         --bootstrap 10000 --seed 42

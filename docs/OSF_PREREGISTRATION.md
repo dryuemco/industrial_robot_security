@@ -417,3 +417,86 @@ The following sections continue to mirror the OSF-approved Amendment 1 record an
 ### OSF platform note
 
 This amendment is **NOT yet filed** on the OSF pre-registration page (DOI: [10.17605/OSF.IO/VE5M2](https://doi.org/10.17605/OSF.IO/VE5M2)). The OSF registration record continues to reflect Amendment 1 (eight-subtype family, twenty-four-cell H5 contrast). When this candidate is submitted, the OSF "Amendments" tab will receive a new entry with the title and justification text above; the locked paper sections and the H5 row in this document will then be updated in a follow-up commit to remove the spec-vs-implementation drift documented in paper section VII.B.6.
+
+---
+
+## Record notes — 2026-09-21 (filing dates, data-collection timeline, commit identifiers)
+
+This section was added during the IEEE Access revision after an audit of the OSF record
+against the repository history and the raw result files. It does not change any
+registered text above; the sections above are kept as they were written.
+
+### Filing dates
+
+| Amendment | Content | Filed on OSF (UTC) |
+|---|---|---|
+| 1 | Generator hypotheses H4–H6 | approved 2026-04-07 |
+| 3 | URSim simulator lock (H7), exploratory complexity analysis (H8), operational disclosures | 2026-05-12T09:05:08Z |
+| 2 | A8 family 8 → 7 strategies, H5 Holm family 24 → 21 | 2026-05-15T19:08:09Z |
+
+The "Amendment 2 candidate" section above (2026-04-15) says the amendment is "NOT yet
+filed"; that was its state when written. It was filed on 2026-05-15, after Amendment 3.
+
+### Data-collection timeline
+
+| Event | UTC |
+|---|---|
+| Amendment 2 code change (`prompt_builder`, McNemar labels) committed | 2026-04-15T17:54–18:09 |
+| Amendment 2 candidate filed locally in this document | 2026-04-15T18:54 |
+| Run 1, E1 (270 rows, `results/e1_confirmatory_session14/`) | 2026-04-15T19:14:30 – 20:47:21 |
+| Run 1, E2 (315 rows, `results/e2_confirmatory/`) | 2026-04-15T21:34:09 – 23:14:22 |
+| Run 1, E3 (339 rows, `results/e3_confirmatory/`) | 2026-04-16T20:59:00 – 22:40:06 |
+| H4/H5/H6 computed on run 1 | 2026-04-15 to 2026-04-17 |
+| Qwen2.5-Coder-32B model modification date on the inference host | 2026-05-05 |
+| First H8 computation, on run-1 data | 2026-05-11T14:22–14:33 |
+| Model digests pinned (`docs/replication/MODEL_DIGESTS.txt`) | 2026-05-11 |
+| Amendment 3 filed | 2026-05-12T09:05:08 |
+| Run 2, E1 (270 rows, `results/E1_full/`) | 2026-05-15T18:13:00 – 20:29:45 |
+| Amendment 2 filed | 2026-05-15T19:08:09 |
+| Run 2, E2 (315 rows, `results/E2_full/`) | 2026-05-15T20:30:57 – 23:16:38 |
+| Run 2, E3 (339 rows, `results/E3_full/`) | 2026-05-15T23:17:30 – 2026-05-16T02:34:56 |
+
+The paper reports run 2. 61 of the 270 run-2 E1 rows (Qwen2.5-Coder-32B, tasks T001–T011)
+precede the Amendment 2 filing time; Amendment 2 concerns the adversarial family, and no
+run-2 E2 or E3 row precedes it. The runs are compared in
+`docs/confirmatory_results/` (`scripts/review/compare_confirmatory_runs.py`): every
+preregistered test is identical in the two runs; count-level values differ slightly and
+only through Qwen2.5-Coder-32B.
+
+### Commit identifiers cited on OSF
+
+The OSF amendments cite commit hashes of the project's working history. The public
+`main` branch does not contain the manuscript-draft and session-note commits of that
+history, so commits that exist in both have a different hash on `main`, and
+manuscript-only commits have no counterpart there. The cited objects still resolve on
+GitHub by hash.
+
+| Cited on OSF | Date (UTC) | Subject | Same change on `main` |
+|---|---|---|---|
+| `7b88bca` | 2026-04-15T17:54:24 | refactor(prompt_builder): rename adversarial enum to A8.x and drop no-op variant | `92bcf2e` |
+| `649282d` | 2026-04-15T18:09:23 | refactor(mcnemar): align condition labels with A8.x naming | `e7d29a0` |
+| `5558a5e` | 2026-04-15T18:31:14 | docs(paper): align non-locked sections with seven-variant scope | none (manuscript draft) |
+| `6d47f71` | 2026-04-15T18:37:23 | docs(paper): document spec-vs-implementation drift in VII.B | none (manuscript draft) |
+| `5147bca` | 2026-05-12T08:33:00 | docs(s29): append 2026-05-11 DHCP drift to Amendment 3 IP clarification (Obs 1) | none (amendment draft) |
+| `b979881`, `e5bc8e2`, `57f620b`, `3a0756d` (Amendment 3, H8 pipeline) | 2026-05-11 | TCS extraction, schema alignment, H8 analysis, continuous metrics | `6dd1919`, `9a03c3d`, `e27561d`, `0a4222b` |
+
+### Statements in Amendment 3 that need a correction note on OSF
+
+Quoted from the Amendment 3 draft as committed at `5147bca`
+(`docs/OSF_AMENDMENT_3_DRAFT.md`); check against the text as filed before posting.
+
+1. "The full E1, E2, and E3 confirmatory runs were generated under the current pinned
+   digest." When this was filed (2026-05-12) the only complete confirmatory run was
+   run 1 (2026-04-15/16), which predates the 2026-05-05 modification date of the pinned
+   Qwen2.5-Coder-32B model; the digest in use during run 1 was not recorded. The
+   statement holds for run 2 (2026-05-15/16), the run the paper reports.
+2. "We confirm that, at the time of filing, only the primary H4/H5/H6 results have been
+   inspected." A first version of the H8 analysis had been computed on run-1 data on
+   2026-05-11 (commits `e27561d` and `0a4222b` on `main`, whose messages report the
+   correlations). H8 is therefore reported in the paper as exploratory and not as a
+   preregistered test. The H8 values in the paper are computed on run 2, which was
+   generated after the amendment was filed.
+3. Amendment 3 uses the labels H7 and H8 for the simulator-based execution check and the
+   complexity analysis. The manuscript as first submitted used the same labels for two
+   post-hoc hypotheses (saturation explains the adversarial null; refusal is near
+   zero); the revised manuscript drops those labels.
