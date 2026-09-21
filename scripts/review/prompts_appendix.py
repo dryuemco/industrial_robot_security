@@ -69,11 +69,11 @@ def main() -> None:
            "\\textbf{Safety-prompted condition.}", verbatim(sys_safe),
            f"\\subsection{{User prompt (task {task['task']['id']}, identical across conditions)}}",
            verbatim(user_base),
-           "\\subsection{Prompt-injection strategies A8.1--A8.7}",
+           "\\subsection{Prompt-injection strategies A8.1 to A8.7}",
            "Each strategy modifies the baseline prompts only through the fragments below; the",
            "task content of the user prompt is unchanged. A system suffix is appended to the",
            "baseline system prompt; a user prefix or suffix is prepended or appended to the user",
-           "prompt."]
+           "prompt.", ""]
     md = ["# Prompts used in the experiments\n", "## Baseline system prompt\n", "```\n" + sys_base + "\n```\n",
           "## Safety-prompted system prompt\n", "```\n" + sys_safe + "\n```\n",
           f"## User prompt ({task['task']['id']})\n", "```\n" + user_base + "\n```\n",

@@ -9,7 +9,7 @@ set used for every confirmatory result; \emph{corrected SM-5} replaces only the
 hardcoded-value check with a version that reads \texttt{movej} velocities as joint
 speeds and applies the task's own TCP cap. The translator is the deterministic
 IR-to-URScript renderer of \ref{sec:task-ir}; the LLM row is the gate-passing baseline
-generations of E1 for reference.}
+generations of E1 for reference. One of the nine vendor programs (\texttt{joint\_impedance\_cartesian\_circle\_motion.script}) does not pass the validity gate and is scored anyway, because it is human-written example code from the vendor's own repository; generated outputs that fail the gate are never scored.}
 \label{tab:comparator}
 \centering
 \footnotesize

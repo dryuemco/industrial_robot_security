@@ -193,7 +193,7 @@
     \setcounter{subsubsection}{0}%
     \setcounter{paragraph}{0}%
     \def\thesection{\Alph{section}}%
-    \def\thesectiondis{APPENDIX \Alph{section}}.%
+    \def\thesectiondis{APPENDIX \Alph{section}}%
     \refstepcounter{section}% update the \ref counter
     \setcounter{section}{0}% NEXT \section will be the FIRST appendix
     % redefine \section command for appendices

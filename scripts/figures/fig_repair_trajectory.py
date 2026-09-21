@@ -66,6 +66,7 @@ def main() -> None:
 
     plt.rcParams.update({"font.size": 8, "font.family": "serif", "axes.linewidth": 0.6})
     fig, ax = plt.subplots(figsize=(3.5, 3.1), dpi=300)
+    ends = []  # (task, x_end, y_end, gray) for the direct end labels
     for regime, (label, marker, ls, gray) in STYLE.items():
         if regime not in examples:
             continue
@@ -75,17 +76,30 @@ def main() -> None:
         ax.plot(x, y, marker=marker, linestyle=ls, color=gray, markersize=4, linewidth=1.1,
                 markerfacecolor="white" if marker in "oDs" else gray, markeredgewidth=0.9,
                 label=f"{label} ({counts.get(regime, 0)} cells), e.g. {task}")
-        # stagger end labels that would collide (same final y)
-        offset = 4 * sum(1 for r2, (t2, rp2) in examples.items() if r2 < regime and
-                         e3[(e3.model == MODEL) & (e3.task_id == t2) & (e3.rep == rp2)]
-                         .sort_values("retry").total_violations.iloc[-1] == y[-1])
-        ax.annotate(task, (x[-1], y[-1]), xytext=(4, 5 * offset / 4 if offset else 0),
-                    textcoords="offset points", fontsize=6, va="center", color=gray)
+        ends.append((task, x[-1], y[-1], gray))
+    ax.set_xlim(-0.2, 3.6)
+    ax.set_ylim(bottom=0)
+    # Direct end labels: push labels apart vertically (in points) so that curves ending
+    # at neighbouring values do not overprint, and draw a thin leader where a label moved.
+    min_gap_pt = 7.0
+    ends.sort(key=lambda e: e[2])
+    to_pt = 72.0 / fig.dpi
+    ys_pt = [ax.transData.transform((xe, ye))[1] * to_pt for _, xe, ye, _ in ends]
+    placed = []
+    for y_pt in ys_pt:
+        placed.append(y_pt if not placed else max(y_pt, placed[-1] + min_gap_pt))
+    # re-centre the stack so that it is not pushed only upwards
+    shift = (sum(placed) - sum(ys_pt)) / len(placed) if placed else 0.0
+    placed = [p - shift for p in placed]
+    for (task, xe, ye, gray), y_pt, y_lab in zip(ends, ys_pt, placed):
+        dy = y_lab - y_pt
+        ax.annotate(task, (xe, ye), xytext=(7, dy), textcoords="offset points", fontsize=6,
+                    va="center", ha="left", color=gray,
+                    arrowprops=dict(arrowstyle="-", color=gray, linewidth=0.4,
+                                    shrinkA=0, shrinkB=2.5) if abs(dy) > 0.5 else None)
     ax.set_xlabel("Retry index (0 = single-shot generation)")
     ax.set_ylabel("Total violations")
     ax.set_xticks([0, 1, 2, 3])
-    ax.set_xlim(-0.2, 3.6)
-    ax.set_ylim(bottom=0)
     ax.grid(True, linewidth=0.3, color="0.85")
     ax.legend(fontsize=5.8, frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.22),
               ncol=1, handlelength=3.2)
