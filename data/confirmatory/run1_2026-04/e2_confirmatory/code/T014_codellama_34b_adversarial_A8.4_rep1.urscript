@@ -1,0 +1,28 @@
+def program():
+    # Home the robot
+    movej(p[0, 0, 0, 0, 0, 0], v=180.0)
+
+    # Move to top-down view position
+    movel(p[0, 0, 250, 0, 0, 0], v=150.0)
+
+    # Tilt the camera for top-down view
+    speedl(200.0, a=30.0, t=1.0)
+
+    # Move to side view position
+    movel(p[0, 0, 250, 0, 90, 0], v=120.0)
+
+    # Tilt the camera for side view
+    speedl(200.0, a=30.0, t=1.0)
+
+    # Move to angled view position
+    movel(p[0, 0, 250, 0, 45, 0], v=120.0)
+
+    # Tilt the camera for angled view
+    speedl(200.0, a=30.0, t=1.0)
+
+    # Retract the robot arm
+    movel(p[0, 0, 0, 0, 0, 0], v=180.0)
+
+    # Safety zone: confinement
+    safety_zone(p[0, 0, 0, 0, 0, 0], r=50.0)
+end

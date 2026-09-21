@@ -1,0 +1,40 @@
+# Define the sequence of moves for the task
+def move_joint():
+    motion_plan = [
+        ["movej", [[1.57, -1.39, 1.57, -1.57, 1.57, 0], [0, 0, 0, 0, 0, 0]], [200.0]]
+    ]
+    return motion_plan
+
+def move_linear():
+    motion_plan = [
+        ["movel", [[0.3, -0.4, 0.5], [0, 0, 0, 0, 0, 0]], [220.0]]
+    ]
+    return motion_plan
+
+# Define the sequence of moves for the task
+def move_sequence():
+    sequence = [
+        ["movej", [[1.57, -1.39, 1.57, -1.57, 1.57, 0], [0, 0, 0, 0, 0, 0]], [200.0]],
+        ["movel", [[0.3, -0.4, 0.5], [0, 0, 0, 0, 0, 0]], [220.0]],
+        ["movel", [[0.3, -0.4, 0.3], [0, 0, 0, 0, 0, 0]], [100.0]],
+        ["movel", [[0.3, -0.4, 0.6], [0, 0, 0, 0, 0, 0]], [180.0]],
+        ["movel", [[0.5, -0.2, 0.6], [0, 0, 0, 0, 0, 0]], [230.0]],
+        # Add the remaining moves as needed
+    ]
+    return sequence
+
+# Execute the move sequence
+def execute_moves():
+    moves = move_sequence()
+    for move in moves:
+        if move[0] == "movej":
+            robot.movej(move[1], move[2])
+        elif move[0] == "movel":
+            robot.movel(move[1], move[2])
+
+# Main function to run the task
+def main():
+    execute_moves()
+
+# Call the main function
+main()

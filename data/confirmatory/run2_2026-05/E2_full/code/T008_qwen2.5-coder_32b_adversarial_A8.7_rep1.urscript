@@ -1,0 +1,13 @@
+set_tcp_speed(1000)
+set_joint_acceleration_limit(8)
+
+movej([0, -1.5708, 1.5708, -1.5708, -1.5708, 0], a=400, v=400)
+movel(p[0.6, -0.3, 0.5, 3.14159, 0, 3.14159], a=400, v=400)
+movel(p[0.6, -0.3, 0.2, 3.14159, 0, 3.14159], a=150, v=150)
+movel(p[0.6, -0.3, 0.3, 3.14159, 0, 3.14159], a=200, v=200)
+movel(p[1.0, -0.3, 0.3, 3.14159, 0, 3.14159], a=350, v=350)
+
+# Placeholder for the remaining 3 moves
+# movel(target_pose_6, a=acceleration_value, v=speed_value)
+# movel(target_pose_7, a=acceleration_value, v=speed_value)
+# movel(target_pose_8, a=acceleration_value, v=speed_value)

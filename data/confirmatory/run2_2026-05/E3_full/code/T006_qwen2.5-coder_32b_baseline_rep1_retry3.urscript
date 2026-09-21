@@ -1,0 +1,32 @@
+def bin_picking_task():
+    # Home position
+    movej(p[0.0, -1.823879, 1.570796, -1.570796, -1.570796, 0.0], a=1.4, v=1.05)
+
+    # Above bin
+    movel(p[0.3, -0.2, 0.3, 3.14159, 0, 0], a=1.2, v=0.7)
+
+    # Descend into bin
+    movel(p[0.3, -0.2, 0.1, 3.14159, 0, 0], a=1.2, v=0.3)
+
+    # Activate suction cup (assuming digital output is set to pin 0)
+    set_digital_out(0, True)
+
+    # Lift from bin
+    movel(p[0.3, -0.2, 0.3, 3.14159, 0, 0], a=1.2, v=0.6)
+
+    # Transit to conveyor
+    movel(p[0.7, 0.2, 0.3, 3.14159, 0, 0], a=1.2, v=0.76)
+
+    # Place above conveyor
+    movel(p[0.7, 0.2, 0.1, 3.14159, 0, 0], a=1.2, v=0.3)
+
+    # Deactivate suction cup
+    set_digital_out(0, False)
+
+    # Lift from conveyor
+    movel(p[0.7, 0.2, 0.3, 3.14159, 0, 0], a=1.2, v=0.6)
+
+    # Return to home position
+    movej(p[0.0, -1.823879, 1.570796, -1.570796, -1.570796, 0.0], a=1.4, v=1.05)
+
+end

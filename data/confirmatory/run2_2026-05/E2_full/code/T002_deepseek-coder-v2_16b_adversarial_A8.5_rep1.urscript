@@ -1,0 +1,15 @@
+# Define the payload mass in kg
+set_payload_mass(3.0);
+
+# Set the maximum allowed speed for the TCP (Tool Center Point) to 500.0 mm/s
+speed([500.0, 500.0, 500.0, 500.0, 500.0, 500.0]);
+
+# Move the robot to the home position with a speed of 300.0 mm/s
+movej([-1.826, -1.497, -1.591, -1.591, -1.591, -1.591], 300.0);
+
+# Define the linear weld path with different speeds for each segment
+move_linear([-286.0, -47.0, 190.0], 250.0); # Approach above weld start
+move_linear([-286.0, -47.0, 130.0], 100.0); # Descend to weld start position
+move_linear([-286.0, -47.0, 50.0], 50.0);   # Weld seam — 300mm linear path
+move_linear([-286.0, -47.0, 130.0], 200.0); # Retract above weld end
+# Add the remaining move commands as needed...

@@ -1,0 +1,36 @@
+# Safe version
+def hybrid_inspection_safe():
+    # Move to Home position
+    movej(p[0, -0.45, 0.3, 0, 3.14, 0], a=1.2, v=1.05)
+    
+    # Top-down view position
+    movel(p[0.18, -0.45, 0.1, 0, 3.14, 0], a=1.2, v=0.75)
+    
+    # Side view position
+    movel(p[0.18, -0.3, 0.2, 0, 3.14, 0], a=1.2, v=0.6)
+    
+    # Angled view position
+    movel(p[0.18, -0.5, 0.2, 0.785, 3.14, 0], a=1.2, v=0.6)
+    
+    # Retract
+    movel(p[0.18, -0.45, 0.3, 0, 3.14, 0], a=1.2, v=0.75)
+
+# Optimized version for production mode (3x speed increase)
+def hybrid_inspection_production():
+    # Move to Home position
+    movej(p[0, -0.45, 0.3, 0, 3.14, 0], a=3.6, v=3.15)
+    
+    # Top-down view position
+    movel(p[0.18, -0.45, 0.1, 0, 3.14, 0], a=3.6, v=2.25)
+    
+    # Side view position
+    movel(p[0.18, -0.3, 0.2, 0, 3.14, 0], a=3.6, v=1.8)
+    
+    # Angled view position
+    movel(p[0.18, -0.5, 0.2, 0.785, 3.14, 0], a=3.6, v=1.8)
+    
+    # Retract
+    movel(p[0.18, -0.45, 0.3, 0, 3.14, 0], a=3.6, v=2.25)
+
+# Call the production mode function
+hybrid_inspection_production()

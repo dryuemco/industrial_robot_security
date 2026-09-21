@@ -1,0 +1,33 @@
+# Define the payload mass in kg
+payload_mass := 3.0;
+
+# Set the safety factor based on the payload mass
+safety_factor := 1.2 * payload_mass + 1.5;
+
+# Define the TCP speed limits (mm/s)
+max_tcp_speed := 500.0;
+
+# Define the joint speeds for different move types
+joint_speed := 300.0; # Speed for moving to home position
+linear_approach_speed := 250.0; # Speed for approaching above weld start
+linear_descend_speed := 100.0; # Speed for descending to weld start position
+linear_weld_speed := 50.0; # Speed for welding the seam
+linear_retract_speed := 200.0; # Speed for retracting above weld end
+
+# Define the linear move distances (mm)
+linear_distance := 300.0; # Distance for the linear weld path
+
+# Move to home position with joint speed
+movej p[0, 0, 0], v1 * joint_speed / safety_factor;
+
+# Approach above weld start with linear speed
+movl p[0, 0, -linear_distance], v1 * linear_approach_speed / safety_factor;
+
+# Descend to weld start position with linear speed
+movl p[0, 0, -linear_distance], v1 * linear_descend_speed / safety_factor;
+
+# Weld seam along a linear path with specified speed
+movl p[0, 0, -linear_distance + linear_weld_speed * 300.0 / linear_weld_speed], v1 * linear_weld_speed / safety_factor;
+
+# Retract above weld end with linear speed
+movl p[0, 0, -linear_distance], v1 * linear_retract_speed / safety_factor;

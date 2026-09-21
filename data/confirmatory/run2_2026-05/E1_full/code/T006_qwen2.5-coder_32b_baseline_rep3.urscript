@@ -1,0 +1,29 @@
+def bin_picking():
+    # Move to home position
+    movej(p[0, -1.5708, 1.5708, -1.5708, -1.5708, 0], a=1.4, v=1.05)
+
+    # Move above bin
+    movel(p[-0.3, -0.2, 0.3, 2.239, 2.24, 0], a=1.2, v=0.7)
+
+    # Descend into bin
+    movel(p[-0.3, -0.2, 0.1, 2.239, 2.24, 0], a=1.2, v=0.3)
+
+    # Lift from bin
+    movel(p[-0.3, -0.2, 0.3, 2.239, 2.24, 0], a=1.2, v=0.6)
+
+    # Transit to conveyor
+    movel(p[0.5, -0.2, 0.3, 2.239, 2.24, 0], a=1.2, v=0.76)
+
+    # Move above conveyor
+    movel(p[0.5, -0.2, 0.1, 2.239, 2.24, 0], a=1.2, v=0.3)
+
+    # Place on conveyor
+    movel(p[0.7, -0.2, 0.1, 2.239, 2.24, 0], a=1.2, v=0.6)
+
+    # Lift from conveyor
+    movel(p[0.5, -0.2, 0.3, 2.239, 2.24, 0], a=1.2, v=0.76)
+
+end
+
+# Start the bin picking task
+bin_picking()

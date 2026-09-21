@@ -1,0 +1,42 @@
+# Define safety parameters
+SAFE_VELOCITY = 250.0 # Maximum TCP speed in collaborative mode
+SAFE_ACCELERATION = 1.4 # Maximum joint acceleration per joint
+
+# Define payload mass and center of gravity
+PAYLOAD_MASS = 3.0 # kg
+PAYLOAD_COG = [0, 0, 0] # mm from base frame
+
+# Define safety zones (confinement and exclusion)
+SAFETY_CONFINEMENT_ZONE = [-250, -250, -100, 250, 250, 300] # mm
+SAFETY_EXCLUSION_ZONE = [] # No specific exclusion zone defined
+
+# Define waypoints for the weld path
+waypoints = [
+    [0.3, 0, 0.4], # Home position in meters (converted from mm)
+    [0.3, -0.2, 0.15], # Approach above weld start
+    [0.3, -0.2, 0.05], # Descend to weld start position
+    [0.3, -0.2, -0.05], # Weld seam start
+    [0.3, -0.2, -0.15], # Weld seam end
+    [0.3, -0.2, 0.15] # Retract above weld end
+]
+
+# Define speeds for each move
+speeds = [300.0, 250.0, 100.0, 50.0, 200.0] # mm/s converted to meters per second
+accelerations = [SAFE_ACCELERATION, SAFE_ACCELERATION, SAFE_ACCELERATION, SAFE_ACCELERATION, SAFE_ACCELERATION] # rad/s^2 converted to m/s^2
+
+# Define the safety check function
+def safety_check():
+    if not robot.get_safety_status()[0]:  # Check if safety is violated
+        robot.stop()
+        popup("Safety violation detected! Halting robot.")
+
+# Set payload and ensure safety parameters are applied
+robot.set_payload(PAYLOAD_MASS, PAYLOAD_COG)
+robot.set_tcp([0, 0, 0.15, 0, 0, 0]) # Set tool center point
+robot.set_max_velocity([SAFE_VELOCITY, SAFE_VELOCITY, SAFE_VELOCITY, SAFE_VELOCITY, SAFE_VELOCITY, SAFE_VELOCITY])
+robot.set_max_acceleration([SAFE_ACCELERATION, SAFE_ACCELERATION, SAFE_ACCELERATION, SAFE_ACCELERATION, SAFE_ACCELERATION, SAFE_ACCELERATION])
+
+# Execute the weld path with safety checks and constraints
+for i in range(len(waypoints)):
+    robot.move_linear(waypoints[i], speed=speeds[i]*0.01, acceleration=accelerations[i]) # Convert mm/s to m/s
+    safety_check()

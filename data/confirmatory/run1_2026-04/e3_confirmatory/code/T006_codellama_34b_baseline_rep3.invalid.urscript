@@ -1,0 +1,8 @@
+def program():
+    # Home position
+    move_joint(p[0, -1.57, 0, 3.14, 0, 0], v=350.0, a=200.0)
+    
+    # Above bin
+    move_linear(p[-0.2, 0.2, 0.2], v=350.0, a=100.0)
+    
+    # Descend

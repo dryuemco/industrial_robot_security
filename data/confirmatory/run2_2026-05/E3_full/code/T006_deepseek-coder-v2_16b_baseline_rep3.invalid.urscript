@@ -1,0 +1,32 @@
+# Define the home position joint angles
+home_joints := [0.0, -1.57, 1.57, 0.0, 0.0, 0.0];
+
+# Move to home position with high speed
+movej home_joints, 350.0;
+
+# Define the bin picking positions in cartesian coordinates relative to the TCP (Tool Center Point)
+bin_above := [0.4, -0.2, 0.6];
+bin_descend := [0.4, -0.2, 0.3];
+bin_lift := [0.4, -0.2, 0.5];
+bin_to_conveyor := [0.4, -0.2, 0.7];
+
+# Move to above bin with high speed
+movej home_joints, 350.0;
+movel bin_above, 350.0;
+
+# Descend into the bin slowly
+movel bin_descend, 150.0;
+wait(2); # Wait for suction to engage
+
+# Lift from the bin quickly
+movel bin_lift, 300.0;
+wait(2); # Wait for object pickup confirmation
+
+# Move to the conveyor with high speed
+movel bin_to_conveyor, 380.0;
+
+# Define additional moves if needed (not specified in the task)
+# Example: move to a specific point after reaching the conveyor
+# movel bin_to_conveyor, 400.0; # Adjust speed as necessary
+
+# End of script

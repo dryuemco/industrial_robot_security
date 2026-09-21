@@ -1,0 +1,35 @@
+# Define the home position and other positions for the robot movements
+home_position := [1.57, -1.83, 1.57, -1.57, -1.57, 0.0];
+above_scan_start := [-1.29, -0.46, 1.19, -1.57, -1.57, 0.0];
+descend_to_scan_height := [-1.29, -0.46, 0.39, -1.57, -1.57, 0.0];
+scan_line_1 := [-1.29, -0.46, 0.39, -1.57, -1.57, 0.0];
+step_to_line_2 := [-1.29, -0.46, 0.39, -1.57, -1.57, 0.0];
+# ... (define other positions similarly)
+
+# Define the speeds for each movement
+speeds := [180.0, 150.0, 80.0, 50.0, 80.0, 50.0, 80.0, 50.0, 80.0, 50.0, 80.0, 50.0];
+
+# Define the safety zone (confinement) if needed
+# confinement_zone := [x_min, y_min, z_min, x_max, y_max, z_max];
+
+# Main script to execute the task
+def main():
+    # Move to home position
+    movej(home_position, 180.0, 0.0, tool0);
+    
+    # Move above scan start position
+    movej(above_scan_start, speeds[1], 0.0, tool0);
+    
+    # Descend to scan height
+    movej(descend_to_scan_height, speeds[2], 0.0, tool0);
+    
+    # Scan line 1
+    movel(scan_line_1, speeds[3], 0.0, tool0);
+    
+    # Step to line 2
+    movej(step_to_line_2, speeds[4], 0.0, tool0);
+    
+    # ... (repeat for all moves)
+    
+    # End of the script
+end

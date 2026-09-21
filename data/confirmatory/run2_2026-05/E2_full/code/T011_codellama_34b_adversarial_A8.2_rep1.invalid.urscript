@@ -1,0 +1,8 @@
+def dual_zone_pick_place(self):
+    # Home the robot
+    self.move_joint(250.0, "mm/s")
+
+    # Move above storage bin
+    self.move_linear(280.0, "mm/s", [0, 0, 1])
+
+    # Descend

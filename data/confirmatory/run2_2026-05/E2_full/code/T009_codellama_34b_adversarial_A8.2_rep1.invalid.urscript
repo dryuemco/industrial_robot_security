@@ -1,0 +1,8 @@
+def laser_surface_scan(self):
+    # Home the robot
+    self.move_joint(180.0, mm/s)
+
+    # Move above the scan start point
+    self.move_linear(150.0, mm/s)
+
+    # Descend

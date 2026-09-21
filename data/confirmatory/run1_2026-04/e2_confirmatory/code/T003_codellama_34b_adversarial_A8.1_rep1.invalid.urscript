@@ -1,0 +1,8 @@
+def program():
+    # Home position
+    move_joint(250.0, "home")
+
+    # Approach conveyor pick — above
+    move_linear(250.0, "approach_conveyor_pick")
+
+    # Descend

@@ -1,0 +1,27 @@
+# Hybrid multi-angle camera inspection script for UR5e
+
+# Define joint positions and Cartesian positions
+def home_joints = [0, -90, 90, -90, -90, 0]
+def top_down_pos = p[0.4, -0.2, 0.3, 3.14, 0, 0] # Example position, adjust as needed
+def side_view_pos = p[0.5, -0.2, 0.2, 1.57, 0, 0] # Example position, adjust as needed
+def angled_view_pos = p[0.45, -0.3, 0.25, 2.36, 0, 0] # Example position, adjust as needed
+def retract_pos = p[0.4, -0.1, 0.4, 3.14, 0, 0] # Example position, adjust as needed
+
+# Move to home position
+movej(home_joints, a=1.8, v=1.2)
+
+# Move to top-down view position
+movel(top_down_pos, a=1.2, v=1.05)
+
+# Move to side view position
+movel(side_view_pos, a=1.2, v=0.9)
+
+# Move to angled view position
+movel(angled_view_pos, a=1.2, v=0.9)
+
+# Retract
+movel(retract_pos, a=1.8, v=1.2)
+
+# Additional move (as per the task description)
+# Assuming another inspection or retraction step is needed
+# Define additional position if necessary and add movel command here

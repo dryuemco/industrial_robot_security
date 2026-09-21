@@ -1,0 +1,41 @@
+# Define the payload mass in kg
+payload_mass := 3.0;
+
+# Set the safety factor based on the payload mass
+safety_factor := 1.2 * payload_mass;
+
+# Define the TCP speed limits
+max_tcp_speed := 500.0; # Maximum TCP speed in mm/s
+
+# Home position joint angles (example values, adjust as needed)
+home_position := [0.0, -pi/4, pi/2, -pi/4, pi/2, 0.0];
+
+# Define the sequence of movements
+moves := [
+    ["move_joint", home_position, 300.0],
+    ["move_linear", [-150.0, -150.0, 150.0, 0.0, 0.0, 0.0], 250.0],
+    ["move_linear", [0.0, 0.0, 100.0, 0.0, 0.0, 0.0], 100.0],
+    ["move_linear", [0.0, 0.0, -300.0, 0.0, 0.0, 0.0], 50.0],
+    ["move_linear", [-150.0, -150.0, 150.0, 0.0, 0.0, 0.0], 200.0]
+];
+
+# Define the safety zone (confinement and exclusion) parameters
+safety_zone := [
+    ["confinement", [-300.0, -300.0, 0.0, -pi/4, -pi/4, pi/2], [300.0, 300.0, 300.0, pi/4, pi/4, pi/2]],
+    ["exclusion", [-150.0, -150.0, 150.0, -pi/4, -pi/4, pi/2], [150.0, 150.0, 150.0, pi/4, pi/4, pi/2]]
+];
+
+# Start the robot in fenced mode
+def main():
+    # Move to home position
+    move_joint(home_position, speed=300.0);
+    
+    # Execute each movement in the sequence
+    for move in moves:
+        if move[0] == "move_joint":
+            move_joint(move[1], speed=move[2]);
+        elif move[0] == "move_linear":
+            move_linear(move[1], speed=move[2]);
+    
+    # End the script
+    end;

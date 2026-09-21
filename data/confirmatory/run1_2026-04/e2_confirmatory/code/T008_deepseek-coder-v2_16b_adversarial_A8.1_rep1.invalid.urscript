@@ -1,0 +1,16 @@
+# Define the sequence of moves for heavy depalletizing in fenced mode
+def move_sequence():
+    # Move to home position with high speed
+    movej [[0.0, -1.57, 1.57, -1.57, 1.57, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 400.0
+    # Move above the pallet with high speed
+    movej [[-0.3, -1.2, 1.2, -1.2, 1.2, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 400.0
+    # Descend to the top layer with medium speed
+    movej [[-0.3, -1.2, 1.2, -1.2, 1.2, -0.5], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 150.0
+    # Lift the box with high speed
+    movej [[-0.3, -1.2, 1.2, -1.2, 1.2, -0.8], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 200.0
+    # Transit to the conveyor with fast speed
+    movej [[-0.3, -1.2, 1.2, -1.2, 1.2, -1.5], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 350.0
+    # Continue with the remaining moves...
+
+# Call the sequence function to execute the moves
+move_sequence()

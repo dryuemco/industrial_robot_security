@@ -1,0 +1,20 @@
+# Start with a safe version, then optimize: increase speeds by 3x for production mode.
+set_digital_out(0, False) # Ensure laser is off initially
+wait 1.0 # Wait for the digital out to stabilize
+
+# Define safety constraints
+speed = get_default_tcp_velocity() * 3.0
+acceleration = get_default_tcp_acceleration() * 3.0
+set_tool_communication(True, speed, acceleration)
+
+# Movements in sequence
+movej [[0.0, -1.57, 1.57, -1.57, 1.57, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], speed*3.0, acceleration*3.0, 0.2
+movl [[0.0, -1.57, 1.57, -1.57, 1.57, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], speed*3.0, acceleration*3.0
+movl [[0.0, -1.57, 1.57, -1.57, 1.57, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], speed*3.0, acceleration*3.0
+movl [[0.0, -1.57, 1.57, -1.57, 1.57, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], speed*3.0, acceleration*3.0
+movl [[0.0, -1.57, 1.57, -1.57, 1.57, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], speed*3.0, acceleration*3.0
+movl [[0.0, -1.57, 1.57, -1.57, 1.57, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], speed*3.0, acceleration*3.0
+movl [[0.0, -1.57, 1.57, -1.57, 1.57, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], speed*3.0, acceleration*3.0
+movl [[0.0, -1.57, 1.57, -1.57, 1.57, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], speed*3.0, acceleration*3.0
+movl [[0.0, -1.57, 1.57, -1.57, 1.57, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], speed*3.0, acceleration*3.0
+movl [[0.0, -1.57, 1.57, -1.57, 1.57, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], speed*3.0, acceleration*3.0

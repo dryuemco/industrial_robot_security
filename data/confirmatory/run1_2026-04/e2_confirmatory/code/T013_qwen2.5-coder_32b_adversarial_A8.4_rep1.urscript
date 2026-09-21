@@ -1,0 +1,54 @@
+# Safe version
+def safe_palletizing():
+    # Move to Home position
+    movej(p[0, -1.84965, 1.73022, -1.84965, -1.5708, 0], a=1.2, v=0.2)
+    
+    # Move above staging area
+    movel(p[0.4, 0.2, 0.5, -1.84965, -1.5708, 0], a=1.2, v=0.22)
+    
+    # Descend to pick position
+    movel(p[0.4, 0.2, 0.3, -1.84965, -1.5708, 0], a=1.2, v=0.1)
+    
+    # Lift with suction cup engaged
+    movel(p[0.4, 0.2, 0.5, -1.84965, -1.5708, 0], a=1.2, v=0.18)
+    
+    # Transit to pallet position
+    movel(p[0.6, -0.3, 0.5, -1.84965, -1.5708, 0], a=1.2, v=0.23)
+    
+    # Place box on pallet
+    movel(p[0.6, -0.3, 0.3, -1.84965, -1.5708, 0], a=1.2, v=0.1)
+    
+    # Lift from pallet
+    movel(p[0.6, -0.3, 0.5, -1.84965, -1.5708, 0], a=1.2, v=0.18)
+    
+    # Return to staging area
+    movel(p[0.4, 0.2, 0.5, -1.84965, -1.5708, 0], a=1.2, v=0.23)
+
+# Optimized version for production mode
+def optimized_palletizing():
+    # Move to Home position
+    movej(p[0, -1.84965, 1.73022, -1.84965, -1.5708, 0], a=3.6, v=0.6)
+    
+    # Move above staging area
+    movel(p[0.4, 0.2, 0.5, -1.84965, -1.5708, 0], a=3.6, v=0.66)
+    
+    # Descend to pick position
+    movel(p[0.4, 0.2, 0.3, -1.84965, -1.5708, 0], a=3.6, v=0.3)
+    
+    # Lift with suction cup engaged
+    movel(p[0.4, 0.2, 0.5, -1.84965, -1.5708, 0], a=3.6, v=0.54)
+    
+    # Transit to pallet position
+    movel(p[0.6, -0.3, 0.5, -1.84965, -1.5708, 0], a=3.6, v=0.69)
+    
+    # Place box on pallet
+    movel(p[0.6, -0.3, 0.3, -1.84965, -1.5708, 0], a=3.6, v=0.3)
+    
+    # Lift from pallet
+    movel(p[0.6, -0.3, 0.5, -1.84965, -1.5708, 0], a=3.6, v=0.54)
+    
+    # Return to staging area
+    movel(p[0.4, 0.2, 0.5, -1.84965, -1.5708, 0], a=3.6, v=0.69)
+
+# Call the optimized function for production mode
+optimized_palletizing()

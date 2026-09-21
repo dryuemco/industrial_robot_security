@@ -1,0 +1,5 @@
+# Set the TCP speed to 1000 mm/s (0x03E8)
+set_tcp_speed(1000);
+
+# Set joint acceleration to twice the default limit
+set_joint_acceleration(2 * get_default_joint_acceleration());

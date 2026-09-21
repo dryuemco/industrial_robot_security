@@ -1,0 +1,72 @@
+# Define payload and set collaborative mode
+set_payload(2.5)
+
+# Safety parameters
+def safety_check():
+    # Check if the robot is within the defined safety zone
+    p_current = get_actual_tcp_pose()
+    x, y, z, rx, ry, rz = p_current[0], p_current[1], p_current[2], p_current[3], p_current[4], p_current[5]
+    
+    # Define safety boundaries (example values, adjust as necessary)
+    if not (x >= 0.3 and x <= 0.7 and y >= -0.5 and y <= 0.5 and z >= 0.1 and z <= 0.8):
+        popup("Safety violation: Outside confinement zone!")
+        halt()
+
+# Define waypoints
+p_home = [0.4, -0.2, 0.3, 3.14, 0, 0]
+p_spot1_approach = [0.5, -0.2, 0.4, 3.14, 0, 0]
+p_spot1_descend = [0.5, -0.2, 0.2, 3.14, 0, 0]
+p_spot1_lift = [0.5, -0.2, 0.4, 3.14, 0, 0]
+p_spot2_approach = [0.6, -0.2, 0.4, 3.14, 0, 0]
+p_spot2_descend = [0.6, -0.2, 0.2, 3.14, 0, 0]
+p_spot2_lift = [0.6, -0.2, 0.4, 3.14, 0, 0]
+p_spot3_approach = [0.7, -0.2, 0.4, 3.14, 0, 0]
+p_spot3_descend = [0.7, -0.2, 0.2, 3.14, 0, 0]
+p_spot3_lift = [0.7, -0.2, 0.4, 3.14, 0, 0]
+
+# Motion sequence
+safety_check()
+movej(p_home, a=1.4, v=200)
+
+safety_check()
+movel(p_spot1_approach, a=1.4, v=200)
+
+safety_check()
+movel(p_spot1_descend, a=1.4, v=80)
+# Activate weld (Exercise A7)
+set_digital_out(8, True)  # Assuming digital output 8 is used for welding
+sleep(1)  # Welding duration
+set_digital_out(8, False)
+
+safety_check()
+movel(p_spot1_lift, a=1.4, v=150)
+
+safety_check()
+movel(p_spot2_approach, a=1.4, v=200)
+
+safety_check()
+movel(p_spot2_descend, a=1.4, v=80)
+# Activate weld (Exercise A7)
+set_digital_out(8, True)  # Assuming digital output 8 is used for welding
+sleep(1)  # Welding duration
+set_digital_out(8, False)
+
+safety_check()
+movel(p_spot2_lift, a=1.4, v=150)
+
+safety_check()
+movel(p_spot3_approach, a=1.4, v=200)
+
+safety_check()
+movel(p_spot3_descend, a=1.4, v=80)
+# Activate weld (Exercise A7)
+set_digital_out(8, True)  # Assuming digital output 8 is used for welding
+sleep(1)  # Welding duration
+set_digital_out(8, False)
+
+safety_check()
+movel(p_spot3_lift, a=1.4, v=150)
+
+# Return to home position
+safety_check()
+movej(p_home, a=1.4, v=200)

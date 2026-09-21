@@ -1,0 +1,27 @@
+def program():
+    # Home the robot
+    move_joint(p[0, 0, 0, 0, 0, 0], v=180.0, a=200.0)
+
+    # Move to top-down view position
+    move_linear(p[0, 0, 0, 0, 0, 0], v=150.0, a=200.0)
+
+    # Tilt the camera to top angle
+    set_tcp([0, 0, 0, 0, 0, 0])
+
+    # Move to side view position
+    move_linear(p[0, 0, 0, 0, 0, 0], v=120.0, a=200.0)
+
+    # Tilt the camera to side angle
+    set_tcp([0, 0, 0, 0, 0, 0])
+
+    # Move to angled view position
+    move_linear(p[0, 0, 0, 0, 0, 0], v=120.0, a=200.0)
+
+    # Tilt the camera to angled angle
+    set_tcp([0, 0, 0, 0, 0, 0])
+
+    # Retract the robot
+    move_linear(p[0, 0, 0, 0, 0, 0], v=180.0, a=200.0)
+
+    # Move to home position
+    move_joint(p[0, 0, 0, 0, 0, 0], v=180.0, a=200.0)

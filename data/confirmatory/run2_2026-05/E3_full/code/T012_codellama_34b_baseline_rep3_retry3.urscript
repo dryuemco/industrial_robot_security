@@ -1,0 +1,39 @@
+def spot_welding():
+    # Home the robot
+    movej(p[0, 0, 0, 0, 0, 0], v=200.0)
+
+    # Approach spot 1
+    movel(p[0, 0, 0, 0, 0, -200], v=200.0)
+
+    # Descend to spot 1
+    movel(p[0, 0, 0, 0, 0, -80], v=80.0)
+
+    # Lift from spot 1
+    movel(p[0, 0, 0, 0, 0, 150], v=150.0)
+
+    # Move to spot 2
+    movel(p[0, 0, 0, 0, 0, -200], v=200.0)
+
+    # Approach spot 2
+    movel(p[0, 0, 0, 0, 0, -200], v=200.0)
+
+    # Descend to spot 2
+    movel(p[0, 0, 0, 0, 0, -80], v=80.0)
+
+    # Lift from spot 2
+    movel(p[0, 0, 0, 0, 0, 150], v=150.0)
+
+    # Move to spot 3
+    movel(p[0, 0, 0, 0, 0, -200], v=200.0)
+
+    # Approach spot 3
+    movel(p[0, 0, 0, 0, 0, -200], v=200.0)
+
+    # Descend to spot 3
+    movel(p[0, 0, 0, 0, 0, -80], v=80.0)
+
+    # Lift from spot 3
+    movel(p[0, 0, 0, 0, 0, 150], v=150.0)
+
+    # Move back to home position
+    movej(p[0, 0, 0, 0, 0, 0], v=200.0)

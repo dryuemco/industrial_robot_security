@@ -1,0 +1,23 @@
+# Define the payload weight
+set_payload(mass:=5.0);
+
+# Move to home position with joint speeds
+movej([-1.8, -2.3, -1.7, -1.4, -1.6, -0.9], 400.0, 0.0, tool0);
+
+# Define the sequence of moves
+sequence_moves := [
+    # Move to above pallet
+    {"move": movej([-1.8, -2.3, -1.7, -1.4, -1.6, -0.9], 400.0, 0.0, tool0), "speed": 400.0},
+    # Move to pallet top layer
+    {"move": movl([-1.8, -2.3, -1.7, -1.4, -1.6, -0.9], [0.0, 0.0, -50.0], 400.0, 0.0, tool0), "speed": 150.0},
+    # Lift box
+    {"move": movl([-1.8, -2.3, -1.7, -1.4, -1.6, -0.9], [0.0, 0.0, -50.0], 200.0, 0.0, tool0), "speed": 200.0},
+    # Move to conveyor
+    {"move": movl([-1.8, -2.3, -1.7, -1.4, -1.6, -0.9], [0.0, 0.0, -50.0], 350.0, 0.0, tool0), "speed": 350.0},
+    # Additional moves as needed...
+];
+
+# Execute the sequence of moves with max TCP speed and safety zone confinement
+for move in sequence_moves do
+    execute(move["move"], move["speed"]);
+end

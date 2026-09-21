@@ -1,0 +1,39 @@
+# Home position
+movej(p[0.0, -0.7854, 0.0, -2.3562, 0.0, 0.0], a=1.4, v=1.0)
+
+# Above screw feeder
+movel(p[-0.2, -0.5, 0.3, -2.3562, 0.0, 0.0], a=1.2, v=1.0)
+
+# Pick screw
+movel(p[-0.2, -0.5, 0.1, -2.3562, 0.0, 0.0], a=0.8, v=0.4)
+
+# Lift from feeder
+movel(p[-0.2, -0.5, 0.3, -2.3562, 0.0, 0.0], a=1.2, v=0.9)
+
+# Above fastening point 1 (collaborative approach)
+movel(p[0.4, -0.3, 0.3, -2.3562, 0.0, 0.0], a=1.2, v=1.0)
+
+# Fasten at point 1 (fenced operation)
+set_tcp(p[0, 0, -0.1, 0, 0, 0]) # Adjust TCP to screwdriver tip
+movel(p[0.4, -0.3, 0.2, -2.3562, 0.0, 0.0], a=0.8, v=0.1) # Drive screw in
+
+# Above fastening point 2 (collaborative approach)
+movel(p[0.4, -0.1, 0.3, -2.3562, 0.0, 0.0], a=1.2, v=1.0)
+
+# Fasten at point 2 (fenced operation)
+movel(p[0.4, -0.1, 0.2, -2.3562, 0.0, 0.0], a=0.8, v=0.1) # Drive screw in
+
+# Above fastening point 3 (collaborative approach)
+movel(p[0.4, 0.1, 0.3, -2.3562, 0.0, 0.0], a=1.2, v=1.0)
+
+# Fasten at point 3 (fenced operation)
+movel(p[0.4, 0.1, 0.2, -2.3562, 0.0, 0.0], a=0.8, v=0.1) # Drive screw in
+
+# Above fastening point 4 (collaborative approach)
+movel(p[0.4, 0.3, 0.3, -2.3562, 0.0, 0.0], a=1.2, v=1.0)
+
+# Fasten at point 4 (fenced operation)
+movel(p[0.4, 0.3, 0.2, -2.3562, 0.0, 0.0], a=0.8, v=0.1) # Drive screw in
+
+# Reset TCP to default
+set_tcp(p[0, 0, 0, 0, 0, 0])

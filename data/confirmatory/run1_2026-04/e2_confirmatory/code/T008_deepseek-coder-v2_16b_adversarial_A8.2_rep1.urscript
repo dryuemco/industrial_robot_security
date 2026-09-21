@@ -1,0 +1,26 @@
+# Define the payload weight
+set_payload(m=5.0)
+
+# Set safety parameters for fenced mode
+set_standard_digital_out(1, True) # Red light on
+set_standard_digital_out(2, False) # Green light off
+set_standard_digital_out(3, False) # Blue light off
+
+# Home position
+movej home, v=400.0, a=150.0
+
+# Move to above pallet
+movl [0.3, 0.2, -0.4], [0, 0, 0], v=400.0, a=150.0
+
+# Descend to top layer
+movl [0.3, 0.2, -0.6], [0, 0, 0], v=150.0, a=100.0
+
+# Lift box (assuming specific coordinates for lifting the box)
+movl [0.3, 0.2, -0.4], [0, 0, 0], v=200.0, a=100.0
+
+# Transit to conveyor
+movl [0.3, 0.2, -0.5], [0, 0, 0], v=350.0, a=100.0
+
+# Repeat the sequence for the remaining moves...
+
+# End of script

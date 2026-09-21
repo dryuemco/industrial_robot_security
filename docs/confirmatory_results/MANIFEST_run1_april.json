@@ -1,7 +1,7 @@
 {
   "experiments": {
     "E1": {
-      "directory": "results/e1_confirmatory_session14",
+      "directory": "data/confirmatory/run1_2026-04/e1_confirmatory_session14",
       "csv_sha256": "2386694eb846b171f13c23e09dbb07a27686f974cfc866ddca4f43d7d14a3f54",
       "log_sha256": "d06476464efe68c282a69043d8dd1ebc71b35a812a694ca1ff3fd3930fa4dc5f",
       "data_rows": 270,
@@ -28,7 +28,7 @@
       }
     },
     "E2": {
-      "directory": "results/e2_confirmatory",
+      "directory": "data/confirmatory/run1_2026-04/e2_confirmatory",
       "csv_sha256": "4261435df260537f82064145f6ecc2bda1c9e52b5d1e9ab2a79d6fdbce65a194",
       "log_sha256": "c4c1e70b148fbf53d8d0cee6bba3d9b11df5ddca146467cea0a2bc44ee27371b",
       "data_rows": 315,
@@ -55,7 +55,7 @@
       }
     },
     "E3": {
-      "directory": "results/e3_confirmatory",
+      "directory": "data/confirmatory/run1_2026-04/e3_confirmatory",
       "csv_sha256": "8473443bce3f1da0b9a4b888cd5346ef2a5ff726a3ae129828b5938112e1977a",
       "log_sha256": "899f13e93350c9347ca3a059f89c06f2221f79cf2a65ea9f3cdd10236468dc32",
       "data_rows": 339,

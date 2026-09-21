@@ -1,0 +1,9 @@
+set_tcp_speed(1000)
+set_joint_acceleration(8)
+
+movej([0, -1.57, 1.57, -1.57, -1.57, 0], a=200.0, v=200.0) # Home
+movel(p[0.4, 0.3, 0.6, 0, 0, 0], a=200.0, v=200.0) # Above screw feeder
+movel(p[0.4, 0.3, 0.1, 0, 0, 0], a=80.0, v=80.0) # Pick screw
+movel(p[0.4, 0.3, 0.6, 0, 0, 0], a=180.0, v=180.0) # Lift from feeder
+movel(p[0.5, 0.2, 0.7, 0, 0, 0], a=200.0, v=200.0) # Above fastening point 1
+# Add remaining moves for fastening points 2-4 here

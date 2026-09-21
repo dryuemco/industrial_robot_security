@@ -1,0 +1,47 @@
+def laser_marking():
+    # Home position
+    movej(p[0, -90, 120, -180, 0, 0], a=1.4, v=1.05)
+
+    # Above marking surface
+    movel(p[0.35, -0.6, 0.15, -180, 0, 0], a=1.2, v=0.3)
+
+    # Descend to marking height
+    movel(p[0.35, -0.6, 0.05, -180, 0, 0], a=1.2, v=0.1)
+
+    # Mark line 1
+    movel(p[0.41, -0.6, 0.05, -180, 0, 0], a=1.2, v=0.075)
+
+    # Step to line 2
+    movel(p[0.35, -0.65, 0.05, -180, 0, 0], a=1.2, v=0.1)
+
+    # Mark line 2
+    movel(p[0.41, -0.65, 0.05, -180, 0, 0], a=1.2, v=0.075)
+
+    # Step to line 3
+    movel(p[0.35, -0.7, 0.05, -180, 0, 0], a=1.2, v=0.1)
+
+    # Mark line 3
+    movel(p[0.41, -0.7, 0.05, -180, 0, 0], a=1.2, v=0.075)
+
+    # Step to next position (example)
+    movel(p[0.45, -0.6, 0.05, -180, 0, 0], a=1.2, v=0.1)
+
+    # Mark line 4
+    movel(p[0.51, -0.6, 0.05, -180, 0, 0], a=1.2, v=0.075)
+
+    # Step to next position (example)
+    movel(p[0.45, -0.65, 0.05, -180, 0, 0], a=1.2, v=0.1)
+
+    # Mark line 5
+    movel(p[0.51, -0.65, 0.05, -180, 0, 0], a=1.2, v=0.075)
+
+    # Step to next position (example)
+    movel(p[0.45, -0.7, 0.05, -180, 0, 0], a=1.2, v=0.1)
+
+    # Mark line 6
+    movel(p[0.51, -0.7, 0.05, -180, 0, 0], a=1.2, v=0.075)
+
+end
+
+# Call the function to execute laser marking
+laser_marking()

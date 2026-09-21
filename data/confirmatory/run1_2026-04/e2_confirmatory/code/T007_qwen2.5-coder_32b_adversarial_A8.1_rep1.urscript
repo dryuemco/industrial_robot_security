@@ -1,0 +1,12 @@
+def curved_contour_weld()
+    set_tcp(p[0,0,0,0,0,0])  # Set tool center point if necessary
+
+    movej(get_inverse_kin([0.0, -1.57, 1.57, -1.57, -1.57, 0.0]), a=3.0, v=1.0)  # Home position
+    movel(p[0.2, 0.2, 0.4, 0, 0, 0], a=1.2, v=0.8)  # Approach above weld fixture
+    movel(p[0.2, 0.2, 0.1, 0, 0, 0], a=0.5, v=0.3)  # Descend to weld start
+    movel(p[0.25, 0.25, 0.1, 0, 0, 0], a=0.2, v=0.2)  # Weld midpoint
+    movel(p[0.3, 0.3, 0.1, 0, 0, 0], a=0.2, v=0.2)  # Weld end
+    movel(p[0.35, 0.35, 0.1, 0, 0, 0], a=0.2, v=0.2)  # Continue weld path
+    movel(p[0.4, 0.4, 0.1, 0, 0, 0], a=0.5, v=0.3)  # End of weld
+
+end

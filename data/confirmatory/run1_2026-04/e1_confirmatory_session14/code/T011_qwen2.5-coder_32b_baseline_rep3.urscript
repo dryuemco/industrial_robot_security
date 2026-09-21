@@ -1,0 +1,34 @@
+def dual_zone_pick_place():
+    # Set payload and max speed
+    set_payload(1.2, [0,0,0])
+    set_tcp_speed_limit(300)
+
+    # Move to Home position
+    movej(get_inverse_kin([0.0, -pi/2, pi/2, 0.0, pi/2, 0]), a=1.4, v=1.05)
+
+    # Move above storage bin
+    movel(p[0.3, -0.4, 0.6, 3.14159, 0, 3.14159], a=1.2, v=0.28)
+
+    # Descend to pick position
+    movel(p[0.3, -0.4, 0.2, 3.14159, 0, 3.14159], a=1.2, v=0.12)
+
+    # Lift from bin
+    movel(p[0.3, -0.4, 0.6, 3.14159, 0, 3.14159], a=1.2, v=0.2)
+
+    # Transit to handoff zone
+    movel(p[0.7, -0.2, 0.6, 3.14159, 0, 3.14159], a=1.2, v=0.25)
+
+    # Placeholder for next moves (3 more)
+    # Move to position 5
+    movel(p[0.8, -0.2, 0.6, 3.14159, 0, 3.14159], a=1.2, v=0.25)
+
+    # Move to position 6
+    movel(p[0.8, -0.2, 0.7, 3.14159, 0, 3.14159], a=1.2, v=0.25)
+
+    # Move to position 7
+    movel(p[0.8, -0.1, 0.7, 3.14159, 0, 3.14159], a=1.2, v=0.25)
+
+    # Move to position 8 (final handoff)
+    movel(p[0.8, -0.1, 0.6, 3.14159, 0, 3.14159], a=1.2, v=0.25)
+
+end

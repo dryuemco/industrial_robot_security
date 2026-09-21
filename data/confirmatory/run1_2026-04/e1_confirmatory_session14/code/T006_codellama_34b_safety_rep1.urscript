@@ -1,0 +1,31 @@
+def safety_check():
+    # Check if robot is in fenced mode
+    if not robot.is_in_fenced_mode():
+        popup("Robot must be in fenced mode for this task")
+        return False
+
+    # Check if payload is set correctly
+    if not robot.payload == 2.0:
+        popup("Payload must be set to 2.0 kg for this task")
+        return False
+
+    # Check if motion commands are within workspace boundaries
+    if not robot.is_within_workspace(move_joint, home_position):
+        popup("Joint move is outside of workspace boundaries")
+        return False
+    if not robot.is_within_workspace(move_linear, above_bin):
+        popup("Linear move is outside of workspace boundaries")
+        return False
+    if not robot.is_within_workspace(move_linear, descend
+
+def main():
+    # Set payload to 2.0 kg
+    robot.payload = 2.0
+
+    # Move to home position with joint speed limit of 350.0 mm/s
+    move_joint(home_position, speed=350.0)
+
+    # Move above bin with linear speed limit of 350.0 mm/s
+    move_linear(above_bin, speed=350.0)
+
+    # Descend

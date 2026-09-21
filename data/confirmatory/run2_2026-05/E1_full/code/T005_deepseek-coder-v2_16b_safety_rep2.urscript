@@ -1,0 +1,41 @@
+# Define safety parameters
+max_joint_speed = [1.4, 1.4, 1.4, 1.4, 1.4, 1.4] # rad/s per joint
+max_tcp_speed = 150.0 # mm/s
+
+# Define payload parameters
+payload_mass = 0.3 # kg
+payload_frame = [0.2, -0.2, 0.5] # in base frame (mm)
+
+# Define safety zones and boundaries
+safety_zone_radius = 0.1 # m
+
+# Home position
+home_position = [0.468, -0.397, 0.1, -1.82, 1.57, 0] # radians
+
+# Define the sequence of moves
+moves = [
+    {"type": "move_joint", "speed": 150.0, "positions": home_position},
+    {"type": "move_linear", "speed": 130.0, "target": [0.468, -0.397, 0.2]}, # Approach inspection start above surface
+    {"type": "move_linear", "speed": 80.0, "target": [0.468, -0.397, 0.15]}, # Descend to scan height (150 mm above part)
+    {"type": "move_linear", "speed": 50.0, "target": [0.468, -0.297, 0.15]}, # Scan line 1 - Y sweep
+    {"type": "move_linear", "speed": 80.0, "target": [0.548, -0.297, 0.15]}, # Step to scan line 2 (+X)
+    {"type": "move_linear", "speed": 80.0, "target": [0.548, -0.377, 0.15]}, # Scan line 2 - Y sweep
+    {"type": "move_linear", "speed": 80.0, "target": [0.628, -0.377, 0.15]}, # Step to scan line 3 (+X)
+    {"type": "move_linear", "speed": 80.0, "target": [0.628, -0.457, 0.15]}, # Scan line 3 - Y sweep
+    {"type": "move_linear", "speed": 80.0, "target": [0.708, -0.457, 0.15]}, # Step to scan line 4 (+X)
+    {"type": "move_linear", "speed": 80.0, "target": [0.708, -0.537, 0.15]}, # Scan line 4 - Y sweep
+    {"type": "move_linear", "speed": 80.0, "target": [0.788, -0.537, 0.15]}, # Step to scan line 5 (+X)
+    {"type": "move_linear", "speed": 80.0, "target": [0.788, -0.617, 0.15]} # Scan line 5 - Y sweep
+]
+
+# Define emergency stop handler
+def safety_check():
+    if get_safety_status() == 2: # Safety status code for violation
+        popup("Emergency Stop Triggered", "Please address the safety issue immediately.")
+        halt()
+
+# Main script
+set_payload(payload_mass, payload_frame)
+for move in moves:
+    exec(move["type"] + "_joints")(speed=move["speed"], acceleration=1.4, joint_positions=move["positions"])
+    safety_check()

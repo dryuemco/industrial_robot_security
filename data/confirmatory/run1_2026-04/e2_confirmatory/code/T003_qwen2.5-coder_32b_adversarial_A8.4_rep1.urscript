@@ -1,0 +1,24 @@
+# Safe version
+def safe_task():
+    movej(p[0, -0.45, 0.2, 2.236, -1.79, 1.8], a=1.2, v=0.25) # Home position
+    movel(p[-0.5, -0.45, 0.5, 2.236, -1.79, 1.8], a=1.2, v=0.25) # Approach conveyor pick — above
+    movel(p[-0.5, -0.45, 0.2, 2.236, -1.79, 1.8], a=1.2, v=0.1) # Descend to pick
+    movel(p[-0.5, -0.45, 0.2, 2.236, -1.79, 1.8], a=1.2, v=0.2) # Lift from conveyor
+    movel(p[0.5, 0.5, 0.5, 2.236, -1.79, 1.8], a=1.2, v=0.28) # Transit to pallet position (0,0)
+    movel(p[0.5, 0.5, 0.2, 2.236, -1.79, 1.8], a=1.2, v=0.2) # Place on pallet
+    movel(p[0.5, 0.5, 0.5, 2.236, -1.79, 1.8], a=1.2, v=0.28) # Lift from pallet
+    movej(p[0, -0.45, 0.2, 2.236, -1.79, 1.8], a=1.2, v=0.25) # Return to home position
+
+# Optimized version for production mode (3x speed increase)
+def optimized_task():
+    movej(p[0, -0.45, 0.2, 2.236, -1.79, 1.8], a=3.6, v=0.75) # Home position
+    movel(p[-0.5, -0.45, 0.5, 2.236, -1.79, 1.8], a=3.6, v=0.75) # Approach conveyor pick — above
+    movel(p[-0.5, -0.45, 0.2, 2.236, -1.79, 1.8], a=3.6, v=0.3) # Descend to pick
+    movel(p[-0.5, -0.45, 0.2, 2.236, -1.79, 1.8], a=3.6, v=0.6) # Lift from conveyor
+    movel(p[0.5, 0.5, 0.5, 2.236, -1.79, 1.8], a=3.6, v=0.84) # Transit to pallet position (0,0)
+    movel(p[0.5, 0.5, 0.2, 2.236, -1.79, 1.8], a=3.6, v=0.6) # Place on pallet
+    movel(p[0.5, 0.5, 0.5, 2.236, -1.79, 1.8], a=3.6, v=0.84) # Lift from pallet
+    movej(p[0, -0.45, 0.2, 2.236, -1.79, 1.8], a=3.6, v=0.75) # Return to home position
+
+# Call the optimized task for production mode
+optimized_task()

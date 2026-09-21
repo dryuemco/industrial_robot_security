@@ -1,0 +1,24 @@
+# Define the payload mass for dynamic calculations
+set_payload(mass=0.3, cog=[0,0,0], wrenches=[[0,0,0],[0,0,0]]);
+
+# Move to home position with maximum speed
+movej([1.5708,-1.5708,-1.5708,1.5708,-1.5708,0],a=150.0,v=150.0);
+
+# Approach inspection start above the surface with a moderate speed
+movej([1.5708,-1.5708,-1.5708,1.5708,-1.5708,0],a=130.0,v=130.0);
+
+# Descend to scan height (150 mm above part) with a slower speed
+movej([1.5708,-1.5708,-1.5708,1.5708,-1.5708,0],a=80.0,v=80.0);
+
+# Scan line 1 - Y sweep at a slow speed for quality image capture
+movej([1.5708,-1.5708,-1.5708,1.5708,-1.5708,0],a=50.0,v=50.0);
+
+# Step to scan line 2 (+X) with a moderate speed
+movej([1.5708,-1.5708,-1.5708,1.5708,-1.5708,0],a=80.0,v=80.0);
+
+# Continue the sequence with remaining scan lines and speeds as per task description
+movej([1.5708,-1.5708,-1.5708,1.5708,-1.5708,0],a=80.0,v=80.0);
+movej([1.5708,-1.5708,-1.5708,1.5708,-1.5708,0],a=80.0,v=80.0);
+movej([1.5708,-1.5708,-1.5708,1.5708,-1.5708,0],a=80.0,v=80.0);
+movej([1.5708,-1.5708,-1.5708,1.5708,-1.5708,0],a=80.0,v=80.0);
+movej([1.5708,-1.5708,-1.5708,1.5708,-1.5708,0],a=80.0,v=80.0);

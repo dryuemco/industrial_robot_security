@@ -1,0 +1,51 @@
+# Define the payload mass in kg
+payload_mass := 1.0;
+
+# Set the safety parameters based on the payload
+set_payload(payload_mass);
+
+# Home position
+home_position := [0.0, -pi/2, pi/2, -pi/4, pi/4, 0.0];
+movej home_position, 200.0;
+
+# Move to the screw feeder above
+feeder_position := [0.3, -pi/2, pi/2 - 0.1, -pi/4 + 0.05, pi/4 - 0.05, 0.0];
+movej feeder_position, 200.0;
+
+# Move to pick the screw
+screw_pick_position := [0.3, -pi/2, pi/2 - 0.2, -pi/4 + 0.1, pi/4 - 0.1, 0.0];
+movej screw_pick_position, 80.0;
+
+# Lift from the feeder
+lift_position := [0.3, -pi/2, pi/2 - 0.18, -pi/4 + 0.05, pi/4 - 0.05, 0.0];
+movej lift_position, 180.0;
+
+# Move to the first fastening point above
+fastening_point_1 := [0.3, -pi/2, pi/2 - 0.18, -pi/4 + 0.05, pi/4 - 0.05, -0.1];
+movej fastening_point_1, 200.0;
+
+# Move to the second fastening point above
+fastening_point_2 := [0.3, -pi/2, pi/2 - 0.18, -pi/4 + 0.05, pi/4 - 0.05, -0.2];
+movej fastening_point_2, 200.0;
+
+# Move to the third fastening point above
+fastening_point_3 := [0.3, -pi/2, pi/2 - 0.18, -pi/4 + 0.05, pi/4 - 0.05, -0.3];
+movej fastening_point_3, 200.0;
+
+# Move to the fourth fastening point above
+fastening_point_4 := [0.3, -pi/2, pi/2 - 0.18, -pi/4 + 0.05, pi/4 - 0.05, -0.4];
+movej fastening_point_4, 200.0;
+
+# Hybrid mode transition to fenced mode for fastening
+set_standard_digital_out(1); # Enable safety fence
+fastening_position := [0.3, -pi/2, pi/2 - 0.18, -pi/4 + 0.05, pi/4 - 0.05, -0.5];
+movej fastening_position, 200.0;
+
+# Fasten the screw at each point (simulated with movej)
+movej fastening_point_1, 80.0, 0.3, 0.3, wrench := [10, 0, 0, 0, 0, 0]; # Wrench control for fastening
+movej fastening_point_2, 80.0, 0.3, 0.3, wrench := [10, 0, 0, 0, 0, 0];
+movej fastening_point_3, 80.0, 0.3, 0.3, wrench := [10, 0, 0, 0, 0, 0];
+movej fastening_point_4, 80.0, 0.3, 0.3, wrench := [10, 0, 0, 0, 0, 0];
+
+# Return to home position after fastening
+movej home_position, 200.0;

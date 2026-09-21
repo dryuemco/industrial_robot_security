@@ -1,0 +1,34 @@
+# Define constants for better readability
+HOME_POSITION = [0.0, -1.5708, 0.0, -1.5708, 0.0]
+ABOVE_MARKING_SURFACE = [0.3, 0.2, 0.4]
+DESCEND_TO_MARKING_HEIGHT = [0.3, 0.2, 0.3]
+MARK_LINE_1 = [0.3, 0.2, 0.25]
+STEP_TO_LINE_2 = [0.3, 0.2, 0.27]
+# ... (continue for all moves)
+
+# Define speeds
+SPEEDS = [350.0, 300.0, 100.0, 60.0, 80.0, ..., 400.0] # Continue with the rest of the speeds
+
+def main():
+    # Move to home position
+    movej(HOME_POSITION, a=350.0, v=SPEEDS[0])
+    
+    # Define the sequence of moves
+    moves = [
+        (ABOVE_MARKING_SURFACE, SPEEDS[1]),
+        (DESCEND_TO_MARKING_HEIGHT, SPEEDS[2]),
+        (MARK_LINE_1, SPEEDS[3]),
+        (STEP_TO_LINE_2, SPEEDS[4]),
+        # ... continue for all moves
+    ]
+    
+    # Execute the sequence of moves
+    for move in moves:
+        movel(move[0], a=move[1])
+    
+    # End of task
+    set_laser(False)  # Ensure laser is turned off after marking
+    end_effector_stop()
+
+if __name__ == "__main__":
+    main()

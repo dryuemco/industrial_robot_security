@@ -1,0 +1,48 @@
+# Define home position
+home_position := [0.785398, -1.8326, 1.5708, -1.5708, -1.5708];
+
+# Define approach height above the surface
+approach_height := 50; # 50 mm above the surface
+
+# Define scan line heights and speeds
+scan_heights := [150, 120, 90, 60, 30]; # Heights for each scan line starting from the highest point directly above the part
+scan_speeds := [80, 80, 80, 80, 80]; # Speeds for each scan line
+
+# Define move commands sequence
+move_commands := [
+    ["move_joint", home_position, 150.0],
+    ["move_linear", [0, 0, approach_height], 130.0],
+    ["move_linear", [0, 0, scan_heights[0]], 80.0],
+    ["move_linear", [scan_heights[0]/2, -scan_heights[0]/2, scan_heights[0]], 50.0], # Scan line 1: Y sweep
+    ["move_linear", [scan_heights[0]/2 + scan_heights[1]/2, -scan_heights[1]/2, scan_heights[1]], 80.0], # Step to scan line 2 (+X)
+    ["move_linear", [scan_heights[0]/2 + scan_heights[1]/2 + scan_heights[2]/2, -scan_heights[2]/2, scan_heights[2]], 80.0], # Step to scan line 3 (+X)
+    ["move_linear", [scan_heights[0]/2 + scan_heights[1]/2 + scan_heights[2]/2 + scan_heights[3]/2, -scan_heights[3]/2, scan_heights[3]], 80.0], # Step to scan line 4 (+X)
+    ["move_linear", [scan_heights[0]/2 + scan_heights[1]/2 + scan_heights[2]/2 + scan_heights[3]/2 + scan_heights[4]/2, -scan_heights[4]/2, scan_heights[4]], 80.0], # Step to scan line 5 (+X)
+    ["move_linear", [scan_heights[0]/2 + scan_heights[1]/2 + scan_heights[2]/2 + scan_heights[3]/2 + scan_heights[4]/2, -scan_heights[4]/2 + scan_heights[1]/2, scan_heights[1]], 80.0], # Step to scan line 6 (+X)
+    ["move_linear", [scan_heights[0]/2 + scan_heights[1]/2 + scan_heights[2]/2 + scan_heights[3]/2 + scan_heights[4]/2, -scan_heights[4]/2 + 2*scan_heights[1]/2, 2*scan_heights[1]], 80.0], # Step to scan line 7 (+X)
+    ["move_linear", [scan_heights[0]/2 + scan_heights[1]/2 + scan_heights[2]/2 + scan_heights[3]/2 + scan_heights[4]/2, -scan_heights[4]/2 + 3*scan_heights[1]/2, 3*scan_heights[1]], 80.0], # Step to scan line 8 (+X)
+    ["move_linear", [scan_heights[0]/2 + scan_heights[1]/2 + scan_heights[2]/2 + scan_heights[3]/2 + scan_heights[4]/2, -scan_heights[4]/2 + 4*scan_heights[1]/2, 4*scan_heights[1]], 80.0], # Step to scan line 9 (+X)
+    ["move_linear", [scan_heights[0]/2 + scan_heights[1]/2 + scan_heights[2]/2 + scan_heights[3]/2 + scan_heights[4]/2, -scan_heights[4]/2 + 5*scan_heights[1]/2, 5*scan_heights[1]], 80.0], # Step to scan line 10 (+X)
+    ["move_linear", [scan_heights[0]/2 + scan_heights[1]/2 + scan_heights[2]/2 + scan_heights[3]/2 + scan_heights[4]/2, -scan_heights[4]/2 + 6*scan_heights[1]/2, 6*scan_heights[1]], 80.0], # Step to scan line 11 (+X)
+    ["move_linear", [scan_heights[0]/2 + scan_heights[1]/2 + scan_heights[2]/2 + scan_heights[3]/2 + scan_heights[4]/2, -scan_heights[4]/2 + 7*scan_heights[1]/2, 7*scan_heights[1]], 80.0], # Step to scan line 12 (+X)
+    ["move_linear", [scan_heights[0]/2 + scan_heights[1]/2 + scan_heheights[2]/2 + scan_heights[3]/2 + scan_heights[4]/2, -scan_heights[4]/2 + 8*scan_heights[1]/2, 8*scan_heights[1]], 80.0], # Step to scan line 13 (+X)
+    ["move_linear", [scan_heights[0]/2 + scan_heights[1]/2 + scan_heights[2]/2 + scan_heights[3]/2 + scan_heights[4]/2, -scan_heights[4]/2 + 9*scan_heights[1]/2, 9*scan_heights[1]], 80.0], # Step to scan line 14 (+X)
+    ["move_linear", [scan_heights[0]/2 + scan_heights[1]/2 + scan_heights[2]/2 + scan_heights[3]/2 + scan_heights[4]/2, -scan_heights[4]/2 + 10*scan_heights[1]/2, 10*scan_heights[1]], 80.0], # Step to scan line 15 (+X)
+    ["move_linear", [scan_heights[0]/2 + scan_heights[1]/2 + scan_heights[2]/2 + scan_heights[3]/2 + scan_heights[4]/2, -scan_heights[4]/2 + 11*scan_heights[1]/2, 11*scan_heights[1]], 80.0], # Step to scan line 16 (+X)
+    ["move_linear", [scan_heights[0]/2 + scan_heights[1]/2 + scan_heights[2]/2 + scan_heights[3]/2 + scan_heights[4]/2, -scan_heights[4]/2 + 12*scan_heights[1]/2, 12*scan_heights[1]], 80.0], # Step to scan line 17 (+X)
+    ["move_linear", [scan_heights[0]/2 + scan_heights[1]/2 + scan_heights[2]/2 + scan_heights[3]/2 + scan_heights[4]/2, -scan_heights[4]/2 + 13*scan_heights[1]/2, 13*scan_heights[1]], 80.0], # Step to scan line 18 (+X)
+    ["move_linear", [scan_heights[0]/2 + scan_heights[1]/2 + scan_heights[2]/2 + scan_heights[3]/2 + scan_heights[4]/2, -scan_heights[4]/2 + 14*scan_heights[1]/2, 14*scan_heights[1]], 80.0], # Step to scan line 19 (+X)
+    ["move_linear", [scan_heights[0]/2 + scan_heights[1]/2 + scan_heights[2]/2 + scan_heights[3]/2 + scan_heights[4]/2, -scan_heights[4]/2 + 15*scan_heights[1]/2, 15*scan_heights[1]], 80.0], # Step to scan line 20 (+X)
+    ["move_linear", [scan_heights[0]/2 + scan_heights[1]/2 + scan_heights[2]/2 + scan_heights[3]/2 + scan_heights[4]/2, -scan_heights[4]/2 + 16*scan_heights[1]/2, 16*scan_heights[1]], 80.0], # Step to scan line 21 (+X)
+    ["move_linear", [scan_heights[0]/2 + scan_heights[1]/2 + scan_heights[2]/2 + scan_heights[3]/2 + scan_heights[4]/2, -scan_heights[4]/2 + 17*scan_heights[1]/2, 17*scan_heights[1]], 80.0], # Step to scan line 22 (+X)
+    ["move_linear", [scan_heights[0]/2 + scan_heights[1]/2 + scan_heights[2]/2 + scan_heights[3]/2 + scan_heights[4]/2, -scan_heights[4]/2 + 18*scan_heights[1]/2, 18*scan_heights[1]], 80.0], # Step to scan line 23 (+X)
+    ["move_linear", [scan_heights[0]/2 + scan_heights[1]/2 + scan_heights[2]/2 + scan_heights[3]/2 + scan_heights[4]/2, -scan_heights[4]/2 + 19*scan_heights[1]/2, 19*scan_heights[1]], 80.0], # Step to scan line 24 (+X)
+    ["move_linear", [scan_heights[0]/2 + scan_heights[1]/2 + scan_heights[2]/2 + scan_heights[3]/2 + scan_heights[4]/2, -scan_heights[4]/2 + 20*scan_heights[1]/2, 20*scan_heights[1]] # Step to scan line 25 (+X)
+];
+
+# Execute the move commands sequence
+for command in move_commands:
+    if command[0] == "move_joint":
+        movej(command[1], speed=command[2])
+    elif command[0] == "move_linear":
+        movl(command[1], speed=command[2])

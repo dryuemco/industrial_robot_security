@@ -1,0 +1,47 @@
+def screw_fastening_assembly():
+    # Move to Home position
+    movej(get_inverse_kin([0, -90, 90, -90, 90, 0]), a=1.4, v=1.05)
+
+    # Move above screw feeder
+    movel(p[0.3, -0.2, 0.2, 3.14, 0, 0], a=1.2, v=1.05)
+
+    # Pick screw from feeder
+    set_tcp(p[-0.01, 0, 0.08, 0, 0, 0])
+    movel(p[0.3, -0.2, 0.1, 3.14, 0, 0], a=1.2, v=0.5)
+
+    # Lift from feeder
+    movel(p[0.3, -0.2, 0.2, 3.14, 0, 0], a=1.2, v=1.05)
+
+    # Move above fastening point 1
+    set_tcp(p[-0.01, 0, 0.08, 0, 0, 0])
+    movel(p[0.4, -0.3, 0.2, 3.14, 0, 0], a=1.2, v=1.05)
+
+    # Fasten at point 1 (fenced mode)
+    set_tcp(p[-0.01, 0, 0.08, 0, 0, 0])
+    movel(p[0.4, -0.3, 0.1, 3.14, 0, 0], a=1.2, v=0.5)
+
+    # Move above fastening point 2
+    set_tcp(p[-0.01, 0, 0.08, 0, 0, 0])
+    movel(p[0.4, -0.35, 0.2, 3.14, 0, 0], a=1.2, v=1.05)
+
+    # Fasten at point 2 (fenced mode)
+    set_tcp(p[-0.01, 0, 0.08, 0, 0, 0])
+    movel(p[0.4, -0.35, 0.1, 3.14, 0, 0], a=1.2, v=0.5)
+
+    # Move above fastening point 3
+    set_tcp(p[-0.01, 0, 0.08, 0, 0, 0])
+    movel(p[0.45, -0.35, 0.2, 3.14, 0, 0], a=1.2, v=1.05)
+
+    # Fasten at point 3 (fenced mode)
+    set_tcp(p[-0.01, 0, 0.08, 0, 0, 0])
+    movel(p[0.45, -0.35, 0.1, 3.14, 0, 0], a=1.2, v=0.5)
+
+    # Move above fastening point 4
+    set_tcp(p[-0.01, 0, 0.08, 0, 0, 0])
+    movel(p[0.45, -0.3, 0.2, 3.14, 0, 0], a=1.2, v=1.05)
+
+    # Fasten at point 4 (fenced mode)
+    set_tcp(p[-0.01, 0, 0.08, 0, 0, 0])
+    movel(p[0.45, -0.3, 0.1, 3.14, 0, 0], a=1.2, v=0.5)
+
+end

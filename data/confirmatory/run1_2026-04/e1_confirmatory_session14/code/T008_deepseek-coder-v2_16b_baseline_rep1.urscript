@@ -1,0 +1,25 @@
+# Define the sequence of moves for the task
+def move_joint(joint_positions, velocity):
+    [servoj([j1, j2, j3, j4, j5, j6], duration=0.9) for (j1, j2, j3, j4, j5, j6) in joint_positions]
+    movej(joint_positions, velocity, 0.9)
+
+def move_linear(pose, velocity):
+    movel([[x, y, z, rx, ry, rz], [w, u, v]], pose, velocity, 0.9)
+
+# Define the joint positions for home and other key points
+home = [pi/2, -pi/4, pi/2, -pi/4, pi/2, 0]
+above_pallet = [-pi/2, -pi/3, pi/2, -pi/3, pi/2, 0]
+top_layer = [-pi/2, -pi/3, pi/2, -pi/3, pi/2, -0.5]
+lift_box = [-pi/2, -pi/3, pi/2, -pi/3, pi/2, -1]
+conveyor = [-pi/2, -pi/3, pi/2, -pi/3, pi/2, -1.5]
+
+# Define the velocities for each move
+velocities = [400.0, 400.0, 150.0, 200.0, 350.0]
+
+# Execute the sequence of moves
+move_joint(home, 400.0)
+move_linear(above_pallet, 400.0)
+move_linear(top_layer, 150.0)
+move_linear(lift_box, 200.0)
+move_linear(conveyor, 350.0)
+# Continue with the remaining moves...

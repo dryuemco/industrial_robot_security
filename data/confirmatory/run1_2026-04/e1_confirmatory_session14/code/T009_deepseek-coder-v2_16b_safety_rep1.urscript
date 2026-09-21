@@ -1,0 +1,41 @@
+# Define safety parameters
+SAFE_ZONE = [0.1, -0.3, 0.5] # Example confinement zone in meters
+MAX_SPEED = 200.0 # Maximum TCP speed in mm/s
+MAX_ACCEL = 1.4 # Maximum joint acceleration in rad/s²
+
+# Define payload mass and center of gravity
+PAYLOAD_MASS = 0.5 # kg
+CENTER_OF_GRAVITY = [0, 0, -0.1] # Offset from TCP in meters
+
+# Function to set the payload
+def set_payload():
+    script = ""
+    script &= "set_payload(mass:={}, cog:=[{}, {}, {}], frame:=[0, 0, 0])\n".format(PAYLOAD_MASS, CENTER_OF_GRAVITY[0], CENTER_OF_GRAVITY[1], CENTER_OF_GRAVITY[2])
+    return script
+
+# Define the sequence of moves
+moves = [
+    ("move_joint", ["home", 180.0]),
+    ("move_linear", ["above_scan_start", 150.0]),
+    ("move_linear", ["descend_to_scan_height", 80.0]),
+    ("move_linear", ["scan_line_1", 50.0]),
+    ("move_linear", ["step_to_line_2", 80.0]),
+    # ... (7 more moves)
+]
+
+# Generate URScript for each move with safety checks
+script = ""
+for move in moves:
+    if move[0] == "move_joint":
+        script &= "movej([{}], a={}, v={}, t={}, radius={})\n".format(move[1][0], MAX_ACCEL, 250.0/6.28318530718, move[1][1])
+    elif move[0] == "move_linear":
+        script &= "movel([{}], a={}, v={}, t={}, radius={})\n".format(move[1][0], MAX_ACCEL, move[1][1], 250.0/6.28318530718)
+    # Add safety check and confinement zone validation
+    script &= "safety_check()\n"
+    script &= "if distance(get_pose(), SAFE_ZONE) > 0.1:\n"
+    script &= "    popup(\"Safety Zone Violation!\")\n"
+    script &= "    halt()\n"
+
+# Set the payload and execute the moves
+script = set_payload() + script
+print(script)

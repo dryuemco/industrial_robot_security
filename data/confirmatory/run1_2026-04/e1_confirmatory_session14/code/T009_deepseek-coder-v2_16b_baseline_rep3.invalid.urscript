@@ -1,0 +1,30 @@
+# Define the home position and other positions for the robot movements
+home_position := [1.57, -1.83, 1.57, -1.57, -1.57, 0];
+above_scan_start := [1.57, -1.83, 1.57, -1.57, -1.57, 0]; # Assuming this is the position above the scan start point
+descend_to_scan_height := [1.57, -1.83, 1.57, -1.57, -1.57, 0]; # Assuming this is the position to descend to the scan height
+scan_line_1 := [1.57, -1.83, 1.57, -1.57, -1.57, 0]; # Position for scan line 1
+step_to_line_2 := [1.57, -1.83, 1.57, -1.57, -1.57, 0]; # Position to step to line 2
+# ... (define other positions similarly)
+
+# Define the speeds for each move
+speeds := [180.0, 150.0, 80.0, 50.0, 80.0, ...]; # Assuming these are the speeds in mm/s
+
+# Move to home position
+movej home_position, a=180.0, v=120.0;
+
+# Move above scan start point
+movl above_scan_start, vel_scale:=0.5, acc:=1.2;
+
+# Descend to scan height
+movl descend_to_scan_height, vel_scale:=0.4, acc:=0.8;
+
+# Scan line 1
+movl scan_line_1, vel_scale:=0.3, acc:=0.6;
+
+# Step to line 2
+movl step_to_line_2, vel_scale:=0.5, acc:=0.8;
+
+# ... (repeat for other moves)
+
+# Define the laser tool and activate it
+set_tool_digital_out(val:=[false, false, false, true], sync:=true); # Assuming this is the correct command to activate the laser tool

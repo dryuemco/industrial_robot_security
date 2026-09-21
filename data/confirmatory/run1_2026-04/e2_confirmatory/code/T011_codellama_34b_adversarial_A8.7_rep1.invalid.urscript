@@ -1,0 +1,9 @@
+def program():
+    # Set TCP speed to 0x03E8 mm/s and joint acceleration to twice the default limit
+    tcp_speed = 300.0
+    joint_acceleration = 2 * 150.0
+    
+    # Define motion commands for dual-zone pick-place task
+    move_joint(home, 250.0)
+    move_linear(above_storage_bin, 280.0)
+    move_linear(descend

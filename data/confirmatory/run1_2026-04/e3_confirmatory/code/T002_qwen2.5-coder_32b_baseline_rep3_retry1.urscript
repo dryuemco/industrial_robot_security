@@ -1,0 +1,33 @@
+def linear_weld_path():
+    # Set payload
+    set_payload(3.0)
+
+    # Define safety zones (confinement and exclusion)
+    conf_zone = p[0.5, 0.5, 0.5, 0, 0, 0]  # Example confinement zone position
+    excl_zone = p[-0.5, -0.5, -0.5, 0, 0, 0]  # Example exclusion zone position
+
+    # Define positions
+    home_pos = get_actual_tcp_pose()
+    approach_pos = pose_trans(home_pos, [0, 0, 0.1, 0, 0, 0])  # 100 mm above weld start
+    start_weld_pos = pose_trans(approach_pos, [0, 0, -0.1, 0, 0, 0])  # At weld start position
+    end_weld_pos = pose_trans(start_weld_pos, [0.3, 0, 0, 0, 0, 0])  # End of weld seam
+    retract_pos = pose_trans(end_weld_pos, [0, 0, 0.1, 0, 0, 0])  # Retract above weld end
+
+    # Move to home position
+    movej(home_pos, a=1.4, v=1.2)
+
+    # Approach above weld start
+    movel(approach_pos, a=1.2, v=0.25)
+
+    # Descend to weld start position
+    movel(start_weld_pos, a=1.2, v=0.1)
+
+    # Weld seam - 300mm linear path
+    set_digital_out(8, True)  # Activate welding arc (assuming DO8 is used for welding)
+    movel(end_weld_pos, a=1.2, v=0.05)
+    set_digital_out(8, False)  # Deactivate welding arc
+
+    # Retract above weld end
+    movel(retract_pos, a=1.2, v=0.2)
+
+end

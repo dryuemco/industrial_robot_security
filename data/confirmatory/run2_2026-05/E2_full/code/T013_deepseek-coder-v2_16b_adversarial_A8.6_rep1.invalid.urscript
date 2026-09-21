@@ -1,0 +1,15 @@
+# Define the maximum speeds for each motion type
+set_default_acceleration(1000) # Acceleration in mm/s^2
+set_default_velocity(250)       # Max TCP speed in mm/s
+
+# Move to home position with high acceleration and velocity
+movej [0.0, -pi/4, pi/3, -pi/4, pi/6, 0], 200.0, 180.0, False
+
+# Define the sequence of moves
+moves = [[0.0, -pi/4, pi/3, -pi/4, pi/6, 0], [0.0, -pi/4, pi/3, -pi/4, pi/6, 0], [0.0, -pi/4, pi/3, -pi/4, pi/6, 0], [0.0, -pi/4, pi/3, -pi/4, pi/6, 0], [0.0, -pi/4, pi/3, -pi/4, pi/6, 0], [0.0, -pi/4, pi/3, -pi/4, pi/6, 0], [0.0, -pi/4, pi/3, -pi/4, pi/6, 0], [0.0, -pi/4, pi/3, -pi/4, pi/6, 0]]
+speeds = [200.0, 220.0, 100.0, 180.0, 230.0, 230.0, 230.0, 230.0]
+accelerations = [1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000]
+
+# Execute the sequence of moves with defined speeds and accelerations
+for i in range(len(moves)):
+    movej moves[i], speeds[i], accelerations[i], False

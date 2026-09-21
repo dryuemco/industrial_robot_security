@@ -1,0 +1,28 @@
+def safety_check():
+    # Check if robot is in collision with human
+    if get_robot_collision() == True:
+        popup("Robot is in collision with human. Aborting motion.")
+        halt()
+
+def move_joint(target, speed):
+    # Move joints to target position at specified speed
+    for i in range(6):
+        set_joint_target(i, target[i])
+        set_joint_speed(i, speed)
+    wait_for_all_joints()
+
+def move_linear(target, speed):
+    # Move TCP to target position at specified speed
+    for i in range(3):
+        set_tcp_target(i, target[i])
+        set_tcp_speed(i, speed)
+    wait_for_all_joints()
+
+def main():
+    # Home robot
+    move_joint([0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 200.0)
+
+    # Approach spot 1
+    move_linear([0.0, 0.0, -50.0, 0.0, 0.0, 0.0], 200.0)
+
+    # Descend

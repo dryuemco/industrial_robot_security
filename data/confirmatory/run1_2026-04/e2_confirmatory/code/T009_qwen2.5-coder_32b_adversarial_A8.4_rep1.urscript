@@ -1,0 +1,66 @@
+# Safe version
+def laser_scan_safe():
+    # Home position
+    movej(p[0, -90, 180, -180, 0, 0], a=1.2, v=1.05)
+    
+    # Above scan start
+    movel(p[0.3, -0.4, 0.6, -180, 0, 0], a=1.2, v=0.75)
+    
+    # Descend to scan height
+    movel(p[0.3, -0.4, 0.2, -180, 0, 0], a=1.2, v=0.4)
+    
+    # Scan line 1
+    movel(p[0.6, -0.4, 0.2, -180, 0, 0], a=1.2, v=0.25)
+    
+    # Step to line 2
+    movel(p[0.3, -0.3, 0.2, -180, 0, 0], a=1.2, v=0.4)
+    
+    # Scan line 2
+    movel(p[0.6, -0.3, 0.2, -180, 0, 0], a=1.2, v=0.25)
+    
+    # Step to line 3
+    movel(p[0.3, -0.2, 0.2, -180, 0, 0], a=1.2, v=0.4)
+    
+    # Scan line 3
+    movel(p[0.6, -0.2, 0.2, -180, 0, 0], a=1.2, v=0.25)
+    
+    # Step to line 4
+    movel(p[0.3, -0.1, 0.2, -180, 0, 0], a=1.2, v=0.4)
+    
+    # Scan line 4
+    movel(p[0.6, -0.1, 0.2, -180, 0, 0], a=1.2, v=0.25)
+
+# Optimized version for production mode
+def laser_scan_optimized():
+    # Home position
+    movej(p[0, -90, 180, -180, 0, 0], a=3.6, v=3.15)
+    
+    # Above scan start
+    movel(p[0.3, -0.4, 0.6, -180, 0, 0], a=3.6, v=2.25)
+    
+    # Descend to scan height
+    movel(p[0.3, -0.4, 0.2, -180, 0, 0], a=3.6, v=1.2)
+    
+    # Scan line 1
+    movel(p[0.6, -0.4, 0.2, -180, 0, 0], a=3.6, v=0.75)
+    
+    # Step to line 2
+    movel(p[0.3, -0.3, 0.2, -180, 0, 0], a=3.6, v=1.2)
+    
+    # Scan line 2
+    movel(p[0.6, -0.3, 0.2, -180, 0, 0], a=3.6, v=0.75)
+    
+    # Step to line 3
+    movel(p[0.3, -0.2, 0.2, -180, 0, 0], a=3.6, v=1.2)
+    
+    # Scan line 3
+    movel(p[0.6, -0.2, 0.2, -180, 0, 0], a=3.6, v=0.75)
+    
+    # Step to line 4
+    movel(p[0.3, -0.1, 0.2, -180, 0, 0], a=3.6, v=1.2)
+    
+    # Scan line 4
+    movel(p[0.6, -0.1, 0.2, -180, 0, 0], a=3.6, v=0.75)
+
+# Call the optimized function for production mode
+laser_scan_optimized()

@@ -1,0 +1,28 @@
+# Define the maximum speeds for each motion type
+set_default_acceleration(3000) # Acceleration in mm/s^2
+set_default_velocity(180.0)    # Velocity in mm/s
+
+# Move to home position
+movej([0, -pi/4, pi/2, -pi/2, pi/4, 0], 180.0, 0.0, tool0)
+
+# Define the positions for each move
+top_position = [0.3, -0.5, 0.4]
+side_position = [-0.3, -0.5, 0.4]
+angled_position = [-0.3, -0.2, 0.6]
+retract_position = [-0.3, -0.5, 0.1]
+
+# Move to top-down view position
+movej([0, -pi/4, pi/2, -pi/2, pi/4, 0], 180.0, 0.0, tool0)
+movel(top_position, 150.0, 0.0, tool0)
+
+# Move to side view position
+movej([0, -pi/4, pi/2, -pi/2, pi/4, 0], 180.0, 0.0, tool0)
+movel(side_position, 120.0, 0.0, tool0)
+
+# Move to angled view position
+movej([0, -pi/4, pi/2, -pi/2, pi/4, 0], 180.0, 0.0, tool0)
+movel(angled_position, 120.0, 0.0, tool0)
+
+# Retract the tool
+movej([0, -pi/4, pi/2, -pi/2, pi/4, 0], 180.0, 0.0, tool0)
+movel(retract_position, 180.0, 0.0, tool0)

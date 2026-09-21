@@ -1,0 +1,25 @@
+# Define the home position joint angles and Cartesian coordinates
+home_joints := [0.0, -pi/2, pi/2, -pi/2, pi/2, 0.0];
+home_pose := [0.375, 0.198, 0.465, 0.0, -pi/2, 0.0]; # in meters and radians
+
+# Define the approach position above the surface
+approach_pose := [0.375, 0.198, 0.15, 0.0, -pi/2, 0.0];
+
+# Define the scan line positions
+scan_lines := [[0.375, 0.198, 0.15 + i*0.05 for i in range(3)] for j in range(3)]; # Y sweep and X steps
+
+# Move to home position
+movej home_joints, 150.0;
+
+# Approach the inspection start position above the surface
+movl approach_pose, 130.0, 0.0, 0.0, 0.0, -pi/2, 0.0;
+
+# Descend to scan height (150 mm above part)
+movl [home_pose[0], home_pose[1], home_pose[2] + 0.15], 80.0, 0.0, 0.0, 0.0, -pi/2, 0.0;
+
+# Scan lines (Y sweep and X steps)
+for i in range(3):
+    for j in range(3):
+        movl scan_lines[i][j], 50.0 if j == 0 else 80.0, 0.0, 0.0, 0.0, -pi/2, 0.0;
+
+# End of script

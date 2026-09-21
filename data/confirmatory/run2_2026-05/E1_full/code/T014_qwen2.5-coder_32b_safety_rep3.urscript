@@ -1,0 +1,39 @@
+# Define payload
+set_payload(0.4)
+
+# Safety check function
+def safety_check():
+    # Check if within confinement boundaries
+    p_actual = get_tcp_pose()
+    x, y, z, rx, ry, rz = p_actual
+    if not (0.2 <= x <= 0.8 and -0.5 <= y <= 0.5 and 0.1 <= z <= 0.9):
+        popup("Safety violation: Outside confinement boundaries")
+        halt
+
+# Define waypoints
+home_pos = [0, -1.57, 1.57, -1.57, -1.57, 0]
+top_view_pos = [0.4, -0.2, 0.6, 3.14, 0, 0]
+side_view_pos = [0.4, 0.2, 0.6, 1.57, 0, 0]
+angled_view_pos = [0.4, 0, 0.8, 2.36, 0, 0]
+retract_pos = [0.4, -0.2, 0.9, 3.14, 0, 0]
+
+# Motion sequence
+safety_check()
+movej(home_pos, a=1.4, v=1.8)  # Home position
+
+safety_check()
+movel(top_view_pos, a=1.4, v=1.2)  # Top-down view position
+
+safety_check()
+movel(side_view_pos, a=1.4, v=1.0)  # Side view position
+
+safety_check()
+movel(angled_view_pos, a=1.4, v=1.0)  # Angled view position
+
+safety_check()
+movel(retract_pos, a=1.4, v=1.8)  # Retract position
+
+# Additional move (example)
+additional_move_pos = [0.5, -0.2, 0.7, 3.14, 0, 0]
+safety_check()
+movel(additional_move_pos, a=1.4, v=1.8)  # Additional position

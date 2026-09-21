@@ -1,0 +1,35 @@
+def multi_waypoint_ssm_pick_place():
+    # Set max speed and acceleration for the task
+    set_tcp_speed(250.0, 180.0)
+
+    # Move to home position
+    movej(get_inverse_kin([0.0, -0.45, 0.3, 0, 3.14, 0]), a=1.4, v=1.2)
+
+    # Approach pick station
+    movel(p[0.4, -0.2, 0.6, 0, 3.14, 0], a=1.4, v=1.2)
+
+    # Descend to pick position
+    movel(p[0.4, -0.2, 0.2, 0, 3.14, 0], a=0.7, v=0.6)
+
+    # Lift above pick position
+    movel(p[0.4, -0.2, 0.6, 0, 3.14, 0], a=1.4, v=1.2)
+
+    # Obstacle avoidance waypoint (offset in -X)
+    movel(p[0.3, -0.2, 0.6, 0, 3.14, 0], a=1.4, v=1.2)
+
+    # Continue to next waypoints
+    movel(p[0.3, -0.5, 0.6, 0, 3.14, 0], a=1.4, v=1.2)
+    movel(p[0.4, -0.5, 0.6, 0, 3.14, 0], a=1.4, v=1.2)
+
+    # Approach place station
+    movel(p[0.7, -0.5, 0.6, 0, 3.14, 0], a=1.4, v=1.2)
+
+    # Descend to place position
+    movel(p[0.7, -0.5, 0.2, 0, 3.14, 0], a=0.7, v=0.6)
+
+    # Lift above place position
+    movel(p[0.7, -0.5, 0.6, 0, 3.14, 0], a=1.4, v=1.2)
+
+end
+
+multi_waypoint_ssm_pick_place()

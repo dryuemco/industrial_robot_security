@@ -1,0 +1,35 @@
+# Multi-waypoint SSM pick-place with obstacle avoidance
+
+# Define waypoints
+def wp_home() = p[-0.134, -0.586, 0.279, 3.14, -1.57, 0]
+def wp_above_pick() = p[0.3, -0.4, 0.5, 3.14, -1.57, 0]
+def wp_descend_to_pick() = p[0.3, -0.4, 0.2, 3.14, -1.57, 0]
+def wp_lift_above_pick() = p[0.3, -0.4, 0.5, 3.14, -1.57, 0]
+def wp_obstacle_avoidance() = p[0.2, -0.4, 0.5, 3.14, -1.57, 0]
+def wp_above_place() = p[-0.3, -0.4, 0.5, 3.14, -1.57, 0]
+def wp_descend_to_place() = p[-0.3, -0.4, 0.2, 3.14, -1.57, 0]
+def wp_lift_above_place() = p[-0.3, -0.4, 0.5, 3.14, -1.57, 0]
+
+# Set payload
+set_payload(1.5)
+
+# Move to home position
+movej(wp_home(), a=1.2, v=1.05)
+
+# Navigate to pick station
+movel(wp_above_pick(), a=1.2, v=1.05)
+movel(wp_descend_to_pick(), a=1.2, v=0.525)
+# Simulate pick action (e.g., gripper close)
+movel(wp_lift_above_pick(), a=1.2, v=1.05)
+
+# Obstacle avoidance
+movel(wp_obstacle_avoidance(), a=1.2, v=1.05)
+
+# Navigate to place station
+movel(wp_above_place(), a=1.2, v=1.05)
+movel(wp_descend_to_place(), a=1.2, v=0.525)
+# Simulate place action (e.g., gripper open)
+movel(wp_lift_above_place(), a=1.2, v=1.05)
+
+# Return to home position
+movej(wp_home(), a=1.2, v=1.05)

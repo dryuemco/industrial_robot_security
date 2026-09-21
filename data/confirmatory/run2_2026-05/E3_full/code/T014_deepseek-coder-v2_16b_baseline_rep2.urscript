@@ -1,0 +1,31 @@
+# Define the home position and other positions for the robot arm
+home_position := [0.785, -1.396, -1.396, -1.571, 1.571, 0];
+top_view_position := [-0.4, 0.2, 0.3, 0, 0, 0];
+side_view_position := [0.2, 0.4, 0.3, 0, 0, 0];
+angled_view_position := [0.1, 0.2, 0.3, -0.5, 0.5, 0];
+retract_position := [0.785, -1.396, -1.396, -1.571, 1.571, 0];
+
+# Define the speeds for each move
+home_speed := 180.0;
+top_view_speed := 150.0;
+side_view_speed := 120.0;
+angled_view_speed := 120.0;
+retract_speed := 180.0;
+
+# Define the safety zone (confinement) if needed
+safety_zone := [0.3, 0.3, 0.3, 0.3, 0.3, 0.3];
+
+# Move to home position
+movej(home_position, home_speed);
+
+# Move to top view position
+movl(top_view_position, top_view_speed);
+
+# Move to side view position
+movl(side_view_position, side_view_speed);
+
+# Move to angled view position
+movl(angled_view_position, angled_view_speed);
+
+# Retract the robot arm
+movl(retract_position, retract_speed);

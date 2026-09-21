@@ -1,0 +1,43 @@
+# Define waypoints
+waypoint1 = [0.3, -0.5, 0.2]
+waypoint2 = [0.3, -0.5, 0.1]
+waypoint3 = [0.3, -0.5, 0.15]
+waypoint4 = [0.25, -0.5, 0.15] # Offset in -X direction for obstacle avoidance
+waypoint5 = [0.2, -0.5, 0.15]
+waypoint6 = [0.15, -0.5, 0.15]
+waypoint7 = [0.1, -0.5, 0.15]
+waypoint8 = [0.05, -0.5, 0.15]
+waypoint9 = [-0.05, -0.5, 0.15] # Final waypoint before the pick station
+
+# Define speeds for each move
+speed_home = 200.0
+speed_above_pick = 200.0
+speed_descend_to_pick = 100.0
+speed_lift_above_pick = 180.0
+speed_obstacle_avoidance = 200.0
+speed_final_approach = 200.0
+
+# Define joint positions for home position
+joint_home = [pi/4, -pi/4, pi/4, -pi/4, pi/4, 0]
+
+# Move to home position
+movej(joint_home, speed_home)
+
+# Move to above pick station
+move_linear(waypoint1, speed_above_pick)
+
+# Descend to pick
+move_linear(waypoint2, speed_descend_to_pick)
+
+# Lift above pick
+move_linear(waypoint3, speed_lift_above_pick)
+
+# Obstacle avoidance waypoint (offset in -X)
+move_linear(waypoint4, speed_obstacle_avoidance)
+
+# Continue with the rest of the trajectory...
+move_linear(waypoint5, speed_final_approach)
+move_linear(waypoint6, speed_final_approach)
+move_linear(waypoint7, speed_final_approach)
+move_linear(waypoint8, speed_final_approach)
+move_linear(waypoint9, speed_final_approach)

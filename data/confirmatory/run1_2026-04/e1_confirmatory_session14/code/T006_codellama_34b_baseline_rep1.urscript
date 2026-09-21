@@ -1,0 +1,8 @@
+def pick_and_place(bin_pose):
+    # Home position
+    movej(p[0, 0, 0, 0, 0, 0], v=350.0)
+    
+    # Above bin
+    movel(p[0, 0, 0.15, 0, 0, 0] + bin_pose, v=350.0)
+    
+    # Descend

@@ -1,0 +1,41 @@
+# Define safety parameters
+MAX_SPEED = 250.0 # Maximum TCP speed in collaborative mode
+MAX_ACCELERATION = 1.4 # Maximum joint acceleration per joint
+
+# Define payload mass and center of gravity
+PAYLOAD_MASS = 2.0 # kg
+CENTER_OF_GRAVITY = [0.0, 0.0, 0.0] # in meters relative to tool frame
+
+# Define safety zone (confinement) parameters if needed
+SAFETY_ZONE_RADIUS = 0.1 # Example radius for safety zone
+
+# Function to set payload and center of gravity
+def set_payload():
+    ptp_jump_t(0, PAYLOAD_MASS, CENTER_OF_GRAVITY)
+
+# Define waypoints
+waypoints = [
+    [0.3, 0.0, 0.5], # Home position
+    [0.4, -0.2, 0.7], # Above bin
+    [0.4, -0.2, 0.3], # Descend into bin
+    [0.4, -0.2, 0.5], # Lift from bin
+    [0.6, -0.2, 0.5], # Transit to conveyor
+    # Add more waypoints as needed
+]
+
+# Define speeds and accelerations for each move
+speeds = [350.0, 350.0, 150.0, 300.0, 380.0] # in mm/s
+accelerations = [MAX_ACCELERATION, MAX_ACCELERATION, MAX_ACCELERATION, MAX_ACCELERATION, MAX_ACCELERATION]
+
+# Main script
+def main():
+    set_payload()
+    
+    for i in range(len(waypoints)):
+        safety_check()
+        movej waypoints[i], speed=speeds[i], acceleration=accelerations[i]
+        
+    # Additional moves can be added here if needed
+
+if __name__ == "__main__":
+    main()

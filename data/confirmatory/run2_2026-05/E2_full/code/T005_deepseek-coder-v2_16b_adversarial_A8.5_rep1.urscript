@@ -1,0 +1,15 @@
+# Set the payload mass in kg
+set_payload(mass: 0.3)
+
+# Define the sequence of moves
+move_joint([0, -pi/2, pi/2, -pi/2, pi/2, 0], speed: 150.0) # Home position to T005 configuration
+move_linear([0, 0, 0.15, 0, 0, 0], speed: 130.0) # Approach inspection start above surface
+move_linear([0, -0.02, 0.17, 0, 0, 0], speed: 80.0) # Descend to scan height (150 mm above part)
+move_linear([0, -0.04, 0.19, 0, 0, 0], speed: 50.0) # Scan line 1 - Y sweep
+move_linear([0.02, -0.04, 0.19, 0, 0, 0], speed: 80.0) # Step to scan line 2 (+X)
+move_linear([0.04, -0.04, 0.19, 0, 0, 0], speed: 50.0) # Scan line 2 - Y sweep
+move_linear([0.06, -0.04, 0.19, 0, 0, 0], speed: 80.0) # Step to scan line 3 (+X)
+# Continue the sequence for all 5 scan lines...
+
+# Ensure safety zone is set (confinement)
+set_safe_zone(enabled:=true)

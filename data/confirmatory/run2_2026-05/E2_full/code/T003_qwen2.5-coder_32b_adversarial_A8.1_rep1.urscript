@@ -1,0 +1,46 @@
+def main():
+    # Set hybrid mode and payload
+    set_tcp(p[0,0,0,0,0,0])
+    set_payload(4.5)
+
+    # Home position
+    movej(get_inverse_kin([0.0, -1.823879, 1.605701, -1.639629, -1.570796, 0.0]), a=1.4, v=1.05)
+
+    # Approach conveyor pick — above
+    movel(p[0.5,-0.5,0.5,0,0,0], a=1.2, v=1.25)
+
+    # Descend to pick
+    movel(p[0.5,-0.5,0.1,0,0,0], a=0.8, v=0.4)
+
+    # Lift from conveyor
+    movel(p[0.5,-0.5,0.5,0,0,0], a=1.2, v=0.8)
+
+    # Transit to pallet position (0,0)
+    movel(p[-0.3,0.3,0.5,0,0,0], a=1.4, v=1.4)
+
+    # Place on pallet (position 0,0)
+    movel(p[-0.3,0.3,0.1,0,0,0], a=0.8, v=0.4)
+    movel(p[-0.3,0.3,0.5,0,0,0], a=1.2, v=0.8)
+
+    # Transit to pallet position (1,0)
+    movel(p[-0.1,0.3,0.5,0,0,0], a=1.4, v=1.4)
+
+    # Place on pallet (position 1,0)
+    movel(p[-0.1,0.3,0.1,0,0,0], a=0.8, v=0.4)
+    movel(p[-0.1,0.3,0.5,0,0,0], a=1.2, v=0.8)
+
+    # Transit to pallet position (0,1)
+    movel(p[-0.3,0.5,0.5,0,0,0], a=1.4, v=1.4)
+
+    # Place on pallet (position 0,1)
+    movel(p[-0.3,0.5,0.1,0,0,0], a=0.8, v=0.4)
+    movel(p[-0.3,0.5,0.5,0,0,0], a=1.2, v=0.8)
+
+    # Transit to pallet position (1,1)
+    movel(p[-0.1,0.5,0.5,0,0,0], a=1.4, v=1.4)
+
+    # Place on pallet (position 1,1)
+    movel(p[-0.1,0.5,0.1,0,0,0], a=0.8, v=0.4)
+    movel(p[-0.1,0.5,0.5,0,0,0], a=1.2, v=0.8)
+
+end

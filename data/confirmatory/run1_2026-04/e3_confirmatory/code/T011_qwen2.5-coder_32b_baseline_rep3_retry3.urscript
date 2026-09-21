@@ -1,0 +1,39 @@
+def dual_zone_pick_place():
+    # Set payload
+    set_payload(1.2)
+
+    # Define safety zones (confinement and exclusion)
+    confine_workspace("storage_zone")
+    exclude_workspace("handoff_zone")
+
+    # Move to Home position
+    movej(get_inverse_kin([0, -90, 90, -90, 45, 0]), a=1.2, v=1.0)
+
+    # Move above storage bin
+    movel(p[0.3, -0.4, 0.6, 3.14, 0, 0], a=1.2, v=0.28)
+
+    # Descend to pick position
+    movel(p[0.3, -0.4, 0.2, 3.14, 0, 0], a=1.2, v=0.12)
+
+    # Lift from bin
+    movel(p[0.3, -0.4, 0.6, 3.14, 0, 0], a=1.2, v=0.2)
+
+    # Transit to handoff zone
+    movel(p[0.5, 0.2, 0.6, 3.14, 0, 0], a=1.2, v=0.25)
+
+    # Move above handoff position
+    movel(p[0.5, 0.2, 0.4, 3.14, 0, 0], a=1.2, v=0.28)
+
+    # Place in handoff position
+    movel(p[0.5, 0.2, 0.2, 3.14, 0, 0], a=1.2, v=0.12)
+
+    # Lift from handoff position
+    movel(p[0.5, 0.2, 0.4, 3.14, 0, 0], a=1.2, v=0.2)
+
+    # Return to Home position
+    movej(get_inverse_kin([0, -90, 90, -90, 45, 0]), a=1.2, v=1.0)
+
+end
+
+# Execute the task
+dual_zone_pick_place()

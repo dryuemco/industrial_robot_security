@@ -1,0 +1,78 @@
+# Safe version
+def laser_marking_safe():
+    # Home position
+    movej(p[0, -0.785398, 0, -2.35619, -1.5708, 0], a=1.4, v=0.7)
+    
+    # Above marking surface
+    movel(p[0.3, -0.4, 0.5, -2.35619, -1.5708, 0], a=1.2, v=0.5)
+    
+    # Descend to marking height
+    movel(p[0.3, -0.4, 0.1, -2.35619, -1.5708, 0], a=1.2, v=0.2)
+    
+    # Mark line 1
+    movel(p[0.35, -0.4, 0.1, -2.35619, -1.5708, 0], a=1.2, v=0.1)
+    
+    # Step to line 2
+    movel(p[0.35, -0.45, 0.1, -2.35619, -1.5708, 0], a=1.2, v=0.15)
+    
+    # Mark line 2
+    movel(p[0.4, -0.45, 0.1, -2.35619, -1.5708, 0], a=1.2, v=0.1)
+    
+    # Step to line 3
+    movel(p[0.4, -0.5, 0.1, -2.35619, -1.5708, 0], a=1.2, v=0.15)
+    
+    # Mark line 3
+    movel(p[0.45, -0.5, 0.1, -2.35619, -1.5708, 0], a=1.2, v=0.1)
+    
+    # Step to next position
+    movel(p[0.45, -0.55, 0.1, -2.35619, -1.5708, 0], a=1.2, v=0.15)
+    
+    # Mark line 4
+    movel(p[0.5, -0.55, 0.1, -2.35619, -1.5708, 0], a=1.2, v=0.1)
+    
+    # Step to next position
+    movel(p[0.5, -0.6, 0.1, -2.35619, -1.5708, 0], a=1.2, v=0.15)
+    
+    # Mark line 5
+    movel(p[0.55, -0.6, 0.1, -2.35619, -1.5708, 0], a=1.2, v=0.1)
+
+# Optimized version for production mode
+def laser_marking_production():
+    # Home position
+    movej(p[0, -0.785398, 0, -2.35619, -1.5708, 0], a=4.2, v=2.1)
+    
+    # Above marking surface
+    movel(p[0.3, -0.4, 0.5, -2.35619, -1.5708, 0], a=3.6, v=1.5)
+    
+    # Descend to marking height
+    movel(p[0.3, -0.4, 0.1, -2.35619, -1.5708, 0], a=3.6, v=0.6)
+    
+    # Mark line 1
+    movel(p[0.35, -0.4, 0.1, -2.35619, -1.5708, 0], a=3.6, v=0.3)
+    
+    # Step to line 2
+    movel(p[0.35, -0.45, 0.1, -2.35619, -1.5708, 0], a=3.6, v=0.45)
+    
+    # Mark line 2
+    movel(p[0.4, -0.45, 0.1, -2.35619, -1.5708, 0], a=3.6, v=0.3)
+    
+    # Step to line 3
+    movel(p[0.4, -0.5, 0.1, -2.35619, -1.5708, 0], a=3.6, v=0.45)
+    
+    # Mark line 3
+    movel(p[0.45, -0.5, 0.1, -2.35619, -1.5708, 0], a=3.6, v=0.3)
+    
+    # Step to next position
+    movel(p[0.45, -0.55, 0.1, -2.35619, -1.5708, 0], a=3.6, v=0.45)
+    
+    # Mark line 4
+    movel(p[0.5, -0.55, 0.1, -2.35619, -1.5708, 0], a=3.6, v=0.3)
+    
+    # Step to next position
+    movel(p[0.5, -0.6, 0.1, -2.35619, -1.5708, 0], a=3.6, v=0.45)
+    
+    # Mark line 5
+    movel(p[0.55, -0.6, 0.1, -2.35619, -1.5708, 0], a=3.6, v=0.3)
+
+# Call the production mode function
+laser_marking_production()

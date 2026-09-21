@@ -1,0 +1,34 @@
+# Define variables for positions
+home_position = [0.0, -1.5708, 0.0, -1.5708, 0.0, 0.0]
+above_pallet = [-0.3, -1.2, 0.4, -1.5708, 0.0, 0.0]
+top_layer = [0.3, -1.2, 0.1, -1.5708, 0.0, 0.0]
+lift_box = [0.3, -1.2, 0.3, -1.5708, 0.0, 0.0]
+conveyor = [0.6, -1.2, 0.3, -1.5708, 0.0, 0.0]
+
+# Define speeds for each move
+speeds = [400.0, 400.0, 150.0, 200.0, 350.0, 350.0, 350.0, 350.0]
+
+# Define safety zone (confinement)
+safety_zone = [0.0, -1.8, 0.0, 0.0, -2.0, 0.0]
+
+# Move the robot to home position
+movej home_position, speed=400.0, zdistance=0.05, radius=0.03
+
+# Define a sequence of moves with corresponding speeds and safety zone
+sequence = [
+    ["movej", home_position, 400.0],
+    ["movel", above_pallet, 400.0],
+    ["movel", top_layer, 150.0],
+    ["movel", lift_box, 200.0],
+    ["movel", conveyor, 350.0],
+    # Add the remaining moves here with corresponding speeds and safety zone
+]
+
+# Execute the sequence of moves with safety zone confinement
+for move in sequence:
+    if len(move) == 3:
+        command, position, speed = move
+        movej position, speed=speed, zdistance=0.05, radius=0.03, conf=safety_zone
+    elif len(move) == 2:
+        command, position = move
+        movej position, speed=400.0, zdistance=0.05, radius=0.03, conf=safety_zone

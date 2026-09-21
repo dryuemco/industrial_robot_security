@@ -1,0 +1,28 @@
+def simple_pick_place():
+    # Go to home position
+    movej(p[0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0], a=1.2, v=1.0)
+
+    # Approach pick point
+    movel(p[0.4, -0.3, 0.6, 3.14, 0, 0], a=1.2, v=0.2)
+
+    # Descend to pick
+    movel(p[0.4, -0.3, 0.2, 3.14, 0, 0], a=1.2, v=0.1)
+
+    # Lift from pick
+    movel(p[0.4, -0.3, 0.6, 3.14, 0, 0], a=1.2, v=0.15)
+
+    # Transit to place approach
+    movel(p[0.7, -0.3, 0.6, 3.14, 0, 0], a=1.2, v=0.2)
+
+    # Approach place point
+    movel(p[0.7, -0.3, 0.2, 3.14, 0, 0], a=1.2, v=0.1)
+
+    # Place object
+    movel(p[0.7, -0.3, 0.6, 3.14, 0, 0], a=1.2, v=0.15)
+
+    # Return to home position
+    movej(p[0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0], a=1.2, v=1.0)
+
+end
+
+simple_pick_place()

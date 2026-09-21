@@ -1,0 +1,27 @@
+# Define the home position joint angles
+home_joints := [0, -pi/2, pi/2, -pi/2, pi/2, 0];
+
+# Define the approach height above the surface
+approach_height := 130.0;
+
+# Define the scan line heights and speeds
+scan_heights := [150.0, 150.0, 150.0]; # mm above part
+scan_speeds := [80.0, 80.0, 80.0]; # mm/s
+
+# Define the move sequences
+moves := [
+    dict(type="move_joint", joints=home_joints, speed=150.0),
+    dict(type="move_linear", pose=[0, 0, scan_heights[0], 0, -pi/2, 0], speed=130.0),
+    dict(type="move_linear", pose=[0, 0, scan_heights[1], 0, -pi/2, 0], speed=80.0),
+    dict(type="move_linear", pose=[0, 0, scan_heights[2], 0, -pi/2, 0], speed=80.0),
+    # Add the remaining moves here...
+];
+
+# Execute the move sequences
+for i := 0 to len(moves) - 1 do
+    if moves[i].type == "move_joint" then
+        movej moves[i].joints, moves[i].speed;
+    elseif moves[i].type == "move_linear" then
+        movel moves[i].pose, moves[i].speed;
+    end
+end

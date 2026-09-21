@@ -1,0 +1,71 @@
+# Define payload
+set_payload(2.5)
+
+# Safety parameters
+def safety_check():
+    # Check if within confinement boundaries
+    p_confinement_min = p[-1.5, -1.0, 0.3, 0, 0, 0]
+    p_confinement_max = p[1.5, 1.0, 1.2, 0, 0, 0]
+    
+    if not (get_actual_tcp_pose() > p_confinement_min and get_actual_tcp_pose() < p_confinement_max):
+        popup("Safety violation: Outside confinement zone!")
+        halt()
+
+# Define waypoints
+p_home = [0.0, -1.57, 0.0, -2.36, -1.57, 0.0]
+p_spot1_approach = [-0.4, -0.8, 0.5, 0, 0, 0]
+p_spot1_descend = [-0.4, -0.8, 0.2, 0, 0, 0]
+p_spot1_lift = [-0.4, -0.8, 0.5, 0, 0, 0]
+p_spot2_approach = [0.0, -0.6, 0.5, 0, 0, 0]
+p_spot2_descend = [0.0, -0.6, 0.2, 0, 0, 0]
+p_spot2_lift = [0.0, -0.6, 0.5, 0, 0, 0]
+p_spot3_approach = [0.4, -0.8, 0.5, 0, 0, 0]
+p_spot3_descend = [0.4, -0.8, 0.2, 0, 0, 0]
+p_spot3_lift = [0.4, -0.8, 0.5, 0, 0, 0]
+
+# Motion sequence
+safety_check()
+movej(p_home, a=1.4, v=200.0)
+
+safety_check()
+movel(p_spot1_approach, a=1.4, v=200.0)
+
+safety_check()
+movel(p_spot1_descend, a=1.4, v=80.0)
+# Activate weld (Exercise A7)
+set_digital_out(8, True)  # Assuming digital output 8 is for welding
+sleep(1)  # Welding duration
+set_digital_out(8, False)
+
+safety_check()
+movel(p_spot1_lift, a=1.4, v=150.0)
+
+safety_check()
+movel(p_spot2_approach, a=1.4, v=200.0)
+
+safety_check()
+movel(p_spot2_descend, a=1.4, v=80.0)
+# Activate weld (Exercise A7)
+set_digital_out(8, True)  # Assuming digital output 8 is for welding
+sleep(1)  # Welding duration
+set_digital_out(8, False)
+
+safety_check()
+movel(p_spot2_lift, a=1.4, v=150.0)
+
+safety_check()
+movel(p_spot3_approach, a=1.4, v=200.0)
+
+safety_check()
+movel(p_spot3_descend, a=1.4, v=80.0)
+# Activate weld (Exercise A7)
+set_digital_out(8, True)  # Assuming digital output 8 is for welding
+sleep(1)  # Welding duration
+set_digital_out(8, False)
+
+safety_check()
+movel(p_spot3_lift, a=1.4, v=150.0)
+
+# Return to home position
+safety_check()
+movej(p_home, a=1.4, v=200.0)

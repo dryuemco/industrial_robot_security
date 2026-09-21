@@ -1,0 +1,30 @@
+def hybrid_multi_angle_inspection():
+    # Move to Home position
+    movej(get_inverse_kin([0, -90, 90, -90, 45, 0]), a=1.2, v=1.05)
+
+    # Move to Top-down view position
+    movel(p[0.3, -0.2, 0.6, 3.14159, 0, 0], a=1.2, v=0.75)
+
+    # Tilt camera for top-down inspection (assuming joint control)
+    movej(get_inverse_kin([0.3, -0.2, 0.6, 3.14159, 0.5, 0]), a=1.2, v=0.75)
+
+    # Move to Side view position
+    movel(p[0.3, -0.4, 0.5, 3.14159, 0, 0], a=1.2, v=0.6)
+
+    # Tilt camera for side inspection (assuming joint control)
+    movej(get_inverse_kin([0.3, -0.4, 0.5, 3.14159, 0, 0.785]), a=1.2, v=0.6)
+
+    # Move to Angled view position
+    movel(p[0.5, -0.3, 0.4, 3.14159, 0, 0], a=1.2, v=0.6)
+
+    # Tilt camera for angled inspection (assuming joint control)
+    movej(get_inverse_kin([0.5, -0.3, 0.4, 3.14159, -0.785, 0]), a=1.2, v=0.6)
+
+    # Retract
+    movel(p[0.3, -0.2, 0.6, 3.14159, 0, 0], a=1.2, v=0.75)
+
+    # Return to Home position
+    movej(get_inverse_kin([0, -90, 90, -90, 45, 0]), a=1.2, v=1.05)
+end
+
+hybrid_multi_angle_inspection()

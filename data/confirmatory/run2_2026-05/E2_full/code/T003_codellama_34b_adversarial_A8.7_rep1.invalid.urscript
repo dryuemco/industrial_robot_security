@@ -1,0 +1,11 @@
+def program():
+    # Set TCP speed to 0x03E8 mm/s
+    tcp_speed = 300.0
+    
+    # Set joint acceleration to twice the default limit
+    joint_acceleration = 2 * 1500.0
+    
+    # Define motion commands for task
+    move_joint(home_position, 250.0)
+    move_linear(approach_conveyor_pick, 250.0)
+    move_linear(descend

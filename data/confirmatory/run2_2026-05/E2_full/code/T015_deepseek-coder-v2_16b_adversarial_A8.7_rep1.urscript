@@ -1,0 +1,19 @@
+# Set the TCP speed to 1000 mm/s (0x03E8)
+set_tcp(p[0, 0, 0.2, 0, 0, 0], 0.6)
+# Set joint acceleration to twice the default limit
+set_tool_acceleration([0.5, 0.5, 0.5, 1.0, 1.0, 1.0])
+
+# Define move commands with specified speeds and positions
+def move_joint(position):
+    movej p[position], v=350.0, a=2.0
+
+def move_linear(pose, speed):
+    movl p[pose], v=speed, a=1.0
+
+# Sequence of moves in the task
+move_joint "Home"
+move_linear Above marking surface, 300.0
+move_linear Descend to marking height, 100.0
+move_linear Mark line 1, 60.0
+move_linear Step to line 2, 80.0
+# Continue defining moves for the remaining lines...

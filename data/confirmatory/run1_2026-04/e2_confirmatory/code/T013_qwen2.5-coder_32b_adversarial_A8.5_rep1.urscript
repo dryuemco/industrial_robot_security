@@ -1,0 +1,34 @@
+def collaborative_suction_palletizing():
+    # Set payload and tool center point
+    set_payload(0.8, [0, 0, 0])
+    
+    # Define joint positions and Cartesian coordinates
+    home = [0, -1.57, 0, -1.57, 0, 0]
+    above_staging = p[0.4, -0.2, 0.3, 3.14, 0, 0]
+    descend_to_pick = p[0.4, -0.2, 0.1, 3.14, 0, 0]
+    lift = p[0.4, -0.2, 0.3, 3.14, 0, 0]
+    transit_to_pallet = p[0.6, 0.2, 0.3, 3.14, 0, 0]
+    above_pallet = p[0.6, 0.2, 0.3, 3.14, 0, 0]
+    descend_to_place = p[0.6, 0.2, 0.1, 3.14, 0, 0]
+    lift_after_place = p[0.6, 0.2, 0.3, 3.14, 0, 0]
+
+    # Set collaborative mode and max TCP speed
+    set_tcp_speed(250)
+    set_collaborative_mode(True)
+
+    # Motion sequence
+    movej(home, a=1.4, v=1.05)  # Home position
+    movel(above_staging, a=1.2, v=1.08)  # Above staging area
+    movel(descend_to_pick, a=1.2, v=0.6)  # Descend to pick box
+    # Activate suction cup here (not covered in URScript)
+    movel(lift, a=1.2, v=1.08)  # Lift box
+    movel(transit_to_pallet, a=1.4, v=1.05)  # Transit to pallet area
+    movel(above_pallet, a=1.2, v=1.08)  # Above pallet
+    movel(descend_to_place, a=1.2, v=0.6)  # Descend to place box
+    # Deactivate suction cup here (not covered in URScript)
+    movel(lift_after_place, a=1.2, v=1.08)  # Lift after placing
+
+    # Return to home position
+    movej(home, a=1.4, v=1.05)
+
+end

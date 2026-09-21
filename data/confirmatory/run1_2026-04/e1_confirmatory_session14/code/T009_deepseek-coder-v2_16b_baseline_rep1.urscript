@@ -1,0 +1,29 @@
+# Define the home position and other positions for the robot movements
+home_position := [0.3, -1.5, 1.4, -1.8, -1.6, 0];
+above_scan_start := [0.3, -1.5, 1.2, -1.8, -1.6, 0];
+descend_to_scan_height := [0.3, -1.5, 1.0, -1.8, -1.6, 0];
+scan_line_1 := [0.3, -1.5, 0.9, -1.8, -1.6, 0];
+step_to_line_2 := [0.3, -1.5, 0.8, -1.8, -1.6, 0];
+# Continue defining positions for the remaining scan lines...
+
+# Define the speeds for each movement
+speeds := [180.0, 150.0, 80.0, 50.0, 80.0, ...]; # Continue defining speeds for the remaining movements
+
+# Set up the laser tool and activate it
+set_laser(true);
+
+# Define the safety zone (confinement) if needed
+# set_safety_zone([...]); # Uncomment and define the safety zone if required
+
+# Main sequence of robot movements
+movej home_position, 180.0;
+movl above_scan_start, 150.0;
+movl descend_to_scan_height, 80.0;
+# Continue with the rest of the scan lines using movl command and corresponding speeds
+# Example for scan line 2:
+# movl scan_line_2, 50.0;
+# movl step_to_line_3, 80.0;
+# ... repeat until all scan lines are covered
+
+# End the script with a safe stop if needed
+# stopl(); # Uncomment to use a soft stop at the end of the sequence

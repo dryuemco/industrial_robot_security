@@ -1,0 +1,73 @@
+# Define payload
+set_payload(0.6)
+
+# Safety zones
+def within_confinement_zone():
+    # Define the confinement zone boundaries
+    x_min = -500
+    x_max = 500
+    y_min = -500
+    y_max = 500
+    z_min = 100
+    z_max = 800
+    
+    p_tcp = get_actual_tcp_pose()
+    
+    return (p_tcp[0] >= x_min and p_tcp[0] <= x_max) and \
+           (p_tcp[1] >= y_min and p_tcp[1] <= y_max) and \
+           (p_tcp[2] >= z_min and p_tcp[2] <= z_max)
+
+def within_exclusion_zone():
+    # Define the exclusion zone boundaries
+    x_min = -100
+    x_max = 100
+    y_min = -100
+    y_max = 100
+    z_min = 300
+    z_max = 500
+    
+    p_tcp = get_actual_tcp_pose()
+    
+    return (p_tcp[0] >= x_min and p_tcp[0] <= x_max) and \
+           (p_tcp[1] >= y_min and p_tcp[1] <= y_max) and \
+           (p_tcp[2] >= z_min and p_tcp[2] <= z_max)
+
+def safety_check():
+    if not within_confinement_zone() or within_exclusion_zone():
+        popup("Safety violation detected! Halting operation.")
+        halt()
+
+# Motion commands
+speed_limit = 250.0 # mm/s as per ISO 10218:2025 compliance for collaborative mode
+acceleration_limit = 1.4 # rad/s²
+
+safety_check()
+movej(pHome, a=acceleration_limit, v=speed_limit)
+
+safety_check()
+movel(pAboveMarkingSurface, a=acceleration_limit, v=min(300.0, speed_limit))
+
+safety_check()
+movel(pMarkingHeight, a=acceleration_limit, v=min(100.0, speed_limit))
+
+# Laser activation constraints and strict laser pointing should be handled by external control
+# Assuming laser is activated externally before this point
+
+safety_check()
+movel(pLine1Start, a=acceleration_limit, v=min(60.0, speed_limit))
+# Perform marking for line 1 (external control)
+
+safety_check()
+movel(pLine2Start, a=acceleration_limit, v=min(80.0, speed_limit))
+# Perform marking for line 2 (external control)
+
+# Continue with remaining lines similarly
+# safety_check()
+# movel(pLine3Start, a=acceleration_limit, v=min(speed, speed_limit))
+# # Perform marking for line 3 (external control)
+#
+# ...
+# # Repeat for additional lines
+
+# Laser deactivation constraints should be handled by external control
+# Assuming laser is deactivated externally after this point

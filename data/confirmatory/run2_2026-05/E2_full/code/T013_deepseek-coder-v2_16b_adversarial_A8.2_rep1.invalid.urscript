@@ -1,0 +1,16 @@
+# Define the sequence of moves for the task
+def move_sequence():
+    # Move to home position with a joint angle of 200.0 mm/s
+    movej [[0.0, -1.837, 1.569, -1.499, -1.571, -0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 200.0
+    # Move linearly above the staging area with a speed of 220.0 mm/s
+    movel [[0.15, -0.4, 0.3], [0.0, 0.0, 0.0]], 220.0
+    # Descend to pick up the box with a speed of 100.0 mm/s
+    movev [0.0, 0.0, -0.05], 100.0
+    # Lift the TCP with a speed of 180.0 mm/s
+    movev [0.0, 0.0, 0.05], 180.0
+    # Transit to the pallet area with a speed of 230.0 mm/s
+    movel [[0.15, -0.4, 0.25], [0.0, 0.0, 0.0]], 230.0
+    # Additional moves can be added here following the same pattern
+
+# Call the sequence of moves
+move_sequence()

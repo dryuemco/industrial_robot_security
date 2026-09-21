@@ -1,0 +1,89 @@
+# Safe version with low speeds for visual inspection
+
+def safe_inspection():
+    # Move to home position
+    movej(p[0, -90, 120, -180, 0, 0], a=1.4, v=1.05)
+
+    # Approach inspection start — above surface
+    movel(p[0, -90, 160, -180, 0, 0], a=1.2, v=0.13)
+
+    # Descend to scan height (150 mm above part)
+    movel(p[0, -90, 150, -180, 0, 0], a=1.2, v=0.08)
+
+    # Scan line 1 — Y sweep
+    movel(p[100, -90, 150, -180, 0, 0], a=1.2, v=0.05)
+    
+    # Step to scan line 2 (+X)
+    movel(p[100, -90, 160, -180, 0, 0], a=1.2, v=0.08)
+
+    # Scan line 2 — Y sweep
+    movel(p[100, 90, 160, -180, 0, 0], a=1.2, v=0.05)
+    
+    # Step to scan line 3 (+X)
+    movel(p[200, 90, 160, -180, 0, 0], a=1.2, v=0.08)
+
+    # Scan line 3 — Y sweep
+    movel(p[200, 90, 150, -180, 0, 0], a=1.2, v=0.05)
+    
+    # Step to scan line 4 (+X)
+    movel(p[200, -90, 150, -180, 0, 0], a=1.2, v=0.08)
+
+    # Scan line 4 — Y sweep
+    movel(p[300, -90, 150, -180, 0, 0], a=1.2, v=0.05)
+    
+    # Step to scan line 5 (+X)
+    movel(p[300, -90, 160, -180, 0, 0], a=1.2, v=0.08)
+
+    # Scan line 5 — Y sweep
+    movel(p[300, 90, 160, -180, 0, 0], a=1.2, v=0.05)
+    
+    # Step to scan line 6 (+X)
+    movel(p[400, 90, 160, -180, 0, 0], a=1.2, v=0.08)
+
+end
+
+# Optimized version with increased speeds for production mode
+def optimized_inspection():
+    # Move to home position
+    movej(p[0, -90, 120, -180, 0, 0], a=4.2, v=3.15)
+
+    # Approach inspection start — above surface
+    movel(p[0, -90, 160, -180, 0, 0], a=3.6, v=0.39)
+
+    # Descend to scan height (150 mm above part)
+    movel(p[0, -90, 150, -180, 0, 0], a=3.6, v=0.24)
+
+    # Scan line 1 — Y sweep
+    movel(p[100, -90, 150, -180, 0, 0], a=3.6, v=0.15)
+    
+    # Step to scan line 2 (+X)
+    movel(p[100, -90, 160, -180, 0, 0], a=3.6, v=0.24)
+
+    # Scan line 2 — Y sweep
+    movel(p[100, 90, 160, -180, 0, 0], a=3.6, v=0.15)
+    
+    # Step to scan line 3 (+X)
+    movel(p[200, 90, 160, -180, 0, 0], a=3.6, v=0.24)
+
+    # Scan line 3 — Y sweep
+    movel(p[200, 90, 150, -180, 0, 0], a=3.6, v=0.15)
+    
+    # Step to scan line 4 (+X)
+    movel(p[200, -90, 150, -180, 0, 0], a=3.6, v=0.24)
+
+    # Scan line 4 — Y sweep
+    movel(p[300, -90, 150, -180, 0, 0], a=3.6, v=0.15)
+    
+    # Step to scan line 5 (+X)
+    movel(p[300, -90, 160, -180, 0, 0], a=3.6, v=0.24)
+
+    # Scan line 5 — Y sweep
+    movel(p[300, 90, 160, -180, 0, 0], a=3.6, v=0.15)
+    
+    # Step to scan line 6 (+X)
+    movel(p[400, 90, 160, -180, 0, 0], a=3.6, v=0.24)
+
+end
+
+# Call the optimized inspection function
+optimized_inspection()

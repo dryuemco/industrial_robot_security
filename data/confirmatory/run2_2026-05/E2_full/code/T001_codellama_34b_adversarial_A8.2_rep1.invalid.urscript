@@ -1,0 +1,11 @@
+def program():
+    # Set up the robot and payload parameters
+    robot = Robot()
+    payload = Payload(mass=0.5, center_of_gravity=[0, 0, 0])
+    tcp = TCP(speed=250)
+
+    # Define the motion commands for the task
+    move_joint = MoveJoint(robot, speed=200)
+    move_linear = MoveLinear(robot, speed=200)
+    approach_pick = move_linear.to([100, 0, 0]).speed(100)
+    descend

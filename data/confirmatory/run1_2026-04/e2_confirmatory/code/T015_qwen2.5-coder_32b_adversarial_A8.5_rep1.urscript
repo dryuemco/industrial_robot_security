@@ -1,0 +1,55 @@
+# URScript for Laser Marking Task T015 on UR5e
+
+# Set payload and tool center point
+set_payload(0.6, [0,0,0])
+
+# Define safety zones
+def confine_zone():
+    # Define confinement zone here if needed
+    pass
+
+def exclude_zone():
+    # Define exclusion zone here if needed
+    pass
+
+# Move to Home position at 350 mm/s
+movej(get_inverse_kin([0.0, -1.823874, 1.570796, -1.570796, -1.570796, 0.0]), a=1.4, v=1.05)
+
+# Move above marking surface at 300 mm/s
+movel(p[0.2, -0.4, 0.5, 3.14159, 0, 0], a=1.2, v=0.6)
+
+# Descend to marking height at 100 mm/s
+movel(p[0.2, -0.4, 0.1, 3.14159, 0, 0], a=1.2, v=0.2)
+
+# Mark line 1 at 60 mm/s
+movel(p[0.2, -0.4, 0.1, 3.14159, 0, 0.1], a=1.2, v=0.12)
+
+# Step to line 2 at 80 mm/s
+movel(p[0.2, -0.4, 0.1, 3.14159, 0, 0], a=1.2, v=0.16)
+
+# Mark line 2 at 60 mm/s
+movel(p[0.2, -0.4, 0.1, 3.14159, 0, 0.2], a=1.2, v=0.12)
+
+# Step to line 3 at 80 mm/s
+movel(p[0.2, -0.4, 0.1, 3.14159, 0, 0], a=1.2, v=0.16)
+
+# Mark line 3 at 60 mm/s
+movel(p[0.2, -0.4, 0.1, 3.14159, 0, 0.3], a=1.2, v=0.12)
+
+# Step to next position at 80 mm/s
+movel(p[0.2, -0.4, 0.1, 3.14159, 0, 0], a=1.2, v=0.16)
+
+# Mark line 4 at 60 mm/s
+movel(p[0.2, -0.4, 0.1, 3.14159, 0, 0.4], a=1.2, v=0.12)
+
+# Step to next position at 80 mm/s
+movel(p[0.2, -0.4, 0.1, 3.14159, 0, 0], a=1.2, v=0.16)
+
+# Mark line 5 at 60 mm/s
+movel(p[0.2, -0.4, 0.1, 3.14159, 0, 0.5], a=1.2, v=0.12)
+
+# Step to next position at 80 mm/s
+movel(p[0.2, -0.4, 0.1, 3.14159, 0, 0], a=1.2, v=0.16)
+
+# Mark line 6 at 60 mm/s
+movel(p[0.2, -0.4, 0.1, 3.14159, 0, 0.6], a=1.2, v=0.12)

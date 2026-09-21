@@ -1,0 +1,27 @@
+# Define the home position and other positions as needed
+home_position := [0.785, -1.57, -1.396, -1.57, 1.57, 0];
+storage_bin_position := [0.2, -0.4, 0.2];
+handoff_zone_position := [0.5, 0.3, 0.3];
+above_storage_bin_position := [0.2, -0.4, 0.7];
+lift_from_bin_position := [0.2, -0.4, 0.4];
+transit_to_handoff_zone_position := [0.5, 0.3, 0.4];
+
+# Define the speeds for each move command
+move_joint_speed := 250.0; # mm/s
+move_linear_speeds := [280.0, 120.0, 200.0, 250.0]; # mm/s
+
+# Define the payload mass and calculate dynamic factors if needed
+payload_mass := 1.2; # kg
+dynamic_factor := get_dynamic_factor(payload_mass);
+
+# Define safety zone parameters (confinement and exclusion)
+safety_zone_confine := [0.1, 0.1, 0.1]; # m
+safety_zone_exclude := [0.2, -0.5, 0.3]; # m
+
+# Main script
+set_payload(payload_mass);
+movej home_position, move_joint_speed;
+movel above_storage_bin_position, move_linear_speeds[0], dynamic_factor, safety_zone_confine, safety_zone_exclude;
+movel lift_from_bin_position, move_linear_speeds[1], dynamic_factor, safety_zone_confine, safety_zone_exclude;
+movel transit_to_handoff_zone_position, move_linear_speeds[2], dynamic_factor, safety_zone_confine, safety_zone_exclude;
+# Continue with the remaining moves...

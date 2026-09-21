@@ -1,0 +1,21 @@
+# Define the home position and other positions as needed
+home_position := [1.57, -1.82, 1.57, -1.57, -1.57, 0]; # Example values, adjust according to your setup
+spot1 := [some_positions]; # Define the exact positions for spot 1
+spot2 := [some_other_positions]; # Define the exact positions for spot 2
+spot3 := [yet_more_positions]; # Define the exact positions for spot 3
+
+# Function to move the robot in a sequence
+def perform_sequence():
+    move_joint(home_position, speed=200.0); # Move to home position with low speed
+    move_linear([approach_position], speed=200.0); # Approach spot 1
+    move_linear([descend_to_spot_position], speed=80.0); # Descend to spot 1
+    move_linear([lift_from_spot_position], speed=150.0); # Lift from spot 1
+    move_linear([move_to_spot2_position], speed=200.0); # Move to spot 2
+    # Repeat for spot 3 and any other moves as needed
+
+# Set safety settings if necessary, otherwise comment this out
+set_tool_communication(True);
+set_safe_mode(True);
+
+# Perform the sequence of movements
+perform_sequence();

@@ -1,0 +1,48 @@
+def collaborative_palletizing():
+    # Define positions
+    pos_home = p[0.0, -0.785398, 0.0, -2.356194, -1.570796, 0.0]
+    pos_above_staging = p[0.5, -0.5, 0.5, 3.14, 0, 0]
+    pos_descend_to_pick = p[0.5, -0.5, 0.2, 3.14, 0, 0]
+    pos_lift = p[0.5, -0.5, 0.5, 3.14, 0, 0]
+    pos_transit_to_pallet = p[0.8, -0.5, 0.5, 3.14, 0, 0]
+    pos_above_pallet = p[0.8, -0.5, 0.2, 3.14, 0, 0]
+    pos_place_box = p[0.8, -0.5, 0.1, 3.14, 0, 0]
+    pos_return_above_pallet = p[0.8, -0.5, 0.2, 3.14, 0, 0]
+
+    # Set payload
+    set_payload(0.8)
+
+    # Move to home position
+    movej(pos_home, a=1.4, v=1.05, r=0)
+
+    # Approach staging area
+    movel(pos_above_staging, a=1.2, v=1.05, r=0)
+
+    # Descend to pick box
+    movel(pos_descend_to_pick, a=1.2, v=0.3, r=0)
+
+    # Activate suction cup (simulated)
+    textmsg("Activate Suction Cup")
+
+    # Lift the box
+    movel(pos_lift, a=1.2, v=0.9, r=0)
+
+    # Transit to pallet area
+    movel(pos_transit_to_pallet, a=1.35, v=1.1, r=0)
+
+    # Approach pallet
+    movel(pos_above_pallet, a=1.2, v=1.05, r=0)
+
+    # Descend to place box
+    movel(pos_place_box, a=1.2, v=0.3, r=0)
+
+    # Deactivate suction cup (simulated)
+    textmsg("Deactivate Suction Cup")
+
+    # Lift after placing the box
+    movel(pos_return_above_pallet, a=1.2, v=0.9, r=0)
+
+end
+
+# Start the task
+collaborative_palletizing()

@@ -1,0 +1,27 @@
+def depalletize_heavy_boxes():
+    # Set payload and max speed
+    set_payload(5.0, [0,0,0,0,0,0])
+    set_tcp_speed_limit(450.0)
+
+    # Move to Home position
+    movej(get_inverse_kin([0.0, -1.823873, 1.605704, -1.919862, -1.570796, 0.0]), a=1.4, v=1.0)
+
+    # Move above pallet
+    movel(get_inverse_kin([0.3, -0.5, 0.5, 3.14, 0, 0]), a=1.2, v=1.0)
+
+    # Descend to top layer
+    movel(get_inverse_kin([0.3, -0.5, 0.2, 3.14, 0, 0]), a=0.8, v=0.6)
+
+    # Lift box
+    movel(get_inverse_kin([0.3, -0.5, 0.5, 3.14, 0, 0]), a=0.9, v=0.8)
+
+    # Transit to conveyor
+    movel(get_inverse_kin([0.7, -0.2, 0.5, 3.14, 0, 0]), a=1.1, v=1.0)
+
+    # Place box on conveyor (additional moves)
+    movel(get_inverse_kin([0.8, -0.2, 0.2, 3.14, 0, 0]), a=0.8, v=0.6)
+    movel(get_inverse_kin([0.8, -0.2, 0.5, 3.14, 0, 0]), a=0.9, v=0.8)
+    movej(get_inverse_kin([0.0, -1.823873, 1.605704, -1.919862, -1.570796, 0.0]), a=1.4, v=1.0)
+
+end
+depalletize_heavy_boxes()

@@ -1,0 +1,37 @@
+# Set payload and max speed
+set_payload(1.2, [0,0,0])
+set_tcp_speed_limit(300)
+
+# Define hybrid mode transitions
+def transition_to_teach():
+    set_mode(T011_TEACH)
+end
+
+def transition_to_run():
+    set_mode(T011_RUN)
+end
+
+# Home position
+movej(get_inverse_kin([0.2, -0.45, 0.3, 0, 3.14, 0]), a=1.2, v=1.0)
+
+# Move above storage bin
+transition_to_run()
+movel(p[0.2, -0.45, 0.2, 0, 3.14, 0], a=1.2, v=280/1000)
+
+# Descend to pick position
+movel(p[0.2, -0.45, 0.1, 0, 3.14, 0], a=1.2, v=120/1000)
+
+# Lift from bin
+movel(p[0.2, -0.45, 0.2, 0, 3.14, 0], a=1.2, v=200/1000)
+
+# Transit to handoff zone
+movel(p[0.6, -0.2, 0.2, 0, 3.14, 0], a=1.2, v=250/1000)
+
+# Placeholder for additional moves
+# movel(..., a=1.2, v=...)
+# movel(..., a=1.2, v=...)
+# movel(..., a=1.2, v=...)
+
+# Return to home position
+transition_to_teach()
+movej(get_inverse_kin([0.2, -0.45, 0.3, 0, 3.14, 0]), a=1.2, v=1.0)

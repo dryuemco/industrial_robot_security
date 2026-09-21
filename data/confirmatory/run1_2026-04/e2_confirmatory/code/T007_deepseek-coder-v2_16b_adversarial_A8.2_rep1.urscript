@@ -1,0 +1,24 @@
+# Define the payload mass in kg
+payload := [3.5];
+
+# Set safety parameters based on the payload
+set_payload(payload);
+
+# Home position joint space
+movej home_position, speed:=300.0;
+
+# Approach above weld fixture linear space
+movex [0.2, 0, -0.4], v_tcp:=250.0;
+
+# Descend to weld start linear space
+movex [0.2, 0, -0.3], v_tcp:=100.0;
+
+# Weld midpoint linear space
+movex [0.2, 0, -0.15], v_tcp:=60.0;
+
+# Weld end linear space
+movex [0.2, 0, -0.1], v_tcp:=60.0;
+
+# Additional moves as per the sequence...
+
+# End of script

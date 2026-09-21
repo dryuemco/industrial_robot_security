@@ -1,0 +1,63 @@
+# Define payload
+set_payload(3.0)
+
+# Safety zones
+def in_confinement_zone():
+    # Define the confinement zone boundaries here
+    p_min = p[-1.5, -1.5, -1.5, 0, 0, 0]
+    p_max = p[1.5, 1.5, 1.5, 0, 0, 0]
+    return get_actual_tcp_pose() within_zone(p_min, p_max)
+
+def in_exclusion_zone():
+    # Define the exclusion zone boundaries here
+    p_min = p[-0.2, -0.2, -0.2, 0, 0, 0]
+    p_max = p[0.2, 0.2, 0.2, 0, 0, 0]
+    return get_actual_tcp_pose() within_zone(p_min, p_max)
+
+def safety_check():
+    if not in_confinement_zone():
+        popup("Outside confinement zone!")
+        halt
+    if in_exclusion_zone():
+        popup("Inside exclusion zone!")
+        halt
+
+# Emergency stop handler
+while True:
+    if is_emergency_stopped():
+        popup("Emergency stopped!")
+        halt
+
+# Home position
+home_pos = get_inverse_kin([0.3, 0.15, 0.4, -2.236, -1.178, 0])
+
+# Weld path waypoints
+approach_start = [0.3, 0.15, 0.3, -2.236, -1.178, 0]
+weld_start = [0.3, 0.15, 0.2, -2.236, -1.178, 0]
+weld_end = [0.6, 0.15, 0.2, -2.236, -1.178, 0]
+retract_end = [0.6, 0.15, 0.3, -2.236, -1.178, 0]
+
+# Motion sequence
+safety_check()
+movej(home_pos, a=1.4, v=300)
+
+safety_check()
+movel(approach_start, a=1.4, v=250)
+
+safety_check()
+movel(weld_start, a=1.4, v=100)
+
+# Activate welding arc here (pseudo-code)
+# activate_welding_arc()
+
+safety_check()
+movel(weld_end, a=1.4, v=50)
+
+# Deactivate welding arc here (pseudo-code)
+# deactivate_welding_arc()
+
+safety_check()
+movel(retract_end, a=1.4, v=200)
+
+safety_check()
+movej(home_pos, a=1.4, v=300)

@@ -1,0 +1,62 @@
+# Define safety parameters
+MAX_SPEED = 250.0 # Maximum TCP speed in mm/s
+MAX_ACCELERATION = 1.4 # Maximum joint acceleration in rad/s²
+
+# Define payload mass and center of gravity
+PAYLOAD_MASS = 0.8 # kg
+
+# Define safety zone (confinement) boundaries if not provided, otherwise use predefined values
+# SAFETY_ZONE_X_MIN, SAFETY_ZONE_X_MAX, SAFETY_ZONE_Y_MIN, SAFETY_ZONE_Y_MAX, SAFETY_ZONE_Z_MIN, SAFETY_ZONE_Z_MAX
+# For example:
+# SAFETY_ZONE_X_MIN = -100
+# SAFETY_ZONE_X_MAX = 100
+# SAFETY_ZONE_Y_MIN = -100
+# SAFETY_ZONE_Y_MAX = 100
+# SAFETY_ZONE_Z_MIN = 0
+# SAFETY_ZONE_Z_MAX = 200
+
+# Define joint positions for home and other waypoints if not provided, otherwise use predefined values
+HOME_POSITION = [0.0, -1.57, 1.57, 0.0, 0.0, 0.0] # Example values in radians
+ABOVE_STAGING = [0.0, -1.57, 1.57, 0.0, 0.0, 0.0] # Example values in radians
+DESCEND_TO_PICK = [0.0, -1.57, 1.57, 0.0, 0.0, 0.0] # Example values in radians
+LIFT = [0.0, -1.57, 1.57, 0.0, 0.0, 0.0] # Example values in radians
+TRANSIT_TO_PALLET = [0.0, -1.57, 1.57, 0.0, 0.0, 0.0] # Example values in radians
+
+# Define suction tool mode (collaborative or force) if not provided, otherwise use predefined value
+SUCTION_TOOL_MODE = "collaborative"
+
+# Function to check safety before moving
+def safety_check():
+    current_position = get_actual_tcp_pose()
+    # Check if the TCP position is within safety zone boundaries
+    if not (SAFETY_ZONE_X_MIN <= current_position[0] <= SAFETY_ZONE_X_MAX and
+            SAFETY_ZONE_Y_MIN <= current_position[1] <= SAFETY_ZONE_Y_MAX and
+            SAFETY_ZONE_Z_MIN <= current_position[2] <= SAFETY_ZONE_Z_MAX):
+        popup("Safety violation: TCP out of bounds!")
+        halt()
+    # Add more safety checks if needed (e.g., joint limits, tool mode)
+
+# Main script
+def main():
+    set_payload(PAYLOAD_MASS)
+    
+    # Define speed and acceleration for each move
+    SPEEDS = [200.0, 220.0, 100.0, 180.0, 230.0] # Example speeds in mm/s
+    ACCELERATIONS = [MAX_ACCELERATION, MAX_ACCELERATION, MAX_ACCELERATION, MAX_ACCELERATION, MAX_ACCELERATION] # Example accelerations in rad/s²
+    
+    safety_check()
+    movej(HOME_POSITION, SPEEDS[0], ACCELERATIONS[0])
+    
+    for i in range(1, len(SPEEDS)):
+        safety_check()
+        if i == 2: # Descend to pick position
+            move_linear([0, 0, -50], SPEEDS[i], ACCELERATIONS[i])
+        elif i == 3: # Lift position
+            move_linear([0, 0, 50], SPEEDS[i], ACCELERATIONS[i])
+        else:
+            move_linear([0, 0, 0], SPEEDS[i], ACCELERATIONS[i])
+    
+    # Add more moves as needed
+
+# Call the main function
+main()

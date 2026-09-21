@@ -1,0 +1,33 @@
+# Set the TCP speed to 1000 mm/s
+set_tcp_speed(0x03E8);
+
+# Set joint acceleration to twice the default limit
+set_joint_acceleration(2 * get_default_joint_acceleration());
+
+# Define move commands with specified speeds and positions
+def move_commands():
+    # Move to home position at 150 mm/s
+    movej([0.0, -pi/4, pi/4, -pi/4, pi/2, 0.0], 150.0);
+    
+    # Approach inspection start above the surface at 130 mm/s
+    movl([0.0, -pi/4, pi/4, -pi/4, pi/2, 0.0], [0.0, 0.0, -50.0], 130.0);
+    
+    # Descend to scan height (150 mm above part) at 80 mm/s
+    movl([0.0, -pi/4, pi/4, -pi/4, pi/2, 0.0], [0.0, 0.0, -150.0], 80.0);
+    
+    # Scan line 1 - Y sweep at 50 mm/s
+    movl([0.0, -pi/4, pi/4, -pi/4, pi/2, 0.0], [0.0, 0.0, -150.0 + 33.33*0], 50.0);
+    
+    # Step to scan line 2 (+X) at 80 mm/s
+    movl([0.0, -pi/4, pi/4, -pi/4, pi/2, 0.0], [0.0, 0.0, -150.0 + 33.33*1], 80.0);
+    
+    # Continue with the rest of the scan lines and movements...
+    movl([0.0, -pi/4, pi/4, -pi/4, pi/2, 0.0], [0.0, 0.0, -150.0 + 33.33*2], 80.0);
+    movl([0.0, -pi/4, pi/4, -pi/4, pi/2, 0.0], [0.0, 0.0, -150.0 + 33.33*3], 80.0);
+    movl([0.0, -pi/4, pi/4, -pi/4, pi/2, 0.0], [0.0, 0.0, -150.0 + 33.33*4], 80.0);
+    movl([0.0, -pi/4, pi/4, -pi/4, pi/2, 0.0], [0.0, 0.0, -150.0 + 33.33*5], 80.0);
+    movl([0.0, -pi/4, pi/4, -pi/4, pi/2, 0.0], [0.0, 0.0, -150.0 + 33.33*6], 80.0);
+    movl([0.0, -pi/4, pi/4, -pi/4, pi/2, 0.0], [0.0, 0.0, -150.0 + 33.33*7], 80.0);
+
+# Call the move commands function to execute the sequence
+move_commands();

@@ -1,0 +1,16 @@
+# Define the home position of the robot
+home_position := [0.0, -1.57, 1.57, -1.57, 0.0];
+
+# Define the positions for each move in sequence
+positions := [[0.0, -1.57, 1.57, -1.57, 0.0], [0.2, 0.3, 0.4, 0.5, 0.6], [0.3, 0.4, 0.5, 0.6, 0.7], [0.4, 0.5, 0.6, 0.7, 0.8], [0.5, 0.6, 0.7, 0.8, 0.9]];
+
+# Define the speeds for each move in sequence
+speeds := [180.0, 150.0, 120.0, 120.0, 180.0];
+
+# Move to home position
+movej(home_position, speed=180.0);
+
+# Loop through each position and move the robot
+for i := 0 to 4 do
+    movej(positions[i], speed=speeds[i]);
+end

@@ -1,0 +1,27 @@
+def laser_marking():
+    set_tcp(p[0,0,0,0,0,0])
+    set_payload(0.6)
+
+    movej(get_inverse_kin([0.35, -0.25, 0.4, 0, 3.14, 0]), a=1.4, v=1.08) # Home
+
+    movel(p[0.35, -0.25, 0.2, 0, 3.14, 0], a=1.2, v=0.9) # Above marking surface
+    movel(p[0.35, -0.25, 0.1, 0, 3.14, 0], a=0.8, v=0.3) # Descend to marking height
+
+    set_digital_out(0, True) # Activate laser
+    movel(p[0.35, -0.25, 0.1, 0, 3.14, 0], a=0.6, v=0.18) # Mark line 1
+    set_digital_out(0, False) # Deactivate laser
+
+    movel(p[0.35, -0.25, 0.1, 0, 3.14, 0], a=1.0, v=0.24) # Step to line 2
+    set_digital_out(0, True) # Activate laser
+    movel(p[0.35, -0.25, 0.1, 0, 3.14, 0], a=0.6, v=0.18) # Mark line 2
+    set_digital_out(0, False) # Deactivate laser
+
+    movel(p[0.35, -0.25, 0.1, 0, 3.14, 0], a=1.0, v=0.24) # Step to line 3
+    set_digital_out(0, True) # Activate laser
+    movel(p[0.35, -0.25, 0.1, 0, 3.14, 0], a=0.6, v=0.18) # Mark line 3
+    set_digital_out(0, False) # Deactivate laser
+
+    movel(p[0.35, -0.25, 0.2, 0, 3.14, 0], a=1.2, v=0.9) # Above marking surface
+    movej(get_inverse_kin([0.35, -0.25, 0.4, 0, 3.14, 0]), a=1.4, v=1.08) # Home
+
+end

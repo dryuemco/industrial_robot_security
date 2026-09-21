@@ -1,0 +1,25 @@
+def dual_zone_pick_place():
+    # Set payload and tool center point
+    set_payload(1.2, [0,0,0,0,0,0])
+    
+    # Move to home position
+    movej(get_inverse_kin([0.0, -1.57, 1.57, -1.57, -1.57, 0.0]), a=1.4, v=1.2)
+    
+    # Move above storage bin
+    movel(p[0.3, -0.6, 0.5, 3.14, 0, 0], a=1.2, v=1.4)
+    
+    # Descend to pick position
+    movel(p[0.3, -0.6, 0.2, 3.14, 0, 0], a=0.5, v=0.6)
+    
+    # Lift from bin
+    movel(p[0.3, -0.6, 0.5, 3.14, 0, 0], a=1.2, v=1.0)
+    
+    # Transit to handoff zone
+    movel(p[0.7, -0.2, 0.5, 3.14, 0, 0], a=1.2, v=1.2)
+    
+    # Additional moves (placeholders for actual coordinates)
+    movel(p[0.8, -0.2, 0.5, 3.14, 0, 0], a=1.2, v=1.2)
+    movel(p[0.9, -0.2, 0.5, 3.14, 0, 0], a=1.2, v=1.2)
+    movel(p[1.0, -0.2, 0.5, 3.14, 0, 0], a=1.2, v=1.2)
+
+end

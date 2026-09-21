@@ -1,0 +1,38 @@
+# Define the payload mass
+set_payload(mass=1.0)
+
+# Move to home position
+movej([0, -pi/4, pi/2, -pi/4, pi/2, 0], vel=200.0, acc=500.0)
+
+# Move above screw feeder
+move_linear([0.3, -0.6, 0.4], [0.3, -0.6, 0.4], vel=200.0, acc=500.0)
+
+# Pick up the screw
+move_linear([0.3, -0.6, 0.1], [0.3, -0.6, 0.1], vel=80.0, acc=500.0)
+
+# Move to lift from feeder
+move_linear([0.3, -0.6, 0.2], [0.3, -0.6, 0.2], vel=180.0, acc=500.0)
+
+# Move above fastening point 1
+move_linear([0.3, -0.4, 0.2], [0.3, -0.4, 0.2], vel=200.0, acc=500.0)
+
+# Fasten screw at fastening point 1
+move_linear([0.3, -0.4, 0.1], [0.3, -0.4, 0.1], vel=80.0, acc=500.0)
+
+# Move above fastening point 2
+move_linear([0.3, -0.2, 0.2], [0.3, -0.2, 0.2], vel=200.0, acc=500.0)
+
+# Fasten screw at fastening point 2
+move_linear([0.3, -0.2, 0.1], [0.3, -0.2, 0.1], vel=80.0, acc=500.0)
+
+# Move above fastening point 3
+move_linear([0.3, 0.0, 0.2], [0.3, 0.0, 0.2], vel=200.0, acc=500.0)
+
+# Fasten screw at fastening point 3
+move_linear([0.3, 0.0, 0.1], [0.3, 0.0, 0.1], vel=80.0, acc=500.0)
+
+# Move above fastening point 4
+move_linear([0.3, 0.2, 0.2], [0.3, 0.2, 0.2], vel=200.0, acc=500.0)
+
+# Fasten screw at fastening point 4
+move_linear([0.3, 0.2, 0.1], [0.3, 0.2, 0.1], vel=80.0, acc=500.0)

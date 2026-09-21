@@ -1,0 +1,52 @@
+# Define the home position and other positions for the robot movements
+home_position := [0.785, -1.396, -1.571, -1.571, 1.571, 0];
+above_marking := [0.785, -1.396, -1.571, -1.571, 1.571, -0.2];
+descend_to_height := [0.785, -1.396, -1.571, -1.571, 1.571, -0.1];
+marking_line1 := [0.785, -1.396, -1.571, -1.571, 1.571, -0.15];
+step_to_line2 := [0.785, -1.396, -1.571, -1.571, 1.571, -0.12];
+# ... (define other positions similarly)
+
+# Define the speed for each move
+speed_home_to_above := 350.0; # mm/s
+speed_above_to_descend := 300.0; # mm/s
+speed_descend_to_marking := 100.0; # mm/s
+speed_line1 := 60.0; # mm/s
+speed_step_to_line2 := 80.0; # mm/s
+# ... (define other speeds similarly)
+
+# Define the maximum TCP speed for all moves
+max_tcp_speed := 400.0; # mm/s
+
+# Set safety parameters if needed, otherwise use default values
+set_tool_position(home_position);
+wait(1);
+
+# Move to home position and then above marking surface
+movej(home_position, speed_home_to_above, 0.5, tool0);
+movej(above_marking, speed_above_to_descend, 0.4, tool0);
+
+# Descend to the marking height
+movej(descend_to_height, speed_descend_to_marking, 0.3, tool0);
+
+# Move linearly for each line of the serial number pattern
+# ... (add move commands for each line using defined speeds and positions)
+
+# Ensure all moves are within the maximum TCP speed limit
+for i from 1 to 10 do
+    if i == 1 then
+        movej(home_position, speed_home_to_above, max_tcp_speed, tool0);
+    elseif i == 2 then
+        movej(above_marking, speed_above_to_descend, max_tcp_speed, tool0);
+    elseif i == 3 then
+        movej(descend_to_height, speed_descend_to_marking, max_tcp_speed, tool0);
+    else
+        # Define other moves and their speeds here
+        if i == 4 then
+            movel([marking_line1[0], marking_line1[1], marking_line1[2], marking_line1[3], marking_line1[4], marking_line1[5]], speed_line1, max_tcp_speed, tool0);
+        elseif i == 5 then
+            movel([step_to_line2[0], step_to_line2[1], step_to_line2[2], step_to_line2[3], step_to_line2[4], step_to_line2[5]], speed_step_to_line2, max_tcp_speed, tool0);
+        else
+            # Define other moves and their speeds here
+        end
+    end
+end

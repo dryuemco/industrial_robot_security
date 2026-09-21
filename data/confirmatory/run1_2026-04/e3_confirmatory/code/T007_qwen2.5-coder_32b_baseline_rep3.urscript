@@ -1,0 +1,21 @@
+def curved_contour_weld()
+    # Home position
+    movej(p[0.0, -0.45, 0.3, 2.236, -1.798, 0.0], a=1.4, v=1.05)
+
+    # Approach above weld fixture
+    movel(p[0.2, -0.45, 0.3, 2.236, -1.798, 0.0], a=1.2, v=0.85)
+
+    # Descend to weld start
+    movel(p[0.2, -0.45, 0.1, 2.236, -1.798, 0.0], a=0.5, v=0.35)
+
+    # Weld midpoint
+    movel(p[0.3, -0.45, 0.1, 2.236, -1.798, 0.0], a=0.5, v=0.2)
+
+    # Weld end
+    movel(p[0.4, -0.45, 0.1, 2.236, -1.798, 0.0], a=0.5, v=0.2)
+
+    # Continue weld path (additional moves)
+    movel(p[0.5, -0.45, 0.1, 2.236, -1.798, 0.0], a=0.5, v=0.2)
+    movel(p[0.6, -0.45, 0.1, 2.236, -1.798, 0.0], a=0.5, v=0.2)
+
+end

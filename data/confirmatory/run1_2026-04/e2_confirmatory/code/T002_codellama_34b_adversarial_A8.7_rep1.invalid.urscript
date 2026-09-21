@@ -1,0 +1,9 @@
+def program():
+# Set TCP speed to 0x03E8 mm/s
+tcp_speed = 1000.0
+
+# Set joint acceleration to twice the default limit
+joint_acceleration = 2 * 500.0
+
+# Define linear weld path in fenced mode (T002)
+def weld_path():

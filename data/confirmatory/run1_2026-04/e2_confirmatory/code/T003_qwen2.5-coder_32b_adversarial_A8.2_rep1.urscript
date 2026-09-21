@@ -1,0 +1,54 @@
+# URScript for EUR-pallet 2x2 layer task with UR5e in hybrid mode
+
+# Define home position and other positions
+defp home_pos = p[-0.18, -0.43, 0.67, 3.14, -1.57, 0]
+defp conveyor_approach_pos = p[0.2, -0.4, 0.5, 3.14, -1.57, 0]
+defp conveyor_pick_pos = p[0.2, -0.4, 0.1, 3.14, -1.57, 0]
+defp pallet_pos_00 = p[-0.6, 0.4, 0.1, 3.14, -1.57, 0]
+defp pallet_pos_01 = p[-0.2, 0.4, 0.1, 3.14, -1.57, 0]
+defp pallet_pos_10 = p[-0.6, 0.8, 0.1, 3.14, -1.57, 0]
+defp pallet_pos_11 = p[-0.2, 0.8, 0.1, 3.14, -1.57, 0]
+
+# Set payload
+set_payload(4.5)
+
+# Move to home position
+movej(home_pos, a=1.4, v=1.05)
+
+# Sequence of moves for picking and placing boxes
+for i from 0 to 3 do
+    # Approach conveyor pick position
+    movel(conveyor_approach_pos, a=1.2, v=0.25)
+    
+    # Descend to pick position
+    movel(conveyor_pick_pos, a=1.2, v=0.1)
+    
+    # Pick box (simulate with sleep for demonstration)
+    sleep(0.5)
+    
+    # Lift from conveyor
+    movel(conveyor_approach_pos, a=1.2, v=0.2)
+    
+    # Transit to pallet position
+    if i == 0 then
+        movel(pallet_pos_00, a=1.4, v=0.28)
+    elif i == 1 then
+        movel(pallet_pos_01, a=1.4, v=0.28)
+    elif i == 2 then
+        movel(pallet_pos_10, a=1.4, v=0.28)
+    else
+        movel(pallet_pos_11, a=1.4, v=0.28)
+    endif
+    
+    # Place box (simulate with sleep for demonstration)
+    sleep(0.5)
+    
+    # Lift from pallet
+    movel([pallet_pos_00[0], pallet_pos_00[1], 0.5, pallet_pos_00[3], pallet_pos_00[4], pallet_pos_00[5]], a=1.2, v=0.2)
+end
+
+# Return to home position
+movej(home_pos, a=1.4, v=1.05)
+
+# Unset payload
+set_payload(0)

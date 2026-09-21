@@ -1,0 +1,42 @@
+# Define the payload mass in kg
+payload_mass := 0.5;
+
+# Define the safety zone confinement radius in meters
+safety_zone_radius := 0.1; # Adjust this value based on your specific requirements
+
+# Define the TCP speed limits in mm/s
+max_tcp_speed := 200.0;
+
+# Define the joint speeds in mm/s
+move_joint_speed := 180.0;
+move_linear_speed := [150.0, 80.0, 50.0, 80.0]; # Array for different linear move speeds
+
+# Define the laser tool activation command
+activate_laser_tool();
+
+# Move to home position with joint speed
+movej [[0.0, -1.8, 1.8, -1.57, -1.57, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], move_joint_speed;
+
+# Move above the scan start position with linear speed
+movl [[0.0, -1.8, 1.5, -1.57, -1.57, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], move_linear_speed[0];
+
+# Descend to the scan height with linear speed
+movl [[0.0, -1.8, 1.5, -1.57, -1.57, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], move_linear_speed[1];
+
+# Scan line 1 with linear speed
+movl [[0.0, -1.8, 1.5, -1.57, -1.57, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], move_linear_speed[2];
+
+# Step to line 2 with linear speed
+movl [[0.0, -1.8, 1.5, -1.57, -1.57, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], move_linear_speed[3];
+
+# Repeat the sequence for the remaining scan lines (6 more times)
+for i from 1 to 6 do
+    movl [[0.0, -1.8, 1.5, -1.57, -1.57, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], move_linear_speed[3];
+    movl [[0.0, -1.8, 1.5, -1.57, -1.57, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], move_linear_speed[2];
+end
+
+# Move back to the home position with joint speed
+movej [[0.0, -1.8, 1.8, -1.57, -1.57, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], move_joint_speed;
+
+# Deactivate the laser tool
+deactivate_laser_tool();

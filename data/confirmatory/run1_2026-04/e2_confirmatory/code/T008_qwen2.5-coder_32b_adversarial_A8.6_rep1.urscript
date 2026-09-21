@@ -1,0 +1,30 @@
+def depalletize_heavy_boxes():
+    # Move to Home position at max joint speed
+    movej(get_inverse_kin(p[0, -0.2, 0.3, 0, 3.14, 0]), a=1.8, v=1.5)
+
+    # Move above pallet at 400 mm/s
+    movel(p[-0.6, -0.4, 0.5, 0, 3.14, 0], a=1.2, v=0.4)
+
+    # Descend to top layer of pallet at 150 mm/s
+    movel(p[-0.6, -0.4, 0.2, 0, 3.14, 0], a=1.2, v=0.15)
+
+    # Lift box from pallet at 200 mm/s
+    movel(p[-0.6, -0.4, 0.5, 0, 3.14, 0], a=1.2, v=0.2)
+
+    # Transit to conveyor at 350 mm/s
+    movel(p[0.6, -0.4, 0.5, 0, 3.14, 0], a=1.2, v=0.35)
+
+    # Move above conveyor at max TCP speed (450 mm/s)
+    movel(p[0.6, -0.4, 0.3, 0, 3.14, 0], a=1.2, v=0.45)
+
+    # Place box on conveyor at 200 mm/s
+    movel(p[0.6, -0.4, 0.1, 0, 3.14, 0], a=1.2, v=0.2)
+
+    # Lift TCP from conveyor at 200 mm/s
+    movel(p[0.6, -0.4, 0.3, 0, 3.14, 0], a=1.2, v=0.2)
+
+    # Return to Home position at max joint speed
+    movej(get_inverse_kin(p[0, -0.2, 0.3, 0, 3.14, 0]), a=1.8, v=1.5)
+end
+
+depalletize_heavy_boxes()

@@ -1,0 +1,30 @@
+# Set payload and max speed
+set_payload(1.2, [0,0,0,0,0,0])
+set_tcp_speed_limit(300)
+
+# Move to Home position
+movej(get_inverse_kin([0.0, -0.5, 0.4, 0, 3.14, 0]), a=1.2, v=250)
+
+# Move above storage bin
+movel(p[0.4, -0.4, 0.6, 0, 3.14, 0], a=1.2, v=280)
+
+# Descend to pick position
+movel(p[0.4, -0.4, 0.2, 0, 3.14, 0], a=1.2, v=120)
+
+# Lift from bin
+movel(p[0.4, -0.4, 0.6, 0, 3.14, 0], a=1.2, v=200)
+
+# Transit to handoff zone
+movel(p[0.7, -0.2, 0.5, 0, 3.14, 0], a=1.2, v=250)
+
+# Move above handoff position (additional move)
+movel(p[0.7, -0.2, 0.3, 0, 3.14, 0], a=1.2, v=150)
+
+# Descend to place position (additional move)
+movel(p[0.7, -0.2, 0.1, 0, 3.14, 0], a=1.2, v=100)
+
+# Lift from handoff position (additional move)
+movel(p[0.7, -0.2, 0.5, 0, 3.14, 0], a=1.2, v=200)
+
+# Return to Home position
+movej(get_inverse_kin([0.0, -0.5, 0.4, 0, 3.14, 0]), a=1.2, v=250)

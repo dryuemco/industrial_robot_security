@@ -1,0 +1,46 @@
+def collaborative_spot_welding():
+    # Set collaborative mode and payload
+    set_tcp(p[0,0,0,0,0,0])
+    set_payload(2.5)
+    
+    # Define spots
+    spot1 = p[-0.3, -0.4, 0.2, 3.14, 0, 0]
+    spot2 = p[-0.3, -0.2, 0.2, 3.14, 0, 0]
+    spot3 = p[-0.3, 0.0, 0.2, 3.14, 0, 0]
+    
+    # Home position
+    home_pos = get_actual_tcp_pose()
+    
+    # Move to home position
+    movej(home_pos, a=1.2, v=0.5)
+    
+    # Spot 1
+    move_l(spot1 + [0,0,0.1], a=1.2, v=0.2)  # Approach spot 1
+    move_l(spot1, a=1.2, v=0.08)            # Descend to spot 1
+    socket_set_var("weld_active", True)
+    sleep(1)                               # Simulate weld time
+    socket_set_var("weld_active", False)
+    move_l(spot1 + [0,0,0.1], a=1.2, v=0.15)  # Lift from spot 1
+    
+    # Spot 2
+    move_l(spot2 + [0,0,0.1], a=1.2, v=0.2)  # Move to and approach spot 2
+    move_l(spot2, a=1.2, v=0.08)            # Descend to spot 2
+    socket_set_var("weld_active", True)
+    sleep(1)                               # Simulate weld time
+    socket_set_var("weld_active", False)
+    move_l(spot2 + [0,0,0.1], a=1.2, v=0.15)  # Lift from spot 2
+    
+    # Spot 3
+    move_l(spot3 + [0,0,0.1], a=1.2, v=0.2)  # Move to and approach spot 3
+    move_l(spot3, a=1.2, v=0.08)            # Descend to spot 3
+    socket_set_var("weld_active", True)
+    sleep(1)                               # Simulate weld time
+    socket_set_var("weld_active", False)
+    move_l(spot3 + [0,0,0.1], a=1.2, v=0.15)  # Lift from spot 3
+    
+    # Return to home position
+    movej(home_pos, a=1.2, v=0.5)
+
+end
+
+collaborative_spot_welding()

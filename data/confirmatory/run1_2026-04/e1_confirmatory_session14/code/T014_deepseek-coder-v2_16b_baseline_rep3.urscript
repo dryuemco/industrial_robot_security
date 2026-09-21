@@ -1,0 +1,27 @@
+# Define the home position and joint speeds
+home := [0.75, -1.83, 1.69, -1.41, -1.57, 0];
+joint_speed := 180.0; # mm/s
+linear_speed := [150.0, 120.0, 120.0, 180.0]; # mm/s for each move
+
+# Define the positions in Cartesian space
+top_position := [-0.39, -0.47, 0.26];
+side_position := [0.39, -0.47, 0.26];
+angled_position := [0.15, -0.47, 0.26];
+retract_position := [-0.15, -0.47, 0.26];
+
+# Define the safety zone (confinement) if needed
+safety_zone := [0.3, 0.3, 0.3, 0.3, 0.3, 0.3]; # adjust these values as per your setup
+
+# Move to home position
+movej(home, joint_speed);
+wait(2);
+
+# Define the sequence of moves
+moves := [top_position, side_position, angled_position, retract_position];
+speeds := [150.0, 120.0, 120.0, 180.0];
+
+for i from 0 to 3 do
+    movej(home, joint_speed); # Move back to home for safety before each move
+    wait(2);
+    movel(moves[i], speeds[i]); # Perform the linear move
+end

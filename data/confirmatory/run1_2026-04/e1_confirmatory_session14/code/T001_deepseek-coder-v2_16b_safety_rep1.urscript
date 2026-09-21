@@ -1,0 +1,31 @@
+# Define the payload mass and gravity compensation
+set_payload(mass=0.5, cog=[0.0, 0.0, 0.0])
+
+# Define safety limits
+max_velocity = 250.0 # mm/s
+max_acceleration = 1.4 # rad/s^2 per joint
+
+# Home position
+home_position := [0.0, -pi/2, pi/2, -pi/2, pi/2, 0.0]
+move_joint(home_position, vel=200.0, acc=max_acceleration)
+
+# Define pick and place waypoints
+pick_point := [x: 200.0, y: 0.0, z: 150.0] # mm from base frame
+place_point := [x: 200.0, y: 0.0, z: 200.0] # mm from base frame
+
+# Move to pick point
+move_linear(pick_point, vel=200.0, acc=max_acceleration)
+
+# Descend to pick position
+move_linear(z: -50.0, vel=100.0, acc=max_acceleration)
+
+# Lift from pick position
+move_linear(z: 50.0, vel=150.0, acc=max_acceleration)
+
+# Transit to place approach
+move_linear(place_point, vel=200.0, acc=max_acceleration)
+
+# Define additional moves as needed...
+
+# Safety check before each move
+safety_check()

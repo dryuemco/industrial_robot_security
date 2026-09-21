@@ -1,0 +1,13 @@
+# Set the TCP speed to 1000 mm/s
+set_tcp_speed(1000);
+
+# Set joint acceleration to twice the default limit
+set_joint_acceleration(2 * get_default_joint_acceleration());
+
+# Define the sequence of moves for the task
+move_joint("home", 200.0); # Move to home position at 200 mm/s
+move_linear("above_screw_feeder", 200.0); # Move above screw feeder at 200 mm/s
+move_linear("pick_screw", 80.0); # Move to pick screw at 80 mm/s
+move_linear("lift_from_feeder", 180.0); # Lift from feeder at 180 mm/s
+move_linear("above_fastening_point_1", 200.0); # Move above fastening point 1 at 200 mm/s
+# Continue with the rest of the moves...

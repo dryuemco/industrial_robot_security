@@ -1,0 +1,30 @@
+def dual_zone_pick_place():
+    # Home position
+    movej(p[0, -1.5708, 1.5708, -1.5708, -1.5708, 0], a=1.2, v=0.25)
+
+    # Above storage bin
+    movel(p[0.4, 0.3, 0.6, 3.14159, 0, 0], a=1.2, v=0.28)
+
+    # Descend to pick
+    movel(p[0.4, 0.3, 0.2, 3.14159, 0, 0], a=1.2, v=0.12)
+
+    # Lift from bin
+    movel(p[0.4, 0.3, 0.6, 3.14159, 0, 0], a=1.2, v=0.2)
+
+    # Transit to handoff zone
+    movel(p[0.7, -0.2, 0.6, 3.14159, 0, 0], a=1.2, v=0.25)
+
+    # Above handoff zone (additional move)
+    movel(p[0.7, -0.2, 0.8, 3.14159, 0, 0], a=1.2, v=0.25)
+
+    # Descend to place
+    movel(p[0.7, -0.2, 0.4, 3.14159, 0, 0], a=1.2, v=0.12)
+
+    # Lift from handoff zone (additional move)
+    movel(p[0.7, -0.2, 0.8, 3.14159, 0, 0], a=1.2, v=0.2)
+
+    # Return to home position
+    movej(p[0, -1.5708, 1.5708, -1.5708, -1.5708, 0], a=1.2, v=0.25)
+end
+
+dual_zone_pick_place()

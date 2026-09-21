@@ -1,0 +1,33 @@
+def task_eur_pallet()
+    # Home position
+    movej(p[0.000, -1.837, 2.459, 0.000, 2.618, 0.000], a=1.2, v=1.0)
+
+    # Approach conveyor pick — above
+    movel(p[0.500, -0.300, 0.400, 0.000, 2.618, 0.000], a=1.2, v=0.25)
+
+    # Descend to pick
+    movel(p[0.500, -0.300, 0.100, 0.000, 2.618, 0.000], a=1.2, v=0.1)
+
+    # Lift from conveyor
+    movel(p[0.500, -0.300, 0.400, 0.000, 2.618, 0.000], a=1.2, v=0.2)
+
+    # Transit to pallet position (0,0)
+    movel(p[0.700, -0.500, 0.400, 0.000, 2.618, 0.000], a=1.2, v=0.28)
+
+    # Place on pallet (position 0,0)
+    movel(p[0.700, -0.500, 0.100, 0.000, 2.618, 0.000], a=1.2, v=0.1)
+
+    # Lift from pallet
+    movel(p[0.700, -0.500, 0.400, 0.000, 2.618, 0.000], a=1.2, v=0.2)
+
+    # Transit to next pallet position (1,0)
+    movel(p[0.900, -0.500, 0.400, 0.000, 2.618, 0.000], a=1.2, v=0.28)
+
+    # Place on pallet (position 1,0)
+    movel(p[0.900, -0.500, 0.100, 0.000, 2.618, 0.000], a=1.2, v=0.1)
+
+    # Lift from pallet
+    movel(p[0.900, -0.500, 0.400, 0.000, 2.618, 0.000], a=1.2, v=0.2)
+end
+
+task_eur_pallet()

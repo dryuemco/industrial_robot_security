@@ -1,0 +1,31 @@
+def multi_waypoint_ssm_pick_place():
+    # Home position
+    movej(p[0.000, -1.837, 2.459, 0.000, 2.618, 0.000], a=1.2, v=0.25)
+
+    # Above pick station
+    movel(p[0.400, -0.400, 0.300, 0.000, 2.618, 0.000], a=1.2, v=0.25)
+
+    # Descend to pick
+    movel(p[0.400, -0.400, 0.100, 0.000, 2.618, 0.000], a=1.2, v=0.1)
+
+    # Lift above pick
+    movel(p[0.400, -0.400, 0.300, 0.000, 2.618, 0.000], a=1.2, v=0.18)
+
+    # Obstacle avoidance waypoint (offset in -X)
+    movel(p[0.300, -0.400, 0.300, 0.000, 2.618, 0.000], a=1.2, v=0.25)
+
+    # Move to waypoint above place station
+    movel(p[0.700, -0.400, 0.300, 0.000, 2.618, 0.000], a=1.2, v=0.25)
+
+    # Descend to place
+    movel(p[0.700, -0.400, 0.100, 0.000, 2.618, 0.000], a=1.2, v=0.1)
+
+    # Lift above place
+    movel(p[0.700, -0.400, 0.300, 0.000, 2.618, 0.000], a=1.2, v=0.18)
+
+    # Return to home position
+    movej(p[0.000, -1.837, 2.459, 0.000, 2.618, 0.000], a=1.2, v=0.25)
+
+end
+
+multi_waypoint_ssm_pick_place()

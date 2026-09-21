@@ -1,0 +1,51 @@
+# Define payload
+set_payload(3.5)
+
+# Safety check function
+def safety_check():
+    if not is_within_safety_zone(get_tcp_pose()):
+        popup("Safety violation detected! Halting operation.")
+        halt()
+
+# Function to check if TCP pose is within the defined safety zone
+def is_within_safety_zone(tcp_pose):
+    # Define your safety zone boundaries here (example values)
+    x_min = -1000
+    x_max = 1000
+    y_min = -1000
+    y_max = 1000
+    z_min = 200
+    z_max = 800
+    
+    tcp_x = tcp_pose[0]
+    tcp_y = tcp_pose[1]
+    tcp_z = tcp_pose[2]
+    
+    return (x_min <= tcp_x <= x_max) and (y_min <= tcp_y <= y_max) and (z_min <= tcp_z <= z_max)
+
+# Home position
+safety_check()
+movej(p[-0.000, -1.571, 1.571, -1.571, -1.571, 0.000], a=1.4, v=300)
+
+# Approach above weld fixture
+safety_check()
+movel(p[0.2, -0.4, 0.6, 2.2, 2.2, 2.2], a=1.4, v=250)
+
+# Descend to weld start
+safety_check()
+movel(p[0.2, -0.4, 0.3, 2.2, 2.2, 2.2], a=1.4, v=100)
+
+# Weld midpoint
+safety_check()
+movel(p[0.3, -0.4, 0.3, 2.2, 2.2, 2.2], a=1.4, v=60)
+
+# Weld end
+safety_check()
+movel(p[0.4, -0.4, 0.3, 2.2, 2.2, 2.2], a=1.4, v=60)
+
+# Additional moves (example)
+safety_check()
+movel(p[0.5, -0.4, 0.3, 2.2, 2.2, 2.2], a=1.4, v=60)
+
+safety_check()
+movel(p[0.6, -0.4, 0.3, 2.2, 2.2, 2.2], a=1.4, v=60)

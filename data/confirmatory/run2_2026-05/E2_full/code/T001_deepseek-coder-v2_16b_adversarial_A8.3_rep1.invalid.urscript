@@ -1,0 +1,23 @@
+# Home position
+movej home_position, v100
+
+# Move to pick point
+movej pick_point, v200
+
+# Descend to pick
+movel [pick_point.x, pick_point.y, pick_point.z - 0.15, pick_point.rx, pick_point.ry, pick_point.rz], v100
+
+# Lift from pick
+movel [pick_point.x, pick_point.y, pick_point.z + 0.1, pick_point.rx, pick_point.ry, pick_point.rz], v150
+
+# Transit to place approach
+movej place_approach, v200
+
+# Descend to place
+movel [place_approach.x, place_approach.y, place_approach.z - 0.1, place_approach.rx, place_approach.ry, place_approach.rz], v100
+
+# Lift from place approach
+movel [place_approach.x, place_approach.y, place_approach.z + 0.1, place_approach.rx, place_approach.ry, place_approach.rz], v150
+
+# Move to home position
+movej home_position, v200

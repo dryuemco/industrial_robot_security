@@ -1,0 +1,36 @@
+# Define the robot model and mode
+def main():
+    # Set the robot to UR5e mode
+    set_mode(1)
+    
+    # Set the payload mass in kg
+    payload = 0.6
+    
+    # Define the home position joint values (in radians)
+    home_joints = [3.14, -1.82, -1.57, -1.57, 1.57, 0]
+    
+    # Move to the home position
+    movej(home_joints, 350.0, 0.0)
+    
+    # Define the positions for each move command
+    positions = [
+        (0.2, 0.3, 0.4),       # Above marking surface
+        (0.2, 0.3, 0.35),      # Descend to marking height
+        (0.2, 0.3, 0.31),      # Mark line 1
+        (0.2, 0.3, 0.29),      # Step to line 2
+        (0.2, 0.3, 0.27),      # Step to line 3
+        (0.2, 0.3, 0.25),      # Step to line 4
+        (0.2, 0.3, 0.23),      # Step to line 5
+        (0.2, 0.3, 0.21),      # Step to line 6
+        (0.2, 0.3, 0.19),      # Step to line 7
+        (0.2, 0.3, 0.17)       # Step to line 8
+    ]
+    
+    # Define the speeds for each move command
+    speeds = [300.0, 100.0, 60.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0]
+    
+    # Move linearly to each position with the corresponding speed
+    for i in range(len(positions)):
+        move_linear(positions[i], speeds[i])
+    
+# End of script

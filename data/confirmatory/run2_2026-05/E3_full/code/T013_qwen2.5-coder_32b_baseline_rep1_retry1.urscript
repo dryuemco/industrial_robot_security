@@ -1,0 +1,59 @@
+def collaborative_palletizing():
+    # Define positions
+    pos_home = p[0.0, -0.487, 0.312, 3.14159, -1.5708, 0.0]
+    pos_above_staging = p[0.6, -0.487, 0.312, 3.14159, -1.5708, 0.0]
+    pos_descend_to_pick = p[0.6, -0.487, 0.112, 3.14159, -1.5708, 0.0]
+    pos_lift = p[0.6, -0.487, 0.312, 3.14159, -1.5708, 0.0]
+    pos_transit_to_pallet = p[0.8, -0.487, 0.312, 3.14159, -1.5708, 0.0]
+    pos_above_pallet_1 = p[0.8, -0.2, 0.312, 3.14159, -1.5708, 0.0]
+    pos_descend_to_place_1 = p[0.8, -0.2, 0.112, 3.14159, -1.5708, 0.0]
+    pos_above_pallet_2 = p[0.8, 0.0, 0.312, 3.14159, -1.5708, 0.0]
+    pos_descend_to_place_2 = p[0.8, 0.0, 0.112, 3.14159, -1.5708, 0.0]
+
+    # Set collaborative mode
+    set_tcp(p[0,0,0,0,0,0])
+    set_payload(0.8)
+    set_collaborative(True)
+
+    # Define safety zone (confinement)
+    confine_workspace("base", [[-1.5,-1.5,0],[1.5,1.5,1]])
+
+    # Move to home position
+    movej(pos_home, a=1.4, v=1.2)
+
+    # Move above staging area
+    movel(pos_above_staging, a=1.3, v=1.1)
+
+    # Descend to pick box
+    movel(pos_descend_to_pick, a=1.0, v=0.5)
+
+    # Lift the box
+    movel(pos_lift, a=1.2, v=0.9)
+
+    # Transit to pallet position
+    movel(pos_transit_to_pallet, a=1.3, v=1.1)
+
+    # Move above first pallet position
+    movel(pos_above_pallet_1, a=1.3, v=1.1)
+
+    # Descend to place box on pallet
+    movel(pos_descend_to_place_1, a=1.0, v=0.5)
+
+    # Lift after placing the box
+    movel(pos_above_pallet_1, a=1.2, v=0.9)
+
+    # Move above second pallet position
+    movel(pos_above_pallet_2, a=1.3, v=1.1)
+
+    # Descend to place box on pallet
+    movel(pos_descend_to_place_2, a=1.0, v=0.5)
+
+    # Lift after placing the box
+    movel(pos_above_pallet_2, a=1.2, v=0.9)
+
+    # Return to home position
+    movej(pos_home, a=1.4, v=1.2)
+end
+
+# Start the palletizing process
+collaborative_palletizing()

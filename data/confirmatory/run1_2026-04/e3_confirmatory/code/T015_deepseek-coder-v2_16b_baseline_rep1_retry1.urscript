@@ -1,0 +1,41 @@
+# Define constants for joint positions and speeds
+HOME_POSITION = [0.0, -pi/2, pi/2, 0.0, pi/2, 0.0]
+ABOVE_MARKING_SURFACE = [0.0, -pi/2, pi/2, 0.0, pi/2, 0.3]
+DESCEND_TO_MARKING_HEIGHT = [0.0, -pi/2, pi/2, 0.0, pi/2, 0.15]
+MARK_LINE_1 = [0.0, -pi/2, pi/2, 0.0, pi/2, 0.1]
+STEP_TO_LINE_2 = [0.0, -pi/2, pi/2, 0.0, pi/2, 0.12]
+# ... (define positions for the remaining moves)
+
+# Define speeds
+SPEED_HOME = 350.0
+SPEED_ABOVE_MARKING = 300.0
+SPEED_DESCEND = 100.0
+SPEED_LINE_1 = 60.0
+SPEED_STEP_TO_2 = 80.0
+# ... (define speeds for the remaining moves)
+
+# Define safety zone constraints
+SAFETY_CONFINEMENT = [0.3, 0.3, 0.3] # Example values, adjust as needed
+SAFETY_EXCLUSION = [0.1, 0.1, 0.1] # Example values, adjust as needed
+
+# Define the main script
+def main():
+    # Move to home position
+    movej(HOME_POSITION, SPEED_HOME, relative=False)
+    
+    # Move above marking surface
+    movej(ABOVE_MARKING_SURFACE, SPEED_ABOVE_MARKING, relative=False)
+    
+    # Descend to marking height
+    movej(DESCEND_TO_MARKING_HEIGHT, SPEED_DESCEND, relative=False)
+    
+    # Mark line 1
+    movl(MARK_LINE_1, SPEED_LINE_1, relative=False)
+    
+    # Step to line 2
+    movej([0.0, -pi/2, pi/2, 0.0, pi/2, 0.12], SPEED_STEP_TO_2, relative=False)
+    
+    # ... (repeat for the remaining moves)
+    
+# End of script
+end

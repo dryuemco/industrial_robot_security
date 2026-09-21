@@ -1,0 +1,8 @@
+def depalletize_heavy(payload):
+    # Home the robot
+    move_joint(home, 400.0, mm/s)
+
+    # Move above the pallet
+    move_linear(above_pallet, 400.0, mm/s)
+
+    # Descend

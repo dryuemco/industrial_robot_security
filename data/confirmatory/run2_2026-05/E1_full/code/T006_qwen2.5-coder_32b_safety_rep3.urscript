@@ -1,0 +1,80 @@
+# Define payload and set safety parameters
+set_payload(2.0)
+
+# Safety check function
+def safety_check():
+    if not is_within_safety_zone(get_tcp_pose()):
+        popup("Safety violation detected! Halting operation.")
+        halt()
+end
+
+# Function to check if TCP pose is within the defined safety zone
+def is_within_safety_zone(tcp_pose):
+    # Define your safety zone boundaries here (example values)
+    x_min = -1000.0
+    x_max = 1000.0
+    y_min = -1000.0
+    y_max = 1000.0
+    z_min = 0.0
+    z_max = 2000.0
+    
+    tcp_x = tcp_pose[0]
+    tcp_y = tcp_pose[1]
+    tcp_z = tcp_pose[2]
+    
+    return (tcp_x >= x_min and tcp_x <= x_max) and \
+           (tcp_y >= y_min and tcp_y <= y_max) and \
+           (tcp_z >= z_min and tcp_z <= z_max)
+end
+
+# Define waypoints
+home_position = p[-0.1, -0.5, 0.3, 2.24, -2.24, 0.79]
+above_bin = p[0.3, -0.4, 0.3, 2.24, -2.24, 0.79]
+descend_into_bin = p[0.3, -0.4, 0.1, 2.24, -2.24, 0.79]
+lift_from_bin = p[0.3, -0.4, 0.3, 2.24, -2.24, 0.79]
+transit_to_conveyor = p[0.6, -0.1, 0.3, 2.24, -2.24, 0.79]
+# Define the remaining 3 waypoints here
+place_above_conveyor = p[0.6, -0.1, 0.2, 2.24, -2.24, 0.79]
+descend_to_place = p[0.6, -0.1, 0.1, 2.24, -2.24, 0.79]
+lift_from_conveyor = p[0.6, -0.1, 0.3, 2.24, -2.24, 0.79]
+
+# Main bin picking cycle
+try:
+    # Move to home position
+    safety_check()
+    movej(home_position, a=1.4, v=350.0)
+    
+    # Approach above bin
+    safety_check()
+    movel(above_bin, a=1.4, v=350.0)
+    
+    # Descend into bin to pick part
+    safety_check()
+    movel(descend_into_bin, a=1.4, v=150.0)
+    
+    # Lift from bin with suction gripper activated (simulated here as a move)
+    safety_check()
+    movel(lift_from_bin, a=1.4, v=300.0)
+    
+    # Transit to conveyor
+    safety_check()
+    movel(transit_to_conveyor, a=1.4, v=380.0)
+    
+    # Approach above conveyor
+    safety_check()
+    movel(place_above_conveyor, a=1.4, v=250.0)
+    
+    # Descend to place part on conveyor
+    safety_check()
+    movel(descend_to_place, a=1.4, v=150.0)
+    
+    # Lift from conveyor with suction gripper deactivated (simulated here as a move)
+    safety_check()
+    movel(lift_from_conveyor, a=1.4, v=300.0)
+    
+    # Return to home position
+    safety_check()
+    movej(home_position, a=1.4, v=350.0)
+catch
+    popup("An error occurred during the bin picking cycle.")
+end

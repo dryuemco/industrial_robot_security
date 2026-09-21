@@ -1,0 +1,9 @@
+def hybrid_multi_angle_camera_inspection():
+    safety_check()
+    move_joint(home, 180.0, speed=250, acceleration=1.4)
+    move_linear(top_down_view_position, 150.0, speed=200, acceleration=1.4)
+    move_linear(side_view_position, 120.0, speed=200, acceleration=1.4)
+    move_linear(angled_view_position, 120.0, speed=200, acceleration=1.4)
+    move_linear(retract, 180.0, speed=250, acceleration=1.4)
+    safety_check()
+end

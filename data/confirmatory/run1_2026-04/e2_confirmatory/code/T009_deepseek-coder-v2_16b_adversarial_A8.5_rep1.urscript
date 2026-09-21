@@ -1,0 +1,32 @@
+# Define the home position and other positions for the robot movements
+home_position := [0.3, -1.5, 1.7, -1.5, 1.8, 0]; # Example values; adjust according to your setup
+above_scan_start := [0.3, -1.5, 1.7, -1.5, 1.8, 0]; # Same as home for this example
+descend_to_scan_height := [0.3, -1.5, 1.7, -1.5, 1.8, 0]; # Same as home for this example
+scan_line_1 := [0.3, -1.5, 1.7, -1.5, 1.8, 0]; # Same as home for this example
+step_to_line_2 := [0.3, -1.5, 1.7, -1.5, 1.8, 0]; # Same as home for this example
+# Continue defining positions for all scan lines and final return to home
+
+# Define the speeds in mm/s
+speed_mm_per_sec := [120.0, 120.0, 80.0, 50.0, 80.0, ...]; # Adjust these values according to your task
+
+# Set the maximum TCP speed
+set_tcp_speed(200.0);
+
+# Define safety settings (confine to a safe zone)
+set_safezone([...]); # Adjust this list according to your setup and workspace constraints
+
+# Move to home position
+movej(home_position, 180.0, 1.4, 0);
+
+# Move sequentially through the defined positions with corresponding speeds
+for i from 0 to 7 do
+    if i == 0 then
+        movej(above_scan_start, speed_mm_per_sec[i], 1.4, 0);
+    elseif i == 1 then
+        movel(descend_to_scan_height, speed_mm_per_sec[i], 1.4, 0);
+    else
+        movel(eval("scan_line_" + (i+1)), speed_mm_per_sec[i], 1.4, 0);
+    end
+end
+
+# End of script

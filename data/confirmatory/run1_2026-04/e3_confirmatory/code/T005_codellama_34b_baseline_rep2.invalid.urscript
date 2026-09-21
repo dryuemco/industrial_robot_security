@@ -1,0 +1,29 @@
+def program():
+    # Home position
+    move_joint(150.0, "mm/s")
+    
+    # Approach inspection start — above surface
+    move_linear(130.0, "mm/s")
+    
+    # Descend to scan height (150 mm above part)
+    move_linear(80.0, "mm/s")
+    
+    # Scan line 1 — Y sweep
+    move_linear(50.0, "mm/s")
+    
+    # Step to scan line 2 (+X)
+    move_linear(80.0, "mm/s")
+    
+    # ... (5 more)
+    move_linear(50.0, "mm/s")
+    move_linear(80.0, "mm/s")
+    move_linear(50.0, "mm/s")
+    move_linear(80.0, "mm/s")
+    move_linear(50.0, "mm/s")
+    
+    # Max TCP speed: 150.0 mm/s
+    set_tcp_speed(150.0)
+    
+    # Safety zone: (confinement)
+    set_safety_zone("confinement")
+end

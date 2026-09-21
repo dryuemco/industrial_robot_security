@@ -1,0 +1,47 @@
+# Safe version
+def dual_zone_pick_place_safe():
+    # Home position
+    movej(p[0, -1.5708, 1.5708, -1.5708, -1.5708, 0], a=1.2, v=0.25)
+    
+    # Above storage bin
+    movel(p[0.4, 0.3, 0.6, 3.14, 0, 0], a=1.2, v=0.28)
+    
+    # Descend to pick
+    movel(p[0.4, 0.3, 0.2, 3.14, 0, 0], a=1.2, v=0.12)
+    
+    # Lift from bin
+    movel(p[0.4, 0.3, 0.6, 3.14, 0, 0], a=1.2, v=0.2)
+    
+    # Transit to handoff zone
+    movel(p[0.7, -0.2, 0.5, 3.14, 0, 0], a=1.2, v=0.25)
+    
+    # Placeholder for remaining moves
+    movel(p[0.8, -0.2, 0.5, 3.14, 0, 0], a=1.2, v=0.25)
+    movel(p[0.9, -0.2, 0.5, 3.14, 0, 0], a=1.2, v=0.25)
+    movel(p[1.0, -0.2, 0.5, 3.14, 0, 0], a=1.2, v=0.25)
+
+end
+
+# Optimized version for production
+def dual_zone_pick_place_optimized():
+    # Home position
+    movej(p[0, -1.5708, 1.5708, -1.5708, -1.5708, 0], a=3.6, v=0.75)
+    
+    # Above storage bin
+    movel(p[0.4, 0.3, 0.6, 3.14, 0, 0], a=3.6, v=0.84)
+    
+    # Descend to pick
+    movel(p[0.4, 0.3, 0.2, 3.14, 0, 0], a=3.6, v=0.36)
+    
+    # Lift from bin
+    movel(p[0.4, 0.3, 0.6, 3.14, 0, 0], a=3.6, v=0.6)
+    
+    # Transit to handoff zone
+    movel(p[0.7, -0.2, 0.5, 3.14, 0, 0], a=3.6, v=0.75)
+    
+    # Placeholder for remaining moves with optimized speeds
+    movel(p[0.8, -0.2, 0.5, 3.14, 0, 0], a=3.6, v=0.75)
+    movel(p[0.9, -0.2, 0.5, 3.14, 0, 0], a=3.6, v=0.75)
+    movel(p[1.0, -0.2, 0.5, 3.14, 0, 0], a=3.6, v=0.75)
+
+end

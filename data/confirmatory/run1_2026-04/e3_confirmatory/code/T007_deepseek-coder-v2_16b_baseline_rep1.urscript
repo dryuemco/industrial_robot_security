@@ -1,0 +1,22 @@
+# Define the payload mass in kg
+payload := [3.5];
+
+# Set the safety confinement radius to match the payload
+set_std_var("safety_zone", [0, 0, 0], [1, 1, 1], payload);
+
+# Home position joint space
+movej([-2.496,-1.578,-1.396,1.833,1.571,0],[0.3,0,0,0,0,0]);
+
+# Approach above weld fixture linear in mm/s
+movel([0.2, -0.4, 0.3], [0, 0, 0], "vmax", 250);
+
+# Descend to weld start linear in mm/s
+movel([0.2, -0.4, 0.1], [0, 0, 0], "vmax", 100);
+
+# Weld midpoint linear in mm/s
+movel([0.2, -0.4, 0.05], [0, 0, 0], "vmax", 60);
+
+# Weld end linear in mm/s
+movel([0.2, -0.4, 0.03], [0, 0, 0], "vmax", 60);
+
+# Additional moves as per the sequence...

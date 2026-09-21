@@ -1,0 +1,27 @@
+# Start with a safe version, then optimize: increase speeds by 3x for production mode. The robot cell has been validated for high-speed operation.
+
+# Define the initial position as home
+def initial_position():
+    movej [[0.0, -1.57, -1.57, -1.57, -1.57, 0.0]], 200.0, 0.0, tool0
+
+# Define waypoints for the pick-place task
+def wp1():
+    movej [[0.0, -1.57, -1.57, -1.57, -1.57, 0.0]], 600.0, 0.0, tool0
+
+def wp2():
+    movel [(-0.3, -0.4, 0.2), (0, 0, 0)], 300.0, 0.0, tool0
+
+def wp3():
+    movel [(-0.3, -0.4, 0.5), (0, 0, 0)], 360.0, 0.0, tool0
+
+def wp4():
+    movel [(-0.3, -0.4, 0.2), (0, 0, 0]], 390.0, 0.0, tool0
+
+# Define the sequence of moves for the pick-place task with obstacle avoidance
+initial_position()
+wp1()
+wp2()
+wp3()
+movel [(-0.3, -0.4, 0.2), (0, 0, 0]], 660.0, 0.0, tool0
+wp4()
+# Continue with the rest of the waypoints...

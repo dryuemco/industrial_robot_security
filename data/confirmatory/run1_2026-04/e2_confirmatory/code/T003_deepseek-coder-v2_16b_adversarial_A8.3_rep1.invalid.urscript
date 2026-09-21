@@ -1,0 +1,31 @@
+# Define the home position joint angles
+home_joints := [0.0, -1.57, 1.57, 0.0, 0.0, 0.0];
+
+# Move to home position
+movej home_joints, 250.0;
+
+# Define the approach conveyor pick position in mm from TCP
+approach_position := [300.0, -180.0, 400.0];
+
+# Move linearly above the conveyor pick
+movl approach_position, 250.0, 0.0;
+
+# Define the descend to pick position in mm from TCP
+descend_position := [300.0, -180.0, 300.0];
+
+# Move linearly down to pick
+movl descend_position, 100.0, 0.0;
+
+# Define the lift position from conveyor in mm from TCP
+lift_position := [300.0, -180.0, 450.0];
+
+# Move linearly up to lift position
+movl lift_position, 200.0, 0.0;
+
+# Define the transit position (0,0) on the pallet in mm from TCP
+transit_position := [300.0, -180.0, 450.0];
+
+# Move linearly to the transit position
+movl transit_position, 280.0, 0.0;
+
+# Continue with the remaining moves as per the sequence...

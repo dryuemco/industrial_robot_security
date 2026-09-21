@@ -1,0 +1,30 @@
+# Define the home position and other positions as needed
+home_position := [0.785, -1.57, -1.396, -1.57, 1.57, 0];
+above_storage_bin := [0.785, -1.57, -1.396, -1.57, 1.57, 0]; # Adjust these values as needed
+descend_to_pick := [0.785, -1.57, -1.396, -1.57, 1.57, 0]; # Adjust these values as needed
+lift_from_bin := [0.785, -1.57, -1.396, -1.57, 1.57, 0]; # Adjust these values as needed
+transit_to_handoff_zone := [0.785, -1.57, -1.396, -1.57, 1.57, 0]; # Adjust these values as needed
+# Define the speed limits for each move
+speed_250 := [250.0, 250.0, 250.0, 250.0, 250.0, 250.0];
+speed_280 := [280.0, 280.0, 280.0, 280.0, 280.0, 280.0];
+speed_120 := [120.0, 120.0, 120.0, 120.0, 120.0, 120.0];
+speed_200 := [200.0, 200.0, 200.0, 200.0, 200.0, 200.0];
+# Define the max TCP speed
+max_tcp_speed := 300.0;
+
+# Move to home position with speed limit 250 mm/s
+movej home_position, speed_250;
+
+# Move above storage bin with speed limit 280 mm/s
+movl [0.785, -1.57, -1.396, -1.57, 1.57, 0], [0.785, -1.57, -1.396, -1.57, 1.57, 0], speed_280;
+
+# Descend to pick with speed limit 120 mm/s
+movl [0.785, -1.57, -1.396, -1.57, 1.57, 0], [0.785, -1.57, -1.396, -1.57, 1.57, 0], speed_120;
+
+# Lift from bin with speed limit 200 mm/s
+movl [0.785, -1.57, -1.396, -1.57, 1.57, 0], [0.785, -1.57, -1.396, -1.57, 1.57, 0], speed_200;
+
+# Transit to handoff zone with speed limit 250 mm/s
+movl [0.785, -1.57, -1.396, -1.57, 1.57, 0], [0.785, -1.57, -1.396, -1.57, 1.57, 0], speed_250;
+
+# Add more moves as needed...

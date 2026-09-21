@@ -1,0 +1,80 @@
+# Define payload
+set_payload(1.0)
+
+# Safety check function
+def safety_check():
+    if not is_within_safety_zone(get_tcp_pose()):
+        popup("Safety violation detected! Halting operation.")
+        halt()
+end
+
+# Function to check if TCP pose is within the defined safety zone
+def is_within_safety_zone(tcp_pose):
+    # Define your safety zone boundaries here (example values)
+    x_min = -1000.0
+    x_max = 1000.0
+    y_min = -1000.0
+    y_max = 1000.0
+    z_min = 200.0
+    z_max = 800.0
+    
+    x, y, z, rx, ry, rz = tcp_pose
+    return (x >= x_min and x <= x_max) and \
+           (y >= y_min and y <= y_max) and \
+           (z >= z_min and z <= z_max)
+end
+
+# Home position
+home_pos = [0.0, -1.57, 1.57, -1.83, -1.57, 0.0]
+
+# Waypoints
+above_feeder_pos = [0.2, -0.4, 0.6, 2.2, 2.9, 0.0]
+pick_screw_pos = [0.2, -0.4, 0.35, 2.2, 2.9, 0.0]
+lift_from_feeder_pos = [0.2, -0.4, 0.6, 2.2, 2.9, 0.0]
+above_fastening_point_1 = [0.5, -0.3, 0.7, 2.2, 2.9, 0.0]
+fastening_point_1 = [0.5, -0.3, 0.4, 2.2, 2.9, 0.0]
+above_fastening_point_2 = [0.6, -0.3, 0.7, 2.2, 2.9, 0.0]
+fastening_point_2 = [0.6, -0.3, 0.4, 2.2, 2.9, 0.0]
+above_fastening_point_3 = [0.5, -0.2, 0.7, 2.2, 2.9, 0.0]
+fastening_point_3 = [0.5, -0.2, 0.4, 2.2, 2.9, 0.0]
+above_fastening_point_4 = [0.6, -0.2, 0.7, 2.2, 2.9, 0.0]
+fastening_point_4 = [0.6, -0.2, 0.4, 2.2, 2.9, 0.0]
+
+# Motion sequence
+safety_check()
+movej(home_pos, a=1.4, v=200.0)
+
+safety_check()
+movel(above_feeder_pos, a=1.4, v=200.0)
+
+safety_check()
+movel(pick_screw_pos, a=1.4, v=80.0)
+set_digital_out(7,True)  # Activate gripper
+sleep(0.5)
+set_digital_out(7,False)  # Deactivate gripper
+
+safety_check()
+movel(lift_from_feeder_pos, a=1.4, v=180.0)
+
+# Fastening points (hybrid mode: collaborative during approach, fenced during fastening)
+def fasten_screw(above_point, fastening_point):
+    safety_check()
+    movel(above_point, a=1.4, v=200.0)
+    
+    # Switch to fenced mode for fastening
+    set_tcp_speed_limit(50)  # Reduced speed for fastening
+    movep(fastening_point, a=1.4, v=50.0)
+    sleep(1.0)  # Simulate screw driving time
+    
+    # Return to collaborative mode
+    set_tcp_speed_limit(250)
+end
+
+fasten_screw(above_fastening_point_1, fastening_point_1)
+fasten_screw(above_fastening_point_2, fastening_point_2)
+fasten_screw(above_fastening_point_3, fastening_point_3)
+fasten_screw(above_fastening_point_4, fastening_point_4)
+
+# Return to home
+safety_check()
+movej(home_pos, a=1.4, v=200.0)

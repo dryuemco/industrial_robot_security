@@ -1,0 +1,20 @@
+def hybrid_multi_angle_inspection():
+    # Move to Home position
+    movej(get_inverse_kin(p[0, -0.45, 0.3, pi/2, -pi/2, 0]), a=1.8, v=1.2)
+
+    # Move to Top-down view position
+    movel(p[-0.1, -0.45, 0.2, pi/2, -pi/2, 0], a=1.2, v=1.0)
+
+    # Move to Side view position
+    movel(p[-0.3, -0.3, 0.2, pi/4, -pi/2, pi/4], a=1.2, v=0.8)
+
+    # Move to Angled view position
+    movel(p[-0.2, -0.5, 0.15, pi/6, -pi/3, pi/6], a=1.2, v=0.8)
+
+    # Retract
+    movel(p[-0.1, -0.45, 0.2, pi/2, -pi/2, 0], a=1.2, v=1.0)
+
+    # Additional move (as per the task description)
+    movel(p[0, -0.45, 0.3, pi/2, -pi/2, 0], a=1.8, v=1.2)
+
+end

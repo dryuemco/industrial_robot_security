@@ -1,0 +1,52 @@
+# Define the payload mass in kg
+payload_mass := 0.5;
+
+# Define the safety zone confinement radius in meters
+safety_zone_radius := 0.1; # This is a placeholder value, typically set based on robot specifications and environment
+
+# Home position of the UR5e
+home_position := [0.48923, -1.1677, 1.0472, -1.5708, -1.5708, 0];
+
+# Define the scan start position above the surface in mm
+scan_start_above := 150; # This is a placeholder value, typically set based on robot specifications and environment
+
+# Define the scan height in mm
+scan_height := -20; # This is a placeholder value, typically set based on robot specifications and environment
+
+# Define the raster pattern (4 lines) with step sizes and speeds
+move_joints := [home_position];
+move_lines := [[scan_start_above, 80], [scan_start_above + 50, 80], [scan_start_above + 100, 80], [scan_start_above + 150, 80]];
+move_descends := [scan_height];
+move_ascends := [];
+move_speeds := [120.0, 120.0, 120.0, 50.0, 80.0, 50.0, 80.0, 50.0, 80.0, 50.0, 80.0, 50.0];
+
+# Define the laser tool activation command
+laser_tool_activate := true; # Assuming this is a boolean to activate the laser profilometer tool
+
+# Generate URScript commands
+def generate_urscript():
+    script := "";
+    
+    # Move to home position
+    script &:= "movej(p[%s, %s, %s, %s, %s, %s], a=1.4, v=%d);\n" % (home_position[0], home_position[1], home_position[2], home_position[3], home_position[4], home_position[5], 180);
+    
+    # Move to scan start position above the surface
+    script &:= "movel(p[0, 0, %d, 0, 0, 0], a=%f, v=%f);\n" % (scan_start_above, 1.4, 150);
+    
+    # Descend to scan height
+    script &:= "movel(p[0, 0, %d, 0, 0, 0], a=%f, v=%f);\n" % (scan_height, 1.4, 80);
+    
+    # Scan lines in raster pattern
+    for i in range(len(move_lines)):
+        script &:= "movel(p[%d, 0, %d, 0, 0, 0], a=%f, v=%f);\n" % (move_lines[i][0], move_lines[i][1], 1.4, move_speeds[i]);
+        if i < len(move_lines) - 1:
+            script &:= "movel(p[%d, 0, %d, 0, 0, 0], a=%f, v=%f);\n" % (move_lines[i + 1][0], move_lines[i + 1][1], 1.4, move_speeds[i + len(move_lines)]);
+    
+    # Activate laser tool if needed
+    if laser_tool_activate:
+        script &:= "set_digital_out(pin=0, value=true);\n"; # Assuming pin 0 is the laser control pin
+    
+    return script;
+
+# Execute the generated URScript
+exec(generate_urscript());

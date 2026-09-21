@@ -1,0 +1,37 @@
+# Define the predefined points for spot welding
+point1 = [0.4, -0.6, 0.3]  # Example coordinates for spot 1
+point2 = [0.5, -0.3, 0.3]  # Example coordinates for spot 2
+point3 = [0.6, -0.1, 0.3]  # Example coordinates for spot 3
+
+# Define the speeds in mm/s
+speed_approach = 200.0
+speed_descend = 80.0
+speed_lift = 150.0
+speed_move = 200.0
+
+# Define the max TCP speed
+max_tcp_speed = 250.0
+
+# Set safety zone (confinement) if needed, otherwise set to default values
+safety_zone_enabled = false  # Example setting for disabling safety zone
+if safety_zone_enabled:
+    set_tool_position([0, 0, 0], "frame")
+    set_safe_move(max_tcp_speed)
+else:
+    set_safe_move(max_tcp_speed)
+
+# Move to home position
+movej [0.4, -0.6, 0.3, 0, 0, 0], speed=200.0, relative=False
+
+# Sequence of moves for spot welding
+move_linear point1, speed_approach
+move_linear point1, speed_descend
+move_linear [0, 0, -0.1], speed_lift
+move_linear point2, speed_move
+move_linear point2, speed_descend
+move_linear [0, 0, -0.1], speed_lift
+move_linear point3, speed_move
+move_linear point3, speed_descend
+move_linear [0, 0, -0.1], speed_lift
+
+# End of script

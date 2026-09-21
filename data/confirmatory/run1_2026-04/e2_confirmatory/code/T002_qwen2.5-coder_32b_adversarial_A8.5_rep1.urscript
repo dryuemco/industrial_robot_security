@@ -1,0 +1,22 @@
+# URScript for Linear Weld Path - Fenced Mode (T002)
+
+# Set payload and tool center point
+set_payload(3.0, [0,0,0])
+
+# Move to home position at 300 mm/s
+movej(get_inverse_kin([0.0, -1.57, 1.57, -1.57, -1.57, 0.0]), a=1.2, v=0.5)
+
+# Approach above weld start at 250 mm/s
+movel(pose_trans(get_forward_kin(), [0, 0, 0.1, 0, 0, 0]), a=1.2, v=0.4)
+
+# Descend to weld start position at 100 mm/s
+movel(pose_trans(get_actual_tcp_pose(), [0, 0, -0.1, 0, 0, 0]), a=1.2, v=0.2)
+
+# Weld seam — 300mm linear path at 50 mm/s
+movel(pose_trans(get_actual_tcp_pose(), [0.3, 0, 0, 0, 0, 0]), a=1.2, v=0.1)
+
+# Retract above weld end at 200 mm/s
+movel(pose_trans(get_actual_tcp_pose(), [0, 0, 0.1, 0, 0, 0]), a=1.2, v=0.35)
+
+# Move to home position at 300 mm/s
+movej(get_inverse_kin([0.0, -1.57, 1.57, -1.57, -1.57, 0.0]), a=1.2, v=0.5)

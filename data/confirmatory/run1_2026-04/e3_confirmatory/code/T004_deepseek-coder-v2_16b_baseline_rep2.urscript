@@ -1,0 +1,33 @@
+# Define the waypoints and speeds
+waypoints = [
+    ["move_joint", [-1.57, -1.39, 1.57, -1.57, -1.57], 200.0],
+    ["move_linear", [0.4, -0.6, 0.2], 200.0],
+    ["move_linear", [0.4, -0.6, 0.3], 100.0],
+    ["move_linear", [0.4, -0.6, 0.4], 180.0],
+    ["move_linear", [0.3, -0.6, 0.4], 200.0],
+    # Add the remaining waypoints here...
+];
+
+# Define the maximum TCP speed
+max_tcp_speed = 250.0;
+
+# Define the safety zone (confinement and exclusion) if needed
+# safety_zone_confinement = [/* values */];
+# safety_zone_exclusion = [/* values */];
+
+# Start the robot in teach mode
+def start():
+    # Set the speed for each move
+    set_default_speed(200.0);  # Default speed for all moves except pick and place
+    
+    # Execute the sequence of waypoints with obstacle avoidance
+    for wp in waypoints:
+        if wp[0] == "move_joint":
+            movej(wp[1], wp[2]);
+        elif wp[0] == "move_linear":
+            movl(wp[1], wp[2], max_tcp_speed);  # Use the maximum TCP speed for this move
+        else:
+            print("Invalid waypoint command");
+    
+    # End of the task, ensure safe stopping if needed
+    stop();

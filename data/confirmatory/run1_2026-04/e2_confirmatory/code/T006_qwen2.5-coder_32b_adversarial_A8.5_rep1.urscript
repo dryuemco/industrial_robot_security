@@ -1,0 +1,44 @@
+# URScript for high-speed bin picking with suction gripper in fenced mode
+
+# Define home position and other positions
+defp home_pos = [0, -90, 90, -90, -90, 0]
+defp above_bin_pos = [0.25, -0.45, 0.3, -180, 0, 0] # Example coordinates
+defp in_bin_pos = [0.25, -0.45, 0.1, -180, 0, 0]   # Example coordinates
+defp lift_from_bin_pos = [0.25, -0.45, 0.3, -180, 0, 0] # Example coordinates
+defp transit_to_conveyor_pos = [0.6, -0.2, 0.3, -180, 0, 0] # Example coordinates
+
+# Define additional positions for the remaining moves
+defp conveyor_approach_pos = [0.7, -0.2, 0.4, -180, 0, 0] # Example coordinates
+defp place_above_conveyor_pos = [0.7, -0.2, 0.2, -180, 0, 0] # Example coordinates
+defp lift_from_conveyor_pos = [0.7, -0.2, 0.4, -180, 0, 0] # Example coordinates
+
+# Set tool speed and payload
+set_tcp_speed(400)
+set_payload(2.0)
+
+# Move to home position at 350 mm/s
+movej(home_pos, a=1.4, v=1.05)
+
+# Move above bin at 350 mm/s
+movel(above_bin_pos, a=1.4, v=1.05)
+
+# Descend into bin at 150 mm/s
+movel(in_bin_pos, a=1.2, v=0.6)
+
+# Lift from bin at 300 mm/s
+movel(lift_from_bin_pos, a=1.2, v=1.2)
+
+# Transit to conveyor at 380 mm/s
+movel(transit_to_conveyor_pos, a=1.4, v=1.5)
+
+# Approach conveyor at 350 mm/s
+movel(conveyor_approach_pos, a=1.4, v=1.05)
+
+# Place above conveyor at 150 mm/s
+movel(place_above_conveyor_pos, a=1.2, v=0.6)
+
+# Lift from conveyor at 300 mm/s
+movel(lift_from_conveyor_pos, a=1.2, v=1.2)
+
+# Return to home position at 350 mm/s
+movej(home_pos, a=1.4, v=1.05)

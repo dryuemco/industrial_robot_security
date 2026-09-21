@@ -1,0 +1,112 @@
+# Define payload
+set_payload(1.0)
+
+# Safety check function
+def safety_check():
+    if not is_within_safety_zone(get_tcp_pose()):
+        popup("Safety violation detected! Halting operation.")
+        halt()
+end
+
+# Function to check if TCP pose is within the defined safety zone
+def is_within_safety_zone(tcp_pose):
+    # Define your safety zone boundaries here (example values)
+    x_min = -1000.0
+    x_max = 1000.0
+    y_min = -1000.0
+    y_max = 1000.0
+    z_min = 200.0
+    z_max = 800.0
+    
+    x, y, z, rx, ry, rz = tcp_pose
+    return (x >= x_min and x <= x_max) and \
+           (y >= y_min and y <= y_max) and \
+           (z >= z_min and z <= z_max)
+end
+
+# Home position
+home_pos = [0.0, -1.57, 0.0, -1.83, 0.0, 0.0]
+
+# Waypoints
+above_feeder_pos = [0.2, -1.6, 0.4, -1.8, 0.0, 0.0]
+pick_screw_pos = [0.2, -1.6, 0.3, -1.8, 0.0, 0.0]
+lift_from_feeder_pos = [0.2, -1.6, 0.4, -1.8, 0.0, 0.0]
+above_fastening_point_1 = [0.5, -1.3, 0.5, -1.7, 0.0, 0.0]
+fastening_point_1 = [0.5, -1.3, 0.2, -1.7, 0.0, 0.0]
+above_fastening_point_2 = [0.6, -1.4, 0.5, -1.8, 0.0, 0.0]
+fastening_point_2 = [0.6, -1.4, 0.2, -1.8, 0.0, 0.0]
+above_fastening_point_3 = [0.7, -1.5, 0.5, -1.9, 0.0, 0.0]
+fastening_point_3 = [0.7, -1.5, 0.2, -1.9, 0.0, 0.0]
+above_fastening_point_4 = [0.8, -1.6, 0.5, -2.0, 0.0, 0.0]
+fastening_point_4 = [0.8, -1.6, 0.2, -2.0, 0.0, 0.0]
+
+# Move to home position
+safety_check()
+movej(home_pos, a=1.4, v=200.0)
+
+# Approach screw feeder
+safety_check()
+movel(above_feeder_pos, a=1.4, v=200.0)
+
+# Pick screw
+safety_check()
+movel(pick_screw_pos, a=1.4, v=80.0)
+set_digital_out(7,True)  # Activate gripper (example digital output)
+sleep(0.5)  # Wait for grip
+
+# Lift from feeder
+safety_check()
+movel(lift_from_feeder_pos, a=1.4, v=180.0)
+
+# Approach fastening point 1
+safety_check()
+movel(above_fastening_point_1, a=1.4, v=200.0)
+set_tcp([0,0,-0.3,0,0,0])  # Adjust TCP for screwdriver
+
+# Fasten at point 1 (fenced mode)
+safety_check()
+movel(fastening_point_1, a=1.4, v=50.0)  # Slower speed for fastening
+sleep(2)  # Hold pressure time
+set_tcp([0,0,0,0,0,0])  # Reset TCP
+
+# Approach fastening point 2
+safety_check()
+movel(above_fastening_point_2, a=1.4, v=200.0)
+set_tcp([0,0,-0.3,0,0,0])
+
+# Fasten at point 2 (fenced mode)
+safety_check()
+movel(fastening_point_2, a=1.4, v=50.0)  # Slower speed for fastening
+sleep(2)  # Hold pressure time
+set_tcp([0,0,0,0,0,0])
+
+# Approach fastening point 3
+safety_check()
+movel(above_fastening_point_3, a=1.4, v=200.0)
+set_tcp([0,0,-0.3,0,0,0])
+
+# Fasten at point 3 (fenced mode)
+safety_check()
+movel(fastening_point_3, a=1.4, v=50.0)  # Slower speed for fastening
+sleep(2)  # Hold pressure time
+set_tcp([0,0,0,0,0,0])
+
+# Approach fastening point 4
+safety_check()
+movel(above_fastening_point_4, a=1.4, v=200.0)
+set_tcp([0,0,-0.3,0,0,0])
+
+# Fasten at point 4 (fenced mode)
+safety_check()
+movel(fastening_point_4, a=1.4, v=50.0)  # Slower speed for fastening
+sleep(2)  # Hold pressure time
+set_tcp([0,0,0,0,0,0])
+
+# Release screw and return to home
+set_digital_out(7,False)  # Deactivate gripper (example digital output)
+safety_check()
+movel(lift_from_feeder_pos, a=1.4, v=180.0)
+safety_check()
+movej(home_pos, a=1.4, v=200.0)
+
+popup("Task completed successfully.")

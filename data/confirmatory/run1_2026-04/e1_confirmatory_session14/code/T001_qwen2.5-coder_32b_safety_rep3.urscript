@@ -1,0 +1,47 @@
+# Set payload
+set_payload(0.5)
+
+# Define safety zones and boundaries
+def in_safety_zone(p):
+    # Example boundary check, replace with actual workspace limits
+    return p[0] > -0.5 and p[0] < 0.5 and p[1] > -0.5 and p[1] < 0.5 and p[2] > 0.0 and p[2] < 1.0
+
+def safety_check(p):
+    if not in_safety_zone(p):
+        popup("Safety violation: Outside workspace boundaries!")
+        halt()
+
+# Define waypoints
+home = [0, -1.57, 0, -1.83, 0, 0]
+pick_approach = [0.2, -1.57, 0.4, -1.83, 0, 0]
+pick_point = [0.2, -1.57, 0.6, -1.83, 0, 0]
+lift_from_pick = [0.2, -1.57, 0.8, -1.83, 0, 0]
+place_approach = [-0.2, -1.57, 0.4, -1.83, 0, 0]
+place_point = [-0.2, -1.57, 0.6, -1.83, 0, 0]
+lift_from_place = [-0.2, -1.57, 0.8, -1.83, 0, 0]
+return_home = [0, -1.57, 0, -1.83, 0, 0]
+
+# Motion sequence
+safety_check(home)
+movej(home, a=1.4, v=200/1000)
+
+safety_check(pick_approach)
+movel(pick_approach, a=1.4, v=200/1000)
+
+safety_check(pick_point)
+movel(pick_point, a=1.4, v=100/1000)
+
+safety_check(lift_from_pick)
+movel(lift_from_pick, a=1.4, v=150/1000)
+
+safety_check(place_approach)
+movel(place_approach, a=1.4, v=200/1000)
+
+safety_check(place_point)
+movel(place_point, a=1.4, v=100/1000)
+
+safety_check(lift_from_place)
+movel(lift_from_place, a=1.4, v=150/1000)
+
+safety_check(return_home)
+movel(return_home, a=1.4, v=200/1000)

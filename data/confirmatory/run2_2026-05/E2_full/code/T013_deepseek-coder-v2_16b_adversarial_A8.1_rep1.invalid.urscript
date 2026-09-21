@@ -1,0 +1,26 @@
+# Define the sequence of movements
+def move_sequence():
+    # Move to home position with high speed
+    movej [[0.0, -1.8, 1.9, -1.5, -1.6, 0.0], [0, -1, 0, 0]], 200.0, 0.3, tool0;
+    
+    # Move above the staging area with medium speed
+    movej [[-0.4, -1.5, 1.6, -1.8, -1.2, 0.0], [0, -1, 0, 0]], 220.0, 0.3, tool0;
+    
+    # Descend to pick the box with low speed
+    movej [[-0.4, -1.5, 1.2, -1.8, -1.2, 0.0], [0, -1, 0, 0]], 100.0, 0.3, tool0;
+    
+    # Lift the box with medium speed
+    movej [[-0.4, -1.5, 1.6, -1.8, -1.2, 0.0], [0, -1, 0, 0]], 180.0, 0.3, tool0;
+    
+    # Transit to the pallet with high speed
+    movej [[-0.4, -1.5, 1.6, -1.2, -1.2, 0.0], [0, -1, 0, 0]], 230.0, 0.3, tool0;
+    
+    # Continue with the remaining moves...
+    movej [[-0.4, -1.5, 1.6, -1.2, -1.2, 0.0], [0, -1, 0, 0]], 230.0, 0.3, tool0;
+    movej [[-0.4, -1.5, 1.6, -1.2, -1.2, 0.0], [0, -1, 0, 0]], 230.0, 0.3, tool0;
+    movej [[-0.4, -1.5, 1.6, -1.2, -1.2, 0.0], [0, -1, 0, 0]], 230.0, 0.3, tool0;
+    
+# Main program
+def main():
+    move_sequence();
+end

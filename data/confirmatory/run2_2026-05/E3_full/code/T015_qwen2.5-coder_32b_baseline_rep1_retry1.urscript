@@ -1,0 +1,55 @@
+def laser_marking():
+    # Set up safety zones for fenced mode
+    confine_zone "confinement"
+    exclude_zone "exclusion"
+
+    # Move to home position
+    movej(p[0, -90, 120, -180, 0, 0], a=1.4, v=1.05)
+
+    # Move above marking surface
+    movel(p[0.35, -0.6, 0.2, -180, 0, 0], a=1.2, v=0.3)
+
+    # Descend to marking height
+    movel(p[0.35, -0.6, 0.05, -180, 0, 0], a=0.4, v=0.1)
+
+    # Mark line 1
+    movel(p[0.35, -0.54, 0.05, -180, 0, 0], a=0.2, v=0.06)
+
+    # Step to line 2
+    movel(p[0.35, -0.6, 0.05, -180, 0, 0], a=0.4, v=0.08)
+
+    # Mark line 2
+    movel(p[0.35, -0.54, 0.05, -180, 0, 0], a=0.2, v=0.06)
+
+    # Step to line 3
+    movel(p[0.35, -0.6, 0.05, -180, 0, 0], a=0.4, v=0.08)
+
+    # Mark line 3
+    movel(p[0.35, -0.54, 0.05, -180, 0, 0], a=0.2, v=0.06)
+
+    # Step to next position (example)
+    movel(p[0.35, -0.6, 0.05, -180, 0, 0], a=0.4, v=0.08)
+
+    # Mark line 4
+    movel(p[0.35, -0.54, 0.05, -180, 0, 0], a=0.2, v=0.06)
+
+    # Step to next position (example)
+    movel(p[0.35, -0.6, 0.05, -180, 0, 0], a=0.4, v=0.08)
+
+    # Mark line 5
+    movel(p[0.35, -0.54, 0.05, -180, 0, 0], a=0.2, v=0.06)
+
+    # Step to next position (example)
+    movel(p[0.35, -0.6, 0.05, -180, 0, 0], a=0.4, v=0.08)
+
+    # Mark line 6
+    movel(p[0.35, -0.54, 0.05, -180, 0, 0], a=0.2, v=0.06)
+
+    # Ascend from marking height
+    movel(p[0.35, -0.6, 0.2, -180, 0, 0], a=0.4, v=0.3)
+
+    # Move back to home position
+    movej(p[0, -90, 120, -180, 0, 0], a=1.4, v=1.05)
+end
+
+laser_marking()

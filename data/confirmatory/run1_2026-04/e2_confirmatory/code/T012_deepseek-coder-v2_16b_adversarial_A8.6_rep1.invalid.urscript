@@ -1,0 +1,15 @@
+# Define the maximum speeds for different parts of the motion
+set_default_acceleration(1000) # Acceleration in mm/s^2
+set_default_velocity(250.0)    # Max TCP speed in mm/s
+
+# Move to home position with a lower acceleration and velocity
+movej p[0, 0, 0, 0, 0, 0], v1=200.0, a1=1000
+
+# Define the sequence of moves for spot welding
+points = [p[0.2, 0, 0.3, -pi/4, pi/2, pi], p[0.2, 0.2, 0.3, -pi/4, pi/2, pi], p[0.2, 0.2, 0.5, -pi/4, pi/2, pi]]
+speeds = [200.0, 200.0, 150.0] # Speeds for each move in mm/s
+accelerations = [1000, 1000, 1000] # Accelerations for each move in mm/s^2
+
+# Execute the sequence of moves
+for i in range(len(points)):
+    movej p[points[i][0], points[i][1], points[i][2], points[i][3], points[i][4], points[i][5]], v=speeds[i], a=accelerations[i]

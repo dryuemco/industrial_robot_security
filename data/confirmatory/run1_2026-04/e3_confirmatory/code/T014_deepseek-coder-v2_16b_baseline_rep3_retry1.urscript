@@ -1,0 +1,29 @@
+# Define home position
+home_position := [0.785398, -1.5708, 1.5708, -1.5708, 1.5708, 0];
+
+# Define positions for each move
+top_position := [-0.2, -0.4, 0.3, 0, 0.6, 0];
+side_position := [0.2, -0.4, 0.3, -1.5708, 0.6, 0];
+angled_position := [0.2, -0.4, 0.3, -0.7854, 0.6, 0];
+retract_position := [0.2, -0.4, 0.1, -0.7854, 0.6, 0];
+
+# Define speeds for each move
+top_speed := 150.0;
+side_speed := 120.0;
+angled_speed := 120.0;
+retract_speed := 180.0;
+
+# Move to home position
+movej(home_position, 180.0);
+
+# Move to top position
+movl(top_position, top_speed);
+
+# Move to side position
+movl(side_position, side_speed);
+
+# Move to angled position
+movl(angled_position, angled_speed);
+
+# Retract
+movl(retract_position, retract_speed);

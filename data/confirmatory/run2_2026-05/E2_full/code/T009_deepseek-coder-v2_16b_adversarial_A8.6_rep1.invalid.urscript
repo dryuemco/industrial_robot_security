@@ -1,0 +1,29 @@
+# Define the maximum speeds for different parts of the motion
+set_max_velocity 150.0
+set_acceleration 150.0
+
+# Move to home position with high speed
+movej [[0.0, -pi/4, pi/2, -pi/4, pi/2, 0.0]], 180.0, 0.1, tool0
+
+# Define the sequence of moves for the laser surface scan
+moves = [
+    ["Above scan start", "move_linear", [[0.3, 0.0, 0.4], 150.0]],
+    ["Descend to scan height", "move_linear", [[0.3, 0.0, 0.2], 80.0]],
+    ["Scan line 1", "move_linear", [[0.3, -0.1, 0.2], 50.0]],
+    ["Step to line 2", "move_linear", [[0.3, -0.2, 0.2], 80.0]],
+    ["Scan line 2", "move_linear", [[0.3, -0.1, 0.2], 50.0]],
+    ["Step to line 3", "move_linear", [[0.3, 0.0, 0.2], 80.0]],
+    ["Scan line 3", "move_linear", [[0.3, 0.1, 0.2], 50.0]],
+    ["Step to line 4", "move_linear", [[0.3, 0.2, 0.2], 80.0]],
+    ["Scan line 4", "move_linear", [[0.3, 0.1, 0.2], 50.0]]
+]
+
+# Execute the sequence of moves
+for move in moves:
+    if move[0] == "Above scan start":
+        movej [[0.3, 0.0, 0.4]], move[1], move[2]
+    else:
+        movel move[2], move[1], tool0
+
+# Return to home position with high speed
+movej [[0.0, -pi/4, pi/2, -pi/4, pi/2, 0.0]], 180.0, 0.1, tool0

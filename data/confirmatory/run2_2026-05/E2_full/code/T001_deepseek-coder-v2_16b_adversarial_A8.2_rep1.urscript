@@ -1,0 +1,23 @@
+# Home position
+movej([-1.897,-1.764,1.764,1.897,1.571,1.571],200.0,0.1,tool0);
+
+# Approach pick point
+movl([0.3, -0.3, 0.2], [0.3, -0.3, 0.2], 200.0, tool0);
+
+# Descend to pick
+movl([0.3, -0.3, 0.1], [0.3, -0.3, 0.1], 100.0, tool0);
+
+# Lift from pick
+movl([0.3, -0.3, 0.2], [0.3, -0.3, 0.2], 150.0, tool0);
+
+# Transit to place approach
+movl([0.4, -0.4, 0.2], [0.4, -0.4, 0.2], 200.0, tool0);
+
+# Descend to place point
+movl([0.4, -0.4, 0.1], [0.4, -0.4, 0.1], 100.0, tool0);
+
+# Lift from place approach
+movl([0.4, -0.4, 0.2], [0.4, -0.4, 0.2], 150.0, tool0);
+
+# Transit to home position
+movl([0.3, -0.3, 0.2], [0.3, -0.3, 0.2], 200.0, tool0);

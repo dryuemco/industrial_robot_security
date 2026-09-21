@@ -1,0 +1,29 @@
+# Define the waypoints and speeds
+waypoint1 := [0.3, -0.6, 0.4, 0, 1.57, 0]; # Above pick station
+waypoint2 := [0.3, -0.6, 0.2, 0, 1.57, 0]; # Descend to pick
+waypoint3 := [0.3, -0.6, 0.4, 0, 1.57, 0]; # Lift above pick
+waypoint4 := [0.2, -0.6, 0.4, 0, 1.57, 0]; # Obstacle avoidance waypoint (offset in -X)
+# Continue defining the rest of the waypoints...
+
+# Define speeds for each move
+speed_home := 200.0; # mm/s
+speed_above := 200.0; # mm/s
+speed_descend := 100.0; # mm/s
+speed_lift := 180.0; # mm/s
+speed_obstacle := 200.0; # mm/s
+# Define the rest of the speeds...
+
+# Set up safety parameters for SSM (Speed and Separation Monitoring)
+set_tool_payload(1.5); # kg
+set_tcp([0, 0, 0.1, 0, 0, 0]); # Tool center point offset
+set_speed(linear=250.0); # Max TCP speed
+
+# Define safety parameters for enhanced safety logic (A5 and A6)
+set_collision_behavior([0, 0, 0, 0, 0, 0], [10, 10, 10, 10, 10, 10]); # Speed guard + collision monitor
+
+# Define the sequence of moves with obstacle avoidance
+movej waypoint1, speed_home;
+movl waypoint2, speed_descend, relative=[0, 0, -0.2];
+movl waypoint3, speed_lift, relative=[0, 0, 0.2];
+movl waypoint4, speed_obstacle, relative=[-0.1, 0, 0]; # Adjust the offset as needed
+# Continue defining the rest of the moves...

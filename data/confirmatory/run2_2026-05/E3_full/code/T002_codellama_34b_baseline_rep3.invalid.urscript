@@ -1,0 +1,8 @@
+def program():
+    # Move to home position
+    move_joint(300.0, 300.0, 300.0, 300.0, 300.0, 300.0)
+    
+    # Approach above weld start
+    move_linear(250.0, 250.0, 250.0, 250.0, 250.0, 250.0)
+    
+    # Descend

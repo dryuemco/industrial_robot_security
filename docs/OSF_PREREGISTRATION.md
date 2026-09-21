@@ -456,7 +456,9 @@ filed"; that was its state when written. It was filed on 2026-05-15, after Amend
 | Run 2, E2 (315 rows, `results/E2_full/`) | 2026-05-15T20:30:57 – 23:16:38 |
 | Run 2, E3 (339 rows, `results/E3_full/`) | 2026-05-15T23:17:30 – 2026-05-16T02:34:56 |
 
-The paper reports run 2. 61 of the 270 run-2 E1 rows (Qwen2.5-Coder-32B, tasks T001–T011)
+The raw data of both runs ship in the public repository under `data/confirmatory/`
+(`run1_2026-04/`, `run2_2026-05/`); the `results/` paths above are where the runs were
+written. The paper reports run 2. 61 of the 270 run-2 E1 rows (Qwen2.5-Coder-32B, tasks T001–T011)
 precede the Amendment 2 filing time; Amendment 2 concerns the adversarial family, and no
 run-2 E2 or E3 row precedes it. The runs are compared in
 `docs/confirmatory_results/` (`scripts/review/compare_confirmatory_runs.py`): every

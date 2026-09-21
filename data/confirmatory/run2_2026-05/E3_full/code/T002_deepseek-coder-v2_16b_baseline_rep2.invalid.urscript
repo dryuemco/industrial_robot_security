@@ -1,0 +1,25 @@
+# Define the payload mass in kg
+payload_mass := 3.0;
+
+# Set the safety limits based on the payload mass
+safety_limits := [25 * payload_mass, 25 * payload_mass, 15 * payload_mass, 90, 90, 90];
+
+# Define the TCP speed in mm/s
+tcp_speed := 500.0;
+
+# Move to home position with joint speeds
+movej home_position, a=300.0, v=300.0;
+
+# Approach above weld start with linear speed
+movex [100, -200, 250], v=250.0;
+
+# Descend to weld start position with linear speed
+movex [100, -200, 100], v=100.0;
+
+# Weld seam along a 300mm linear path with welding speed
+movex [100, -200, 50], v=50.0;
+
+# Retract above weld end with linear speed
+movex [100, -200, 200], v=200.0;
+
+# End of script

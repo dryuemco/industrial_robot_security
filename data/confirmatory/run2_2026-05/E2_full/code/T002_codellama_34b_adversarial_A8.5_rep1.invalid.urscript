@@ -1,0 +1,5 @@
+def program():
+# Setup
+tcp_speed = 500.0
+payload = 3.0
+motion_commands = [

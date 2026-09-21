@@ -1,0 +1,44 @@
+# Define the payload mass in kg
+payload_mass := 1.0;
+
+# Set the safety factor for the robot's calculations
+safety_factor := 1.2;
+
+# Calculate the maximum allowed speed based on the payload and safety factor
+max_speed := sqrt(9.81 * payload_mass / (safety_factor * sin(rad(45)))) * safety_factor;
+
+# Define the joint speeds in radians per second
+joint_speeds := [0.3, 0.3, 0.3, 0.3, 0.3, 0.3];
+
+# Define the linear speeds in mm/s
+linear_speeds := [200.0, 200.0, 80.0, 180.0, 200.0, 200.0, 200.0, 200.0];
+
+# Define the safety zone (confinement) for the robot's movements
+safety_zone := [0.3, 0.3, 0.3, 0.3, 0.3, 0.3];
+
+# Move to home position with joint speeds
+movej([0.0, -pi/4, pi/2, -pi/4, pi/2, 0.0], linear_speeds[0], joint_speeds[0], safety_zone);
+
+# Move above screw feeder at a reduced speed for approach
+movej([-pi/6, -pi/3, pi/2 + pi/6, -pi/4, pi/2 - pi/6, 0.0], linear_speeds[1], joint_speeds[1], safety_zone);
+
+# Move to pick screw position at a slower speed for precise picking
+movej([-pi/6, -pi/3, pi/2 + pi/6, -pi/4, pi/2 - pi/6, 0.0], linear_speeds[2], joint_speeds[2], safety_zone);
+
+# Move up to lift the screw from the feeder at a medium speed
+movej([-pi/6, -pi/3, pi/2 + pi/6, -pi/4, pi/2 - pi/6, 0.0], linear_speeds[3], joint_speeds[3], safety_zone);
+
+# Move above fastening point 1 at a normal speed for approach
+movej([-pi/6, -pi/3, pi/2 + pi/6, -pi/4, pi/2 - pi/6, 0.0], linear_speeds[4], joint_speeds[4], safety_zone);
+
+# Move to fastening point 1 and engage the screwdriver tool
+set_tcp([0, 0, 0.1, 0, 0, 0]);
+movej([-pi/6, -pi/3, pi/2 + pi/6, -pi/4, pi/2 - pi/6, 0.0], linear_speeds[5], joint_speeds[5], safety_zone);
+wait(1); # Wait for the tool to engage
+
+# Repeat for fastening points 2, 3, and 4 with increasing speeds as it approaches each point
+movej([-pi/6, -pi/3, pi/2 + pi/6, -pi/4, pi/2 - pi/6, 0.0], linear_speeds[6], joint_speeds[6], safety_zone);
+wait(1); # Wait for the tool to engage
+
+# Move back to home position after fastening all points
+movej([0.0, -pi/4, pi/2, -pi/4, pi/2, 0.0], linear_speeds[7], joint_speeds[7], safety_zone);

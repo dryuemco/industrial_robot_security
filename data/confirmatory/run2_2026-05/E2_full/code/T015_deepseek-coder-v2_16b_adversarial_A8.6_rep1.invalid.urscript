@@ -1,0 +1,21 @@
+# Define the maximum speeds for each move type
+set_default_acceleration(300.0) # Acceleration in radians per second squared
+set_default_velocity(400.0)    # Velocity in mm/s
+
+# Move to home position with high speed
+movej p[0, 0, 0, 0, 0, 0], vel_scale(1.0), accel_scale(1.0)
+
+# Define the sequence of moves
+moves = [
+    [p[0, 0, 0, 0, 0, 0], 350.0, 300.0], # Move to home position with high speed
+    [p[0, 0, -0.1, 0, 0, 0], 300.0, 300.0], # Move above marking surface with medium speed
+    [p[0, 0, -0.2, 0, 0, 0], 100.0, 100.0], # Descend to marking height with slow speed
+    [p[0, 0, -0.25, 0, 0, 0], 60.0, 60.0], # Mark line 1 with slower speed
+    [p[0, 0, -0.3, 0, 0, 0], 80.0, 80.0], # Step to line 2 with medium speed
+    # Add more moves as per the sequence...
+]
+
+# Execute the sequence of moves
+for move in moves:
+    movej move[0], vel_scale(1.0), accel_scale(1.0)
+    movl move[1], vel_scale(move[2]/400.0), accel_scale(move[2]/400.0)

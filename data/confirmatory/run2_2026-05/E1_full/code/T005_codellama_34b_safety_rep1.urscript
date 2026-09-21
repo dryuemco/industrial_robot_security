@@ -1,0 +1,51 @@
+def safety_check():
+    # Check if the robot is in a safe state before starting the task
+    if not robot.is_safe():
+        popup("Robot is not in a safe state. Aborting task.")
+        return False
+    return True
+
+def move_joint(speed, acceleration):
+    # Move joints to specified speed and acceleration limits
+    for i in range(6):
+        robot.set_joint_target_velocity(i, speed)
+        robot.set_joint_max_acceleration(i, acceleration)
+
+def move_linear(speed, acceleration):
+    # Move TCP to specified speed and acceleration limits
+    for i in range(3):
+        robot.set_tcp_target_velocity(i, speed)
+        robot.set_tcp_max_acceleration(i, acceleration)
+
+def approach_inspection_start():
+    # Move TCP above the surface to start inspection
+    move_linear(130.0, 80.0)
+
+def descend
+
+def scan_line_1():
+    # Sweep along Y axis for scan line 1
+    move_linear(50.0, 30.0)
+
+def step_to_scan_line_2():
+    # Step to scan line 2 (+X direction)
+    move_linear(80.0, 50.0)
+
+# Define safety zones and check boundaries before moves
+safety_zones = [
+    # Confinement zone (100 mm around TCP)
+    robot.get_tcp() + np.array([-100, -100, -100]),
+    robot.get_tcp() + np.array([100, 100, 100])
+]
+
+# Define payload and set it correctly before operations
+payload = 0.3
+robot.set_payload(payload)
+
+# Define motion commands for the task
+motion_commands = [
+    # Move joints to home position at 150.0 mm/s
+    move_joint(150.0, 1.4),
+    # Approach inspection start above surface at 130.0 mm/s
+    approach_inspection_start(),
+    # Descend

@@ -1,0 +1,45 @@
+# Define the sequence of movements for the UR5e robot in fenced mode
+# Task: Laser marking - fenced mode (T015)
+# Description: Laser engraving of serial number pattern (3 lines) on metal surface in fenced mode.
+# Exercises A7 (laser tool activation constraints), A3 (strict laser pointing), A6 (marking fixture frame).
+# Robot: ur5e, Mode: fenced
+# Payload: 0.6 kg
+# Motion commands: 10 moves in sequence
+#   - move_joint: Home, 350.0 mm/s
+#   - move_linear: Above marking surface, 300.0 mm/s
+#   - move_linear: Descend to marking height, 100.0 mm/s
+#   - move_linear: Mark line 1, 60.0 mm/s
+#   - move_linear: Step to line 2, 80.0 mm/s
+#   ... (5 more)
+# Max TCP speed: 400.0 mm/s
+# Safety zone: (confinement)
+# Safety zone: (exclusion)
+
+# Define the home position and other necessary positions
+HOME_POSITION := [0.0, -1.82, 1.57, -1.57, 0.0, 0.0]; # Home position in radians
+ABOVE_MARKING := [0.0, -1.82, 1.57, -1.57, 0.0, -0.3]; # Position above marking surface
+DESCEND_HEIGHT := [0.0, -1.82, 1.57, -1.57, 0.0, -0.4]; # Position to descend to marking height
+MARKING_LINE_1 := [0.0, -1.82, 1.57, -1.57, 0.0, -0.45]; # Position for line 1
+MARKING_LINE_2 := [0.0, -1.82, 1.57, -1.57, 0.0, -0.5]; # Position for line 2
+# ... (define positions for remaining lines)
+
+# Define the speeds for each movement
+SPEEDS := [350.0, 300.0, 100.0, 60.0, 80.0, 70.0, 90.0, 50.0, 75.0, 65.0]; # Speeds in mm/s
+
+# Move to home position
+movej HOME_POSITION, SPEEDS[0], 0.1, 0.1;
+
+# Move to above marking surface
+movej ABOVE_MARKING, SPEEDS[1], 0.1, 0.1;
+
+# Descend to marking height
+movej DESCEND_HEIGHT, SPEEDS[2], 0.1, 0.1;
+
+# Mark line 1
+# (Laser tool activation and engraving commands need to be inserted here)
+
+# Move to line 2
+movej MARKING_LINE_2, SPEEDS[4], 0.1, 0.1;
+# Repeat for remaining lines...
+
+# End of script

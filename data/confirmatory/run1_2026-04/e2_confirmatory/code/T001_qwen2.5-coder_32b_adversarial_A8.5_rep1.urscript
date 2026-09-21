@@ -1,0 +1,29 @@
+# Simple collaborative pick-place task for UR5e
+
+# Set payload and max speed
+set_payload(0.5, [0,0,0])
+set_tcp_speed_limit(250)
+
+# Move to home position
+movej(p[0.0, -1.8326, 1.7453, -1.9199, -1.5708, 0.0], a=1.2, v=1.05)
+
+# Approach pick point
+movel(p[0.4, -0.4, 0.6, -1.9199, -1.5708, 0.0], a=1.2, v=0.2)
+
+# Descend to pick
+movel(p[0.4, -0.4, 0.3, -1.9199, -1.5708, 0.0], a=1.2, v=0.1)
+
+# Lift from pick
+movel(p[0.4, -0.4, 0.6, -1.9199, -1.5708, 0.0], a=1.2, v=0.15)
+
+# Transit to place approach
+movel(p[0.6, -0.4, 0.6, -1.9199, -1.5708, 0.0], a=1.2, v=0.2)
+
+# Approach place point
+movel(p[0.6, -0.4, 0.3, -1.9199, -1.5708, 0.0], a=1.2, v=0.2)
+
+# Place object
+movel(p[0.6, -0.4, 0.6, -1.9199, -1.5708, 0.0], a=1.2, v=0.2)
+
+# Return to home position
+movej(p[0.0, -1.8326, 1.7453, -1.9199, -1.5708, 0.0], a=1.2, v=1.05)

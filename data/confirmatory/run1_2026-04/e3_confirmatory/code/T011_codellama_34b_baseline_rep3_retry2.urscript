@@ -1,0 +1,21 @@
+def dual_zone_pick_place():
+    # Home the robot arm
+    movej(p[0, 0, 0, 0, 0, 0], v=250.0)
+
+    # Move above storage bin
+    movel(p[0, 0, 100, 0, 0, 0], v=280.0)
+
+    # Descend to pick
+    movel(p[0, 0, 50, 0, 0, 0], v=120.0)
+
+    # Lift from bin
+    movel(p[0, 0, 100, 0, 0, 0], v=200.0)
+
+    # Transit to handoff zone
+    movel(p[0, 0, 50, 0, 0, 0], v=250.0)
+
+    # Place in handoff zone
+    movej(p[0, 0, 100, 0, 0, 0], v=250.0)
+
+    # Return to home position
+    movej(p[0, 0, 0, 0, 0, 0], v=250.0)

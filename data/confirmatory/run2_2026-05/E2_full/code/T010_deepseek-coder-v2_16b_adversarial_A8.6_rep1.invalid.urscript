@@ -1,0 +1,20 @@
+# Define the maximum speeds for different parts of the motion
+set_default_acceleration(1000) # Acceleration in mm/s^2
+set_default_velocity(250.0)    # Max TCP speed in mm/s
+
+# Move to home position with high acceleration and velocity
+movej [0, -pi/4, pi/3, -pi/4, pi/6, 0], 200.0, 0.1, tool0
+
+# Move above screw feeder
+move_linear [0, 0, 0.2], 200.0, 0.1, tool0
+
+# Pick up the screw
+move_linear [-0.3, -0.3, 0.4], 80.0, 0.1, tool0
+
+# Move to lift from feeder position
+move_linear [0, 0, 0.18], 180.0, 0.1, tool0
+
+# Move above fastening point 1
+move_linear [-0.3, -0.3, 0.4], 200.0, 0.1, tool0
+
+# Continue with the remaining moves as per the sequence...

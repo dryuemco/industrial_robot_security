@@ -1,0 +1,8 @@
+def program():
+    # Home the robot
+    move_joint(180.0, mm/s)
+
+    # Move above the scan start point
+    move_linear(150.0, mm/s)
+
+    # Descend

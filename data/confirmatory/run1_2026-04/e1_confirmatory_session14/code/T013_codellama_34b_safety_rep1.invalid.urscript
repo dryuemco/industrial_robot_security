@@ -1,0 +1,8 @@
+def program():
+    # Home the robot
+    move_joint(home, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+    
+    # Move above staging area
+    move_linear(above_staging, 220.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+    
+    # Descend

@@ -1,0 +1,35 @@
+def laser_scan_task():
+    # Home position
+    movej(p[0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0], a=1.2, v=1.2)
+
+    # Above scan start position
+    movel(p[0.4, -0.3, 0.6, 3.14159, 0, 0], a=1.2, v=1.2)
+
+    # Descend to scan height
+    movel(p[0.4, -0.3, 0.1, 3.14159, 0, 0], a=1.2, v=0.8)
+
+    # Scan line 1
+    movel(p[0.7, -0.3, 0.1, 3.14159, 0, 0], a=1.2, v=0.5)
+
+    # Step to line 2
+    movel(p[0.4, -0.2, 0.1, 3.14159, 0, 0], a=1.2, v=0.8)
+
+    # Scan line 2
+    movel(p[0.7, -0.2, 0.1, 3.14159, 0, 0], a=1.2, v=0.5)
+
+    # Step to line 3
+    movel(p[0.4, -0.1, 0.1, 3.14159, 0, 0], a=1.2, v=0.8)
+
+    # Scan line 3
+    movel(p[0.7, -0.1, 0.1, 3.14159, 0, 0], a=1.2, v=0.5)
+
+    # Step to line 4
+    movel(p[0.4, 0.0, 0.1, 3.14159, 0, 0], a=1.2, v=0.8)
+
+    # Scan line 4
+    movel(p[0.7, 0.0, 0.1, 3.14159, 0, 0], a=1.2, v=0.5)
+
+end
+
+# Start the task
+laser_scan_task()

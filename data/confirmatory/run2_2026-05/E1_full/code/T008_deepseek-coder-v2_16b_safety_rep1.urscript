@@ -1,0 +1,28 @@
+# Define safety parameters
+set_payload(mass=5.0, cog=[0, 0, 0], frame=FRAME_WORLD)
+set_tcp(frame=[1, 0, 0, 0, 1, 0, 0.2], speed=450.0)
+
+# Define safety zones and boundaries
+safety_zone([-0.6, -0.8, 0.3, 0.7, -1.0, 1.0], radius=0.1)
+
+# Home position
+move_joints([0, -90, 90, 0, 90, 0], speed=400.0, acceleration=1.4)
+wait(2)
+
+# Move to above pallet
+move_linear([0.5, -0.3, 0.6], speed=400.0, acceleration=1.4)
+check_safety()
+
+# Descend to top layer
+move_linear([0.5, -0.3, 0.2], speed=150.0, acceleration=1.4)
+check_safety()
+
+# Lift box
+move_linear([0.5, -0.3, 0.4], speed=200.0, acceleration=1.4)
+check_safety()
+
+# Transit to conveyor
+move_linear([0.5, -0.3, 0.6], speed=350.0, acceleration=1.4)
+check_safety()
+
+# Repeat for remaining moves...

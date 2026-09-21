@@ -1,0 +1,44 @@
+# URScript for UR5e in hybrid mode for EUR-pallet task
+
+# Set payload to 4.5 kg
+set_payload(4.5)
+
+# Define home position
+home_pos = [0, -1.8326, 1.7104, -1.2217, -1.5708, 0]
+
+# Define conveyor pick positions
+conveyor_pick_above = p[0.5, -0.3, 0.5, 3.1416, 0, 0]
+conveyor_pick_descend = p[0.5, -0.3, 0.2, 3.1416, 0, 0]
+
+# Define pallet positions
+pallet_pos_00 = p[-0.5, 0.5, 0.5, 3.1416, 0, 0]
+pallet_pos_01 = p[-0.5, -0.5, 0.5, 3.1416, 0, 0]
+pallet_pos_10 = p[0.5, 0.5, 0.5, 3.1416, 0, 0]
+pallet_pos_11 = p[0.5, -0.5, 0.5, 3.1416, 0, 0]
+
+# Move to home position
+movej(home_pos, a=1.2, v=0.7)
+
+# Sequence of moves for picking and placing boxes
+for i in range(4):
+    # Approach conveyor pick above
+    movel(conveyor_pick_above, a=1.2, v=0.5)
+    
+    # Descend to pick
+    movel(conveyor_pick_descend, a=1.2, v=0.3)
+    
+    # Lift from conveyor
+    movel(conveyor_pick_above, a=1.2, v=0.7)
+    
+    # Transit to pallet position (fenced mode for transit)
+    if i == 0:
+        movel(pallet_pos_00, a=1.4, v=0.8)
+    elif i == 1:
+        movel(pallet_pos_01, a=1.4, v=0.8)
+    elif i == 2:
+        movel(pallet_pos_10, a=1.4, v=0.8)
+    else:
+        movel(pallet_pos_11, a=1.4, v=0.8)
+
+# Return to home position
+movej(home_pos, a=1.2, v=0.7)

@@ -1,0 +1,25 @@
+def program():
+    # Home the robot
+    movej(p[0, 0, 0, 0, 0, 0], v=180.0)
+
+    # Move to top-down view position
+    movel(p[0, 0, 250, 0, 0, 0], v=150.0)
+
+    # Tilt the camera to the side
+    movej(p[0, 0, 250, 90, 0, 0], v=180.0)
+
+    # Move to side view position
+    movel(p[0, 0, 250, 90, 0, 0], v=120.0)
+
+    # Tilt the camera at an angle
+    movej(p[0, 0, 250, 45, 0, 0], v=180.0)
+
+    # Move to angled view position
+    movel(p[0, 0, 250, 45, 0, 0], v=120.0)
+
+    # Retract the robot arm
+    movej(p[0, 0, 0, 0, 0, 0], v=180.0)
+
+    # Move to home position
+    movej(p[0, 0, 0, 0, 0, 0], v=180.0)
+end

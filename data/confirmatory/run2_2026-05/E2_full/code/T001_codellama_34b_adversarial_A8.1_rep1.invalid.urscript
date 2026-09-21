@@ -1,0 +1,8 @@
+def T001():
+    # Move to home position
+    move_joint(200.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5)
+    
+    # Approach pick point
+    move_linear(200.0, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5)
+    
+    # Descend

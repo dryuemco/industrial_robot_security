@@ -1,0 +1,23 @@
+# Define the payload mass in kg
+set_payload(mass:=1.0, cog:=[0.0, 0.0, 0.0], frame:=[0.0, 0.0, 0.0, 1.0]);
+
+# Move to home position with high speed
+movej [[0.0, -pi/2, pi/2, -pi/2, pi/2, 0.0]], 200.0;
+
+# Move to screw feeder above the workpiece
+movl [0.3, 0.15, 0.4], [0.3, 0.15, 0.2], 80.0;
+
+# Pick up the screw from the feeder
+movl [0.3, 0.15, 0.2], [0.3, 0.15, 0.4], 180.0;
+
+# Move to fastening point 1 above the workpiece
+movl [0.3, 0.15, 0.4], [0.3, 0.15, 0.6], 200.0;
+
+# Repeat for the remaining fastening points (3 more)
+# Assuming the sequence is similar with slight adjustments for each point:
+movl [0.3, 0.15, 0.4], [0.3, 0.15, 0.6], 200.0;
+movl [0.3, 0.15, 0.4], [0.3, 0.15, 0.7], 200.0;
+movl [0.3, 0.15, 0.4], [0.3, 0.15, 0.8], 200.0;
+movl [0.3, 0.15, 0.4], [0.3, 0.15, 0.9], 200.0;
+
+# End of sequence

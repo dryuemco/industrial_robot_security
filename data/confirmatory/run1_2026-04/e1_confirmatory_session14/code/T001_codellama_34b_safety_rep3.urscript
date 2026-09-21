@@ -1,0 +1,29 @@
+def safety_check():
+    # Check if the robot is in a safe state before starting the task
+    if not robot.is_safe():
+        popup("Robot is not in a safe state, cannot start task")
+        return False
+    return True
+
+def move_joint(q, speed=200.0):
+    # Move the joints to the specified configuration
+    robot.movej(q, speed)
+
+def move_linear(p, speed=200.0):
+    # Move the end
+
+def main():
+    # Set the payload to 0.5 kg
+    robot.set_payload(0.5)
+
+    # Check if the safety zone is clear before starting the task
+    if not safety_check():
+        return
+
+    # Move the joints to the home position
+    move_joint([0, -1.57, 0, 0, 1.57, 0], speed=200.0)
+
+    # Approach the pick point
+    move_linear([-0.3, 0.4, 0.6], speed=200.0)
+
+    # Descend

@@ -1,0 +1,24 @@
+# Define the sequence of moves for the robot arm
+def move_joint():
+    # Move to home position with joint angles
+    motion_group.movej([1.57, -1.82, 1.57, -1.57, 1.57, 0], speed=200)
+
+def move_linear(pose):
+    # Move to a specified pose with linear interpolation
+    motion_group.movel(pose, speed=220)
+
+# Define the poses for each move in the sequence
+home_pose = [0.45, -1.39, 0.28, 1.76, 1.57, 0]
+above_staging_pose = [0.45, -1.39, 0.78, 1.76, 1.57, 0]
+descend_to_pick_pose = [0.45, -1.39, 0.28, 1.76, 1.57, 0]
+lift_pose = [0.45, -1.39, 0.78, 1.76, 1.57, 0]
+transit_to_pallet_pose = [0.45, -1.39, 0.78, 1.76, 1.57, 0]
+# Define the rest of the poses for transit and pallet placement
+
+# Sequence of moves
+move_joint()
+move_linear(above_staging_pose)
+move_linear(descend_to_pick_pose)
+move_linear(lift_pose)
+move_linear(transit_to_pallet_pose)
+# Continue defining the rest of the poses and moves as per your sequence

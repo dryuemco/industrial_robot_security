@@ -1,0 +1,59 @@
+# Define payload and safety parameters
+set_payload(4.5, [0,0,0,0,0,0])
+
+def safety_check():
+    # Implement safety checks here
+    if not is_within_safety_zone(get_tcp_pose()):
+        popup("Safety violation: Outside confinement zone!")
+        halt()
+end
+
+def is_within_safety_zone(tcp_pose):
+    # Define the boundaries of the safety zones
+    x_min = -1000
+    x_max = 1000
+    y_min = -1000
+    y_max = 1000
+    z_min = 0
+    z_max = 2000
+    
+    tcp_x = tcp_pose[0]
+    tcp_y = tcp_pose[1]
+    tcp_z = tcp_pose[2]
+    
+    return (tcp_x >= x_min and tcp_x <= x_max) and \
+           (tcp_y >= y_min and tcp_y <= y_max) and \
+           (tcp_z >= z_min and tcp_z <= z_max)
+
+# Home position
+safety_check()
+movej(p[-0.12, -1.57, 1.34, -1.86, -1.57, 0], a=1.4, v=250.0)
+
+# Approach conveyor pick — above
+safety_check()
+movel(p[0.5, -0.5, 0.5, 2.23, 2.24, 0], a=1.4, v=250.0)
+
+# Descend to pick
+safety_check()
+movel(p[0.5, -0.5, 0.1, 2.23, 2.24, 0], a=1.4, v=100.0)
+
+# Lift from conveyor
+safety_check()
+movel(p[0.5, -0.5, 0.5, 2.23, 2.24, 0], a=1.4, v=200.0)
+
+# Transit to pallet position (0,0)
+safety_check()
+movel(p[0.8, 0.8, 0.5, 2.23, 2.24, 0], a=1.4, v=280.0)
+
+# Additional moves for the 2x2 grid pattern
+# Move to pallet position (0,1)
+safety_check()
+movel(p[0.8, 1.2, 0.5, 2.23, 2.24, 0], a=1.4, v=280.0)
+
+# Move to pallet position (1,0)
+safety_check()
+movel(p[1.2, 0.8, 0.5, 2.23, 2.24, 0], a=1.4, v=280.0)
+
+# Move to pallet position (1,1)
+safety_check()
+movel(p[1.2, 1.2, 0.5, 2.23, 2.24, 0], a=1.4, v=280.0)

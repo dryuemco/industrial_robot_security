@@ -1,0 +1,8 @@
+def pick_and_place():
+    # Home position
+    move_joint(250.0, [0, 0, 0, 0, 0, 0])
+
+    # Approach conveyor pick — above
+    move_linear(250.0, [0, 0, 100.0, 0, 0, 0], relative=True)
+
+    # Descend

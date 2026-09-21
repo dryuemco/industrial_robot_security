@@ -1,0 +1,45 @@
+def palletize_light_boxes():
+    # Define positions
+    pos_home = p[0.0, -0.618, 0.349, 2.257, -2.356, 0.0]
+    pos_above_staging = p[0.4, -0.5, 0.5, 2.257, -2.356, 0.0]
+    pos_descend_to_pick = p[0.4, -0.5, 0.1, 2.257, -2.356, 0.0]
+    pos_lift = p[0.4, -0.5, 0.5, 2.257, -2.356, 0.0]
+    pos_transit_to_pallet = p[0.8, -0.5, 0.5, 2.257, -2.356, 0.0]
+    pos_above_pallet = p[0.8, -0.5, 0.1, 2.257, -2.356, 0.0]
+    pos_place_box = p[0.8, -0.5, 0.05, 2.257, -2.356, 0.0]
+    pos_return_above_pallet = p[0.8, -0.5, 0.1, 2.257, -2.356, 0.0]
+
+    # Move to home position
+    movej(pos_home, a=1.4, v=1.05)
+
+    # Approach staging area
+    movel(pos_above_staging, a=1.2, v=1.05)
+
+    # Descend to pick box
+    movel(pos_descend_to_pick, a=1.2, v=0.7)
+
+    # Activate suction cup (simulated here with sleep)
+    sleep(0.5)
+
+    # Lift the box
+    movel(pos_lift, a=1.2, v=1.05)
+
+    # Transit to pallet area
+    movel(pos_transit_to_pallet, a=1.2, v=1.05)
+
+    # Approach pallet area
+    movel(pos_above_pallet, a=1.2, v=1.05)
+
+    # Descend to place box
+    movel(pos_place_box, a=1.2, v=0.7)
+
+    # Deactivate suction cup (simulated here with sleep)
+    sleep(0.5)
+
+    # Lift from pallet
+    movel(pos_return_above_pallet, a=1.2, v=1.05)
+
+end
+
+# Start the palletizing process
+palletize_light_boxes()
