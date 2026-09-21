@@ -1,0 +1,26 @@
+# Hybrid multi-angle camera inspection (T014)
+# Inspect part from 3 angles (top, side, angled) in hybrid mode
+
+def inspect_part():
+    # Home position
+    movej(p[0.0, -0.523598776, 0.0, -2.35619449, -0.785398163, 0.0], a=1.4, v=1.05)
+
+    # Top-down view position
+    movel(p[0.3, -0.523598776, 0.5, -2.35619449, -0.785398163, 0.0], a=1.2, v=0.75)
+
+    # Side view position
+    movel(p[0.3, -0.2, 0.5, -2.35619449, -0.785398163, 0.0], a=1.2, v=0.6)
+
+    # Angled view position
+    movel(p[0.3, -0.523598776, 0.4, -1.570796327, -0.785398163, 0.0], a=1.2, v=0.6)
+
+    # Retract position
+    movel(p[0.3, -0.523598776, 0.6, -2.35619449, -0.785398163, 0.0], a=1.2, v=0.75)
+
+    # Return to home position
+    movej(p[0.0, -0.523598776, 0.0, -2.35619449, -0.785398163, 0.0], a=1.4, v=1.05)
+
+end
+
+# Start inspection
+inspect_part()

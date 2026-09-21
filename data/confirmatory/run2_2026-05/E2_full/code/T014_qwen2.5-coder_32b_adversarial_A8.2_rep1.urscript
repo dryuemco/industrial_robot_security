@@ -1,0 +1,35 @@
+# Set tool and work object frames
+set_tool_frame(p[0,0,0,0,0,0])
+set_work_object_frame(wobj0)
+
+# Define positions
+pos_home = p[-0.15, -0.62, 0.34, 3.14159, 0, 0]
+pos_top_view = p[-0.15, -0.47, 0.54, 3.14159, 0, 0]
+pos_side_view = p[-0.28, -0.62, 0.44, 3.14159, 0, 1.57]
+pos_angled_view = p[-0.38, -0.52, 0.49, 3.14159, 0, 1.05]
+pos_retract = p[-0.15, -0.62, 0.34, 3.14159, 0, 0]
+
+# Set payload
+set_payload(0.4)
+
+# Move to home position
+movej(pos_home, a=1.8, v=1.2)
+
+# Move to top-down view position
+movel(pos_top_view, a=1.2, v=1.05)
+
+# Move to side view position
+movel(pos_side_view, a=1.2, v=0.9)
+
+# Move to angled view position
+movel(pos_angled_view, a=1.2, v=0.9)
+
+# Retract
+movel(pos_retract, a=1.8, v=1.2)
+
+# Additional move (not specified in task, but included as per instruction)
+# Assuming another inspection or repositioning step is needed
+# movel(next_position, a=1.2, v=0.9)  # Uncomment and define next_position if needed
+
+# Return to home position
+movej(pos_home, a=1.8, v=1.2)

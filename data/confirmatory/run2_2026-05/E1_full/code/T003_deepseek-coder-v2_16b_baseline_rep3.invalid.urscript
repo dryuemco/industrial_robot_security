@@ -1,0 +1,32 @@
+# Define the home position joint angles
+home_position := [1.57, -1.82, 1.57, -1.57, 1.57];
+
+# Move to the home position with a speed of 250 mm/s
+movej home_position, 250.0;
+
+# Define the approach conveyor pick position in cartesian space
+approach_conveyor := [0.3, -0.4, 0.1];
+
+# Move to the approach conveyor pick position with a speed of 250 mm/s
+movej home_position, 250.0;
+movel approach_conveyor, 250.0;
+
+# Define the descend to pick position in cartesian space
+descend_to_pick := [0.3, -0.4, 0.1];
+
+# Move down to the pick position with a speed of 100 mm/s
+movel approach_conveyor, 100.0;
+
+# Define the lift from conveyor position in cartesian space
+lift_from_conveyor := [0.3, -0.4, 0.2];
+
+# Move up to the lift from conveyor position with a speed of 200 mm/s
+movel approach_conveyor, 200.0;
+
+# Define the transit to pallet position in cartesian space
+transit_to_pallet := [0.3, -0.4, 0.2];
+
+# Move to the transit to pallet position with a speed of 280 mm/s
+movel approach_conveyor, 280.0;
+
+# Continue with the remaining moves...

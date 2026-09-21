@@ -1,0 +1,27 @@
+# Define the sequence of movements for the UR5e robot in fenced mode
+def move_home():
+    movej home(), 350.0, 1.4
+
+def move_above_marking(z):
+    movl [0, 0, z], 300.0, 1.2
+
+def move_descend_to_marking(z):
+    movl [0, 0, z], 100.0, 1.0
+
+def move_line(x, y, speed):
+    movl [x, y, 0], speed, 1.0
+
+# Define the sequence of movements for the laser marking task
+move_home()
+move_above_marking(0.3)  # Assuming z position above marking surface is 0.3 meters
+move_descend_to_marking(0.2)  # Descending to marking height, adjust as needed
+
+# Define the positions for each line (example values, adjust according to actual task requirements)
+line1 = [0.1, 0.1]  # x, y coordinates for line 1
+line2 = [0.2, 0.2]  # x, y coordinates for line 2
+# Continue defining lines as needed...
+
+# Movements for each line (adjust speeds and positions according to task requirements)
+move_line(line1[0], line1[1], 60.0)
+move_line(line2[0], line2[1], 80.0)
+# Continue adding lines as per the sequence...

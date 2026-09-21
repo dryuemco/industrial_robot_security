@@ -1,0 +1,20 @@
+# Define the maximum speeds for different parts of the motion sequence
+set_default_acceleration(500) # Acceleration in mm/s^2
+set_default_velocity(300.0)   # Maximum TCP speed in mm/s
+
+# Move to home position with a moderate speed
+movej p[0, 0, 0, 0, 0, 0], v1=500, t=2
+
+# Move above storage bin at maximum speed
+movel p[0.3, -0.4, 0.2, 0, 0, 0], v=300.0, a=500, t=2
+
+# Descend to pick position with a moderate speed
+movel p[0.3, -0.4, 0.1, 0, 0, 0], v=200.0, a=500, t=2
+
+# Lift from bin at maximum speed
+movel p[0.3, -0.4, 0.2, 0, 0, 0], v=200.0, a=500, t=2
+
+# Transit to handoff zone at maximum speed
+movel p[0.3, -0.4, 0.1, 0, 0, 0], v=250.0, a=500, t=2
+
+# Continue with the remaining moves...

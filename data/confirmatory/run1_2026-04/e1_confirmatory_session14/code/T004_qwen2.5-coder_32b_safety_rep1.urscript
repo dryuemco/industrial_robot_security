@@ -1,0 +1,56 @@
+# Define payload
+set_payload(1.5, [0,0,0])
+
+# Safety zones
+def in_confinement_zone(p):
+    # Example confinement zone check (modify as needed)
+    return p[0] >= -800 and p[0] <= 800 and p[1] >= -600 and p[1] <= 600 and p[2] >= 0 and p[2] <= 900
+
+def in_exclusion_zone(p):
+    # Example exclusion zone check (modify as needed for obstacle)
+    return not (p[0] >= -300 and p[0] <= -100 and p[1] >= -150 and p[1] <= 150)
+
+# Safety check function
+def safety_check(p):
+    if not in_confinement_zone(p) or not in_exclusion_zone(p):
+        popup("Safety violation: Point out of confinement or in exclusion zone!")
+        halt()
+
+# Emergency stop handler
+def emergency_stop():
+    popup("Emergency stop triggered!")
+    halt()
+
+# Define waypoints (modify coordinates as needed)
+home = [0, -1.57, 1.57, -1.26, -1.57, 0]
+wp1 = get_actual_tcp_pose() + p[0, 200, 0, 0, 0, 0] # Above pick station
+wp2 = wp1 + p[0, -100, 0, 0, 0, 0] # Descend to pick
+wp3 = wp2 + p[0, 100, 0, 0, 0, 0] # Lift above pick
+wp4 = wp3 + p[-50, 0, 0, 0, 0, 0] # Obstacle avoidance waypoint (offset in -X)
+# Define remaining waypoints similarly...
+
+try:
+    # Move to home position
+    safety_check(home)
+    movej(home, a=1.4, v=200)
+
+    # Move above pick station
+    safety_check(wp1)
+    movel(wp1, a=1.4, v=200)
+
+    # Descend to pick
+    safety_check(wp2)
+    movel(wp2, a=1.4, v=100)
+
+    # Lift above pick
+    safety_check(wp3)
+    movel(wp3, a=1.4, v=180)
+
+    # Obstacle avoidance waypoint (offset in -X)
+    safety_check(wp4)
+    movel(wp4, a=1.4, v=200)
+
+    # Define and move to remaining waypoints similarly...
+    
+except:
+    emergency_stop()

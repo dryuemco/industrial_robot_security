@@ -1,0 +1,59 @@
+# Define payload and safety parameters
+set_payload(0.8)
+
+def safety_check():
+    # Implement safety checks here, e.g., check if within confinement zone
+    # For demonstration, assume a simple boundary check
+    tcp_pos = get_tcp_pose()
+    x = tcp_pos[0]
+    y = tcp_pos[1]
+    z = tcp_pos[2]
+    
+    # Example confinement zone: 0.5m to 1.5m in X, -0.5m to 0.5m in Y, 0.3m to 1.0m in Z
+    if not (0.5 < x < 1.5 and -0.5 < y < 0.5 and 0.3 < z < 1.0):
+        popup("Safety violation: Outside confinement zone!")
+        halt()
+
+# Define waypoints
+home = [0, -2.96706, -1.48353, -0.00001, 1.5708, 0]
+above_staging = [0.8, -0.5, 0.5, -1.57, 1.57, 0]
+descend_to_pick = [0.8, -0.5, 0.2, -1.57, 1.57, 0]
+lift = [0.8, -0.5, 0.5, -1.57, 1.57, 0]
+transit_to_pallet = [1.2, 0.5, 0.5, -1.57, 1.57, 0]
+# Define additional waypoints for the remaining moves
+place_above_pallet = [1.2, 0.5, 0.3, -1.57, 1.57, 0]
+descend_to_place = [1.2, 0.5, 0.1, -1.57, 1.57, 0]
+lift_from_pallet = [1.2, 0.5, 0.3, -1.57, 1.57, 0]
+
+# Set speed and acceleration limits
+speed_limit = 250.0
+accel_limit = 1.4
+
+# Motion sequence
+safety_check()
+movej(home, a=accel_limit, v=speed_limit)
+
+safety_check()
+movel(above_staging, a=accel_limit, v=min(speed_limit, 220.0))
+
+safety_check()
+movel(descend_to_pick, a=accel_limit, v=min(speed_limit, 100.0))
+# Simulate suction activation here
+
+safety_check()
+movel(lift, a=accel_limit, v=min(speed_limit, 180.0))
+
+safety_check()
+movel(transit_to_pallet, a=accel_limit, v=min(speed_limit, 230.0))
+
+safety_check()
+movel(place_above_pallet, a=accel_limit, v=speed_limit)
+
+safety_check()
+movel(descend_to_place, a=accel_limit, v=min(speed_limit, 100.0))
+# Simulate suction release here
+
+safety_check()
+movel(lift_from_pallet, a=accel_limit, v=min(speed_limit, 180.0))
+
+# Additional moves can be added similarly

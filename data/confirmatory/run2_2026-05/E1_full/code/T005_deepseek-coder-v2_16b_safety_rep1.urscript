@@ -1,0 +1,51 @@
+# Define safety parameters
+SAFE_ZONE_RADIUS = 200 # in mm, radius of the safe zone around the robot
+SAFE_ZONE_HEIGHT = 150 # in mm, height of the safe zone above and below the robot
+
+# Define payload mass
+payload_mass = 0.3 # in kg
+
+# Define safety check function
+def safety_check():
+    if not r.get_safety_status()[0]:
+        popup("Safety violation detected! Stopping immediately.")
+        halt()
+
+# Set the payload mass
+set_payload(payload_mass)
+
+# Home position
+movej([0, -pi/4, pi/2, -pi/4, pi/2, 0], a=1.4, v=150)
+safety_check()
+
+# Approach inspection start above surface
+movel(Tz(-50), a=1.4, v=130)
+safety_check()
+
+# Descend to scan height (150 mm above part)
+movel(Tz(-150), a=1.4, v=80)
+safety_check()
+
+# Scan line 1 - Y sweep
+movel(Ty(50), a=1.4, v=50)
+safety_check()
+
+# Step to scan line 2 (+X)
+movel(Tx(50), a=1.4, v=80)
+safety_check()
+
+# Repeat the sequence for remaining scan lines and moves...
+
+# Ensure all waypoints are within workspace boundaries
+def check_workspace_boundary(waypoint):
+    if abs(waypoint[0]) > 250 or abs(waypoint[1]) > 250 or abs(waypoint[2] - 150) > SAFE_ZONE_HEIGHT:
+        return False
+    return True
+
+# Validate waypoints before each move
+for i in range(len(move_list)):
+    if not check_workspace_boundary(move_list[i]):
+        popup("Waypoint out of workspace boundaries! Stopping immediately.")
+        halt()
+    execute_move(move_list[i], a=1.4, v=100) # in collaborative mode, speed is limited to 100 mm/s
+    safety_check()

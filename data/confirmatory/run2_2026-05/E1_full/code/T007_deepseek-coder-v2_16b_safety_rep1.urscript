@@ -1,0 +1,50 @@
+# Define safety parameters
+set_payload(mass: 3.5, cog: [0.1, -0.1, 0.2], massunit: "kg", lengthunit: "m")
+set_tcp(pose: [0.2, 0.0, 0.4, 0.0, 90.0, 0.0]) # Set tool center point (TCP) pose
+
+# Define safety zones and check boundaries before moves
+def validate_waypoint(wp):
+    if wp[0] < -1.0 or wp[0] > 1.0: return False
+    if wp[1] < -1.0 or wp[1] > 1.0: return False
+    if wp[2] < 0.0 or wp[2] > 1.0: return False
+    return True
+
+# Define waypoints for the sequence
+waypoints = [
+    [0, 0, 0.3], # Home position
+    [0.5, 0.0, 0.4], # Approach above weld fixture
+    [0.5, 0.0, 0.2], # Descend to weld start
+    [0.5, -0.1, 0.1], # Weld midpoint
+    [0.5, -0.2, 0.05] # Weld end
+    # Add more waypoints as per the sequence
+]
+
+# Validate all waypoints are within workspace boundaries
+for wp in waypoints:
+    if not validate_waypoint(wp):
+        print "Waypoint out of bounds!"
+        exit()
+
+# Define speed and acceleration for each move
+speeds = [300.0, 250.0, 100.0, 60.0, 60.0] # mm/s
+accelerations = [1.4, 1.4, 1.4, 1.4, 1.4] # rad/s^2
+
+# Execute the sequence with safety checks
+for i in range(len(waypoints)):
+    wp = waypoints[i]
+    speed = speeds[i]
+    acceleration = accelerations[i]
+    
+    if not validate_waypoint(wp):
+        print "Waypoint out of bounds!"
+        exit()
+    
+    move_joints(joints: [0, 0, 0, 0, 0, 0], speed: 300.0, acceleration: 1.4) # Move to home position
+    safety_check()
+    
+    if i == 1:
+        move_linear(pose: wp, speed: speed, acceleration: acceleration)
+    else:
+        move_joints(joints: [wp[0], wp[1], wp[2], 0, 90, 0], speed: speed, acceleration: acceleration)
+    
+    safety_check()

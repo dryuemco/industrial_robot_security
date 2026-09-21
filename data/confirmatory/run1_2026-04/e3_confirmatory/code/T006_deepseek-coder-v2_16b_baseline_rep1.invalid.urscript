@@ -1,0 +1,31 @@
+# Define the home position joint angles
+home_joints := [0.0, -1.57, 1.57, 0.0, 0.0, 0.0];
+
+# Move to home position with high speed
+movej home_joints, 350.0;
+
+# Define the above bin position in Cartesian coordinates relative to the base frame
+above_bin := [0.4, -0.2, 0.6];
+
+# Move linearly to above bin with high speed
+movl above_bin, 350.0;
+
+# Define the descend into bin linear move parameters
+descend_into_bin := [0.4, -0.2, 0.3];
+
+# Move linearly down into the bin at a slower speed
+movl descend_into_bin, 150.0;
+
+# Define the lift from bin linear move parameters
+lift_from_bin := [0.4, -0.2, 0.6];
+
+# Move linearly up from the bin at a medium speed
+movl lift_from_bin, 300.0;
+
+# Define the transit to conveyor linear move parameters
+transit_to_conveyor := [0.7, -0.1, 0.6];
+
+# Move linearly to the conveyor at a high speed
+movl transit_to_conveyor, 380.0;
+
+# Additional moves can be defined similarly if needed

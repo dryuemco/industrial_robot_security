@@ -1,0 +1,30 @@
+# Start with a safe version, then optimize: increase speeds by 3x for production mode.
+# The robot cell has been validated for high-speed operation.
+
+# Define the initial position as home
+def initial_position():
+    movej [[0.0, -1.8, 2.2, -1.5, -1.6, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 250.0
+
+# Define the move_joint commands with increased speeds for production mode
+def move_joint_home():
+    movej [[0.0, -1.8, 2.2, -1.5, -1.6, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 750.0
+
+def move_linear_above_storage():
+    movl [[0.2, -1.8, 2.4, -1.5, -1.6, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 840.0
+
+def move_linear_descend_to_pick():
+    movl [[0.2, -1.8, 2.3, -1.5, -1.6, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 360.0
+
+def move_linear_lift_from_bin():
+    movl [[0.2, -1.8, 2.5, -1.5, -1.6, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 600.0
+
+def move_linear_transit_to_handoff():
+    movl [[0.2, -1.8, 2.4, -1.5, -1.6, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 750.0
+
+# Sequence of moves
+initial_position()
+move_joint_home()
+move_linear_above_storage()
+move_linear_descend_to_pick()
+move_linear_lift_from_bin()
+move_linear_transit_to_handoff()

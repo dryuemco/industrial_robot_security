@@ -95,14 +95,18 @@ models, temperature or prompt set. The suffix is what distinguishes them:
 
 | Directory | Contents | Used for |
 |-----------|----------|----------|
-| `E1_full`, `E2_full`, `E3_full` | Confirmatory run 2 (2026-05-15/16), the three pinned local models (270 / 315 / 339 rows); SHA-256 in `docs/confirmatory_results/MANIFEST.json` | H4, H5, H6 — the paper's principal results |
-| `e1_confirmatory_session14`, `e2_confirmatory`, `e3_confirmatory` | Confirmatory run 1 (2026-04-15/16), same matrix, same code path; SHA-256 in `docs/confirmatory_results/MANIFEST_run1_april.json` | Not an analysis input. Kept for the run-to-run comparison below |
+| `E1_full`, `E2_full`, `E3_full` | Confirmatory run 2 (2026-05-15/16), the three pinned local models (270 / 315 / 339 rows); shipped under `data/confirmatory/run2_2026-05/`, SHA-256 in `docs/confirmatory_results/MANIFEST.json` | H4, H5, H6 — the paper's principal results |
+| `e1_confirmatory_session14`, `e2_confirmatory`, `e3_confirmatory` | Confirmatory run 1 (2026-04-15/16), same matrix, same code path; shipped under `data/confirmatory/run1_2026-04/`, SHA-256 in `docs/confirmatory_results/MANIFEST_run1_april.json` | Not an analysis input. Kept for the run-to-run comparison below |
 | `E1_frontier`, `E3_frontier`, `*_frontier_probe` | Frontier models, 24B–675B | Additional analyses (not preregistered) |
 | `exploratory/temp_robustness/temp0p2`, `temp0p7` | Temperature sensitivity, 180 rows each | Additional analyses |
 | `ICSE/`, `icse_confirm/`, `*_probe`, `*_mini`, `pilot_*` | Probes and pilot subsets | Excluded from confirmatory analyses per the pre-registration's pilot-data exclusion rule |
 | `E1_mock` | Two-row fixture with synthetic models `mock-a` / `mock-b` | Runner smoke-testing only — never an analysis input |
 | `static_pipeline` | Deterministic watchdog outputs (Section 4) | H1–H3 |
 | `stats` | Statistical analysis products (Section 9) | — |
+
+`results/` itself is gitignored. The raw data of both confirmatory runs ship in the
+repository under `data/confirmatory/` (see its README); copy run 2 into place with
+`mkdir -p results && cp -r data/confirmatory/run2_2026-05/E?_full results/`.
 
 `scripts/mcnemar_analysis.py` therefore reads only `E1_full`, `E2_full` and `E3_full`
 (plus any `e[123]_results.csv` placed directly in `--results-dir`). It deliberately
@@ -119,7 +123,8 @@ inference host carries a modification date of 2026-05-05, and the digest in use 
 run 1 was not recorded. **The paper reports run 2**, and every table and figure script
 defaults to the `E*_full` directories.
 
-`scripts/review/compare_confirmatory_runs.py` compares the runs row by row and writes
+`scripts/review/compare_confirmatory_runs.py` compares the runs row by row (it reads the
+shipped copies under `data/confirmatory/` by default) and writes
 `docs/confirmatory_results/run_comparison_identity.csv`, `run_comparison_headline.csv`
 and `MANIFEST_run1_april.json`:
 
@@ -338,7 +343,8 @@ results/
 ├── E1/, E2/, E3/                (per-call CSV + JSONL + generated URScript; the shipped
 │                                 confirmatory data are E1_full/, E2_full/, E3_full/ (run 2)
 │                                 and e1_confirmatory_session14/, e2_confirmatory/,
-│                                 e3_confirmatory/ (run 1), both OSF-deposited)
+│                                 e3_confirmatory/ (run 1), both shipped under
+│                                 data/confirmatory/)
 ├── stats/
 │   ├── mcnemar_results.csv
 │   ├── hypothesis_report.md

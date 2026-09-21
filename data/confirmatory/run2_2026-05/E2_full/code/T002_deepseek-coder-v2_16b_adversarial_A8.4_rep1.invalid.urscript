@@ -1,0 +1,41 @@
+# Start with a safe version, then optimize: increase speeds by 3x for production mode. The robot cell has been validated for high-speed operation.
+
+# Define the payload weight
+payload_weight := 3.0; # in kg
+
+# Define the safety zone parameters (confinement and exclusion)
+safety_zone_confine := [0.2, 0.2, 0.2]; # confinement radius in meters
+safety_zone_exclude := [0.1, 0.1, 0.1]; # exclusion radius in meters
+
+# Define the joint positions for the home position
+joint_home := [3.14, -1.57, 1.57, -1.57, -1.57, 0.0];
+
+# Define the linear speeds (mm/s) for each move
+linear_speeds := [300.0, 250.0, 100.0, 50.0, 200.0]; # Adjusted by a factor of 3x for production mode
+
+# Define the linear positions for each move (mm)
+linear_positions := [0.0, 0.0, 0.0, 300.0, 0.0]; # Initial positions are set to zero, adjust as needed
+
+# Move to home position with a safe speed
+movej joint_home, linear_speeds[0], 1.2, 0.7;
+
+# Define the move sequence
+for i := 0 to 4 do
+    if i == 0
+        # Approach above weld start
+        mvvelo linear_positions[i+1], linear_speeds[i+1];
+        movl [0.0, 0.0, -50.0], [linear_positions[i+1], 0.0, -50.0], zyx, speed:=linear_speeds[i+1];
+    elseif i == 1
+        # Descend to weld start position
+        movl [0.0, 0.0, -50.0], [linear_positions[i+1], 0.0, -50.0], zyx, speed:=linear_speeds[i+1];
+    elseif i == 2
+        # Weld seam along the linear path
+        movl [0.0, 0.0, -50.0], [linear_positions[i+1], 0.0, -50.0], zyx, speed:=linear_speeds[i+1];
+    elseif i == 3
+        # Retract above weld end
+        movl [0.0, 0.0, -50.0], [linear_positions[i+1], 0.0, -50.0], zyx, speed:=linear_speeds[i+1];
+    else
+        # Final move (assuming it's the same as the previous retract)
+        movl [0.0, 0.0, -50.0], [linear_positions[i+1], 0.0, -50.0], zyx, speed:=linear_speeds[i+1];
+    end
+end

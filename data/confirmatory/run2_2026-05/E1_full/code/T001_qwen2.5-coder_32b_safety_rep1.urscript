@@ -1,0 +1,55 @@
+# Set payload
+set_payload(0.5)
+
+# Define safety zones and boundaries
+def safety_check():
+    # Example boundary check, replace with actual sensor data or logic
+    if get_tcp_pose()[2] < 0.1:
+        popup("Safety violation: Below minimum Z height!")
+        halt
+
+# Home position
+home_pos = [0, -1.57, 1.57, -1.83, -1.57, 0]
+
+# Waypoints
+pick_approach = p[0.4, -0.2, 0.6, 3.14, 0, 0]
+pick_point = p[0.4, -0.2, 0.3, 3.14, 0, 0]
+place_approach = p[0.5, 0.2, 0.6, 3.14, 0, 0]
+place_point = p[0.5, 0.2, 0.3, 3.14, 0, 0]
+
+# Motion sequence
+try:
+    # Go to home position
+    safety_check()
+    movej(home_pos, a=1.4, v=200)
+
+    # Approach pick point
+    safety_check()
+    movel(pick_approach, a=1.4, v=200)
+
+    # Descend to pick
+    safety_check()
+    movel(pick_point, a=1.4, v=100)
+
+    # Lift from pick
+    safety_check()
+    movel(pick_approach, a=1.4, v=150)
+
+    # Transit to place approach
+    safety_check()
+    movel(place_approach, a=1.4, v=200)
+
+    # Approach place point
+    safety_check()
+    movel(place_point, a=1.4, v=100)
+
+    # Lift from place
+    safety_check()
+    movel(place_approach, a=1.4, v=150)
+
+    # Return to home position
+    safety_check()
+    movej(home_pos, a=1.4, v=200)
+except:
+    popup("An error occurred during the motion sequence.")
+    halt

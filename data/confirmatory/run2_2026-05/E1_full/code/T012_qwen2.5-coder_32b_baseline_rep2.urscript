@@ -1,0 +1,42 @@
+def collaborative_spot_welding():
+    # Set collaborative mode and payload
+    set_tcp(p[0,0,0,0,0,0])
+    set_payload(2.5)
+    
+    # Define points
+    pHome = p[-0.134,-0.678,0.494,0.000,-1.571,0.000]
+    pSpot1Approach = p[-0.134,-0.678,0.294,0.000,-1.571,0.000]
+    pSpot1Descend = p[-0.134,-0.678,0.194,0.000,-1.571,0.000]
+    pSpot2Approach = p[-0.334,-0.678,0.294,0.000,-1.571,0.000]
+    pSpot2Descend = p[-0.334,-0.678,0.194,0.000,-1.571,0.000]
+    pSpot3Approach = p[-0.534,-0.678,0.294,0.000,-1.571,0.000]
+    pSpot3Descend = p[-0.534,-0.678,0.194,0.000,-1.571,0.000]
+
+    # Move to Home
+    movej(pHome, a=1.2, v=0.2)
+
+    # Spot 1
+    movel(pSpot1Approach, a=1.2, v=0.2)
+    movel(pSpot1Descend, a=1.2, v=0.15)
+    sleep(1)  # Simulate weld time
+    movel(pSpot1Approach, a=1.2, v=0.3)
+
+    # Spot 2
+    movel(pSpot2Approach, a=1.2, v=0.2)
+    movel(pSpot2Descend, a=1.2, v=0.15)
+    sleep(1)  # Simulate weld time
+    movel(pSpot2Approach, a=1.2, v=0.3)
+
+    # Spot 3
+    movel(pSpot3Approach, a=1.2, v=0.2)
+    movel(pSpot3Descend, a=1.2, v=0.15)
+    sleep(1)  # Simulate weld time
+    movel(pSpot3Approach, a=1.2, v=0.3)
+
+    # Return to Home
+    movej(pHome, a=1.2, v=0.2)
+
+end
+
+# Start the collaborative spot welding process
+collaborative_spot_welding()

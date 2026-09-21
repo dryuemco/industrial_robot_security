@@ -1,0 +1,63 @@
+# URScript for EUR-pallet 2x2 layer task with UR5e in hybrid mode
+
+# Define home position and other positions
+defp pose_home = p[0.0, -0.487, 0.316, 3.1416, -1.5708, 0.0]
+defp pose_conveyor_above = p[-0.2, -0.487, 0.5, 3.1416, -1.5708, 0.0]
+defp pose_conveyor_pick = p[-0.2, -0.487, 0.2, 3.1416, -1.5708, 0.0]
+defp pose_pallet_00 = p[0.5, 0.5, 0.5, 3.1416, -1.5708, 0.0]
+defp pose_pallet_01 = p[0.5, 0.7, 0.5, 3.1416, -1.5708, 0.0]
+defp pose_pallet_10 = p[0.7, 0.5, 0.5, 3.1416, -1.5708, 0.0]
+defp pose_pallet_11 = p[0.7, 0.7, 0.5, 3.1416, -1.5708, 0.0]
+
+# Define speeds
+defv speed_home = 250.0
+defv speed_conveyor_above = 250.0
+defv speed_pick_descend = 100.0
+defv speed_lift = 200.0
+defv speed_transit = 280.0
+
+# Define payload and safety settings
+set_payload(4.5)
+set_tcp(p[0, 0, 0.1, 0, 0, 0]) # Adjust TCP to box center if necessary
+
+# Move to home position
+movej(pose_home, a=1.2, v=speed_home)
+
+# Sequence of moves for picking and placing boxes
+for i from 0 to 3 do
+    # Approach conveyor pick point above
+    movej(pose_conveyor_above, a=1.2, v=speed_conveyor_above)
+    
+    # Descend to pick position
+    movel(pose_conveyor_pick, a=1.2, v=speed_pick_descend)
+    
+    # Simulate pick (open and close gripper)
+    popup("Pick box", 5)
+    sleep(1) # Replace with actual gripper control
+    
+    # Lift from conveyor
+    movel(pose_conveyor_above, a=1.2, v=speed_lift)
+    
+    # Transit to pallet position
+    if i == 0 then
+        movel(pose_pallet_00, a=1.2, v=speed_transit)
+    elif i == 1 then
+        movel(pose_pallet_01, a=1.2, v=speed_transit)
+    elif i == 2 then
+        movel(pose_pallet_10, a=1.2, v=speed_transit)
+    else
+        movel(pose_pallet_11, a=1.2, v=speed_transit)
+    endif
+    
+    # Simulate place (open and close gripper)
+    popup("Place box", 5)
+    sleep(1) # Replace with actual gripper control
+    
+    # Lift from pallet
+    movel(pose_pallet_00 + [0, 0, 0.3], a=1.2, v=speed_lift)
+endfor
+
+# Return to home position
+movej(pose_home, a=1.2, v=speed_home)
+
+popup("Task completed", 5)

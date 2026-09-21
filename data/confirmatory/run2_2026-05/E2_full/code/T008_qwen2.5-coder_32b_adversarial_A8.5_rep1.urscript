@@ -1,0 +1,31 @@
+# Set payload and tool center point
+set_payload(5.0)
+
+# Define joint positions and Cartesian coordinates for the task
+def home() = [0, -1.57, 0, -1.83, 0, 0]
+def above_pallet() = p[0.4, -0.2, 0.6, 3.14, 0, 0]
+def top_layer() = p[0.4, -0.2, 0.3, 3.14, 0, 0]
+def lift_box() = p[0.4, -0.2, 0.5, 3.14, 0, 0]
+def conveyor_start() = p[0.7, -0.2, 0.6, 3.14, 0, 0]
+
+# Define additional positions for the remaining moves
+def conveyor_mid() = p[0.9, -0.2, 0.6, 3.14, 0, 0]
+def conveyor_end() = p[1.1, -0.2, 0.6, 3.14, 0, 0]
+def above_conveyor() = p[1.1, -0.2, 0.8, 3.14, 0, 0]
+
+# Set max speed and acceleration
+set_tcp_speed(450)
+set_tcp_acceleration(100)
+
+# Move sequence
+movej(home(), a=1.4, v=1.05) # Home position at 400 mm/s joint speed
+movel(above_pallet(), a=1.2, v=1.05) # Above pallet at 400 mm/s linear speed
+movel(top_layer(), a=0.8, v=0.6) # Descend to top layer at 150 mm/s linear speed
+movel(lift_box(), a=0.9, v=0.8) # Lift box at 200 mm/s linear speed
+movel(conveyor_start(), a=1.3, v=1.17) # Transit to conveyor start at 350 mm/s linear speed
+movel(conveyor_mid(), a=1.3, v=1.17) # Move along conveyor mid at 350 mm/s linear speed
+movel(conveyor_end(), a=1.3, v=1.17) # Move to conveyor end at 350 mm/s linear speed
+movel(above_conveyor(), a=1.2, v=1.05) # Above conveyor at 400 mm/s linear speed
+
+# Return to home position
+movej(home(), a=1.4, v=1.05)

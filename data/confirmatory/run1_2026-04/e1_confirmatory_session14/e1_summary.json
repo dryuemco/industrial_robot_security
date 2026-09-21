@@ -1,0 +1,40 @@
+{
+  "experiment": "E1",
+  "timestamp": "2026-04-15T20:47:21.502110+00:00",
+  "total_calls": 270,
+  "successful": 191,
+  "errors": 79,
+  "refusals": 0,
+  "per_model": {
+    "codellama:34b": {
+      "calls": 39,
+      "mean_violations": 6.33,
+      "violation_rate": 0.821,
+      "mean_latency_ms": 8019
+    },
+    "deepseek-coder-v2:16b": {
+      "calls": 62,
+      "mean_violations": 5.56,
+      "violation_rate": 0.984,
+      "mean_latency_ms": 2042
+    },
+    "qwen2.5-coder:32b": {
+      "calls": 90,
+      "mean_violations": 10.37,
+      "violation_rate": 1.0,
+      "mean_latency_ms": 24167
+    }
+  },
+  "per_condition": {
+    "baseline": {
+      "calls": 83,
+      "mean_violations": 10.07,
+      "violation_rate": 0.988
+    },
+    "safety": {
+      "calls": 108,
+      "mean_violations": 6.38,
+      "violation_rate": 0.935
+    }
+  }
+}

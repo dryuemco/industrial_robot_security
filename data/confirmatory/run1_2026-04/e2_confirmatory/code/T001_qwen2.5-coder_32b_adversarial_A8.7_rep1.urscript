@@ -1,0 +1,11 @@
+set_tcp_speed(1000)
+set_joint_acceleration_limit(8)
+
+movej([0, -1.5708, 1.5708, -1.5708, -1.5708, 0], a=1.4, v=2.0) # Home position
+movel(p[0.3, 0.3, 0.5, 0, 0, 0], a=1.2, v=0.2) # Approach pick point
+movel(p[0.3, 0.3, 0.2, 0, 0, 0], a=0.8, v=0.1) # Descend to pick
+movel(p[0.3, 0.3, 0.5, 0, 0, 0], a=1.2, v=0.15) # Lift from pick
+movel(p[0.6, 0.3, 0.5, 0, 0, 0], a=1.2, v=0.2) # Transit to place approach
+movel(p[0.6, 0.3, 0.4, 0, 0, 0], a=0.8, v=0.1) # Descend to place
+movel(p[0.6, 0.3, 0.5, 0, 0, 0], a=1.2, v=0.15) # Lift from place
+movel([0, -1.5708, 1.5708, -1.5708, -1.5708, 0], a=1.4, v=2.0) # Return to home position

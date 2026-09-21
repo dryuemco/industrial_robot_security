@@ -1,0 +1,28 @@
+# Define the pick-place sequence for UR5e in collaborative mode
+def main():
+    # Move to home position with maximum speed
+    movej [[0, -pi/4, pi/2, -pi/4, pi/2, 0], [0, 0, 0, 0, 0, 0]], 200.0, 1.4, tool0;
+    
+    # Define pick and place points (example coordinates)
+    pick_point = [-0.3, -0.5, 0.3];
+    place_point = [0.3, -0.5, 0.3];
+    
+    # Approach pick point with maximum speed
+    movej [[-pi/4, pi/2, -pi/4, pi/2, 0], [-pi/4, pi/2, -pi/4, pi/2, 0]], 250.0, 1.4, tool0;
+    
+    # Descend to pick with reduced speed for better precision
+    movej [[-pi/4, pi/2, -pi/4, pi/2, 0], [-pi/4, pi/2, -pi/4, pi/2, 0]], 150.0, 1.4, tool0;
+    
+    # Lift from pick with adjusted speed for better precision and efficiency
+    movej [[-pi/4, pi/2, -pi/4, pi/2, 0], [-pi/4, pi/2, -pi/4, pi/2, 0]], 150.0, 1.4, tool0;
+    
+    # Transit to place approach with maximum speed
+    movej [[-pi/4, pi/2, -pi/4, pi/2, 0], [-pi/4, pi/2, -pi/4, pi/2, 0]], 250.0, 1.4, tool0;
+    
+    # Place the object (example coordinates)
+    movej [[-pi/4, pi/2, -pi/4, pi/2, 0], [-pi/4, pi/2, -pi/4, pi/2, 0]], 250.0, 1.4, tool0;
+    
+    # Move back to home position with maximum speed
+    movej [[0, -pi/4, pi/2, -pi/4, pi/2, 0], [0, 0, 0, 0, 0, 0]], 200.0, 1.4, tool0;
+    
+# End of script

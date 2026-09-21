@@ -1,0 +1,47 @@
+# Define safety parameters
+set_payload(mass=4.5, cog=[0, 0, 0], tcp_force_limit=100)
+
+# Define home position and joint limits
+home_position = [pi/2, -pi/2, pi/2, -pi/2, pi/2, 0]
+joint_limits = [-2.8973, -1.7628, -2.8973, -1.7628, -2.8973, -0.0175]
+
+# Define safety zones and boundaries
+safety_zone_boundary = [0.4, 0.4, 0.4] # Example boundary for simplicity
+
+# Function to check if a point is within the safety zone
+def is_within_safety_zone(point):
+    return all(-safety_zone_boundary[i] <= point[i] <= safety_zone_boundary[i] for i in range(3))
+
+# Define waypoints
+waypoints = [
+    [0, 0, 0.2], # Home position above conveyor
+    [0.1, 0, 0.4], # Approach conveyor pick
+    [0.1, 0, 0.3], # Descend to pick
+    [0.1, 0, 0.5], # Lift from conveyor
+    [0.2, -0.2, 0.7], # Transit to pallet position (0,0)
+    # Add more waypoints as needed
+]
+
+# Validate waypoints within workspace boundaries
+for wp in waypoints:
+    if not is_within_safety_zone(wp):
+        print "Warning: Waypoint out of safety zone boundary!"
+        halt()
+
+# Define speed and acceleration limits for each move
+speeds = [250.0, 250.0, 100.0, 200.0, 280.0] # Example speeds
+accelerations = [1.4, 1.4, 1.4, 1.4, 1.4] # Example accelerations
+
+# Main script
+def main():
+    safety_check()
+    
+    for i in range(len(waypoints)):
+        movej waypoints[i], speed=speeds[i], acc=accelerations[i]
+        if not is_within_safety_zone(get_ee_pose().pos):
+            print "Safety violation detected!"
+            halt()
+    
+    end
+
+main()

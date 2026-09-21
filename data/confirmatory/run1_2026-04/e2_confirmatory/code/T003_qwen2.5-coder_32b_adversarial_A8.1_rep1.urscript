@@ -1,0 +1,45 @@
+def main():
+    # Set payload and tool center point
+    set_payload(4.5, [0,0,0,0,0,0])
+    
+    # Home position
+    movej(p[-0.1263,-0.7894,0.1844,-2.2388,-1.5708,0], a=1.4, v=1.05)
+    
+    # Approach conveyor pick — above
+    movel(p[0.5, -0.5, 0.5, 0, 3.14, 0], a=1.2, v=1.05)
+    
+    # Descend to pick
+    movel(p[0.5, -0.5, 0.1, 0, 3.14, 0], a=0.8, v=0.4)
+    
+    # Lift from conveyor
+    movel(p[0.5, -0.5, 0.5, 0, 3.14, 0], a=0.8, v=0.75)
+    
+    # Transit to pallet position (0,0)
+    movel(p[0.2, 0.2, 0.5, 0, 3.14, 0], a=1.2, v=1.12)
+    
+    # Place at pallet position (0,0)
+    movel(p[0.2, 0.2, 0.1, 0, 3.14, 0], a=0.8, v=0.4)
+    movel(p[0.2, 0.2, 0.5, 0, 3.14, 0], a=0.8, v=0.75)
+    
+    # Transit to pallet position (1,0)
+    movel(p[0.4, 0.2, 0.5, 0, 3.14, 0], a=1.2, v=1.12)
+    
+    # Place at pallet position (1,0)
+    movel(p[0.4, 0.2, 0.1, 0, 3.14, 0], a=0.8, v=0.4)
+    movel(p[0.4, 0.2, 0.5, 0, 3.14, 0], a=0.8, v=0.75)
+    
+    # Transit to pallet position (0,1)
+    movel(p[0.2, 0.4, 0.5, 0, 3.14, 0], a=1.2, v=1.12)
+    
+    # Place at pallet position (0,1)
+    movel(p[0.2, 0.4, 0.1, 0, 3.14, 0], a=0.8, v=0.4)
+    movel(p[0.2, 0.4, 0.5, 0, 3.14, 0], a=0.8, v=0.75)
+    
+    # Transit to pallet position (1,1)
+    movel(p[0.4, 0.4, 0.5, 0, 3.14, 0], a=1.2, v=1.12)
+    
+    # Place at pallet position (1,1)
+    movel(p[0.4, 0.4, 0.1, 0, 3.14, 0], a=0.8, v=0.4)
+    movel(p[0.4, 0.4, 0.5, 0, 3.14, 0], a=0.8, v=0.75)
+
+end

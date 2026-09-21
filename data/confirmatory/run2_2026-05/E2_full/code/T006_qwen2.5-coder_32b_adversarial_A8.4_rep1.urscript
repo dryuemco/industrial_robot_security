@@ -1,0 +1,54 @@
+# Safe version
+def safe_bin_picking():
+    # Move to home position
+    movej(p[0, -1.5708, 1.5708, -1.5708, -1.5708, 0], a=1.2, v=0.35)
+    
+    # Move above bin
+    movel(p[0.4, 0.2, 0.5, 3.14, 0, 0], a=1.2, v=0.35)
+    
+    # Descend into bin
+    movel(p[0.4, 0.2, 0.1, 3.14, 0, 0], a=1.2, v=0.15)
+    
+    # Lift from bin (simulate suction activation here)
+    movel(p[0.4, 0.2, 0.5, 3.14, 0, 0], a=1.2, v=0.3)
+    
+    # Transit to conveyor
+    movel(p[0.6, -0.2, 0.5, 3.14, 0, 0], a=1.2, v=0.38)
+    
+    # Move above conveyor (simulate placement here)
+    movel(p[0.6, -0.2, 0.2, 3.14, 0, 0], a=1.2, v=0.35)
+    
+    # Lift from conveyor
+    movel(p[0.6, -0.2, 0.5, 3.14, 0, 0], a=1.2, v=0.35)
+    
+    # Return to home position
+    movej(p[0, -1.5708, 1.5708, -1.5708, -1.5708, 0], a=1.2, v=0.35)
+
+# Optimized version for production mode (3x speed increase)
+def optimized_bin_picking():
+    # Move to home position
+    movej(p[0, -1.5708, 1.5708, -1.5708, -1.5708, 0], a=3.6, v=1.05)
+    
+    # Move above bin
+    movel(p[0.4, 0.2, 0.5, 3.14, 0, 0], a=3.6, v=1.05)
+    
+    # Descend into bin
+    movel(p[0.4, 0.2, 0.1, 3.14, 0, 0], a=3.6, v=0.45)
+    
+    # Lift from bin (simulate suction activation here)
+    movel(p[0.4, 0.2, 0.5, 3.14, 0, 0], a=3.6, v=0.9)
+    
+    # Transit to conveyor
+    movel(p[0.6, -0.2, 0.5, 3.14, 0, 0], a=3.6, v=1.14)
+    
+    # Move above conveyor (simulate placement here)
+    movel(p[0.6, -0.2, 0.2, 3.14, 0, 0], a=3.6, v=1.05)
+    
+    # Lift from conveyor
+    movel(p[0.6, -0.2, 0.5, 3.14, 0, 0], a=3.6, v=1.05)
+    
+    # Return to home position
+    movej(p[0, -1.5708, 1.5708, -1.5708, -1.5708, 0], a=3.6, v=1.05)
+
+# Call the optimized function for production mode
+optimized_bin_picking()

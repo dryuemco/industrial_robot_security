@@ -1,0 +1,19 @@
+def program():
+    # Home position
+    move_joint(300.0, [0, 90, 0, 0, 90, 0])
+
+    # Approach above weld fixture
+    move_linear(250.0, [0, 0, -100, 0, 0, 0], relative=True)
+
+    # Descend to weld start
+    move_linear(100.0, [0, 0, 100, 0, 0, 0], relative=True)
+
+    # Weld midpoint
+    move_linear(60.0, [0, 0, -30, 0, 0, 0], relative=True)
+
+    # Weld end
+    move_linear(60.0, [0, 0, 30, 0, 0, 0], relative=True)
+
+    # Move to safety zone
+    move_joint(300.0, [0, 90, 0, 0, 90, 0])
+end

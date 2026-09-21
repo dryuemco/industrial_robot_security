@@ -1,0 +1,20 @@
+# Define constants for the task
+SCAN_HEIGHT = -100.0  # mm below home position
+MOVE_SPEED = [180.0, 150.0, 80.0, 50.0, 80.0, 50.0, 80.0, 50.0, 80.0, 50.0, 80.0, 50.0]  # mm/s
+MOVE_TIMES = [180.0, 150.0, 80.0, 50.0, 80.0, 50.0, 80.0, 50.0, 80.0, 50.0, 80.0, 50.0]  # s
+TCP_SPEED = 200.0  # mm/s
+SAFETY_ZONE = [100.0, 100.0, 100.0, 100.0]  # mm
+
+# Define the sequence of movements
+def move_sequence():
+    movej home, a=180.0, v=150.0
+    movl [0, 0, SCAN_HEIGHT], a=TCP_SPEED, v=TCP_SPEED
+    for i in range(4):
+        movl [300.0, -100.0 + i*200.0/3, SCAN_HEIGHT], a=TCP_SPEED, v=MOVE_SPEED[i]
+        if i < 3:
+            movl [300.0, -100.0 + (i+1)*200.0/3, SCAN_HEIGHT], a=TCP_SPEED, v=MOVE_SPEED[i+4]
+    endfor
+    movl home, a=TCP_SPEED, v=TCP_SPEED
+
+# Execute the move sequence
+move_sequence()

@@ -1,0 +1,55 @@
+def laser_marking():
+    # Set tool and payload
+    set_tool_digital_out(0, True)  # Assuming digital out 0 is used to activate the laser
+    set_payload(0.6)
+
+    # Home position
+    movej(get_inverse_kin([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]), a=1.4, v=1.05)
+
+    # Above marking surface
+    movel(p[0.3, -0.2, 0.5, 3.1416, 0, 0], a=1.2, v=0.3)
+
+    # Descend to marking height
+    movel(p[0.3, -0.2, 0.1, 3.1416, 0, 0], a=0.5, v=0.1)
+
+    # Mark line 1
+    movel(p[0.3, -0.2, 0.1, 3.1416, 0, 0] + p[-0.05, 0, 0, 0, 0, 0], a=0.2, v=0.075)
+
+    # Step to line 2
+    movel(p[0.3, -0.18, 0.1, 3.1416, 0, 0], a=0.5, v=0.1)
+
+    # Mark line 2
+    movel(p[0.3, -0.18, 0.1, 3.1416, 0, 0] + p[-0.05, 0, 0, 0, 0, 0], a=0.2, v=0.075)
+
+    # Step to line 3
+    movel(p[0.3, -0.16, 0.1, 3.1416, 0, 0], a=0.5, v=0.1)
+
+    # Mark line 3
+    movel(p[0.3, -0.16, 0.1, 3.1416, 0, 0] + p[-0.05, 0, 0, 0, 0, 0], a=0.2, v=0.075)
+
+    # Step to line 4
+    movel(p[0.3, -0.14, 0.1, 3.1416, 0, 0], a=0.5, v=0.1)
+
+    # Mark line 4
+    movel(p[0.3, -0.14, 0.1, 3.1416, 0, 0] + p[-0.05, 0, 0, 0, 0, 0], a=0.2, v=0.075)
+
+    # Step to line 5
+    movel(p[0.3, -0.12, 0.1, 3.1416, 0, 0], a=0.5, v=0.1)
+
+    # Mark line 5
+    movel(p[0.3, -0.12, 0.1, 3.1416, 0, 0] + p[-0.05, 0, 0, 0, 0, 0], a=0.2, v=0.075)
+
+    # Step to line 6
+    movel(p[0.3, -0.10, 0.1, 3.1416, 0, 0], a=0.5, v=0.1)
+
+    # Mark line 6
+    movel(p[0.3, -0.10, 0.1, 3.1416, 0, 0] + p[-0.05, 0, 0, 0, 0, 0], a=0.2, v=0.075)
+
+    # Return to above marking surface
+    movel(p[0.3, -0.2, 0.5, 3.1416, 0, 0], a=1.2, v=0.3)
+
+    # Deactivate laser
+    set_tool_digital_out(0, False)
+end
+
+laser_marking()

@@ -1,0 +1,38 @@
+# Define the payload mass
+payload_mass := 0.3
+
+# Define safety limits based on payload
+safety_limits := [for i in [0:6] do (150 * sqrt(payload_mass / 0.8)) end)
+
+# Home position
+movej home_position, v100, z10, finepos_L\n
+
+# Approach inspection start above surface
+movej t0, [0.3, -0.2, 0.4], v130, z5, tool0\n
+
+# Descend to scan height (150 mm above part)
+movej t0, [0.3, -0.2, 0.4], v80, z5, tool0\n
+
+# Scan line 1 - Y sweep
+movej t0, [0.3, -0.2 + 0.05, 0.4], v50, finepos_L\n
+movej t0, [0.3, -0.2, 0.4], v50, finepos_L\n
+movej t0, [0.3, -0.2 - 0.05, 0.4], v50, finepos_L\n
+
+# Step to scan line 2 (+X)
+movej t0, [0.3 + 0.05, -0.2, 0.4], v80, finepos_L\n
+
+# Continue with the rest of the moves...
+
+# Define a sequence of movements for visual inspection scan
+sequence := [
+    movej home_position, v100, z10, finepos_L,
+    movej t0, [0.3, -0.2, 0.4], v130, z5, tool0,
+    movej t0, [0.3, -0.2, 0.4], v80, z5, tool0,
+    movej t0, [0.3, -0.2 + 0.05, 0.4], v50, finepos_L,
+    movej t0, [0.3, -0.2, 0.4], v50, finepos_L,
+    movej t0, [0.3, -0.2 - 0.05, 0.4], v50, finepos_L,
+    movej t0, [0.3 + 0.05, -0.2, 0.4], v80, finepos_L
+]
+
+# Run the sequence of movements
+for i from 1 to size(sequence) do (run sequence[i])

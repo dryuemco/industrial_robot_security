@@ -1,0 +1,28 @@
+# Define the home position joint angles
+home_joints := [0.0, -1.57, 1.57, 0.0, 0.0, 0.0];
+
+# Define the approach and descent positions in mm
+approach_position := [200.0, -180.0, 130.0, 140.0, 90.0, 0.0];
+descend_position := [200.0, -180.0, 50.0, 140.0, 90.0, 0.0];
+weld_midpoint := [200.0, -180.0, 50.0, 140.0, 90.0, 0.0];
+weld_end := [200.0, -180.0, 50.0, 140.0, 90.0, 0.0];
+
+# Define the speeds in mm/s
+speeds := [300.0, 250.0, 100.0, 60.0, 60.0];
+
+# Move to home position with joint control at 300.0 mm/s
+movej home_joints, speed_joints(300.0);
+
+# Move to approach position with linear control at 250.0 mm/s
+movel approach_position, vel_rel(1), speed_factor(0.8);
+
+# Move down to descend position with linear control at 100.0 mm/s
+movel descend_position, vel_rel(1), speed_factor(0.3);
+
+# Weld midpoint with linear control at 60.0 mm/s
+movel weld_midpoint, vel_rel(1), speed_factor(0.5);
+
+# Weld end with linear control at 60.0 mm/s
+movel weld_end, vel_rel(1), speed_factor(0.5);
+
+# Define the remaining moves if any...

@@ -1,0 +1,59 @@
+# Define payload and set it
+set_payload(0.6, [0,0,0])
+
+# Safety zones definition
+def in_confinement_zone(p):
+    # Example confinement zone check (modify as per actual zone coordinates)
+    return p[0] >= -500 and p[0] <= 500 and p[1] >= -500 and p[1] <= 500 and p[2] >= 0 and p[2] <= 800
+
+def in_exclusion_zone(p):
+    # Example exclusion zone check (modify as per actual zone coordinates)
+    return not (p[0] >= -300 and p[0] <= 300 and p[1] >= -300 and p[1] <= 300 and p[2] >= 50 and p[2] <= 750)
+
+def safety_check(p):
+    if not in_confinement_zone(p) or in_exclusion_zone(p):
+        popup("Safety violation: Point out of confinement zone or in exclusion zone!")
+        halt()
+
+# Define waypoints
+p_home = [0, -1.57, 1.57, -1.83, -1.57, 0]
+p_above_marking = [0.2, -1.6, 1.4, -1.9, -1.6, 0]
+p_mark_height = [0.2, -1.6, 1.2, -1.9, -1.6, 0]
+p_line1_start = [0.2, -1.6, 1.2, -1.9, -1.6, 0] # Modify as per actual line start
+p_step_to_line2 = [0.3, -1.6, 1.2, -1.9, -1.6, 0] # Modify as per actual step position
+
+# Motion sequence with safety checks and speed/acceleration limits
+def laser_marking_sequence():
+    # Move to home
+    safety_check(p_home)
+    movej(p_home, a=1.4, v=350)
+
+    # Move above marking surface
+    safety_check(p_above_marking)
+    movel(p_above_marking, a=1.4, v=300)
+
+    # Descend to marking height
+    safety_check(p_mark_height)
+    movel(p_mark_height, a=1.4, v=100)
+
+    # Mark line 1
+    safety_check(p_line1_start)
+    movel(p_line1_start, a=1.4, v=60) # Modify as per actual path
+
+    # Step to line 2
+    safety_check(p_step_to_line2)
+    movel(p_step_to_line2, a=1.4, v=80)
+
+    # Continue with remaining lines (modify paths and speeds as needed)
+    # Example for two more steps:
+    p_line2_start = [0.3, -1.6, 1.2, -1.9, -1.6, 0] # Modify as per actual line start
+    movel(p_line2_start, a=1.4, v=60) # Mark line 2
+
+    p_step_to_line3 = [0.4, -1.6, 1.2, -1.9, -1.6, 0] # Modify as per actual step position
+    movel(p_step_to_line3, a=1.4, v=80)
+
+    p_line3_start = [0.4, -1.6, 1.2, -1.9, -1.6, 0] # Modify as per actual line start
+    movel(p_line3_start, a=1.4, v=60) # Mark line 3
+
+# Execute the sequence
+laser_marking_sequence()

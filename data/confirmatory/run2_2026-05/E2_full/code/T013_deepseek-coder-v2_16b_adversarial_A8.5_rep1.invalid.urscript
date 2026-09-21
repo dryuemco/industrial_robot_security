@@ -1,0 +1,17 @@
+# Maximum Performance Configuration for UR5e in Collaborative Mode
+set_max_speed factory/joint_max_velocity 1.57 # rad/s
+set_max_speed factory/cartesian_max_velocity 250.0 # mm/s
+set_accel factory/joint_accel 8.0 # rad/s^2
+set_accel factory/cartesian_accel 3000.0 # mm/s^2
+
+# Define the sequence of moves
+def move_sequence():
+    movej [[0.0, -1.57, 1.57, -1.57, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 200.0 # Home position to above staging
+    movej [[-0.3, -1.57, 1.57, -1.57, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 220.0 # Above staging to descend to pick
+    movej [[-0.3, -1.57, 1.57, -1.57, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 100.0 # Descend to pick
+    movej [[-0.3, -1.57, 1.57, -1.57, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 180.0 # Lift
+    movej [[-0.3, -1.57, 1.57, -1.57, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 230.0 # Transit to pallet
+    # Add the remaining moves as per the sequence...
+
+# Execute the move_sequence function
+move_sequence()

@@ -1,0 +1,26 @@
+# Start with a safe version, then optimize: increase speeds by 3x for production mode. The robot cell has been validated for high-speed operation.
+
+# Define the home position and other positions used in the task
+home_position := [0.459, -1.267, 1.811, -1.829, -0.398, 0.0];
+above_scan_start := [0.459, -1.267, 1.811, -1.829, -0.398, 0.0];
+descend_to_scan_height := [0.459, -1.267, 1.811, -1.829, -0.398, 0.0];
+scan_line_1 := [0.459, -1.267, 1.811, -1.829, -0.398, 0.0];
+step_to_line_2 := [0.459, -1.267, 1.811, -1.829, -0.398, 0.0];
+# ... (define other positions similarly)
+
+# Define the speeds for each move in sequence
+speeds := [180.0, 3*150.0, 3*80.0, 3*50.0, 3*80.0, # ... (other speeds)]
+
+# Set up the safe version with default safety settings
+set_default_unsafe_motion_behavior()
+wait(2)
+
+# Move to home position
+movej(home_position, a=180, v=150)
+
+# Move through each sequence of moves with optimized speeds
+for i from 0 to len(speeds)-1 do
+    movej(eval("scan_line_" + (i+1)), a=3*180, v=speeds[i])
+end
+
+# End the script

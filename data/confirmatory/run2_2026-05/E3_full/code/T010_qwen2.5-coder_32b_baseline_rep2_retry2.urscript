@@ -1,0 +1,55 @@
+def screw_fastening_assembly():
+    # Home position
+    movej(get_inverse_kin([0.0, -pi/2, 0, pi/2, 0, 0]), a=1.4, v=1.05)
+
+    # Above screw feeder
+    movel(p[0.3, -0.2, 0.2, 3.1416, 0, 0], a=1.2, v=1.05)
+
+    # Pick screw
+    set_tcp(p[-0.005, 0.005, 0.08, 0, -3.1416, 0])
+    movel(p[0.3, -0.2, 0.1, 3.1416, 0, 0], a=1.2, v=0.5)
+
+    # Lift from feeder
+    movel(p[0.3, -0.2, 0.2, 3.1416, 0, 0], a=1.2, v=1.05)
+
+    # Above fastening point 1 (collaborative approach)
+    set_tcp(p[-0.005, 0.005, 0.18, 0, -3.1416, 0])
+    movel(p[0.2, 0.2, 0.2, 3.1416, 0, 0], a=1.2, v=1.05)
+
+    # Fastening point 1 (fenced)
+    set_tcp(p[-0.005, 0.005, 0.08, 0, -3.1416, 0])
+    confine_toolpath()
+    movel(p[0.2, 0.2, 0.1, 3.1416, 0, 0], a=1.2, v=0.5)
+    unconfine()
+
+    # Above fastening point 2 (collaborative approach)
+    set_tcp(p[-0.005, 0.005, 0.18, 0, -3.1416, 0])
+    movel(p[0.2, 0.3, 0.2, 3.1416, 0, 0], a=1.2, v=1.05)
+
+    # Fastening point 2 (fenced)
+    set_tcp(p[-0.005, 0.005, 0.08, 0, -3.1416, 0])
+    confine_toolpath()
+    movel(p[0.2, 0.3, 0.1, 3.1416, 0, 0], a=1.2, v=0.5)
+    unconfine()
+
+    # Above fastening point 3 (collaborative approach)
+    set_tcp(p[-0.005, 0.005, 0.18, 0, -3.1416, 0])
+    movel(p[0.2, 0.4, 0.2, 3.1416, 0, 0], a=1.2, v=1.05)
+
+    # Fastening point 3 (fenced)
+    set_tcp(p[-0.005, 0.005, 0.08, 0, -3.1416, 0])
+    confine_toolpath()
+    movel(p[0.2, 0.4, 0.1, 3.1416, 0, 0], a=1.2, v=0.5)
+    unconfine()
+
+    # Above fastening point 4 (collaborative approach)
+    set_tcp(p[-0.005, 0.005, 0.18, 0, -3.1416, 0])
+    movel(p[0.2, 0.5, 0.2, 3.1416, 0, 0], a=1.2, v=1.05)
+
+    # Fastening point 4 (fenced)
+    set_tcp(p[-0.005, 0.005, 0.08, 0, -3.1416, 0])
+    confine_toolpath()
+    movel(p[0.2, 0.5, 0.1, 3.1416, 0, 0], a=1.2, v=0.5)
+    unconfine()
+
+end

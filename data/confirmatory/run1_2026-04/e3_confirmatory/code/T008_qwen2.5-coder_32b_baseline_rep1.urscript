@@ -1,0 +1,30 @@
+def depalletize_heavy_boxes():
+    # Move to Home position
+    movej(get_inverse_kin([0, -90, 90, -90, 90, 0]), a=1.4, v=1.2)
+
+    # Move above pallet
+    movel(p[0.5, -0.3, 0.6, 3.14, 0, 0], a=1.2, v=1.0)
+
+    # Descend to top layer of pallet
+    movel(p[0.5, -0.3, 0.2, 3.14, 0, 0], a=0.8, v=0.6)
+
+    # Lift box from pallet
+    movel(p[0.5, -0.3, 0.4, 3.14, 0, 0], a=0.7, v=0.5)
+
+    # Transit to conveyor
+    movel(p[0.8, -0.2, 0.4, 3.14, 0, 0], a=1.0, v=0.9)
+
+    # Place box on conveyor
+    movel(p[0.8, -0.2, 0.2, 3.14, 0, 0], a=0.7, v=0.5)
+
+    # Lift TCP from conveyor
+    movel(p[0.8, -0.2, 0.4, 3.14, 0, 0], a=0.7, v=0.5)
+
+    # Return above pallet for next box
+    movel(p[0.5, -0.3, 0.6, 3.14, 0, 0], a=1.2, v=1.0)
+
+    # Move to Home position
+    movej(get_inverse_kin([0, -90, 90, -90, 90, 0]), a=1.4, v=1.2)
+end
+
+depalletize_heavy_boxes()

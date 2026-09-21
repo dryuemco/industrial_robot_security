@@ -1,0 +1,70 @@
+def laser_marking():
+    # Move to Home position at max joint speed
+    movej(get_inverse_kin(p[0, -0.55, 0.3, 0, 2.24, 0]), a=1.4, v=1.05)
+
+    # Move above marking surface
+    movel(p[0.2, -0.3, 0.3, 0, 2.24, 0], a=1.2, v=0.75)
+
+    # Descend to marking height
+    movel(p[0.2, -0.3, 0.1, 0, 2.24, 0], a=0.8, v=0.25)
+
+    # Mark line 1
+    movel(p[0.2, -0.35, 0.1, 0, 2.24, 0], a=0.6, v=0.15)
+
+    # Step to line 2
+    movel(p[0.2, -0.3, 0.1, 0, 2.24, 0], a=0.8, v=0.2)
+
+    # Mark line 2
+    movel(p[0.2, -0.35, 0.1, 0, 2.24, 0], a=0.6, v=0.15)
+
+    # Step to line 3
+    movel(p[0.2, -0.3, 0.1, 0, 2.24, 0], a=0.8, v=0.2)
+
+    # Mark line 3
+    movel(p[0.2, -0.35, 0.1, 0, 2.24, 0], a=0.6, v=0.15)
+
+    # Step to next position (example)
+    movel(p[0.25, -0.3, 0.1, 0, 2.24, 0], a=0.8, v=0.2)
+
+    # Mark line 4
+    movel(p[0.25, -0.35, 0.1, 0, 2.24, 0], a=0.6, v=0.15)
+
+    # Step to next position (example)
+    movel(p[0.25, -0.3, 0.1, 0, 2.24, 0], a=0.8, v=0.2)
+
+    # Mark line 5
+    movel(p[0.25, -0.35, 0.1, 0, 2.24, 0], a=0.6, v=0.15)
+
+    # Step to next position (example)
+    movel(p[0.25, -0.3, 0.1, 0, 2.24, 0], a=0.8, v=0.2)
+
+    # Mark line 6
+    movel(p[0.25, -0.35, 0.1, 0, 2.24, 0], a=0.6, v=0.15)
+
+    # Step to next position (example)
+    movel(p[0.25, -0.3, 0.1, 0, 2.24, 0], a=0.8, v=0.2)
+
+    # Mark line 7
+    movel(p[0.25, -0.35, 0.1, 0, 2.24, 0], a=0.6, v=0.15)
+
+    # Step to next position (example)
+    movel(p[0.25, -0.3, 0.1, 0, 2.24, 0], a=0.8, v=0.2)
+
+    # Mark line 8
+    movel(p[0.25, -0.35, 0.1, 0, 2.24, 0], a=0.6, v=0.15)
+
+    # Step to next position (example)
+    movel(p[0.25, -0.3, 0.1, 0, 2.24, 0], a=0.8, v=0.2)
+
+    # Mark line 9
+    movel(p[0.25, -0.35, 0.1, 0, 2.24, 0], a=0.6, v=0.15)
+
+    # Step to next position (example)
+    movel(p[0.25, -0.3, 0.1, 0, 2.24, 0], a=0.8, v=0.2)
+
+    # Mark line 10
+    movel(p[0.25, -0.35, 0.1, 0, 2.24, 0], a=0.6, v=0.15)
+
+end
+
+laser_marking()

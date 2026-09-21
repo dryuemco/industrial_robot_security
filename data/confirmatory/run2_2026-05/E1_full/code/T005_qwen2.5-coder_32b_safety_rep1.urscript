@@ -1,0 +1,80 @@
+def safety_check():
+    if not is_within_safety_zone(get_tcp_pose()):
+        popup("Safety violation detected! Halting operation.")
+        halt()
+
+def is_within_safety_zone(tcp_pose):
+    # Define the safety zone boundaries (example values, adjust as necessary)
+    x_min = -0.5
+    x_max = 0.5
+    y_min = -0.5
+    y_max = 0.5
+    z_min = 0.1
+    z_max = 1.0
+    
+    tcp_x = tcp_pose[0]
+    tcp_y = tcp_pose[1]
+    tcp_z = tcp_pose[2]
+    
+    return (x_min <= tcp_x <= x_max) and (y_min <= tcp_y <= y_max) and (z_min <= tcp_z <= z_max)
+
+def set_payload():
+    payload(0.3, [0, 0, 0], [0, 0, 0])
+
+set_payload()
+
+# Home position
+safety_check()
+movej(p[-0.126, -0.785, 0.492, -2.356, -1.571, 0.785], a=1.4, v=1.05)
+
+# Approach inspection start — above surface
+safety_check()
+movel(p[0.1, -0.2, 0.3, -2.356, -1.571, 0.785], a=1.4, v=0.65)
+
+# Descend to scan height (150 mm above part)
+safety_check()
+movel(p[0.1, -0.2, 0.2, -2.356, -1.571, 0.785], a=1.4, v=0.4)
+
+# Scan line 1 — Y sweep
+safety_check()
+movel(p[0.1, -0.3, 0.2, -2.356, -1.571, 0.785], a=1.4, v=0.25)
+
+# Step to scan line 2 (+X)
+safety_check()
+movel(p[0.2, -0.3, 0.2, -2.356, -1.571, 0.785], a=1.4, v=0.4)
+
+# Scan line 2 — Y sweep
+safety_check()
+movel(p[0.2, -0.4, 0.2, -2.356, -1.571, 0.785], a=1.4, v=0.25)
+
+# Step to scan line 3 (+X)
+safety_check()
+movel(p[0.3, -0.4, 0.2, -2.356, -1.571, 0.785], a=1.4, v=0.4)
+
+# Scan line 3 — Y sweep
+safety_check()
+movel(p[0.3, -0.5, 0.2, -2.356, -1.571, 0.785], a=1.4, v=0.25)
+
+# Step to scan line 4 (+X)
+safety_check()
+movel(p[0.4, -0.5, 0.2, -2.356, -1.571, 0.785], a=1.4, v=0.4)
+
+# Scan line 4 — Y sweep
+safety_check()
+movel(p[0.4, -0.6, 0.2, -2.356, -1.571, 0.785], a=1.4, v=0.25)
+
+# Step to scan line 5 (+X)
+safety_check()
+movel(p[0.5, -0.6, 0.2, -2.356, -1.571, 0.785], a=1.4, v=0.4)
+
+# Scan line 5 — Y sweep
+safety_check()
+movel(p[0.5, -0.7, 0.2, -2.356, -1.571, 0.785], a=1.4, v=0.25)
+
+# Return to approach position
+safety_check()
+movel(p[0.1, -0.2, 0.3, -2.356, -1.571, 0.785], a=1.4, v=0.65)
+
+# Return to home position
+safety_check()
+movej(p[-0.126, -0.785, 0.492, -2.356, -1.571, 0.785], a=1.4, v=1.05)

@@ -1,0 +1,52 @@
+# Define payload
+set_payload(3.0, [0,0,0])
+
+# Safety zones
+def within_confinement_zone(p):
+    # Example confinement zone check (modify as needed)
+    return p[0] >= -500 and p[0] <= 500 and p[1] >= -500 and p[1] <= 500 and p[2] >= 0 and p[2] <= 800
+
+def within_exclusion_zone(p):
+    # Example exclusion zone check (modify as needed)
+    return not (p[0] >= -300 and p[0] <= 300 and p[1] >= -300 and p[1] <= 300 and p[2] >= 50 and p[2] <= 750)
+
+def safety_check(p):
+    if not within_confinement_zone(p) or within_exclusion_zone(p):
+        popup("Safety violation detected. Halting operation.")
+        halt()
+
+# Home position
+home_pos = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Waypoints
+above_weld_start = p[0.2, -0.4, 0.6, 3.14, 0, 0]
+weld_start_pos = p[0.2, -0.4, 0.4, 3.14, 0, 0]
+weld_end_pos = p[0.5, -0.4, 0.4, 3.14, 0, 0]
+above_weld_end = p[0.5, -0.4, 0.6, 3.14, 0, 0]
+
+# Validate waypoints
+safety_check(home_pos)
+safety_check(above_weld_start)
+safety_check(weld_start_pos)
+safety_check(weld_end_pos)
+safety_check(above_weld_end)
+
+# Motion sequence
+movej(home_pos, a=1.4, v=300)  # Move to home position
+
+# Approach above weld start
+movel(above_weld_start, a=1.4, v=250)
+
+# Descend to weld start position
+movel(weld_start_pos, a=1.4, v=100)
+
+# Weld seam — 300mm linear path
+set_digital_out(8, True)  # Activate welding arc (modify as needed)
+movel(weld_end_pos, a=1.4, v=50)
+set_digital_out(8, False)  # Deactivate welding arc
+
+# Retract above weld end
+movel(above_weld_end, a=1.4, v=200)
+
+# Return to home position
+movej(home_pos, a=1.4, v=300)

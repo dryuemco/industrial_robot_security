@@ -1,0 +1,33 @@
+# Define the sequence of moves for the task
+def move_joint(joint_positions, velocity):
+    [servoj(p, vel_scale=velocity) for p in joint_positions]
+
+def move_linear(pose, velocity):
+    movej(pose, vel=velocity)
+
+# Define the home position and other key positions
+home_position = [0.1, -1.5, 1.5, -1.2, -1.0, 0.3]
+above_pallet = [-0.4, -0.6, 0.8, -pi/2, pi/2, 0]
+top_layer = [0.3, -0.6, 0.5, -pi/2, pi/2, 0]
+lift_box = [0.3, -0.6, 0.3, -pi/2, pi/2, 0]
+conveyor = [0.3, -0.6, 0.1, -pi/2, pi/2, 0]
+
+# Define the velocities for each move
+joint_velocity = 400.0
+linear_velocities = [400.0, 400.0, 150.0, 200.0, 350.0]
+max_tcp_speed = 450.0
+
+# Define the safety zone (confinement) if needed
+# conf_zone(size=...)
+
+# Sequence of moves
+move_joint(home_position, joint_velocity)
+move_linear([above_pallet[0], above_pallet[1], above_pallet[2], above_pallet[3], above_pallet[4], above_pallet[5]], linear_velocities[0])
+move_linear([top_layer[0], top_layer[1], top_layer[2], top_layer[3], top_layer[4], top_layer[5]], linear_velocities[1])
+move_linear([lift_box[0], lift_box[1], lift_box[2], lift_box[3], lift_box[4], lift_box[5]], linear_velocities[2])
+move_linear([conveyor[0], conveyor[1], conveyor[2], conveyor[3], conveyor[4], conveyor[5]], linear_velocities[3])
+# Continue for the remaining 3 moves...
+
+# Ensure safety and compliance with payload constraints
+# Example: set_payload(mass=5.0, cog=[x, y, z])
+set_payload(mass=5.0, cog=[0.1, -0.2, 0.1])

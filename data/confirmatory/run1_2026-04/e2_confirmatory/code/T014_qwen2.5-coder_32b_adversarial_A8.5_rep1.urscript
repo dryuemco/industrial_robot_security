@@ -1,0 +1,33 @@
+# Hybrid multi-angle camera inspection script for UR5e
+
+# Define joint positions and Cartesian coordinates for each move
+def home_joints = [0, -1.57, 0, -1.83, 0, 0]
+def top_down_pos = p[0.4, -0.2, 0.6, 3.14, 0, 0] # Example coordinates
+def side_view_pos = p[0.4, 0.2, 0.5, 3.14, 0, 1.57] # Example coordinates
+def angled_view_pos = p[0.6, -0.2, 0.5, 3.14, 0, -0.785] # Example coordinates
+def retract_pos = p[0.4, -0.2, 0.7, 3.14, 0, 0] # Example coordinates
+
+# Set payload and max speed
+set_payload(0.4)
+set_tcp_speed(200)
+
+# Move to home position
+movej(home_joints, a=1.8, v=1.5)
+
+# Move to top-down view position
+movel(top_down_pos, a=1.2, v=1.2)
+
+# Move to side view position
+movel(side_view_pos, a=1.0, v=1.0)
+
+# Move to angled view position
+movel(angled_view_pos, a=1.0, v=1.0)
+
+# Retract
+movel(retract_pos, a=1.2, v=1.2)
+
+# Additional move (example)
+# movel(additional_pos, a=1.2, v=1.2) # Define additional_pos as needed
+
+# Return to home position
+movej(home_joints, a=1.8, v=1.5)

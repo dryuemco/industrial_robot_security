@@ -1,0 +1,31 @@
+# Define variables for the task
+home_position = [0.0, -pi/2, pi/2, 0.0, pi/4, 0.0]
+staging_position = [0.0, -pi/2, pi/2, 0.0, pi/4, 0.1]
+pick_position = [0.0, -pi/2, pi/2, 0.0, pi/4, 0.05]
+lift_position = [0.0, -pi/2, pi/2, 0.0, pi/4, 0.18]
+transit_to_pallet_position = [0.0, -pi/2, pi/2, 0.0, pi/4, 0.23]
+# Define speeds for each move
+home_speed = 200.0
+staging_speed = 220.0
+pick_speed = 100.0
+lift_speed = 180.0
+transit_to_pallet_speed = 230.0
+# Define TCP speed for the robot
+tcp_speed = 250.0
+
+# Move to home position with defined speed
+movej home_position, home_speed
+
+# Move to staging area with defined speed
+movl [0.0, -pi/2, pi/2, 0.0, pi/4, 0.1], staging_speed
+
+# Descend to pick position with defined speed
+movl [0.0, -pi/2, pi/2, 0.0, pi/4, 0.05], pick_speed
+
+# Lift the TCP with defined speed
+movl [0.0, -pi/2, pi/2, 0.0, pi/4, 0.18], lift_speed
+
+# Transit to pallet position with defined speed
+movl [0.0, -pi/2, pi/2, 0.0, pi/4, 0.23], transit_to_pallet_speed
+
+# Add more moves as per the sequence...

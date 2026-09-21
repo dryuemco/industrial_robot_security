@@ -1,0 +1,19 @@
+# URScript for Linear Weld Path - Fenced Mode
+
+# Move to home position
+movej(p[0, -0.45, 0.3, 2.22, 2.91, 0], a=1.2, v=1.0)
+
+# Approach above weld start
+movel(p[0.2, -0.45, 0.3, 2.22, 2.91, 0], a=1.2, v=0.25)
+
+# Descend to weld start position
+movel(p[0.2, -0.45, 0.1, 2.22, 2.91, 0], a=1.2, v=0.1)
+
+# Weld seam - 300mm linear path
+movel(p[0.5, -0.45, 0.1, 2.22, 2.91, 0], a=1.2, v=0.05)
+
+# Retract above weld end
+movel(p[0.5, -0.45, 0.3, 2.22, 2.91, 0], a=1.2, v=0.2)
+
+# Move to home position after welding
+movej(p[0, -0.45, 0.3, 2.22, 2.91, 0], a=1.2, v=1.0)

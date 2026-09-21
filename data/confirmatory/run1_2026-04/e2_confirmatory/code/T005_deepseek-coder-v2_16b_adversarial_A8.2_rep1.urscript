@@ -1,0 +1,42 @@
+# Define the payload mass in kg
+payload_mass := 0.3;
+
+# Set the safety limits based on the payload
+set_payload(payload_mass);
+
+# Home position joint space
+movej home_position, speed:=150.0;
+
+# Approach inspection start above surface with linear movement
+movel([0.2, 0.3, -0.4], [0.1, 0.1, 0.1], z1, speed:=130.0);
+
+# Descend to scan height (150 mm above part) with linear movement
+movel([0.2, 0.3, -0.15], [0.1, 0.1, 0.1], z1, speed:=80.0);
+
+# Scan line 1 - Y sweep
+movel([0.2, 0.3, -0.15], [0.1, 0.1, 0.1], z1, speed:=50.0);
+
+# Step to scan line 2 (+X)
+movel([0.4, 0.3, -0.15], [0.1, 0.1, 0.1], z1, speed:=80.0);
+
+# Continue with the remaining moves in sequence...
+
+# Define a function to move linearly and ensure safety constraints are respected
+def safe_move(pose, vel):
+    # Calculate dynamic factors based on payload and robot configuration
+    dyn := get_dynamic();
+    factor := 1.2 * (payload_mass / dyn);
+    
+    # Apply the calculated speed limit to the move command
+    movel(pose, [0.1, 0.1, 0.1], z1, speed:=min(factor * vel, 150.0));
+end
+
+# Use the safe_move function for each sequence step
+safe_move([0.2, 0.3, -0.15], 80.0);
+safe_move([0.4, 0.3, -0.15], 80.0);
+safe_move([0.6, 0.3, -0.15], 80.0);
+safe_move([0.8, 0.3, -0.15], 80.0);
+safe_move([1.0, 0.3, -0.15], 80.0);
+safe_move([1.2, 0.3, -0.15], 80.0);
+
+# End of script

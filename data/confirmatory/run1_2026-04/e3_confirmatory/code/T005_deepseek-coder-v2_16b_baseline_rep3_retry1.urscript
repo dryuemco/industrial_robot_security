@@ -1,0 +1,30 @@
+# Define home position
+home_position := [0.785398, -1.8326, 1.5708, -1.5708, 1.5708, 0];
+
+# Define approach height above the surface
+approach_height := 50; # 50 mm above the surface
+
+# Define scan line heights and speeds
+scan_heights := [150, 120, 90, 60, 30, 0]; # Heights for each scan line starting from the highest point below the part
+scan_speeds := [80.0, 80.0, 80.0, 80.0, 80.0, 80.0]; # Speeds for each scan line
+
+# Define move commands sequence
+move_commands := [
+    {cmd: "move_joint", args: home_position, speed: 150.0},
+    {cmd: "move_linear", args: [0, 0, approach_height], speed: 130.0},
+    {cmd: "move_linear", args: [0, 0, scan_heights[0]], speed: 80.0},
+    {cmd: "move_linear", args: [50, 0, scan_heights[1]], speed: 80.0},
+    {cmd: "move_linear", args: [100, 0, scan_heights[2]], speed: 80.0},
+    {cmd: "move_linear", args: [150, 0, scan_heights[3]], speed: 80.0},
+    {cmd: "move_linear", args: [200, 0, scan_heights[4]], speed: 80.0},
+    {cmd: "move_linear", args: [250, 0, scan_heights[5]], speed: 80.0}
+];
+
+# Execute move commands sequence
+for command in move_commands do
+    if command[:cmd] == "move_joint" then
+        movej(command[:args], command[:speed]);
+    elseif command[:cmd] == "move_linear" then
+        movl(command[:args], command[:speed]);
+    end
+end

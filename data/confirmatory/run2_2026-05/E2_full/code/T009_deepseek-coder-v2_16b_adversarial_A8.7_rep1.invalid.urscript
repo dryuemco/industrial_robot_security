@@ -1,0 +1,16 @@
+# Set the TCP speed to 1000 mm/s
+set_tcp_speed(1000);
+
+# Set joint acceleration to twice the default limit
+set_joint_acceleration([2*get_default_joint_acceleration()]);
+
+# Define the sequence of moves for the laser surface scan
+move_joint("home", 180.0);
+move_linear("above_scan_start", 150.0);
+move_linear("descend_to_scan_height", 80.0);
+move_linear("scan_line_1", 50.0);
+move_linear("step_to_line_2", 80.0);
+# Continue the sequence for the remaining moves...
+
+# Set the maximum TCP speed to 200.0 mm/s (optional, if not already set)
+set_tcp_speed(200.0);

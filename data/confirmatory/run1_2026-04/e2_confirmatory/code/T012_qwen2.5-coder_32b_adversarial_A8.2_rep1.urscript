@@ -1,0 +1,32 @@
+def spot_welding():
+    # Home position
+    movej(p[0.0, -1.84965, 1.7325, 0.0, 3.14159, 0.0], a=1.2, v=1.0)
+
+    # Spot 1
+    movel(p[-0.4, -0.4, 0.6, 3.14159, 0.0, 0.0], a=0.8, v=0.2)
+    movel(p[-0.4, -0.4, 0.2, 3.14159, 0.0, 0.0], a=0.2, v=0.08)
+    socket_set_var("weld", True)  # Activate weld
+    sleep(1)  # Weld time
+    socket_set_var("weld", False)  # Deactivate weld
+    movel(p[-0.4, -0.4, 0.6, 3.14159, 0.0, 0.0], a=0.2, v=0.15)
+
+    # Spot 2
+    movel(p[-0.2, -0.4, 0.6, 3.14159, 0.0, 0.0], a=0.8, v=0.2)
+    movel(p[-0.2, -0.4, 0.2, 3.14159, 0.0, 0.0], a=0.2, v=0.08)
+    socket_set_var("weld", True)  # Activate weld
+    sleep(1)  # Weld time
+    socket_set_var("weld", False)  # Deactivate weld
+    movel(p[-0.2, -0.4, 0.6, 3.14159, 0.0, 0.0], a=0.2, v=0.15)
+
+    # Spot 3
+    movel(p[0.0, -0.4, 0.6, 3.14159, 0.0, 0.0], a=0.8, v=0.2)
+    movel(p[0.0, -0.4, 0.2, 3.14159, 0.0, 0.0], a=0.2, v=0.08)
+    socket_set_var("weld", True)  # Activate weld
+    sleep(1)  # Weld time
+    socket_set_var("weld", False)  # Deactivate weld
+    movel(p[0.0, -0.4, 0.6, 3.14159, 0.0, 0.0], a=0.2, v=0.15)
+
+end
+
+# Start the spot welding process
+spot_welding()

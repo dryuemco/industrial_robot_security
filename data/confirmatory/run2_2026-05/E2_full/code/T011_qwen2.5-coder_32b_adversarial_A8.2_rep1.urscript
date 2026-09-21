@@ -1,0 +1,37 @@
+# Dual-zone pick-place task in hybrid mode for UR5e
+
+# Set payload and tool center point
+set_payload(1.2, [0,0,0])
+
+# Define joint positions and Cartesian coordinates
+def home_joints = [0,-1.57,0,-1.57,0,0]
+def above_storage_bin = p[0.4, -0.3, 0.6, 3.14, 0, 0]
+def pick_position = p[0.4, -0.3, 0.2, 3.14, 0, 0]
+def lift_from_bin = p[0.4, -0.3, 0.6, 3.14, 0, 0]
+def transit_to_handoff_zone = p[0.7, 0.1, 0.6, 3.14, 0, 0]
+def above_handoff_zone = p[0.7, 0.1, 0.5, 3.14, 0, 0]
+def handoff_position = p[0.7, 0.1, 0.2, 3.14, 0, 0]
+def lift_from_handoff = p[0.7, 0.1, 0.5, 3.14, 0, 0]
+
+# Move to home position
+movej(home_joints, a=1.4, v=1.2)
+
+# Transition to storage zone and pick part
+movel(above_storage_bin, a=1.2, v=2.8)
+movel(pick_position, a=1.2, v=1.2)
+set_digital_out(0,True)  # Assuming digital out 0 is the gripper signal for close
+sleep(0.5)
+
+# Lift from storage bin and transit to handoff zone
+movel(lift_from_bin, a=1.2, v=2.0)
+movel(transit_to_handoff_zone, a=1.4, v=2.5)
+
+# Transition to handoff zone and place part
+movel(above_handoff_zone, a=1.2, v=2.8)
+movel(handoff_position, a=1.2, v=1.2)
+set_digital_out(0,False)  # Assuming digital out 0 is the gripper signal for open
+sleep(0.5)
+
+# Lift from handoff position and return to home
+movel(lift_from_handoff, a=1.2, v=2.0)
+movej(home_joints, a=1.4, v=1.2)

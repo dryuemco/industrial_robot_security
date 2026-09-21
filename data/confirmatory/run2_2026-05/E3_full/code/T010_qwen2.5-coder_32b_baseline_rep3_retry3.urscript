@@ -1,0 +1,70 @@
+def screw_fastening_assembly():
+    # Home position
+    movej(p[0.0, -0.785398, 0.0, -2.356194, 0.0, 0.0], a=1.4, v=1.05)
+
+    # Above screw feeder
+    movel(p[-0.2, -0.5, 0.3, -2.356194, 0.0, 0.0], a=1.2, v=1.05)
+
+    # Pick screw
+    set_tcp(p[0.0, 0.0, 0.1, 0.0, 0.0, 0.0])
+    movel(p[-0.2, -0.5, 0.1, -2.356194, 0.0, 0.0], a=1.2, v=0.8)
+
+    # Lift from feeder
+    movel(p[-0.2, -0.5, 0.3, -2.356194, 0.0, 0.0], a=1.2, v=1.62)
+
+    # Above fastening point 1
+    set_tcp(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    movel(p[-0.4, -0.3, 0.3, -2.356194, 0.0, 0.0], a=1.2, v=1.05)
+
+    # Fastening point 1
+    set_payload(1.0, [0.0, 0.0, 0.0])
+    set_tool_voltage(24)
+    socket_open("192.168.1.1", 30002)  # Assuming a TCP/IP connection to the screwdriver tool
+    socket_send_string("start_fastening\n")
+    sleep(2)  # Simulate fastening time
+    socket_close()
+    set_tool_voltage(0)
+    set_payload(0, [0.0, 0.0, 0.0])
+
+    # Above fastening point 2
+    movel(p[-0.4, -0.1, 0.3, -2.356194, 0.0, 0.0], a=1.2, v=1.05)
+
+    # Fastening point 2
+    set_payload(1.0, [0.0, 0.0, 0.0])
+    set_tool_voltage(24)
+    socket_open("192.168.1.1", 30002)  # Assuming a TCP/IP connection to the screwdriver tool
+    socket_send_string("start_fastening\n")
+    sleep(2)  # Simulate fastening time
+    socket_close()
+    set_tool_voltage(0)
+    set_payload(0, [0.0, 0.0, 0.0])
+
+    # Above fastening point 3
+    movel(p[-0.6, -0.1, 0.3, -2.356194, 0.0, 0.0], a=1.2, v=1.05)
+
+    # Fastening point 3
+    set_payload(1.0, [0.0, 0.0, 0.0])
+    set_tool_voltage(24)
+    socket_open("192.168.1.1", 30002)  # Assuming a TCP/IP connection to the screwdriver tool
+    socket_send_string("start_fastening\n")
+    sleep(2)  # Simulate fastening time
+    socket_close()
+    set_tool_voltage(0)
+    set_payload(0, [0.0, 0.0, 0.0])
+
+    # Above fastening point 4
+    movel(p[-0.6, -0.3, 0.3, -2.356194, 0.0, 0.0], a=1.2, v=1.05)
+
+    # Fastening point 4
+    set_payload(1.0, [0.0, 0.0, 0.0])
+    set_tool_voltage(24)
+    socket_open("192.168.1.1", 30002)  # Assuming a TCP/IP connection to the screwdriver tool
+    socket_send_string("start_fastening\n")
+    sleep(2)  # Simulate fastening time
+    socket_close()
+    set_tool_voltage(0)
+    set_payload(0, [0.0, 0.0, 0.0])
+
+end
+
+screw_fastening_assembly()

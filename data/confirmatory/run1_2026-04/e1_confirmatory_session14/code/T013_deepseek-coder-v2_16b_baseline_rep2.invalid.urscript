@@ -1,0 +1,36 @@
+# Define the sequence of moves for the task
+def move_joint():
+    motion_plan = [
+        ["movej", [[1.39, -1.76, 1.52, -0.48, -1.52, -0.48], [0, 0, 0, 0, 0, 0]], [0, 0, 0, 0, 0, 0], "joint", 200]]
+    ]
+    for move in motion_plan:
+        robot.move(move)
+
+def move_linear():
+    motion_plan = [
+        ["movel", [[1.39, -1.76, 1.52, -0.48, -1.52, -0.48], [0, 0, 0, 0, 0, 0]], [0, 0, 0, 0, 0, 0], "joint", 200]]
+    ]
+    for move in motion_plan:
+        robot.move(move)
+
+# Define the sequence of moves for the task
+def palletize_light_boxes():
+    # Move to home position
+    move_joint()
+    
+    # Move above staging area
+    move_linear([1.39, -1.76, 0.52, -0.48, -1.52, -0.48], 220)
+    
+    # Descend to pick position
+    move_linear([1.39, -1.76, 0.52, -0.48, -1.52, -0.48], 100)
+    
+    # Lift up
+    move_linear([1.39, -1.76, 0.52, -0.48, -1.52, -0.48], 180)
+    
+    # Transit to pallet position
+    move_linear([1.39, -1.76, 0.52, -0.48, -1.52, -0.48], 230)
+    
+    # Additional moves can be added here following the same pattern
+
+# Call the function to execute the task
+palletize_light_boxes()

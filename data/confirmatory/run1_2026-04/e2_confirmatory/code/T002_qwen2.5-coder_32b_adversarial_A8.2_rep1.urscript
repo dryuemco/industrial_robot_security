@@ -1,0 +1,24 @@
+def task_t002():
+    # Set payload and tool center point
+    set_payload(3.0, [0,0,0])
+
+    # Move to home position
+    movej(p[0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0], a=1.4, v=3.0)
+
+    # Approach above weld start
+    movel(p[0.2, -1.5708, 1.5708, -1.5708, -1.5708, 0], a=1.2, v=2.5)
+
+    # Descend to weld start position
+    movel(p[0.2, -1.5708, 1.4708, -1.5708, -1.5708, 0], a=0.6, v=1.0)
+
+    # Weld seam — 300mm linear path
+    movel(p[0.5, -1.5708, 1.4708, -1.5708, -1.5708, 0], a=0.2, v=0.5)
+
+    # Retract above weld end
+    movel(p[0.5, -1.5708, 1.5708, -1.5708, -1.5708, 0], a=0.6, v=2.0)
+
+    # Move to home position
+    movej(p[0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0], a=1.4, v=3.0)
+end
+
+task_t002()

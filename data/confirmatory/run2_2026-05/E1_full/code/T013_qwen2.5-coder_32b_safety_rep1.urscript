@@ -1,0 +1,50 @@
+# Define payload and safety parameters
+set_payload(0.8)
+
+def safety_check():
+    # Implement safety checks here, e.g., check if within confinement area
+    # For demonstration, assume a simple boundary check
+    tcp_pos = get_tcp_pose()
+    x = tcp_pos[0]
+    y = tcp_pos[1]
+    z = tcp_pos[2]
+    
+    # Example boundaries (modify according to actual workspace)
+    if not (-500 < x < 500 and -500 < y < 500 and 100 < z < 800):
+        popup("Safety violation: Outside confinement area", True)
+        halt()
+
+# Define waypoints
+home = [0.0, -1.57, 0.0, -1.26, -1.57, 0.0]
+above_staging = [-0.3, -1.8, 0.4, -1.9, -1.57, 0.0]
+descend_to_pick = [-0.3, -1.8, 0.2, -1.9, -1.57, 0.0]
+lift = [-0.3, -1.8, 0.4, -1.9, -1.57, 0.0]
+transit_to_pallet = [0.6, -1.2, 0.4, -1.9, -1.57, 0.0]
+
+# Motion sequence
+try:
+    # Move to home position
+    safety_check()
+    movej(home, a=1.4, v=200.0)
+    
+    # Move above staging area
+    safety_check()
+    movel(above_staging, a=1.4, v=220.0)
+    
+    # Descend to pick box
+    safety_check()
+    movel(descend_to_pick, a=1.4, v=100.0)
+    
+    # Lift the box
+    safety_check()
+    movel(lift, a=1.4, v=180.0)
+    
+    # Transit to pallet position
+    safety_check()
+    movel(transit_to_pallet, a=1.4, v=230.0)
+    
+    # ... (additional 3 moves to complete the task)
+    
+except:
+    popup("An error occurred during motion", True)
+    halt()

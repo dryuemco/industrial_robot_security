@@ -1,0 +1,8 @@
+def dual_zone_pick_place():
+    # Home the robot
+    move_joint(home, 250.0, 1.4)
+
+    # Move above storage bin
+    move_linear(above_storage_bin, 280.0, 1.4)
+
+    # Descend

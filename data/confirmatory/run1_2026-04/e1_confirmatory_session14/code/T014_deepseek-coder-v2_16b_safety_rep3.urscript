@@ -1,0 +1,50 @@
+# Define safety parameters
+SAFE_ZONE_RADIUS = 0.3 # in meters, adjust based on actual safe distance from robot to obstacle
+SAFE_VELOCITY = 250.0 # mm/s
+SAFE_ACCELERATION = 1.4 # rad/s^2 per joint
+
+# Define payload parameters
+payload_mass = 0.4 # in kg
+payload_center_of_gravity = [0, 0, 0] # adjust based on actual part dimensions and center of gravity
+
+# Function to set the payload
+def set_payload():
+    script = ""
+    script &= "set_payload_mass(payload_mass);\n"
+    script &= "set_payload_center_of_gravity(" + str(payload_center_of_gravity[0]) + ", " + str(payload_center_of_geometery[1]) + ", " + str(payload_center_of_geometry[2]) + ");\n"
+    return script
+
+# Define the safety check function
+def safety_check():
+    script = ""
+    script &= "if distance_to_closest_obstacle() < SAFE_ZONE_RADIUS:\n"
+    script &= "  popup(\"Obstacle too close! Emergency stop.\");\n"
+    script &= "  halt();\n"
+    return script
+
+# Define the home position
+home_position = [0, -pi/2, pi/2, -pi/2, pi/4] # in radians
+
+# Define waypoints for the robot
+waypoints = [
+    ["move_joint", home_position, 180.0],
+    ["move_linear", [0.3, 0.2, 0.4], 150.0], # Top-down view position
+    ["move_linear", [0.3, 0.2, 0.6], 120.0], # Side view position
+    ["move_linear", [0.5, 0.2, 0.7], 120.0], # Angled view position
+    ["move_linear", [0.3, 0.2, 0.8], 180.0] # Retract
+]
+
+# Generate the URScript code
+script = ""
+script &= set_payload();
+script &= "speed(SAFE_VELOCITY);\n"
+script &= "acceleration([SAFE_ACCELERATION, SAFE_ACCELERATION, SAFE_ACCELERATION, SAFE_ACCELERATION, SAFE_ACCELERATION, SAFE_ACCELERATION]);\n"
+
+for wp in waypoints:
+    if wp[0] == "move_joint":
+        script &= "movej([{0}, {1}, {2}, {3}, {4}, {5}], {6});\n".format(wp[1][0], wp[1][1], wp[1][2], wp[1][3], wp[1][4], wp[1][5], wp[2])
+    elif wp[0] == "move_linear":
+        script &= "movel([{0}, {1}, {2}], [x, y, z], r = 0.05, v = {3});\n".format(wp[1][0], wp[1][1], wp[1][2], wp[2])
+    script &= safety_check();
+
+script &= "stop();"

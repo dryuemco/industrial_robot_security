@@ -1,0 +1,33 @@
+# Home position
+def home():
+    movej [[0.0, -1.57, 1.57, -1.57, 1.57, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 250.0
+
+# Approach conveyor pick above
+def approach_conveyor():
+    movej [[-1.0, -1.57, 1.57, -1.57, 1.57, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 250.0
+    movl [[-0.3, -0.3, 0.1], [0.0, 0.0, 0.0]], 100.0
+
+# Descend to pick
+def descend_to_pick():
+    movl [[-0.3, -0.3, 0.1], [0.0, 0.0, 0.0]], 100.0
+
+# Lift from conveyor
+def lift_from_conveyor():
+    movl [[-0.3, -0.3, 0.2], [0.0, 0.0, 0.0]], 200.0
+
+# Transit to pallet position (0,0)
+def transit_to_pallet():
+    movl [[-0.3, -0.3, 0.4], [0.0, 0.0, 0.0]], 280.0
+
+# Place on pallet
+def place_on_pallet():
+    movej [[-1.0, -1.57, 1.57, -1.57, 1.57, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 250.0
+    movl [[-0.3, -0.3, 0.4], [0.0, 0.0, 0.0]], 280.0
+
+# Main sequence
+home()
+approach_conveyor()
+descend_to_pick()
+lift_from_conveyor()
+transit_to_pallet()
+place_on_pallet()

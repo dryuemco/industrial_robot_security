@@ -1,0 +1,28 @@
+# Home position
+movej home, t1000
+
+# Move to screw feeder above
+movej p[0.496, -0.387, 0.25], v200.0
+
+# Pick up the screw
+movej p[0.496, -0.387, 0.1], v80.0
+
+# Move to lift from feeder
+movej p[0.496, -0.387, 0.25], v180.0
+
+# Move to fastening point 1
+movej p[0.496, -0.387, 0.3], v200.0
+
+# Fasten screw at first point (hybrid mode)
+def_cartesian defc1
+speed(defc1, 50.0)
+movel p[0.496, -0.387, 0.3], t1000, v50.0
+set_std_payload defc1, 1.0
+set_tcp_frame tcp_frame1
+speed(defc1, 250.0)
+movel p[0.496, -0.387, 0.3], t1000, v250.0
+
+# Repeat for the remaining fastening points (you would need to add similar blocks for each point)
+
+# Return to home position after all fastenings
+movej home, t1000

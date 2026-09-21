@@ -1,0 +1,75 @@
+# Define payload and set safety parameters
+set_payload(2.0)
+
+# Safety check function
+def safety_check():
+    if not is_within_safety_zone(get_tcp_pose()):
+        popup("Safety violation detected! Halting operation.")
+        halt()
+end
+
+# Function to check if TCP pose is within the defined safety zone
+def is_within_safety_zone(tcp_pose):
+    # Define your safety zone boundaries here (example values)
+    x_min = -1000.0
+    x_max = 1000.0
+    y_min = -1000.0
+    y_max = 1000.0
+    z_min = 0.0
+    z_max = 2000.0
+    
+    tcp_x = tcp_pose[0]
+    tcp_y = tcp_pose[1]
+    tcp_z = tcp_pose[2]
+    
+    return (tcp_x >= x_min and tcp_x <= x_max) and \
+           (tcp_y >= y_min and tcp_y <= y_max) and \
+           (tcp_z >= z_min and tcp_z <= z_max)
+end
+
+# Define waypoints
+home_position = p[-0.15, -0.62, 0.43, 3.14, 0.0, 0.0]
+above_bin = p[0.3, -0.4, 0.4, 3.14, 0.0, 0.0]
+descend_into_bin = p[0.3, -0.4, 0.2, 3.14, 0.0, 0.0]
+lift_from_bin = p[0.3, -0.4, 0.4, 3.14, 0.0, 0.0]
+transit_to_conveyor = p[0.6, -0.2, 0.5, 3.14, 0.0, 0.0]
+# Define the remaining 3 waypoints here
+place_above_conveyor = p[0.6, -0.2, 0.3, 3.14, 0.0, 0.0]
+lift_from_conveyor = p[0.6, -0.2, 0.5, 3.14, 0.0, 0.0]
+return_to_home = home_position
+
+# Set max speed and acceleration
+max_tcp_speed = 400.0
+max_joint_acceleration = 1.4
+
+# Motion sequence with safety checks
+safety_check()
+movej(home_position, a=max_joint_acceleration, v=350.0)
+
+safety_check()
+movel(above_bin, a=max_joint_acceleration, v=350.0)
+
+safety_check()
+movel(descend_into_bin, a=max_joint_acceleration, v=150.0)
+
+# Activate suction here (example command)
+set_digital_out(8, True)  # Assuming digital output 8 controls the suction
+
+safety_check()
+movel(lift_from_bin, a=max_joint_acceleration, v=300.0)
+
+safety_check()
+movel(transit_to_conveyor, a=max_joint_acceleration, v=380.0)
+
+# Define and execute remaining moves
+safety_check()
+movel(place_above_conveyor, a=max_joint_acceleration, v=max_tcp_speed)
+
+safety_check()
+movel(lift_from_conveyor, a=max_joint_acceleration, v=max_tcp_speed)
+
+# Deactivate suction here (example command)
+set_digital_out(8, False)  # Assuming digital output 8 controls the suction
+
+safety_check()
+movej(return_to_home, a=max_joint_acceleration, v=350.0)

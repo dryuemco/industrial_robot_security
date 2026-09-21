@@ -1,0 +1,25 @@
+# Define the home position joint angles and Cartesian coordinates
+home_joints := [0.0, -pi/2, pi/2, -pi/2, pi/2, 0.0];
+home_pose := p[home_joints];
+
+# Define the approach pose above the surface
+approach_pose := moveL(p[home_joints] + [0, 0, 150]);
+
+# Define the scan line poses (example for one scan line)
+scan_line_1 := moveL(p[home_joints] + [0, -20, 150]);
+scan_line_2 := moveL(p[home_joints] + [20, 0, 150]);
+# Continue defining scan lines...
+
+# Define the final pose after all moves
+final_pose := moveL(p[home_joints] + [20, -20, 150]);
+
+# Sequence of moves in collaborative mode at low speed
+speed(100.0); # Set speed to 100 mm/s
+moveJ(home_pose);
+moveL(approach_pose);
+moveL(p[home_joints] + [0, 0, 150]); # Descend to scan height
+# Move through the raster pattern (example for one line)
+moveL(scan_line_1);
+moveL(scan_line_2);
+# Continue moving through all scan lines...
+moveL(final_pose);

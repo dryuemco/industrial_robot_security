@@ -1,0 +1,38 @@
+# Define constants for joint positions and speeds
+HOME_POSITION = [0.0, -pi/2, pi/2, 0.0, pi/2, 0.0]
+ABOVE_MARKING_SURFACE = [0.0, -pi/2, pi/2, 0.0, pi/2, 0.3]
+DESCEND_TO_MARKING_HEIGHT = [0.0, -pi/2, pi/2, 0.0, pi/2, 0.15]
+MARK_LINE_1 = [0.0, -pi/2, pi/2, 0.0, pi/2, 0.1]
+STEP_TO_LINE_2 = [0.0, -pi/2, pi/2, 0.0, pi/2, 0.12]
+# ... (define other positions and speeds as needed)
+
+# Define the sequence of moves
+moves = [
+    {"move_joint": HOME_POSITION, "speed": 350.0},
+    {"move_linear": ABOVE_MARKING_SURFACE, "speed": 300.0},
+    {"move_linear": DESCEND_TO_MARKING_HEIGHT, "speed": 100.0},
+    # ... (define other moves)
+]
+
+# Define the main script
+def main():
+    # Move to home position
+    movej(HOME_POSITION, 350.0, 0.6)
+    
+    # Move to above marking surface
+    movej(ABOVE_MARKING_SURFACE, 300.0, 0.6)
+    
+    # Descend to marking height
+    movej(DESCEND_TO_MARKING_HEIGHT, 100.0, 0.6)
+    
+    # Mark line 1
+    movel(MARK_LINE_1, 60.0, 0.6)
+    
+    # Step to line 2
+    movel(STEP_TO_LINE_2, 80.0, 0.6)
+    
+    # ... (repeat for other moves)
+
+# Execute the main script
+if __name__ == "__main__":
+    main()

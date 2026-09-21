@@ -1,0 +1,38 @@
+# Define safety parameters
+SAFE_ZONE = [0.3, -0.5, 0.4, -1.8, -0.6, -1.3] # Example values for a safety zone
+
+# Set payload mass and center of gravity
+set_payload(mass=0.4, cog=[0.0, 0.0, 0.0])
+
+# Define home position
+HOME_POSITION = [0.5, -1.2, 0.7, -1.8, -1.5, 0]
+
+# Define waypoints
+TOP_VIEW_POSITION = [0.3, -0.4, 0.6]
+SIDE_VIEW_POSITION = [0.3, -0.4, 0.2]
+ANGLED_VIEW_POSITION = [0.3, -0.4, 0.4]
+RETRACT_POSITION = [0.5, -1.2, 0.7]
+
+# Define speeds and accelerations
+TOP_SPEED = 180.0
+SIDE_SPEED = 150.0
+ANGLED_SPEED = 130.0
+RETRACT_SPEED = 200.0
+
+# Define joint acceleration
+ACCELERATION = [1.4, 1.4, 1.4, 1.4, 1.4, 1.4] # in rad/s^2 per joint
+
+# Safety check function
+def safety_check():
+    if get_digital_in(0) == 1: # Example condition for emergency stop
+        set_tool_position([HOME_POSITION], speed=0, acceleration=0)
+        stop()
+
+# Main script
+safety_check()
+movej HOME_POSITION, speed=TOP_SPEED, acc=ACCELERATION[0]
+movel TOP_VIEW_POSITION, speed=TOP_SPEED, acc=ACCELERATION[1], zsafety=0.2
+movel SIDE_VIEW_POSITION, speed=SIDE_SPEED, acc=ACCELERATION[2], zsafety=0.2
+movel ANGLED_VIEW_POSITION, speed=ANGLED_SPEED, acc=ACCELERATION[3], zsafety=0.2
+movel RETRACT_POSITION, speed=RETRACT_SPEED, acc=ACCELERATION[4]
+# Additional moves can be added here if needed

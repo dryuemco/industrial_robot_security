@@ -1,0 +1,27 @@
+# Define the home position and other parameters
+home_position := [0.3, -1.2, 1.2, -1.8, -1.5, 0]; # Home position in radians
+approach_height := 150; # Height above part surface for approach
+scan_heights := [150, 150, 150]; # Heights for each scan line in mm
+scan_speeds := [80, 80, 80]; # Speeds for each scan line in mm/s
+sweep_distances := [20, 20, 20]; # Distances for Y sweep in mm
+step_distances := [20, 20, 20]; # Distances to step to next line in mm
+
+# Define the sequence of movements
+moves := [
+  ["move_joint", home_position, 150.0],
+  ["move_linear", [0, -0.3, approach_height], 130.0],
+  ["move_linear", [0, -0.3, scan_heights[0]], 80.0],
+  ["move_linear", [step_distances[0], -0.3, scan_heights[0]], 80.0],
+  ["move_linear", [step_distances[0] + step_distances[1], -0.3, scan_heights[1]], 80.0],
+  ["move_linear", [step_distances[0] + step_distances[1] + step_distances[2], -0.3, scan_heights[2]], 80.0],
+  # Add the remaining moves similarly
+];
+
+# Execute the sequence of movements
+for move in moves do
+  if move[0] == "move_joint" then
+    movelj(move[1], move[3]);
+  elseif move[0] == "move_linear" then
+    movl(move[1], move[3], 0, 0);
+  end
+end

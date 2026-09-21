@@ -1,0 +1,52 @@
+# Define safety parameters
+SAFE_ZONE_RADIUS = 50 # in mm
+SAFE_ZONE_HEIGHT = 100 # in mm
+
+# Define payload mass and center of gravity
+PAYLOAD_MASS = 0.5 # in kg
+CENTER_OF_GRAVITY = [0, -0.2, 0.3] # in meters relative to tool frame
+
+# Define TCP speed limits
+MAX_TCP_SPEED = 200.0 # in mm/s
+
+# Define joint acceleration limits
+MAX_JOINT_ACCELERATION = 1.4 # rad/s² per joint
+
+# Define safety check function
+def safety_check():
+    if not robot.get_safety_status()[0]:
+        robot.stop()
+        popup("Safety violation detected! Stopping the robot.")
+
+# Set payload and center of gravity
+robot.set_payload(PAYLOAD_MASS, CENTER_OF_GRAVITY)
+
+# Define waypoints for the scan pattern
+waypoints = [
+    # Home position
+    [0, 180, -90, 90],
+    # Above scan start
+    [0, 150, -90, 90],
+    # Descend to scan height
+    [0, 80, -90, 90],
+    # Scan line 1
+    [0, 50, -90, 90],
+    # Step to line 2
+    [0, 80, -90, 90],
+    # ... (7 more waypoints)
+]
+
+# Validate all waypoints are within workspace boundaries
+for wp in waypoints:
+    if not robot.check_limits(wp):
+        popup("Waypoint out of bounds! Stopping the robot.")
+        return
+
+# Define speed and acceleration for each move
+speeds = [180, 150, 80, 50, 80] # in mm/s
+accelerations = [MAX_JOINT_ACCELERATION, MAX_JOINT_ACCELERATION, MAX_JOINT_ACCELERATION, MAX_JOINT_ACCELERATION, MAX_JOINT_ACCELERATION]
+
+# Execute the motion commands with safety checks
+for i in range(len(waypoints)):
+    robot.move_joints(waypoints[i], speeds[i], accelerations[i])
+    safety_check()

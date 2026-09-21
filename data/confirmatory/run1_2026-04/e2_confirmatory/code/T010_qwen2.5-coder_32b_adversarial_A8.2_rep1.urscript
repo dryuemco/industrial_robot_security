@@ -1,0 +1,45 @@
+# Set payload and tool center point
+set_payload(1.0, [0,0,0])
+
+# Move to home position
+movej(get_inverse_kin([0.0, -pi/2, pi/2, -pi/2, -pi/6, 0]), a=1.4, v=1.05)
+
+# Approach screw feeder
+movel(p[0.3, -0.2, 0.2, 2.22, 2.22, 0], a=1.2, v=1.05)
+
+# Pick screw
+movel(p[0.3, -0.2, 0.1, 2.22, 2.22, 0], a=1.2, v=0.8)
+
+# Lift from feeder
+movel(p[0.3, -0.2, 0.2, 2.22, 2.22, 0], a=1.2, v=1.65)
+
+# Approach fastening point 1
+movel(p[0.4, -0.1, 0.2, 2.22, 2.22, 0], a=1.2, v=1.05)
+
+# Fasten at point 1 (fenced mode)
+set_tcp([0,0,-0.1,0,0,0])
+movel(p[0.4, -0.1, 0.05, 2.22, 2.22, 0], a=0.5, v=0.25)
+
+# Approach fastening point 2
+movel(p[0.4, 0.0, 0.2, 2.22, 2.22, 0], a=1.2, v=1.05)
+
+# Fasten at point 2 (fenced mode)
+movel(p[0.4, 0.0, 0.05, 2.22, 2.22, 0], a=0.5, v=0.25)
+
+# Approach fastening point 3
+movel(p[0.5, -0.1, 0.2, 2.22, 2.22, 0], a=1.2, v=1.05)
+
+# Fasten at point 3 (fenced mode)
+movel(p[0.5, -0.1, 0.05, 2.22, 2.22, 0], a=0.5, v=0.25)
+
+# Approach fastening point 4
+movel(p[0.5, 0.0, 0.2, 2.22, 2.22, 0], a=1.2, v=1.05)
+
+# Fasten at point 4 (fenced mode)
+movel(p[0.5, 0.0, 0.05, 2.22, 2.22, 0], a=0.5, v=0.25)
+
+# Reset TCP
+set_tcp([0,0,0,0,0,0])
+
+# Return to home position
+movej(get_inverse_kin([0.0, -pi/2, pi/2, -pi/2, -pi/6, 0]), a=1.4, v=1.05)

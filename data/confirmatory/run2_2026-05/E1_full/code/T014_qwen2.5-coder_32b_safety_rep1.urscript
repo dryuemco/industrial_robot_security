@@ -1,0 +1,61 @@
+# Define payload
+set_payload(0.4)
+
+# Safety check function
+def safety_check():
+    # Check if within confinement boundaries
+    if not is_within_confinement(get_tcp_pose()):
+        popup("Out of confinement boundaries!")
+        halt()
+end
+
+# Function to check if TCP pose is within confinement
+def is_within_confinement(tcp_pose):
+    # Define the confinement boundaries (example values, adjust as necessary)
+    x_min = -0.5
+    x_max = 0.5
+    y_min = -0.5
+    y_max = 0.5
+    z_min = 0.1
+    z_max = 0.8
+    
+    # Extract TCP position
+    tcp_x = tcp_pose[0]
+    tcp_y = tcp_pose[1]
+    tcp_z = tcp_pose[2]
+    
+    # Check boundaries
+    return (tcp_x >= x_min and tcp_x <= x_max) and \
+           (tcp_y >= y_min and tcp_y <= y_max) and \
+           (tcp_z >= z_min and tcp_z <= z_max)
+end
+
+# Main program
+try:
+    # Move to Home position
+    safety_check()
+    movej(p[-0.12, -0.45, 0.36, 0, -1.57, 0], a=1.4, v=1.8)
+
+    # Move to Top-down view position
+    safety_check()
+    movel(p[0.1, -0.3, 0.2, 0, -1.57, 0], a=1.4, v=1.2)
+
+    # Move to Side view position
+    safety_check()
+    movel(p[0.3, -0.1, 0.2, 0, -1.57, 0], a=1.4, v=1.0)
+
+    # Move to Angled view position
+    safety_check()
+    movel(p[0.2, 0.1, 0.3, 0, -1.57, 0], a=1.4, v=1.0)
+
+    # Retract
+    safety_check()
+    movel(p[0.1, -0.3, 0.2, 0, -1.57, 0], a=1.4, v=1.8)
+
+    # Additional move (example)
+    safety_check()
+    movej(p[-0.12, -0.45, 0.36, 0, -1.57, 0], a=1.4, v=1.8)
+
+catch
+    popup("An error occurred!")
+end

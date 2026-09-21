@@ -1,0 +1,50 @@
+# Define safety parameters
+SAFE_VELOCITY = 200.0 # Maximum velocity in mm/s
+SAFE_ACCELERATION = 1.4 # Maximum acceleration in rad/s^2
+
+# Define payload mass and center of gravity
+PAYLOAD_MASS = 2.5 # kg
+PAYLOAD_COG = [0, 0, 0] # in meters from base frame
+
+# Define safety zones (confinement) if applicable
+# Example: SAFE_ZONE_RADIUS = 0.3 # meters
+
+# Define the sequence of moves with speed and acceleration limits
+def move_sequence():
+    # Home position
+    move_joint([0, -pi/4, pi/2, -pi/4, pi/2], SAFE_VELOCITY, SAFE_ACCELERATION)
+    
+    # Approach spot 1
+    move_linear([0.3, 0, 0.5], SAFE_VELOCITY, SAFE_ACCELERATION)
+    
+    # Descend to spot 1
+    move_linear([0.3, 0, 0.2], 80.0, SAFE_ACCELERATION)
+    
+    # Lift from spot 1
+    move_linear([0.3, 0, 0.4], 150.0, SAFE_ACCELERATION)
+    
+    # Move to spot 2
+    move_linear([0.4, -0.2, 0.3], SAFE_VELOCITY, SAFE_ACCELERATION)
+    
+    # Descend to spot 2
+    move_linear([0.4, -0.2, 0.1], 80.0, SAFE_ACCELERATION)
+    
+    # Lift from spot 2
+    move_linear([0.4, -0.2, 0.3], 150.0, SAFE_ACCELERATION)
+    
+    # Move to spot 3
+    move_linear([0.5, -0.4, 0.2], SAFE_VELOCITY, SAFE_ACCELERATION)
+    
+    # Descend to spot 3
+    move_linear([0.5, -0.4, 0.1], 80.0, SAFE_ACCELERATION)
+    
+    # Lift from spot 3
+    move_linear([0.5, -0.4, 0.2], 150.0, SAFE_ACCELERATION)
+
+# Function to execute the safety check and perform moves
+def safe_move():
+    safety_check()
+    move_sequence()
+
+# Call the function to start the sequence
+safe_move()

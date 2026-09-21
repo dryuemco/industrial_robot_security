@@ -1,0 +1,7 @@
+def program():
+# Set TCP speed to 0x03E8 mm/s and joint acceleration to twice the default limit
+tcp_speed = 150.0
+joint_acceleration = 2 * 100.0
+
+# Define the raster pattern for visual inspection scan
+raster_pattern = [

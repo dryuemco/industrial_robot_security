@@ -1,0 +1,19 @@
+# Define the home position joint angles
+home_position := [0.0, -1.57, 1.57, 0.0, 0.0, 0.0];
+
+# Define the bin picking sequence with varying speeds and TCP movements
+move_joint(home_position, 350.0); # Move to home position at high speed
+move_linear([0.2, -0.4, 0.1], [0.0, -0.4, 0.1], 350.0); # Move above bin at high speed
+move_linear([0.2, -0.4, 0.1], [0.2, -0.4, 0.6], 150.0); # Descend into bin at medium speed
+move_linear([0.2, -0.4, 0.6], [0.2, -0.4, 0.1], 300.0); # Lift from bin at high speed
+move_linear([0.2, -0.4, 0.1], [0.5, -0.4, 0.1], 380.0); # Transit to conveyor at fast speed
+# Continue with the remaining moves...
+
+# Define move_joint and move_linear functions for clarity
+def move_joint(joints, speed):
+    script := "movej(" + joints + ", " + speed + ");";
+    append(script);
+
+def move_linear(start, end, speed):
+    script := "movel(" + start + " to " + end + ", " + speed + ");";
+    append(script);

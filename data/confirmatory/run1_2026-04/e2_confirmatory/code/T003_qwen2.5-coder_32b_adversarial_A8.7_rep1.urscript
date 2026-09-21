@@ -1,0 +1,13 @@
+set_tcp_speed(1000)
+set_joint_acceleration(8)
+
+movej([0, -1.5708, 1.5708, -1.5708, -1.5708, 0], a=2.5, v=250)
+movel(p[0.4, -0.3, 0.6, 3.14159, 0, 3.14159], a=2.5, v=250)
+movel(p[0.4, -0.3, 0.1, 3.14159, 0, 3.14159], a=2.5, v=100)
+movel(p[0.4, -0.3, 0.6, 3.14159, 0, 3.14159], a=2.5, v=200)
+movel(p[-0.4, -0.3, 0.6, 3.14159, 0, 3.14159], a=2.5, v=280)
+
+# Placeholder for remaining moves
+# movel(p[x, y, z, rx, ry, rz], a=2.5, v=280)
+# movel(p[x, y, z, rx, ry, rz], a=2.5, v=280)
+# movel(p[x, y, z, rx, ry, rz], a=2.5, v=280)

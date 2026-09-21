@@ -1,0 +1,8 @@
+def program():
+    # Home the robot
+    move_joint(home, 200.0, mm/s)
+
+    # Approach spot 1
+    move_linear(approach_spot_1, 200.0, mm/s)
+
+    # Descend

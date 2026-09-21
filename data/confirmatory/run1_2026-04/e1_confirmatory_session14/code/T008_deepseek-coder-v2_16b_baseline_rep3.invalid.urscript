@@ -1,0 +1,24 @@
+# Define the payload mass in kg
+payload := [5.0];
+
+# Set the safety zone confinement to avoid obstacles
+set_safety_zone([0, 0, 0], 100); # Adjust the size of the safety zone as needed
+
+# Move to home position with joint speed 400 mm/s
+movej home, 400.0;
+
+# Move above pallet linearly at 400 mm/s
+movel [x, y, z], [vx, vy, vz], [ax, ay, az], payload, 400.0;
+
+# Descend to top layer linearly at 150 mm/s
+movel [x, y, z], [vx, vy, vz], [ax, ay, az], payload, 150.0;
+
+# Lift box linearly at 200 mm/s
+movel [x, y, z], [vx, vy, vz], [ax, ay, az], payload, 200.0;
+
+# Transit to conveyor linearly at 350 mm/s
+movel [x, y, z], [vx, vy, vz], [ax, ay, az], payload, 350.0;
+
+# Continue with the remaining moves...
+
+# End of script

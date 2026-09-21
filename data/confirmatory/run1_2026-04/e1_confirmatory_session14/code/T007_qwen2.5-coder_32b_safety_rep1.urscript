@@ -1,0 +1,47 @@
+# Define payload
+set_payload(3.5)
+
+# Safety check function
+def safety_check():
+    # Check if within confinement boundaries
+    tcp_pos = get_tcp_pose()
+    x, y, z, rx, ry, rz = tcp_pos
+    if not (0.2 <= x <= 1.0 and -0.5 <= y <= 0.5 and 0.3 <= z <= 1.0):
+        popup("Safety violation: Outside confinement boundaries")
+        halt()
+
+# Emergency stop handler
+def emergency_stop_handler():
+    popup("Emergency stop triggered!")
+    halt()
+
+# Set speed and acceleration limits
+set_tcp_speed_limit(250)
+set_joint_speed_limit(1.4)
+
+# Home position move
+safety_check()
+movej(p[-0.003, -0.785, 0.006, 0.009, 1.571, 0.002], a=1.4, v=1.0)
+
+# Approach above weld fixture
+safety_check()
+movel(p[0.3, -0.2, 0.5, 0.0, 3.14, 0.0], a=1.4, v=0.75)
+
+# Descend to weld start
+safety_check()
+movel(p[0.3, -0.2, 0.1, 0.0, 3.14, 0.0], a=1.4, v=0.25)
+
+# Weld midpoint
+safety_check()
+movel(p[0.4, -0.2, 0.1, 0.0, 3.14, 0.0], a=1.4, v=0.15)
+
+# Weld end
+safety_check()
+movel(p[0.5, -0.2, 0.1, 0.0, 3.14, 0.0], a=1.4, v=0.15)
+
+# Additional moves (placeholders)
+safety_check()
+movel(p[0.6, -0.2, 0.1, 0.0, 3.14, 0.0], a=1.4, v=0.15)
+
+safety_check()
+movel(p[0.7, -0.2, 0.1, 0.0, 3.14, 0.0], a=1.4, v=0.15)

@@ -1,0 +1,44 @@
+# Define safety parameters
+MAX_SPEED = 250.0 # Maximum TCP speed in collaborative mode
+MAX_ACCELERATION = 1.4 # Maximum joint acceleration per joint
+
+# Define payload mass and center of gravity
+PAYLOAD_MASS = 2.0 # kg
+CENTER_OF_GRAVITY = [0.0, 0.0, -0.1] # in meters relative to tool frame
+
+# Define safety zone (confinement) boundaries
+SAFETY_ZONE_RADIUS = 0.3 # radius of the safety zone in meters
+
+# Define TCP speeds for each move
+TCP_SPEEDS = [350.0, 350.0, 150.0, 300.0, 380.0] # mm/s
+
+# Define joint angles for home position
+HOME_POSITION = [-pi/2, -pi/2, pi/2, -pi/2, pi/2, 0]
+
+# Function to check if a point is within the safety zone
+def is_within_safety_zone(point):
+    distance_to_center = sqrt(point[0]*point[0] + point[1]*point[1])
+    return distance_to_center <= SAFETY_ZONE_RADIUS
+
+# Define waypoints for the robot moves
+WAYPOINTS = [
+    [HOME_POSITION, 350.0], # Home position to above bin at speed 350 mm/s
+    [..., ..., ..., ..., ..., 400.0], # Above bin to below bin (fill in waypoint)
+    [..., ..., ..., ..., ..., 150.0], # Below bin to lift from bin (fill in waypoint)
+    [..., ..., ..., ..., ..., 300.0], # Lift from bin to transit to conveyor (fill in waypoint)
+    [..., ..., ..., ..., ..., 380.0] # Transit to conveyor (fill in waypoint)
+]
+
+# Define emergency stop function
+def emergency_stop():
+    set_digital_out(0, False) # Release suction cup if used for gripping
+    movej([HOME_POSITION], MAX_SPEED, MAX_ACCELERATION, relative=False)
+    stop
+
+# Main script
+set_payload(PAYLOAD_MASS, CENTER_OF_GRAVITY)
+for wp in WAYPOINTS:
+    safety_check()
+    if not is_within_safety_zone(wp[0]):
+        halt("Waypoint out of safety zone boundaries")
+    movej([wp[0]], wp[1], MAX_ACCELERATION, relative=False)

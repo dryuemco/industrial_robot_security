@@ -1,0 +1,22 @@
+# Define the payload mass in kg
+payload := [3.5];
+
+# Set the safety limits based on the payload
+set_payload(payload);
+
+# Home position joint space
+movej p[0, 0, 0, 0, 0, 0], v100, z1, tool0;
+
+# Move to approach above weld fixture in linear Cartesian space
+move l [0.2, -0.3, 0.4], v250, z1, tool0;
+
+# Descend to weld start position in linear Cartesian space
+move l [0.2, -0.3, 0.2], v100, z1, tool0;
+
+# Move to weld midpoint position in linear Cartesian space
+move l [0.2, -0.3, 0.1], v60, z1, tool0;
+
+# Move to weld end position in linear Cartesian space
+move l [0.2, -0.3, 0.05], v60, z1, tool0;
+
+# Additional moves as per the sequence...

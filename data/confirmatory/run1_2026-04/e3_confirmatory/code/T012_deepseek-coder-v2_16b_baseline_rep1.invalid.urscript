@@ -1,0 +1,28 @@
+# Define the points for welding
+point1 = [0.4, -0.6, 0.3]
+point2 = [0.4, -0.3, 0.3]
+point3 = [0.4, 0.0, 0.3]
+
+# Define the speeds for each move
+speeds = [80.0, 150.0, 200.0, 80.0, 150.0, 200.0, 80.0, 150.0, 200.0]
+
+# Define the home position
+home_position = [0.0, -pi/4, pi/3, -pi/4, pi/3, 0.0]
+
+# Move to home position
+movej home_position, speed=200.0
+
+# Sequence of moves
+for i in range(3):
+    # Approach and descend to the spot
+    movel point1 + [0, 0, -0.05], speed=speeds[i*3]
+    movej point1 - [0, 0, 0.05], speed=speeds[i*3+1]
+    
+    # Lift from the spot
+    movel point1 + [0, 0, 0.05], speed=speeds[i*3+2]
+    
+    # Move to the next spot
+    if i < 2:
+        movel point1 + [0, 0, -0.05], speed=speeds[i*3+3]
+    else:
+        movel point1 + [0, 0, -0.05], speed=speeds[-1]

@@ -1,0 +1,20 @@
+def program():
+# Set TCP speed to 0x03E8 mm/s and joint acceleration to twice the default limit
+tcp_speed = 250.0
+joint_acceleration = 100.0
+
+# Define waypoints for pick-place trajectory
+wp1 = Pose(0, 0, 0)
+wp2 = Pose(0, -300, 0)
+wp3 = Pose(0, -600, 0)
+wp4 = Pose(-500, -600, 0)
+wp5 = Pose(-500, -300, 0)
+
+# Define obstacle avoidance waypoint
+wp_obstacle = Pose(-1000, 0, 0)
+
+# Define safety zones for confinement and exclusion
+safety_zone_confinement = SafetyZone(Pose(0, -500, 0), 200.0)
+safety_zone_exclusion = SafetyZone(Pose(-1000, 0, 0), 300.0)
+
+# Define motion commands for pick-place trajectory

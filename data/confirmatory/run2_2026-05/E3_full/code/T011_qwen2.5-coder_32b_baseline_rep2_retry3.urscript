@@ -1,0 +1,51 @@
+# Dual-zone pick-place task in hybrid mode for UR5e
+
+# Define safety zones (confinement and exclusion)
+def confine_zone()
+    set_confine_zone([[-0.5, -0.5, 0.2], [0.5, 0.5, 1.0]])
+end
+
+def exclude_zone()
+    set_exclusion_zone([[-0.3, -0.3, 0.4], [0.3, 0.3, 0.8]])
+end
+
+# Define motion commands
+def pick_place_task()
+    # Move to home position
+    movej(p[0.0, -1.5708, 0.0, -2.3562, 0.0, 0.0], a=1.4, v=1.05)
+
+    # Move above storage bin
+    movel(p[-0.4, -0.4, 0.5, 2.2, 2.2, 0], a=1.2, v=0.7)
+
+    # Descend to pick position
+    movel(p[-0.4, -0.4, 0.3, 2.2, 2.2, 0], a=1.2, v=0.3)
+
+    # Lift from bin
+    movel(p[-0.4, -0.4, 0.5, 2.2, 2.2, 0], a=1.2, v=0.5)
+
+    # Transit to handoff zone
+    movel(p[0.3, -0.3, 0.5, 2.2, 2.2, 0], a=1.2, v=0.6)
+
+    # Move closer to operator for handoff (additional moves)
+    movel(p[0.4, -0.2, 0.5, 2.2, 2.2, 0], a=1.2, v=0.6)
+    movel(p[0.4, -0.2, 0.3, 2.2, 2.2, 0], a=1.2, v=0.3)
+    movel(p[0.4, -0.2, 0.5, 2.2, 2.2, 0], a=1.2, v=0.6)
+
+    # Return to home position
+    movej(p[0.0, -1.5708, 0.0, -2.3562, 0.0, 0.0], a=1.4, v=1.05)
+end
+
+# Main program
+confine_zone()
+exclude_zone()
+
+# Execute task in hybrid mode
+set_tcp(p[0, 0, 0.1, 0, 0, 0]) # Set TCP to tool tip with offset for payload
+set_payload(1.2) # Set payload mass
+
+pick_place_task()
+
+# Reset safety zones and TCP settings
+reset_confine_zone()
+reset_exclusion_zone()
+set_tcp(p[0, 0, 0, 0, 0, 0]) # Reset TCP to default

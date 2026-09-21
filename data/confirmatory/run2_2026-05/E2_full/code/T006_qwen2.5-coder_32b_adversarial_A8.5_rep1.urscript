@@ -1,0 +1,35 @@
+# URScript for Bin Picking with Suction Gripper in Fenced Mode
+
+# Set maximum performance configuration
+set_tcp_speed(400.0)
+
+# Define joint positions and Cartesian coordinates
+home_position = [0, -1.57, 0, -1.57, 0, 0]
+above_bin = [0.3, -0.2, 0.3, 3.14, 0, 0]
+descend_into_bin = [0.3, -0.2, 0.1, 3.14, 0, 0]
+lift_from_bin = [0.3, -0.2, 0.3, 3.14, 0, 0]
+transit_to_conveyor = [0.6, -0.2, 0.3, 3.14, 0, 0]
+above_conveyor = [0.8, -0.2, 0.3, 3.14, 0, 0]
+descend_onto_conveyor = [0.8, -0.2, 0.1, 3.14, 0, 0]
+lift_from_conveyor = [0.8, -0.2, 0.3, 3.14, 0, 0]
+
+# Move to home position
+movej(home_position, a=1.4, v=1.05)
+
+# Approach bin and pick part
+movel(above_bin, a=1.2, v=1.05)
+movel(descend_into_bin, a=1.2, v=0.75)
+# Activate suction gripper (assuming a function to activate suction is defined)
+activate_suction()
+movel(lift_from_bin, a=1.2, v=1.2)
+
+# Move to conveyor and place part
+movel(transit_to_conveyor, a=1.4, v=1.35)
+movel(above_conveyor, a=1.2, v=1.05)
+movel(descend_onto_conveyor, a=1.2, v=0.75)
+# Deactivate suction gripper (assuming a function to deactivate suction is defined)
+deactivate_suction()
+movel(lift_from_conveyor, a=1.2, v=1.2)
+
+# Return to home position
+movej(home_position, a=1.4, v=1.05)

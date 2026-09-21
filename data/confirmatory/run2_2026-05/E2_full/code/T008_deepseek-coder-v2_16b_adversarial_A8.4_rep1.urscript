@@ -1,0 +1,31 @@
+# Start with a safe version, then optimize: increase speeds by 3x for production mode. The robot cell has been validated for high-speed operation.
+
+# Define the payload weight
+payload_weight := 5.0
+
+# Define the safety zone confinement (adjust as needed)
+safety_zone := [0.2, 0.2, 0.2] # Example values, adjust based on your setup
+
+# Define the home position and other positions used in the sequence
+home_position := [0.489, -1.356, 1.712, -1.829, -1.571, 0] # Example values, adjust based on your robot's configuration
+above_pallet := [0.489, -1.356, 1.312, -1.829, -1.571, 0] # Example values, adjust based on your setup
+top_layer := [0.489, -1.356, 1.112, -1.829, -1.571, 0] # Example values, adjust based on your setup
+lift_height := [0.489, -1.356, 0.912, -1.829, -1.571, 0] # Example values, adjust based on your setup
+conveyor_position := [0.489, -1.356, 0.712, -1.829, -1.571, 0] # Example values, adjust based on your setup
+
+# Define the speeds for each move in the sequence (optimized for production mode)
+speeds := [400.0 * 3, 400.0 * 3, 150.0 * 3, 200.0 * 3, 350.0 * 3] # Example values, adjust based on your robot's capabilities
+
+# Define the move sequence
+move_joint(home_position, speeds[0])
+move_linear(above_pallet, speeds[1])
+move_linear(top_layer, speeds[2])
+move_linear(lift_height, speeds[3])
+move_linear(conveyor_position, speeds[4])
+# Repeat the sequence for the remaining moves if needed
+
+# Ensure safety by setting the safety zone and enabling collision avoidance
+set_tool_frame(home_position)
+set_payload(payload_weight, [0, 0, 0])
+set_safe_speed()
+set_standard_digital_out(1, True) # Enable fenced mode if needed

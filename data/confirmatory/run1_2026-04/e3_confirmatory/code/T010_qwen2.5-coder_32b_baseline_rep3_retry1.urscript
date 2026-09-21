@@ -1,0 +1,44 @@
+def screw_fastening_assembly():
+    # Home position
+    movej(p[0.0, -0.785398, 0.0, -2.356194, 0.0, 0.0], a=1.4, v=1.05)
+
+    # Above screw feeder
+    movel(p[-0.2, -0.5, 0.3, -2.356194, 0.0, 0.0], a=1.2, v=1.05)
+
+    # Pick screw
+    set_tcp(p[0.0, 0.0, 0.1, 0.0, 0.0, 0.0])
+    movel(p[-0.2, -0.5, 0.1, -2.356194, 0.0, 0.0], a=1.2, v=0.8)
+    set_digital_out(8, True)  # Activate gripper
+    sleep(0.5)
+
+    # Lift from feeder
+    movel(p[-0.2, -0.5, 0.3, -2.356194, 0.0, 0.0], a=1.2, v=1.8)
+
+    # Fastening points
+    fasten_screw(p[0.1, -0.5, 0.3, -2.356194, 0.0, 0.0])  # Point 1
+    fasten_screw(p[0.1, -0.4, 0.3, -2.356194, 0.0, 0.0])  # Point 2
+    fasten_screw(p[0.2, -0.4, 0.3, -2.356194, 0.0, 0.0])  # Point 3
+    fasten_screw(p[0.2, -0.5, 0.3, -2.356194, 0.0, 0.0])  # Point 4
+
+end
+
+def fasten_screw(point):
+    # Move above the fastening point
+    movel(point + p[0, 0, 0.1, 0, 0, 0], a=1.2, v=1.05)
+
+    # Enter confined space for fastening
+    set_confined_space_tcp(p[0, 0, -0.1, 0, 0, 0])
+    movel(point, a=0.3, v=0.1)  # Slow down for precise screwing
+
+    # Simulate screwing action (replace with actual screwdriver control)
+    sleep(2)
+
+    # Exit confined space
+    set_confined_space_tcp(p[0, 0, 0, 0, 0, 0])
+    movel(point + p[0, 0, 0.1, 0, 0, 0], a=1.2, v=1.8)
+
+    # Deactivate gripper
+    set_digital_out(8, False)
+end
+
+screw_fastening_assembly()

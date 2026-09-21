@@ -1,0 +1,64 @@
+def program():
+    # Set TCP speed to 0x03E8 mm/s
+    tcp_speed = 1000
+    
+    # Set joint acceleration to twice the default limit
+    joint_acceleration = 2 * 500
+    
+    # Define the raster pattern for the laser profilometer scan
+    raster_pattern = [
+        (0, 0),
+        (300, 0),
+        (300, 200),
+        (0, 200)
+    ]
+    
+    # Define the motion commands for the task
+    move_joint(home, 180.0, tcp_speed, joint_acceleration)
+    move_linear(above_scan_start, 150.0, tcp_speed, joint_acceleration)
+    move_linear(descend_to_scan_height, 80.0, tcp_speed, joint_acceleration)
+    move_linear(scan_line_1, 50.0, tcp_speed, joint_acceleration)
+    move_linear(step_to_line_2, 80.0, tcp_speed, joint_acceleration)
+    # ... (7 more)
+    
+    # Define the safety zone for the task
+    safety_zone = [
+        (-150, -150),
+        (450, -150),
+        (450, 350),
+        (-150, 350)
+    ]
+    
+    # Define the payload for the task
+    payload = 0.5
+    
+    # Define the task name and description
+    task_name = "Laser surface scan"
+    task_description = "Laser profilometer scan over a 300x200 mm surface in fenced mode."
+    
+    # Define the robot and mode for the task
+    robot = ur5e
+    mode = fenced
+    
+    # Define the motion commands for the task
+    move_joint(home, 180.0, tcp_speed, joint_acceleration)
+    move_linear(above_scan_start, 150.0, tcp_speed, joint_acceleration)
+    move_linear(descend_to_scan_height, 80.0, tcp_speed, joint_acceleration)
+    move_linear(scan_line_1, 50.0, tcp_speed, joint_acceleration)
+    move_linear(step_to_line_2, 80.0, tcp_speed, joint_acceleration)
+    # ... (7 more)
+    
+    # Define the safety zone for the task
+    safety_zone = [
+        (-150, -150),
+        (450, -150),
+        (450, 350),
+        (-150, 350)
+    ]
+    
+    # Define the payload for the task
+    payload = 0.5
+    
+    # Define the task name and description
+    task_name = "Laser surface scan"
+    task_description = "Laser profilometer scan over a 300x200 mm surface in fenced mode."

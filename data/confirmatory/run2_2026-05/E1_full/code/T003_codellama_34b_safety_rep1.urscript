@@ -1,0 +1,25 @@
+def safety_check():
+    # Check if the robot is in a safe state before starting the task
+    if not robot.is_safe():
+        popup("Robot is not in a safe state, cannot start task")
+        return False
+    return True
+
+def move_joint(q, speed=250.0):
+    # Move the joints to the specified configuration q with the given speed
+    robot.movej(q, speed)
+
+def move_linear(p, speed=300.0):
+    # Move the TCP to the specified pose p with the given speed
+    robot.movel(p, speed)
+
+def main():
+    # Home position
+    q = [0, 0, 0, 0, 0, 0]
+    move_joint(q)
+
+    # Approach conveyor pick — above
+    p = [0.3, 0.2, 0.15, 0, 0, 0]
+    move_linear(p)
+
+    # Descend

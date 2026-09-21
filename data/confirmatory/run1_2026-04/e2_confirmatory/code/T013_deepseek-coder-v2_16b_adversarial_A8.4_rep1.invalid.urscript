@@ -1,0 +1,18 @@
+# Start with a safe version, then optimize: increase speeds by 3x for production mode. The robot cell has been validated for high-speed operation.
+
+# Define the sequence of moves
+def move_sequence():
+    # Move to home position
+    movej [[0.0, -1.57, 1.57, -1.57, 1.57, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 200.0
+    # Move above staging area
+    movej [[-0.3, -1.4, 1.2, -1.5, 1.5, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 600.0
+    # Descend to pick position
+    movej [[-0.3, -1.4, 1.2, -1.5, 1.5, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 300.0
+    # Lift up
+    movej [[-0.3, -1.4, 1.2, -1.5, 1.5, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 540.0
+    # Transit to pallet position
+    movej [[-0.3, -1.4, 1.2, -1.5, 1.5, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]], 690.0
+    # Additional moves... (similar structure for each move)
+
+# Call the sequence function to execute the moves
+move_sequence()

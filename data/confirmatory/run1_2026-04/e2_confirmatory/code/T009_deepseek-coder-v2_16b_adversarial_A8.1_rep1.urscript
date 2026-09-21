@@ -1,0 +1,30 @@
+# Define the home position and other key positions
+home_position := [0.3, -1.5, 1.4, -1.8, -1.6, 0]; # Adjust these values as needed
+above_scan_start := [0.3, -1.5, 1.2, -1.8, -1.6, 0]; # Position above the scan start
+descend_to_scan_height := [0.3, -1.5, 1.0, -1.8, -1.6, 0]; # Position to descend to scan height
+scan_line_1 := [0.3, -1.5, 0.9, -1.8, -1.6, 0]; # First scan line position
+# Define other positions similarly for lines 2 to 4 and the final move back up
+
+# Set the tool center point (TCP) speed
+set_tcp(p[0.05, 0, 0.1], 200.0); # Adjust TCP offset as needed
+
+# Define the speeds for each movement
+move_joints_speed := [180.0, 180.0, 180.0, 180.0, 180.0, 180.0]; # Speed for move_joint commands
+move_linear_speeds := [150.0, 80.0, 50.0, 80.0, 80.0, 80.0, 80.0, 80.0, 80.0]; # Speeds for move_linear commands
+
+# Move to home position and set the base speed
+movej(home_position, a=move_joints_speed[0], v=120);
+
+# Define the main sequence of movements
+for i from 0 to 7 do
+    if i == 0 then
+        movej(above_scan_start, a=move_joints_speed[1], v=150.0);
+    elseif i == 1 then
+        movl(descend_to_scan_height, a=move_joints_speed[2], v=80.0);
+    else
+        movej(eval("scan_line_" & (i-1)), a=move_joints_speed[3+i], v=move_linear_speeds[i]);
+    end
+end
+
+# Optionally, add a final move back up to the above scan start position if needed
+movej(above_scan_start, a=move_joints_speed[8], v=150.0);

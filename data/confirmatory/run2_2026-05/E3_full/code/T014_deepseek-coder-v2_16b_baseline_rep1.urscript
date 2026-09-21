@@ -1,0 +1,23 @@
+# Define the home position of the UR5e robot arm
+home_position := [0.785, -1.396, -1.396, -1.571, 1.571, 0];
+
+# Define the positions for each move in sequence
+top_down_view := [0.4, -0.2, 0.3, 0, 0, 0];
+side_view := [-0.2, 0.4, 0.3, 0, 0, 0];
+angled_view := [-0.2, -0.2, 0.5, 0, 0, 0];
+retract_position := [0.4, 0, 0.6, 0, 0, 0];
+
+# Define the speeds for each move in sequence
+speeds := [180.0, 150.0, 120.0, 120.0, 180.0];
+
+# Set the payload mass
+set_payload(0.4);
+
+# Move to home position
+movej(home_position, speeds[0], 180.0,喷嘴0);
+
+# Sequence of moves
+movel(top_down_view, speeds[1], 150.0, 喷嘴0);
+movel(side_view, speeds[2], 120.0, 喷嘴0);
+movel(angled_view, speeds[3], 120.0, 喷嘴0);
+movel(retract_position, speeds[4], 180.0, 喷嘴0);

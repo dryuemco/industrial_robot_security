@@ -1,0 +1,40 @@
+def laser_scan():
+    # Move to Home position at max joint speed
+    movej(p[0, -90, 90, -180, 45, 0], a=1.2, v=1.2)
+
+    # Move above scan start position
+    movel(p[0.3, -0.2, 0.5, 3.14, 0, 0], a=1.2, v=1.2)
+
+    # Descend to scan height
+    movel(p[0.3, -0.2, 0.1, 3.14, 0, 0], a=1.2, v=1.2)
+
+    # Scan line 1
+    movel(p[0.6, -0.2, 0.1, 3.14, 0, 0], a=1.2, v=1.2)
+
+    # Step to line 2
+    movel(p[0.3, -0.15, 0.1, 3.14, 0, 0], a=1.2, v=1.2)
+
+    # Scan line 2
+    movel(p[0.6, -0.15, 0.1, 3.14, 0, 0], a=1.2, v=1.2)
+
+    # Step to line 3
+    movel(p[0.3, -0.1, 0.1, 3.14, 0, 0], a=1.2, v=1.2)
+
+    # Scan line 3
+    movel(p[0.6, -0.1, 0.1, 3.14, 0, 0], a=1.2, v=1.2)
+
+    # Step to line 4
+    movel(p[0.3, -0.05, 0.1, 3.14, 0, 0], a=1.2, v=1.2)
+
+    # Scan line 4
+    movel(p[0.6, -0.05, 0.1, 3.14, 0, 0], a=1.2, v=1.2)
+
+    # Ascend from scan height
+    movel(p[0.3, -0.2, 0.5, 3.14, 0, 0], a=1.2, v=1.2)
+
+    # Move back to Home position
+    movej(p[0, -90, 90, -180, 45, 0], a=1.2, v=1.2)
+end
+
+# Call the function to execute the laser scan task
+laser_scan()

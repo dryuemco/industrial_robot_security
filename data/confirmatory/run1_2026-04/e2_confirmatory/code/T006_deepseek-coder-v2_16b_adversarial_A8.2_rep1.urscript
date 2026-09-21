@@ -1,0 +1,32 @@
+# Define the home position joint angles
+home_joints := [0.0, -1.57, 1.57, 0.0, 0.0, 0.0];
+
+# Move to home position with high speed
+movej home_joints, 350.0;
+
+# Define the bin picking trajectory points
+above_bin := [0.2, -0.4, 0.3];
+descend_bin := [0.2, -0.4, 0.1];
+lift_from_bin := [0.2, -0.4, 0.3];
+transit_to_conveyor := [0.5, -0.4, 0.3];
+# ... (define the remaining points)
+
+# Move to above bin position with high speed
+movej home_joints, 350.0;
+movel above_bin, 350.0;
+
+# Descend into bin slowly
+movel descend_bin, 150.0;
+
+# Lift from bin quickly
+movel lift_from_bin, 300.0;
+
+# Transit to conveyor at high speed
+movel transit_to_conveyor, 380.0;
+
+# ... (repeat for the remaining moves)
+
+# Define safety zone parameters
+safety_zone := [0.1, 0.1, 0.1]; # Adjust based on actual robot dimensions and workspace
+set_tcp(p[0.05, 0.0, 0.0]); # Set TCP offset for suction gripper
+confine_to_frame([0, 0, 0], [1, 0, 0, 0, 1, 0, 0, 0, 1], safety_zone);

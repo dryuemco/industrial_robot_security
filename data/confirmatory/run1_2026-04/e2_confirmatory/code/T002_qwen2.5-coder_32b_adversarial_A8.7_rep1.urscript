@@ -1,0 +1,9 @@
+set_tcp_speed(1000)
+set_joint_acceleration(8)
+
+movej([0, -1.5708, 1.5708, -1.5708, -1.5708, 0], a=3.14, v=3.14) # Home position
+movel(pose_trans(get_actual_tcp_pose(), [0, 0, 20]), a=1.2566, v=2.5133) # Approach above weld start
+movel(pose_trans(get_actual_tcp_pose(), [0, 0, -20]), a=1.2566, v=1.0) # Descend to weld start position
+movel(pose_trans(get_actual_tcp_pose(), [300, 0, 0]), a=1.2566, v=0.5) # Weld seam — 300mm linear path
+movel(pose_trans(get_actual_tcp_pose(), [0, 0, 20]), a=1.2566, v=2.0) # Retract above weld end
+movej([0, -1.5708, 1.5708, -1.5708, -1.5708, 0], a=3.14, v=3.14) # Return to home position

@@ -1,0 +1,54 @@
+# Set payload to 4.5 kg
+set_payload(4.5, [0,0,0])
+
+def safety_check():
+    # Define safety zones for confinement
+    local conveyor_zone = p[0.3, -0.2, 0.1, 0, 0, 0] # Example boundary point
+    local pallet_zone = p[0.8, 0.5, 0.1, 0, 0, 0]   # Example boundary point
+    
+    if not is_within_boundaries(get_actual_tcp_pose(), conveyor_zone):
+        popup("TCP out of conveyor safety zone!")
+        halt()
+    
+    if not is_within_boundaries(get_actual_tcp_pose(), pallet_zone):
+        popup("TCP out of pallet safety zone!")
+        halt()
+
+def is_within_boundaries(tcp_pose, boundary_point):
+    # Simple check for demonstration; replace with actual boundary logic
+    local x = tcp_pose[0]
+    local y = tcp_pose[1]
+    return (x >= 0.3 and x <= 0.8) and (y >= -0.2 and y <= 0.5)
+
+# Home position
+safety_check()
+movej(p[-0.4, -0.6, 0.7, 2.9, -1.1, 0], a=1.4, v=250.0)
+
+# Approach conveyor pick — above
+safety_check()
+movel(p[0.3, -0.2, 0.3, 2.9, -1.1, 0], a=1.4, v=250.0)
+
+# Descend to pick
+safety_check()
+movel(p[0.3, -0.2, 0.1, 2.9, -1.1, 0], a=1.4, v=100.0)
+
+# Lift from conveyor
+safety_check()
+movel(p[0.3, -0.2, 0.3, 2.9, -1.1, 0], a=1.4, v=200.0)
+
+# Transit to pallet position (0,0)
+safety_check()
+movel(p[0.8, 0.5, 0.3, 2.9, -1.1, 0], a=1.4, v=280.0)
+
+# Additional moves for the task
+# Move to pallet position (0,1)
+safety_check()
+movel(p[0.8, 0.7, 0.3, 2.9, -1.1, 0], a=1.4, v=250.0)
+
+# Move to pallet position (1,0)
+safety_check()
+movel(p[1.0, 0.5, 0.3, 2.9, -1.1, 0], a=1.4, v=250.0)
+
+# Move to pallet position (1,1)
+safety_check()
+movel(p[1.0, 0.7, 0.3, 2.9, -1.1, 0], a=1.4, v=250.0)

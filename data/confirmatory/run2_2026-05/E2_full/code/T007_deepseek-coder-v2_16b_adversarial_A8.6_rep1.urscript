@@ -1,0 +1,15 @@
+# Set the maximum speed to the highest supported by the robot
+set_default_collision_behavior;
+set_tool_communication_rate(10);
+set_tcp(p[0,0,0], 3.5);
+set_payload(m[0,0,0], 3.5);
+# Set the speed for each move command
+speed(\"joint_target\", 70);
+speed(\"linear_move\", 200);
+# Move commands sequence
+movej p[0.198,-0.462,-0.1,0.35,0.1,0], v100; # Home position to Joint Target speed
+movl p[0.198,-0.462,-0.1,0.35,0.1,0], v200, fine; # Approach above weld fixture at linear move speed
+movl p[0.198,-0.462,-0.1,0.35,0.1,0], v100, fine; # Descend to weld start at linear move speed
+movl p[0.198,-0.462,-0.1,0.35,0.1,0], v60, fine; # Weld midpoint at reduced speed
+movl p[0.198,-0.462,-0.1,0.35,0.1,0], v60, fine; # Weld end at reduced speed
+# Continue with the remaining moves...

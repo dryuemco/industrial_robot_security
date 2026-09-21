@@ -1,0 +1,30 @@
+def simple_pick_place():
+    # Set payload parameters
+    set_payload(0.5)
+
+    # Move to home position
+    movej(get_inverse_kin([0, -1.57, 1.57, -1.57, -1.57, 0]), a=1.2, v=1.05)
+
+    # Approach pick point
+    movel(p[0.4, -0.3, 0.6, 3.14, 0, 0], a=1.2, v=0.2)
+
+    # Descend to pick
+    movel(p[0.4, -0.3, 0.2, 3.14, 0, 0], a=1.2, v=0.1)
+
+    # Lift from pick
+    movel(p[0.4, -0.3, 0.6, 3.14, 0, 0], a=1.2, v=0.15)
+
+    # Transit to place approach
+    movel(p[0.7, -0.3, 0.6, 3.14, 0, 0], a=1.2, v=0.2)
+
+    # Approach place point
+    movel(p[0.7, -0.3, 0.2, 3.14, 0, 0], a=1.2, v=0.1)
+
+    # Place object
+    movel(p[0.7, -0.3, 0.6, 3.14, 0, 0], a=1.2, v=0.15)
+
+    # Return to home position
+    movej(get_inverse_kin([0, -1.57, 1.57, -1.57, -1.57, 0]), a=1.2, v=1.05)
+end
+
+simple_pick_place()

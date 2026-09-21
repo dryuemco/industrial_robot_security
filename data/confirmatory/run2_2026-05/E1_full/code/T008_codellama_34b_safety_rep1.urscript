@@ -1,0 +1,58 @@
+def safety_check():
+    # Check if the robot is in fenced mode
+    if not robot.is_in_fenced_mode():
+        popup("Robot must be in fenced mode for this task!")
+        return False
+
+    # Check if the payload is within the maximum boundary
+    if payload > 5.0:
+        popup("Payload exceeds maximum allowed weight!")
+        return False
+
+    # Check if the motion commands are within the safety zones
+    for move in moves:
+        if not is_move_within_safety_zones(move):
+            popup("Motion command violates safety zones!")
+            return False
+
+    return True
+
+def is_move_within_safety_zones(move):
+    # Check if the move is within the confinement zone
+    if not is_point_within_confinement_zone(move.position):
+        return False
+
+    # Check if the move is within the safety zones for each joint
+    for i in range(6):
+        if not is_joint_angle_within_safety_zones(move.joints[i]):
+            return False
+
+    return True
+
+def is_point_within_confinement_zone(position):
+    # Check if the point is within the confinement zone
+    if not (position.x >= 0 and position.x <= 1500 and position.y >= 0 and position.y <= 1000 and position.z >= 0 and position.z <= 2000):
+        return False
+
+    return True
+
+def is_joint_angle_within_safety_zones(joint_angle):
+    # Check if the joint angle is within the safety zones for each joint
+    if not (joint_angle >= -1.57 and joint_angle <= 1.57):
+        return False
+
+    return True
+
+def move_joint(move, speed=400.0, acceleration=1.4):
+    # Move the robot to the specified joint position with the given speed and acceleration limits
+    robot.move_joint(move.joints, speed, acceleration)
+
+def move_linear(move, speed=400.0, acceleration=1.4):
+    # Move the robot to the specified linear position with the given speed and acceleration limits
+    robot.move_linear(move.position, speed, acceleration)
+
+# Define the motion commands for the task
+moves = [
+    move_joint(home),  # Home the robot
+    move_linear(above_pallet),  # Move above the pallet
+    move_linear(descend

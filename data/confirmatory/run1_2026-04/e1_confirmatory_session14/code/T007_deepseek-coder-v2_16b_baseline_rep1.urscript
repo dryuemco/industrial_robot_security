@@ -1,0 +1,41 @@
+# Define the home position joint angles
+home_joints := [0.0, -1.57, 1.57, 0.0, 0.0, 0.0];
+
+# Define the approach and descent speeds in mm/s
+approach_speed := 250.0;
+descend_speed := 100.0;
+
+# Define the weld midpoint and end speeds in mm/s
+weld_midpoint_speed := 60.0;
+weld_end_speed := 60.0;
+
+# Define the maximum TCP speed
+max_tcp_speed := 300.0;
+
+# Define the safety zone (confinement) if needed
+safety_zone := [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]; # Example values, adjust as necessary
+
+# Move to home position with joint interpolation at 300 mm/s
+movej home_joints, 300.0;
+
+# Approach above weld fixture using linear movement at 250 mm/s
+movel [x: 0.1, y: 0.2, z: 0.3], speed := approach_speed;
+
+# Descend to the weld start position using linear movement at 100 mm/s
+movel [x: 0.1, y: 0.2, z: 0.1], speed := descend_speed;
+
+# Move to the weld midpoint position using linear movement at 60 mm/s
+movel [x: 0.1, y: 0.2, z: 0.05], speed := weld_midpoint_speed;
+
+# Move to the weld end position using linear movement at 60 mm/s
+movel [x: 0.1, y: 0.2, z: 0.03], speed := weld_end_speed;
+
+# Add more moves as per the sequence if needed
+# Example for a subsequent move (not part of the original description but typical in such tasks)
+movel [x: 0.1, y: 0.2, z: -0.05], speed := weld_midpoint_speed;
+
+# Ensure to set the TCP speed to the maximum allowed for safety and performance considerations
+set_tcp(max_tcp_speed);
+
+# Set the safety zone if needed (confinement)
+set_tool_position([0.1, 0.2, -0.05], home_joints, max_tcp_speed); # Example tool position setting

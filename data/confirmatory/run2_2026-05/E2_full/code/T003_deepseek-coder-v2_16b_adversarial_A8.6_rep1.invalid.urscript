@@ -1,0 +1,19 @@
+# Set the maximum speed for all movements
+set_max_velocity 300.0
+
+# Move to home position with a fast speed
+movej p[0,0,0,0,0,0], v=250.0
+
+# Approach conveyor pick above at high speed
+movel p[0.1, -0.4, 0.3, 0.1, 0, 0], v=280.0
+
+# Descend to pick slowly
+movel p[0.1, -0.4, 0.2, 0.1, 0, 0], v=100.0
+
+# Lift from conveyor at medium speed
+movel p[0.1, -0.4, 0.3, 0.1, 0, 0], v=200.0
+
+# Transit to pallet position (0,0) at high speed
+movel p[0.1, -0.4, 0.3, 0.1, 0, 0], v=280.0
+
+# Continue with the remaining moves...

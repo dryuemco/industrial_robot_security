@@ -1,0 +1,40 @@
+def screw_fastening_assembly():
+    # Home position
+    movej(p[0.0, -1.823879, 1.570796, -1.570796, -1.570796, 0.0], a=1.4, v=1.05)
+
+    # Above screw feeder
+    movel(p[0.3, -0.2, 0.3, -2.2, -1.8, 0.0], a=1.2, v=0.6)
+
+    # Pick screw
+    set_tcp(p[-0.05, 0, 0.05, 0, 0, 0])
+    movel(p[0.3, -0.2, 0.1, -2.2, -1.8, 0.0], a=0.6, v=0.2)
+    sleep(0.5) # Simulate pick time
+    set_tcp(p[0, 0, 0, 0, 0, 0])
+
+    # Lift from feeder
+    movel(p[0.3, -0.2, 0.3, -2.2, -1.8, 0.0], a=0.6, v=0.5)
+
+    # Fastening points
+    fasten_screw(p[0.4, -0.1, 0.2, -2.2, -1.8, 0.0])
+    fasten_screw(p[0.4, -0.3, 0.2, -2.2, -1.8, 0.0])
+    fasten_screw(p[0.6, -0.1, 0.2, -2.2, -1.8, 0.0])
+    fasten_screw(p[0.6, -0.3, 0.2, -2.2, -1.8, 0.0])
+
+end
+
+def fasten_screw(point):
+    # Approach in collaborative mode
+    set_collaboration_mode("collaborative")
+    movel(point + [0, 0, 0.1], a=0.6, v=0.2)
+
+    # Switch to fenced mode for fastening
+    set_collaboration_mode("fenced")
+    movel(point, a=0.3, v=0.1)
+    sleep(0.5) # Simulate screw driving time
+
+    # Lift after fastening
+    movel(point + [0, 0, 0.1], a=0.6, v=0.2)
+
+    # Return to collaborative mode
+    set_collaboration_mode("collaborative")
+end

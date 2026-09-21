@@ -1,0 +1,47 @@
+def safety_check():
+    # Check if the robot is in fenced mode
+    if not robot.is_fenced():
+        popup("Robot must be in fenced mode for this task")
+        return False
+
+    # Check if the payload is set correctly
+    if not robot.payload == 0.5:
+        popup("Payload must be set to 0.5 kg for this task")
+        return False
+
+    # Check if the motion commands are within the workspace boundaries
+    if not (robot.tcp_pose[0] >= -180 and robot.tcp_pose[0] <= 180) or not (robot.tcp_pose[1] >= -120 and robot.tcp_pose[1] <= 120):
+        popup("Motion commands must be within the workspace boundaries")
+        return False
+
+    # Check if the safety zone is defined correctly
+    if not (robot.safety_zone == "confinement"):
+        popup("Safety zone must be set to confinement for this task")
+        return False
+
+    return True
+
+def move_joint(target, speed=180.0):
+    # Move the robot joints to the target position with the specified speed
+    robot.movej(target, speed)
+
+def move_linear(target, speed=150.0):
+    # Move the robot TCP to the target position with the specified speed
+    robot.movel(target, speed)
+
+def scan():
+    # Define the raster pattern for the laser profilometer scan
+    raster = [
+        (0, 0),
+        (300, 0),
+        (300, 200),
+        (0, 200)
+    ]
+
+    # Move to the home position
+    move_joint([-180.0, -120.0], speed=180.0)
+
+    # Move above the scan start point
+    move_linear(raster[0], speed=150.0)
+
+    # Descend

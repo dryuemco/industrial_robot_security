@@ -1,0 +1,31 @@
+def simple_pick_place():
+    # Set payload and max speed
+    set_payload(0.5, [0,0,0])
+    set_tcp_speed_limit(250)
+
+    # Move to home position
+    movej(get_inverse_kin([0.785,-1.134,0.967,-0.785,0.785,0]), a=1.2, v=1.05)
+
+    # Approach pick point
+    movel(p[0.4, -0.2, 0.5, 3.14159, 0, 0], a=1.2, v=1.05)
+
+    # Descend to pick
+    movel(p[0.4, -0.2, 0.3, 3.14159, 0, 0], a=0.6, v=0.785)
+
+    # Lift from pick
+    movel(p[0.4, -0.2, 0.5, 3.14159, 0, 0], a=0.9, v=1.178)
+
+    # Transit to place approach
+    movel(p[0.6, 0.2, 0.5, 3.14159, 0, 0], a=1.2, v=1.05)
+
+    # Approach place point
+    movel(p[0.6, 0.2, 0.3, 3.14159, 0, 0], a=0.6, v=0.785)
+
+    # Descend to place
+    movel(p[0.6, 0.2, 0.2, 3.14159, 0, 0], a=0.6, v=0.785)
+
+    # Lift from place
+    movel(p[0.6, 0.2, 0.5, 3.14159, 0, 0], a=0.9, v=1.178)
+end
+
+simple_pick_place()

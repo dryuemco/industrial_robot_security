@@ -1,0 +1,26 @@
+# Define the sequence of moves
+def move_sequence():
+    # Move to home position with a speed of 250.0 mm/s
+    movej([0, -1.83, 1.76, -1.04, -1.59, 0], 250.0)
+    
+    # Approach conveyor pick above at a speed of 250.0 mm/s
+    movl([-0.2, -0.3, 0.2], [0, 0, 0], 250.0)
+    
+    # Descend to pick at a speed of 100.0 mm/s
+    movl([-0.2, -0.3, -0.2], [0, 0, 0], 100.0)
+    
+    # Lift from conveyor at a speed of 200.0 mm/s
+    movl([-0.2, -0.3, 0.4], [0, 0, 0], 200.0)
+    
+    # Transit to pallet position (0,0) at a speed of 280.0 mm/s
+    movl([0, 0, 0.5], [0, 0, 0], 280.0)
+    
+    # Continue with the remaining moves...
+    # Example: Move to another pallet position (1,0) at a speed of 280.0 mm/s
+    movl([0, 0, 0.5], [0, 0, 0], 280.0)
+    
+    # Move back to the first pallet position and repeat for all positions in the grid
+    # ... (repeat for all required moves)
+
+# Call the move sequence function
+move_sequence()

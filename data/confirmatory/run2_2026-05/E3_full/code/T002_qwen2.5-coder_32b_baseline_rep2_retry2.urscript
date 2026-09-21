@@ -1,0 +1,22 @@
+def linear_weld_path():
+    # Go to home position
+    movej(get_inverse_kin([0.0, -1.57, 1.57, -1.57, -1.57, 0.0]), a=1.4, v=1.2)
+
+    # Approach above weld start
+    movel(pose_trans(get_actual_tcp_pose(), [0, 0, 50]), a=1.2, v=0.25)
+
+    # Descend to weld start position
+    movel(pose_trans(get_actual_tcp_pose(), [0, 0, -40]), a=1.2, v=0.1)
+
+    # Weld seam — 300mm linear path
+    movel(pose_trans(get_actual_tcp_pose(), [300, 0, 0]), a=1.2, v=0.05)
+
+    # Retract above weld end
+    movel(pose_trans(get_actual_tcp_pose(), [0, 0, 40]), a=1.2, v=0.2)
+
+    # Move away from workpiece
+    movel(pose_trans(get_actual_tcp_pose(), [-50, 0, 0]), a=1.2, v=0.25)
+end
+
+# Start the weld path task
+linear_weld_path()

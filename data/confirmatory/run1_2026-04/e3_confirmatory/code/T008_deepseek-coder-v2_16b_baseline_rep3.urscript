@@ -1,0 +1,30 @@
+# Define the sequence of moves for the task
+def move_joint(joint_positions, velocity):
+    motion_commander.movej(joint_positions, velocity)
+
+def move_linear(pose, velocity):
+    motion_commander.movel(pose, velocity)
+
+# Home position
+home_position = [0.0, -1.57, 1.57, -1.57, 0.0, 0.0]
+
+# Define the sequence of moves
+move_joint(home_position, 400.0)
+
+# Move above pallet
+above_pallet = [0.0, -1.57, 1.57, -1.57, 0.0, 0.0]
+move_linear(above_pallet, 400.0)
+
+# Descend to top layer
+top_layer = [0.0, -1.57, 1.57, -1.57, 0.0, 0.0]
+move_linear(top_layer, 150.0)
+
+# Lift box
+box_lift = [0.0, -1.57, 1.57, -1.57, 0.0, 0.0]
+move_linear(box_lift, 200.0)
+
+# Transit to conveyor
+conveyor_transit = [0.0, -1.57, 1.57, -1.57, 0.0, 0.0]
+move_linear(conveyor_transit, 350.0)
+
+# Repeat the sequence for the remaining moves...

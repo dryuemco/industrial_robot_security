@@ -1,0 +1,8 @@
+def bin_picking():
+    # Home position
+    movej(p[0, 0, -90, 0, 180, 0], a=350.0, v=400.0)
+    
+    # Above bin
+    movel(p[-200, 0, 0, 0, 0, 0], a=350.0, v=400.0)
+    
+    # Descend

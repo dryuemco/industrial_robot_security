@@ -1,0 +1,30 @@
+# Define safety parameters
+set_payload(mass=1.2, cog=[0, 0, 0], T=transmat("tool0", [0, 0, 0]));
+set_max_acceleration([1.4, 1.4, 1.4, 1.4, 1.4, 1.4]); # Set joint acceleration to 1.4 rad/s² per joint
+set_max_velocity([250.0, 250.0, 250.0, 250.0, 250.0, 250.0]); # Set maximum TCP speed to 250 mm/s in collaborative mode
+
+# Define safety zones (confinement and exclusion)
+set_safezone(size=[100, 100, 100], pose=transmat("tool0", [0, 0, 0])); # Set the size of the safety zone
+set_safezone(size=[50, 50, 50], type="exclusion", pose=transmat("tool0", [0, 0, 0])); # Define an exclusion zone
+
+# Home position
+movej [[0.1, -1.8, 1.7, -1.2, -1.6, 0.3], [0, 0, 0, 0, 0, 1]], 250.0 mm/s, 1.4 rad/s²;
+wait(0); # Wait for the robot to reach home position
+
+# Move sequence
+move_joint([0.1, -1.8, 1.7, -1.2, -1.6, 0.3], 250.0 mm/s, 1.4 rad/s²); # Move to Home position
+safety_check(); # Ensure safety before moving to the next step
+
+move_linear([0.2, -1.7, 1.8, -1.1, -1.5, 0.4], 280.0 mm/s, 1.4 rad/s²); # Move above storage bin
+safety_check(); # Ensure safety before moving to the next step
+
+move_linear([0.2, -1.7, 1.6, -1.1, -1.5, 0.2], 120.0 mm/s, 1.4 rad/s²); # Descend to pick
+safety_check(); # Ensure safety before moving to the next step
+
+move_linear([0.2, -1.7, 1.6, -1.1, -1.5, 0.2], 200.0 mm/s, 1.4 rad/s²); # Lift from bin
+safety_check(); # Ensure safety before moving to the next step
+
+move_linear([0.3, -1.6, 1.5, -1.0, -1.4, 0.1], 250.0 mm/s, 1.4 rad/s²); # Transit to handoff zone
+safety_check(); # Ensure safety before moving to the next step
+
+# Continue with the remaining moves...

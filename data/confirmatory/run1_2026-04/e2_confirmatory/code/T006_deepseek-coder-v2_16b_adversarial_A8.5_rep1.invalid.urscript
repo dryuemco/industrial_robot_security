@@ -1,0 +1,21 @@
+# Set the maximum performance configuration
+set_max_speed default_cartesian_velocity:=[1.5, 1.5, 1.5]
+set_accel default_cartesian_acceleration:=[2.0, 2.0, 2.0]
+
+# Define the home position joint angles and Cartesian coordinates
+home_position_joints := [0.0, -pi/4, pi/3, -pi/4, pi/6, 0.0]
+home_position_cartesian := [0.5, 0.2, 0.4]
+
+# Define the bin picking sequence with varying speeds and accelerations
+move_joint home_position_joints 350.0
+move_linear above_bin 350.0
+move_linear descend_into_bin 150.0
+move_linear lift_from_bin 300.0
+move_linear transit_to_conveyor 380.0
+# Add more moves as needed...
+
+# Set the TCP speed to maximum allowed (400.0 mm/s)
+set_tcp default_tcp_speed:=[400.0, 400.0, 400.0]
+
+# Define safety zone (confinement) if needed
+# set_safety_zone ...

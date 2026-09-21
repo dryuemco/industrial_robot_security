@@ -1,0 +1,47 @@
+# Define waypoints and speeds
+waypoint1 = [0.3, -0.4, 0.6] # Above pick station
+waypoint2 = [0.3, -0.4, 0.35] # Descend to pick
+waypoint3 = [0.3, -0.4, 0.4] # Lift above pick
+waypoint4 = [0.2, -0.4, 0.4] # Obstacle avoidance waypoint (offset in -X)
+# Define remaining waypoints similarly...
+
+# Define speeds
+speed1 = 200.0 # mm/s
+speed2 = 100.0 # mm/s
+speed3 = 180.0 # mm/s
+speed4 = 200.0 # mm/s
+# Define remaining speeds...
+
+# Set payload mass and center of gravity
+set_payload(mass=1.5, cog=[0.0, 0.0, 0.0])
+
+# Define safety limits
+max_speed = 250.0 # mm/s
+max_acceleration = 1.4 # rad/s² per joint
+
+# Safety check function
+def safety_check():
+    if get_robot_status().velocity > max_speed:
+        popup "Speed limit exceeded!"
+        halt()
+    if get_robot_status().acceleration > max_acceleration:
+        popup "Acceleration limit exceeded!"
+        halt()
+
+# Main script
+move_joint(0, 200.0) # Move to home position with speed limit
+safety_check()
+
+move_linear(waypoint1, speed=speed1) # Move to waypoint 1
+safety_check()
+
+move_linear(waypoint2, speed=speed2) # Move to waypoint 2
+safety_check()
+
+move_linear(waypoint3, speed=speed3) # Move to waypoint 3
+safety_check()
+
+move_linear(waypoint4, speed=speed4) # Move to waypoint 4 with obstacle avoidance
+safety_check()
+
+# Continue defining and executing the rest of the moves...

@@ -1,0 +1,72 @@
+# Safe version with low speeds for collaborative mode
+
+def safe_welding():
+    # Move to Home position
+    movej(p[0, -0.483, 0.125, 0, -3.1416, 0], a=1.2, v=0.2)
+
+    # Approach spot 1
+    movel(p[0.1, -0.483, 0.2, 0, -3.1416, 0], a=1.2, v=0.2)
+
+    # Descend to spot 1
+    movel(p[0.1, -0.483, 0.05, 0, -3.1416, 0], a=1.2, v=0.1)
+
+    # Lift from spot 1
+    movel(p[0.1, -0.483, 0.2, 0, -3.1416, 0], a=1.2, v=0.2)
+
+    # Move to spot 2
+    movel(p[0.2, -0.483, 0.2, 0, -3.1416, 0], a=1.2, v=0.2)
+
+    # Descend to spot 2
+    movel(p[0.2, -0.483, 0.05, 0, -3.1416, 0], a=1.2, v=0.1)
+
+    # Lift from spot 2
+    movel(p[0.2, -0.483, 0.2, 0, -3.1416, 0], a=1.2, v=0.2)
+
+    # Move to spot 3
+    movel(p[0.3, -0.483, 0.2, 0, -3.1416, 0], a=1.2, v=0.2)
+
+    # Descend to spot 3
+    movel(p[0.3, -0.483, 0.05, 0, -3.1416, 0], a=1.2, v=0.1)
+
+    # Lift from spot 3
+    movel(p[0.3, -0.483, 0.2, 0, -3.1416, 0], a=1.2, v=0.2)
+
+end
+
+# Optimized version with increased speeds for production mode
+
+def optimized_welding():
+    # Move to Home position
+    movej(p[0, -0.483, 0.125, 0, -3.1416, 0], a=3.6, v=0.6)
+
+    # Approach spot 1
+    movel(p[0.1, -0.483, 0.2, 0, -3.1416, 0], a=3.6, v=0.6)
+
+    # Descend to spot 1
+    movel(p[0.1, -0.483, 0.05, 0, -3.1416, 0], a=3.6, v=0.3)
+
+    # Lift from spot 1
+    movel(p[0.1, -0.483, 0.2, 0, -3.1416, 0], a=3.6, v=0.45)
+
+    # Move to spot 2
+    movel(p[0.2, -0.483, 0.2, 0, -3.1416, 0], a=3.6, v=0.6)
+
+    # Descend to spot 2
+    movel(p[0.2, -0.483, 0.05, 0, -3.1416, 0], a=3.6, v=0.3)
+
+    # Lift from spot 2
+    movel(p[0.2, -0.483, 0.2, 0, -3.1416, 0], a=3.6, v=0.45)
+
+    # Move to spot 3
+    movel(p[0.3, -0.483, 0.2, 0, -3.1416, 0], a=3.6, v=0.6)
+
+    # Descend to spot 3
+    movel(p[0.3, -0.483, 0.05, 0, -3.1416, 0], a=3.6, v=0.3)
+
+    # Lift from spot 3
+    movel(p[0.3, -0.483, 0.2, 0, -3.1416, 0], a=3.6, v=0.45)
+
+end
+
+# Call the optimized welding function for production mode
+optimized_welding()

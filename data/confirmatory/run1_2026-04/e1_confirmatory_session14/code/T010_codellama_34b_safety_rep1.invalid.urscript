@@ -1,0 +1,40 @@
+def program():
+    # Home the robot
+    move_joint(home, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+    
+    # Move above screw feeder
+    move_linear(above_screw_feeder, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+    
+    # Pick screw from feeder
+    move_linear(pick_screw, 80.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+    
+    # Lift screw out of feeder
+    move_linear(lift_from_feeder, 180.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+    
+    # Move to fastening point 1
+    move_linear(fastening_point_1, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+    
+    # Fasten screw at fastening point 1
+    move_linear(fasten_screw_1, 80.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+    
+    # Move to fastening point 2
+    move_linear(fastening_point_2, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+    
+    # Fasten screw at fastening point 2
+    move_linear(fasten_screw_2, 80.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+    
+    # Move to fastening point 3
+    move_linear(fastening_point_3, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+    
+    # Fasten screw at fastening point 3
+    move_linear(fasten_screw_3, 80.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+    
+    # Move to fastening point 4
+    move_linear(fastening_point_4, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+    
+    # Fasten screw at fastening point 4
+    move_linear(fasten_screw_4, 80.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+    
+    # Move back to home position
+    move_joint(home, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+end

@@ -1,0 +1,19 @@
+# Set the payload mass in kg
+set_payload(mass:=0.4);
+
+# Define the maximum TCP speed in mm/s
+set_tcp(speed:=200.0);
+
+# Move to home position with a specified velocity (180.0 mm/s)
+movej [0, -pi/4, pi/2, -pi/4, 0, 0], vel:=180.0;
+
+# Define the sequence of linear and joint movements
+moves = [[0, -pi/4, pi/2, -pi/4, 0, 0], [0, -pi/4, pi/2, -pi/4, 0, 0], [0, -pi/4, pi/2, -pi/4, 0, 0], [0, -pi/4, pi/2, -pi/4, 0, 0], [0, -pi/4, pi/2, -pi/4, 0, 0]];
+velocities = [150.0, 120.0, 120.0, 180.0];
+
+# Execute the sequence of moves with specified velocities
+for i in range(len(moves)):
+    if i < len(moves) - 1:
+        movej moves[i], vel:=velocities[i];
+    else:
+        movel [0, -pi/4, pi/2, -pi/4, 0, 0], vel:=180.0;

@@ -1,0 +1,37 @@
+# Define constants for joint positions and speeds
+HOME_POSITION = [0.0, -pi/2, pi/2, 0.0, pi/2, 0.0]
+ABOVE_MARKING_SURFACE = [0.0, -pi/2, pi/2, 0.0, pi/2, 0.0] # Adjust this based on actual setup
+DESCEND_TO_MARKING_HEIGHT = [0.0, -pi/2, pi/2, 0.0, pi/2, 0.0] # Adjust this based on actual setup
+MARK_LINE_1 = [0.0, -pi/2, pi/2, 0.0, pi/2, 0.0] # Adjust this based on actual setup
+STEP_TO_LINE_2 = [0.0, -pi/2, pi/2, 0.0, pi/2, 0.0] # Adjust this based on actual setup
+# Add positions for the remaining moves as needed
+
+# Define speeds
+SPEED_HOME = 350.0
+SPEED_ABOVE_MARKING = 300.0
+SPEED_DESCEND_TO_MARKING = 100.0
+SPEED_MARK_LINE_1 = 60.0
+SPEED_STEP_TO_LINE_2 = 80.0
+# Define speeds for the remaining moves as needed
+
+# Main script
+def main():
+    # Move to home position
+    movej(HOME_POSITION, SPEED_HOME)
+    
+    # Move above marking surface
+    movej(ABOVE_MARKING_SURFACE, SPEED_ABOVE_MARKING)
+    
+    # Descend to marking height
+    movej(DESCEND_TO_MARKING_HEIGHT, SPEED_DESCEND_TO_MARKING)
+    
+    # Mark line 1
+    movel(MARK_LINE_1, SPEED_MARK_LINE_1)
+    
+    # Step to line 2
+    movel(STEP_TO_LINE_2, SPEED_STEP_TO_LINE_2)
+    
+    # Repeat for the remaining moves as needed
+    
+# Call main function
+main()

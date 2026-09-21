@@ -1,0 +1,51 @@
+# Define payload and set it
+set_payload(3.0, [0,0,0])
+
+# Safety zones definition
+def in_confinement_zone(tcp_pos):
+    # Example confinement zone check (modify as per actual zone)
+    return tcp_pos[0] >= 250 and tcp_pos[0] <= 750 and tcp_pos[1] >= -300 and tcp_pos[1] <= 300 and tcp_pos[2] >= 100 and tcp_pos[2] <= 800
+
+def in_exclusion_zone(tcp_pos):
+    # Example exclusion zone check (modify as per actual zone)
+    return tcp_pos[0] >= 450 and tcp_pos[0] <= 550 and tcp_pos[1] >= -100 and tcp_pos[1] <= 100 and tcp_pos[2] >= 300 and tcp_pos[2] <= 400
+
+# Safety check function
+def safety_check(tcp_pos):
+    if not in_confinement_zone(tcp_pos) or in_exclusion_zone(tcp_pos):
+        popup("Safety violation detected! Halting operation.")
+        halt()
+
+# Home position
+home_j = [0, -1.57, 0, -1.83, 0, 0]
+
+# Waypoints definition (modify as per actual coordinates)
+p_home = p[0, 0, 0, 0, 0, 0]
+p_above_weld_start = p[400, 0, 250, 0, 3.14, 0]
+p_weld_start = p[400, 0, 150, 0, 3.14, 0]
+p_weld_end = p[700, 0, 150, 0, 3.14, 0]
+p_above_weld_end = p[700, 0, 250, 0, 3.14, 0]
+
+# Motion sequence
+def weld_path():
+    # Move to home position
+    movej(home_j, a=1.4, v=300)
+    
+    # Approach above weld start
+    safety_check(get_tcp_pose())
+    movel(p_above_weld_start, a=1.4, v=250)
+    
+    # Descend to weld start position
+    safety_check(get_tcp_pose())
+    movel(p_weld_start, a=1.4, v=100)
+    
+    # Weld seam — 300mm linear path
+    safety_check(get_tcp_pose())
+    movel(p_weld_end, a=1.4, v=50)
+    
+    # Retract above weld end
+    safety_check(get_tcp_pose())
+    movel(p_above_weld_end, a=1.4, v=200)
+
+# Execute the weld path
+weld_path()

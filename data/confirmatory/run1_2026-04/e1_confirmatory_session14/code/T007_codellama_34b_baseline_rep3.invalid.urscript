@@ -1,0 +1,18 @@
+def program():
+    # Home position
+    move_joint(300.0, "mm/s")
+    
+    # Approach above weld fixture
+    move_linear(250.0, "mm/s")
+    
+    # Descend to weld start
+    move_linear(100.0, "mm/s")
+    
+    # Weld midpoint
+    move_linear(60.0, "mm/s")
+    
+    # Weld end
+    move_linear(60.0, "mm/s")
+    
+    # Move to safety zone
+    move_joint(300.0, "mm/s")

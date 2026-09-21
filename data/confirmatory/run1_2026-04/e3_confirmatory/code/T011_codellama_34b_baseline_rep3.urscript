@@ -1,0 +1,8 @@
+def dual_zone_pick_place():
+    # Home the robot
+    movej(p[0, 0, 0, 0, 0, 0], v=250.0)
+
+    # Move above storage bin
+    movel(p[0, 0, 100, 0, 0, 0], v=280.0)
+
+    # Descend

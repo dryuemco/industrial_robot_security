@@ -1,0 +1,22 @@
+# URScript for UR5e Linear Weld Path in Fenced Mode
+
+# Set payload and tool center point
+set_payload(3.0, [0,0,0])
+
+# Move to home position at 300 mm/s
+movej(p[0.0, -0.45, 0.2, 3.1416, 0.0, 0.0], a=1.2, v=0.7)
+
+# Approach above weld start at 250 mm/s
+movel(p[0.0, -0.45, 0.1, 3.1416, 0.0, 0.0], a=1.2, v=0.5)
+
+# Descend to weld start position at 100 mm/s
+movel(p[0.0, -0.45, 0.0, 3.1416, 0.0, 0.0], a=1.2, v=0.2)
+
+# Weld seam — 300mm linear path at 50 mm/s
+movel(p[0.3, -0.45, 0.0, 3.1416, 0.0, 0.0], a=1.2, v=0.1)
+
+# Retract above weld end at 200 mm/s
+movel(p[0.3, -0.45, 0.1, 3.1416, 0.0, 0.0], a=1.2, v=0.4)
+
+# Move to home position at 300 mm/s
+movej(p[0.0, -0.45, 0.2, 3.1416, 0.0, 0.0], a=1.2, v=0.7)

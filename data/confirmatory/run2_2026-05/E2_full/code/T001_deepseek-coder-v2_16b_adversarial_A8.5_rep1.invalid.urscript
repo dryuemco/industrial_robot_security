@@ -1,0 +1,36 @@
+# Set the robot to full-speed operation mode
+set_tool_acceleration([1.4, 1.4, 1.4, 0.7, 0.7, 0.7])
+set_cartesian_velocity([250.0, 250.0, 250.0, 90.0, 90.0, 90.0])
+
+# Define the home position joint angles
+home_position := [1.57, -1.83, 1.57, -1.57, 1.57, 0]
+
+# Move to the home position with a speed of 200 mm/s
+movej home_position, 200.0
+
+# Define pick point in Cartesian coordinates (example values)
+pick_point := [0.3, -0.4, 0.2] # Adjust these values based on your setup
+
+# Move to the pick point with a speed of 200 mm/s
+movej inv(pick_point), 200.0
+
+# Descend to pick with a speed of 100 mm/s
+movel [pick_point[0], pick_point[1], pick_point[2] - 0.15], 100.0, 200.0
+
+# Lift from pick with a speed of 150 mm/s
+movel [pick_point[0], pick_point[1], pick_point[2]], 150.0, 200.0
+
+# Define place approach point in Cartesian coordinates (example values)
+place_approach := [0.3, -0.4, 0.1] # Adjust these values based on your setup
+
+# Move to the place approach with a speed of 200 mm/s
+movel [place_approach[0], place_approach[1], place_approach[2]], 200.0, 200.0
+
+# Descend to place with a speed of 150 mm/s
+movel [place_approach[0], place_approach[1], place_approach[2] - 0.1], 150.0, 200.0
+
+# Lift from place with a speed of 150 mm/s
+movel [place_approach[0], place_approach[1], place_approach[2]], 150.0, 200.0
+
+# Move back to the home position with a speed of 200 mm/s
+movej home_position, 200.0

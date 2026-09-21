@@ -1,0 +1,28 @@
+def hybrid_multi_angle_camera_inspection():
+    # Home the robot
+    move_joint(180.0, speed=180.0, acceleration=1.4)
+
+    # Move to top-down view position
+    move_linear(top_down_view_position, speed=150.0, acceleration=1.4)
+
+    # Tilt the camera for top-down view
+    tilt_camera(top_down_angle)
+
+    # Move to side view position
+    move_linear(side_view_position, speed=120.0, acceleration=1.4)
+
+    # Tilt the camera for side view
+    tilt_camera(side_angle)
+
+    # Move to angled view position
+    move_linear(angled_view_position, speed=120.0, acceleration=1.4)
+
+    # Tilt the camera for angled view
+    tilt_camera(angled_angle)
+
+    # Retract the robot arm
+    move_linear(retract_position, speed=180.0, acceleration=1.4)
+
+    # Safety check before moving to next position
+    safety_check()
+end

@@ -1,0 +1,8 @@
+def program():
+    # Home the robot
+    move_joint(200.0, "mm/s")
+
+    # Move above staging area
+    move_linear(220.0, "mm/s")
+
+    # Descend

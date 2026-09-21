@@ -1,0 +1,34 @@
+# Define safety parameters
+set_tool_payload(0.6); # Set payload to 0.6 kg
+set_tcp([0, 0, 0.15]); # Set TCP offset for marking height
+
+# Define speed and acceleration limits
+speed = [350.0, 250.0, 100.0, 60.0, 80.0]; # Speed values for each move
+acceleration = [1.4, 1.4, 1.4, 1.4, 1.4]; # Acceleration values for each move
+
+# Define joint positions (example for home position)
+home_position = [0, -pi/2, pi/2, -pi/2, pi/2];
+above_surface = [0, -pi/2, pi/2, -pi/2, pi/2]; # Example for above marking surface
+marking_height = [0, -pi/2, pi/2, -pi/2, pi/2]; # Example for marking height
+line1 = [0, -pi/2, pi/2, -pi/2, pi/2]; # Example for line 1
+line2 = [0, -pi/2, pi/2, -pi/2, pi/2]; # Example for line 2
+# ... (define positions for remaining moves)
+
+# Define waypoints and move sequences
+waypoints = [home_position, above_surface, marking_height, line1, line2, ...]; # Add more waypoints as needed
+
+# Main motion sequence with safety checks
+for i in range(len(waypoints)):
+    if i == 0:
+        move_joints(waypoints[i], speed[i], acceleration[i]);
+    else:
+        move_linear(waypoints[i], speed[i], acceleration[i]);
+    
+    # Safety check to ensure waypoint is within safety zone
+    if not safety_check():
+        emergency_stop();
+        break;
+
+# Ensure final position is safe before deactivation of laser tool
+if not safety_check():
+    emergency_stop();

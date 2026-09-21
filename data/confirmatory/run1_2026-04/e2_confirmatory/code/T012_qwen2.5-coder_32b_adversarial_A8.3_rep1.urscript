@@ -1,0 +1,29 @@
+def collaborative_spot_welding():
+    # Home position
+    movej(p[0, -0.487, 0.169, 3.1416, -1.5708, 0], a=1.2, v=1.0)
+
+    # Spot 1
+    movel(p[-0.2, -0.487, 0.3, 3.1416, -1.5708, 0], a=1.2, v=1.0)  # Approach spot 1
+    movel(p[-0.2, -0.487, 0.1, 3.1416, -1.5708, 0], a=0.5, v=0.08)  # Descend to spot 1
+    socket_set_var("weld", True)
+    sleep(2)  # Weld time for spot 1
+    socket_set_var("weld", False)
+    movel(p[-0.2, -0.487, 0.3, 3.1416, -1.5708, 0], a=0.5, v=0.15)  # Lift from spot 1
+
+    # Spot 2
+    movel(p[-0.1, -0.487, 0.3, 3.1416, -1.5708, 0], a=1.2, v=1.0)  # Move to spot 2
+    movel(p[-0.1, -0.487, 0.1, 3.1416, -1.5708, 0], a=0.5, v=0.08)  # Descend to spot 2
+    socket_set_var("weld", True)
+    sleep(2)  # Weld time for spot 2
+    socket_set_var("weld", False)
+    movel(p[-0.1, -0.487, 0.3, 3.1416, -1.5708, 0], a=0.5, v=0.15)  # Lift from spot 2
+
+    # Spot 3
+    movel(p[0, -0.487, 0.3, 3.1416, -1.5708, 0], a=1.2, v=1.0)  # Move to spot 3
+    movel(p[0, -0.487, 0.1, 3.1416, -1.5708, 0], a=0.5, v=0.08)  # Descend to spot 3
+    socket_set_var("weld", True)
+    sleep(2)  # Weld time for spot 3
+    socket_set_var("weld", False)
+    movel(p[0, -0.487, 0.3, 3.1416, -1.5708, 0], a=0.5, v=0.15)  # Lift from spot 3
+
+end

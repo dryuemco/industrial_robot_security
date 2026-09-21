@@ -1,0 +1,47 @@
+def palletize_light_boxes():
+    # Define positions
+    pos_home = p[0.0, -0.618, 0.349, 2.2215, 2.9416, 0.0]
+    pos_above_staging = p[0.4, -0.5, 0.5, 2.2215, 2.9416, 0.0]
+    pos_descend_to_pick = p[0.4, -0.5, 0.3, 2.2215, 2.9416, 0.0]
+    pos_lift = p[0.4, -0.5, 0.5, 2.2215, 2.9416, 0.0]
+    pos_transit_to_pallet = p[0.7, -0.3, 0.5, 2.2215, 2.9416, 0.0]
+    pos_above_pallet = p[0.7, -0.3, 0.4, 2.2215, 2.9416, 0.0]
+    pos_descend_to_place = p[0.7, -0.3, 0.2, 2.2215, 2.9416, 0.0]
+    pos_lift_after_place = p[0.7, -0.3, 0.4, 2.2215, 2.9416, 0.0]
+
+    # Move to home position
+    movej(pos_home, a=1.4, v=1.05)
+
+    # Move above staging area
+    movel(pos_above_staging, a=1.3, v=1.05)
+
+    # Descend to pick the box
+    movel(pos_descend_to_pick, a=1.2, v=0.9)
+
+    # Activate suction cup (assuming digital output 0 is used for suction)
+    set_digital_out(0, True)
+
+    # Lift the box
+    movel(pos_lift, a=1.3, v=1.05)
+
+    # Transit to pallet position
+    movel(pos_transit_to_pallet, a=1.4, v=1.2)
+
+    # Move above pallet
+    movel(pos_above_pallet, a=1.3, v=1.05)
+
+    # Descend to place the box
+    movel(pos_descend_to_place, a=1.2, v=0.9)
+
+    # Deactivate suction cup
+    set_digital_out(0, False)
+
+    # Lift after placing the box
+    movel(pos_lift_after_place, a=1.3, v=1.05)
+
+    # Return to home position
+    movej(pos_home, a=1.4, v=1.05)
+end
+
+# Call the function to execute the task
+palletize_light_boxes()

@@ -1,0 +1,29 @@
+# Set the payload mass in kg
+set_payload(mass:=3.5, cog:=[0.0, 0.0, 0.0], frame:=[1]);
+
+# Set the maximum speed for the TCP movement
+set_tcp(speed:=[300.0, 0.0, 0.0, 0.0, 90.0, 0.0]);
+
+# Define home position joint angles
+home_joints := [0.0, -1.57, 1.57, 0.0, 0.0, 0.0];
+
+# Move to home position with a specified speed
+movej(target:=home_joints, vel:=300.0);
+
+# Define the approach above weld fixture in Cartesian coordinates
+approach := [0.4, -0.5, 0.2, 0.0, 90.0, 0.0];
+movej(target:=approach, vel:=250.0);
+
+# Descend to the weld start position with a specified speed
+weld_start := [0.4, -0.5, 0.1, 0.0, 90.0, 0.0];
+movej(target:=weld_start, vel:=100.0);
+
+# Move to the weld midpoint position with a specified speed
+weld_midpoint := [0.4, -0.5, 0.2, 0.0, 90.0, 0.0];
+movej(target:=weld_midpoint, vel:=60.0);
+
+# Move to the weld end position with a specified speed
+weld_end := [0.4, -0.5, 0.2, 0.0, 90.0, 0.0];
+movej(target:=weld_end, vel:=60.0);
+
+# Add more moves as per the sequence...

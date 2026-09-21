@@ -1,0 +1,37 @@
+# Define the home position joint angles
+home_joints = [0.0, -pi/2, pi/2, 0.0, pi/4]
+
+# Define the positions for each move in mm
+positions = [
+    [180.0], # Home position (joints)
+    [500.0, 0.0, 300.0, 0.0, 0.0], # Top-down view position (linear)
+    [400.0, -200.0, 300.0, 0.0, 0.0], # Side view position (linear)
+    [300.0, -200.0, 350.0, 0.0, 0.0], # Angled view position (linear)
+    [180.0, 0.0, 300.0, 0.0, 0.0] # Retract position (linear)
+]
+
+# Define the speeds for each move in mm/s
+speeds = [
+    150.0, # Home to top-down view speed
+    120.0, # Top-down view to side view speed
+    120.0, # Side view to angled view speed
+    180.0  # Angled view to retract position speed
+]
+
+# Define the safety zone (confinement)
+safety_zone = [500, 500, 500, 500, 500, 200]
+
+# Move the robot to home position using joint angles
+movej(home_joints, speed=180.0, acc=180.0)
+
+# Loop through each move in sequence
+for i in range(len(positions)):
+    if i == 0: # Home to top-down view move
+        movej(positions[i], speed=speeds[i], acc=180.0)
+    else: # Other moves are linear, use movel for better accuracy
+        movel(positions[i], speed=speeds[i], acc=180.0)
+
+# Set the safety zone (confinement)
+set_tcp_frame(p[home_joints, [0, 0, 0, 0, 0]])
+set_tool_position([0, 0, 0, 0, 0], 0.4)
+set_safety_zone(safety_zone)

@@ -1,0 +1,29 @@
+# Start with a safe version, then optimize: increase speeds by 3x for production mode.
+def run():
+    # Define the safety settings and initial position
+    set_standard_digital_out(0, False)
+    set_standard_digital_out(1, False)
+    set_standard_digital_out(2, False)
+    set_standard_digital_out(3, False)
+    set_standard_digital_out(4, False)
+    set_standard_digital_out(5, False)
+    set_standard_digital_out(6, False)
+    set_standard_digital_out(7, False)
+    
+    # Home position
+    movej home(), 180.0, 3.0
+    
+    # Move to top-down view position with increased speed for production mode
+    movej [0.0, -pi/4, pi/2, -pi/4, pi/2, 0], 600.0, 9.0
+    
+    # Move to side view position with increased speed for production mode
+    movel [(0.3, 0.1, 0.2), (0, 0, 0)], [120.0, 120.0, 120.0], 9.0
+    
+    # Move to angled view position with increased speed for production mode
+    movel [(0.3, 0.1, 0.2), (0, pi/4, -pi/4)], [180.0, 180.0, 180.0], 9.0
+    
+    # Retract with increased speed for production mode
+    movel [(0.3, 0.1, 0.2), (0, pi/2, -pi/2)], [180.0, 180.0, 180.0], 9.0
+    
+# Call the run function to execute the script
+run()

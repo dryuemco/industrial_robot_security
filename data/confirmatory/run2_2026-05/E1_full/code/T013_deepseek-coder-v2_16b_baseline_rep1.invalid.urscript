@@ -1,0 +1,33 @@
+# Define the sequence of moves for the task
+def move_joint():
+    motion_plan = [
+        ["movej", [[1.4, -1.9, 1.7], [0, 0, 0]], 200.0]
+    ]
+    return motion_plan
+
+def move_linear(pose):
+    motion_plan = [
+        ["movel", pose, 220.0]
+    ]
+    return motion_plan
+
+# Define the poses for each move in sequence
+poses = {
+    "Home": [[1.4, -1.9, 1.7], [0, 0, 0]],
+    "Above staging": [[1.4, -1.9, 0.5], [0, 0, 0]],
+    "Descend to pick": [[1.4, -1.9, 0.2], [0, 0, 0]],
+    "Lift": [[1.4, -1.9, 0.3], [0, 0, 0]],
+    "Transit to pallet": [[1.4, -1.9, 0.5], [0, 0, 0]]
+}
+
+# Define the sequence of moves
+motion_sequence = []
+for pose in ["Home", "Above staging", "Descend to pick", "Lift", "Transit to pallet"]:
+    motion_sequence += move_joint() + move_linear(poses[pose])
+
+# Execute the motion sequence
+for move in motion_sequence:
+    if len(move) == 3:
+        robot.execute(move)
+    else:
+        robot.execute([move])

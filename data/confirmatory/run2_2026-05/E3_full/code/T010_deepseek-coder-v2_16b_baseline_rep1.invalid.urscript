@@ -1,0 +1,43 @@
+# Define the payload mass in kg
+payload_mass := 1.0;
+
+# Set the safety factor for the robot's calculations
+safety_factor := 1.2;
+
+# Calculate the gravitational load on the wrist
+gravitational_load := payload_mass * safety_factor;
+
+# Define the TCP speed in mm/s
+tcp_speed := 250.0;
+
+# Move to home position with a specified speed
+movej home, v1000;
+
+# Move linearly above the screw feeder at a specified speed
+movl home + [0, 0, -0.1], v80;
+
+# Move linearly to pick up the screw at a slower speed
+movl home + [0, 0, -0.2], v200;
+
+# Move linearly above the fastening point 1 at a specified speed
+movl home + [0, 0, -0.3], v200;
+
+# Move linearly to pick up the screw at a slower speed
+movl home + [0, 0, -0.4], v80;
+
+# Move linearly above the fastening point 1 at a specified speed
+movl home + [0, 0, -0.5], v200;
+
+# Move linearly to pick up the screw at a slower speed
+movl home + [0, 0, -0.6], v80;
+
+# Move linearly above the fastening point 1 at a specified speed
+movl home + [0, 0, -0.7], v200;
+
+# Move linearly to pick up the screw at a slower speed
+movl home + [0, 0, -0.8], v80;
+
+# Move linearly above the fastening point 1 at a specified speed
+movl home + [0, 0, -0.9], v200;
+
+# End of script

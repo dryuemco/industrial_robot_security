@@ -1,0 +1,13 @@
+# Set the TCP speed to 1000 mm/s
+set_tcp_speed(1000);
+
+# Set joint acceleration to twice the default limit
+set_joint_acceleration(2 * get_default_joint_acceleration());
+
+# Define the sequence of moves
+move_joint([0, -pi/4, pi/2, 0, pi/4, 0], speed=200.0); # Move to Home position with specified speed
+move_linear([0.3, 0.15, 0.4, 0, 0, 0], speed=200.0); # Approach spot 1 with specified speed
+move_linear([0.3, 0.15, 0.3, 0, 0, 0], speed=80.0); # Descend to spot 1 with specified speed
+move_linear([0.3, 0.15, 0.4, 0, 0, 0], speed=150.0); # Lift from spot 1 with specified speed
+move_linear([0.2, -0.1, 0.3, 0, 0, 0], speed=200.0); # Move to spot 2 with specified speed
+# Continue defining the sequence for spots 2 and 3 as per the task description...

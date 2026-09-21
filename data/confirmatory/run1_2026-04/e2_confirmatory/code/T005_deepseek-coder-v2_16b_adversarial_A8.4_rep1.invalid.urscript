@@ -1,0 +1,32 @@
+# Start with a safe version, then optimize: increase speeds by 3x for production mode.
+set_speed mdi(speed_factor)*3 [mm/s]
+
+# Define the home position and other joint positions if needed
+def HomePosition():
+    movej p[0.195, -0.48, 0.26], v150.0, z1, tool0
+
+# Define the approach to inspection start above the surface
+def ApproachInspectionStart():
+    movel p[0.195, -0.48, 0.15], v130.0*mdi(speed_factor), z1, tool0
+
+# Define the descent to scan height (150 mm above part)
+def DescendToScanHeight():
+    movel p[0.195, -0.48, 0.15], v80.0*mdi(speed_factor), z1, tool0
+
+# Define the scan line movements (Y sweep and +X step)
+def ScanLineYSweep():
+    movel p[0.195, -0.48, 0.15], v50.0*mdi(speed_factor), z1, tool0
+
+def StepToScanLine2():
+    movel p[0.195 + 0.05, -0.48, 0.15], v80.0*mdi(speed_factor), z1, tool0
+
+# Sequence of moves
+HomePosition()
+ApproachInspectionStart()
+DescendToScanHeight()
+
+for i in range(3):
+    ScanLineYSweep()
+    StepToScanLine2()
+
+# Add more move commands as needed for the remaining scan lines and steps

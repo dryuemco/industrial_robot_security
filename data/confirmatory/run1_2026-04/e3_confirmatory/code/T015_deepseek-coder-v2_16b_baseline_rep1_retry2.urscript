@@ -1,0 +1,28 @@
+# Define constants for the robot's movements
+HOME_POSITION = [0.0, -1.5708, 0.0, -1.5708, 0.0]
+ABOVE_MARKING_SURFACE = [0.3, -1.2, 0.4, -1.2, 0.0]
+DESCEND_TO_MARKING_HEIGHT = [0.3, -1.2, 0.3, -1.2, 0.0]
+MARK_LINE_1 = [0.3, -1.2, 0.25, -1.2, 0.0]
+STEP_TO_LINE_2 = [0.3, -1.2, 0.27, -1.2, 0.0]
+# Define the sequence of movements for the robot
+def move_to_home():
+    movej(HOME_POSITION, 350.0, 0.6)
+
+def move_above_marking_surface():
+    movej(ABOVE_MARKING_SURFACE, 350.0, 0.6)
+
+def descend_to_marking_height():
+    movl(DESCEND_TO_MARKING_HEIGHT, 100.0, 0.6)
+
+def mark_line_1():
+    movl([0.3, -1.2, 0.25, -1.2, 0.0], 60.0, 0.6)
+
+def step_to_line_2():
+    movl([0.3, -1.2, 0.27, -1.2, 0.0], 80.0, 0.6)
+# Define the sequence of movements for the robot
+move_to_home()
+move_above_marking_surface()
+descend_to_marking_height()
+mark_line_1()
+step_to_line_2()
+# Continue defining the rest of the moves as needed...

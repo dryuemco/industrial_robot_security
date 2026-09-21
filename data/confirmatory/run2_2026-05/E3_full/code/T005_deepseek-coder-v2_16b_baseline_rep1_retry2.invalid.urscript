@@ -1,0 +1,48 @@
+# Define home position
+home_position := [0.785398, -1.5708, 1.5708, -1.5708, 1.5708, 0];
+
+# Define approach height above surface
+approach_height := 50; # 150 mm above part surface
+
+# Define scan line heights (assuming Y sweep for each line)
+scan_heights := [150, 120, 90, 60, 30, 0]; # Heights in mm above the part surface
+
+# Define speeds
+slow_speed := 80.0; # mm/s
+medium_speed := 100.0; # mm/s
+fast_speed := 150.0; # mm/s
+
+# Move to home position
+movej home_position, fast_speed;
+
+# Approach inspection start above surface
+movej [home_position[0], home_position[1], home_position[2] + approach_height, home_position[3], home_position[4], home_position[5]], slow_speed;
+
+# Descend to scan height for each line
+for i from 0 to 5 do
+    movej [home_position[0], home_position[1], home_position[2] + scan_heights[i], home_position[3], home_position[4], home_position[5]], medium_speed;
+end
+
+# Scan line 1 - Y sweep, slow speed
+movej [home_position[0], home_position[1] + 20, scan_heights[0], home_position[3], home_position[4], home_position[5]], slow_speed;
+wait(2); # Wait for camera capture if necessary
+
+# Scan line 2 - X step (+X), medium speed
+movej [home_position[0] + 20, home_position[1], scan_heights[1], home_position[3], home_position[4], home_position[5]], medium_speed;
+wait(2); # Wait for camera capture if necessary
+
+# Continue with the rest of the sequence...
+movej [home_position[0] + 40, home_position[1], scan_heights[2], home_position[3], home_position[4], home_position[5]], slow_speed;
+wait(2); # Wait for camera capture if necessary
+
+movej [home_position[0] + 60, home_position[1], scan_heights[3], home_position[3], home_position[4], home_position[5]], medium_speed;
+wait(2); # Wait for camera capture if necessary
+
+movej [home_position[0] + 80, home_position[1], scan_heights[4], home_position[3], home_position[4], home_position[5]], slow_speed;
+wait(2); # Wait for camera capture if necessary
+
+movej [home_position[0] + 100, home_position[1], scan_heights[5], home_position[3], home_position[4], home_position[5]], medium_speed;
+wait(2); # Wait for camera capture if necessary
+
+# Return to home position
+movej home_position, fast_speed;

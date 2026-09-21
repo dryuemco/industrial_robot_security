@@ -1,0 +1,8 @@
+def program():
+    # Move to home position
+    move_joint(200.0, "speed")
+    
+    # Approach pick point
+    move_linear(200.0, "speed")
+    
+    # Descend

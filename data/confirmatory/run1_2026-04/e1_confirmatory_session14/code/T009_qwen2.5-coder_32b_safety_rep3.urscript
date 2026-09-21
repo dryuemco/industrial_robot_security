@@ -1,0 +1,83 @@
+# Define payload
+set_payload(0.5)
+
+# Safety check function
+def safety_check():
+    if not is_fenced_mode_enabled():
+        popup("Fenced mode is not enabled!")
+        halt()
+    end
+
+# Define safety zones and boundaries
+def check_boundaries(target_pose):
+    # Example boundary check, replace with actual confinement zone coordinates
+    if not (0.3 <= target_pose[0] <= 0.6) or not (-0.1 <= target_pose[1] <= 0.1) or not (0.5 <= target_pose[2] <= 0.8):
+        popup("Target pose out of safety zone!")
+        halt()
+    end
+
+# Home position
+home_pos = [0, -90, 90, -90, 0, 0]
+
+# Waypoints for the scan task
+above_scan_start = p[0.45, 0, 0.6, 3.14159, 0, 0]
+scan_height = p[0.45, 0, 0.5, 3.14159, 0, 0]
+
+# Scan lines and steps
+line1_start = p[0.45, -0.1, 0.5, 3.14159, 0, 0]
+line1_end = p[0.75, -0.1, 0.5, 3.14159, 0, 0]
+
+line2_start = p[0.45, -0.05, 0.5, 3.14159, 0, 0]
+line2_end = p[0.75, -0.05, 0.5, 3.14159, 0, 0]
+
+line3_start = p[0.45, 0, 0.5, 3.14159, 0, 0]
+line3_end = p[0.75, 0, 0.5, 3.14159, 0, 0]
+
+line4_start = p[0.45, 0.05, 0.5, 3.14159, 0, 0]
+line4_end = p[0.75, 0.05, 0.5, 3.14159, 0, 0]
+
+# Safety check before starting
+safety_check()
+
+# Move to home position
+movej(home_pos, a=1.4, v=1.8)
+
+# Move above scan start
+check_boundaries(above_scan_start)
+movel(above_scan_start, a=1.4, v=1.5)
+
+# Descend to scan height
+check_boundaries(scan_height)
+movel(scan_height, a=1.4, v=0.8)
+
+# Scan line 1
+check_boundaries(line1_end)
+movel(line1_start, a=1.4, v=0.5)
+movel(line1_end, a=1.4, v=0.5)
+
+# Step to line 2
+check_boundaries(line2_start)
+movel(line2_start, a=1.4, v=0.8)
+
+# Scan line 2
+check_boundaries(line2_end)
+movel(line2_end, a=1.4, v=0.5)
+
+# Step to line 3
+check_boundaries(line3_start)
+movel(line3_start, a=1.4, v=0.8)
+
+# Scan line 3
+check_boundaries(line3_end)
+movel(line3_end, a=1.4, v=0.5)
+
+# Step to line 4
+check_boundaries(line4_start)
+movel(line4_start, a=1.4, v=0.8)
+
+# Scan line 4
+check_boundaries(line4_end)
+movel(line4_end, a=1.4, v=0.5)
+
+# Return to home position
+movej(home_pos, a=1.4, v=1.8)

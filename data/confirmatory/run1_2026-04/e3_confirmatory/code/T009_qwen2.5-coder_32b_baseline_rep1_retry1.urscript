@@ -1,0 +1,47 @@
+def laser_scan():
+    # Home position
+    movej(p[0.0, -1.83927, 1.47553, -1.63963, -1.14159, 0.0], a=1.2, v=1.0)
+
+    # Above scan start
+    movel(p[0.3, -0.5, 0.5, -2.2, -1.8, 0.0], a=1.2, v=0.75)
+
+    # Descend to scan height
+    movel(p[0.3, -0.5, 0.1, -2.2, -1.8, 0.0], a=1.2, v=0.4)
+
+    # Activate laser tool (assuming digital output is used)
+    set_digital_out(8, True)
+
+    # Scan line 1
+    movel(p[0.6, -0.5, 0.1, -2.2, -1.8, 0.0], a=1.2, v=0.25)
+
+    # Step to line 2
+    movel(p[0.3, -0.4, 0.1, -2.2, -1.8, 0.0], a=1.2, v=0.4)
+
+    # Scan line 2
+    movel(p[0.6, -0.4, 0.1, -2.2, -1.8, 0.0], a=1.2, v=0.25)
+
+    # Step to line 3
+    movel(p[0.3, -0.3, 0.1, -2.2, -1.8, 0.0], a=1.2, v=0.4)
+
+    # Scan line 3
+    movel(p[0.6, -0.3, 0.1, -2.2, -1.8, 0.0], a=1.2, v=0.25)
+
+    # Step to line 4
+    movel(p[0.3, -0.2, 0.1, -2.2, -1.8, 0.0], a=1.2, v=0.4)
+
+    # Scan line 4
+    movel(p[0.6, -0.2, 0.1, -2.2, -1.8, 0.0], a=1.2, v=0.25)
+
+    # Deactivate laser tool
+    set_digital_out(8, False)
+
+    # Ascend from scan height
+    movel(p[0.3, -0.5, 0.5, -2.2, -1.8, 0.0], a=1.2, v=0.75)
+
+    # Return to home position
+    movej(p[0.0, -1.83927, 1.47553, -1.63963, -1.14159, 0.0], a=1.2, v=1.0)
+
+end
+
+# Execute the laser scan function
+laser_scan()

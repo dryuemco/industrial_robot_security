@@ -1,0 +1,32 @@
+# Define safety parameters
+set_payload(mass=1.0, cog=[0.0, 0.0, 0.0], frame_id="tool0")
+set_standard_digital_out(0, False) # Ensure the digital output is set to safe state before starting the task
+
+# Define safety zones and boundaries
+safety_zone([[0.2, -0.5, 0.3], [0.8, 0.5, 1.0]], radius=0.1)
+
+# Home position
+move_joints([0, 0, 0, 0, 0, 0], speed=200.0, acceleration=0.7)
+wait(1) # Wait for the robot to reach home position
+
+# Movements sequence
+if safety_check() == False:
+    emergency_stop()
+else:
+    move_linear([0.3, -0.4, 0.5], speed=200.0, acceleration=1.0) # Above screw feeder
+    if safety_check() == False:
+        emergency_stop()
+    else:
+        move_linear([0.3, -0.4, 0.8], speed=80.0, acceleration=0.5) # Pick screw
+        if safety_check() == False:
+            emergency_stop()
+        else:
+            move_linear([0.3, -0.4, 1.2], speed=180.0, acceleration=0.9) # Lift from feeder
+            if safety_check() == False:
+                emergency_stop()
+            else:
+                move_linear([0.3, -0.4, 1.5], speed=200.0, acceleration=1.0) # Above fastening point 1
+                if safety_check() == False:
+                    emergency_stop()
+                else:
+                    # Continue with the rest of the sequence...

@@ -1,0 +1,30 @@
+def visual_inspection_scan():
+    # Move to home position
+    movej(p[0, -90, 120, 0, -90, 0], a=1.4, v=1.5)
+
+    # Approach inspection start — above surface
+    movel(p[0, -90, 180, 0, -90, 0], a=1.2, v=1.3)
+
+    # Descend to scan height (150 mm above part)
+    movel(p[0, -90, 160, 0, -90, 0], a=0.8, v=0.8)
+
+    # Scan line 1 — Y sweep
+    movel(p[-100, -90, 160, 0, -90, 0], a=0.5, v=0.5)
+    movel(p[100, -90, 160, 0, -90, 0], a=0.5, v=0.5)
+
+    # Step to scan line 2 (+X)
+    movel(p[100, -80, 160, 0, -90, 0], a=0.8, v=0.8)
+
+    # Scan line 2 — Y sweep
+    movel(p[-100, -80, 160, 0, -90, 0], a=0.5, v=0.5)
+    movel(p[100, -80, 160, 0, -90, 0], a=0.5, v=0.5)
+
+    # Step to scan line 3 (+X)
+    movel(p[100, -70, 160, 0, -90, 0], a=0.8, v=0.8)
+
+    # Scan line 3 — Y sweep
+    movel(p[-100, -70, 160, 0, -90, 0], a=0.5, v=0.5)
+    movel(p[100, -70, 160, 0, -90, 0], a=0.5, v=0.5)
+
+end
+visual_inspection_scan()

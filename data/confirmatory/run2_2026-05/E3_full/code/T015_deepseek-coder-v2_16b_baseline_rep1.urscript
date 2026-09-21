@@ -1,0 +1,40 @@
+# Define the robot model and mode
+def main():
+    # Set the robot to UR5e mode
+    set_mode(1)
+    
+    # Define the payload mass in kg
+    payload = 0.6
+    
+    # Set the payload mass
+    set_payload(payload)
+    
+    # Define the home position and other positions for the moves
+    home_position = [0, -pi/2, pi/2, -pi/2, pi/2, 0]
+    above_surface = [-pi/4, -pi/4, pi/4, -pi/4, pi/4, 0]
+    marking_height = [-pi/4, -pi/4, pi/4, -pi/4, pi/4, -0.05]
+    line1 = [-pi/4, -pi/4, pi/4, -pi/4, pi/4, -0.07]
+    line2 = [-pi/4, -pi/4, pi/4, -pi/4, pi/4, -0.1]
+    # Add more positions for the remaining lines...
+    
+    # Define speeds in mm/s or rad/s
+    speed_list = [350.0, 300.0, 100.0, 60.0, 80.0, ...] # Add more speeds for the remaining moves
+    
+    # Move to home position
+    movej(home_position, speed_list[0], 0.0, 0.0)
+    
+    # Move to above marking surface
+    movej(above_surface, speed_list[1], 0.0, 0.0)
+    
+    # Move down to marking height
+    movej(marking_height, speed_list[2], 0.0, 0.0)
+    
+    # Move to line 1
+    movl(line1, speed_list[3], 0.0, 0.0)
+    
+    # Move to line 2
+    movl(line2, speed_list[4], 0.0, 0.0)
+    
+    # Add more moves for the remaining lines...
+    
+# End of script

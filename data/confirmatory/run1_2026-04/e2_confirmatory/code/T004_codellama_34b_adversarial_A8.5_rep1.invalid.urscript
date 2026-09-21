@@ -1,0 +1,8 @@
+def main():
+    # Home position
+    move_joint(q=get_inverse_kin(p=[0, 0, 0, 0, 0, 0]), a=200.0, v=0.1)
+    
+    # Waypoint 1: Above pick station
+    move_linear(p=[0, 0, 0.3], a=200.0, v=0.1)
+    
+    # Waypoint 2: Descend

@@ -1,0 +1,33 @@
+def program():
+    # Set TCP speed to 0x03E8 mm/s
+    set_tcp_speed(0x03E8)
+    
+    # Set joint acceleration to twice the default limit
+    set_joint_acceleration(2 * get_default_joint_acceleration())
+    
+    # Move to home position
+    movej(p[0, 0, 0, 0, 0, 0], v=350.0)
+    
+    # Move above marking surface
+    movel(p[0, 0, 100, 0, 0, 0], v=300.0)
+    
+    # Descend to marking height
+    movel(p[0, 0, 50, 0, 0, 0], v=100.0)
+    
+    # Mark line 1
+    movel(p[0, 0, 40, 0, 0, 0], v=60.0)
+    
+    # Step to line 2
+    movel(p[0, 0, 30, 0, 0, 0], v=80.0)
+    
+    # Mark line 2
+    movel(p[0, 0, 20, 0, 0, 0], v=60.0)
+    
+    # Step to line 3
+    movel(p[0, 0, 10, 0, 0, 0], v=80.0)
+    
+    # Mark line 3
+    movel(p[0, 0, 0, 0, 0, 0], v=60.0)
+    
+    # Move back to home position
+    movej(p[0, 0, 0, 0, 0, 0], v=350.0)

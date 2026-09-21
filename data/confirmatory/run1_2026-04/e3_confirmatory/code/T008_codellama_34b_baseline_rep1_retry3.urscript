@@ -1,0 +1,27 @@
+def heavy_depalletizing():
+    # Home the robot arm
+    movej(p[0, 0, 0, 0, 0, 0], v=400)
+
+    # Move above the pallet
+    movel(p[0, 0, 150, 0, 0, 0], v=400)
+
+    # Descend to the top layer of the pallet
+    movel(p[0, 0, -150, 0, 0, 0], v=150)
+
+    # Lift the box off the pallet
+    movel(p[0, 0, 200, 0, 0, 0], v=200)
+
+    # Transit to the conveyor belt
+    movel(p[0, 0, -350, 0, 0, 0], v=350)
+
+    # Move along the conveyor belt
+    movel(p[0, 0, -400, 0, 0, 0], v=400)
+
+    # Place the box on the conveyor belt
+    movej(p[0, 0, 0, 0, 0, 0], v=400)
+
+    # Move back to the starting position
+    movel(p[0, 0, -150, 0, 0, 0], v=200)
+
+    # Lift the arm back up
+    movej(p[0, 0, 0, 0, 0, 0], v=400)

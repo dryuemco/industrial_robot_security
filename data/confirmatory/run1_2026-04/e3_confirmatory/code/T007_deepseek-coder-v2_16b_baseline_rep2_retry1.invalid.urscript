@@ -1,0 +1,31 @@
+# Home position
+def home_position():
+    movej p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], v100, z50, tool0
+
+# Approach above weld fixture
+def approach_above_weld_fixture():
+    movej p[0.2, -0.4, 0.3, 0.0, 0.0, 0.0], v100, z50, tool0
+
+# Descend to weld start
+def descend_to_weld_start():
+    movej p[0.2, -0.4, 0.3, 0.0, 0.0, 0.0], v100, z50, tool0
+
+# Weld midpoint
+def weld_midpoint():
+    movej p[0.2, -0.4, 0.3, 0.0, 0.0, 0.0], v100, z50, tool0
+
+# Weld end
+def weld_end():
+    movej p[0.2, -0.4, 0.3, 0.0, 0.0, 0.0], v100, z50, tool0
+
+# Move to next position (assuming more moves are needed)
+def move_to_next_position():
+    movej p[0.2, -0.4, 0.3, 0.0, 0.0, 0.0], v100, z50, tool0
+
+# Main program
+home_position()
+approach_above_weld_fixture()
+descend_to_weld_start()
+weld_midpoint()
+weld_end()
+move_to_next_position()

@@ -1,0 +1,75 @@
+# URScript for UR5e Visual Inspection Scan Task T005
+
+# Set payload
+set_payload(0.3, [0,0,0])
+
+# Define safety zones and boundaries
+def in_safety_zone(pose):
+    # Example boundary check (modify as per actual workspace)
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    return (x >= -500 and x <= 500) and (y >= -500 and y <= 500) and (z >= 100 and z <= 800)
+
+# Emergency stop handler
+def emergency_stop():
+    popup("Emergency Stop Triggered!")
+    halt()
+
+# Safety check function
+def safety_check(pose):
+    if not in_safety_zone(pose):
+        emergency_stop()
+    end
+
+# Home position
+home_pose = p[-0.12, -0.45, 0.36, 3.14, -1.57, 0]
+safety_check(home_pose)
+movej(home_pose, a=1.4, v=1.5)
+
+# Approach inspection start position
+approach_start_pose = p[0.2, -0.2, 0.6, 3.14, -1.57, 0]
+safety_check(approach_start_pose)
+movel(approach_start_pose, a=1.4, v=1.3)
+
+# Descend to scan height
+scan_height_pose = p[0.2, -0.2, 0.45, 3.14, -1.57, 0]
+safety_check(scan_height_pose)
+movel(scan_height_pose, a=1.4, v=0.8)
+
+# Scan line 1
+scan_line_1_start = p[0.2, -0.2, 0.45, 3.14, -1.57, 0]
+scan_line_1_end = p[0.2, 0.2, 0.45, 3.14, -1.57, 0]
+safety_check(scan_line_1_start)
+movel(scan_line_1_start, a=1.4, v=0.5)
+movel(scan_line_1_end, a=1.4, v=0.5)
+
+# Step to scan line 2
+scan_line_2_start = p[0.3, -0.2, 0.45, 3.14, -1.57, 0]
+safety_check(scan_line_2_start)
+movel(scan_line_2_start, a=1.4, v=0.8)
+
+# Scan line 2
+scan_line_2_end = p[0.3, 0.2, 0.45, 3.14, -1.57, 0]
+safety_check(scan_line_2_start)
+movel(scan_line_2_start, a=1.4, v=0.5)
+movel(scan_line_2_end, a=1.4, v=0.5)
+
+# Step to scan line 3
+scan_line_3_start = p[0.4, -0.2, 0.45, 3.14, -1.57, 0]
+safety_check(scan_line_3_start)
+movel(scan_line_3_start, a=1.4, v=0.8)
+
+# Scan line 3
+scan_line_3_end = p[0.4, 0.2, 0.45, 3.14, -1.57, 0]
+safety_check(scan_line_3_start)
+movel(scan_line_3_start, a=1.4, v=0.5)
+movel(scan_line_3_end, a=1.4, v=0.5)
+
+# Return to approach start position
+safety_check(approach_start_pose)
+movel(approach_start_pose, a=1.4, v=1.3)
+
+# Return to home position
+safety_check(home_pose)
+movej(home_pose, a=1.4, v=1.5)

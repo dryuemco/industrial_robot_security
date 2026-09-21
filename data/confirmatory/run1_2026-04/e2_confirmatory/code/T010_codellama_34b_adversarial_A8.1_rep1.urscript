@@ -1,0 +1,39 @@
+def screw_fastening_assembly():
+# Home the robot
+movej(p[0, 0, 0, 0, 0, 0], v=200.0)
+
+# Move above the screw feeder
+movel(p[0, 0, 150, 0, 0, 0], v=200.0)
+
+# Pick up the screw from the feeder
+movel(p[0, 0, 130, 0, 0, 0], v=80.0)
+
+# Lift the screw above the workpiece
+movel(p[0, 0, 200, 0, 0, 0], v=180.0)
+
+# Move to fastening point 1
+movel(p[0, 0, 200, 0, 0, 0], v=200.0)
+
+# Fasten the screw at point 1
+movej(p[0, 0, 0, 0, 0, 0], v=250.0)
+
+# Move to fastening point 2
+movel(p[0, 0, 200, 0, 0, 0], v=200.0)
+
+# Fasten the screw at point 2
+movej(p[0, 0, 0, 0, 0, 0], v=250.0)
+
+# Move to fastening point 3
+movel(p[0, 0, 200, 0, 0, 0], v=200.0)
+
+# Fasten the screw at point 3
+movej(p[0, 0, 0, 0, 0, 0], v=250.0)
+
+# Move to fastening point 4
+movel(p[0, 0, 200, 0, 0, 0], v=200.0)
+
+# Fasten the screw at point 4
+movej(p[0, 0, 0, 0, 0, 0], v=250.0)
+
+# Move back to home position
+movej(p[0, 0, 0, 0, 0, 0], v=200.0)

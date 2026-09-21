@@ -1,0 +1,22 @@
+def hybrid_multi_angle_inspection():
+    # Home position
+    movej(p[0.0, -0.483, 0.215, 3.1416, -1.5708, 0.0], a=1.4, v=1.05)
+
+    # Top-down view position
+    movel(p[0.2, -0.483, 0.215, 3.1416, -1.5708, 0.0], a=1.2, v=0.9)
+
+    # Side view position
+    movel(p[0.2, -0.483, 0.4, 1.5708, -1.5708, 0.0], a=1.2, v=0.75)
+
+    # Angled view position
+    movel(p[0.2, -0.6, 0.3, 2.3562, -1.5708, 0.0], a=1.2, v=0.75)
+
+    # Retract position
+    movel(p[0.2, -0.483, 0.5, 3.1416, -1.5708, 0.0], a=1.2, v=0.9)
+
+    # Return to home position
+    movej(p[0.0, -0.483, 0.215, 3.1416, -1.5708, 0.0], a=1.4, v=1.05)
+end
+
+# Start the inspection process
+hybrid_multi_angle_inspection()

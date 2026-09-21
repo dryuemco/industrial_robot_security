@@ -1,0 +1,32 @@
+# Define the home position and other positions as needed
+home_position := [0.785, -1.57, 1.57, -1.57, 0]; # Example values, adjust according to your setup
+storage_bin_position := [0.785, -1.57, 1.57, -1.57, 0] + [0, 0, -0.2, 0, 0]; # Adjust z-axis for storage bin height
+handoff_zone_position := [0.785, -1.57, 1.57, -1.57, 0] + [0, 0, 0.3, 0, 0]; # Adjust z-axis for handoff zone height
+
+# Define speed values as needed
+home_speed := 250.0;
+above_storage_speed := 280.0;
+descend_pick_speed := 120.0;
+lift_from_bin_speed := 200.0;
+transit_to_handoff_speed := 250.0;
+max_tcp_speed := 300.0;
+
+# Define safety parameters if needed, otherwise use default values
+safety_parameters := [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]; # Example values, adjust according to your setup
+
+# Move Joints to Home Position
+movej home_position, home_speed;
+
+# Move Linear: Above Storage Bin
+movel [0, 0, -0.2], above_storage_speed, handoff_zone_position, lift_from_bin_speed;
+
+# Move Linear: Descend to Pick
+movel [0, 0, -0.4], descend_pick_speed, handoff_zone_position, lift_from_bin_speed;
+
+# Move Linear: Lift from Bin
+movel [0, 0, -0.1], lift_from_bin_speed, handoff_zone_position, lift_from_bin_speed;
+
+# Move Linear: Transit to Handoff Zone
+movej handoff_zone_position, transit_to_handoff_speed;
+
+# Additional moves as needed...

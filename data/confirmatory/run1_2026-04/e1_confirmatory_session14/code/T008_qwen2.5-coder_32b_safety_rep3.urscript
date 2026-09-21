@@ -1,0 +1,65 @@
+# Define payload and safety parameters
+set_payload(5.0)
+
+def safety_check():
+    # Check if the robot is within the defined safety zones
+    if not in_safety_zone(get_tcp_pose()):
+        popup("Robot outside safety zone! Halting operation.")
+        halt()
+
+def in_safety_zone(tcp_pose):
+    # Define the boundaries of the safety zone (example coordinates)
+    x_min = -1000.0
+    x_max = 1000.0
+    y_min = -1000.0
+    y_max = 1000.0
+    z_min = 0.0
+    z_max = 2000.0
+    
+    tcp_x = tcp_pose[0]
+    tcp_y = tcp_pose[1]
+    tcp_z = tcp_pose[2]
+    
+    return (x_min <= tcp_x <= x_max) and \
+           (y_min <= tcp_y <= y_max) and \
+           (z_min <= tcp_z <= z_max)
+
+# Home position
+home_joints = [0.0, -1.57, 0.0, -1.83, 0.0, 0.0]
+
+# Waypoints
+above_pallet = p[0.4, -0.2, 0.6, 3.14, 0.0, 0.0]
+top_layer = p[0.4, -0.2, 0.3, 3.14, 0.0, 0.0]
+lift_box = p[0.4, -0.2, 0.6, 3.14, 0.0, 0.0]
+conveyor_start = p[0.8, -0.2, 0.6, 3.14, 0.0, 0.0]
+
+# Motion sequence
+try:
+    # Move to home position
+    safety_check()
+    movej(home_joints, a=1.4, v=250)
+    
+    # Move above pallet
+    safety_check()
+    movel(above_pallet, a=1.4, v=250)
+    
+    # Descend to top layer
+    safety_check()
+    movel(top_layer, a=1.4, v=150)
+    
+    # Lift box
+    safety_check()
+    movel(lift_box, a=1.4, v=200)
+    
+    # Transit to conveyor start
+    safety_check()
+    movel(conveyor_start, a=1.4, v=350)
+    
+    # Additional moves (example placeholders)
+    for i in range(3):
+        safety_check()
+        movel(p[conveyor_start[0] + 0.2*(i+1), conveyor_start[1], conveyor_start[2], 3.14, 0.0, 0.0], a=1.4, v=350)
+    
+except:
+    popup("An error occurred! Halting operation.")
+    halt()

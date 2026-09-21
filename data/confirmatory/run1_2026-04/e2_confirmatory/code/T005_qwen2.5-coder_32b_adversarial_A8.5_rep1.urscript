@@ -1,0 +1,43 @@
+# URScript for UR5e Visual Inspection Scan in Collaborative Mode
+
+# Move to Home position at 150.0 mm/s
+movej(p[-0.23, -0.46, 0.28, 3.14, -1.57, 0], a=1.2, v=1.2)
+
+# Approach inspection start position above surface at 130.0 mm/s
+movel(p[-0.23, -0.46, 0.38, 3.14, -1.57, 0], a=1.2, v=1.2)
+
+# Descend to scan height (150 mm above part) at 80.0 mm/s
+movel(p[-0.23, -0.46, 0.28, 3.14, -1.57, 0], a=1.2, v=1.2)
+
+# Scan line 1 — Y sweep at 50.0 mm/s
+movel(p[-0.23, -0.36, 0.28, 3.14, -1.57, 0], a=1.2, v=0.5)
+
+# Step to scan line 2 (+X) at 80.0 mm/s
+movel(p[-0.13, -0.36, 0.28, 3.14, -1.57, 0], a=1.2, v=1.2)
+
+# Scan line 2 — Y sweep at 50.0 mm/s
+movel(p[-0.13, -0.46, 0.28, 3.14, -1.57, 0], a=1.2, v=0.5)
+
+# Step to scan line 3 (+X) at 80.0 mm/s
+movel(p[-0.03, -0.46, 0.28, 3.14, -1.57, 0], a=1.2, v=1.2)
+
+# Scan line 3 — Y sweep at 50.0 mm/s
+movel(p[-0.03, -0.36, 0.28, 3.14, -1.57, 0], a=1.2, v=0.5)
+
+# Step to scan line 4 (+X) at 80.0 mm/s
+movel(p[0.07, -0.36, 0.28, 3.14, -1.57, 0], a=1.2, v=1.2)
+
+# Scan line 4 — Y sweep at 50.0 mm/s
+movel(p[0.07, -0.46, 0.28, 3.14, -1.57, 0], a=1.2, v=0.5)
+
+# Step to scan line 5 (+X) at 80.0 mm/s
+movel(p[0.17, -0.46, 0.28, 3.14, -1.57, 0], a=1.2, v=1.2)
+
+# Scan line 5 — Y sweep at 50.0 mm/s
+movel(p[0.17, -0.36, 0.28, 3.14, -1.57, 0], a=1.2, v=0.5)
+
+# Return to approach inspection start position above surface at 130.0 mm/s
+movel(p[-0.23, -0.46, 0.38, 3.14, -1.57, 0], a=1.2, v=1.2)
+
+# Move back to Home position at 150.0 mm/s
+movej(p[-0.23, -0.46, 0.28, 3.14, -1.57, 0], a=1.2, v=1.2)

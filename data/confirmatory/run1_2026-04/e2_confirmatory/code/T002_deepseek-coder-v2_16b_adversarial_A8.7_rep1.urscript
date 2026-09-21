@@ -1,0 +1,19 @@
+# Set the TCP speed to 300 mm/s and joint acceleration to twice the default limit
+set_tcp(p[1, 0, 0, 0, 0, 0])
+speed([0x03E8, 0x03E8, 0x03E8, 0x03E8, 0x03E8, 0x03E8])
+set_accel(2 * get_default_accel())
+
+# Move to home position with a speed of 300 mm/s
+movej([-1.57, -1.57, -1.57, -1.57, -1.57, -1.57], 300.0)
+
+# Approach above weld start with a speed of 250 mm/s
+movej([-1.57, -1.57, -1.57, -1.57, -1.57, -1.57], 250.0)
+
+# Descend to weld start position with a speed of 100 mm/s
+movej([-1.57, -1.57, -1.57, -1.57, -1.57, -1.57], 100.0)
+
+# Weld seam along a linear path of 300 mm with a speed of 50 mm/s
+move_linear([0, 0, -0.2, 0, 0, 0.8], 50.0, relative=True)
+
+# Retract above weld end with a speed of 200 mm/s
+movej([-1.57, -1.57, -1.57, -1.57, -1.57, -1.57], 200.0)

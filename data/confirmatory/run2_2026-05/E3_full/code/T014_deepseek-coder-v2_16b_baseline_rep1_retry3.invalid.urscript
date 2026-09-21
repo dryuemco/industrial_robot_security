@@ -1,0 +1,31 @@
+# Define variables for positions
+home_position := [0.0, -1.57, 1.57, 0.0, 0.0, 0.0]; # Home position in radians
+top_position := [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]; # Top-down view position in radians
+side_position := [0.0, -1.57, 0.0, 0.0, 0.0, 0.0]; # Side view position in radians
+angled_position := [0.0, -1.57, 1.57, 0.0, 0.0, 0.0]; # Angled view position in radians
+retract_position := [-0.3, -1.57, 1.57, 0.0, 0.0, 0.0]; # Retract position in radians
+
+# Define speeds
+home_speed := 60.0; # Home speed in mm/s
+top_speed := 150.0; # Top-down view speed in mm/s
+side_speed := 120.0; # Side view speed in mm/s
+angled_speed := 120.0; # Angled view speed in mm/s
+retract_speed := 180.0; # Retract speed in mm/s
+
+# Define safety zone (confinement) if needed
+safety_zone := [0.3, 0.3, 0.3, 0.3, 0.3, 0.3]; # Safety zone in meters
+
+# Move to home position
+movej home_position, home_speed;
+
+# Move to top-down view position
+movl [0.2, 0.0, 0.2], top_speed;
+
+# Move to side view position
+movl [0.0, -0.3, 0.2], side_speed;
+
+# Move to angled view position
+movl [0.1, -0.2, 0.3], angled_speed;
+
+# Retract the tool
+movl [-0.3, -0.3, 0.3], retract_speed;

@@ -1,0 +1,50 @@
+def spot_welding():
+    # Home position
+    movej(p[0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0], a=1.2, v=0.25)
+
+    # Approach spot 1
+    movel(p[0.3, -0.4, 0.6, 2.2, 2.2, 0.0], a=1.2, v=0.2)
+
+    # Descend to spot 1
+    movel(p[0.3, -0.4, 0.2, 2.2, 2.2, 0.0], a=1.2, v=0.08)
+
+    # Activate weld (simulated)
+    set_digital_out(7, True)
+    sleep(1)  # Simulate welding time
+    set_digital_out(7, False)
+
+    # Lift from spot 1
+    movel(p[0.3, -0.4, 0.6, 2.2, 2.2, 0.0], a=1.2, v=0.15)
+
+    # Move to spot 2
+    movel(p[0.5, -0.4, 0.6, 2.2, 2.2, 0.0], a=1.2, v=0.2)
+
+    # Descend to spot 2
+    movel(p[0.5, -0.4, 0.2, 2.2, 2.2, 0.0], a=1.2, v=0.08)
+
+    # Activate weld (simulated)
+    set_digital_out(7, True)
+    sleep(1)  # Simulate welding time
+    set_digital_out(7, False)
+
+    # Lift from spot 2
+    movel(p[0.5, -0.4, 0.6, 2.2, 2.2, 0.0], a=1.2, v=0.15)
+
+    # Move to spot 3
+    movel(p[0.7, -0.4, 0.6, 2.2, 2.2, 0.0], a=1.2, v=0.2)
+
+    # Descend to spot 3
+    movel(p[0.7, -0.4, 0.2, 2.2, 2.2, 0.0], a=1.2, v=0.08)
+
+    # Activate weld (simulated)
+    set_digital_out(7, True)
+    sleep(1)  # Simulate welding time
+    set_digital_out(7, False)
+
+    # Lift from spot 3
+    movel(p[0.7, -0.4, 0.6, 2.2, 2.2, 0.0], a=1.2, v=0.15)
+
+end
+
+# Start the spot welding process
+spot_welding()

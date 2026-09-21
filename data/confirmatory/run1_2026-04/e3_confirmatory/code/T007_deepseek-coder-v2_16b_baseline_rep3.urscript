@@ -1,0 +1,27 @@
+# Define the payload mass in kg
+payload := [3.5];
+
+# Set the safety confinement zone radius to 0 for no confinement
+safety_zone := [0.0, 0.0, 0.0];
+
+# Home position joint angles (in radians)
+home_position := [1.5708, -1.3963, -1.5708, -1.5708, 1.5708, 0.0];
+
+# Define the sequence of moves
+moves := [
+    ["move_joint", home_position, 300.0],
+    ["move_linear", [-0.2, 0.4, 0.6], 250.0],
+    ["move_linear", [-0.2, 0.4, 0.3], 100.0],
+    ["move_linear", [0.0, 0.4, 0.3], 60.0],
+    ["move_linear", [0.0, 0.4, 0.2], 60.0],
+    # Add the remaining moves here...
+];
+
+# Execute the sequence of moves
+for move in moves do
+    if move[0] == "move_joint" then
+        movel(move[1], move[3], relative=False);
+    elseif move[0] == "move_linear" then
+        movl(move[1], move[3], relative=False);
+    end
+end

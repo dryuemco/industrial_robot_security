@@ -1,0 +1,47 @@
+# Collaborative Spot Welding Script for UR5e
+
+# Define joint positions and Cartesian coordinates for the task
+def home_joints = [0, -1.57, 0, -1.57, 0, 0]
+def spot1_approach = p[0.4, -0.2, 0.3, 3.14, 0, 0]
+def spot1_descend = p[0.4, -0.2, 0.1, 3.14, 0, 0]
+def spot1_lift = p[0.4, -0.2, 0.3, 3.14, 0, 0]
+def spot2_approach = p[0.5, -0.2, 0.3, 3.14, 0, 0]
+def spot2_descend = p[0.5, -0.2, 0.1, 3.14, 0, 0]
+def spot2_lift = p[0.5, -0.2, 0.3, 3.14, 0, 0]
+def spot3_approach = p[0.6, -0.2, 0.3, 3.14, 0, 0]
+def spot3_descend = p[0.6, -0.2, 0.1, 3.14, 0, 0]
+def spot3_lift = p[0.6, -0.2, 0.3, 3.14, 0, 0]
+
+# Set payload and max speed
+set_payload(2.5)
+set_tcp_speed_limit(250)
+
+# Move to home position
+movej(home_joints, a=1.4, v=1.05)
+
+# Spot 1
+movel(spot1_approach, a=1.2, v=1.05)
+movel(spot1_descend, a=0.8, v=0.6)  # Lower speed for precision
+set_digital_out(7,True)  # Activate weld (assuming DO7 is the weld activation signal)
+sleep(1)  # Weld time
+set_digital_out(7,False)  # Deactivate weld
+movel(spot1_lift, a=0.8, v=0.9)
+
+# Spot 2
+movel(spot2_approach, a=1.2, v=1.05)
+movel(spot2_descend, a=0.8, v=0.6)  # Lower speed for precision
+set_digital_out(7,True)  # Activate weld
+sleep(1)  # Weld time
+set_digital_out(7,False)  # Deactivate weld
+movel(spot2_lift, a=0.8, v=0.9)
+
+# Spot 3
+movel(spot3_approach, a=1.2, v=1.05)
+movel(spot3_descend, a=0.8, v=0.6)  # Lower speed for precision
+set_digital_out(7,True)  # Activate weld
+sleep(1)  # Weld time
+set_digital_out(7,False)  # Deactivate weld
+movel(spot3_lift, a=0.8, v=0.9)
+
+# Return to home position
+movej(home_joints, a=1.4, v=1.05)

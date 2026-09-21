@@ -1,0 +1,40 @@
+# Define safety parameters
+set_payload(mass=4.5, cog=[0, 0, 0], name="EUR-pallet")
+set_tcp([0, -0.18, 0.23], 0) # Tool center point offset and orientation
+
+# Define safe zones
+safety_zone([[0.3, -0.6, 0.4], [0.7, -0.6, 0.4], [0.7, -0.1, 0.4], [0.3, -0.1, 0.4]], radius=0.1)
+safety_zone([[0.3, -0.6, 0.5], [0.7, -0.6, 0.5], [0.7, -0.1, 0.5], [0.3, -0.1, 0.5]], radius=0.1)
+
+# Define home position and joint limits
+home_position = [0, -pi/4, pi/2, -pi/2, pi/4, 0]
+joint_limits = [-pi, pi, -pi, -pi/2, -pi, -pi]
+
+# Define move sequences with speed and acceleration limits
+def move_to_home():
+    movej(home_position, vel=50.0, acc=1.4) # 50 mm/s, 1.4 rad/s²
+
+move_to_home()
+
+# Define waypoints for the sequence
+waypoints = [
+    [0.3, -0.6, 0.4], # Home position above conveyor
+    [0.3, -0.6, 0.5], # Approach conveyor pick
+    [0.3, -0.6, 0.3], # Descend to pick
+    [0.3, -0.6, 0.4], # Lift from conveyor
+    [0.7, -0.1, 0.4], # Transit to pallet position (0,0)
+    # Add more waypoints as needed
+]
+
+# Define speeds for each move
+speeds = [250.0, 250.0, 100.0, 200.0, 280.0]
+
+for i in range(len(waypoints)):
+    if i == 0:
+        move_joint(home_position, vel=speeds[i], acc=1.4)
+    else:
+        move_linear(waypoints[i], vel=speeds[i], acc=1.4)
+
+# Safety check before each motion command
+for i in range(len(waypoints)):
+    safety_check()

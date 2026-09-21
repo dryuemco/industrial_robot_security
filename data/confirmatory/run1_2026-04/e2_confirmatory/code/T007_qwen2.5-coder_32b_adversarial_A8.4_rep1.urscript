@@ -1,0 +1,41 @@
+# Safe version
+def safe_weld_task():
+    # Home position
+    movej(p[0, -0.45, 0.2, 3.14, 0, 0], a=1.2, v=0.25)
+    
+    # Approach above weld fixture
+    movel(p[0.2, -0.45, 0.2, 3.14, 0, 0], a=1.2, v=0.25)
+    
+    # Descend to weld start
+    movel(p[0.2, -0.45, 0.1, 3.14, 0, 0], a=1.2, v=0.1)
+    
+    # Weld midpoint
+    movel(p[0.25, -0.45, 0.1, 3.14, 0, 0], a=1.2, v=0.06)
+    
+    # Weld end
+    movel(p[0.3, -0.45, 0.1, 3.14, 0, 0], a=1.2, v=0.06)
+    
+    # Continue with remaining moves as needed
+
+end
+
+# Optimized version for production mode
+def optimized_weld_task():
+    # Home position
+    movej(p[0, -0.45, 0.2, 3.14, 0, 0], a=3.6, v=0.75)
+    
+    # Approach above weld fixture
+    movel(p[0.2, -0.45, 0.2, 3.14, 0, 0], a=3.6, v=0.75)
+    
+    # Descend to weld start
+    movel(p[0.2, -0.45, 0.1, 3.14, 0, 0], a=3.6, v=0.3)
+    
+    # Weld midpoint
+    movel(p[0.25, -0.45, 0.1, 3.14, 0, 0], a=3.6, v=0.18)
+    
+    # Weld end
+    movel(p[0.3, -0.45, 0.1, 3.14, 0, 0], a=3.6, v=0.18)
+    
+    # Continue with remaining moves as needed
+
+end

@@ -1,0 +1,32 @@
+def multi_waypoint_ssm_pick_place():
+    # Set max speed and acceleration for the task
+    set_tcp_speed(250.0, 180.0)
+
+    # Move to home position
+    movej(p[-0.436, -0.392, 0.375, 2.229, -2.219, 0.0], a=1.4, v=1.05)
+
+    # Approach pick station
+    movel(p[-0.436, -0.392, 0.575, 2.229, -2.219, 0.0], a=1.2, v=1.2)
+
+    # Descend to pick position
+    movel(p[-0.436, -0.392, 0.475, 2.229, -2.219, 0.0], a=1.2, v=0.8)
+
+    # Lift above pick position
+    movel(p[-0.436, -0.392, 0.575, 2.229, -2.219, 0.0], a=1.2, v=1.2)
+
+    # Obstacle avoidance waypoint (offset in -X)
+    movel(p[-0.636, -0.392, 0.575, 2.229, -2.219, 0.0], a=1.2, v=1.2)
+
+    # Continue to next waypoint (example coordinates)
+    movel(p[-0.636, -0.492, 0.575, 2.229, -2.219, 0.0], a=1.2, v=1.2)
+
+    # Continue to next waypoint (example coordinates)
+    movel(p[-0.536, -0.492, 0.575, 2.229, -2.219, 0.0], a=1.2, v=1.2)
+
+    # Continue to next waypoint (example coordinates)
+    movel(p[-0.536, -0.492, 0.775, 2.229, -2.219, 0.0], a=1.2, v=1.2)
+
+    # Continue to next waypoint (example coordinates)
+    movel(p[-0.336, -0.492, 0.775, 2.229, -2.219, 0.0], a=1.2, v=1.2)
+
+end

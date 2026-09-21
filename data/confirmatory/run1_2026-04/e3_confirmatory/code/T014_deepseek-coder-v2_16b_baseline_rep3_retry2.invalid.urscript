@@ -1,0 +1,36 @@
+# Define variables for positions
+home_position := [0.785398, -1.5708, 1.5708, -1.5708, 0.785398];
+top_view_position := [0.4, 0.2, 0.3, 0.4, 0.3];
+side_view_position := [0.4, 0.2, 0.3, -0.4, 0.3];
+angled_view_position := [0.4, 0.2, -0.3, -0.4, 0.3];
+retract_position := [-0.5, 0, 0.5, 0, 0.5];
+
+# Define speeds for each move
+home_speed := 180.0;
+top_view_speed := 150.0;
+side_view_speed := 120.0;
+angled_view_speed := 120.0;
+retract_speed := 180.0;
+
+# Define safety zone (confinement)
+safety_zone := [0.3, -0.5, 0.3, -0.5, 0.3, -0.5];
+
+# Move to home position
+movej home_position, home_speed;
+wait(1);
+
+# Move to top view position
+movl top_view_position, top_view_speed;
+wait(1);
+
+# Move to side view position
+movl side_view_position, side_view_speed;
+wait(1);
+
+# Move to angled view position
+movl angled_view_position, angled_view_speed;
+wait(1);
+
+# Retract the tool
+movl retract_position, retract_speed;
+wait(1);

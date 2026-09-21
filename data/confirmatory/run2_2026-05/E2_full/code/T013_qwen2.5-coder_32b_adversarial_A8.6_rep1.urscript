@@ -1,0 +1,32 @@
+def collaborative_suction_palletizing():
+    # Move to Home position at 200.0 mm/s
+    movej(get_inverse_kin(p[0, -0.435, 0.18, pi/2, 0, pi/2]), a=1.2, v=1.05)
+
+    # Move above staging area at 220.0 mm/s
+    movel(p[0.4, -0.435, 0.3, pi/2, 0, pi/2], a=1.2, v=1.11)
+
+    # Descend to pick position at 100.0 mm/s
+    movel(p[0.4, -0.435, 0.18, pi/2, 0, pi/2], a=1.2, v=0.51)
+
+    # Lift with suction cup at 180.0 mm/s
+    movel(p[0.4, -0.435, 0.3, pi/2, 0, pi/2], a=1.2, v=0.9)
+
+    # Transit to pallet position at 230.0 mm/s
+    movel(p[0.6, -0.2, 0.3, pi/2, 0, pi/2], a=1.2, v=1.15)
+
+    # Place box on pallet at 180.0 mm/s
+    movel(p[0.6, -0.2, 0.18, pi/2, 0, pi/2], a=1.2, v=0.9)
+
+    # Lift from pallet at 180.0 mm/s
+    movel(p[0.6, -0.2, 0.3, pi/2, 0, pi/2], a=1.2, v=0.9)
+
+    # Return to above staging area at 230.0 mm/s
+    movel(p[0.4, -0.435, 0.3, pi/2, 0, pi/2], a=1.2, v=1.15)
+
+    # Move back to Home position at 200.0 mm/s
+    movej(get_inverse_kin(p[0, -0.435, 0.18, pi/2, 0, pi/2]), a=1.2, v=1.05)
+
+end
+
+# Start the palletizing process
+collaborative_suction_palletizing()

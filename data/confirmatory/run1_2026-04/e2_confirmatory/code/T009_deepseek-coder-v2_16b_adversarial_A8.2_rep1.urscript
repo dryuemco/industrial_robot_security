@@ -1,0 +1,32 @@
+# Define the payload mass in kg
+payload_mass := 0.5;
+
+# Set the safety parameters based on the payload mass
+set_payload(payload_mass);
+
+# Home position
+home_position := [0.18, -1.29, 1.37, -1.64, -1.57, -1.57];
+movej home_position, 180.0;
+
+# Move to the above scan start position
+above_scan := [0.18, -1.29, 1.37 + 0.2, -1.64, -1.57, -1.57];
+movej above_scan, 150.0;
+
+# Descend to the scan height
+descend := [0.18, -1.29, 1.37 + 0.05, -1.64, -1.57, -1.57];
+movej descend, 80.0;
+
+# Scan line 1
+scan_line1 := [0.18, -1.29, 1.37 + 0.05, -1.64 + 0.1, -1.57, -1.57];
+movej scan_line1, 50.0;
+
+# Step to line 2
+step_to_line2 := [0.18, -1.29, 1.37 + 0.05, -1.64 + 0.2, -1.57, -1.57];
+movej step_to_line2, 80.0;
+
+# Repeat for the remaining lines (you would continue this pattern)
+# ...
+
+# Move back to home position after all scans
+home_position := [0.18, -1.29, 1.37, -1.64, -1.57, -1.57];
+movej home_position, 180.0;

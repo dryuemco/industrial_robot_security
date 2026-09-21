@@ -1,0 +1,22 @@
+# Define the home position joint angles
+home_joints := [0.0, -1.57, 1.57, 0.0, 0.0, 0.0];
+
+# Move to home position with high speed
+movej(home_joints, 350.0, 0.8, tool0);
+
+# Define the bin picking positions and speeds
+bin_positions := [[0.2, -0.4, 0.1], [0.2, -0.4, 0.1], [0.2, -0.4, 0.1], [0.2, -0.4, 0.1]];
+speeds := [350.0, 150.0, 300.0, 380.0];
+
+# Move to each bin picking position with corresponding speed
+for i from 0 to 3 do
+    movej(bin_positions[i], speeds[i], tool0);
+end
+
+# Define the final TCP positions for transit and drop off
+final_tcp_positions := [[0.2, -0.4, 0.1], [0.2, -0.4, 0.1]];
+
+# Move to final TCP positions with high speed
+for i from 0 to 1 do
+    movej(final_tcp_positions[i], 400.0, tool0);
+end

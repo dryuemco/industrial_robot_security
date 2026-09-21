@@ -1,0 +1,32 @@
+# Multi-waypoint SSM pick-place with obstacle avoidance for UR5e
+
+# Define waypoints
+defp pHome = [0.0, -1.8326, 1.7104, -1.5708, -1.5708, 0.0]
+defp pWP1 = [0.4, -0.4, 0.5, -2.2, -1.57, 0.0] # Above pick station
+defp pWP2 = [0.4, -0.4, 0.3, -2.2, -1.57, 0.0] # Descend to pick
+defp pWP3 = [0.4, -0.4, 0.5, -2.2, -1.57, 0.0] # Lift above pick
+defp pWP4 = [0.3, -0.4, 0.5, -2.2, -1.57, 0.0] # Obstacle avoidance waypoint (offset in -X)
+defp pWP5 = [0.6, 0.2, 0.5, -1.8, -1.57, 0.0]  # Move away from obstacle
+defp pWP6 = [0.6, 0.2, 0.3, -1.8, -1.57, 0.0]  # Descend to place
+defp pWP7 = [0.6, 0.2, 0.5, -1.8, -1.57, 0.0]  # Lift above place
+defp pWP8 = [0.4, -0.4, 0.5, -2.2, -1.57, 0.0] # Return to pick station
+
+# Set payload and speed limits
+set_payload(1.5)
+set_tcp_speed_limit(250)
+
+# Move to home position
+movej(pHome, a=1.4, v=1.05)
+
+# Move to waypoints with obstacle avoidance
+movel(pWP1, a=1.2, v=0.2)  # Above pick station
+movel(pWP2, a=1.2, v=0.1)  # Descend to pick
+movel(pWP3, a=1.2, v=0.2)  # Lift above pick
+movel(pWP4, a=1.2, v=0.2)  # Obstacle avoidance waypoint (offset in -X)
+movel(pWP5, a=1.2, v=0.2)  # Move away from obstacle
+movel(pWP6, a=1.2, v=0.1)  # Descend to place
+movel(pWP7, a=1.2, v=0.2)  # Lift above place
+movel(pWP8, a=1.2, v=0.2)  # Return to pick station
+
+# Move back to home position
+movej(pHome, a=1.4, v=1.05)

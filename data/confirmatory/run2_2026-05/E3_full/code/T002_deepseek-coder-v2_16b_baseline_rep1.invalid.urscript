@@ -1,0 +1,34 @@
+# Define the payload mass in kg
+payload_mass := 3.0;
+
+# Set the safety factor for the robot's calculations
+safety_factor := 1.2;
+
+# Calculate the maximum allowed speed based on the payload and safety factor
+max_speed := min(500.0, sqrt(9.81 * payload_mass * safety_factor) / (0.005 * pow(payload_mass, -0.9)));
+
+# Define the joint speeds in rad/s
+joint_speeds := [300.0, 300.0, 300.0, 300.0, 300.0, 300.0];
+
+# Define the linear speeds in mm/s
+linear_speeds := [250.0, 100.0, 50.0, 200.0, 200.0];
+
+# Move to home position with joint speed
+movej home_position, max_speed;
+
+# Define the weld start and end positions in mm
+weld_start := [x, y, z]; # Replace with actual coordinates
+weld_end := [x, y, z];   # Replace with actual coordinates
+
+# Move to above weld start position linearly at 250.0 mm/s
+movej [theta1, theta2, theta3, theta4, theta5, theta6], linear_speeds[0];
+movl weld_start, linear_speeds[1];
+
+# Descend to weld start position linearly at 100.0 mm/s
+movl weld_start, linear_speeds[2];
+
+# Weld seam along the linear path with speed 50.0 mm/s
+movl weld_start, [x, y, z], linear_speeds[3];
+
+# Retract above weld end position linearly at 200.0 mm/s
+movl weld_end, linear_speeds[4];

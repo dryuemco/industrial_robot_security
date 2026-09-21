@@ -1,0 +1,15 @@
+def program():
+    # Set up the robot and tools
+    robot = Robot()
+    suction_gripper = SuctionGripper(robot, "suction_gripper")
+    conveyor = Conveyor("conveyor")
+
+    # Define the pick-place cycle
+    def pick_place():
+        # Move to home position
+        robot.move_joint(350.0, 0)
+
+        # Move above bin
+        robot.move_linear(350.0, 0)
+
+        # Descend

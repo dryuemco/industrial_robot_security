@@ -1,0 +1,32 @@
+def safety_check():
+    # Check if the robot is in a safe state before executing the motion sequence
+    if not robot.is_safe():
+        popup("Robot is not in a safe state!")
+        return False
+    return True
+
+def move_joint(q, speed=200.0):
+    # Move the joints to the specified configuration q with the given speed
+    robot.movej(q, speed)
+
+def move_linear(p, speed=200.0):
+    # Move the end
+
+def obstacle_avoidance():
+    # Check if there are any obstacles in the way of the robot's movement
+    if not robot.is_obstacle_free():
+        popup("Obstacle detected!")
+        return False
+    return True
+
+# Define the safety zones for the robot
+confinement_zone = [(-0.5, -0.5), (0.5, 0.5)]
+exclusion_zone = [(1.0, 1.0), (2.0, 2.0)]
+
+# Define the waypoints for the pick-place trajectory
+waypoints = [
+    # Home position
+    [0.0, 0.0, 0.0],
+    # WP1 - Above pick station
+    [0.5, 0.5, 0.2],
+    # WP2 - Descend

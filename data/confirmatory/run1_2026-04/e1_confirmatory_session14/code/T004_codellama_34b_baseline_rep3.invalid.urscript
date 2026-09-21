@@ -1,0 +1,8 @@
+def program():
+    # Home position
+    move_joint(q=[[0, -1.57, 0, 0, 0, 0]], a=200.0, v=0.05)
+    
+    # WP1: Above pick station
+    move_linear(p=[0, 0, 300], a=200.0, v=0.05)
+    
+    # WP2: Descend

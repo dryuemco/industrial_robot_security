@@ -1,0 +1,38 @@
+# Define safety parameters
+set_payload(mass=1.2, cog=[0, 0, 0], tcp_force_limit=30);
+
+# Define home position and storage bin positions
+home := [0.5, -1.5, 1.7, -1.8, 1.6, 0];
+storage_bin := [0.5, -1.5, 1.7, -1.8, 1.6, 0]; # Adjust these values based on actual bin positions
+handoff_zone := [0.5, -1.5, 1.7, -1.8, 1.6, 0]; # Adjust these values based on actual handoff zone positions
+
+# Define safety zones and constraints
+set_safe_move(distance=0.05); # Set a small safe distance to avoid collisions
+set_collision_behavior([0, 0, 0], [1, 1, 1]); # Adjust collision behavior if needed
+
+# Function to check waypoints within workspace boundaries
+def is_within_workspace(waypoint):
+    return waypoint[0] >= -0.5 and waypoint[0] <= 0.8 and \
+           waypoint[1] >= -2.0 and waypoint[1] <= 0.0 and \
+           waypoint[2] >= 0.7 and waypoint[2] <= 2.0
+
+# Validate all waypoints within workspace boundaries
+waypoints = [home, storage_bin, handoff_zone]; # Add more waypoints as needed
+for wp in waypoints:
+    if not is_within_workspace(wp):
+        print "Waypoint out of bounds!";
+        exit();
+
+# Define motion commands with speed and acceleration limits
+speed = [250.0, 280.0, 120.0, 200.0, 250.0]; # Adjust speeds based on actual requirements
+acceleration = [1.4, 1.4, 1.4, 1.4, 1.4]; # Set acceleration for each joint
+
+# Execute safety_check() before motion sequences
+safety_check();
+
+# Move commands with speed and acceleration limits
+for i in range(len(waypoints)):
+    if i == 0:
+        move_joint(home, speed[i], acceleration[i]);
+    else:
+        move_linear(waypoints[i], speed[i], acceleration[i]);

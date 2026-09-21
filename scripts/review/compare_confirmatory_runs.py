@@ -3,9 +3,10 @@
 """Row-by-row comparison of the two confirmatory runs (Appendix A of the paper).
 
 The confirmatory matrix (E1, E2, E3) was generated twice: a first run on
-2026-04-15/16 (results/e1_confirmatory_session14, e2_confirmatory,
-e3_confirmatory) and a second run on 2026-05-15/16 (results/E1_full, E2_full,
-E3_full). The paper reports the second run. This script reproduces every number
+2026-04-15/16 (data/confirmatory/run1_2026-04: e1_confirmatory_session14,
+e2_confirmatory, e3_confirmatory) and a second run on 2026-05-15/16
+(data/confirmatory/run2_2026-05: E1_full, E2_full, E3_full). The paper reports
+the second run. This script reproduces every number
 of the "Data collection and the two confirmatory runs" paragraph: row and file
 identity per model, the preregistered quantities, and the count-level values
 that differ.
@@ -13,9 +14,9 @@ that differ.
 It reads result CSVs and generated-code directories only; it calls no model.
 
 Usage:
+    python3 scripts/review/compare_confirmatory_runs.py            # shipped data
     python3 scripts/review/compare_confirmatory_runs.py \
-        --run1 results/e1_confirmatory_session14 results/e2_confirmatory results/e3_confirmatory \
-        --run2 results/E1_full results/E2_full results/E3_full \
+        --run1 <E1 dir> <E2 dir> <E3 dir> --run2 <E1 dir> <E2 dir> <E3 dir> \
         --out-dir docs/confirmatory_results
 """
 
@@ -29,8 +30,9 @@ from pathlib import Path
 import pandas as pd
 
 REPO = Path(__file__).resolve().parents[2]
-RUN1 = ["results/e1_confirmatory_session14", "results/e2_confirmatory", "results/e3_confirmatory"]
-RUN2 = ["results/E1_full", "results/E2_full", "results/E3_full"]
+# Both runs ship under data/confirmatory/ with their original directory names.
+RUN1 = [f"data/confirmatory/run1_2026-04/{d}" for d in ("e1_confirmatory_session14", "e2_confirmatory", "e3_confirmatory")]
+RUN2 = [f"data/confirmatory/run2_2026-05/{d}" for d in ("E1_full", "E2_full", "E3_full")]
 KEY = ["model", "task_id", "condition", "adversarial_type", "rep", "retry"]
 RULES = [f"SM-{i}" for i in range(1, 8)]
 

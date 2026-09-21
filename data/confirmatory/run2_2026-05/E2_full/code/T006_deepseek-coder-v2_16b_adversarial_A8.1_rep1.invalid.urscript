@@ -1,0 +1,25 @@
+# Define the home position and other positions as needed
+home_position := [0.0, -1.57, 1.57, 0.0, 0.0, 0.0]; # Example values, adjust according to your setup
+bin_position := [x, y, z]; # Adjust these values based on your bin location
+conveyor_position := [x, y, z]; # Adjust these values based on your conveyor location
+
+# Define the speeds for each move
+move_speeds := [350.0, 350.0, 150.0, 300.0, 380.0]; # Example values, adjust according to your requirements
+
+# Move to home position
+movej home_position, move_speeds[0], 0.0, tool0;
+
+# Move above the bin
+move_linear bin_position, move_speeds[1], 0.0, tool0;
+
+# Descend into the bin
+move_linear bin_position, move_speeds[2], 0.0, tool0;
+
+# Lift from the bin
+move_linear bin_position, move_speeds[3], 0.0, tool0;
+
+# Transit to the conveyor
+move_linear conveyor_position, move_speeds[4], 0.0, tool0;
+
+# Continue with the remaining moves as needed
+# ... (additional moves)

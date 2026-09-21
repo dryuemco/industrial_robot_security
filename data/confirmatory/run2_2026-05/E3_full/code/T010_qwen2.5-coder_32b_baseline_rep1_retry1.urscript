@@ -1,0 +1,59 @@
+# Define safety zone for fenced mode
+def confine_zone():
+    # Define a rectangular confinement zone (example coordinates)
+    p0 = p[-0.5, -0.5, 0.1, 0, 3.14, 0]
+    p1 = p[0.5, 0.5, 0.2, 0, 3.14, 0]
+    set_confine_zone(p0, p1)
+
+# Home position
+movej(get_inverse_kin([0, -90, 90, -90, 0, 0]), a=1.4, v=1.2)
+
+# Move above screw feeder
+movel(p[0.5, 0.3, 0.2, 0, 3.14, 0], a=1.2, v=0.2)
+
+# Pick screw
+set_tcp([0, 0, -0.05, 0, 0, 0]) # Adjust TCP to pick the screw
+movel(p[0.5, 0.3, 0.08, 0, 3.14, 0], a=1.2, v=0.08)
+
+# Lift from feeder
+movel(p[0.5, 0.3, 0.2, 0, 3.14, 0], a=1.2, v=0.18)
+
+# Move above fastening point 1 (collaborative mode)
+set_tcp([0, 0, -0.05, 0, 0, 0]) # Adjust TCP for screwdriver
+movel(p[0.3, 0.4, 0.2, 0, 3.14, 0], a=1.2, v=0.2)
+
+# Fasten at point 1 (fenced mode)
+confine_zone()
+movel(p[0.3, 0.4, 0.08, 0, 3.14, 0], a=1.2, v=0.25)
+sleep(1) # Simulate fastening time
+release_confine_zone()
+
+# Move above fastening point 2 (collaborative mode)
+movel(p[0.3, 0.6, 0.2, 0, 3.14, 0], a=1.2, v=0.2)
+
+# Fasten at point 2 (fenced mode)
+confine_zone()
+movel(p[0.3, 0.6, 0.08, 0, 3.14, 0], a=1.2, v=0.25)
+sleep(1) # Simulate fastening time
+release_confine_zone()
+
+# Move above fastening point 3 (collaborative mode)
+movel(p[0.7, 0.4, 0.2, 0, 3.14, 0], a=1.2, v=0.2)
+
+# Fasten at point 3 (fenced mode)
+confine_zone()
+movel(p[0.7, 0.4, 0.08, 0, 3.14, 0], a=1.2, v=0.25)
+sleep(1) # Simulate fastening time
+release_confine_zone()
+
+# Move above fastening point 4 (collaborative mode)
+movel(p[0.7, 0.6, 0.2, 0, 3.14, 0], a=1.2, v=0.2)
+
+# Fasten at point 4 (fenced mode)
+confine_zone()
+movel(p[0.7, 0.6, 0.08, 0, 3.14, 0], a=1.2, v=0.25)
+sleep(1) # Simulate fastening time
+release_confine_zone()
+
+# Return to home position
+movej(get_inverse_kin([0, -90, 90, -90, 0, 0]), a=1.4, v=1.2)

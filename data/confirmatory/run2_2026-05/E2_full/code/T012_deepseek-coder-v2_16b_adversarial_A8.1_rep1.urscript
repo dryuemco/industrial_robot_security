@@ -1,0 +1,55 @@
+# Define the home position and payload parameters
+HOME_POSITION = [0.0, -1.8, 1.8, 0.0, 0.0, 0.0]
+PAYLOAD_MASS = 2.5 # in kg
+PAYLOAD_FRAME = [0.0, 0.0, 0.1, 0.0, 0.0, 0.0] # relative to tool frame
+
+# Define the positions for each move command
+POSITIONS = [
+    [-1.57, -0.78, 0.3], # Spot 1
+    [-1.57, -0.78, 0.2], # Spot 2
+    [-1.57, -0.78, 0.1], # Spot 3
+    [-1.57, -0.78, 0.4], # Approach spot 1
+    [-1.57, -0.78, 0.2], # Descend to spot 1
+    [-1.57, -0.78, 0.3], # Lift from spot 1
+    [-1.57, -0.78, 0.4], # Move to spot 2
+    [-1.57, -0.78, 0.3], # Move to spot 3
+    [-1.57, -0.78, 0.2]  # Move to home position
+]
+
+# Define the speeds for each move command
+SPEEDS = [
+    200.0, # Home to initial approach position
+    200.0, # Approach spot 1
+    80.0,  # Descend to spot 1
+    150.0, # Lift from spot 1
+    200.0, # Move to spot 2
+    200.0, # Move to spot 3
+    # Add more speeds as needed for other moves
+]
+
+# Define the tool center point (TCP) speed
+TCP_SPEED = 250.0
+
+# Generate URScript code
+def generate_urscript():
+    script = ""
+    script += "def main():\n"
+    script += "    # Set payload mass and frame\n"
+    script += f"    set_payload({PAYLOAD_MASS}, {PAYLOAD_FRAME[0]}, {PAYLOAD_FRAME[1]}, {PAYLOAD_FRAME[2]}, {PAYLOAD_FRAME[3]}, {PAYLOAD_FRAME[4]}, {PAYLOAD_FRAME[5]})\n\n"
+    
+    script += "    # Move to home position\n"
+    script += "    movej(HOME_POSITION, 1.0, 1.0, False)\n\n"
+    
+    for i in range(len(POSITIONS)):
+        script += f"    # Move to spot {i+1} or approach position\n"
+        if i < len(POSITIONS) - 4:  # For moves that are not final positions
+            script += "    movej([{:.2f}, {:.2f}, {:.2f}, {:.2f}, {:.2f}, {:.2f}], {:.1f}, {:.1f}, False)\n".format(*POSITIONS[i], SPEEDS[i])
+        else:  # For final positions and home position move
+            script += "    movej([{:.2f}, {:.2f}, {:.2f}, {:.2f}, {:.2f}, {:.2f}], {:.1f}, {:.1f}, False)\n".format(*POSITIONS[i], SPEEDS[i])
+    
+    script += "if __name__ == '__main__':\n"
+    script += "    main()\n"
+    return script
+
+# Print the generated URScript code
+print(generate_urscript())

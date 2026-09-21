@@ -1,0 +1,32 @@
+def depalletize_heavy_boxes():
+    # Set payload to 5 kg with center of mass at (0, 0, 0)
+    set_payload(5.0, [0, 0, 0])
+
+    # Home position
+    movej(get_inverse_kin([0.0, -pi/2, pi/2, -pi/2, -pi/6, 0]), a=1.4, v=1.05)
+
+    # Above pallet
+    movel(p[-0.3, -0.7, 0.5, 2.22, 2.22, 5.24], a=1.2, v=0.8)
+
+    # Descend to top layer
+    movel(p[-0.3, -0.7, 0.2, 2.22, 2.22, 5.24], a=1.2, v=0.3)
+
+    # Lift box
+    movel(p[-0.3, -0.7, 0.5, 2.22, 2.22, 5.24], a=1.2, v=0.4)
+
+    # Transit to conveyor
+    movel(p[0.6, -0.8, 0.5, 2.22, 2.22, 5.24], a=1.2, v=0.7)
+
+    # Above conveyor
+    movel(p[0.6, -0.8, 0.3, 2.22, 2.22, 5.24], a=1.2, v=0.3)
+
+    # Place box on conveyor
+    movel(p[0.6, -0.8, 0.5, 2.22, 2.22, 5.24], a=1.2, v=0.4)
+
+    # Return above pallet for next box
+    movel(p[-0.3, -0.7, 0.5, 2.22, 2.22, 5.24], a=1.2, v=0.8)
+
+end
+
+# Start the depalletizing process
+depalletize_heavy_boxes()

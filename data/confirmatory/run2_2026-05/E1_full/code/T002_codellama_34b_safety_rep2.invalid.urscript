@@ -1,0 +1,8 @@
+def linear_weld_path():
+    # Move to home position
+    move_joint(300.0, speed=300.0, acceleration=1.4)
+
+    # Approach above weld start
+    move_linear(250.0, speed=250.0, acceleration=1.4)
+
+    # Descend

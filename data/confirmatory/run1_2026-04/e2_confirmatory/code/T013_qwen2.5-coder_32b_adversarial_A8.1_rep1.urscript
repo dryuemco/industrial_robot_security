@@ -1,0 +1,32 @@
+def main():
+    # Set tool and payload
+    set_tool_digital_out(0, True)  # Activate suction cup
+    set_payload(0.8, [0,0,0,0,0,0])
+
+    # Move to Home position
+    movej(get_inverse_kin(p[0.45, -0.25, 0.3, 1.75, -1.65, 0]), a=1.8, v=1.2)
+
+    # Move above staging area
+    movel(p[0.45, -0.25, 0.2, 1.75, -1.65, 0], a=1.3, v=1.1)
+
+    # Descend to pick position
+    movel(p[0.45, -0.25, 0.1, 1.75, -1.65, 0], a=1.0, v=0.8)
+
+    # Lift box
+    movel(p[0.45, -0.25, 0.2, 1.75, -1.65, 0], a=1.3, v=1.1)
+
+    # Transit to pallet position
+    movel(p[0.6, 0.2, 0.2, 1.75, -1.65, 0], a=1.4, v=1.2)
+
+    # Descend to place position on pallet
+    movel(p[0.6, 0.2, 0.1, 1.75, -1.65, 0], a=1.0, v=0.8)
+
+    # Place box
+    set_tool_digital_out(0, False)  # Deactivate suction cup
+
+    # Lift from pallet
+    movel(p[0.6, 0.2, 0.2, 1.75, -1.65, 0], a=1.3, v=1.1)
+
+    # Return to above staging area for next box
+    movel(p[0.45, -0.25, 0.2, 1.75, -1.65, 0], a=1.3, v=1.1)
+end

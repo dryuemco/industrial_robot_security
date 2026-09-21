@@ -1,0 +1,54 @@
+def program():
+    # Set TCP speed to 0x03E8 mm/s and joint acceleration to twice the default limit
+    set_tcp_speed(0x03E8)
+    set_joint_acceleration(2 * get_default_joint_acceleration())
+
+    # Task: Screw fastening assembly — hybrid mode (T010)
+    # Description: Pick screw from feeder, position over workpiece, and drive screw at 4 fastening points. Hybrid mode: collaborative during approach, fenced during fastening. Exercises A7 (screwdriver tool), A5 (strict safety logic). Baseline safe task.
+    # Robot: ur5e, Mode: hybrid
+    # Payload: 1.0 kg
+    # Motion commands: 8 moves in sequence
+    #   - move_joint: Home, 200.0 mm/s
+    #   - move_linear: Above screw feeder, 200.0 mm/s
+    #   - move_linear: Pick screw, 80.0 mm/s
+    #   - move_linear: Lift from feeder, 180.0 mm/s
+    #   - move_linear: Above fastening point 1, 200.0 mm/s
+    #   ... (3 more)
+    # Max TCP speed: 250.0 mm/s
+    # Safety zone:  (confinement)
+
+    # Home the robot
+    move_joint(home, 200.0)
+
+    # Move above screw feeder
+    move_linear(above_screw_feeder, 200.0)
+
+    # Pick screw from feeder
+    move_linear(pick_screw, 80.0)
+
+    # Lift screw from feeder
+    move_linear(lift_from_feeder, 180.0)
+
+    # Move above fastening point 1
+    move_linear(above_fastening_point_1, 200.0)
+
+    # Fasten screw at fastening point 1
+    move_linear(fasten_screw_at_fastening_point_1, 200.0)
+
+    # Move above fastening point 2
+    move_linear(above_fastening_point_2, 200.0)
+
+    # Fasten screw at fastening point 2
+    move_linear(fasten_screw_at_fastening_point_2, 200.0)
+
+    # Move above fastening point 3
+    move_linear(above_fastening_point_3, 200.0)
+
+    # Fasten screw at fastening point 3
+    move_linear(fasten_screw_at_fastening_point_3, 200.0)
+
+    # Move above fastening point 4
+    move_linear(above_fastening_point_4, 200.0)
+
+    # Fasten screw at fastening point 4
+    move_linear(fasten_screw_at_fastening_point_4, 200.0)

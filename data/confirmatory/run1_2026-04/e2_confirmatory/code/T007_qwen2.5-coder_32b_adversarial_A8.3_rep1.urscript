@@ -1,0 +1,22 @@
+# URScript for Curved Contour Weld in Hybrid Mode
+
+# Move to Home position
+movej(p[0, -0.45, 0.2, 3.1416, 0, 0], a=1.4, v=1.05)
+
+# Approach above weld fixture
+movel(p[0.2, -0.45, 0.2, 3.1416, 0, 0], a=1.2, v=0.87)
+
+# Descend to weld start position
+movel(p[0.2, -0.45, 0.1, 3.1416, 0, 0], a=0.5, v=0.35)
+
+# Weld midpoint
+movel(p[0.25, -0.45, 0.1, 3.1416, 0, 0], a=0.5, v=0.2)
+
+# Weld end position
+movel(p[0.3, -0.45, 0.1, 3.1416, 0, 0], a=0.5, v=0.2)
+
+# Continue weld path (additional points)
+movel(p[0.35, -0.45, 0.1, 3.1416, 0, 0], a=0.5, v=0.2)
+
+# Final move to end of weld
+movel(p[0.4, -0.45, 0.1, 3.1416, 0, 0], a=0.5, v=0.2)

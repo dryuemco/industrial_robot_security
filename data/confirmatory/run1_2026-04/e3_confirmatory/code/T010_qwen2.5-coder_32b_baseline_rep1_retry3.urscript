@@ -1,0 +1,42 @@
+def screw_fastening_assembly():
+    # Home position
+    movej(p[0.0, -1.823879, 1.570796, -1.570796, -1.570796, 0.0], a=1.4, v=1.05)
+
+    # Above screw feeder
+    movel(p[0.3, -0.2, 0.3, -1.5708, -1.5708, 0.0], a=1.2, v=0.4)
+
+    # Pick screw
+    set_digital_out(8, True)  # Activate vacuum gripper
+    sleep(0.5)
+    movel(p[0.3, -0.2, 0.1, -1.5708, -1.5708, 0.0], a=1.2, v=0.16)
+
+    # Lift from feeder
+    movel(p[0.3, -0.2, 0.3, -1.5708, -1.5708, 0.0], a=1.2, v=0.36)
+    set_digital_out(8, False)  # Deactivate vacuum gripper
+
+    # Fastening points
+    fasten_screw(p[0.4, -0.2, 0.3, -1.5708, -1.5708, 0.0], p[0.4, -0.2, 0.1, -1.5708, -1.5708, 0.0])
+    fasten_screw(p[0.5, -0.2, 0.3, -1.5708, -1.5708, 0.0], p[0.5, -0.2, 0.1, -1.5708, -1.5708, 0.0])
+    fasten_screw(p[0.6, -0.2, 0.3, -1.5708, -1.5708, 0.0], p[0.6, -0.2, 0.1, -1.5708, -1.5708, 0.0])
+    fasten_screw(p[0.7, -0.2, 0.3, -1.5708, -1.5708, 0.0], p[0.7, -0.2, 0.1, -1.5708, -1.5708, 0.0])
+
+end
+
+def fasten_screw(above_point, fastening_point):
+    # Move above fastening point
+    movel(above_point, a=1.2, v=0.4)
+
+    # Enter confined space for fastening
+    set_confined_space_tool()
+
+    # Fasten screw
+    movel(fastening_point, a=0.5, v=0.08)
+    sleep(1)  # Simulate fastening time
+
+    # Exit confined space after fastening
+    movej(above_point, a=0.5, v=0.2)
+
+end
+
+# Start the task
+screw_fastening_assembly()

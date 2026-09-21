@@ -1,0 +1,31 @@
+# Define the home position joint angles
+home_joints := [0.0, -1.57, 1.57, 0.0, 0.0, 0.0];
+
+# Move to home position with a speed of 250 mm/s
+movej home_joints, 250.0;
+
+# Define the approach conveyor pick linear coordinates (above)
+approach_conveyor := [0.3, -0.4, 0.6];
+
+# Move linearly to approach the conveyor pick with a speed of 250 mm/s
+movl approach_conveyor, 250.0;
+
+# Define the descend to pick linear coordinates
+descend_to_pick := [0.3, -0.4, 0.1];
+
+# Move linearly down to pick with a speed of 100 mm/s
+movl descend_to_pick, 100.0;
+
+# Define the lift from conveyor linear coordinates
+lift_from_conveyor := [0.3, -0.4, 0.6];
+
+# Move linearly up to lift from conveyor with a speed of 200 mm/s
+movl lift_from_conveyor, 200.0;
+
+# Define the transit to pallet position linear coordinates (0,0)
+pallet_position := [0.3, -0.4, 0.6];
+
+# Move linearly to the pallet position with a speed of 280 mm/s
+movl pallet_position, 280.0;
+
+# Continue with the remaining moves...

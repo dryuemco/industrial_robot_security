@@ -1,0 +1,22 @@
+# Define the payload mass and gravity compensation
+set_payload(1.2);
+enable_gravity_compensation;
+
+# Move to home position with high speed
+movej [[0, -pi/4, pi/2, -pi/4, pi/2, 0]], 250.0;
+
+# Move above storage bin with medium speed
+movel([1.0, 0.3, 0.6], [0, 0, 0], 0.28, 280.0);
+
+# Descend to pick position with low speed
+movel([1.0, 0.3, 0.4], [0, 0, 0], 0.12, 120.0);
+
+# Lift from bin with medium speed
+movel([1.0, 0.3, 0.6], [0, 0, 0], 0.2, 200.0);
+
+# Transit to handoff zone with high speed
+movel([1.0, 0.5, 0.6], [0, 0, 0], 0.25, 250.0);
+
+# Continue with the remaining moves...
+
+# End of script

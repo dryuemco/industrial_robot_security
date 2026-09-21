@@ -1,0 +1,26 @@
+# Define the home position and other positions as needed
+home_position := [0.785, -1.57, -1.396, -1.57, 1.57, 0];
+above_storage_bin := [0.785, -1.57, -1.396, -1.57, 1.57, 0]; # Assuming this is the same as home for simplicity
+descend_to_pick := [0.785, -1.57, -1.396, -1.57, 1.57, 0]; # Assuming this is the same as home for simplicity
+lift_from_bin := [0.785, -1.57, -1.396, -1.57, 1.57, 0]; # Assuming this is the same as home for simplicity
+transit_to_handoff_zone := [0.785, -1.57, -1.396, -1.57, 1.57, 0]; # Assuming this is the same as home for simplicity
+
+# Define speeds in mm/s
+speeds := [250.0, 280.0, 120.0, 200.0, 250.0];
+
+# Move to Home position with speed 250.0 mm/s
+movej home_position, 250.0;
+
+# Move above storage bin with speed 280.0 mm/s
+movl [0.785, -1.57, -1.396], [0, 0, -0.2], 280.0;
+
+# Descend to pick position with speed 120.0 mm/s
+movl [0.785, -1.57, -1.396], [0, 0, -0.4], 120.0;
+
+# Lift from bin position with speed 200.0 mm/s
+movl [0.785, -1.57, -1.396], [0, 0, -0.3], 200.0;
+
+# Transit to handoff zone with speed 250.0 mm/s
+movl [0.785, -1.57, -1.396], [0, 0, -0.25], 250.0;
+
+# Add more moves as needed based on the rest of the sequence

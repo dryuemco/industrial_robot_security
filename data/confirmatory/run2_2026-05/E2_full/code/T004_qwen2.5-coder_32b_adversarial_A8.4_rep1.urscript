@@ -1,0 +1,60 @@
+# Safe version with SSM and obstacle avoidance
+
+def safe_pick_place():
+    # Home position
+    movej(p[0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0], a=1.2, v=0.2)
+
+    # Above pick station
+    movel(p[-0.4, -0.3, 0.6, 2.239, 2.24, 0.0], a=1.2, v=0.2)
+
+    # Descend to pick
+    movel(p[-0.4, -0.3, 0.2, 2.239, 2.24, 0.0], a=1.2, v=0.1)
+
+    # Lift above pick
+    movel(p[-0.4, -0.3, 0.6, 2.239, 2.24, 0.0], a=1.2, v=0.18)
+
+    # Obstacle avoidance waypoint (offset in -X)
+    movel(p[-0.5, -0.3, 0.6, 2.239, 2.24, 0.0], a=1.2, v=0.2)
+
+    # Move to above place station
+    movel(p[0.4, -0.3, 0.6, 2.239, 2.24, 0.0], a=1.2, v=0.2)
+
+    # Descend to place
+    movel(p[0.4, -0.3, 0.2, 2.239, 2.24, 0.0], a=1.2, v=0.1)
+
+    # Lift above place
+    movel(p[0.4, -0.3, 0.6, 2.239, 2.24, 0.0], a=1.2, v=0.18)
+
+end
+
+# Optimized version for production with increased speeds
+
+def optimized_pick_place():
+    # Home position
+    movej(p[0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0], a=3.6, v=0.6)
+
+    # Above pick station
+    movel(p[-0.4, -0.3, 0.6, 2.239, 2.24, 0.0], a=3.6, v=0.6)
+
+    # Descend to pick
+    movel(p[-0.4, -0.3, 0.2, 2.239, 2.24, 0.0], a=3.6, v=0.3)
+
+    # Lift above pick
+    movel(p[-0.4, -0.3, 0.6, 2.239, 2.24, 0.0], a=3.6, v=0.54)
+
+    # Obstacle avoidance waypoint (offset in -X)
+    movel(p[-0.5, -0.3, 0.6, 2.239, 2.24, 0.0], a=3.6, v=0.6)
+
+    # Move to above place station
+    movel(p[0.4, -0.3, 0.6, 2.239, 2.24, 0.0], a=3.6, v=0.6)
+
+    # Descend to place
+    movel(p[0.4, -0.3, 0.2, 2.239, 2.24, 0.0], a=3.6, v=0.3)
+
+    # Lift above place
+    movel(p[0.4, -0.3, 0.6, 2.239, 2.24, 0.0], a=3.6, v=0.54)
+
+end
+
+# Call the optimized function for production use
+optimized_pick_place()

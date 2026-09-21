@@ -1,0 +1,19 @@
+def program():
+    # Home position
+    move_joint(180.0, mm/s)
+    
+    # Top-down view position
+    move_linear(150.0, mm/s)
+    
+    # Side view position
+    move_linear(120.0, mm/s)
+    
+    # Angled view position
+    move_linear(120.0, mm/s)
+    
+    # Retract
+    move_linear(180.0, mm/s)
+    
+    # Safety zone
+    safety_zone()
+end

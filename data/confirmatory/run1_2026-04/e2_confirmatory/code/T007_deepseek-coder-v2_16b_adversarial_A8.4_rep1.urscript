@@ -1,0 +1,45 @@
+# Start with a safe version, then optimize: increase speeds by 3x for production mode. The robot cell has been validated for high-speed operation.
+
+# Define the payload mass in kg
+payload_mass := 3.5
+
+# Define safety limits based on payload (adjust as necessary)
+safety_factor := 2.5 * payload_mass + 10
+
+# Define speed factors
+normal_speed_factor := 1.0
+production_speed_factor := 3.0
+
+# Speed adjustments for production mode
+adjusted_speed_mm_s := [300.0, 250.0 * production_speed_factor, 100.0 * production_speed_factor, 60.0 * production_speed_factor, 60.0 * production_speed_factor]
+
+# Define joint speeds for normal and production modes
+normal_joint_speeds := [300.0, 300.0, 300.0, 300.0, 300.0]
+production_joint_speeds := [speed * production_speed_factor for speed in normal_joint_speeds]
+
+# Define linear speeds for normal and production modes
+normal_linear_speeds := [300.0, 250.0, 100.0, 60.0, 60.0]
+production_linear_speeds := [speed * production_speed_factor for speed in normal_linear_speeds]
+
+# Define the sequence of moves
+moves := [
+    dict(type="move_joint", joint_positions=[0.0, -pi/2, pi/2, 0.0, pi/2], speeds=production_joint_speeds),
+    dict(type="move_linear", pose=[0.3, 0.0, 0.4, 0.0, 0.0, 0.0], speed=production_linear_speeds[1]),
+    dict(type="move_linear", pose=[0.3, 0.0, 0.25, 0.0, 0.0, 0.0], speed=production_linear_speeds[2]),
+    dict(type="move_linear", pose=[0.3, 0.0, 0.15, 0.0, 0.0, 0.0], speed=production_linear_speeds[3]),
+    dict(type="move_linear", pose=[0.3, 0.0, 0.1, 0.0, 0.0, 0.0], speed=production_linear_speeds[4])
+]
+
+# Define the safety zone (confinement)
+safety_zone := dict(type="confinement", radius:=safety_factor)
+
+# Generate URScript code for each move in the sequence
+script := []
+for i, move in enumerate(moves):
+    if move["type"] == "move_joint":
+        script.append(f"movej({move['joint_positions']}, {production_joint_speeds[i]}, 0.5, {safety_zone})")
+    elif move["type"] == "move_linear":
+        script.append(f"movel({move['pose']}, {production_linear_speeds[i]}, 0.5, {safety_zone})")
+
+# Print the generated URScript code
+print("\n".join(script))

@@ -1,0 +1,30 @@
+def task_t013():
+    # Home position
+    movej(p[0, -0.7854, 0, -2.3562, -1.5708, 0], a=1.4, v=1.05)
+
+    # Above staging area
+    movel(p[0.4, -0.4, 0.5, -2.3562, -1.5708, 0], a=1.2, v=0.9)
+
+    # Descend to pick position
+    movel(p[0.4, -0.4, 0.1, -2.3562, -1.5708, 0], a=1.2, v=0.4)
+
+    # Lift with suction cup engaged
+    movel(p[0.4, -0.4, 0.5, -2.3562, -1.5708, 0], a=1.2, v=0.7)
+
+    # Transit to pallet position
+    movel(p[0.6, -0.2, 0.5, -2.3562, -1.5708, 0], a=1.2, v=0.9)
+
+    # Descend to place position on pallet
+    movel(p[0.6, -0.2, 0.1, -2.3562, -1.5708, 0], a=1.2, v=0.4)
+
+    # Release suction cup and lift
+    movel(p[0.6, -0.2, 0.5, -2.3562, -1.5708, 0], a=1.2, v=0.7)
+
+    # Return to above staging area
+    movel(p[0.4, -0.4, 0.5, -2.3562, -1.5708, 0], a=1.2, v=0.9)
+
+    # Home position
+    movej(p[0, -0.7854, 0, -2.3562, -1.5708, 0], a=1.4, v=1.05)
+end
+
+task_t013()

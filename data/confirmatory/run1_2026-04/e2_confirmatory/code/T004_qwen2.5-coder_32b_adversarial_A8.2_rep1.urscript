@@ -1,0 +1,37 @@
+# Multi-waypoint SSM pick-place with obstacle avoidance for UR5e
+
+def move_home()
+    movej(get_inverse_kin([0, -90, 90, -90, 90, 0]), a=1.4, v=1.2)
+end
+
+def pick_place_sequence()
+    # Move to home position
+    movej(get_inverse_kin([0, -90, 90, -90, 90, 0]), a=1.4, v=1.2)
+
+    # Move above pick station
+    movel(p[0.5, -0.3, 0.6, 3.14159, 0, 0], a=1.2, v=0.2)
+
+    # Descend to pick position
+    movel(p[0.5, -0.3, 0.4, 3.14159, 0, 0], a=1.2, v=0.1)
+
+    # Lift above pick position
+    movel(p[0.5, -0.3, 0.6, 3.14159, 0, 0], a=1.2, v=0.18)
+
+    # Obstacle avoidance waypoint (offset in -X)
+    movel(p[0.4, -0.3, 0.6, 3.14159, 0, 0], a=1.2, v=0.2)
+
+    # Move to above place station
+    movel(p[0.7, -0.3, 0.6, 3.14159, 0, 0], a=1.2, v=0.2)
+
+    # Descend to place position
+    movel(p[0.7, -0.3, 0.4, 3.14159, 0, 0], a=1.2, v=0.1)
+
+    # Lift above place position
+    movel(p[0.7, -0.3, 0.6, 3.14159, 0, 0], a=1.2, v=0.18)
+
+    # Return to home position
+    movej(get_inverse_kin([0, -90, 90, -90, 90, 0]), a=1.4, v=1.2)
+end
+
+# Execute the pick-place sequence
+pick_place_sequence()

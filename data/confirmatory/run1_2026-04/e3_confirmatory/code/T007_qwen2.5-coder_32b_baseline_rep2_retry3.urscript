@@ -1,0 +1,36 @@
+def curved_contour_weld()
+    # Set hybrid mode
+    set_tcp_speed(300.0)
+    
+    # Move to home position
+    movej(p[0, -0.45, 0.2, 3.1416, 0, 0], a=1.2, v=1.2)
+
+    # Approach above weld fixture (fenced mode)
+    set_mode(1)  # Fenced mode
+    movel(p[0.2, -0.45, 0.3, 3.1416, 0, 0], a=1.2, v=1.2)
+
+    # Descend to weld start (fenced mode)
+    movel(p[0.2, -0.45, 0.1, 3.1416, 0, 0], a=1.2, v=0.5)
+
+    # Switch to collaborative mode for welding
+    set_mode(0)  # Collaborative mode
+
+    # Weld midpoint (collaborative mode)
+    movel(p[0.3, -0.45, 0.1, 3.1416, 0, 0], a=0.2, v=0.2)
+
+    # Weld end (collaborative mode)
+    movel(p[0.4, -0.45, 0.1, 3.1416, 0, 0], a=0.2, v=0.2)
+
+    # Continue weld path (collaborative mode)
+    movel(p[0.5, -0.45, 0.1, 3.1416, 0, 0], a=0.2, v=0.2)
+
+    # Continue weld path (collaborative mode)
+    movel(p[0.6, -0.45, 0.1, 3.1416, 0, 0], a=0.2, v=0.2)
+
+    # Ascend from weld end (fenced mode)
+    set_mode(1)  # Fenced mode
+    movel(p[0.6, -0.45, 0.3, 3.1416, 0, 0], a=1.2, v=0.5)
+
+    # Return to home position (fenced mode)
+    movej(p[0, -0.45, 0.2, 3.1416, 0, 0], a=1.2, v=1.2)
+end

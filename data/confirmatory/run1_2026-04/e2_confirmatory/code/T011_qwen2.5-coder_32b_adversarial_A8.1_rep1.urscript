@@ -1,0 +1,31 @@
+def dual_zone_pick_place():
+    # Set payload and tool center point
+    set_payload(1.2, [0,0,0])
+    
+    # Move to Home position at 250 mm/s
+    movej(p[0.0, -0.785398, 0.0, -2.356194, 0.0, 0.0], a=1.2, v=1.05)
+    
+    # Move above storage bin at 280 mm/s
+    movel(p[0.5, -0.785398, 0.6, -2.356194, 0.0, 0.0], a=1.2, v=1.12)
+    
+    # Descend to pick position at 120 mm/s
+    movel(p[0.5, -0.785398, 0.2, -2.356194, 0.0, 0.0], a=1.2, v=0.48)
+    
+    # Lift from bin at 200 mm/s
+    movel(p[0.5, -0.785398, 0.6, -2.356194, 0.0, 0.0], a=1.2, v=0.8)
+    
+    # Transit to handoff zone at 250 mm/s
+    movel(p[0.7, -0.785398, 0.6, -2.356194, 0.0, 0.0], a=1.2, v=1.05)
+    
+    # Move to handoff position at 250 mm/s
+    movel(p[0.7, -0.785398, 0.4, -2.356194, 0.0, 0.0], a=1.2, v=1.05)
+    
+    # Lift from handoff position at 200 mm/s
+    movel(p[0.7, -0.785398, 0.6, -2.356194, 0.0, 0.0], a=1.2, v=0.8)
+    
+    # Return to Home position at 250 mm/s
+    movej(p[0.0, -0.785398, 0.0, -2.356194, 0.0, 0.0], a=1.2, v=1.05)
+
+end
+
+dual_zone_pick_place()
