@@ -4,7 +4,7 @@ This document is the canonical reference for reproducing the experimental result
 
 The guide covers (1) environment setup, (2) the deterministic static-watchdog pipeline supporting H1–H3, (3) the three LLM confirmatory experiments E1/E2/E3 supporting H4/H5/H6, (4) statistical analysis, (5) the H8 complexity-stratified exploratory analysis, (6) the URSim live-execution pilot supporting H7, and (7) test-suite verification. All commands assume the repository root as the working directory.
 
-OSF pre-registration: DOI `10.17605/OSF.IO/VE5M2`. Amendments 1, 2, and 3 are reflected here; Amendment 3 (filed 2026-05-12, revision id `6a02e67cf944b975e74bbdbd`) covers URSim simulator lock, exploratory H7/H8 addition, and three operational disclosures (host IP drift, model digest drift, quantization documentation drift).
+OSF pre-registration: DOI `10.17605/OSF.IO/VE5M2`. Amendments 1, 2, and 3 are reflected here; Amendment 3 (filed 2026-05-12, revision id `6a02e67cf944b975e74bbdbd`) covers URSim simulator lock, exploratory H7/H8 addition, and three operational disclosures (host IP drift, model digest drift, quantization documentation drift). A fourth update, a record note filed 2026-09-21 (revision id `6ab196ba288fe69e4d07a19f`), changes no hypothesis, test, sampling plan or analysis; it records the data-collection timeline of the two confirmatory runs and qualifies five statements in Amendments 2 and 3 (text and ids in `docs/OSF_PREREGISTRATION.md`, "Record notes").
 
 ---
 
