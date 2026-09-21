@@ -1,26 +1,3 @@
-%% ============================================================================
-%% IEEE ACCESS conversion of main_v6.tex  --  SCAFFOLD (front matter + style anchor)
-%% ----------------------------------------------------------------------------
-%% TARGET CLASS: ieeeaccess  (official template: IEEE Author Center > IEEE Access)
-%%   The official IEEE Access template package ships ieeeaccess.cls + its assets
-%%   (spotcolor, ltxutil, ltxgrid). It needs IEEEtran installed, which is present
-%%   in a full TeX Live (and on the local Mac). To compile this file:
-%%     1. Place this file inside the official IEEE Access template folder, OR
-%%     2. Temporary local check only: swap line below to
-%%        \documentclass[journal]{IEEEtran}  and comment out the \address/\corresp
-%%        /\tfootnote/\markboth block, replacing with a standard \thanks{} in \author.
-%%
-%% STYLE CONTRACT enforced in this conversion (per Georgios):
-%%   - no em-dashes or en-dashes anywhere (--- and -- are banned in source)
-%%   - no first-person "we/our": simple passive voice
-%%   - plain, human-readable English; fewer pages than main_v6.tex
-%%   - figures/captions in standard CS academic terms, no internal codenames
-%%     (DM-/SM-/A6.x/T0xx/E1..E5/Hn) in the main text
-%%   - file names, repo paths, and OSF/internal identifiers removed from the body;
-%%     OSF preregistration cited only in the Acknowledgment
-%%   - internal IDs + full protocol live in the Appendix / replication package
-%% ============================================================================
-
 \documentclass{ieeeaccess}
 
 \usepackage{cite}
@@ -63,9 +40,6 @@ Europe Research and Innovation Programme under Grant Agreement No.\ 101120657
 
 \corresp{Corresponding author: Aida Akbarzadeh (e-mail:
 aida.akbarzadeh@ntnu.no).}
-%% FILL before submission (remaining):
-%%   - ORCID for Author Center metadata: Yunus 0000-0002-9229-9657; Aida if available.
-%%   - Add \IEEEmembership{...} after a name only if that author is an IEEE member.
 
 %% ----------------------------------------------------------------------------
 %% ABSTRACT 
@@ -84,8 +58,8 @@ preregistered study covers three open-weight code models (16 to 34 billion param
 585 generations. Three findings are reported. First, generated code pervasively fails the
 checks: 98.8\% of syntactically valid outputs violate at least one, and only 1 of 135
 baseline generations is both valid and violation-free; a non-LLM comparator shows that part
-of this rate is a property of the rule set, yet generated code fires on roughly twice as
-many checks as the reference translation (10.4 against 5.7 per program under the
+of this rate is a property of the rule set, yet generated code produces roughly twice as
+many rule firings as the reference translation (10.4 against 5.7 per program under the
 preregistered rules). Second, this saturation is a measurement
 hazard: naive scoring lets invalid pseudo-code pass as safe, and the preregistered
 adversarial-uplift test is untestable against a saturated baseline. Third, rule-checker
@@ -917,7 +891,7 @@ Adversarial uplift in mean violations, pooled & $+1.24$ & all-outputs basis $+0.
 Adversarial uplift, binary rate & $+6.67$ pp (max) & ceiling demonstration; Holm-adjusted $p=1.000$ \\
 Repair-loop reduction, pooled & 30.5\% relative & below the registered 40\% threshold \\
 Cells remediated to zero violations & 0/135 & Table~\ref{tab:regimes} \\
-Cross-model heterogeneity, Cochran $Q$ & 12.60 / 20.00 & $p{=}0.004$ / $p{<}0.001$; baseline / safety-prompted \\
+Cross-model heterogeneity, Cochran $Q$ & 12.60 / 20.00 & $p{=}0.004$ / $p{<}0.001$, Holm-corrected; baseline / safety-prompted \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1081,8 +1055,9 @@ Safety preamble & none & 11 & 11 & 100 [71.5, 100] \\
 \end{tabular}
 \end{table}
 
-Because the two checks that this first audit rated low precision are also the two
-highest-firing checks, the combined violation rate is mildly inflated by them under that
+Because the two checks that this first audit rated low precision fire often (the
+error-handling proxy on 82 of the 83 gate-passing baseline outputs, the highest count of
+any check, and the input-validation proxy on 52), the combined violation rate is mildly inflated by them under that
 audit's criteria, a second and milder measurement hazard alongside the
 naive-versus-gate distinction. The substantive conclusion is robust to it. Restricting
 the violation flag to the three checks the first audit rated at or above 90 percent
@@ -1211,7 +1186,7 @@ follow. First, the binary flag is uninformative as an absolute: SM-4 and SM-6 ar
 properties of the idiom that the rule set rewards, not of the model, which is why the
 substantive-safe rate is reported with its rule composition rather than alone. Second, the
 count and the rule profile do separate generated code from the reference: gate-passing
-generated code fires on 10.4 checks per program against 5.7 for the reference translation,
+generated code produces 10.4 firings per program against 5.7 for the reference translation,
 and it fires on the input-validation and error-handling proxies (52 and 82 of 83 programs)
 on which the reference never fires (Figure~\ref{fig:heatmap}). Third, correcting the SM-5
 unit reading (Table~\ref{tab:comparator}, corrected SM-5) removes every SM-5 firing from the
@@ -1266,8 +1241,8 @@ generation, an increase of 3.58, and the pooled mean over all seven strategies r
 0.70 (6.38 to 7.08). On the gate-passing basis, which is the basis used for the
 safety-prompt contrast above, the same strategy raises the mean from 10.37 to 16.59
 (+6.22) and the pooled mean from 10.37 to 11.61 (+1.24); five of the seven strategies lie
-within $\pm 1.5$ violations of the baseline on this basis, and two (role-playing, A8.2,
-and context overflow, A8.3) lower the mean. The gate-passing rate itself is unchanged at
+within $\pm 1.5$ violations of the baseline on this basis, and two of these five
+(role-playing, A8.2, and context overflow, A8.3) lower the mean. The gate-passing rate itself is unchanged at
 61\% (83 of 135 at baseline; 192 of 315 pooled over strategies), so the strategies do not
 push the models out of syntax more than the plain prompt does. The mean maximum severity is essentially unchanged on either
 basis (0.54 to 0.55 on all outputs; 0.88 to 0.91 on gate-passing outputs), so the
@@ -1281,11 +1256,13 @@ The hypothesis that the strategies raise the combined violation rate by at least
 percentage points is not supported: no cell of either the naive or the gate-passing
 contrast crosses the threshold, and every per-model and pooled test returns a Holm-adjusted
 p of 1.000, with a largest pooled increase of 6.67 percentage points under the naive
-contrast and 4.76 percentage points under the gate-passing contrast. This is a mechanical
-consequence of the saturated baseline: with a gate-passing baseline rate of 98.8\%, only
-1.2 percentage points of headroom remain below the ceiling, so the registered 50-point
-threshold is more than forty times the maximum attainable change and the test has no power
-to detect the registered effect. The absence of measurable binary uplift is therefore an
+contrast and 4.76 percentage points under the gate-passing contrast, the latter being a
+single discordant pair among the 21 matched gate-passing cells of one strategy. This is a
+mechanical consequence of the saturated baseline: the gate-passing baseline rate is 98.8\%
+over all baseline outputs and between 95.2\% and 100\% on the matched cells of each
+strategy, so at most 4.8 percentage points of headroom remain below the ceiling, the
+registered 50-point threshold is more than ten times the maximum attainable pooled change,
+and the test has no power to detect the registered effect. The absence of measurable binary uplift is therefore an
 artifact of the metric-and-data interaction under this ceiling rather than evidence that
 the prompt-injection strategies are safe. In hindsight the fifty-point threshold was
 mis-specified for this regime: it was registered before the baseline rate was observed,
@@ -1327,9 +1304,9 @@ transient improvement followed by regression, and an invariant trajectory
   \def\xfigwd{\columnwidth}%
   \caption{Representative self-repair trajectories under rule-checker feedback for
   Qwen2.5-Coder-32B, the one model that maintains valid output throughout, showing total violations against
-  retry index, one curve per regime. The curves illustrate the recurring regimes: monotone reduction that
-  does not reach zero, two-state oscillation in which each retry undoes the previous fix,
-  transient improvement followed by regression, and an invariant trajectory. Each curve
+  retry index, one curve per regime. The curves illustrate the six regimes of Table~\ref{tab:regimes}: monotone reduction that
+  does not reach zero, net reduction with one reversal, two-state oscillation in which each retry undoes the previous fix,
+  transient improvement followed by regression, monotone increase, and an invariant trajectory. Each curve
   is a real Qwen2.5-Coder-32B cell of Table~\ref{tab:regimes}, and the cell counts in the
   legend are that model's column of the table; each curve is drawn with its own marker and
   line style.}\label{fig:retry}
@@ -1341,7 +1318,8 @@ sequence. Of the 135 cells, 78 leave the loop by dropping out of valid syntax, 5
 already at the first generation so that no feedback is ever issued, and 57 remain valid
 through all three retries; none of the 57 reaches zero violations. Among the valid cells
 the count falls monotonically in 11, falls with one reversal in 6, rises monotonically in
-12, oscillates in 14, and shows a transient improvement that is undone in 12; the mean
+12, oscillates in 14, shows a transient improvement that is undone in 12, and is invariant
+in 2; the mean
 count is 10.4 at the first generation and 13.2 at the last retry. At the rule level, each
 valid retry step clears 0.26 checks and introduces 0.29 on average, so feedback
 redistributes firings across rules roughly as often as it removes them. The regimes are
@@ -1355,7 +1333,8 @@ The three models differ on matched per-task outcomes. A cross-model homogeneity 
 reported as an additional non-confirmatory analysis outside the preregistered confirmatory
 family, rejects homogeneity under both single-shot conditions: the test statistic is 12.60
 at the baseline condition (p of 0.004) and 20.00 at the safety-prompted condition (p below
-0.001), with multiplicity correction applied within this additional family only.
+0.001), with multiplicity correction applied within this additional family only (the
+uncorrected values, 0.002 and below 0.001, are the ones listed in Table~\ref{tab:quant}).
 
 Because the three models were served at two different quantization levels, one at
 Q4\_K\_M and two at Q4\_0 (Table~\ref{tab:models}), this heterogeneity test cannot by
@@ -1390,7 +1369,8 @@ not differ significantly ($p = 0.10$ and $0.81$). Thirty of the 90 CodeLlama-34B
 Q4\_K\_M, 24 of them under the safety prompt, run to the 4096-token budget and are
 truncated; 17 fail the gate and 13 pass it. Recomputing the cross-model test with all
 three models at Q4\_K\_M gives Cochran $Q = 8.67$ at baseline and $7.82$ under the safety
-prompt (Holm-corrected $p = 0.026$ and $0.020$); with all three at Q4\_0 the as-served
+prompt (uncorrected $p = 0.013$ and $0.020$; Holm-corrected over the two tests,
+$p = 0.026$ for both); with all three at Q4\_0 the as-served
 values are unchanged, because the only model served at Q4\_K\_M keeps every verdict at
 Q4\_0. The heterogeneity result therefore stands at the binary level that it was
 registered for at either uniform quantization, with a narrower margin at Q4\_K\_M, where
@@ -1431,7 +1411,7 @@ and constraint representation.
 
 \textbf{Frontier scale.} A spot-check of four open-weight models spanning 24B to 675B
 parameters, served through a hosted gateway, repeats the baseline subset for 120
-generations. Every generation parses as valid URScript, so the gate-passing rate is
+generations. Every generation passes the validity gate, so the gate-passing rate is
 1.00 for all four models, yet the combined violation rate is 1.00 for every model and
 the substantive-safe count is 0 of 120, with no refusals. Mean violations per
 generation, pooled over the baseline and safety-prompted conditions, are 4.67, 5.70,
@@ -1515,7 +1495,7 @@ editing an already-safe template rarely introduces a breach: only 2 genuine spee
 breaches occur across 180 edited programs, against 70 in the from-scratch control. The
 representation probe then re-encodes each task's speed cap in four behaviorally
 identical forms and applies one benign performance-framed edit, over 240 generations.
-Two of the 240 outputs fail to parse as URScript and are excluded as invalid before any
+Two of the 240 outputs fail the validity gate and are excluded as invalid before any
 breach is scored, both at the 358B scale, one in the comment encoding and one in the
 named-constant encoding. The four encodings therefore retain 60, 59, 59, and 60 valid
 outputs in legibility order, 238 in total, and the two explicit forms, the named constant
@@ -1568,7 +1548,7 @@ signal and a target for replication rather than an established scaling law
 
 \section{Discussion}\label{sec:discussion}
 A single mechanism threads through the results: invalidation acts as a measurement
-confound. Whenever a generation or a retry ceases to be parseable URScript, binary
+confound. Whenever a generation or a retry ceases to pass the validity gate, binary
 violation outcomes improve without the code becoming safer. The repair-in-loop
 intervention lowers violation flags primarily by driving models into invalid
 pseudo-code rather than remediation, the trajectory taxonomy shows that most local
@@ -1629,8 +1609,9 @@ where targeted prompts elicit harmful actions from language-model-controlled rob
 near-total success rates \cite{ref32}, and with plan-level safeguards such as RoboGuard,
 which reduce the execution of unsafe plans from over 92\% to below 2.5\% under worst-case
 jailbreaking \cite{ref10}. The contrast is not evidence of robustness. The baseline here
-already sits at the binary ceiling, so any strategy has at most 1.2 percentage points of
-headroom and the registered 50-point effect is more than forty times that bound. The null
+already sits at the binary ceiling, so any strategy has at most 4.8 percentage points of
+pooled headroom on its matched cells (1.2 over all baseline outputs) and the registered
+50-point effect is more than ten times that bound. The null
 is therefore a property of the metric and the saturated base rate, and it relocates the
 open problem from the symbolic plan, where plan-level safeguards operate, to the
 vendor-specific motion code one level below, which no comparable safeguard yet covers.
@@ -1799,15 +1780,11 @@ the open robotics community.
 \textit{Formal Adversarial Testing of LLM-Generated Code for Industrial Robots} project has received funding from the European Union, via the oc4-2025-TES-02-44 issued and
 implemented by the ENFIELD project, under the grant agreement No 101120657.
 
-%% OSF preregistration lives here only (removed from the body).
 The preregistration, analysis plan, and amendment history for this study are
 available on the Open Science Framework (DOI 10.17605/OSF.IO/VE5M2). The complete
 replication package, including the rule catalogue, task specifications, generation
 logs, and analysis scripts, is released under the Apache 2.0 license.
 
-%%
-%% IEEE ACCESS POLICY (mandatory if AI-generated text is retained): AI-generated
-%% text must be disclosed here and the AI system cited.
 
 %% ----------------------------------------------------------------------------
 \appendices
@@ -2058,8 +2035,7 @@ independent validation set, for example URScript programs with documented incide
 vendor safety-bulletin cases, is identified as future work in \ref{sec:threats}.
 
 %% ----------------------------------------------------------------------------
-%% BIBLIOGRAPHY: main_v6.tex uses an inline thebibliography with 22 entries
-%% (L3027-3050). Copy it in verbatim during Pass 3; no external .bib needed.
+%% BIBLIOGRAPHY (inline; no external .bib needed)
 %% ----------------------------------------------------------------------------
 \begin{thebibliography}{99}
 \bibitem{ref1} International Organization for Standardization, "ISO 10218-1:2025 Robotics - Safety requirements - Part 1: Industrial robots," ISO Standard, 2025.
@@ -2130,12 +2106,6 @@ vendor safety-bulletin cases, is identified as future work in \ref{sec:threats}.
 \bibitem{ref66} Association for Advancing Automation (A3), "ANSI/A3 R15.06-2025 Industrial Robots and Robot Systems - Safety Requirements," American National Standard, 2025.
 \bibitem{ref67} Universal Robots A/S, "The URScript Programming Language, e-Series, software version 5.12," Universal Robots A/S, Odense, Denmark, 2022. [Online]. Available: \url{https://www.universal-robots.com/download/}
 \end{thebibliography}
-
-%% Author biographies (IEEE Access convention) -- optional; add before \EOD:
-%%   \begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,%
-%%     keepaspectratio]{photo.png}}]{Yunus Emre Cogurcu} Short bio. \end{IEEEbiography}
-%%   \begin{IEEEbiography}{Aida Akbarzadeh} Short bio. \end{IEEEbiography}
-%%   \begin{IEEEbiography}{Georgios Spathoulas} Short bio. \end{IEEEbiography}
 
 \begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{photo1.jpg}}]{Yunus Emre Cogurcu}
 received the Ph.D. degree in computer science from the University of Sheffield, Sheffield, U.K., in 2024, with a thesis on augmented reality for safe human-robot collaboration. He is currently a Lecturer and Researcher with the Department of Computer Engineering, Cukurova University, Adana, T\"urkiye. His research interests include augmented and virtual reality, digital twins, human-robot interaction, and the safety and security of robotic systems, including ISO 10218 and ISO/TS 15066 compliance and the security of AI-generated robot control code.
