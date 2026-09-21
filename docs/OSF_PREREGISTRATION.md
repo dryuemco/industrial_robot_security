@@ -442,7 +442,7 @@ filed"; that was its state when written. It was filed on 2026-05-15, after Amend
 | Event | UTC |
 |---|---|
 | Amendment 2 code change (`prompt_builder`, McNemar labels) committed | 2026-04-15T17:54–18:09 |
-| Amendment 2 candidate filed locally in this document | 2026-04-15T18:54 |
+| Amendment 2 candidate filed locally in this document: `d251c15` (working history) = `f501029` (main), same patch-id | 2026-04-15T18:54:51 |
 | Run 1, E1 (270 rows, `results/e1_confirmatory_session14/`) | 2026-04-15T19:14:30 – 20:47:21 |
 | Run 1, E2 (315 rows, `results/e2_confirmatory/`) | 2026-04-15T21:34:09 – 23:14:22 |
 | Run 1, E3 (339 rows, `results/e3_confirmatory/`) | 2026-04-16T20:59:00 – 22:40:06 |
@@ -477,6 +477,7 @@ GitHub by hash.
 |---|---|---|---|
 | `7b88bca` | 2026-04-15T17:54:24 | refactor(prompt_builder): rename adversarial enum to A8.x and drop no-op variant | `92bcf2e` |
 | `649282d` | 2026-04-15T18:09:23 | refactor(mcnemar): align condition labels with A8.x naming | `e7d29a0` |
+| `d251c15` (cited in the session notes; Amendment 2 candidate) | 2026-04-15T18:54:51 | docs(prereg): file Amendment 2 candidate locally | `f501029`; d251c15 (working history) = f501029 (main), same patch-id `a1dcac98bd7abb9859992880a7806bb8d756e3d1` |
 | `5558a5e` | 2026-04-15T18:31:14 | docs(paper): align non-locked sections with seven-variant scope | none (manuscript draft) |
 | `6d47f71` | 2026-04-15T18:37:23 | docs(paper): document spec-vs-implementation drift in VII.B | none (manuscript draft) |
 | `5147bca` | 2026-05-12T08:33:00 | docs(s29): append 2026-05-11 DHCP drift to Amendment 3 IP clarification (Obs 1) | none (amendment draft) |
