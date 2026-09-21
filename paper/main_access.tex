@@ -749,6 +749,16 @@ Total & 924 & 315 &  &  & 644 \\
 \end{tabular}
 \end{table}
 
+\textbf{Data collection.} The three confirmatory experiments were generated twice, with
+the same code path, prompts, task representations, models and decoding settings: a first
+run on 15 and 16 April 2026 and a second run on 15 and 16 May 2026. The first run was
+analysed when it completed, so the outcome of the confirmatory tests was known before the
+second run was made. Every number, table and figure in this article is computed from the
+second run, whose result files are the ones pinned by hash in the replication package.
+The two runs give identical values for every preregistered test and differ only in the
+violation counts of one model; the comparison, and the timing of both runs relative to
+the preregistration amendments, are given in Appendix~\ref{app:replication}.
+
 \textbf{Protocol invariant.} Across all three experiment families the task
 representation is held invariant for a given task: the baseline task specification is
 the input to the motion-safety pass in every call. Adversarial manipulation enters the
@@ -1397,7 +1407,10 @@ of them, are documented in Appendix~\ref{app:replication}.
 
 A
 complexity-stratified subgroup analysis using the outcome-blind complexity score of
-\ref{sec:complexity} was also preregistered as a non-confirmatory analysis. It is null
+\ref{sec:complexity} was registered as an exploratory, non-confirmatory analysis in the
+third preregistration amendment. A first version of it had been computed on the first-run
+data the day before that amendment was filed (Appendix~\ref{app:replication}), so it is
+reported here as an exploratory analysis and not as a preregistered test. It is null
 (Table~\ref{tab:complexity}). The saturated baseline leaves little binary headroom for a
 subgroup effect: the gate-passing violation rate is 92\%, 100\% and 100\% across the low,
 medium and high complexity tertiles at baseline, and the mean violation count does not
@@ -1667,7 +1680,14 @@ Statistically, the temperature-zero protocol makes verdicts reproducible at the 
 level but, as Table~\ref{tab:reps} shows, not bit-reproducible, so within-cell variation
 exists but is small relative to between-cell variation and is absorbed by taking the cell
 as the unit; several outcomes are bounded by the binary ceiling rather than by model
-behavior. In scope, the task
+behavior. The reported results are, in addition, those of the second of two complete
+generations of the confirmatory matrix, made after the first had been analysed
+(\ref{sec:exps}). Every preregistered test gives the same value in both, so no
+confirmatory decision depends on the choice, but the count-level values reported here
+are one of two realizations. The two differ only in the outputs of Qwen2.5-Coder-32B, by
+up to 0.3 violations in a pooled mean, 0.9 in a per-strategy mean and 2.0 in the mean at
+the last repair retry (Appendix~\ref{app:replication}); both runs are released. In scope,
+the task
 specification is held invariant across conditions by design, so the motion-safety pass
 is not exercised on generated code and the reported violations concern
 cybersecurity-relevant properties rather than demonstrated physical-motion hazards;
@@ -1815,6 +1835,46 @@ states, and the tables and prompts in this article are generated from the frozen
 The generation logs and generated URScript files for every run, including the single-task
 probe of \ref{sec:res-baseline}, are provided in the same package.
 
+\textbf{Data collection and the two confirmatory runs.} The confirmatory matrix of
+\ref{sec:exps} (270, 315 and 339 generations) was generated twice on the same inference
+host, with the same runner, prompts, task representations and decoding settings. The
+first run was made on 15 and 16 April 2026 and was analysed at once, so the outcome of
+the three confirmatory tests was known from that date. The second run was made on 15 and
+16 May 2026 as one chained overnight job; it is the run reported throughout this article
+and the one whose result files are pinned by SHA-256 in the replication package. Between
+the two runs the Qwen2.5-Coder-32B model stored on the inference host acquired a
+modification date of 5 May 2026, and the model digests were pinned for the replication
+package on 11 May 2026; the digest in use during the first run was not recorded, so only
+the second run can be tied to pinned weights.
+
+The two runs were compared row by row. The stored programs of DeepSeek-Coder-V2-16B and
+CodeLlama-34B are byte-identical in the two runs (505 of 505 files), and every row of
+these two models has the same status, violation count and fired checks. All differences
+lie in the outputs of Qwen2.5-Coder-32B, of whose 375 stored programs 70 are
+byte-identical; its validity status and binary verdict are nevertheless the same on every
+row. The validity status and the binary verdict therefore agree on all 924 rows, and
+every preregistered quantity is identical in the two runs: the gate-passing counts (83 of
+135 at baseline, 192 of 315 adversarial), the single substantive-safe program (the same
+cell), every contingency table, test statistic and p-value of the three confirmatory
+tests, and the cross-model statistics (12.60 and 20.00). The count-level values differ
+through Qwen2.5-Coder-32B. Giving the first run first, the gate-passing baseline mean is
+10.07 against 10.37 and the safety-prompted mean 6.38 against 6.39; the pooled adversarial
+uplift is $+1.64$ against $+1.24$ on gate-passing outputs and $+0.95$ against $+0.70$ on
+all outputs, the strongest strategy is the same at $+5.74$ against $+6.22$, and no
+per-strategy mean differs by more than 0.93; the baseline per-check firing counts of
+Table~\ref{tab:perrule} differ by at most five (47 against 52, 58 against 54 and 55
+against 54 for the three checks that differ). In the repair loop the dropout counts (52
+and 26) and the absence of any remediated cell are identical, the counts of the invariant,
+monotone, one-reversal and oscillating regimes are 5, 9, 7 and 12 against 2, 11, 6 and
+14, the other regimes are unchanged, and the mean at the last retry is 11.18 against
+13.21 from a first-generation mean of 10.4 in both. In Table~\ref{tab:reps}, 12 against
+14 of 90 cells are byte-identical across repetitions and 53 against 59 agree on the
+count. The findings of this article are the same under either run; descriptive
+statements that rest on small count differences can shift by one item (in the first run
+four rather than five strategies lie within $\pm 1.5$ violations of the baseline, and one
+rather than two lowers the mean). Both runs, with their logs and generated programs, are
+provided in the replication package.
+
 \textbf{Token budget and the quantization controls.} The client used for the local
 inference server sent the 4096-token output budget of \ref{sec:models} in a form that the
 server's OpenAI-compatible endpoint ignores, so the budget was not enforced in the local
@@ -1907,17 +1967,32 @@ Code robustness & none & SM-2, SM-4 & none \\
 \textbf{Experiments and hypotheses.} The baseline experiment is identified as E1, the
 adversarial experiment as E2, and the repair-in-loop experiment as E3. The confirmatory
 hypotheses are the baseline-rate hypothesis (H4), the adversarial-uplift hypothesis
-(H5), and the repair-loop hypothesis (H6); the post-hoc hypotheses are the
-saturation-explains-the-null hypothesis (H7) and the near-zero-refusal hypothesis (H8).
+(H5), and the repair-loop hypothesis (H6). The two post-hoc hypotheses, that saturation
+explains the adversarial null and that refusal is near zero, carry no label in the
+registry; the submitted version of this article labelled them H7 and H8, labels that the
+third amendment uses for two other analyses (see below), and the labels are dropped here.
 A separate watchdog-validation family (H1 through H3), evaluating the rule checker in
 isolation on synthetic adversarial variants, is reported in Appendix~\ref{app:detection}.
 
 \textbf{Preregistration and amendments.} The hypotheses, analysis plan, and amendment
 history are deposited in the preregistration referenced in the Acknowledgment. Three
-amendments were filed: the first formalized the generator hypotheses, the second reduced
-the prompt-injection family from eight to seven strategies and the multiple-comparison
-family accordingly, and the third recorded the deployed quantization levels. The
-deployed quantization, one model at Q4\_K\_M and two at Q4\_0, differs from the uniform
+amendments were filed. The first, approved on 7 April 2026 and therefore before either
+confirmatory run, formalized the generator hypotheses. The second reduced the
+prompt-injection family from eight to seven strategies and the multiple-comparison family
+accordingly. That change was made in the code and recorded in the project repository on
+15 April 2026, before the first generation of the first confirmatory run, but it was
+filed on the registry only on 15 May 2026: after the first run had been analysed, about
+one hour after the second run had started, and before the adversarial experiment of the
+second run began. The third amendment, filed on 12 May 2026, between the two runs, fixed
+the simulator used for the live-execution pilot, registered the complexity-stratified
+analysis as exploratory, and recorded operational disclosures, among them the deployed
+quantization levels. In that amendment the labels H7 and H8 denote the simulator-based
+execution check and the complexity-stratified analysis. A first version of each had
+been run before the amendment was filed (the execution pilot in the first week of May
+2026, the complexity analysis on the first-run data on 11 May 2026), so neither is
+treated as preregistered in this article; the complexity analysis reported in
+\ref{sec:res-sens} is computed on the second run, which was generated after the
+amendment was filed. The deployed quantization, one model at Q4\_K\_M and two at Q4\_0, differs from the uniform
 level stated in the original proposal and is recorded in the replication package.
 
 \section{Prompts Used in the Experiments}\label{app:prompts}
