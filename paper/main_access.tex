@@ -1838,8 +1838,8 @@ probe of \ref{sec:res-baseline}, are provided in the same package.
 \textbf{Data collection and the two confirmatory runs.} The confirmatory matrix of
 \ref{sec:exps} (270, 315 and 339 generations) was generated twice on the same inference
 host, with the same runner, prompts, task representations and decoding settings. The
-first run was made on 15 and 16 April 2026 and was analysed at once, so the outcome of
-the three confirmatory tests was known from that date. The second run was made on 15 and
+first run (run 1) was made on 15 and 16 April 2026 and was analysed at once, so the outcome of
+the three confirmatory tests was known from that date. The second run (run 2) was made on 15 and
 16 May 2026 as one chained overnight job; it is the run reported throughout this article
 and the one whose result files are pinned by SHA-256 in the replication package. Between
 the two runs the Qwen2.5-Coder-32B model stored on the inference host acquired a
@@ -1873,7 +1873,7 @@ count. The findings of this article are the same under either run; descriptive
 statements that rest on small count differences can shift by one item (in the first run
 four rather than five strategies lie within $\pm 1.5$ violations of the baseline, and one
 rather than two lowers the mean). Both runs, with their logs and generated programs, are
-provided in the replication package.
+provided in the replication package. Run 2 is the run whose model digests are recorded; the digest of Qwen2.5-Coder-32B in run 1 is not.
 
 \textbf{Token budget and the quantization controls.} The client used for the local
 inference server sent the 4096-token output budget of \ref{sec:models} in a form that the
