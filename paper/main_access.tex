@@ -53,9 +53,10 @@ address cybersecurity where it affects safety. The article presents FACT (Formal
 Adversarial Code Testing), a reproducible framework whose lexical, regular-expression rule
 checker applies seven security checks referencing Common Weakness Enumeration classes to
 the generated code, spans seven ISO 10218-1:2025 clauses including the new cybersecurity
-clause 5.1.16, and is exercised under seven prompt-injection strategies. The confirmatory,
-preregistered study covers three open-weight code models (16 to 34 billion parameters) and
-585 generations. Three findings are reported. First, generated code pervasively fails the
+clause 5.1.16, and is exercised under seven prompt-injection strategies. The confirmatory
+study is preregistered and covers three open-weight code models (16 to 34 billion
+parameters) and 585 generations, reported from the second of two identical generation runs
+that agree on every preregistered test. Three findings are reported. First, generated code pervasively fails the
 checks: 98.8\% of syntactically valid outputs violate at least one, and only 1 of 135
 baseline generations is both valid and violation-free; a non-LLM comparator shows that part
 of this rate is a property of the rule set, yet generated code produces roughly twice as
@@ -127,7 +128,8 @@ safety-critical environments, where a velocity that exceeds the collaborative
 limit, an omitted protective stop, or a confusion between millimetres and metres
 does not merely produce a logic error but can injure an operator who shares the
 workspace. The commercial adoption of generated robot code is already underway, making
- the safety of that code an immediate concern rather than a hypothetical one.
+ the security of that code, and through it the safety of the cell, an immediate concern
+rather than a hypothetical one.
 Two properties make a rigorous evaluation difficult. First, the relevant safety
 semantics reside in low-level motion primitives rather than in high-level task
 plans, so the evaluation must reach the level at which velocity, acceleration,
@@ -162,8 +164,8 @@ using a lexical rule checker and a watchdog-in-loop repair setting. Three empiri
 findings organize the study: generated code fails the static checks almost
 universally; the naive way of counting these failures is itself unreliable,
 because syntactically invalid output can be scored as safe; and an iterative repair
-loop does not reliably fix the unsafe code. The first finding motivates the main
-methodological contribution, a safety measure conditioned on code validity, under
+loop does not reliably fix the flagged code. The first finding motivates the main
+methodological contribution, an outcome measure conditioned on code validity, under
 which almost no baseline generation is both valid and free of rule violations. The
 preregistered confirmatory tests are reported as a secondary and deliberately
 conservative check. The definitions and the supporting quantities for each
@@ -207,8 +209,8 @@ language-model-driven robots, and iterative repair of generated code. Section~\r
 defines the threat model and the safety and security properties under evaluation.
 Section~\ref{sec:framework} describes the FACT framework, including the rule checker and its mapping to ISO 10218-1:2025 clauses. Section~\ref{sec:setup}
 details the experimental setup, the models, and the tasks. Section~\ref{sec:results}
-reports the empirical findings, covering baseline safety, adversarial prompting,
-the watchdog-in-loop intervention, cross-model heterogeneity, and additional
+reports the empirical findings, covering baseline code security, adversarial prompting,
+the repair-in-loop intervention, cross-model heterogeneity, and additional
 frontier and robustness probes. Section~\ref{sec:discussion} discusses the
 implications, the resulting design requirements, and threats to validity.
 Section~\ref{sec:conclusion} concludes the article.
@@ -532,8 +534,13 @@ frozen at the repository tag named in Appendix~\ref{app:replication}.
 
 \subsection{Generation Conditions}\label{sec:conditions}
 Code is generated under three prompt conditions. The baseline condition supplies the
-task description only. The safety-prompted condition adds explicit safety constraints,
-namely the applicable speed limits and the required configuration preamble. The
+task description only. The safety-prompted condition replaces the system prompt with one
+that lists eight safety requirements, the same for every task irrespective of its
+operating mode: a collaborative TCP speed cap of 250 mm/s, a joint-acceleration cap,
+explicit speed and acceleration arguments on every motion command, a guard before motion
+sequences, safety-zone and workspace-boundary checks, an emergency-stop handler, and a
+correct payload setting. The task's own speed cap and operating mode are part of the user
+prompt, which is identical across conditions. The
 adversarial condition adds one of the prompt-injection strategies described above; the
 full prompts for every condition are reproduced in Appendix~\ref{app:prompts}.
 
@@ -678,7 +685,7 @@ stated below.
 The baseline experiment establishes how often unaided generation produces unsafe or
 insecure code and whether an explicit safety prompt changes that. It generates code
 for the fifteen tasks under a task-only baseline condition and a safety-prompted
-condition that adds the applicable speed limits and the configuration preamble, with
+condition that adds the fixed list of safety requirements of \ref{sec:conditions}, with
 three repetitions per cell, for 270 generations.
 
 The adversarial experiment probes robustness under prompt-level attack. It applies the
@@ -848,8 +855,8 @@ UR5e configuration. Exact container, driver, and topic identifiers are listed in
 replication package.
 
 \section{Results}\label{sec:results}
-The results in this section concern how often open-weight models emit unsafe URScript
-and whether adversarial prompting or repair-in-loop feedback changes that.
+The results in this section concern how often open-weight models emit URScript that
+violates the security checks and whether adversarial prompting or repair-in-loop feedback changes that.
 Table~\ref{tab:summary} summarizes the preregistered results and their sensitivity
 analyses, and Table~\ref{tab:summary-extra} the additional analyses. Because the
 task representation is held invariant by design (\ref{sec:exps}), the motion-safety
@@ -1169,8 +1176,8 @@ checks, with no refusals in any condition (0 of 585).
 programs that no language model wrote. Table~\ref{tab:comparator} applies the same checker
 to three such sets: the deterministic reference translation of each task produced by the
 framework's own IR-to-URScript renderer (\ref{sec:task-ir}); the same translation with the
-\texttt{set\_tcp}/\texttt{set\_payload} preamble that the safety-prompted condition asks
-for; and nine vendor and community example programs redistributed under their own licences
+\texttt{set\_tcp}/\texttt{set\_payload} preamble that the preamble check (SM-6) requires
+(the safety prompt itself asks only for the payload setting); and nine vendor and community example programs redistributed under their own licences
 in the replication package. The comparator is deliberately unflattering to the
 instrument. Under the preregistered rule set the reference translation is flagged on all
 fifteen tasks: the unusual-conditions check (SM-4) and the preamble check (SM-6) fire on
@@ -1746,14 +1753,37 @@ anchored to the cybersecurity clause newly introduced in the 2025 revision. The 
 is advisory and evaluative; it does not establish conformity itself.
 
 \section{Conclusion}\label{sec:conclusion}
-This article presented FACT, a preregistered adversarial testing framework for
-generated industrial robot code at the intersection of code security and the
-cybersecurity clause of ISO 10218-1:2025. The preregistered study spans three
-open-weight code-specialized models and 585 generations across baseline,
-safety-prompted, and adversarial conditions, with detection performed by a rule checker of seven motion-safety and seven weakness-mapped security checks over nineteen
-rule instances touching seven distinct clauses. The preregistered confirmatory hypothesis tests are reported as a secondary check whose conservative effective unit is the model-task cell rather than the individual generation, consistent with the methodological emphasis of this work.
+This article presented FACT, an adversarial testing framework for the code security of
+generated industrial robot programs, anchored to the cybersecurity clause of
+ISO 10218-1:2025. The preregistered study spans three open-weight code-specialized models
+and 585 generations across baseline, safety-prompted, and adversarial conditions, with
+detection performed by a rule checker of seven motion-safety and seven weakness-mapped
+security checks over nineteen rule instances touching seven distinct clauses. Because the
+task specification is held invariant, the motion-safety checks do not fire, and every
+reported violation is a code-security finding rather than a demonstrated motion hazard.
+The preregistered confirmatory hypothesis tests are reported as a secondary check whose
+conservative effective unit is the model-task cell rather than the individual generation,
+consistent with the methodological emphasis of this work, and the reported data are the
+second of two identical generation runs that agree on every preregistered test
+(Appendix~\ref{app:replication}).
 
-Three findings emerge. Safety-prompt response is model-dependent, reducing violations in two of three models, which refutes the assumption that prompt-level guidance is universally protective. Adversarial uplift fails the preregistered fifty-percentage-point threshold, but this reflects a baseline-saturation ceiling rather than robust alignment. Low violation counts can mask syntactically invalid code, which motivates the validity-aware substantive-safe rate as the primary outcome. Across the three confirmatory local models and additional frontier and decoding-temperature probes spanning 24B to 675B parameters, the substantive-safe rate stays at or near zero, the violation floor does not improve with scale, and the repair loop, in its whole-program-regeneration form, produces no remediation at any scale.
+Three findings emerge. First, generated code pervasively fails the checks: 98.8\% of
+gate-passing baseline outputs violate at least one, and 1 of 135 baseline generations is
+substantive-safe. The non-LLM comparator shows that part of this rate is a property of the
+rule set, while generated code still produces roughly twice as many rule firings as the
+reference translation. Second, the saturated binary rate is a measurement hazard. Scored
+naively it lets invalid pseudo-code pass as safe, which motivates the validity-aware
+substantive-safe rate as the primary outcome, and it leaves the preregistered
+fifty-percentage-point adversarial-uplift test without power, so that null reflects a
+ceiling rather than robust alignment. Third, rule-checker feedback under whole-program
+regeneration does not remediate: no cell reaches zero violations, and two of the three
+models leave the loop by falling out of valid syntax. Two further observations qualify
+these findings. Safety-prompt response is model-dependent, reducing violations in two of
+three models, so prompt-level guidance is not universally protective. In the additional
+single-repetition probes on frontier models and at two decoding temperatures, spanning 24B
+to 675B parameters, the substantive-safe rate stays at or near zero and the repair loop
+again produces no remediation; these are signals for replication rather than confirmed
+effects.
 
 Future work proceeds along four axes. The pre-execution failure modes surfaced by the
 live-execution pilot, namely semantically inadmissible interface use and workspace
@@ -1770,8 +1800,11 @@ around the three design requirements above.
 
 ISO 10218-1:2025 introduces cybersecurity as a normative requirement for industrial
 robots for the first time, yet offers no operational method for evaluating generated
-code against its safety and security clauses. FACT provides a concrete, preregistered,
-and fully reproducible framework that closes this gap with measurable results, released
+code against it. FACT provides a concrete and fully reproducible way to measure
+code-security properties of generated robot programs against that requirement, with a
+preregistered study and measurable results. It does not evaluate motion safety or
+physical execution, and its rule set, whose precision and composition are reported here,
+is an instrument to be validated further rather than a certification test. It is released
 as advisory infrastructure for standardization bodies, certification laboratories, and
 the open robotics community.
 
