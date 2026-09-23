@@ -61,6 +61,32 @@ Yunus Emre Cogurcu, Aida Akbarzadeh, Georgios Spathoulas
 
 **Author action:** Figure 5 (Figure 4 in the submitted version) is regenerated (script `scripts/figures/fig_repair_trajectory.py`, now in the replication package) so that the regimes no longer depend on line style: each regime is drawn in its own panel, on a scale shared by all panels, and the figure therefore reads identically in grayscale. The curves are now real cells rather than schematics. In each panel a dark curve shows a representative cell, labelled with its task identifier, and thin gray curves show the other cells of that regime; the panel title carries the number of cells in the regime from the new Table 15, which classifies all 135 local-model cells (see Reviewer 2, "repair-trajectory regimes never quantified").
 
+### Reviewer 1, points raised under the additional questions
+
+**Reviewer#1, "Is the paper technically sound?":** The confirmatory claims rest on only 3 models.
+
+**Author response:** We agree that three models bound what the confirmatory study can claim, and we do not generalize beyond them.
+
+**Author action:** Threats to Validity states the limitation in full: "the confirmatory experiments cover three locally hosted models in a single vendor language under simulation, so generalization to other model families, to other robot languages, and to physical execution is not established". The abstract gives the model count and size range together with the confirmatory findings ("three open-weight code models (16 to 34 billion parameters) and 585 generations"), and the frontier probes that widen the range to 675B are labelled throughout as exploratory, single-repetition analyses (Table 7; see Concern 1).
+
+**Reviewer#1, "Is the paper technically sound?":** Several of the most quotable findings (frontier scaling, construct removal at scale) are single-repetition exploratory probes presented in the abstract with more confidence than the N supports, and the rule checker's detection validity is only self-referentially tested.
+
+**Author response:** Agreed; these are Concerns 1 and 2 above.
+
+**Author action:** See Concern 1 (the abstract separates confirmatory from exploratory results, Table 7 collects the single-repetition results, and Figure 7 carries no trend line) and Concern 2 (Appendix D states what the variant test does and does not establish, and the comparator and sensitivity re-scoring are independent of the variant generator).
+
+**Reviewer#1, "Is the subject matter presented in a comprehensive manner?":** The abstract and title suggest a broader "industrial robot code security" evaluation, but the study is scoped to URScript in simulation with the task specification held invariant, so no motion-safety violation ever fires; this scope should be foregrounded.
+
+**Author response:** Agreed. The scope is now stated before any result, in the title, the abstract and the Introduction.
+
+**Author action:** The title now names code security and programs (see Reviewer 2, Concern 2). The first sentence of the abstract names URScript, the second states that the task specification is held invariant by design and never fails, and the abstract closes with "Obtained in simulation and specific to URScript". The Introduction states the same scope condition in its third paragraph (see Concern 4). We kept "industrial robot programs" in the title rather than naming URScript because the task representation and the rule catalogue are vendor-neutral by design; the language-selection paragraph of Section IV explains why URScript is the language evaluated here, and adapters for RAPID and KRL are named as future work.
+
+**Reviewer#1, "Are the references provided applicable and sufficient?":** References 53 and 54 appear to be arXiv preprints; confirm their publication status.
+
+**Author response:** Confirmed; see Concern 5.
+
+**Author action:** See Concern 5: reference 53 is a peer-reviewed IEEE ISTAS 2025 paper; reference 54 remains a preprint and is flagged as such wherever it is used.
+
 ---
 
 ## Reviewer 2
@@ -113,33 +139,143 @@ Yunus Emre Cogurcu, Aida Akbarzadeh, Georgios Spathoulas
 
 **Author action:** References 63 to 67 are added (IEC 62443-3-3 and 62443-4-2; Regulation (EU) 2024/1689; MITRE CWE version 4.17; ANSI/A3 R15.06-2025; the URScript Programming Language manual, e-Series 5.12) and cited at first mention in Sections II-B, IV-C, IV-D, VII-D and VII-F and in the language-selection paragraph of Section IV.
 
-### Further points raised under "Is the paper technically sound?" and "comprehensive?"
+### Reviewer 2, points raised under the additional questions
 
-**Detector validation is circular.** See Reviewer 1, Concern 2, and Reviewer 2, Concern 1: Appendix D now states its scope precisely; the comparator and the sensitivity re-scoring are independent of the variant generator; an independent validation set is named as future work.
+The points below are listed in the order of the review. Where a point repeats one of the eight required items, the action is given under that item and referenced here.
 
-**Manual audit has a single rater, auditing their own tool.** See Reviewer 1, Concern 3: the second audit was labelled independently by two raters, one a consensus of two authors and one an independent non-author blind to the first audit, on a larger sample; Table 10 reports both, their agreement (κ = 0.55 pooled) and the adjudicated labels, and the article states the consequence for the headline under each rater's threshold rather than absorbing it.
+#### "Does the paper contribute to the body of knowledge?" (what the paper does not deliver)
 
-**Quantization confounds the cross-model test.** See Concern 7.
+**Reviewer#2:** The motion-safety half never fires (0/585, by design), so the ISO framing carries no empirical weight.
 
-**Arithmetic error; unexplained inconsistency.** See Concern 3.
+**Author response:** Agreed.
 
-**Fig. 6 draws a trend guide.** See Concern 7.
+**Author action:** See Concern 2: the title, abstract, Introduction, Section IV and Conclusion now scope the article to code security and describe the motion-safety checks as specification-level checks that by design never fire.
 
-**Preregistered thresholds are structurally untestable.** Section VI-B now says explicitly that "the confirmatory arm for this hypothesis is therefore reported as voided by the ceiling rather than as a negative result, and the count and severity contrasts reported above are post hoc".
+**Reviewer#2:** 98.8% is partly rule-design artifact; the two highest-firing checks audit at 12.5% and 0% precision.
 
-**No task table; no prompt text; no generated code.** See Concern 6.
+**Author response:** Agreed; the rate is partly a property of the rule set, and the article now says so and measures how much.
 
-**The adversarial experiment has no results table.** See Concern 5.
+**Author action:** Section VI-A states it directly and quantifies it with the comparator (SM-4 and SM-6 are idiom-level; SM-5 on the reference is a unit artefact) and the sensitivity table (the rate is 92.8% on the high-precision checks alone and no lower than 89.2% under any rule-set choice), and the substantive-safe rate is reported together with its rule composition (Tables 12 and 13).
 
-**Repair-trajectory regimes are drawn schematically but never quantified.** New Table 15 (`scripts/review/e3_regimes.py`) classifies all 135 local-model cells: 78 leave the loop by dropping out of valid syntax (52 at the first generation), 57 remain valid through all retries, none reaches zero violations; among the valid cells 11 fall monotonically, 6 fall with one reversal, 12 rise monotonically, 14 oscillate, 12 show a transient improvement that is undone, 2 are invariant; each valid retry clears 0.26 checks and introduces 0.29 on average. Figure 5 now draws real cells from this table.
+**Reviewer#2:** No comparator: no human or vendor URScript baseline, so the number is uninterpretable.
 
-**The preregistered complexity-stratified analysis is punted to the replication package.** It is now reported in Section VI-D and Table 17: null, with the tertile rates and the nine per-model Spearman correlations given (one nominally significant before correction). In preparing this revision we also corrected its status: the analysis was registered as exploratory in the third preregistration amendment, but a first version of it had been computed on the first-run data the day before that amendment was filed, so Section VI-D, the caption of Table 17 and Appendix A now describe it as an exploratory analysis and no longer as a preregistered one.
+**Author response:** Agreed; this was the most consequential comment.
 
-**Appendix B is a one-line stub.** Removed; its pointer sentence is folded into Appendix A, which also gains a "Task set provenance" paragraph.
+**Author action:** See Concern 1: three comparator sets (reference translation, reference translation with preamble, nine vendor and community programs) are scored under the same rules (Section VI-A, Table 12, Figure 4).
 
-**Table 5 mixes confirmatory and exploratory rows with cryptic notes.** Split into Tables 6 and 7 with full-word notes; Table 6 adds rows for the high-precision-only rate, the corrected-SM-5 rate and the structural-gate rate.
+**Reviewer#2:** Load-bearing claims sit on post-hoc, n=1 probes; the preregistered arm largely failed on threshold mis-specification.
 
-**"98.8% is partly rule-design artifact; two highest-firing checks audit at 12.5% and 0% precision."** We now say so directly in Section VI-A, quantify it with the comparator (SM-4 and SM-6 are idiom-level; SM-5 on the reference is a unit artefact) and the sensitivity table (the rate is 92.8% on the high-precision checks alone and no lower than 89.2% under any rule-set choice), and report the substantive-safe rate together with its rule composition.
+**Author response:** Agreed on both. The single-repetition results are now presented as exploratory throughout, and the preregistered adversarial arm is reported as voided rather than as a result.
+
+**Author action:** See Reviewer 1, Concern 1: the abstract states the confirmatory findings first and the single-repetition probes in a separate sentence marked "signals for replication, not confirmed effects"; the Contributions list labels them "Exploratory evidence"; Table 7 collects every such result under the heading "not preregistered; single repetition per cell"; Figure 7 carries no trend line. For the threshold, see "Preregistered thresholds are structurally untestable" below.
+
+#### "Is the paper technically sound?" (problems)
+
+**Reviewer#2:** Detector validation is circular: author-written rules tested on author-constructed variants (114/120), so real-world precision rests on a 50-firing self-audit.
+
+**Author response:** Agreed; the variant test is a construction check, not a validation.
+
+**Author action:** See Reviewer 1, Concerns 2 and 3: Appendix D now states precisely what the 114/120 figure establishes; the comparator and the sensitivity re-scoring are independent of the variant generator; the second precision audit covers 100 firings labelled by two raters, one of them a non-author (Table 10); an independent validation set is named as future work in Threats to Validity.
+
+**Reviewer#2:** "Grammar-anchored" is an overclaim: the validity gate is a regular expression, not a parse, yet Section IV-C said rules are "evaluated over the parsed URScript grammar".
+
+**Author response:** Agreed.
+
+**Author action:** See Concern 4: every occurrence is corrected, Section IV-C states that no parser is built, and Listing L1 shows a pseudo-program that the gate admits.
+
+**Reviewer#2:** Quantization confounds the cross-model test (Q4_K_M for one model, Q4_0 for two).
+
+**Author response:** Agreed.
+
+**Author action:** See Concern 7: the confound is disclosed, all three models were re-run at the other level (Table 16), and the heterogeneity test is recomputed with all three models at each uniform level.
+
+**Reviewer#2:** Arithmetic error: the adversarial arm is described as "fifteen tasks, with three repetitions, for 315 generations".
+
+**Author response:** Agreed; the sentence was wrong and the table was right.
+
+**Author action:** See Concern 3: Section V-C now reads "with a single repetition per cell (3 models x 15 tasks x 7 strategies), for 315 generations".
+
+**Reviewer#2:** Unexplained inconsistency: the baseline mean is 10.37 in Section VI-A but 6.38 in Section VI-B.
+
+**Author response:** Agreed; the two values are the same data under two denominators, which the text did not say.
+
+**Author action:** See Concern 3: Section VI-A defines the "gate-passing" and "all-outputs" denominators where a mean is first reported, states both values for the baseline and safety conditions; Section VI-B reports every adversarial contrast on both bases, and Table 6 names the basis of every mean.
+
+**Reviewer#2:** Fig. 6 draws a trend guide through four points at n=1 per cell; the text disclaims it, the figure does not.
+
+**Author response:** Agreed.
+
+**Author action:** See Concern 7: Figure 7 (Figure 6 in the submitted version) shows the four points with exact intervals and counts, no fitted line, and states in the figure itself "one repetition per cell; exact 95% intervals; no trend fitted".
+
+**Reviewer#2:** The manual audit has a single rater, auditing their own tool, with no second coder and no agreement statistic.
+
+**Author response:** Agreed.
+
+**Author action:** See Reviewer 1, Concern 3: the second audit was labelled independently by two raters, one a consensus of two authors and one an independent non-author blind to the first audit, on a larger sample; Table 10 reports both, their agreement (κ = 0.55 pooled) and the adjudicated labels, and the article states the consequence for the headline under each rater's threshold rather than absorbing it.
+
+**Reviewer#2:** Preregistered thresholds are structurally untestable (a 50-point uplift against a 98.8% ceiling with 1.2 points of headroom); honestly reframed, but it voids the confirmatory arm.
+
+**Author response:** Agreed; the arm is void, and the article now says so in those terms.
+
+**Author action:** Section VI-B now says explicitly that "the confirmatory arm for this hypothesis is therefore reported as voided by the ceiling rather than as a negative result, and the count and severity contrasts reported above are post hoc".
+
+#### "Is the subject matter presented in a comprehensive manner?" (missing material)
+
+**Reviewer#2:** No task table: coverage and representativeness of the fifteen tasks are unjudgeable.
+
+**Author response:** Agreed.
+
+**Author action:** See Concern 6(a): Table 3 lists the fifteen tasks with category, operating mode, tool, payload, speed cap, command and motion counts and complexity tertile.
+
+**Reviewer#2:** No prompt text: not a single full prompt is shown.
+
+**Author response:** Agreed.
+
+**Author action:** See Concern 6(b): Appendix B reproduces the system prompts, the full user prompt for one task, each of the seven injection fragments, one complete adversarial prompt and the repair-loop feedback block, verbatim.
+
+**Reviewer#2:** No generated code: the most vivid claims (pseudo-code evading detection, a hallucinated safety call, 200 mm/s emitted as 200 m/s, silent deletion of a speed cap) are asserted, not shown.
+
+**Author response:** Agreed.
+
+**Author action:** See Concern 6(c): Appendix C gives three annotated listings from the stored logs that show exactly these cases (L1 to L3), each with the checker's firings on that program.
+
+**Reviewer#2:** The adversarial experiment has no results table; Section VI-B is prose only.
+
+**Author response:** Agreed.
+
+**Author action:** See Concern 5: Table 14 gives the strategy-by-model breakdown on both denominators, and Section VI-B is rewritten around it.
+
+**Reviewer#2:** Repair-trajectory regimes are drawn schematically (Fig. 4) but never quantified for the local models.
+
+**Author response:** Agreed.
+
+**Author action:** New Table 15 (`scripts/review/e3_regimes.py`) classifies all 135 local-model cells: 78 leave the loop by dropping out of valid syntax (52 at the first generation), 57 remain valid through all retries, none reaches zero violations; among the valid cells 11 fall monotonically, 6 fall with one reversal, 12 rise monotonically, 14 oscillate, 12 show a transient improvement that is undone, 2 are invariant; each valid retry clears 0.26 checks and introduces 0.29 on average. Figure 5 now draws real cells from this table, one panel per regime.
+
+**Reviewer#2:** The preregistered complexity-stratified analysis is punted to the replication package; report it, even if null.
+
+**Author response:** Agreed; it is now reported. We also corrected its status (see below).
+
+**Author action:** It is now reported in Section VI-D and Table 17: null, with the tertile rates and the nine per-model Spearman correlations given (one nominally significant before correction). In preparing this revision we also corrected its status: the analysis was registered as exploratory in the third preregistration amendment, but a first version of it had been computed on the first-run data the day before that amendment was filed, so Section VI-D, the caption of Table 17 and Appendix A now describe it as an exploratory analysis and no longer as a preregistered one.
+
+**Reviewer#2:** Appendix B is a one-line stub pointing elsewhere; delete or populate.
+
+**Author response:** Agreed.
+
+**Author action:** Removed; its pointer sentence is folded into Appendix A, which also gains a "Task set provenance" paragraph. (The current Appendix B is the new prompts appendix.)
+
+**Reviewer#2:** Table 5 mixes confirmatory and exploratory rows with cryptic notes ("ceiling demo", "descr.").
+
+**Author response:** Agreed.
+
+**Author action:** Split into Tables 6 (principal results) and 7 (additional analyses, not preregistered) with full-word notes; Table 6 adds rows for the high-precision-only rate, the corrected-SM-5 rate and the structural-gate rate.
+
+#### "Are the references provided applicable and sufficient?"
+
+**Reviewer#2:** Five documents are named but not cited: IEC 62443, the EU AI Act, MITRE CWE, ANSI/A3 R15.06-2025 and the URScript language reference.
+
+**Author response:** Agreed.
+
+**Author action:** See Concern 8: references 63 to 67 are added and cited at first mention.
 
 ### Additional analyses added on our own initiative
 
