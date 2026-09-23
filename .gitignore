@@ -124,3 +124,8 @@ paper/*_diff.pdf
 paper/diff/
 paper/response_to_reviewers.docx
 paper/pg*.png
+
+# Response letter to the reviewers (kept locally, not published)
+paper/response_to_reviewers.md
+# Markdown previews written by scripts/review/*.py alongside the .tex tables
+paper/tables/*.md

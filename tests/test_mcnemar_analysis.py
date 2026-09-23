@@ -683,8 +683,7 @@ class TestHypothesisMappingInvariants:
     coincidences.
 
     See scripts/mcnemar_analysis.py module docstring for the
-    authoritative naming convention declaration, and
-    docs/WEEK10_TODO.md item #12 for the audit trail.
+    authoritative naming convention declaration.
     """
 
     # ---- minimal fixture helpers ----

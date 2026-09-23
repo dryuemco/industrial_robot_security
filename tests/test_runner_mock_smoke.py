@@ -14,8 +14,7 @@ The smoke test runs E1 and E2 end-to-end against MockLLMClient via
 exercised: SUCCESS with violations, SUCCESS without violations,
 REFUSAL, PARSE_FAILURE and the invalid_pseudocode validity-gate
 branch. A regression here means no confirmatory E1/E2/E3 run can
-start until the pipeline is green again — this is the "mandatory
-gate" item in docs/WEEK10_TODO.md (#5b).
+start until the pipeline is green again.
 """
 
 from __future__ import annotations
