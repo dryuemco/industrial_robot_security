@@ -18,11 +18,11 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
-import numpy as np  # noqa: E402
-import pandas as pd  # noqa: E402
+import numpy as np
+import pandas as pd
+
+import _style
+from _style import plt
 
 RULES = ["SM-1", "SM-2", "SM-3", "SM-4", "SM-5", "SM-6", "SM-7"]
 RULE_SHORT = {
@@ -48,47 +48,53 @@ def main() -> None:
     e1["rules"] = e1.violation_types.fillna("").astype(str).str.split(",")
 
     rows, labels = [], []
-    for cond, cname in (("baseline", "baseline"), ("safety", "safety-prompted")):
+    for cond in ("baseline", "safety"):
         for model, mlabel in MODEL_LABEL.items():
             g = e1[(e1.condition == cond) & (e1.model == model)]
             rows.append([np.mean([r in rs for rs in g.rules]) if len(g) else np.nan for r in RULES])
-            labels.append(f"{mlabel}\n{cname}, n={len(g)}")
+            labels.append(f"{mlabel}, n={len(g)}")
     if args.comparator.is_file():
         c = pd.read_csv(args.comparator)
-        for set_name, short in (("Translator", "Reference\ntranslator"), ("Vendor / community examples", "Vendor/community\nexamples")):
+        for set_name, short in (("Translator", "Reference translator"), ("Vendor / community examples", "Vendor/community")):
             g = c[(c.set == set_name) & (c.gate == 1)]
             if len(g):
                 rows.append([(g[f"pre_{r}"] > 0).mean() for r in RULES])
                 labels.append(f"{short}, n={len(g)}")
     m = np.array(rows, dtype=float)
 
-    plt.rcParams.update({"font.size": 7.5, "font.family": "serif"})
-    fig, ax = plt.subplots(figsize=(3.5, 0.42 * len(rows) + 1.0), dpi=300)
-    im = ax.imshow(m, cmap="Greys", vmin=0, vmax=1, aspect="auto")
+    _style.apply()
+    fig, ax = plt.subplots(figsize=(_style.COL_W, 0.24 * len(rows) + 0.75), constrained_layout=True)
+    ax.imshow(m, cmap="Greys", vmin=-0.06, vmax=1.15, aspect="auto")
     ax.set_xticks(range(len(RULES)))
-    ax.set_xticklabels(RULES, fontsize=6.2)
+    ax.set_xticklabels(RULES, fontsize=7)
+    ax.xaxis.tick_top()
     ax.set_yticks(range(len(labels)))
-    ax.set_yticklabels(labels, fontsize=5.8)
+    ax.set_yticklabels(labels, fontsize=7)
     for i in range(m.shape[0]):
         for j in range(m.shape[1]):
             v = m[i, j]
             if np.isnan(v):
                 continue
-            ax.text(j, i, f"{100*v:.0f}", ha="center", va="center", fontsize=6,
-                    color="white" if v > 0.55 else "black")
-    ax.axhline(5.5, color="black", linewidth=0.8)
-    if len(rows) > 6:
-        ax.axhline(len(rows) - 2.5 if len(rows) == 8 else len(rows) - 1.5, color="black", linewidth=0.5, linestyle=":")
-    ax.set_xlabel("Security check; cell = % of gate-passing outputs on which it fires", fontsize=6)
+            ax.text(j, i, f"{100*v:.0f}", ha="center", va="center", fontsize=7,
+                    color="white" if v > 0.5 else "black")
+    # white gaps between cells, a rule between the two conditions, a heavier rule
+    # between generated code and the comparison programs
+    ax.set_xticks(np.arange(-0.5, len(RULES)), minor=True)
+    ax.set_yticks(np.arange(-0.5, len(rows)), minor=True)
+    ax.grid(which="minor", color="white", linewidth=1.2)
+    ax.tick_params(which="minor", length=0)
+    ax.axhline(2.5, color=_style.INK, linewidth=0.5, xmin=-0.02, xmax=1.08, clip_on=False)
+    ax.axhline(5.5, color=_style.INK, linewidth=1.0, xmin=-0.02, xmax=1.08, clip_on=False)
+    groups = (("Baseline", 0, 2), ("Safety-\nprompted", 3, 5), ("Comparison", 6, len(rows) - 1))
+    for name, a, b in groups:
+        ax.text(len(RULES) - 0.3, (a + b) / 2, name, rotation=270, ha="left", va="center",
+                fontsize=7, linespacing=1.0)
+    ax.set_xlabel("% of gate-passing outputs on which the check fires", fontsize=7)
     ax.tick_params(length=0)
-    for s in ax.spines.values():
-        s.set_visible(False)
-    fig.tight_layout()
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(args.out)
-    fig.savefig(args.out.with_suffix(".png"))
+    for sp in ax.spines.values():
+        sp.set_visible(False)
+    _style.save(fig, args.out)
     print(pd.DataFrame(m, index=labels, columns=RULES).round(2).to_string())
-    print(f"Wrote {args.out}")
 
 
 if __name__ == "__main__":

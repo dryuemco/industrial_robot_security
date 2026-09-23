@@ -2,11 +2,12 @@
 # Copyright 2026 Yunus Emre Cogurcu - Apache-2.0
 """Figure: self-repair trajectories under rule-checker feedback (E3), grayscale-safe.
 
-Revision items R1-6 and R2-M4. One representative cell per regime for the
-model that keeps valid output throughout (Qwen2.5-Coder-32B), each drawn
-with its own marker AND line style AND a direct end label, so the curves
-remain distinguishable when printed in grayscale. The legend carries the
-count of cells in each regime from scripts/review/e3_regimes.py.
+Revision items R1-6 and R2-M4. One panel per regime for the model that keeps
+valid output throughout (Qwen2.5-Coder-32B), on a shared scale. In each panel
+the dark curve is a representative cell, labelled with its task, and the thin
+gray curves are the other cells of that regime; the panel title carries the
+count of cells in the regime from scripts/review/e3_regimes.py. Regimes are
+separated by panel rather than by line style, so the figure reads in grayscale.
 
 Usage:
     python3 scripts/figures/fig_repair_trajectory.py \
@@ -19,20 +20,20 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
-import pandas as pd  # noqa: E402
+import pandas as pd
+
+import _style
+from _style import plt
 
 MODEL = "qwen2.5-coder:32b"
-# regime -> (label, marker, linestyle, gray level)
+# regime -> panel title, in the order of the figure caption
 STYLE = {
-    "monotone_decrease": ("Monotone reduction, not to zero", "o", "-", "0.0"),
-    "nonmonotone_decrease": ("Net reduction, one reversal", "D", (0, (5, 2)), "0.15"),
-    "oscillation": ("Oscillation", "s", (0, (2, 1.5)), "0.3"),
-    "transient": ("Transient improvement", "^", (0, (6, 2, 1, 2)), "0.45"),
-    "monotone_increase": ("Monotone increase", "v", (0, (1, 1)), "0.55"),
-    "invariant": ("Invariant", "x", (0, (8, 3)), "0.65"),
+    "monotone_decrease": "Monotone reduction",
+    "nonmonotone_decrease": "Net reduction, one reversal",
+    "oscillation": "Oscillation",
+    "transient": "Transient improvement",
+    "monotone_increase": "Monotone increase",
+    "invariant": "Invariant",
 }
 
 
@@ -64,53 +65,32 @@ def main() -> None:
     counts = cells[cells.model == MODEL].regime.value_counts().to_dict()
     examples = pick_examples(cells)
 
-    plt.rcParams.update({"font.size": 8, "font.family": "serif", "axes.linewidth": 0.6})
-    fig, ax = plt.subplots(figsize=(3.5, 3.1), dpi=300)
-    ends = []  # (task, x_end, y_end, gray) for the direct end labels
-    for regime, (label, marker, ls, gray) in STYLE.items():
-        if regime not in examples:
-            continue
+    def sequence(task: str, rep: int) -> list[int]:
+        g = e3[(e3.model == MODEL) & (e3.task_id == task) & (e3.rep == rep)].sort_values("retry")
+        return g.total_violations.tolist()
+
+    q = cells[cells.model == MODEL]
+    _style.apply()
+    fig, axs = plt.subplots(2, 3, figsize=(_style.COL_W, 2.9), sharex=True, sharey=True,
+                            constrained_layout=True)
+    for ax, (regime, title) in zip(axs.flat, STYLE.items()):
+        for c in q[q.regime == regime].itertuples():
+            ax.plot(range(4), sequence(c.task_id, c.rep), color="0.72", linewidth=0.6, zorder=1)
         task, rep = examples[regime]
-        seq = e3[(e3.model == MODEL) & (e3.task_id == task) & (e3.rep == rep)].sort_values("retry")
-        x, y = seq.retry.tolist(), seq.total_violations.tolist()
-        ax.plot(x, y, marker=marker, linestyle=ls, color=gray, markersize=4, linewidth=1.1,
-                markerfacecolor="white" if marker in "oDs" else gray, markeredgewidth=0.9,
-                label=f"{label} ({counts.get(regime, 0)} cells), e.g. {task}")
-        ends.append((task, x[-1], y[-1], gray))
-    ax.set_xlim(-0.2, 3.6)
-    ax.set_ylim(bottom=0)
-    # Direct end labels: push labels apart vertically (in points) so that curves ending
-    # at neighbouring values do not overprint, and draw a thin leader where a label moved.
-    min_gap_pt = 7.0
-    ends.sort(key=lambda e: e[2])
-    to_pt = 72.0 / fig.dpi
-    ys_pt = [ax.transData.transform((xe, ye))[1] * to_pt for _, xe, ye, _ in ends]
-    placed = []
-    for y_pt in ys_pt:
-        placed.append(y_pt if not placed else max(y_pt, placed[-1] + min_gap_pt))
-    # re-centre the stack so that it is not pushed only upwards
-    shift = (sum(placed) - sum(ys_pt)) / len(placed) if placed else 0.0
-    placed = [p - shift for p in placed]
-    for (task, xe, ye, gray), y_pt, y_lab in zip(ends, ys_pt, placed):
-        dy = y_lab - y_pt
-        ax.annotate(task, (xe, ye), xytext=(7, dy), textcoords="offset points", fontsize=6,
-                    va="center", ha="left", color=gray,
-                    arrowprops=dict(arrowstyle="-", color=gray, linewidth=0.4,
-                                    shrinkA=0, shrinkB=2.5) if abs(dy) > 0.5 else None)
-    ax.set_xlabel("Retry index (0 = single-shot generation)")
-    ax.set_ylabel("Total violations")
-    ax.set_xticks([0, 1, 2, 3])
-    ax.grid(True, linewidth=0.3, color="0.85")
-    ax.legend(fontsize=5.8, frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.22),
-              ncol=1, handlelength=3.2)
-    ax.spines[["top", "right"]].set_visible(False)
-    fig.tight_layout()
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(args.out)
-    fig.savefig(args.out.with_suffix(".png"))
+        y = sequence(task, rep)
+        ax.plot(range(4), y, color=_style.INK, linewidth=1.3, marker="o", markersize=3,
+                markerfacecolor="white", zorder=3)
+        ax.annotate(task, (3, y[-1]), xytext=(3, 0), textcoords="offset points", fontsize=6.5,
+                    va="center")
+        ax.set_title(f"{title}\n{counts.get(regime, 0)} cells", fontsize=7, linespacing=1.1, pad=3)
+        ax.set_xticks([0, 1, 2, 3])
+        ax.set_xlim(-0.3, 3.9)
+        _style.grid_y(ax)
+    fig.supxlabel("Retry index (0 = single-shot generation)", fontsize=8)
+    fig.supylabel("Total violations", fontsize=8)
+    _style.save(fig, args.out)
     print("examples:", examples)
     print("counts:", counts)
-    print(f"Wrote {args.out}")
 
 
 if __name__ == "__main__":

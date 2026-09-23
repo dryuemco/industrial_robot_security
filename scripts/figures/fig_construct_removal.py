@@ -17,11 +17,11 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
-import pandas as pd  # noqa: E402
-from scipy.stats import beta  # noqa: E402
+import pandas as pd
+from scipy.stats import beta
+
+import _style
+from _style import plt
 
 # ordered by parameter count; label, size in B
 MODELS = [
@@ -56,31 +56,27 @@ def main() -> None:
         rows.append({"model": label, "size_b": size, "n": n, "removed": k, "rate": k / n, "lo": lo, "hi": hi})
     t = pd.DataFrame(rows)
 
-    plt.rcParams.update({"font.size": 8, "font.family": "serif", "axes.linewidth": 0.6})
-    fig, ax = plt.subplots(figsize=(3.5, 2.4), dpi=300)
+    _style.apply()
+    fig, ax = plt.subplots(figsize=(_style.COL_W, 2.3), constrained_layout=True)
     x = range(len(t))
     ax.errorbar(list(x), 100 * t.rate, yerr=[100 * (t.rate - t.lo), 100 * (t.hi - t.rate)],
-                fmt="o", color="0.1", ecolor="0.4", elinewidth=0.9, capsize=3, markersize=5,
-                markerfacecolor="white", markeredgewidth=1.2)
+                fmt="o", color=_style.INK, ecolor=_style.MID, elinewidth=0.9, capsize=3, markersize=5,
+                markerfacecolor="white", markeredgewidth=1.2, clip_on=False, zorder=3)
     for i, r in t.iterrows():
-        ax.annotate(f"{r.removed}/{r.n}", (i, 100 * r.rate), xytext=(7, -2), textcoords="offset points",
-                    fontsize=6.5, va="center")
+        ax.annotate(f"{r.removed}/{r.n}", (i, 100 * r.rate), xytext=(7, 0 if r.rate > 0.05 else 5),
+                    textcoords="offset points", fontsize=7, va="center" if r.rate > 0.05 else "bottom")
     ax.set_xticks(list(x))
-    ax.set_xticklabels([f"{r.model}\n{r.size_b}B" for _, r in t.iterrows()], fontsize=6.5)
+    ax.set_xticklabels([f"{r.model}\n{r.size_b}B" for _, r in t.iterrows()], fontsize=7)
+    ax.tick_params(axis="x", length=0)
     ax.set_xlabel("Model, ordered by parameter count (ordinal axis)")
     ax.set_ylabel("Construct removed (%)")
     ax.set_ylim(0, 100)
     ax.set_xlim(-0.5, len(t) - 0.5)
-    ax.grid(True, axis="y", linewidth=0.3, color="0.85")
-    ax.spines[["top", "right"]].set_visible(False)
-    ax.text(0.02, 0.97, "one repetition per cell; exact 95% intervals; no trend fitted",
-            transform=ax.transAxes, fontsize=6, va="top", color="0.35")
-    fig.tight_layout()
-    args.out.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(args.out)
-    fig.savefig(args.out.with_suffix(".png"))
+    _style.grid_y(ax)
+    ax.text(0.02, 0.99, "one repetition per cell; exact 95% intervals; no trend fitted",
+            transform=ax.transAxes, fontsize=7, va="top", color="0.3")
+    _style.save(fig, args.out)
     print(t.to_string(index=False))
-    print(f"Wrote {args.out}")
 
 
 if __name__ == "__main__":
