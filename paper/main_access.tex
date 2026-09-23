@@ -949,7 +949,7 @@ gate-passing violation rates are 100\% for Qwen2.5-Coder-32B, 95\% for DeepSeek-
 100\% for CodeLlama-34B. The preregistered hypothesis that at least 30\% of baseline
 generations violate is supported, with every gate-passing test rejecting the null at
 p below 0.001 after correction. The gap between naive and gate-passing rates is
-driven by the high invalid-pseudo-code rates of the two smaller models
+driven by the high invalid-pseudo-code rates of DeepSeek-Coder-V2-16B and CodeLlama-34B
 (Figure~\ref{fig:per-model}). No model
 refused to generate code in any condition: the refusal count is 0 of 585, consistent
 with the post-hoc expectation of near-zero refusal for code-specialized models.
@@ -959,7 +959,7 @@ with the post-hoc expectation of near-zero refusal for code-specialized models.
   \def\xfigwd{\columnwidth}%
   \caption{Combined violation rate for each model under the baseline condition,
   computed over all generations (naive) and over only the generations that pass the
-  validity gate, with Wilson 95\% intervals. For the two smaller models the gap between
+  validity gate, with Wilson 95\% intervals. For DeepSeek-Coder-V2-16B and CodeLlama-34B the gap between
   the bars reflects the high rate of invalid pseudo-code, which the naive rate scores as
   zero-violation.}\label{fig:per-model}
 \end{figure}
@@ -1303,12 +1303,12 @@ transient improvement followed by regression, and an invariant trajectory
   \def\xfigwd{\columnwidth}%
   \caption{Representative self-repair trajectories under rule-checker feedback for
   Qwen2.5-Coder-32B, the one model that maintains valid output throughout, showing total violations against
-  retry index, one curve per regime. The curves illustrate the six regimes of Table~\ref{tab:regimes}: monotone reduction that
+  retry index, one panel per regime on a shared scale. The panels show the six regimes of Table~\ref{tab:regimes}: monotone reduction that
   does not reach zero, net reduction with one reversal, two-state oscillation in which each retry undoes the previous fix,
-  transient improvement followed by regression, monotone increase, and an invariant trajectory. Each curve
-  is a real Qwen2.5-Coder-32B cell of Table~\ref{tab:regimes}, and the cell counts in the
-  legend are that model's column of the table; each curve is drawn with its own marker and
-  line style.}\label{fig:retry}
+  transient improvement followed by regression, monotone increase, and an invariant trajectory. In each panel
+  the dark curve is a representative cell, labelled with its task, and the gray curves are the other
+  Qwen2.5-Coder-32B cells of that regime (the three repetitions of a task often coincide); the cell count in
+  each panel title is that model's column of the table.}\label{fig:retry}
 \end{figure}
 
 The regimes are counted rather than only illustrated. Table~\ref{tab:regimes}
@@ -1352,7 +1352,7 @@ proxy no longer firing (49\% to 0\% of outputs) while the unusual-conditions che
 more often (49\% to 93\%); under the safety prompt the means are 10.40 and 11.24
 ($p = 0.68$).
 
-For the two smaller models quantization does move outcomes. DeepSeek-Coder-V2-16B at
+For the other two models quantization does move outcomes. DeepSeek-Coder-V2-16B at
 Q4\_K\_M passes the validity gate more often at baseline (37 against 20 of 45 outputs) and
 less often under the safety prompt (22 against 42); the binary verdict agrees in 11 of 15
 baseline cells ($p = 0.12$) and 9 of 15 safety-prompted cells ($p = 0.03$), and the
@@ -1686,7 +1686,7 @@ Q4\_0 (Table~\ref{tab:models}), so the cross-model heterogeneity test of
 \ref{sec:res-sens} cannot separate model identity from quantization level; re-runs of
 all three models at the other level, reported in \ref{sec:res-sens}, show that the
 binary heterogeneity survives at either uniform level while the count-level outcomes of
-the two smaller models move with quantization, which is why no count-level contrast in
+DeepSeek-Coder-V2-16B and CodeLlama-34B move with quantization, which is why no count-level contrast in
 this article crosses models. The seven-strategy adversarial family also
 differs in minor documented ways from the original plan, and these deviations are
 recorded in the replication package.
