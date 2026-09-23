@@ -475,8 +475,13 @@ only through Qwen2.5-Coder-32B.
 The OSF amendments cite commit hashes of the project's working history. The public
 `main` branch does not contain the manuscript-draft and session-note commits of that
 history, so commits that exist in both have a different hash on `main`, and
-manuscript-only commits have no counterpart there. The cited objects still resolve on
-GitHub by hash.
+manuscript-only commits have no counterpart there. All cited commits are kept
+reachable by the annotated tag `osf-cited-history`, placed at `5147bca`, the last commit
+cited on OSF, so they can be looked up and browsed on GitHub
+(<https://github.com/dryuemco/industrial_robot_security/tree/osf-cited-history>; a single
+commit at `https://github.com/dryuemco/industrial_robot_security/commit/<hash>`). The tag
+is not a branch, so the statement in the record note below that the cited commits are
+"not reachable from any branch" remains accurate.
 
 | Cited on OSF | Date (UTC) | Subject | Same change on `main` |
 |---|---|---|---|
