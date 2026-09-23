@@ -16,8 +16,7 @@ Naming convention:
   Cochran's Q (run_cross_model_cochran_q) is NOT a fourth confirmatory
   hypothesis -- it is an exploratory cross-model heterogeneity analysis
   reported alongside the confirmatory H4-H6 family but explicitly
-  outside it. See paper sections V.E, VI.J, VII.B.5 and
-  docs/WEEK10_TODO.md #12 for the audit trail.
+  outside it. See paper sections V.E, VI.J and VII.B.5.
 
 Usage:
   python3 scripts/mcnemar_analysis.py --results-dir results/
@@ -540,7 +539,7 @@ def run_cross_model_cochran_q(df: pd.DataFrame) -> list[CochranResult]:
     confirmatory hypothesis; it is an exploratory cross-model
     heterogeneity analysis reported alongside the confirmatory family
     but explicitly outside it. See paper sections V.E, VI.J, and
-    VII.B.5, and docs/WEEK10_TODO.md item #12 for the audit trail.
+    VII.B.5.
     """
     raw_results: list[CochranResult] = []
 
