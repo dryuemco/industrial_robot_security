@@ -1,15 +1,22 @@
 #!/usr/bin/env bash
 # Build the "highlighted" resubmission PDF: latexdiff of the submitted source
-# (tag paper-submitted-r0) against the current main_access.tex, compiled in
-# the TeX Live container. Output: paper/diff/main_access_diff.pdf
+# (the commit or tag given as the first argument, default paper-submitted-r1)
+# against the current main_access.tex, compiled in the TeX Live container.
+# Output: paper/diff/main_access_diff.pdf
 set -euo pipefail
 cd "$(dirname "$0")"
-git show paper-submitted-r0:paper/main_access.tex > diff/main_submitted.tex
+BASE="${1:-paper-submitted-r1}"
+# The submitted paper/ tree is exported whole, so that latexdiff --flatten
+# finds the table files that the submitted main_access.tex \input's. git archive
+# resolves paths against the working directory, so it runs from the repo root.
+rm -rf diff/submitted
+mkdir -p diff/submitted
+git -C .. archive "$BASE" paper | tar -x -C diff/submitted --strip-components=1
 docker run --rm -v "$PWD":/work -w /work texlive/texlive:latest sh -c '
   latexdiff --flatten --type=CFONT --graphics-markup=none \
     --exclude-textcmd="section,subsection,caption" \
     --config="PICTUREENV=(?:picture|DIFnomarkup|table|table\\*|figure|figure\\*|lstlisting|verbatim|thebibliography)[\\w\\d*@]*" \
-    diff/main_submitted.tex main_access.tex > diff/main_access_diff.tex 2> diff/latexdiff.log
+    diff/submitted/main_access.tex main_access.tex > diff/main_access_diff.tex 2> diff/latexdiff.log
   # IEEE Access asks for yellow highlighting of changes: additions on a yellow
   # background (soul), deletions as small red strike-through text (ulem).
   sed -i \
@@ -19,7 +26,7 @@ docker run --rm -v "$PWD":/work -w /work texlive/texlive:latest sh -c '
     diff/main_access_diff.tex'
 # latexdiff leaves table/figure environments unmarked; flag floats that are new
 # or whose graphics changed since the submitted version (runs on the host).
-python3 mark_new_floats.py diff/main_access_diff.tex
+python3 mark_new_floats.py diff/main_access_diff.tex "$BASE"
 docker run --rm -v "$PWD":/work -w /work texlive/texlive:latest sh -c '
   cd diff && cp -r ../figures ../tables ../*.cls ../*.png ../*.jpg . 2>/dev/null || true
   latexmk -pdf -interaction=nonstopmode main_access_diff.tex > build_diff.log 2>&1 || true
