@@ -5,21 +5,23 @@ latexdiff treats table and figure environments as pictures (PICTUREENV in
 build_diff.sh), so a table that is entirely new since the submitted version is
 compiled without any highlighting. IEEE Access asks for every change to be
 highlighted, so this script inserts a highlighted line at the top of every
-float whose label did not exist at tag paper-submitted-r0 ("New in this
-revision"), whose graphics file changed since that tag ("Figure regenerated in
-this revision"), or whose environment text (caption, body, notes) differs from
-the submitted version ("Revised in this revision"). The three rules are applied
-in that order of precedence. Floats that latexdiff emits inside a deleted block
-are skipped.
+float whose label did not exist in the submitted commit ("New in this
+revision"), whose graphics file changed since that commit ("Figure regenerated
+in this revision"), or whose environment text (caption, body, notes) differs
+from the submitted version ("Revised in this revision"). The three rules are
+applied in that order of precedence. Floats that latexdiff emits inside a
+deleted block are skipped. The submitted sources are the submitted
+main_access.tex and the files it \\input's.
 
-Usage: mark_new_floats.py <diff.tex>   (rewrites the file in place)
+Usage: mark_new_floats.py <diff.tex> [<submitted commit>]   (rewrites the file
+in place; the commit defaults to paper-submitted-r1)
 """
 import pathlib
 import re
 import subprocess
 import sys
 
-TAG = "paper-submitted-r0"
+TAG = "paper-submitted-r1"
 FLOAT_RE = re.compile(r"\\begin\{(table\*?|figure\*?)\}(\[[^\]]*\])?")
 LABEL_RE = re.compile(r"\\label\{((?:tab|fig|lst):[^}]*)\}")
 GRAPHICS_RE = re.compile(r"\\includegraphics(?:\[[^\]]*\])?\{([^}]*)\}")
@@ -31,6 +33,7 @@ DIF_BLOCK_RE = re.compile(r"\\DIF(?:add|del)(?:begin|end)(?:FL)?\b")
 DIF_ADD_RE = re.compile(r"\\DIFadd(?:FL)?\{")
 DIF_DEL_RE = re.compile(r"\\DIFdel(?:FL)?\{")
 COMMENT_RE = re.compile(r"(?<!\\)%.*$", re.M)
+INPUT_RE = re.compile(r"^[^%\n]*?\\input\{([^}]*)\}", re.M)
 
 
 def git(*args: str) -> str:
@@ -39,8 +42,10 @@ def git(*args: str) -> str:
 
 def submitted_sources() -> str:
     src = git("show", f"{TAG}:paper/main_access.tex")
-    for path in git("ls-tree", "-r", "--name-only", TAG, "paper/tables").split():
-        src += "\n" + git("show", f"{TAG}:{path}")
+    for name in INPUT_RE.findall(src):
+        if not name.endswith(".tex"):
+            name += ".tex"
+        src += "\n" + git("show", f"{TAG}:paper/{name}")
     return src
 
 
@@ -162,4 +167,6 @@ def main(path: str) -> None:
 
 
 if __name__ == "__main__":
+    if len(sys.argv) > 2:
+        TAG = sys.argv[2]
     main(sys.argv[1])
