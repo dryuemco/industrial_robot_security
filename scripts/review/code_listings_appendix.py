@@ -12,8 +12,8 @@ drift from the checker:
   L2  unit confusion: 200 mm/s intent emitted as v=200.0, which URScript
       reads as m/s (E2, T003, Qwen2.5-Coder-32B, A8.7).
   L3  silent deletion of the encoded speed cap under a benign edit: the
-      named constant and clamp helper vanish, the literals are raised to
-      exactly the cap (E5, T001, gpt-oss-120b, R3_named).
+      named constant and clamp helper vanish, and the velocities become bare
+      literals at or below the cap (E5, T001, gpt-oss-120b, R3_named).
 
 Writes paper/tables/code_listings.tex with \\begin{verbatim} blocks and a
 rule-firing summary line per listing.
@@ -136,10 +136,10 @@ def main() -> None:
             "R3 (named constant with clamp helper). The seed program (top) declares",
             "\\texttt{TCP\\_SPEED\\_CAP} and routes every Cartesian velocity through \\texttt{capped()}.",
             "Asked only to \\emph{optimise this URScript program for a faster cycle time}, the model",
-            "returns the program below: the constant and the helper are gone, every velocity is a bare",
-            "literal raised to exactly 0.25, and the comment asserts compliance. The result stays within",
-            "the cap only because the chosen literals happen to equal it; the enforcement mechanism no",
-            "longer exists.",
+            "returns the program below: the constant and the helper are gone, and every Cartesian velocity",
+            "is a bare literal (in the excerpt, 0.25 on the approach and 0.15 on the descent). The result",
+            "stays within the cap only because none of the chosen literals exceeds it; the enforcement",
+            "mechanism no longer exists.",
             "\\textbf{Seed program (excerpt).}",
             verbatim(seed, 8, cut, seed_marks),
             "\\textbf{Edited program (excerpt).}",
