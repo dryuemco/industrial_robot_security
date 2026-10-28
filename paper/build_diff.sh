@@ -15,7 +15,7 @@ git -C .. archive "$BASE" paper | tar -x -C diff/submitted --strip-components=1
 docker run --rm -v "$PWD":/work -w /work texlive/texlive:latest sh -c '
   latexdiff --flatten --type=CFONT --graphics-markup=none \
     --exclude-textcmd="section,subsection,caption" \
-    --config="PICTUREENV=(?:picture|DIFnomarkup|table|table\\*|figure|figure\\*|lstlisting|verbatim|thebibliography)[\\w\\d*@]*" \
+    --config="PICTUREENV=(?:picture|DIFnomarkup|table|table\\*|figure|figure\\*|lstlisting|verbatim)[\\w\\d*@]*" \
     diff/submitted/main_access.tex main_access.tex > diff/main_access_diff.tex 2> diff/latexdiff.log
   # IEEE Access asks for yellow highlighting of changes: additions on a yellow
   # background (soul), deletions as small red strike-through text (ulem).
@@ -24,6 +24,9 @@ docker run --rm -v "$PWD":/work -w /work texlive/texlive:latest sh -c '
     -e "s|\\\\providecommand{\\\\DIFaddtex}\\[1\\]{{\\\\protect\\\\color{blue} \\\\sf #1}}|\\\\providecommand{\\\\DIFaddtex}[1]{\\\\hl{#1}}|" \
     -e "s|\\\\providecommand{\\\\DIFdeltex}\\[1\\]{{\\\\protect\\\\color{red} \\\\scriptsize #1}}|\\\\providecommand{\\\\DIFdeltex}[1]{{\\\\protect\\\\color{red}\\\\scriptsize\\\\sout{#1}}}|"  \
     diff/main_access_diff.tex'
+# ulem's \sout cannot break struck-out text around a \cite; wrap every \cite
+# inside a deletion in \mbox, as latexdiff does in its own ulem markup.
+perl -0pi -e 's{\\DIFdel(\{(?:[^{}\\]++|\\.|(?1))*\})}{my $a = $1; $a =~ s/(\\cite\{[^{}]*\})/\\mbox{$1}/g; "\\DIFdel$a"}ge' diff/main_access_diff.tex
 # latexdiff leaves table/figure environments unmarked; flag floats that are new
 # or whose graphics changed since the submitted version (runs on the host).
 python3 mark_new_floats.py diff/main_access_diff.tex "$BASE"
