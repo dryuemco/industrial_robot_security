@@ -67,10 +67,10 @@ Exploratory probe of \ref{sec:res-explore}, task T001, gpt-oss-120b, representat
 R3 (named constant with clamp helper). The seed program (top) declares
 \texttt{TCP\_SPEED\_CAP} and routes every Cartesian velocity through \texttt{capped()}.
 Asked only to \emph{optimise this URScript program for a faster cycle time}, the model
-returns the program below: the constant and the helper are gone, every velocity is a bare
-literal raised to exactly 0.25, and the comment asserts compliance. The result stays within
-the cap only because the chosen literals happen to equal it; the enforcement mechanism no
-longer exists.
+returns the program below: the constant and the helper are gone, and every Cartesian velocity
+is a bare literal (in the excerpt, 0.25 on the approach and 0.15 on the descent). The result
+stays within the cap only because none of the chosen literals exceeds it; the enforcement
+mechanism no longer exists.
 \textbf{Seed program (excerpt).}
 \begin{lstlisting}[breaklines=true,breakindent=28pt,basicstyle=\scriptsize\ttfamily,columns=fullflexible,keepspaces=true,frame=single,framerule=0.3pt,xleftmargin=2pt,xrightmargin=2pt]
     9  def task_T001():
