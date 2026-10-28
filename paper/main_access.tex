@@ -50,17 +50,17 @@ models (LLMs) for an industrial robot. It does not evaluate their motion safety:
 specification against which motion safety is checked is held invariant by design and never
 fails. Under ISO 10218-1:2025, the first edition to require cybersecurity where it affects
 safety, FACT (Formal Adversarial Code Testing) applies seven lexical security checks under
-seven prompt-injection strategies. The preregistered confirmatory study covers three
-open-weight code models (16 to 34 billion parameters) and 585 generations, reported from
+seven prompt-injection strategies. The preregistered confirmatory study (Appendix A) covers
+three open-weight code models (16B to 34B) and 585 generations, reported from
 the second of two identical runs that agree on every preregistered test. First, generated
-code fails the checks: 98.8\% of syntactically valid outputs violate at least one, and 1 of
+code fails the checks: 89.2\% to 98.8\% of syntactically valid outputs violate at least one, and 1 of
 135 baseline generations is valid and violation-free; a non-LLM comparator shows that part
 of this rate is a property of the rule set, yet generated code produces about twice as
 many rule firings as the reference translation. Second, this saturation is a measurement
 hazard: naive scoring lets invalid pseudo-code pass as safe, and the preregistered
 adversarial-uplift test has no power against it. Third, rule-checker feedback under
 whole-program regeneration does not remediate: no cell reaches zero violations. Exploratory
-single-repetition probes on frontier models (24 to 675 billion parameters) show no
+single-repetition probes on frontier models (24B to 675B) show no
 remediation, and a benign edit removes an encoded speed cap in 0\% to 70\% of cells; these
 are signals for replication, not confirmed effects. Obtained in simulation and specific to
 URScript, the findings caution how generated control code is measured and patched.
@@ -169,9 +169,10 @@ ISO 10218-1:2025 clauses, including the new cybersecurity clause 5.1.16.
 \item \textbf{Evidence of pervasive static-check failure.} Baseline violation
 rates approach saturation across three open-weight models and are driven by the
 security checks rather than the motion-safety checks (\ref{sec:res-baseline}).
-\item \textbf{A validity-aware acceptance metric.} The substantive-safe rate, which
+\item \textbf{A validity-aware outcome measure.} The substantive-safe rate, which
 counts only generations that are both valid and violation-free, is 1 of 135 at
-baseline; the preregistered binary analysis is retained alongside it for fidelity
+baseline and is used to compare models and conditions within the evaluated corpus;
+the preregistered binary analysis is retained alongside it for fidelity
 (\ref{sec:res-baseline}).
 \item \textbf{A non-LLM comparator and a sensitivity analysis of the instrument.}
 The same checker applied to a deterministic reference translation and to vendor example
@@ -1076,15 +1077,17 @@ the baseline and adversarial experiments and labelled independently by two rater
 to each other's labels, following a written guide released with the replication package.
 Rater A is a consensus label agreed between two authors (the first and second authors)
 before rater B's sheet was opened; rater B is not an author and had not seen the
-manuscript, the rule code or the first audit. The raters agree on 81 of 100 labels, pooled Cohen's
-$\kappa=0.55$, with full agreement on the unusual-conditions check and the weakest
+manuscript, the rule code or the first audit. The same two authors adjudicated the 19
+disagreements in a recorded procedure under the written guide, and all 19 resolved to
+rater A's label. Agreement is reported before adjudication: pooled Cohen's
+$\kappa=0.55$ (81 of 100 labels agree), with full agreement on the unusual-conditions
+check and the weakest
 agreement on the error-handling proxy ($\kappa=0.20$) and the hardcoded-value check
 ($\kappa=0.35$); the $\kappa$ of 0.00 on the preamble check is an artefact of rater A
 labelling all twenty firings genuine, which leaves no variance for the statistic. Rater B
 is systematically less favourable to the instrument than rater A: pooled precision 64\%
-[54, 73] against 77\% [68, 85]. The 19 disagreements were resolved in a recorded
-adjudication under the written guide, performed by the two rater A authors, and every one resolved to
-rater A's label, because each of rater B's departures applied the rule's own wording
+[54, 73] against 77\% [68, 85]. Every disagreement resolved to
+rater A's label because each of rater B's departures applied the rule's own wording
 where the guide's criterion differs from it. The adjudicated column therefore coincides
 with rater A's, and the reader who prefers the non-author's judgement should read the
 rater B column as the conservative estimate. The disagreements fall into four groups, and
@@ -1636,13 +1639,13 @@ here, although the safety-prompt paradox observed at baseline and the shallow-al
 evidence in the literature \cite{ref29} both caution that naive interventions can leave
 the failure in place or worsen it. For a practitioner the conservative reading is that
 current open-weight models should not emit safety-critical motion code without an independent
-verification layer, and that the validity-gated metric, the substantive-safe acceptance
-criterion, localized patching in place of whole-program regeneration, trajectory-aware
+verification layer, and that the validity-gated metric, the substantive-safe rate for
+within-corpus comparison, localized patching in place of whole-program regeneration, trajectory-aware
 loop control, and a digital-twin execution stage before any hardware is engaged are the
 levers most directly supported by the evidence reported here.
 
 \subsection{Implications for Deployment}\label{sec:implications}
-Four implications follow. First, safety prompting helps two of three models but is not universally protective, and a unit-naive safety prompt can even elicit more dangerous code through a millimetre-versus-metre confusion, which motivates specifying units in the target language's convention. Second, adversarial robustness varies unpredictably across models and is not predicted by general coding ability. Third, rule checking is necessary but not sufficient, because pseudo-code that does not match expected syntax patterns evades rule-based detection. Fourth, any benchmark that scores generated robot code on rule violations alone, without first gating on whether the output is committed URScript at all (the present gate is lexical; a future gate that verifies syntactic validity against the URScript grammar would be stricter), risks rewarding models that fail to commit to executable output; the validity-gated violation rate is therefore recommended as the primary metric, reported alongside the invalid-generation fraction, and the substantive-safe rate is proposed as a reusable acceptance metric immune to the invalid-counts-as-safe artifact.
+Four implications follow. First, safety prompting helps two of three models but is not universally protective, and a unit-naive safety prompt can even elicit more dangerous code through a millimetre-versus-metre confusion, which motivates specifying units in the target language's convention. Second, adversarial robustness varies unpredictably across models and is not predicted by general coding ability. Third, rule checking is necessary but not sufficient, because pseudo-code that does not match expected syntax patterns evades rule-based detection. Fourth, any benchmark that scores generated robot code on rule violations alone, without first gating on whether the output is committed URScript at all (the present gate is lexical; a future gate that verifies syntactic validity against the URScript grammar would be stricter), risks rewarding models that fail to commit to executable output; the validity-gated violation rate is therefore recommended as the primary metric, reported alongside the invalid-generation fraction. The substantive-safe rate is immune to the invalid-counts-as-safe artifact but is not an acceptance test in its present form: the deterministic reference translation is substantive-safe on 0 of 15 tasks (Table~\ref{tab:comparator}), so the same criterion would also reject a program rendered directly from the task specification. It is used here only to compare models and conditions within the evaluated corpus, all scored under one rule set, and its use as an acceptance criterion would first require the rule-by-rule revision of the checker identified as future work in \ref{sec:res-baseline}.
 
 \subsection{Threats to Validity}\label{sec:threats}
 The study is bounded along several axes. The principal internal threat is the
