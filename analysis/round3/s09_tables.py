@@ -172,7 +172,8 @@ def comparator_rules() -> str:
     a, b, c = cor["llm"].total, cor["min"].total, cor["pre"].total
     lines.append(f"Total & {a:.2f} & {b:.2f} & {c:.2f} & {a - b:+.2f} & {a - c:+.2f} \\\\")
     lines += ["\\bottomrule", "\\end{tabular}", "\\end{table}", ""]
-    return "\n".join(lines).replace("+0.00", "0.00").replace("-0.00", "0.00").replace(" -", " $-$")
+    body = "\n".join(lines[1:]).replace("+0.00", "0.00").replace("-0.00", "0.00").replace(" -", " $-$")
+    return lines[0] + "\n" + body
 
 
 # ----------------------------------------------------------------------------- Table 16

@@ -11,6 +11,7 @@ Outputs under out/r3/:
   first_audit_rules.csv       SM-4 + SM-5 + SM-6 mean for the LLM baseline and both translators
   sm2_per_program.csv         SM-2 mean per program counted per call site and deduplicated per program
   gate_passing_violating.csv  gate-passing outputs that violate, E2 and the final E3 attempt
+  table6_fractions.csv        numerator and denominator of every rate in Table 6 that has one
 """
 from __future__ import annotations
 
@@ -140,6 +141,29 @@ def gate_passing_violating() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def table6_fractions() -> pd.DataFrame:
+    """k/N for the rates of Table 6 (E1 baseline, run 2)."""
+    e1 = pd.read_csv(RUN2_E1 / "e1_results.csv")
+    b = e1[e1.condition == "baseline"]
+    g = b[b.status == "success"]
+    t13 = pd.read_csv(out("a1", "table13_with_translator.csv"))
+    t13 = t13[t13["set"] == "LLM baseline (E1, run 2)"].set_index(["gate", "rules"])
+    rows = [("substantive-safe rate", int((g.total_violations == 0).sum()), len(b), "baseline generations"),
+            ("combined violation rate, gate-passing", int((g.total_violations > 0).sum()), len(g), "gate-passing outputs"),
+            ("combined violation rate, all outputs (naive)", int((b.total_violations > 0).sum()), len(b), "baseline generations")]
+    for label, gate, rs in (("high-precision (first audit)", "lexical", "high-precision"),
+                            ("SM6-only (rater B)", "lexical", "SM6-only"), ("SM2+SM6 (adjudicated)", "lexical", "SM2+SM6"),
+                            ("corrected SM-5", "lexical", "corrected-SM5"), ("structural gate", "structural", "preregistered")):
+        r = t13.loc[(gate, rs)]
+        rows.append((label, int(round(r.viol_pct * r.gate_pass / 100)), int(r.gate_pass), "gate-passing outputs"))
+        rows.append((label + ", violation-free", int(r.safe), int(r.n_all), "stored outputs"))
+    rows.append(("structural gate, admitted", int(t13.loc[("structural", "preregistered")].gate_pass),
+                 int(t13.loc[("structural", "preregistered")].n_all), "stored outputs"))
+    df = pd.DataFrame(rows, columns=["quantity", "k", "N", "denominator"])
+    df["rate"] = df.k / df.N
+    return df
+
+
 def main() -> None:
     if get_flag("data_mismatch"):
         print("STOP: data_mismatch flag set by s00_provenance.py")
@@ -159,6 +183,9 @@ def main() -> None:
     s2.to_csv(out("r3", "sm2_per_program.csv"), index=False)
     gv = gate_passing_violating()
     gv.to_csv(out("r3", "gate_passing_violating.csv"), index=False)
+    t6 = table6_fractions()
+    t6.to_csv(out("r3", "table6_fractions.csv"), index=False)
+    print(t6.to_string(index=False))
     print(gv.to_string(index=False))
     print(dec.round(3).to_string(index=False))
     print(dif.round(3).to_string(index=False))
