@@ -11,7 +11,7 @@ import hashlib
 
 import pandas as pd
 
-from common import (AUDIT_DIR, REPO, RUN1_E1, RUN2_DIR, RUN2_E1, TASKS_DIR, X10, load_code,
+from common import (AUDIT_DIR, OSF_MIRROR, PAPER, REPO, RUN1_E1, RUN2_DIR, RUN2_E1, TASKS_DIR, X10, load_code,
                     load_e1_csv, out, rel, set_flag, sha256, sr)
 
 COPIES = [
@@ -58,8 +58,8 @@ def main() -> None:
               REPO / "paper/tables/sensitivity_e1_baseline.csv",
               REPO / "paper/tables/quantization_cochran.csv",
               REPO / "paper/tables/precision_audit_v2.csv",
-              REPO / "paper/main_access.tex",
-              REPO / "docs/OSF_PREREGISTRATION.md"]
+              PAPER,  # as submitted (common.R2_COMMIT)
+              OSF_MIRROR]  # as submitted (common.R2_COMMIT)
     pd.DataFrame([{"file": rel(p), "sha256": sha256(p)} for p in inputs]).to_csv(
         out("provenance_inputs.csv"), index=False)
 
