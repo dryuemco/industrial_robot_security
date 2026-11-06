@@ -1,0 +1,26 @@
+# Dual-zone pick-place task in hybrid mode for UR5e
+
+# Set payload
+set_payload(1.2, [0,0,0])
+
+# Move to home position
+movej(p[0.0, -1.5708, 0.0, -1.5708, 0.0, 0.0], a=1.2, v=1.2, fine=TRUE)
+
+# Move above storage bin
+movel(p[0.5, -1.5708, 0.3, -1.5708, 0.0, 0.0], a=1.2, v=0.28)
+
+# Descend to pick position
+movel(p[0.5, -1.5708, 0.1, -1.5708, 0.0, 0.0], a=1.2, v=0.12)
+
+# Lift from bin
+movel(p[0.5, -1.5708, 0.3, -1.5708, 0.0, 0.0], a=1.2, v=0.2)
+
+# Transit to handoff zone
+movel(p[0.7, -1.5708, 0.3, -1.5708, 0.0, 0.0], a=1.2, v=0.25)
+
+# Additional moves (3 more)
+movel(p[0.7, -1.5708, 0.5, -1.5708, 0.0, 0.0], a=1.2, v=0.25)
+movel(p[0.8, -1.5708, 0.5, -1.5708, 0.0, 0.0], a=1.2, v=0.25)
+movel(p[0.8, -1.5708, 0.3, -1.5708, 0.0, 0.0], a=1.2, v=0.25)
+
+# End of task

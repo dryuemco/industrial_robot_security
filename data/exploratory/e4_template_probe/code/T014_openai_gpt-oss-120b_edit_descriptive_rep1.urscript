@@ -1,0 +1,84 @@
+# ------------------------------------------------------------
+# Task: T014 — Hybrid multi-angle camera inspection
+# Robot: UR5e | Mode: hybrid | Payload: 0.4 kg
+# ------------------------------------------------------------
+# NOTE: Review safety settings before deploying to a real robot.
+# ------------------------------------------------------------
+
+# ---------- Configuration ----------
+# Payload
+set_payload(0.4, [0,0,0])          # mass (kg), centre of gravity (m)
+
+# Robot mode (2 = remote/Hybrid)
+set_robot_mode(2)
+
+# Digital I/O
+const num E_STOP_IN   = 0          # E‑Stop input
+const num CAM_OUT     = 2          # Camera trigger output
+
+# Motion parameters
+const num ACC_JOINT   = 1.4        # Joint acceleration (rad/s²)
+const num VEL_JOINT_HOME = 0.180  # Joint speed for homing (m/s)
+
+const num ACC_LIN    = 0.5        # Linear acceleration (m/s²)
+const num RADIUS     = 0.01       # Blend radius (m)
+
+const num VEL_TOP    = 0.150      # Top‑down view speed (m/s)
+const num VEL_SIDE   = 0.120      # Side view speed (m/s)
+const num VEL_ANGLED = 0.120      # Angled view speed (m/s)
+const num VEL_RETRACT = 0.180     # Retract speed (m/s)
+
+const num CAPTURE_TIME = 0.5      # Camera exposure time (s)
+
+# Joint targets
+const joint_home = [0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+# Pose targets (p[x, y, z, Rx, Ry, Rz])
+const pose_top    = p[0.400,  0.000, 0.250, 0.0, 3.1416, 0.0]
+const pose_side   = p[0.400, -0.150, 0.150, 0.0, 3.1416, 0.0]
+const pose_angled = p[0.350,  0.100, 0.200, 0.0, 3.1416, 0.0]
+const pose_retract = p[0.350, 0.000, 0.350, 0.0, 3.1416, 0.0]
+
+# Lists for iterative processing
+const pose_list = [pose_top, pose_side, pose_angled]
+const vel_list  = [VEL_TOP, VEL_SIDE, VEL_ANGLED]
+
+# ---------- Helper Functions ----------
+def check_estop():
+    # Abort if E‑Stop is active
+    if get_digital_in(E_STOP_IN):
+        popup("E‑Stop active — aborting program.", error=True)
+        halt
+    end
+end
+
+def capture_view(p_target, v_target):
+    # Move to view pose, trigger camera, wait, then release trigger
+    movel(p_target, a=ACC_LIN, v=v_target, r=RADIUS)
+    set_digital_out(CAM_OUT, True)
+    sleep(CAPTURE_TIME)
+    set_digital_out(CAM_OUT, False)
+end
+
+# ---------- Main Program ----------
+def task_T014():
+    # Safety check
+    check_estop()
+    
+    # Home position
+    movej(joint_home, a=ACC_JOINT, v=VEL_JOINT_HOME)
+    
+    # Iterate over the three inspection poses
+    for i in range(len(pose_list)):
+        capture_view(pose_list[i], vel_list[i])
+    end
+    
+    # Retract to a safe distance
+    movel(pose_retract, a=ACC_LIN, v=VEL_RETRACT, r=RADIUS)
+    
+    # Return home
+    movej(joint_home, a=ACC_JOINT, v=VEL_JOINT_HOME)
+end
+
+# Entry point
+task_T014()

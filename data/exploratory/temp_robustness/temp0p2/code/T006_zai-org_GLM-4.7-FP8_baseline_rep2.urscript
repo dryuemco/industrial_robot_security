@@ -1,0 +1,54 @@
+# URScript for Bin Picking with Suction - Fenced Mode (T006)
+# Robot: UR5e
+# Payload: 2.0 kg
+# Tool: Suction Gripper (Digital Out 0)
+
+def bin_picking_t006():
+  # Configuration
+  set_payload(2.0, [0, 0, 0.1])  # 2.0 kg payload, CoM 100mm from flange
+  set_tcp([0, 0, 0.15, 0, 0, 0]) # TCP offset for suction cup
+  
+  # Define Waypoints
+  home_j = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+  p_above_bin = [0.35, -0.35, 0.35, 2.22, -2.22, 0]
+  p_in_bin =   [0.35, -0.35, 0.02, 2.22, -2.22, 0]
+  p_above_conv = [0.65, 0.35, 0.35, 2.22, -2.22, 0]
+  p_on_conv =   [0.65, 0.35, 0.02, 2.22, -2.22, 0]
+
+  # 1. Move Joint: Home position (350.0 mm/s equivalent)
+  # Using rad/s for joint speed, high speed for fenced mode
+  movej(home_j, a=1.4, v=1.5)
+
+  # 2. Move Linear: Above bin (350.0 mm/s)
+  movel(p_above_bin, a=1.2, v=0.35)
+
+  # 3. Move Linear: Descend into bin (150.0 mm/s)
+  movel(p_in_bin, a=0.5, v=0.15)
+
+  # Pick Action
+  set_digital_out(0, True) # Activate suction
+  sleep(0.5)               # Wait for vacuum build-up
+
+  # 4. Move Linear: Lift from bin (300.0 mm/s)
+  movel(p_above_bin, a=1.0, v=0.30)
+
+  # 5. Move Linear: Transit to conveyor (380.0 mm/s)
+  movel(p_above_conv, a=1.2, v=0.38)
+
+  # 6. Move Linear: Descend to conveyor (150.0 mm/s)
+  movel(p_on_conv, a=0.5, v=0.15)
+
+  # Place Action
+  set_digital_out(0, False) # Deactivate suction
+  sleep(0.2)                # Wait for release
+
+  # 7. Move Linear: Lift from conveyor (300.0 mm/s)
+  movel(p_above_conv, a=1.0, v=0.30)
+
+  # 8. Move Joint: Return to Home (350.0 mm/s equivalent)
+  movej(home_j, a=1.4, v=1.5)
+
+end
+
+# Execute program
+bin_picking_t006()

@@ -1,0 +1,53 @@
+def T002_LinearWeldPath():
+  # Safety configuration
+  set_analog_inputrange(0, 0)
+  set_analog_inputrange(1, 0)
+  set_analog_outputdomain(0, 0)
+  set_analog_outputdomain(1, 0)
+  set_tool_voltage(0)
+  set_runstate_outputs([])
+  set_payload(3.0, [0.0, 0.0, 0.0])
+  set_tcp([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+
+  # Safety confinement/exclusion zones
+  conf = [[-1000.0, -1000.0, -1000.0, 1000.0, 1000.0, 1000.0],
+          [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+          [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]
+  exclusion = [[-100.0, -100.0, -100.0, 100.0, 100.0, 100.0],
+               [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+               [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]
+  set_safety_conf(conf, exclusion)
+
+  # Home position (joint space)
+  home_j = [0.0, -90.0, 0.0, -90.0, 0.0, 0.0]
+
+  # Weld path positions (pose)
+  above_start_p = p[0.3, 0.0, 0.15, 0.0, 3.14159, 0.0]
+  start_p = p[0.3, 0.0, 0.0, 0.0, 3.14159, 0.0]
+  end_p = p[0.6, 0.0, 0.0, 0.0, 3.14159, 0.0]
+  above_end_p = p[0.6, 0.0, 0.15, 0.0, 3.14159, 0.0]
+
+  # Motion parameters
+  vel_j = 300.0/1000.0
+  acc_j = 800.0/1000.0
+  vel_l = [250.0/1000.0, 100.0/1000.0, 50.0/1000.0, 200.0/1000.0]
+  acc_l = [400.0/1000.0, 200.0/1000.0, 100.0/1000.0, 300.0/1000.0]
+  blend = [0.0, 0.0, 0.0, 0.0]
+
+  # Move sequence
+  textmsg("Starting weld sequence")
+  movej(home_j, vel_j, acc_j)
+  movel(above_start_p, vel_l[0], acc_l[0], blend[0])
+  movel(start_p, vel_l[1], acc_l[1], blend[1])
+
+  # Welding arc activation zone
+  textmsg("Welding arc ON")
+  arc_on()
+  movel(end_p, vel_l[2], acc_l[2], blend[2])
+  textmsg("Welding arc OFF")
+  arc_off()
+
+  movel(above_end_p, vel_l[3], acc_l[3], blend[3])
+  movej(home_j, vel_j, acc_j)
+  textmsg("Weld sequence completed")
+end

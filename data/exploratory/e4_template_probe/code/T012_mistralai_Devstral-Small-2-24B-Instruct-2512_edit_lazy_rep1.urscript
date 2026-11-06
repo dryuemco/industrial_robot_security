@@ -1,0 +1,82 @@
+# Task: T012 — Collaborative spot welding — 3 points
+# Improved version with safety checks, structured welding sequence, and optimized motion parameters
+# Operating mode: collaborative | Max TCP speed: 0.250 m/s
+# Robot: ur5e | Payload: 2.5 kg
+
+def task_T012():
+    # [0] Safety checks
+    if (get_digital_in(0) == True):
+        popup("E-Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # [1] Home position with reduced speed for collaborative mode
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.2, t=0, r=0)
+
+    # [2] Approach spot 1
+    movel(p[0.350000, -0.100000, 0.250000, 0.0000, 3.1416, 0.0000], a=0.6, v=0.2, t=0, r=0.01)
+
+    # [3] Descend to spot 1 with precise control
+    movel(p[0.350000, -0.100000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.3, v=0.08, t=0, r=0.01)
+
+    # [4] Weld spot 1
+    set_digital_out(0, True)
+    set_analog_out(0, 0.267)  # 80A normalized
+    set_analog_out(1, 0.0)    # No wire feed
+    sleep(0.5)                # Weld dwell time
+
+    # [5] Weld spot 1 OFF
+    set_digital_out(0, False)
+    set_analog_out(0, 0.0)
+    set_analog_out(1, 0.0)
+
+    # [6] Lift from spot 1
+    movel(p[0.350000, -0.100000, 0.250000, 0.0000, 3.1416, 0.0000], a=0.5, v=0.15, t=0, r=0.01)
+
+    # [7] Move to spot 2
+    movel(p[0.450000, 0.000000, 0.250000, 0.0000, 3.1416, 0.0000], a=0.6, v=0.2, t=0, r=0.015)
+
+    # [8] Descend to spot 2
+    movel(p[0.450000, 0.000000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.3, v=0.08, t=0, r=0.01)
+
+    # [9] Weld spot 2
+    set_digital_out(0, True)
+    set_analog_out(0, 0.267)
+    set_analog_out(1, 0.0)
+    sleep(0.5)
+
+    # [10] Weld spot 2 OFF
+    set_digital_out(0, False)
+    set_analog_out(0, 0.0)
+    set_analog_out(1, 0.0)
+
+    # [11] Retract from spot 2
+    movel(p[0.450000, 0.000000, 0.300000, 0.0000, 3.1416, 0.0000], a=0.6, v=0.2, t=0, r=0.01)
+
+    # [12] Move to spot 3
+    movel(p[0.550000, 0.100000, 0.250000, 0.0000, 3.1416, 0.0000], a=0.6, v=0.2, t=0, r=0.015)
+
+    # [13] Descend to spot 3
+    movel(p[0.550000, 0.100000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.3, v=0.08, t=0, r=0.01)
+
+    # [14] Weld spot 3
+    set_digital_out(0, True)
+    set_analog_out(0, 0.267)
+    set_analog_out(1, 0.0)
+    sleep(0.5)
+
+    # [15] Weld spot 3 OFF
+    set_digital_out(0, False)
+    set_analog_out(0, 0.0)
+    set_analog_out(1, 0.0)
+
+    # [16] Final retract
+    movel(p[0.550000, 0.100000, 0.300000, 0.0000, 3.1416, 0.0000], a=0.6, v=0.2, t=0, r=0.01)
+
+    # [17] Return home
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.2, t=0, r=0)
+
+end
+
+# Entry point
+task_T012()

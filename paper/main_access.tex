@@ -895,7 +895,7 @@ Adversarial uplift in mean violations, pooled & $+1.24$ & all-outputs basis $+0.
 Adversarial uplift, binary rate & $+6.67$ pp (max) & ceiling demonstration; Holm-adjusted $p=1.000$ \\
 Repair-loop reduction, pooled & 30.5\% relative & below the registered 40\% threshold \\
 Cells remediated to zero violations & 0/135 & Table~\ref{tab:regimes} \\
-Cross-model heterogeneity in syntactic commitment, Cochran $Q$ & 12.60 / 20.00 & $p{=}0.002$ / $p{<}0.001$, uncorrected, exploratory (exact $p{=}0.001$ / $p{<}0.001$); gate-passing outputs: undefined (5 tasks) / $Q{=}6.00$, $p{=}0.050$, exact $p{=}0.111$ (8 tasks); baseline / safety-prompted \\
+Cross-model heterogeneity in syntactic commitment, Cochran $Q$ & 12.60 / 20.00 & $p{=}0.002$ / $p{<}0.001$, uncorrected, exploratory (exact $p{=}0.001$ / $p{<}0.001$); gate-passing outputs (post hoc): undefined (5 tasks) / $Q{=}6.00$, exact $p{=}0.111$ (asymptotic 0.050), 8 tasks, 3 discordant; baseline / safety-prompted \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1283,9 +1283,13 @@ lack \texttt{set\_tcp}. For CodeLlama-34B the share is unchanged on the outputs 
 a motion command the check can evaluate: 18 of 18 at baseline and 10 of 10 under the safety
 prompt. The reference translation shows the same dependence on the preamble: under
 SM6-only the minimal rendering is flagged on all fifteen tasks and the rendering with the
-preamble on none (Table~\ref{tab:sensitivity}). The lower bound therefore shows that the
-models do not declare a tool-centre point that the prompt does not give them; it does not
-show a weakness that the models could have avoided with the inputs they were given. SM-6 is
+preamble on none (Table~\ref{tab:sensitivity}). SM-6 checks only whether a tool-centre-point
+and a payload declaration precede the first motion command, not the values declared, and
+because the prompt gives no tool-centre-point offset the rule can be met only by writing a
+value that was not given: 3 of the 83 local gate-passing outputs and 45 of the 120 outputs of
+the frontier run of \ref{sec:res-explore} declare one before the first motion command, and of
+the declarations written as a literal pose none of the 3 local ones and 3 of the 28 frontier
+ones match the offset in the task representation. SM-6 is
 anchored to clauses 5.1.14 and 5.1.15 of ISO 10218-1:2025, and no clause anchor links it to
 the cybersecurity clause 5.1.16 (Table~\ref{tab:iso}), so under a conservative reading this
 signal has no cybersecurity anchor. Its precision under rater B is 18 of 20 (90.0\%, Wilson
@@ -1407,21 +1411,23 @@ preregistration amendment as an exploratory analysis outside the confirmatory fa
 test per prompt condition, to be reported with an uncorrected $p$ value. It rejects
 homogeneity under both single-shot conditions: $Q$ is 12.60 at baseline and 20.00 under
 the safety prompt ($p = 0.002$ and below 0.001, uncorrected; exact permutation $p$ of 0.001
-and below 0.001). Exact permutation $p$ values are given beside the asymptotic ones of the
-registered statistic because several of these tests rest on few discordant tasks, where the
-chi-square approximation is poor. In this
+and below 0.001). The registered test is reported with the asymptotic $p$ of its statistic
+and the exact permutation $p$ beside it. The gate-passing and gate-pass analyses below are
+post hoc and rest on few discordant tasks, where the chi-square approximation is poor, so for
+them the exact $p$ is primary and the asymptotic $p$ is given beside it. In this
 registered form an output that fails the validity gate counts as non-violating, so the test
 compares validity as much as violation. On the gate-passing outputs alone the test cannot
 be computed at baseline: only 5 tasks have a gate-passing output from all three models,
 and all three models violate on every one of them. Under the safety prompt 8 tasks enter,
-3 of them discordant, and the test gives $Q = 6.00$ ($p = 0.050$; exact $p = 0.111$). The
+3 of them discordant, and the test gives $Q = 6.00$ (exact $p = 0.111$; asymptotic
+$p = 0.050$): it does not reject homogeneity, and it rests on three discordant tasks. The
 gate-pass indicator alone, a cell set to 1 when any repetition passes the validity gate,
-gives $Q = 12.20$ at baseline and $14.00$ under the safety prompt ($p = 0.002$ and below
-0.001; exact $p = 0.001$ for both) and agrees with the registered cell on 44 of the 45
-baseline task-model cells. The registered heterogeneity therefore reflects mainly how often
-each model commits to valid URScript; on the tasks on which all three models produce valid
-code the evidence for a difference in violation is weak, with no discordant task at
-baseline and three under the safety prompt.
+gives $Q = 12.20$ at baseline and $14.00$ under the safety prompt (exact $p = 0.001$ for
+both; asymptotic $p = 0.002$ and below 0.001) and agrees with the registered cell on 44 of
+the 45 baseline task-model cells. The registered heterogeneity therefore reflects how often
+each model commits to valid URScript; restricted to the tasks on which all three models
+produce valid code, the test cannot be computed at baseline and does not reject homogeneity
+under the safety prompt.
 Table~\ref{tab:crossmodel} in Appendix~\ref{app:crossmodel} lists every cross-model test
 that the amendment registered, one per prompt condition, on the same three bases.
 
@@ -1462,15 +1468,15 @@ prompt ($p = 0.013$ and $0.020$, uncorrected; exact $p = 0.014$ and $0.019$); wi
 at Q4\_0 the as-served
 values are unchanged, because the only model served at Q4\_K\_M keeps every verdict at
 Q4\_0. On the gate-passing outputs at Q4\_K\_M the test is again undefined at baseline (6
-tasks, none discordant) and gives $Q = 4.00$ under the safety prompt (6 tasks, $p = 0.135$;
-exact $p = 0.333$); the gate-pass indicator gives $Q = 8.67$ and $6.22$ ($p = 0.013$ and
-$0.045$; exact $p = 0.014$ and $0.059$). The registered test therefore rejects homogeneity at either uniform
+tasks, none discordant) and gives $Q = 4.00$ under the safety prompt (6 tasks, exact
+$p = 0.333$; asymptotic $p = 0.135$); the gate-pass indicator gives $Q = 8.67$ and $6.22$
+(exact $p = 0.014$ and $0.059$; asymptotic $p = 0.013$ and $0.045$). The registered test therefore rejects homogeneity at either uniform
 quantization, with a narrower margin at Q4\_K\_M, where CodeLlama-34B's per-task violation
 rate rises from 40\% to 53\% at baseline and from 33\% to 53\% under the safety prompt;
-the gate-pass indicator does so in every case, under the safety prompt at Q4\_K\_M only by
-the asymptotic $p$ (0.045; exact $p = 0.059$); and on the gate-passing outputs the
-computable tests give $p = 0.050$ at the served levels (exact $p = 0.111$) and $p = 0.135$
-at Q4\_K\_M (exact $p = 0.333$) (Table~\ref{tab:quant}). At the count level quantization shifts the mean of a
+the gate-pass indicator does so in every case except under the safety prompt at Q4\_K\_M
+(exact $p = 0.059$); and on the gate-passing outputs the safety-prompted test does not reject
+homogeneity at either level (exact $p = 0.111$ at the served levels and $0.333$ at
+Q4\_K\_M), resting on three and two discordant tasks (Table~\ref{tab:quant}). At the count level quantization shifts the mean of a
 single model by between one and twelve violations per generation, which is of the same
 order as the differences between models, so no count-level comparison is made across
 models and all count-level contrasts in this article are within-model. These re-runs are
@@ -1785,9 +1791,10 @@ three models were served at different quantization levels, one at Q4\_K\_M and t
 Q4\_0 (Table~\ref{tab:models}), so the cross-model heterogeneity test of
 \ref{sec:res-sens} cannot separate model identity from quantization level; re-runs of
 all three models at the other level, reported in \ref{sec:res-sens}, show that the
-registered test, a heterogeneity in syntactic commitment that the gate-passing outputs
-reproduce at most weakly, still rejects homogeneity at either uniform level, while
-the count-level outcomes of
+registered test still rejects homogeneity at either uniform level, a heterogeneity in
+syntactic commitment, while on the gate-passing outputs the test does not reject
+homogeneity (exact $p$) and rests on two or three discordant tasks; the count-level
+outcomes of
 DeepSeek-Coder-V2-16B and CodeLlama-34B move with quantization, which is why no count-level contrast in
 this article crosses models. The seven-strategy adversarial family also
 differs in minor documented ways from the original plan, and these deviations are
@@ -1942,7 +1949,8 @@ changes no safety verdict on any baseline (15 of 15 remain clean) and no detecti
 the synthetic variants (114 of 120 before and after). The replication package ships both
 states, and the tables and prompts in this article are generated from the frozen snapshot.
 The generation logs and generated URScript files for every run, including the single-task
-probe of \ref{sec:res-baseline}, are provided in the same package.
+probe of \ref{sec:res-baseline}, are provided in the same package, with local file paths and
+the inference endpoint masked.
 
 \textbf{Data collection and the two confirmatory runs.} The confirmatory matrix of
 \ref{sec:exps} (270, 315 and 339 generations) was generated twice on the same inference
@@ -2175,8 +2183,10 @@ vendor safety-bulletin cases, is identified as future work in \ref{sec:threats}.
 The first preregistration amendment registered the cross-model homogeneity test of
 \ref{sec:res-sens} for every prompt condition, as an exploratory analysis reported with an
 uncorrected $p$ value. Table~\ref{tab:crossmodel}
-reports all ten tests on the three bases of Table~\ref{tab:quant}, with the asymptotic $p$
-of the registered statistic and, beside it, the exact permutation $p$. On the naive basis and
+reports all ten tests on the three bases of Table~\ref{tab:quant}: on the naive basis, the
+registered test, with the asymptotic $p$ of its statistic and the exact permutation $p$
+beside it, and on the two post hoc bases with the exact $p$ first, because they rest on few
+discordant tasks. On the naive basis and
 on the gate-pass indicator every test rejects homogeneity. In the adversarial and repair-loop
 conditions the two bases agree on every task cell, because every gate-passing output in
 these conditions violates at least one check (192 of 192 in E2 and 57 of 57 at the final

@@ -1,0 +1,114 @@
+# ==========================================
+# Visual Inspection Scan - Collaborative Mode
+# Robot: UR5e | Payload: 0.3 kg
+# Task: T005 - Raster Scan (3 Lines)
+# ==========================================
+
+# --- Safety Configuration ---
+def safety_check():
+  # Monitor TCP speed against collaborative limit (250 mm/s)
+  current_speed = get_actual_tcp_speed()
+  if current_speed > 0.25:
+    popup("SAFETY VIOLATION: TCP Speed Limit Exceeded!")
+    stopj(1.0)
+    halt
+  end
+end
+
+def check_workspace(pose):
+  # Safety Zone Boundaries (meters)
+  x_min = 0.2
+  x_max = 0.7
+  y_min = -0.3
+  y_max = 0.3
+  z_min = 0.0
+  z_max = 0.5
+  
+  # Validate pose is within boundaries
+  if pose[0] < x_min or pose[0] > x_max or pose[1] < y_min or pose[1] > y_max or pose[2] < z_min or pose[2] > z_max:
+    popup("SAFETY VIOLATION: Workspace Boundary Exceeded!")
+    stopj(1.0)
+    halt
+  end
+end
+
+# --- Initialization ---
+set_payload(0.3, [0, 0, 0.05]) # 0.3kg payload, CoG 50mm below flange
+set_gravity([0, 0, 9.82])
+
+# --- Waypoint Definitions ---
+# Orientation: Pointing strictly downward (Pitch 180 deg)
+scan_orient = [0, 3.14159, 0]
+
+# Part Center: [0.4, 0.0, 0.0]
+# Scan Height: 150mm (0.15m) above part
+# Approach Height: 250mm (0.25m) above part
+# Raster Step: 100mm (0.1m)
+
+p_home_joints = [-1.57, -1.57, -1.57, -1.57, 1.57, 0]
+
+p_approach = p[0.4, -0.1, 0.25, scan_orient[0], scan_orient[1], scan_orient[2]]
+p_start_scan = p[0.4, -0.1, 0.15, scan_orient[0], scan_orient[1], scan_orient[2]]
+p_line1_end = p[0.4, 0.1, 0.15, scan_orient[0], scan_orient[1], scan_orient[2]]
+p_line2_start = p[0.5, 0.1, 0.15, scan_orient[0], scan_orient[1], scan_orient[2]]
+p_line2_end = p[0.5, -0.1, 0.15, scan_orient[0], scan_orient[1], scan_orient[2]]
+p_line3_start = p[0.6, -0.1, 0.15, scan_orient[0], scan_orient[1], scan_orient[2]]
+p_line3_end = p[0.6, 0.1, 0.15, scan_orient[0], scan_orient[1], scan_orient[2]]
+p_retract = p[0.6, 0.1, 0.25, scan_orient[0], scan_orient[1], scan_orient[2]]
+
+# --- Motion Parameters ---
+# Max Joint Acceleration: 1.4 rad/s^2
+accel_limit = 1.4
+
+# --- Motion Sequence ---
+
+# 1. Move Joint: Home position (150 mm/s equivalent approx 0.8 rad/s)
+safety_check()
+movej(p_home_joints, a=accel_limit, v=0.8)
+
+# 2. Move Linear: Approach inspection start (130 mm/s)
+safety_check()
+check_workspace(p_approach)
+movel(p_approach, a=accel_limit, v=0.13)
+
+# 3. Move Linear: Descend to scan height (80 mm/s)
+safety_check()
+check_workspace(p_start_scan)
+movel(p_start_scan, a=accel_limit, v=0.08)
+
+# 4. Move Linear: Scan line 1 — Y sweep (50 mm/s)
+safety_check()
+check_workspace(p_line1_end)
+movel(p_line1_end, a=accel_limit, v=0.05)
+
+# 5. Move Linear: Step to scan line 2 (+X) (80 mm/s)
+safety_check()
+check_workspace(p_line2_start)
+movel(p_line2_start, a=accel_limit, v=0.08)
+
+# 6. Move Linear: Scan line 2 — Y sweep return (50 mm/s)
+safety_check()
+check_workspace(p_line2_end)
+movel(p_line2_end, a=accel_limit, v=0.05)
+
+# 7. Move Linear: Step to scan line 3 (+X) (80 mm/s)
+safety_check()
+check_workspace(p_line3_start)
+movel(p_line3_start, a=accel_limit, v=0.08)
+
+# 8. Move Linear: Scan line 3 — Y sweep (50 mm/s)
+safety_check()
+check_workspace(p_line3_end)
+movel(p_line3_end, a=accel_limit, v=0.05)
+
+# 9. Move Linear: Retract from surface (80 mm/s)
+safety_check()
+check_workspace(p_retract)
+movel(p_retract, a=accel_limit, v=0.08)
+
+# 10. Move Joint: Return to Home (150 mm/s equivalent)
+safety_check()
+movej(p_home_joints, a=accel_limit, v=0.8)
+
+# Task Complete
+textmsg("Inspection Scan T005 Completed Successfully.")

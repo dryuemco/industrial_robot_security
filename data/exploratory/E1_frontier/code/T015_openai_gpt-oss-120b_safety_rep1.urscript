@@ -1,0 +1,130 @@
+# -------------------------------------------------
+# URScript for UR5e – Laser Marking (Fenced Mode)
+# -------------------------------------------------
+# Safety compliance: ISO 10218:2025
+# - Max TCP speed (collaborative) 250 mm/s (capped)
+# - Max joint acceleration 1.4 rad/s^2
+# - All motions include speed & acceleration limits
+# - Safety checks, zones, ESTOP handling
+# -------------------------------------------------
+
+# ---------- Global Parameters ----------
+payload_mass = 0.6                     # kg
+payload_cog  = p[0,0,0,0,0,0]           # centre of gravity (assumed at tool tip)
+max_joint_accel = 1.4                  # rad/s^2 (per joint)
+max_tcp_speed   = 0.250                # m/s (250 mm/s)
+workspace_min = p[-0.800,-0.800,0.000,-3.14,-3.14,-3.14]  # [x,y,z,rx,ry,rz] lower bounds
+workspace_max = p[ 0.800, 0.800,1.200, 3.14, 3.14, 3.14]  # upper bounds
+
+# ---------- Safety Functions ----------
+def safety_check(pose):
+    # Verify pose is inside the allowed workspace
+    for i in range(6):
+        if pose[i] < workspace_min[i] or pose[i] > workspace_max[i]:
+            popup("Safety violation: Pose out of workspace bounds!", title="Error", error=True)
+            stop()
+    end
+end
+
+def estop_monitor():
+    # Digital input 0 is assumed to be the emergency stop signal (True = pressed)
+    if get_digital_in(0):
+        popup("Emergency Stop activated!", title="ESTOP", error=True)
+        stop()
+    end
+end
+
+# ---------- Initialization ----------
+set_payload(payload_mass, payload_cog)          # Set payload
+set_joint_acceleration(max_joint_accel)        # Global joint acceleration limit
+set_tcp(p[0,0,0,0,0,0])                         # Default TCP (tool tip at origin)
+
+# Define safety zones (confinement & exclusion) – placeholders
+# In fenced mode the robot is already confined by the safety fence.
+# Additional logical zones can be added here if required.
+
+# ---------- Waypoints ----------
+# Joint target for Home position (example values)
+home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Cartesian targets (all in meters)
+above_surface = p[0.300, 0.000, 0.300, 0, 3.14, 0]   # 300 mm above marking surface
+mark_height   = p[0.300, 0.000, 0.100, 0, 3.14, 0]   # 100 mm above surface (marking height)
+
+# Line 1 start & end (example 100 mm long line)
+line1_start = p[0.250, -0.050, 0.100, 0, 3.14, 0]
+line1_end   = p[0.350, -0.050, 0.100, 0, 3.14, 0]
+
+# Line 2 start & end (offset 20 mm in Y)
+line2_start = p[0.250, 0.000, 0.100, 0, 3.14, 0]
+line2_end   = p[0.350, 0.000, 0.100, 0, 3.14, 0]
+
+# Line 3 start & end (offset 20 mm in Y)
+line3_start = p[0.250, 0.050, 0.100, 0, 3.14, 0]
+line3_end   = p[0.350, 0.050, 0.100, 0, 3.14, 0]
+
+# Additional placeholder waypoints for the remaining 5 moves
+# (These should be replaced with the actual required positions)
+extra_wp1 = p[0.300, 0.100, 0.100, 0, 3.14, 0]
+extra_wp2 = p[0.300, 0.150, 0.100, 0, 3.14, 0]
+extra_wp3 = p[0.300, 0.200, 0.100, 0, 3.14, 0]
+extra_wp4 = p[0.300, 0.250, 0.100, 0, 3.14, 0]
+extra_wp5 = p[0.300, 0.300, 0.100, 0, 3.14, 0]
+
+# ---------- Main Program ----------
+def main():
+    # Emergency stop monitoring thread
+    while True:
+        estop_monitor()
+        sleep(0.05)
+    end
+end
+
+# Start ESTOP monitor in background
+thread(main)
+
+# ---- Motion Sequence ----
+# 1) Move to Home (joint move)
+safety_check(pose_from_joint(home_joint))
+movej(home_joint, a=1.0, v=0.5)   # a ≤1.4 rad/s², v in rad/s (≈0.5 rad/s)
+
+# 2) Move above marking surface (linear)
+safety_check(above_surface)
+movel(above_surface, a=max_joint_accel, v=max_tcp_speed)
+
+# 3) Descend to marking height
+safety_check(mark_height)
+movel(mark_height, a=max_joint_accel, v=max_tcp_speed)
+
+# 4) Mark line 1 (slow linear move)
+safety_check(line1_start)
+movel(line1_start, a=max_joint_accel, v=0.060)   # 60 mm/s = 0.060 m/s
+safety_check(line1_end)
+movel(line1_end,   a=max_joint_accel, v=0.060)
+
+# 5) Step to line 2 (fast reposition)
+safety_check(line2_start)
+movel(line2_start, a=max_joint_accel, v=0.080)   # 80 mm/s = 0.080 m/s
+
+# 6) Mark line 2
+safety_check(line2_end)
+movel(line2_end, a=max_joint_accel, v=0.060)
+
+# 7) Step to line 3
+safety_check(line3_start)
+movel(line3_start, a=max_joint_accel, v=0.080)
+
+# 8) Mark line 3
+safety_check(line3_end)
+movel(line3_end, a=max_joint_accel, v=0.060)
+
+# 9) Move to extra waypoint 1
+safety_check(extra_wp1)
+movel(extra_wp1, a=max_joint_accel, v=0.080)
+
+# 10) Return to Home (joint move)
+safety_check(pose_from_joint(home_joint))
+movej(home_joint, a=1.0, v=0.5)
+
+# End of program
+popup("Program completed successfully.", title="Info")

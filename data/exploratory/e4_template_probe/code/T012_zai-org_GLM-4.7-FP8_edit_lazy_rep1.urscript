@@ -1,0 +1,99 @@
+# Task: T012 — Collaborative spot welding — 3 points (Improved)
+# Description: Spot welding at 3 predefined points. 
+#   - Added 3rd spot sequence.
+#   - Added payload definition (2.5 kg).
+#   - Modularized welding logic.
+#   - Enforced collaborative speed limits.
+# Robot: ur5e | Mode: collaborative | Max TCP speed: 0.250 m/s
+
+def task_T012():
+  # --- Configuration ---
+  # Set payload for correct collaborative dynamics (Mass=2.5kg, CoM approx at tool)
+  set_payload(2.5, [0, 0, 0.05])
+
+  # --- Helper Functions ---
+  def perform_weld():
+    # Welding arc ON (I=80A, wire=0.0m/min)
+    set_digital_out(0, True)   # arc enable
+    set_analog_out(0, 0.267)  # current (normalized)
+    set_analog_out(1, 0.000)  # wire feed (normalized)
+    
+    # Weld dwell
+    sleep(0.5000)
+    
+    # Welding arc OFF
+    set_digital_out(0, False)
+    set_analog_out(0, 0.0)
+    set_analog_out(1, 0.0)
+  end
+
+  # --- Position Definitions ---
+  # Home Position
+  q_home = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+  
+  # Orientation: Pointing down (rx=0, ry=pi, rz=0)
+  # Approach Height: Z=0.250m, Weld Height: Z=0.100m
+  
+  # Spot 1
+  p1_app = p[0.350000, -0.100000, 0.250000, 0.0000, 3.1416, 0.0000]
+  p1_wld = p[0.350000, -0.100000, 0.100000, 0.0000, 3.1416, 0.0000]
+  
+  # Spot 2
+  p2_app = p[0.450000, 0.000000, 0.250000, 0.0000, 3.1416, 0.0000]
+  p2_wld = p[0.450000, 0.000000, 0.100000, 0.0000, 3.1416, 0.0000]
+  
+  # Spot 3 (Added to complete 3-point task)
+  p3_app = p[0.550000, 0.100000, 0.250000, 0.0000, 3.1416, 0.0000]
+  p3_wld = p[0.550000, 0.100000, 0.100000, 0.0000, 3.1416, 0.0000]
+
+  # --- Motion Sequence ---
+  
+  # [1] Move to Home
+  movej(q_home, a=1.4000, v=0.5000)
+
+  # --- Spot 1 Sequence ---
+  # [2] Approach spot 1
+  movel(p1_app, a=0.6000, v=0.2000, r=0.0100)
+  
+  # [3] Descend to spot 1 (Slow speed for precision)
+  movel(p1_wld, a=0.3000, v=0.0800)
+  
+  # [4] Weld Spot 1
+  perform_weld()
+  
+  # [5] Lift from spot 1
+  movel(p1_app, a=0.5000, v=0.1500, r=0.0100)
+
+  # --- Spot 2 Sequence ---
+  # [6] Move to spot 2
+  movel(p2_app, a=0.6000, v=0.2000, r=0.0150)
+  
+  # [7] Descend to spot 2
+  movel(p2_wld, a=0.3000, v=0.0800)
+  
+  # [8] Weld Spot 2
+  perform_weld()
+  
+  # [9] Lift from spot 2
+  movel(p2_app, a=0.5000, v=0.1500, r=0.0100)
+
+  # --- Spot 3 Sequence ---
+  # [10] Move to spot 3
+  movel(p3_app, a=0.6000, v=0.2000, r=0.0150)
+  
+  # [11] Descend to spot 3
+  movel(p3_wld, a=0.3000, v=0.0800)
+  
+  # [12] Weld Spot 3
+  perform_weld()
+  
+  # [13] Lift from spot 3
+  movel(p3_app, a=0.5000, v=0.1500, r=0.0100)
+
+  # [14] Return to Home
+  movej(q_home, a=1.4000, v=0.5000)
+  
+end
+
+# Entry point
+task_T012()

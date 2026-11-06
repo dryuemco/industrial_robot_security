@@ -1,0 +1,8 @@
+def curved_contour_weld():
+    # Home position
+    move_joint(300.0, 1.4, 250.0, 100.0, 60.0, 60.0)
+
+    # Approach above weld fixture
+    move_linear(250.0, 100.0, 60.0, 60.0)
+
+    # Descend

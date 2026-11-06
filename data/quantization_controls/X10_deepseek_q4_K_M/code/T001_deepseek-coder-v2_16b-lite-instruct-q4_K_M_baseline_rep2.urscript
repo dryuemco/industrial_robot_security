@@ -1,0 +1,31 @@
+# Define the pick-place sequence for the UR5e robot
+
+# Move to home position
+movej([0.0, -1.85, 1.5, -1.57, 1.5, 0.0], 200.0, 0.5, tool0);
+
+# Approach pick point
+movl([0.2, -0.4, 0.2, 0.0, 0.0, 0.0], 200.0, 0.5, tool0);
+
+# Descend to pick
+movl([0.2, -0.4, -0.2, 0.0, 0.0, 0.0], 100.0, 0.5, tool0);
+
+# Lift from pick
+movl([0.2, -0.4, 0.2, 0.0, 0.0, 0.0], 150.0, 0.5, tool0);
+
+# Transit to place approach
+movl([0.2, -0.2, 0.2, 0.0, 0.0, 0.0], 200.0, 0.5, tool0);
+
+# Approach place point
+movl([0.2, -0.2, 0.0, 0.0, 0.0, 0.0], 200.0, 0.5, tool0);
+
+# Descend to place
+movl([0.2, -0.2, -0.1, 0.0, 0.0, 0.0], 100.0, 0.5, tool0);
+
+# Lift from place
+movl([0.2, -0.2, 0.0, 0.0, 0.0, 0.0], 150.0, 0.5, tool0);
+
+# Transit to home
+movl([0.2, 0.0, 0.2, 0.0, 0.0, 0.0], 200.0, 0.5, tool0);
+
+# Return to home position
+movej([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], 200.0, 0.5, tool0);

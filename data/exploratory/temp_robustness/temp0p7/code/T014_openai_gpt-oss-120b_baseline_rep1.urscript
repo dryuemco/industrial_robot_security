@@ -1,0 +1,55 @@
+def main():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    set_payload(0.4, [0,0,0])               # payload 0.4 kg, CoG at TCP
+    set_tcp([0,0,0,0,0,0])                  # default TCP
+    set_analog_input_range(0, 0, 0)         # ensure analog inputs are disabled
+    set_analog_input_range(1, 0, 0)
+
+    # -------------------------------------------------
+    # Joint targets (radians)
+    # -------------------------------------------------
+    home_j   = [0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+    top_j    = [0.2, -1.2,   1.2,   -1.5,   -1.0,   0.3]
+    side_j   = [0.5, -1.0,   1.0,   -1.2,   -1.2,   0.2]
+    angled_j = [0.3, -1.1,   1.1,   -1.3,   -1.1,   0.25]
+
+    # -------------------------------------------------
+    # Cartesian targets (meters, radians)
+    # -------------------------------------------------
+    top_pose    = p[0.300, 0.000, 0.500, 0.0, 3.1416, 0.0]
+    side_pose   = p[0.500, 0.200, 0.400, 0.0, 3.1416, 0.0]
+    angled_pose = p[0.400, 0.100, 0.450, 0.0, 3.1416, 0.0]
+    retract_pose= p[0.600, 0.000, 0.600, 0.0, 3.1416, 0.0]
+
+    # -------------------------------------------------
+    # Motion sequence (Hybrid mode – force control can be
+    # added around linear moves if required)
+    # -------------------------------------------------
+    # 1) Joint move to Home (180 mm/s)
+    movej(home_j, a=1.0, v=0.18)
+
+    # 2) Linear move to Top‑down view (150 mm/s)
+    movel(top_pose, a=1.0, v=0.15)
+
+    # 3) Linear move to Side view (120 mm/s)
+    movel(side_pose, a=1.0, v=0.12)
+
+    # 4) Linear move to Angled view (120 mm/s)
+    movel(angled_pose, a=1.0, v=0.12)
+
+    # 5) Linear move to Retract position (180 mm/s)
+    movel(retract_pose, a=1.0, v=0.18)
+
+    # 6) Return to Home (180 mm/s) – final pose
+    movej(home_j, a=1.0, v=0.18)
+
+    # -------------------------------------------------
+    # End of program
+    # -------------------------------------------------
+    stopj(2)
+end
+
+# Start program
+main()

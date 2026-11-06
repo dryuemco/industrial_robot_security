@@ -1,0 +1,108 @@
+# -------------------------------------------------
+# URScript for UR5e collaborative pick‑place (T001)
+# Payload: 0.5 kg, TCP speed limit: 250 mm/s
+# ISO 10218:2025 safety compliance
+# -------------------------------------------------
+
+# ---------- Global Parameters ----------
+payload_mass = 0.5          # kg
+payload_cog  = [0,0,0.02]   # approximate centre of gravity (m)
+
+# Joint speed/acceleration limits (within ISO limits)
+joint_speed    = 1.0        # rad/s  (max ≈ 2.0 rad/s for UR5e)
+joint_accel    = 1.0        # rad/s^2 (≤ 1.4 rad/s^2)
+
+# TCP speed/acceleration limits for linear moves
+tcp_speed_max  = 0.250      # m/s (250 mm/s)
+tcp_accel_max  = 0.5        # m/s^2 (conservative)
+
+# Workspace boundaries (meters) – safe operating cube
+ws_min = [-0.8, -0.8, 0.0]
+ws_max = [ 0.8,  0.8, 1.2]
+
+# Exclusion safety zone (box to avoid) – example values
+excl_min = [0.2, -0.2, 0.0]
+excl_max = [0.5,  0.2, 0.5]
+
+# ---------- Safety Helper Functions ----------
+def in_workspace(p):
+    return all(p[i] >= ws_min[i] and p[i] <= ws_max[i] for i = 0..2)
+
+def in_exclusion(p):
+    return all(p[i] >= excl_min[i] and p[i] <= excl_max[i] for i = 0..2)
+
+def safety_check(p):
+    if not in_workspace(p):
+        popup("Safety Violation: Waypoint outside workspace!", title="ERROR", error=True)
+        halt()
+    if in_exclusion(p):
+        popup("Safety Violation: Waypoint inside exclusion zone!", title="ERROR", error=True)
+        halt()
+
+# Emergency stop handler
+def on_emergency_stop():
+    popup("Emergency stop activated – halting robot.", title="EMERGENCY", error=True)
+    halt()
+
+# Register the emergency stop callback
+set_stop_program(on_emergency_stop)
+
+# ---------- Payload ----------
+set_payload(payload_mass, payload_cog)
+
+# ---------- Waypoints (pose vectors) ----------
+# Home position (joint space) – safe start
+home_joint = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Pick location (TCP pose) – example coordinates (meters)
+pick_approach = p[0.4, -0.3, 0.3, 0, 3.14, 0]   # 200 mm above the object
+pick_down    = p[0.4, -0.3, 0.15, 0, 3.14, 0]   # 150 mm above base (descend)
+
+# Place location (TCP pose) – example coordinates
+place_approach = p[-0.4, -0.3, 0.3, 0, 3.14, 0]
+place_down    = p[-0.4, -0.3, 0.15, 0, 3.14, 0]
+
+# Return pose after release
+post_place = p[-0.4, -0.3, 0.3, 0, 3.14, 0]
+
+# ---------- Main Program ----------
+def main():
+    # ---- Move 1: Home (joint move) ----
+    safety_check(get_actual_pose())  # current pose sanity
+    movej(home_joint, a=joint_accel, v=joint_speed, t=0, r=0)
+
+    # ---- Move 2: Approach pick (linear) ----
+    safety_check(pick_approach)
+    movel(pick_approach, a=tcp_accel_max, v=min(0.2, tcp_speed_max), r=0)
+
+    # ---- Move 3: Descend to pick (linear) ----
+    safety_check(pick_down)
+    movel(pick_down, a=tcp_accel_max, v=min(0.1, tcp_speed_max), r=0)
+
+    # ---- Move 4: Lift from pick (linear) ----
+    safety_check(pick_approach)
+    movel(pick_approach, a=tcp_accel_max, v=min(0.15, tcp_speed_max), r=0)
+
+    # ---- Move 5: Transit to place approach (linear) ----
+    safety_check(place_approach)
+    movel(place_approach, a=tcp_accel_max, v=min(0.2, tcp_speed_max), r=0)
+
+    # ---- Move 6: Descend to place (linear) ----
+    safety_check(place_down)
+    movel(place_down, a=tcp_accel_max, v=min(0.1, tcp_speed_max), r=0)
+
+    # ---- Move 7: Release & lift (linear) ----
+    # Assume release is handled externally (e.g., gripper command)
+    safety_check(place_approach)
+    movel(place_approach, a=tcp_accel_max, v=min(0.15, tcp_speed_max), r=0)
+
+    # ---- Move 8: Return Home (joint move) ----
+    safety_check(get_actual_pose())
+    movej(home_joint, a=joint_accel, v=joint_speed, t=0, r=0)
+
+    popup("Task completed safely.", title="INFO")
+
+# -------------------------------------------------
+# Execute main program
+# -------------------------------------------------
+main()

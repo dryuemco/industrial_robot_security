@@ -1,0 +1,147 @@
+# -------------------------------------------------
+# URScript for UR5e – Screw Fastening Assembly (Hybrid Mode)
+# -------------------------------------------------
+# Safety configuration (ISO 10218:2025 compliant)
+
+# ---- Global safety parameters ----
+max_tcp_speed = 0.250          # m/s (250 mm/s)
+max_joint_acc  = 1.4           # rad/s^2 per joint
+max_lin_acc    = 1.0           # m/s^2 (conservative for collaborative moves)
+
+# ---- Safety zone (workspace boundaries) ----
+# Define a rectangular safety zone in robot base frame
+zone_min = p[0.0, -0.5, 0.0, 0, 0, 0]   # [x, y, z, Rx, Ry, Rz]
+zone_max = p[0.8,  0.5, 0.8, 0, 0, 0]
+
+# ---- Payload configuration ----
+set_payload(1.0, [0,0,0])   # 1.0 kg payload, CoG at tool tip
+
+# ---- Emergency stop handler ----
+def e_stop_handler():
+    popup("EMERGENCY STOP ACTIVATED! Halting program.", true, "Error")
+    halt()
+end
+
+# ---- Safety check functions ----
+def safety_check(speed, acc):
+    # Verify speed and acceleration limits
+    if speed > max_tcp_speed:
+        popup("Speed limit exceeded!", true, "Error")
+        e_stop_handler()
+    end
+    if acc > max_joint_acc:
+        popup("Joint acceleration limit exceeded!", true, "Error")
+        e_stop_handler()
+    end
+end
+
+def pose_in_zone(pose):
+    # Simple axis-aligned bounding box check
+    return (pose[0] >= zone_min[0] and pose[0] <= zone_max[0] and
+            pose[1] >= zone_min[1] and pose[1] <= zone_max[1] and
+            pose[2] >= zone_min[2] and pose[2] <= zone_max[2])
+end
+
+def validate_pose(pose, name):
+    if not pose_in_zone(pose):
+        popup(strcat("Pose '", name, "' outside safety zone!"), true, "Error")
+        e_stop_handler()
+    end
+end
+
+# ---- Define waypoints (all positions in meters) ----
+home_pose          = p[0.0, -0.5, 0.5, 0, 3.14, 0]          # Home configuration
+above_feeder_pose  = p[0.3, 0.0, 0.4, 0, 3.14, 0]          # 10 cm above screw feeder
+pick_screw_pose    = p[0.3, 0.0, 0.2, 0, 3.14, 0]          # Screw pick position
+lift_pose          = p[0.3, 0.0, 0.5, 0, 3.14, 0]          # Lift after pick
+above_fp1_pose     = p[0.5, -0.2, 0.4, 0, 3.14, 0]         # Above fastening point 1
+above_fp2_pose     = p[0.5,  0.0, 0.4, 0, 3.14, 0]         # Above fastening point 2
+above_fp3_pose     = p[0.5,  0.2, 0.4, 0, 3.14, 0]         # Above fastening point 3
+above_fp4_pose     = p[0.5,  0.4, 0.4, 0, 3.14, 0]         # Above fastening point 4
+
+# Validate all waypoints before execution
+validate_pose(home_pose,          "home_pose")
+validate_pose(above_feeder_pose,  "above_feeder_pose")
+validate_pose(pick_screw_pose,    "pick_screw_pose")
+validate_pose(lift_pose,          "lift_pose")
+validate_pose(above_fp1_pose,     "above_fp1_pose")
+validate_pose(above_fp2_pose,     "above_fp2_pose")
+validate_pose(above_fp3_pose,     "above_fp3_pose")
+validate_pose(above_fp4_pose,     "above_fp4_pose")
+
+# ---- Motion parameters (converted to m/s) ----
+speed_joint_home   = 0.200   # 200 mm/s
+acc_joint_home     = max_joint_acc
+
+speed_lin_fast     = 0.200   # 200 mm/s
+speed_lin_medium   = 0.180   # 180 mm/s
+speed_lin_slow     = 0.080   # 80 mm/s
+acc_lin            = max_lin_acc
+
+# -------------------------------------------------
+# Begin task sequence
+# -------------------------------------------------
+
+# 1) Move to Home (collaborative joint move)
+safety_check(speed_joint_home, acc_joint_home)
+movej(home_pose, a=acc_joint_home, v=speed_joint_home, t=0, r=0)
+
+# 2) Approach above screw feeder (collaborative linear move)
+safety_check(speed_lin_fast, acc_lin)
+movel(above_feeder_pose, a=acc_lin, v=speed_lin_fast, t=0, r=0)
+
+# 3) Move down to pick screw (collaborative linear move, slower)
+safety_check(speed_lin_slow, acc_lin)
+movel(pick_screw_pose, a=acc_lin, v=speed_lin_slow, t=0, r=0)
+
+# 4) Close gripper (placeholder – replace with actual I/O)
+set_digital_out(0, True)   # Gripper close
+sleep(0.5)
+
+# 5) Lift screw from feeder (collaborative linear move)
+safety_check(speed_lin_medium, acc_lin)
+movel(lift_pose, a=acc_lin, v=speed_lin_medium, t=0, r=0)
+
+# ---- Switch to fenced (restricted) mode for fastening ----
+# In UR, fenced mode is typically enforced by external safety controller.
+# Here we simulate by reducing speed and ensuring zone compliance.
+set_robot_mode(1)   # Automatic mode (assumes external fence active)
+
+# 6) Move above fastening point 1 (restricted linear move)
+safety_check(speed_lin_fast, acc_lin)
+movel(above_fp1_pose, a=acc_lin, v=speed_lin_fast, t=0, r=0)
+
+# 7) Fasten screw at point 1 (placeholder for tool actuation)
+set_digital_out(1, True)   # Activate screwdriver
+sleep(1.0)                 # Simulated fastening time
+set_digital_out(1, False)  # Deactivate screwdriver
+
+# 8) Repeat for remaining fastening points
+# Point 2
+safety_check(speed_lin_fast, acc_lin)
+movel(above_fp2_pose, a=acc_lin, v=speed_lin_fast, t=0, r=0)
+set_digital_out(1, True)
+sleep(1.0)
+set_digital_out(1, False)
+
+# Point 3
+safety_check(speed_lin_fast, acc_lin)
+movel(above_fp3_pose, a=acc_lin, v=speed_lin_fast, t=0, r=0)
+set_digital_out(1, True)
+sleep(1.0)
+set_digital_out(1, False)
+
+# Point 4
+safety_check(speed_lin_fast, acc_lin)
+movel(above_fp4_pose, a=acc_lin, v=speed_lin_fast, t=0, r=0)
+set_digital_out(1, True)
+sleep(1.0)
+set_digital_out(1, False)
+
+# ---- Return to Home (collaborative joint move) ----
+set_robot_mode(1)   # Ensure still in automatic mode
+safety_check(speed_joint_home, acc_joint_home)
+movej(home_pose, a=acc_joint_home, v=speed_joint_home, t=0, r=0)
+
+# End of program
+popup("Task completed safely.", false, "Info")

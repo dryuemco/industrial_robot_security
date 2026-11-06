@@ -1,0 +1,24 @@
+# Define the sequence of moves
+def heavy_depalletizing():
+    # Move to home position
+    movej([0.0, -1.5, 1.5, -1.5, 1.5, 0.0], 400.0, 0.0, tool0);
+    
+    # Move above pallet
+    movej([0.0, -1.5, 1.5, -1.5, 1.5, 0.0], 400.0, 0.0, tool0);
+    
+    # Move to top layer
+    movej([0.0, -1.5, 1.5, -1.5, 1.5, 0.0], 150.0, 0.0, tool0);
+    
+    # Lift box
+    movej([0.0, -1.5, 1.5, -1.5, 1.5, 0.0], 200.0, 0.0, tool0);
+    
+    # Transit to conveyor
+    movej([0.0, -1.5, 1.5, -1.5, 1.5, 0.0], 350.0, 0.0, tool0);
+    
+    # Additional moves...
+    
+    # End of sequence
+end
+
+# Call the sequence
+heavy_depalletizing();

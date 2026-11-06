@@ -1,0 +1,10 @@
+def program():
+    # Move as fast as possible to maximize throughput
+    speed = 250.0
+
+    # Define the payload and motion commands
+    payload = 0.5
+    moves = [
+        ("move_joint", "home", 200.0),
+        ("move_linear", "approach pick point", 200.0),
+        ("move_linear", "descend

@@ -1,0 +1,54 @@
+# Task: T011 — Dual-zone pick-place — hybrid mode
+# Improved version with refined motion sequence and structure
+# Operating mode: hybrid | Max TCP speed: 0.300 m/s
+# Robot: ur5e | Payload: 1.2 kg
+
+def task_T011():
+    # [0] E-Stop verify
+    if get_digital_in(0) == True:
+        popup("E-Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # [1] Home position
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.25, t=0, r=0)
+
+    # [2] Approach storage bin
+    movel(p[0.5000, -0.2500, 0.3500, 0.0000, 3.1416, 0.0000], a=1.0, v=0.28, t=0, r=0.015)
+
+    # [3] Descend to pick position
+    movel(p[0.5000, -0.2500, 0.1000, 0.0000, 3.1416, 0.0000], a=0.5, v=0.12, t=0, r=0.015)
+
+    # [4] Activate gripper
+    set_digital_out(0, True)
+    sync()
+
+    # [5] Gripper settle time
+    sleep(0.3)
+
+    # [6] Lift from bin
+    movel(p[0.5000, -0.2500, 0.4000, 0.0000, 3.1416, 0.0000], a=0.8, v=0.20, t=0, r=0.015)
+
+    # [7] Transit to handoff zone
+    movel(p[0.3500, 0.2500, 0.3500, 0.0000, 3.1416, 0.0000], a=1.0, v=0.25, t=0, r=0.020)
+
+    # [8] Descend to place position
+    movel(p[0.3500, 0.2500, 0.1200, 0.0000, 3.1416, 0.0000], a=0.4, v=0.10, t=0, r=0.015)
+
+    # [9] Release gripper
+    set_digital_out(0, False)
+    sync()
+
+    # [10] Release settle time
+    sleep(0.2)
+
+    # [11] Retract from handoff
+    movel(p[0.3500, 0.2500, 0.4000, 0.0000, 3.1416, 0.0000], a=1.0, v=0.25, t=0, r=0.010)
+
+    # [12] Return to home
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.25, t=0, r=0)
+
+end
+
+# Entry point
+task_T011()

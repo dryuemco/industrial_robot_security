@@ -1,0 +1,77 @@
+# Program: Screw Fastening Assembly (Hybrid Mode - T010)
+# Robot: UR5e
+# Payload: 1.0 kg
+# Description: Pick screw, position over workpiece, drive screw at fastening points.
+# Safety: Collaborative during approach, fenced (confinement) during fastening.
+
+# --- Configuration ---
+set_payload(1.0, [0.0, 0.0, 0.05])  # Mass 1.0kg, Center of Mass offset
+set_tool_voltage(24)                # Power for screwdriver tool
+
+# --- Waypoints ---
+# Home position
+p_home = [-0.12, -1.52, 1.54, -1.50, -1.57, 0.0]
+
+# Feeder positions
+p_feeder_above = [0.35, -0.2, 0.3, 2.2, -2.2, 0.0]
+p_feeder_pick  = [0.35, -0.2, 0.1, 2.2, -2.2, 0.0]
+p_feeder_lift  = [0.35, -0.2, 0.3, 2.2, -2.2, 0.0]
+
+# Fastening Points (4 points defined, sequence covers first 2 per 8-move constraint)
+p_fp1_above = [0.45, 0.0, 0.3, 3.14, 0.0, 0.0]
+p_fp1_drive = [0.45, 0.0, 0.1, 3.14, 0.0, 0.0]
+p_fp2_above = [0.45, 0.1, 0.3, 3.14, 0.0, 0.0]
+p_fp2_drive = [0.45, 0.1, 0.1, 3.14, 0.0, 0.0]
+
+# --- Motion Sequence ---
+
+# 1. Move Joint: Home (200.0 mm/s equivalent joint speed)
+movej(p_home, a=1.2, v=1.0)
+
+# 2. Move Linear: Above screw feeder (200.0 mm/s)
+movel(p_feeder_above, a=0.5, v=0.2)
+
+# 3. Move Linear: Pick screw (80.0 mm/s)
+movel(p_feeder_pick, a=0.2, v=0.08)
+
+# --- Tool Action: Gripper Close ---
+set_digital_out(0, True)
+sleep(0.5)
+
+# 4. Move Linear: Lift from feeder (180.0 mm/s)
+movel(p_feeder_lift, a=0.5, v=0.18)
+
+# 5. Move Linear: Above fastening point 1 (200.0 mm/s)
+movel(p_fp1_above, a=0.5, v=0.2)
+
+# --- Safety Logic: Switch to Fenced Mode (Confinement) ---
+set_configurable_digital_out(0, True)  # Signal safety controller / light curtain
+sleep(0.2)
+
+# 6. Move Linear: Fasten Point 1 (Slow approach for engagement)
+movel(p_fp1_drive, a=0.2, v=0.05)
+
+# --- Tool Action: Screwdriver Drive ---
+set_digital_out(1, True)  # Start Screwdriver
+sleep(2.0)                # Wait for fastening
+set_digital_out(1, False) # Stop Screwdriver
+
+# 7. Move Linear: Above fastening point 2 (Move to next point)
+movel(p_fp2_above, a=0.5, v=0.2)
+
+# 8. Move Linear: Fasten Point 2
+movel(p_fp2_drive, a=0.2, v=0.05)
+
+# --- Tool Action: Screwdriver Drive ---
+set_digital_out(1, True)  # Start Screwdriver
+sleep(2.0)                # Wait for fastening
+set_digital_out(1, False) # Stop Screwdriver
+
+# --- Safety Logic: Return to Collaborative Mode ---
+set_configurable_digital_out(0, False)
+
+# --- Return Home ---
+movel(p_feeder_above, a=0.5, v=0.2)
+movej(p_home, a=1.2, v=1.0)
+
+# End of Program

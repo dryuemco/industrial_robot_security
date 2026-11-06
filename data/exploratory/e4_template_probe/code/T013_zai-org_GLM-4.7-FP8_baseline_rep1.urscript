@@ -1,0 +1,53 @@
+# URScript for Collaborative Suction Palletizing (UR5e)
+# Task: T013 - Light boxes (0.8 kg)
+
+# Setup
+set_payload(0.8, [0, 0, 0.05])  # Mass 0.8kg, CoM 50mm from flange
+set_tcp(p[0, 0, 0.1, 0, 0, 0])   # Set TCP for suction cup
+
+# Define Waypoints
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, -1.57]
+
+# Staging Area
+p_above_staging = p[0.3, -0.4, 0.3, 0, 3.14, 0]
+p_pick = p[0.3, -0.4, 0.0, 0, 3.14, 0]
+p_lift = p[0.3, -0.4, 0.15, 0, 3.14, 0]
+
+# Pallet Area
+p_transit = p[0.3, 0.4, 0.3, 0, 3.14, 0]
+p_above_place = p[0.3, 0.4, 0.15, 0, 3.14, 0]
+p_place = p[0.3, 0.4, 0.0, 0, 3.14, 0]
+
+# Motion Sequence
+
+# 1. Move Joint: Home (200.0 mm/s)
+movej(q_home, a=1.2, v=0.2)
+
+# 2. Move Linear: Above staging (220.0 mm/s)
+movel(p_above_staging, a=1.0, v=0.22)
+
+# 3. Move Linear: Descend to pick (100.0 mm/s)
+movel(p_pick, a=0.5, v=0.1)
+
+# Activate Suction
+set_standard_digital_out(0, True)
+sleep(0.5) # Wait for vacuum
+
+# 4. Move Linear: Lift (180.0 mm/s)
+movel(p_lift, a=1.0, v=0.18)
+
+# 5. Move Linear: Transit to pallet (230.0 mm/s)
+movel(p_transit, a=1.2, v=0.23)
+
+# 6. Move Linear: Descend to place (100.0 mm/s)
+movel(p_above_place, a=0.5, v=0.1)
+
+# 7. Move Linear: Place (50.0 mm/s - slow contact)
+movel(p_place, a=0.2, v=0.05)
+
+# Release Suction
+set_standard_digital_out(0, False)
+sleep(0.3)
+
+# 8. Move Joint: Home (200.0 mm/s)
+movej(q_home, a=1.2, v=0.2)

@@ -1,0 +1,130 @@
+# -------------------------------------------------
+# URScript: Safe Bin Picking with Suction (Fenced Mode)
+# Robot: UR5e
+# Payload: 2.0 kg
+# -------------------------------------------------
+
+# ---------- Configuration ----------
+set_payload(2.0, {0,0,0.1})          # payload mass (kg) and centre of mass (m)
+
+# Safety limits
+tcp_speed_max = 0.250               # m/s (250 mm/s)
+joint_accel_max = 1.4               # rad/s^2 per joint
+joint_speed_max = 0.8               # rad/s (conservative for safety)
+
+# ---------- Safety Zone Definition ----------
+# Define a cubic safety zone: [xmin, xmax, ymin, ymax, zmin, zmax] (meters)
+# Adjust these limits to match the fenced workspace.
+safety_zone = [-0.8, 0.8, -0.8, 0.8, 0.0, 1.2]
+
+# ---------- Helper Functions ----------
+def within_zone(pose):
+    # pose: 6-vector [x, y, z, rx, ry, rz] (m, rad)
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    return (x >= safety_zone[0] and x <= safety_zone[1] and
+            y >= safety_zone[2] and y <= safety_zone[3] and
+            z >= safety_zone[4] and z <= safety_zone[5])
+
+def safety_check(target_pose):
+    if not within_zone(target_pose):
+        textmsg("Safety violation: target pose outside permitted zone.")
+        popup("Emergency Stop: Pose outside safety zone!", "STOP", False)
+        halt()
+    end
+end
+
+def emergency_stop_handler():
+    # Called when a critical error occurs
+    popup("EMERGENCY STOP ACTIVATED!", "STOP", False)
+    halt()
+end
+
+# ---------- Waypoints (all poses in meters) ----------
+# Home position (joint target)
+home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Above bin (TCP pose)
+above_bin = p[0.5, -0.3, 0.4, 0, 3.14, 0]
+
+# Descend into bin
+into_bin = p[0.5, -0.3, 0.1, 0, 3.14, 0]
+
+# Lift from bin
+lift_bin = p[0.5, -0.3, 0.4, 0, 3.14, 0]
+
+# Transit to conveyor
+above_conveyor = p[0.0, 0.5, 0.4, 0, 3.14, 0]
+
+# Lower to place on conveyor
+place_conveyor = p[0.0, 0.5, 0.1, 0, 3.14, 0]
+
+# Retreat after placement
+retreat = p[0.0, 0.5, 0.4, 0, 3.14, 0]
+
+# ---------- Motion Parameters ----------
+# Joint motion
+joint_speed = min(joint_speed_max, 0.5)    # rad/s
+joint_accel = min(joint_accel_max, 0.8)    # rad/s^2
+
+# Linear motion
+lin_speed = min(tcp_speed_max, 0.25)       # m/s
+lin_accel = 1.2                            # m/s^2 (below joint limit)
+
+# ---------- Main Program ----------
+def main():
+    # Ensure robot is in correct mode (fenced)
+    # (Assume external system already set mode)
+
+    # 1. Move to Home (joint move)
+    safety_check(pose_home())
+    movej(home_joint, a=joint_accel, v=joint_speed, t=0, r=0)
+
+    # 2. Move above bin (linear)
+    safety_check(above_bin)
+    movel(above_bin, a=lin_accel, v=lin_speed, t=0, r=0)
+
+    # 3. Descend into bin (linear)
+    safety_check(into_bin)
+    movel(into_bin, a=lin_accel, v=lin_speed/2, t=0, r=0)   # slower for precision
+
+    # Activate suction (placeholder)
+    set_digital_out(0, True)   # suction ON
+    sync()
+    
+    # 4. Lift from bin (linear)
+    safety_check(lift_bin)
+    movel(lift_bin, a=lin_accel, v=lin_speed, t=0, r=0)
+
+    # 5. Transit to conveyor (linear)
+    safety_check(above_conveyor)
+    movel(above_conveyor, a=lin_accel, v=lin_speed, t=0, r=0)
+
+    # 6. Lower to place (linear)
+    safety_check(place_conveyor)
+    movel(place_conveyor, a=lin_accel, v=lin_speed/2, t=0, r=0)
+
+    # Release suction (placeholder)
+    set_digital_out(0, False)  # suction OFF
+    sync()
+    
+    # 7. Retreat after placement (linear)
+    safety_check(retreat)
+    movel(retreat, a=lin_accel, v=lin_speed, t=0, r=0)
+
+    # 8. Return to Home (joint)
+    safety_check(pose_home())
+    movej(home_joint, a=joint_accel, v=joint_speed, t=0, r=0)
+
+    textmsg("Pick‑place cycle completed safely.")
+end
+
+# ---------- Helper to get current TCP pose as a vector ----------
+def pose_home():
+    # Use a known safe home pose (same as above_bin but higher)
+    return p[0.0, 0.0, 0.6, 0, 3.14, 0]
+end
+
+# Run the program
+main()

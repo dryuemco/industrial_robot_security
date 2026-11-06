@@ -1,0 +1,75 @@
+def spot_welding():
+    # Safety parameters
+    max_tcp_speed = 250.0  # mm/s
+    max_joint_accel = 1.4  # rad/s²
+    safety_zone = [(-0.5, -0.5, -0.2), (0.5, 0.5, 0.8)]  # x_min, y_min, z_min, x_max, y_max, z_max
+
+    # Payload setup
+    set_payload(2.5, [0.0, 0.0, 0.0])  # mass, CoG
+
+    # Home position
+    home_joints = [0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+
+    # Spot positions (TCP frame)
+    spot1_approach = [0.3, 0.2, 0.3, 0.0, 0.0, 0.0]
+    spot1_weld = [0.3, 0.2, 0.1, 0.0, 0.0, 0.0]
+    spot2_approach = [0.4, 0.1, 0.3, 0.0, 0.0, 0.0]
+    spot2_weld = [0.4, 0.1, 0.1, 0.0, 0.0, 0.0]
+    spot3_approach = [0.35, -0.1, 0.3, 0.0, 0.0, 0.0]
+    spot3_weld = [0.35, -0.1, 0.1, 0.0, 0.0, 0.0]
+
+    # Safety check function
+    def safety_check(pos):
+        if (pos[0] < safety_zone[0][0] or pos[0] > safety_zone[1][0] or
+            pos[1] < safety_zone[0][1] or pos[1] > safety_zone[1][1] or
+            pos[2] < safety_zone[0][2] or pos[2] > safety_zone[1][2]):
+            sys.exit("Safety zone violation!")
+        return True
+
+    # Emergency stop handler
+    def emergency_stop():
+        pop_up("Emergency stop triggered!")
+        halt()
+
+    # Main sequence
+    try:
+        # Move to home
+        move_j(home_joints, a=max_joint_accel, v=200.0)
+        safety_check(get_actual_tcp_pose()[1:4])
+
+        # Spot 1
+        move_l(spot1_approach, a=max_joint_accel, v=200.0)
+        safety_check(spot1_approach)
+        move_l(spot1_weld, a=max_joint_accel, v=80.0)
+        safety_check(spot1_weld)
+        # Simulate weld activation (A7)
+        sleep(2.0)
+        move_l(spot1_approach, a=max_joint_accel, v=150.0)
+        safety_check(spot1_approach)
+
+        # Spot 2
+        move_l(spot2_approach, a=max_joint_accel, v=200.0)
+        safety_check(spot2_approach)
+        move_l(spot2_weld, a=max_joint_accel, v=80.0)
+        safety_check(spot2_weld)
+        sleep(2.0)
+        move_l(spot2_approach, a=max_joint_accel, v=150.0)
+        safety_check(spot2_approach)
+
+        # Spot 3
+        move_l(spot3_approach, a=max_joint_accel, v=200.0)
+        safety_check(spot3_approach)
+        move_l(spot3_weld, a=max_joint_accel, v=80.0)
+        safety_check(spot3_weld)
+        sleep(2.0)
+        move_l(spot3_approach, a=max_joint_accel, v=150.0)
+        safety_check(spot3_approach)
+
+        # Return to home
+        move_j(home_joints, a=max_joint_accel, v=200.0)
+        safety_check(get_actual_tcp_pose()[1:4])
+
+    except:
+        emergency_stop()
+
+spot_welding()

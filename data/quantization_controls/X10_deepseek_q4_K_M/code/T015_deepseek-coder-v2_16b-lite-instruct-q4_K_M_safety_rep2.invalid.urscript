@@ -1,0 +1,43 @@
+# Define safety parameters
+set_tool_payload 0.6;
+set_speed 350.0;  # Home speed
+set_acceleration [1.4, 1.4, 1.4, 1.4, 1.4, 1.4];  # Joint acceleration
+
+# Define safety zones
+def SAFE_ZONE = [
+    [-0.5, -0.5, 0, -180, -180, -180],
+    [0.5, 0.5, 1.5, 180, 180, 180]
+];
+
+# Define payload position
+def PAYLOAD_POS = [0.0, 0.0, 0.1, 0, 0, 0];
+
+# Define home position
+def HOME_POS = [0.3, -0.4, 0.2, 0, 0, 0];
+
+# Define safety_check function
+def safety_check() {
+    if !check_collision(SAFE_ZONE, PAYLOAD_POS) {
+        popup "Collision detected!";
+        stop;
+    }
+}
+
+# Move to home position
+movej HOME_POS;
+
+# Move to above marking surface
+move_linear [0, 0, -0.1, 0, 0, 0], [0, 0, 0, 0, 0, 0], 300.0;
+
+# Move to marking height
+move_linear [0, 0, -0.1, 0, 0, 0], [0, 0, 0, 0, 0, 0], 100.0;
+
+# Move to mark line 1
+move_linear [0, 0, 0, 0, 0, 0], [0, 0, -0.01, 0, 0, 0], 60.0;
+
+# Move to step to line 2
+move_linear [0, 0, 0, 0, 0, 0], [0, 0, -0.01, 0, 0, 0], 80.0;
+
+# Repeat for remaining moves...
+
+# End of script

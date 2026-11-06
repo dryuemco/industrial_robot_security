@@ -1,0 +1,69 @@
+# Task: T002 — Linear weld path — fenced mode
+# Robot: UR5e | Mode: Fenced | Payload: 3.0 kg
+# Max TCP speed: 500.0 mm/s | Safety zones: Confinement & Exclusion enforced
+# Weld sequence: 300mm linear seam with controlled approach/retract
+
+def task_T002():
+    # Safety check: Verify E-Stop is clear before proceeding
+    if get_digital_in(0):
+        popup("E-Stop active — program aborted.", title="Safety Alert", error=True)
+        halt()
+    end
+
+    # Constants for motion parameters
+    HOME_POS = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+    WELD_START_POSE = p[0.450000, 0.000000, 0.200000, 0.0000, 3.1416, 0.0000]
+    WELD_END_POSE = p[0.450000, 0.300000, 0.200000, 0.0000, 3.1416, 0.0000]
+    APPROACH_HEIGHT = 0.350000
+    RETRACT_HEIGHT = 0.350000
+
+    # Motion parameters
+    HOME_SPEED = 300.0  # mm/s
+    APPROACH_SPEED = 250.0  # mm/s
+    DESCENT_SPEED = 100.0  # mm/s
+    WELD_SPEED = 50.0  # mm/s
+    RETRACT_SPEED = 200.0  # mm/s
+
+    # Welding parameters
+    GAS_PRE_FLOW_DELAY = 0.5  # seconds
+    POST_WELD_GAS_DELAY = 1.0  # seconds
+    WELD_CURRENT = 0.400  # normalized
+    WIRE_FEED_RATE = 0.333  # normalized
+
+    # [1] Move to home position (joint move)
+    movej(HOME_POS, a=1.4, v=HOME_SPEED/1000)
+
+    # [2] Approach above weld start (linear move)
+    movel(WELD_START_POSE + p[0, 0, APPROACH_HEIGHT, 0, 0, 0], a=1.0, v=APPROACH_SPEED/1000, r=0.01)
+
+    # [3] Descend to weld start position (linear move)
+    movel(WELD_START_POSE, a=0.5, v=DESCENT_SPEED/1000, r=0.001)
+
+    # [4] Welding preparation
+    set_digital_out(1, True)  # Gas pre-flow ON
+    sleep(GAS_PRE_FLOW_DELAY)
+
+    # [5] Welding arc activation
+    set_digital_out(0, True)  # Arc ON
+    set_analog_out(0, WELD_CURRENT)
+    set_analog_out(1, WIRE_FEED_RATE)
+
+    # [6] Weld seam execution (300mm linear path)
+    movel(WELD_END_POSE, a=0.2, v=WELD_SPEED/1000)
+
+    # [7] Welding termination
+    set_digital_out(0, False)  # Arc OFF
+    set_analog_out(0, 0.0)
+    set_analog_out(1, 0.0)
+    sleep(POST_WELD_GAS_DELAY)
+    set_digital_out(1, False)  # Gas OFF
+
+    # [8] Retract above weld end (linear move)
+    movel(WELD_END_POSE + p[0, 0, RETRACT_HEIGHT, 0, 0, 0], a=1.0, v=RETRACT_SPEED/1000, r=0.01)
+
+    # [9] Return to home position (joint move)
+    movej(HOME_POS, a=1.4, v=HOME_SPEED/1000)
+end
+
+# Program entry point
+task_T002()

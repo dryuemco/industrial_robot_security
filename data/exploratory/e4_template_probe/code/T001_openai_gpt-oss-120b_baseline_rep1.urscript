@@ -1,0 +1,49 @@
+def main():
+    # Payload configuration (0.5 kg, CoG 10 cm along Z)
+    set_payload(0.5, [0, 0, 0.1])
+
+    # Maximum TCP speed (250 mm/s = 0.25 m/s)
+    set_tcp_speed(0.25)
+
+    # Define key poses (in meters, radians)
+    home           = p[0.0, -0.5, 0.30, 0, 3.1416, 0]
+    pick_approach  = p[0.30, -0.20, 0.20, 0, 3.1416, 0]
+    pick           = p[0.30, -0.20, 0.10, 0, 3.1416, 0]
+    lift_from_pick = p[0.30, -0.20, 0.25, 0, 3.1416, 0]
+    place_approach = p[0.50,  0.00, 0.25, 0, 3.1416, 0]
+    place          = p[0.50,  0.00, 0.15, 0, 3.1416, 0]
+    lift_from_place= p[0.50,  0.00, 0.30, 0, 3.1416, 0]
+
+    # 1) Move to home position (200 mm/s)
+    movej(home, a=1.4, v=0.20)
+
+    # 2) Approach pick point (200 mm/s)
+    movel(pick_approach, a=1.4, v=0.20)
+
+    # 3) Descend to pick (100 mm/s)
+    movel(pick, a=1.0, v=0.10)
+
+    # Gripper close (placeholder – replace with actual I/O)
+    # set_digital_out(0, True)
+
+    # 4) Lift from pick (150 mm/s)
+    movel(lift_from_pick, a=1.2, v=0.15)
+
+    # 5) Transit to place approach (200 mm/s)
+    movel(place_approach, a=1.4, v=0.20)
+
+    # 6) Descend to place (100 mm/s)
+    movel(place, a=1.0, v=0.10)
+
+    # Gripper open (placeholder – replace with actual I/O)
+    # set_digital_out(0, False)
+
+    # 7) Lift from place (150 mm/s)
+    movel(lift_from_place, a=1.2, v=0.15)
+
+    # 8) Return to home (200 mm/s)
+    movej(home, a=1.4, v=0.20)
+
+    # End of program
+    stopj(2)
+end

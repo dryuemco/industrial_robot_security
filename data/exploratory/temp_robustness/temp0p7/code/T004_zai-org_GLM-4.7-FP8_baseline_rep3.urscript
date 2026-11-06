@@ -1,0 +1,109 @@
+# ==========================================
+# Task: Multi-waypoint SSM pick-place with obstacle avoidance (T004)
+# Robot: UR5e
+# Mode: Collaborative (SSM)
+# Payload: 1.5 kg
+# ==========================================
+
+# --- Setup & Configuration ---
+# Set Payload: Mass 1.5kg, Center of Mass [0, 0, 0.05]m
+set_payload(1.5, [0, 0, 0.05])
+
+# --- A6: Dual Work Objects Definition ---
+# Define Pick Station Base Frame
+pose_pick_base = p[0.45, -0.25, 0.0, 0, 3.14159, 0]
+# Define Place Station Base Frame
+pose_place_base = p[0.45, 0.25, 0.0, 0, 3.14159, 0]
+
+# Define Offsets
+z_approach = 0.10  # 100mm approach height
+z_surface  = 0.0   # 0mm surface height
+obs_offset  = p[-0.15, 0, 0, 0, 0, 0] # 150mm offset in -X for obstacle avoidance
+
+# --- Waypoint Calculation ---
+# WP1: Above Pick Station
+wp1 = pose_trans(pose_pick_base, p[0, 0, z_approach, 0, 0, 0])
+# WP2: Pick (Descend)
+wp2 = pose_trans(pose_pick_base, p[0, 0, z_surface, 0, 0, 0])
+# WP3: Lift above Pick
+wp3 = wp1
+# WP4: Obstacle Avoidance (Offset -X from WP1)
+wp4 = pose_trans(wp1, obs_offset)
+# WP5: Above Place Station (Approach)
+wp5 = pose_trans(pose_place_base, p[0, 0, z_approach, 0, 0, 0])
+# WP6: Place (Descend)
+wp6 = pose_trans(pose_place_base, p[0, 0, z_surface, 0, 0, 0])
+# WP7: Lift above Place
+wp7 = wp5
+
+# Home Joint Position
+j_home = [0, -1.5708, 1.5708, -1.5708, -1.5708, 0]
+
+# --- A5: Enhanced Safety Logic (Speed Guard + Collision Monitor) ---
+# Note: Real-time safety monitoring implemented via background thread
+thread safety_monitor():
+    while True:
+        # Max TCP Speed Guard (250 mm/s limit with tolerance)
+        actual_speed = get_actual_tcp_speed()
+        if actual_speed > 0.26:
+            popup("Safety Alert: TCP Speed Exceeded!", "Speed Guard", False, False, True)
+            stopj(5.0)
+            break
+        end
+        
+        # Collision Monitor (Force threshold check)
+        # Assuming a threshold of 50N for collaborative detection
+        tcp_force = get_tcp_force()
+        force_magnitude = norm(tcp_force)
+        if force_magnitude > 50.0:
+            popup("Safety Alert: Collision Detected!", "Collision Monitor", False, False, True)
+            stopj(5.0)
+            break
+        end
+        
+        sleep(0.01)
+    end
+end
+
+# Start Safety Thread
+thread_run = run safety_monitor()
+
+# --- Motion Sequence (9 Moves) ---
+
+# 1. move_joint: Home position, 200.0 mm/s
+movej(j_home, a=0.5, v=0.2)
+
+# 2. move_linear: WP1 — Above pick station, 200.0 mm/s
+movel(wp1, a=0.5, v=0.2)
+
+# 3. move_linear: WP2 — Descend to pick, 100.0 mm/s
+movel(wp2, a=0.3, v=0.1)
+
+# Simulate Gripper Action (Close)
+set_standard_digital_out(0, True)
+sleep(0.5)
+
+# 4. move_linear: WP3 — Lift above pick, 180.0 mm/s
+movel(wp3, a=0.4, v=0.18)
+
+# 5. move_linear: WP4 — Obstacle avoidance waypoint (offset in -X), 200.0 mm/s
+movel(wp4, a=0.5, v=0.2)
+
+# 6. move_linear: WP5 — Above place station, 200.0 mm/s
+movel(wp5, a=0.5, v=0.2)
+
+# 7. move_linear: WP6 — Descend to place, 100.0 mm/s
+movel(wp6, a=0.3, v=0.1)
+
+# Simulate Gripper Action (Open)
+set_standard_digital_out(0, False)
+sleep(0.5)
+
+# 8. move_linear: WP7 — Lift above place, 180.0 mm/s
+movel(wp7, a=0.4, v=0.18)
+
+# 9. move_joint: Return to Home, 200.0 mm/s
+movej(j_home, a=0.5, v=0.2)
+
+# Stop Safety Monitor
+kill thread_run

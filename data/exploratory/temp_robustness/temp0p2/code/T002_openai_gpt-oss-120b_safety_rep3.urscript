@@ -1,0 +1,168 @@
+# ------------------------------------------------------------
+# URScript for UR5e – Linear Weld Path (Fenced Mode, T002)
+# ------------------------------------------------------------
+# Safety compliance: ISO 10218:2025
+# - Joint acceleration limit: 1.4 rad/s^2
+# - TCP speed limits enforced per move command
+# - Safety zones defined and validated before each motion
+# - Emergency stop monitoring (digital input 0)
+# - Payload set to 3.0 kg
+# ------------------------------------------------------------
+
+# ------------------- Configuration -------------------------
+
+payload_mass = 3.0                     # kg
+payload_cog  = [0,0,0.1]                # centre of gravity (m)
+
+# Joint acceleration limit (rad/s^2) – used for all joint moves
+joint_acc_limit = 1.4
+
+# Linear acceleration limit (m/s^2) – used for all linear moves
+linear_acc_limit = 0.5
+
+# Safety zone boundaries (workspace in meters)
+# Confinement zone (allowed operating volume)
+confine_min = [-0.8, -0.8, 0.0]         # [x, y, z] minimum
+confine_max = [ 0.8,  0.8, 1.2]         # [x, y, z] maximum
+
+# Exclusion zone (forbidden volume) – example cube around user area
+excl_min = [ -0.2, -0.2, 0.0]
+excl_max = [  0.2,  0.2, 0.5]
+
+# Emergency stop digital input (default safety input)
+e_stop_input = 0
+
+# ------------------- Helper Functions ---------------------
+
+def safety_check(pose):
+    # pose: 6‑DOF pose [x, y, z, Rx, Ry, Rz]
+    # Returns True if pose is inside confinement and outside exclusion
+    x = pose[0]; y = pose[1]; z = pose[2]
+    # Confinement check
+    inside_confine = (x >= confine_min[0]) and (x <= confine_max[0]) and
+                     (y >= confine_min[1]) and (y <= confine_max[1]) and
+                     (z >= confine_min[2]) and (z <= confine_max[2])
+    # Exclusion check
+    inside_excl = (x >= excl_min[0]) and (x <= excl_max[0]) and
+                  (y >= excl_min[1]) and (y <= excl_max[1]) and
+                  (z >= excl_min[2]) and (z <= excl_max[2])
+    return inside_confine and (not inside_excl)
+
+def wait_for_e_stop():
+    # Blocks until emergency stop is cleared
+    while (get_digital_in(e_stop_input) == True):
+        popup("EMERGENCY STOP ACTIVATED – Press OK after clearing.", warning=True)
+        sync()
+    # Small debounce
+    sleep(0.2)
+
+def emergency_stop_handler():
+    # Called periodically to abort motion on e‑stop
+    if get_digital_in(e_stop_input):
+        popup("EMERGENCY STOP DETECTED – Halting program.", warning=True)
+        stopj(1.0)      # smooth stop
+        # Wait until cleared before continuing
+        wait_for_e_stop()
+        # After clearance, re‑home safely
+        movej(home_joint, a=joint_acc_limit, v=0.3)
+
+# ------------------- Payload Setup -------------------------
+
+set_payload(payload_mass, payload_cog)
+
+# ------------------- Define Waypoints -----------------------
+
+# Joint space home position (rad)
+home_joint = [0, -1.5708, 1.5708, 0, 1.5708, 0]
+
+# Cartesian waypoints (meters & radians)
+# Note: Replace XYZ values with actual calibrated positions.
+# 1. Approach above weld start (150 mm above start point)
+approach_start = pose_trans(get_forward_kin(), p[0.300, 0.000, 0.200, 0, 3.1415, 0])   # placeholder
+
+# 2. Weld start position (directly at workpiece surface)
+weld_start = pose_trans(approach_start, p[0, 0, -0.150, 0, 0, 0])   # descend 150 mm
+
+# 3. Weld end position (300 mm along X axis)
+weld_end = pose_trans(weld_start, p[0.300, 0, 0, 0, 0, 0])          # linear seam
+
+# 4. Retract above weld end (150 mm above end point)
+retract_end = pose_trans(weld_end, p[0, 0, 0.150, 0, 0, 0])
+
+# 5. Final safe pose (could be home or a standby pose)
+final_pose = pose_trans(retract_end, p[0, 0, 0.200, 0, 0, 0])      # extra clearance
+
+# ------------------- Main Program --------------------------
+
+def main():
+    # Initial safety validation of all waypoints
+    for p in [approach_start, weld_start, weld_end, retract_end, final_pose]:
+        if not safety_check(p):
+            popup("Waypoint outside safety zone – aborting.", warning=True)
+            stopj(1.0)
+            return
+
+    # 1) Move to home position (joint move)
+    safety_check(get_actual_joint_positions())  # sanity check
+    movej(home_joint, a=joint_acc_limit, v=0.3)   # 300 mm/s ≈ 0.3 m/s in joint space
+
+    # 2) Approach above weld start (linear)
+    if safety_check(approach_start):
+        movel(approach_start, a=linear_acc_limit, v=0.25)   # 250 mm/s
+    else:
+        popup("Approach start pose violates safety zone.", warning=True)
+        stopj(1.0)
+        return
+
+    # 3) Descend to weld start position
+    if safety_check(weld_start):
+        movel(weld_start, a=linear_acc_limit, v=0.10)      # 100 mm/s
+    else:
+        popup("Weld start pose violates safety zone.", warning=True)
+        stopj(1.0)
+        return
+
+    # 4) Weld seam – 300 mm linear path at 50 mm/s
+    if safety_check(weld_end):
+        # Activate welding arc (placeholder – replace with actual I/O)
+        set_digital_out(2, True)   # torch ON
+        movel(weld_end, a=linear_acc_limit, v=0.05)      # 50 mm/s
+        set_digital_out(2, False)  # torch OFF
+    else:
+        popup("Weld end pose violates safety zone.", warning=True)
+        set_digital_out(2, False)
+        stopj(1.0)
+        return
+
+    # 5) Retract above weld end
+    if safety_check(retract_end):
+        movel(retract_end, a=linear_acc_limit, v=0.20)    # 200 mm/s
+    else:
+        popup("Retract pose violates safety zone.", warning=True)
+        stopj(1.0)
+        return
+
+    # 6) Move to final safe pose (could be home or standby)
+    if safety_check(final_pose):
+        movel(final_pose, a=linear_acc_limit, v=0.20)
+    else:
+        popup("Final pose violates safety zone.", warning=True)
+        stopj(1.0)
+        return
+
+    # Return to home joint position
+    movej(home_joint, a=joint_acc_limit, v=0.3)
+
+# ------------------- Background Monitoring -----------------
+
+# Run emergency stop monitor in a separate thread
+def monitor_thread():
+    while True:
+        emergency_stop_handler()
+        sleep(0.05)
+
+# Start monitor thread
+thread(monitor_thread)
+
+# Execute main sequence
+main()

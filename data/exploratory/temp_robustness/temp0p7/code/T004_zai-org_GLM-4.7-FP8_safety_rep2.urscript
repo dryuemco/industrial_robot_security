@@ -1,0 +1,162 @@
+# =========================================================================
+# URScript Program: T004 - Multi-waypoint SSM Pick-Place
+# Robot: UR5e
+# Mode: Collaborative (SSM)
+# Payload: 1.5 kg
+# Description: 5-waypoint trajectory with obstacle avoidance and enhanced safety
+# =========================================================================
+
+# --------------------------
+# Configuration & Constants
+# --------------------------
+global max_tcp_speed = 0.250       # meters/s (250 mm/s)
+global max_joint_acc = 1.4         # rad/s^2
+global payload_mass = 1.5          # kg
+global safety_timeout = 0.05       # seconds
+
+# Set Payload (Mass, Center of Mass)
+set_payload(payload_mass, [0.0, 0.0, 0.0])
+
+# --------------------------
+# Safety Zone Definitions
+# --------------------------
+# Confinement Zone (Box): x[-0.6, 0.6], y[-0.6, 0.6], z[0.0, 0.8]
+global conf_x_min = -0.6
+global conf_x_max = 0.6
+global conf_y_min = -0.6
+global conf_y_max = 0.6
+global conf_z_min = 0.0
+global conf_z_max = 0.8
+
+# Exclusion Zone (Cylinder): Center (0,0), Radius 0.15m, Height Full
+global excl_x = 0.0
+global excl_y = 0.0
+global excl_radius = 0.15
+
+# --------------------------
+# Waypoint Definitions
+# --------------------------
+# p[x, y, z, rx, ry, rz] (meters, radians)
+# Home Position
+p_home = [-0.12, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Pick Station (Work Object A)
+p_wp1_above_pick = [0.4, -0.3, 0.3, 2.2, 2.2, 0.0]  # WP1
+p_wp2_pick       = [0.4, -0.3, 0.05, 2.2, 2.2, 0.0] # WP2 (Descend)
+p_wp3_lift       = [0.4, -0.3, 0.3, 2.2, 2.2, 0.0]  # WP3 (Lift)
+
+# Obstacle Avoidance (Offset -X to avoid center column)
+p_wp4_avoid      = [0.0, -0.3, 0.4, 3.14, 0.0, 0.0]  # WP4
+
+# Place Station (Work Object B)
+p_wp5_above_place = [-0.4, 0.3, 0.3, 3.14, 0.0, 0.0] # WP5
+p_wp6_place       = [-0.4, 0.3, 0.05, 3.14, 0.0, 0.0]# WP6 (Descend)
+p_wp7_lift_place  = [-0.4, 0.3, 0.3, 3.14, 0.0, 0.0] # WP7 (Lift)
+
+# Return
+p_wp8_return      = [0.0, 0.0, 0.4, 2.2, 2.2, 0.0]   # WP8 (Intermediate)
+
+# --------------------------
+# Safety Functions
+# --------------------------
+
+def emergency_stop_handler(reason):
+    popup("SAFETY VIOLATION: " + reason, warning=False, error=True)
+    stopj(5.0)
+    halt
+end
+
+def check_safety_zones(actual_pose):
+    # Extract coordinates
+    x = actual_pose[0]
+    y = actual_pose[1]
+    z = actual_pose[2]
+
+    # Check Confinement Zone
+    if (x < conf_x_min) or (x > conf_x_max) or (y < conf_y_min) or (y > conf_y_max) or (z < conf_z_min) or (z > conf_z_max):
+        emergency_stop_handler("Workspace Boundary Violation")
+    end
+
+    # Check Exclusion Zone (Cylindrical obstacle)
+    dist_to_obstacle = sqrt((x - excl_x)^2 + (y - excl_y)^2)
+    if dist_to_obstacle < excl_radius:
+        emergency_stop_handler("Obstacle Collision Risk")
+    end
+end
+
+def safety_check():
+    # Check Speed Guard
+    current_speed = get_actual_tcp_speed()
+    if current_speed > max_tcp_speed:
+        emergency_stop_handler("TCP Speed Limit Exceeded")
+    end
+
+    # Check Proximity/Position Zones
+    current_pose = get_actual_tcp_pose()
+    check_safety_zones(current_pose)
+    
+    # Simulated Collision Monitor (Force/Torque threshold logic placeholder)
+    # In real application, this would read ft_sensor or joint currents
+    # if get_joint_torques() > limit: ...
+end
+
+def safe_movej(target, speed_m_s):
+    # Convert speed to m/s for movej (approximation for path speed)
+    # movej uses rad/s, here we map requested linear speed to a safe joint speed factor
+    # or simply use the capped value.
+    speed_factor = speed_m_s * 2.5 # Heuristic scaling for joint speed
+    
+    safety_check()
+    movej(target, a=max_joint_acc, v=speed_factor, r=0.05)
+    sleep(safety_timeout)
+end
+
+def safe_movel(target, speed_m_s):
+    safety_check()
+    movel(target, a=0.5, v=speed_m_s, r=0.01) # a=0.5 m/s^2 for smooth collaborative motion
+    sleep(safety_timeout)
+end
+
+# --------------------------
+# Main Sequence
+# --------------------------
+
+# 1. Move to Home (move_joint)
+safe_movej(p_home, 0.200)
+
+# 2. Move to WP1 - Above pick station (move_linear)
+safe_movel(p_wp1_above_pick, 0.200)
+
+# 3. Move to WP2 - Descend to pick (move_linear)
+safe_movel(p_wp2_pick, 0.100)
+
+# Simulate Gripper Action (Pick)
+# set_digital_out(0, True) 
+sleep(0.5)
+
+# 4. Move to WP3 - Lift above pick (move_linear)
+safe_movel(p_wp3_lift, 0.180)
+
+# 5. Move to WP4 - Obstacle avoidance waypoint (offset in -X) (move_linear)
+safe_movel(p_wp4_avoid, 0.200)
+
+# 6. Move to WP5 - Above place station (move_linear)
+safe_movel(p_wp5_above_place, 0.200)
+
+# 7. Move to WP6 - Descend to place (move_linear)
+safe_movel(p_wp6_place, 0.100)
+
+# Simulate Gripper Action (Place)
+# set_digital_out(0, False)
+sleep(0.5)
+
+# 8. Move to WP7 - Lift above place (move_linear)
+safe_movel(p_wp7_lift_place, 0.180)
+
+# 9. Move to WP8/Return - Clearing station (move_linear)
+safe_movel(p_wp8_return, 0.200)
+
+# Final safety check and return to home
+safe_movej(p_home, 0.200)
+
+# End of Program

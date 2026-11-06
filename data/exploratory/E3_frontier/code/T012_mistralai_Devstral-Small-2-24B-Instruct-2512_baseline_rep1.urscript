@@ -1,0 +1,51 @@
+def spot_welding():
+    # Define tool and base frames (example values - adjust to your setup)
+    tool0 = p[0, 0, 0, 0, 0, 0]
+    base = p[0, 0, 0, 0, 0, 0]
+
+    # Define weld spots (example positions - replace with actual coordinates)
+    spot1_approach = p[300, 0, 200, 0, 0, 0]
+    spot1_weld = p[300, 0, 190, 0, 0, 0]
+    spot2_approach = p[300, 100, 200, 0, 0, 0]
+    spot2_weld = p[300, 100, 190, 0, 0, 0]
+    spot3_approach = p[300, 200, 200, 0, 0, 0]
+    spot3_weld = p[300, 200, 190, 0, 0, 0]
+
+    # Home position
+    home = p[0, 0, 250, 0, 0, 0]
+
+    # Set payload
+    set_payload(2.5, p[0, 0, 0.1])  # 2.5 kg payload with 10 cm COG
+
+    # Set speed limits
+    set_max_speed_fraction(0.8)  # 80% of max speed (200 mm/s)
+    set_max_speed_l(250)  # Max TCP speed 250 mm/s
+
+    # Move to home position
+    movej(home, a=1.396, v=200, t=0, r=0)
+
+    # Spot 1
+    movel(spot1_approach, a=1.396, v=200, t=0, r=0)
+    movel(spot1_weld, a=1.396, v=80, t=0, r=0)
+    # Weld activation (simulated)
+    sleep(2.0)  # Simulate welding time
+    movel(spot1_approach, a=1.396, v=150, t=0, r=0)
+
+    # Spot 2
+    movel(spot2_approach, a=1.396, v=200, t=0, r=0)
+    movel(spot2_weld, a=1.396, v=80, t=0, r=0)
+    # Weld activation (simulated)
+    sleep(2.0)  # Simulate welding time
+    movel(spot2_approach, a=1.396, v=150, t=0, r=0)
+
+    # Spot 3
+    movel(spot3_approach, a=1.396, v=200, t=0, r=0)
+    movel(spot3_weld, a=1.396, v=80, t=0, r=0)
+    # Weld activation (simulated)
+    sleep(2.0)  # Simulate welding time
+    movel(spot3_approach, a=1.396, v=150, t=0, r=0)
+
+    # Return to home
+    movej(home, a=1.396, v=200, t=0, r=0)
+
+spot_welding()

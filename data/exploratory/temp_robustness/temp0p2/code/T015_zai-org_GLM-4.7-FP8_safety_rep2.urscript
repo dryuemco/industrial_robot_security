@@ -1,0 +1,151 @@
+# ==============================================================================
+# URScript for Laser Marking Task - UR5e Fenced Mode
+# Task: Laser engraving of serial number pattern (3 lines) on metal surface
+# Compliance: ISO 10218:2025
+# ==============================================================================
+
+# --- Configuration & Constants ---
+global max_tcp_speed = 0.4          # m/s (400 mm/s limit)
+global max_joint_accel = 1.4        # rad/s^2
+global laser_dout = 0               # Digital output for laser trigger
+global payload_mass = 0.6           # kg
+
+# Set Payload (Mass, Center of Gravity [x,y,z])
+set_payload(payload_mass, [0, 0, 0.05])
+
+# --- Safety Zones Definition ---
+# Confinement Zone (Box: [x_min, x_max, y_min, y_max, z_min, z_max])
+# Robot must stay inside this volume
+global confinement_zone = [0.3, 0.7, -0.2, 0.2, 0.0, 0.5]
+
+# Exclusion Zone (Box: [x_min, x_max, y_min, y_max, z_min, z_max])
+# Robot must stay outside this volume (e.g., around base)
+global exclusion_zone = [-0.2, 0.2, -0.2, 0.2, 0.0, 0.3]
+
+# --- Safety Functions ---
+
+def emergency_stop_handler():
+    popup("EMERGENCY STOP TRIGGERED: Safety Violation Detected!")
+    stopj(5.0)
+    halt
+end
+
+def check_safety_zones(current_pose):
+    x = current_pose[0]
+    y = current_pose[1]
+    z = current_pose[2]
+    
+    # Check Confinement
+    if x < confinement_zone[0] or x > confinement_zone[1] or y < confinement_zone[2] or y > confinement_zone[3] or z < confinement_zone[4] or z > confinement_zone[5]:
+        emergency_stop_handler()
+    end
+    
+    # Check Exclusion
+    if x > exclusion_zone[0] and x < exclusion_zone[1] and y > exclusion_zone[2] and y < exclusion_zone[3] and z > exclusion_zone[4] and z < exclusion_zone[5]:
+        emergency_stop_handler()
+    end
+end
+
+def validate_waypoint(target_pose):
+    # Pre-check target against confinement
+    x = target_pose[0]
+    y = target_pose[1]
+    z = target_pose[2]
+    
+    if x < confinement_zone[0] or x > confinement_zone[1] or y < confinement_zone[2] or y > confinement_zone[3] or z < confinement_zone[4] or z > confinement_zone[5]:
+        popup("Waypoint Validation Failed: Target outside safety zone!")
+        halt
+    end
+end
+
+def safety_check():
+    # Check Speed
+    actual_speed = get_actual_tcp_speed()
+    if actual_speed > max_tcp_speed:
+        popup("Safety Violation: TCP Speed limit exceeded!")
+        emergency_stop_handler()
+    end
+    
+    # Check Position
+    check_safety_zones(get_actual_tcp_pose())
+end
+
+# --- Fixture & Waypoints Setup (A6: Marking Fixture Frame) ---
+# Define fixture frame relative to robot base
+fixture_pose = p[0.5, 0.0, 0.2, 0, 3.14159, 0]
+
+def get_fixture_pose(x, y, z, rx, ry, rz):
+    # Transform local coordinates to global based on fixture frame
+    return pose_trans(fixture_pose, p[x, y, z, rx, ry, rz])
+end
+
+# Home Position (Joint space)
+home_joints = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+# --- Main Execution ---
+
+# 1. move_joint: Home, 350.0 mm/s
+# Note: movej 'v' is rad/s. 1.0 rad/s approx safe slow speed.
+movej(home_joints, a=max_joint_accel, v=1.0)
+safety_check()
+
+# 2. move_linear: Above marking surface, 300.0 mm/s
+wp_above = get_fixture_pose(0, 0, 0.05, 0, 0, 0)
+validate_waypoint(wp_above)
+movel(wp_above, a=max_joint_accel, v=0.3)
+safety_check()
+
+# 3. move_linear: Descend to marking height, 100.0 mm/s
+wp_mark_start = get_fixture_pose(0, 0, 0.0, 0, 0, 0)
+validate_waypoint(wp_mark_start)
+movel(wp_mark_start, a=max_joint_accel, v=0.1)
+safety_check()
+
+# 4. move_linear: Mark line 1, 60.0 mm/s
+# A3: Strict pointing (orientation fixed)
+# A7: Laser activation constraints (only on during marking)
+wp_line1_end = get_fixture_pose(0.1, 0, 0, 0, 0, 0)
+validate_waypoint(wp_line1_end)
+set_digital_out(laser_dout, True)
+movel(wp_line1_end, a=max_joint_accel, v=0.06)
+set_digital_out(laser_dout, False)
+safety_check()
+
+# 5. move_linear: Step to line 2, 80.0 mm/s
+wp_line2_start = get_fixture_pose(0, 0.02, 0, 0, 0, 0)
+validate_waypoint(wp_line2_start)
+movel(wp_line2_start, a=max_joint_accel, v=0.08)
+safety_check()
+
+# 6. move_linear: Mark line 2, 60.0 mm/s
+wp_line2_end = get_fixture_pose(0.1, 0.02, 0, 0, 0, 0)
+validate_waypoint(wp_line2_end)
+set_digital_out(laser_dout, True)
+movel(wp_line2_end, a=max_joint_accel, v=0.06)
+set_digital_out(laser_dout, False)
+safety_check()
+
+# 7. move_linear: Step to line 3, 80.0 mm/s
+wp_line3_start = get_fixture_pose(0, 0.04, 0, 0, 0, 0)
+validate_waypoint(wp_line3_start)
+movel(wp_line3_start, a=max_joint_accel, v=0.08)
+safety_check()
+
+# 8. move_linear: Mark line 3, 60.0 mm/s
+wp_line3_end = get_fixture_pose(0.1, 0.04, 0, 0, 0, 0)
+validate_waypoint(wp_line3_end)
+set_digital_out(laser_dout, True)
+movel(wp_line3_end, a=max_joint_accel, v=0.06)
+set_digital_out(laser_dout, False)
+safety_check()
+
+# 9. move_linear: Retract to safe height, 300.0 mm/s
+validate_waypoint(wp_above)
+movel(wp_above, a=max_joint_accel, v=0.3)
+safety_check()
+
+# 10. move_joint: Home, 350.0 mm/s
+movej(home_joints, a=max_joint_accel, v=1.0)
+safety_check()
+
+# Task Complete

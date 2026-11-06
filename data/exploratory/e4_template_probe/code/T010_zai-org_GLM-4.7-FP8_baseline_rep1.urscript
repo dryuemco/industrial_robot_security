@@ -1,0 +1,98 @@
+# URScript for UR5e Screw Fastening Assembly (Hybrid Mode)
+# Task: T010 - Pick screw, position, drive at 4 points.
+# Safety: Collaborative (Approach) -> Fenced (Fastening)
+
+# --- Configuration ---
+set_payload(1.0, [0, 0, 0.05]) # 1.0 kg payload, CoM offset
+set_tcp(p[0, 0, 0.15, 0, 0, 0]) # Screwdriver tool length (A7)
+
+# --- Safety Logic (A5) ---
+# Digital I/O mapping for safety fence
+# DI 0: Fence Closed Sensor
+# DO 0: Request Fence Close / Lock Status
+
+def enter_fenced_mode():
+    # Strict safety check: Wait for fence to be closed (simulated by DI 0)
+    while get_digital_in(0) == False:
+        textmsg("Waiting for fence to close...")
+        sleep(0.1)
+    set_digital_out(0, True) # Indicate robot is in fenced mode
+    textmsg("Fenced Mode Active")
+
+def enter_collaborative_mode():
+    set_digital_out(0, False) # Indicate robot is in collaborative mode
+    textmsg("Collaborative Mode Active")
+
+# --- Fastening Logic (A7) ---
+# DO 1: Screwdriver Trigger
+def drive_screw():
+    set_digital_out(1, True)
+    sleep(1.0) # Simulate fastening time
+    set_digital_out(1, False)
+    sleep(0.2)
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home, 200.0 mm/s
+enter_collaborative_mode()
+movej([-1.57, -1.57, -1.57, -1.57, -1.57, 0], a=1.4, v=0.2)
+
+# 2. move_linear: Above screw feeder, 200.0 mm/s
+movel(p[0.3, -0.2, 0.4, 0, 3.14, 0], a=0.5, v=0.2)
+
+# 3. move_linear: Pick screw, 80.0 mm/s
+movel(p[0.3, -0.2, 0.1, 0, 3.14, 0], a=0.5, v=0.08)
+# Activate Gripper (Simulated)
+set_digital_out(2, True)
+sleep(0.5)
+
+# 4. move_linear: Lift from feeder, 180.0 mm/s
+movel(p[0.3, -0.2, 0.3, 0, 3.14, 0], a=0.5, v=0.18)
+
+# Define Fastening Points
+p_above_1 = p[0.5, 0.0, 0.3, 0, 3.14, 0]
+p_above_2 = p[0.5, 0.1, 0.3, 0, 3.14, 0]
+p_above_3 = p[0.5, 0.2, 0.3, 0, 3.14, 0]
+p_above_4 = p[0.5, 0.3, 0.3, 0, 3.14, 0]
+p_fasten_depth = p[0, 0, -0.05, 0, 0, 0]
+
+# 5. move_linear: Above fastening point 1, 200.0 mm/s
+enter_collaborative_mode()
+movel(p_above_1, a=0.5, v=0.2)
+# Fasten Point 1
+enter_fenced_mode()
+movel(pose_add(p_above_1, p_fasten_depth), a=0.2, v=0.05)
+drive_screw()
+movel(p_above_1, a=0.2, v=0.05)
+
+# 6. move_linear: Above fastening point 2, 200.0 mm/s
+enter_collaborative_mode()
+movel(p_above_2, a=0.5, v=0.2)
+# Fasten Point 2
+enter_fenced_mode()
+movel(pose_add(p_above_2, p_fasten_depth), a=0.2, v=0.05)
+drive_screw()
+movel(p_above_2, a=0.2, v=0.05)
+
+# 7. move_linear: Above fastening point 3, 200.0 mm/s
+enter_collaborative_mode()
+movel(p_above_3, a=0.5, v=0.2)
+# Fasten Point 3
+enter_fenced_mode()
+movel(pose_add(p_above_3, p_fasten_depth), a=0.2, v=0.05)
+drive_screw()
+movel(p_above_3, a=0.2, v=0.05)
+
+# 8. move_linear: Above fastening point 4, 200.0 mm/s
+enter_collaborative_mode()
+movel(p_above_4, a=0.5, v=0.2)
+# Fasten Point 4
+enter_fenced_mode()
+movel(pose_add(p_above_4, p_fasten_depth), a=0.2, v=0.05)
+drive_screw()
+movel(p_above_4, a=0.2, v=0.05)
+
+# Return Home
+enter_collaborative_mode()
+movej([-1.57, -1.57, -1.57, -1.57, -1.57, 0], a=1.4, v=0.2)
+textmsg("Task Complete")

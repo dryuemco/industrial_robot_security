@@ -1,0 +1,80 @@
+# Task: T010 — Screw fastening assembly — hybrid mode
+# Robot: UR5e | Payload: 1.0 kg | Max TCP speed: 250 mm/s
+# Operating mode: hybrid (collaborative approach, fenced fastening)
+# Safety zones: A5 (strict safety logic), A7 (screwdriver tool)
+# Points: 4 fastening locations
+
+def task_T010():
+    # --- Safety Check ---
+    if get_digital_in(0):  # E-Stop active
+        popup("E-Stop active — aborting program.", error=True)
+        halt()
+    end
+
+    # --- Tool Configuration ---
+    set_tool_voltage(24)  # Ensure tool power
+    set_payload(1.0, [0, 0, 0.05])  # Payload with COG offset
+
+    # --- Waypoints Definition ---
+    global HOME_POS = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+    global FEEDER_ABOVE = p[0.3000, -0.2000, 0.2500, 0.0000, 3.1416, 0.0000]
+    global FEEDER_PICK = p[0.3000, -0.2000, 0.1100, 0.0000, 3.1416, 0.0000]
+    global FEEDER_LIFT = p[0.3000, -0.2000, 0.3000, 0.0000, 3.1416, 0.0000]
+
+    # Fastening points (x4)
+    global FASTEN_POINTS = [
+        p[0.4200, 0.1200, 0.0800, 0.0000, 3.1416, 0.0000],  # Point 1
+        p[0.4500, 0.1200, 0.0800, 0.0000, 3.1416, 0.0000],  # Point 2
+        p[0.4200, 0.1500, 0.0800, 0.0000, 3.1416, 0.0000],  # Point 3
+        p[0.4500, 0.1500, 0.0800, 0.0000, 3.1416, 0.0000]   # Point 4
+    ]
+    global FASTEN_ABOVE = p[0.4200, 0.1200, 0.2000, 0.0000, 3.1416, 0.0000]
+
+    # --- Motion Parameters ---
+    global SPEED_JOINT = 1.4  # rad/s
+    global SPEED_LINEAR = 0.25  # m/s
+    global ACCEL_JOINT = 1.4  # rad/s²
+    global ACCEL_LINEAR = 0.8  # m/s²
+    global BLEND_RADIUS = 0.01  # m
+
+    # --- Main Sequence ---
+    # [1] Home position
+    movej(HOME_POS, a=ACCEL_JOINT, v=SPEED_JOINT)
+
+    # [2] Approach screw feeder
+    movel(FEEDER_ABOVE, a=ACCEL_LINEAR, v=SPEED_LINEAR, r=BLEND_RADIUS)
+
+    # [3] Pick screw
+    movel(FEEDER_PICK, a=0.4, v=0.08)
+    set_digital_out(4, True)  # Magnet ON
+    sleep(0.2)
+
+    # [4] Lift from feeder
+    movel(FEEDER_LIFT, a=0.7, v=0.18, r=BLEND_RADIUS)
+
+    # [5-8] Fastening sequence (x4)
+    for i in range(4):
+        # Approach fastening point
+        movel(FASTEN_ABOVE, a=ACCEL_LINEAR, v=SPEED_LINEAR, r=BLEND_RADIUS)
+
+        # Descend to fastening point
+        movel(FASTEN_POINTS[i], a=0.2, v=0.05)
+
+        # Drive screw
+        set_digital_out(0, True)  # Screwdriver ON
+        sleep(2.0)
+        set_digital_out(0, False)  # Screwdriver OFF
+
+        # Retract
+        movel(FASTEN_ABOVE, a=0.6, v=0.15, r=BLEND_RADIUS)
+    end
+
+    # [9] Return home
+    movej(HOME_POS, a=ACCEL_JOINT, v=SPEED_JOINT)
+
+    # Cleanup
+    set_digital_out(4, False)  # Magnet OFF
+end
+
+# Entry point
+task_T010()

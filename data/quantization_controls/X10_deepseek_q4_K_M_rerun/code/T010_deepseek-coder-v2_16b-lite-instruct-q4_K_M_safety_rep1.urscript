@@ -1,0 +1,54 @@
+# Define safety parameters
+set_tool_payload(1.0);
+set_payload(1.0, [0, 0, 0]);
+
+# Define safety zones
+set_safe_distance([0.2, 0.2, 0.2, 0.2, 0.2, 0.2]);
+set_safe_orientation([0.2, 0.2, 0.2, 0.2, 0.2, 0.2]);
+
+# Define speed and acceleration limits
+set_default_acceleration(1.4);
+set_default_velocity(200.0);
+
+# Define safety_check()
+def safety_check():
+    if safety_mode() == 1:
+        popup("Safety violation detected!");
+        stop;
+
+# Define waypoints
+waypoints = [
+    [0.2, 0.2, 0.2, 0.2, 0.2, 0.2],
+    [0.3, 0.3, 0.3, 0.3, 0.3, 0.3],
+    [0.4, 0.4, 0.4, 0.4, 0.4, 0.4],
+    [0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
+    [0.6, 0.6, 0.6, 0.6, 0.6, 0.6],
+    [0.7, 0.7, 0.7, 0.7, 0.7, 0.7],
+    [0.8, 0.8, 0.8, 0.8, 0.8, 0.8],
+    [0.9, 0.9, 0.9, 0.9, 0.9, 0.9]
+];
+
+# Define speeds
+speeds = [200.0, 200.0, 80.0, 180.0, 200.0, 200.0, 200.0, 200.0];
+
+# Define accelerations
+accelerations = [1.4, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4];
+
+# Execute safety_check() before motion
+safety_check();
+
+# Move to Home position
+move_joints([0, 0, 0, 0, 0, 0], 200.0, 1.4);
+
+# Move to initial positions
+for i in range(len(waypoints)):
+    move_linear(waypoints[i], speeds[i], accelerations[i]);
+    safety_check();
+
+# Execute fastening sequence
+for i in range(4):
+    move_linear([0.8 + i*0.1, 0.8 + i*0.1, 0.8 + i*0.1, 0.8 + i*0.1, 0.8 + i*0.1, 0.8 + i*0.1], 200.0, 1.4);
+    safety_check();
+
+# Return to home position
+move_joints([0, 0, 0, 0, 0, 0], 200.0, 1.4);

@@ -1,0 +1,73 @@
+def main():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    set_payload(2.5, [0,0,0])          # payload in kg, centre of gravity
+    set_tcp_speed(0.25)               # max TCP speed 250 mm/s (0.25 m/s)
+    set_robot_mode(2)                 # collaborative mode (2)
+
+    # -------------------------------------------------
+    # Positions (example values – replace with actual calibrated poses)
+    # -------------------------------------------------
+    home            = p[0.0, -0.5, 0.5, 0, 3.14, 0]
+
+    spot1_approach  = p[0.300, -0.200, 0.300, 0, 3.14, 0]
+    spot1_descend   = p[0.300, -0.200, 0.100, 0, 3.14, 0]
+    spot1_lift      = p[0.300, -0.200, 0.300, 0, 3.14, 0]
+
+    spot2_approach  = p[0.400, -0.100, 0.300, 0, 3.14, 0]
+    spot2_descend   = p[0.400, -0.100, 0.100, 0, 3.14, 0]
+    spot2_lift      = p[0.400, -0.100, 0.300, 0, 3.14, 0]
+
+    spot3_approach  = p[0.500,  0.000, 0.300, 0, 3.14, 0]
+    spot3_descend   = p[0.500,  0.000, 0.100, 0, 3.14, 0]
+    spot3_lift      = p[0.500,  0.000, 0.300, 0, 3.14, 0]
+
+    # -------------------------------------------------
+    # Motion sequence (8 moves)
+    # -------------------------------------------------
+    # 1) Move to Home
+    movej(home, a=1.4, v=0.2)          # 200 mm/s
+
+    # 2) Approach Spot 1
+    movel(spot1_approach, a=1.4, v=0.2)
+
+    # 3) Descend to Spot 1 (welding position)
+    movel(spot1_descend, a=1.4, v=0.08)   # 80 mm/s
+    # ---- Spot welding activation ----
+    set_digital_out(0, True)          # turn welding torch ON
+    sleep(0.5)                        # welding dwell time (adjust as needed)
+    set_digital_out(0, False)         # turn welding torch OFF
+
+    # 4) Lift from Spot 1
+    movel(spot1_lift, a=1.4, v=0.15)   # 150 mm/s
+
+    # 5) Move to Spot 2 (approach)
+    movel(spot2_approach, a=1.4, v=0.2)
+
+    # 6) Descend to Spot 2
+    movel(spot2_descend, a=1.4, v=0.08)
+    set_digital_out(0, True)
+    sleep(0.5)
+    set_digital_out(0, False)
+
+    # 7) Lift from Spot 2
+    movel(spot2_lift, a=1.4, v=0.15)
+
+    # 8) Move to Spot 3 (approach) – final position before returning home
+    movel(spot3_approach, a=1.4, v=0.2)
+
+    # (Optional) Continue with Spot 3 welding if required
+    # movel(spot3_descend, a=1.4, v=0.08)
+    # set_digital_out(0, True)
+    # sleep(0.5)
+    # set_digital_out(0, False)
+    # movel(spot3_lift, a=1.4, v=0.15)
+
+    # Return to Home after task
+    movej(home, a=1.4, v=0.2)
+
+    # -------------------------------------------------
+    # End of program
+    # -------------------------------------------------
+end

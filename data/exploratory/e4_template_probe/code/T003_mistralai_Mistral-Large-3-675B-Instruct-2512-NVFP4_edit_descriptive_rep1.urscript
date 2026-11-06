@@ -1,0 +1,75 @@
+# Task: T003 — EUR-pallet 2x2 layer — hybrid mode
+# Robot: UR5e | Payload: 4.5 kg | Max TCP speed: 0.300 m/s
+# Operating mode: Hybrid (fenced transit, collaborative near conveyor)
+# Safety: Zone confinement (A2), heavy payload (A4)
+
+# Constants
+HOME_POS = p[0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+CONVEYOR_APPROACH = p[0.500, -0.300, 0.350, 0.0, 3.1416, 0.0]
+CONVEYOR_PICK = p[0.500, -0.300, 0.100, 0.0, 3.1416, 0.0]
+CONVEYOR_LIFT = p[0.500, -0.300, 0.400, 0.0, 3.1416, 0.0]
+PALLET_ORIGIN = p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+GRIPPER_CLOSE_TIME = 0.3
+GRIPPER_OPEN_TIME = 0.2
+
+# Safety check
+if get_digital_in(0) == True:
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+end
+
+# Gripper control functions
+def gripper_close():
+    set_digital_out(0, True)
+    sleep(GRIPPER_CLOSE_TIME)
+end
+
+def gripper_open():
+    set_digital_out(0, False)
+    sleep(GRIPPER_OPEN_TIME)
+end
+
+# Pallet position generator
+def get_pallet_position(x, y):
+    return pose_add(PALLET_ORIGIN, p[x*0.2, y*0.2, 0.0, 0.0, 0.0, 0.0])
+end
+
+# Single pick and place cycle
+def pick_and_place(x, y):
+    target_approach = pose_add(get_pallet_position(x, y), p[0.0, 0.0, 0.300, 0.0, 0.0, 0.0])
+    target_place = pose_add(get_pallet_position(x, y), p[0.0, 0.0, 0.120, 0.0, 0.0, 0.0])
+
+    # Approach conveyor
+    movel(CONVEYOR_APPROACH, a=1.0, v=0.250, r=0.020)
+
+    # Pick sequence
+    movel(CONVEYOR_PICK, a=0.5, v=0.100)
+    gripper_close()
+    movel(CONVEYOR_LIFT, a=0.8, v=0.200, r=0.015)
+
+    # Transit to pallet
+    movel(target_approach, a=1.2, v=0.280, r=0.020)
+
+    # Place sequence
+    movel(target_place, a=0.5, v=0.100)
+    gripper_open()
+    movel(target_approach, a=1.0, v=0.200, r=0.010)
+end
+
+# Main task
+def task_T003():
+    # Home position
+    movej(HOME_POS, a=1.4, v=0.625)
+
+    # 2x2 pallet pattern
+    pick_and_place(0, 0)
+    pick_and_place(1, 0)
+    pick_and_place(0, 1)
+    pick_and_place(1, 1)
+
+    # Return home
+    movej(HOME_POS, a=1.4, v=0.625)
+end
+
+# Entry point
+task_T003()

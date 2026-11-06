@@ -1,0 +1,125 @@
+# ------------------------------------------------------------
+# Task: T002 – Linear weld path (fenced mode)
+# Robot: UR5e | Payload: 3.0 kg
+# Max TCP speed: 0.500 m/s (500 mm/s)
+# ------------------------------------------------------------
+# This script is structured for readability, maintainability and
+# compliance with the fenced safety configuration.
+# ------------------------------------------------------------
+
+# ----------------------------------------------------------------------
+# Configuration constants
+# ----------------------------------------------------------------------
+# Joint target for the robot home position
+global const HOME_JOINTS = [0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+# Cartesian targets (pose = [X, Y, Z, Rx, Ry, Rz])
+global const POS_ABOVE_START = p[0.450, 0.0,   0.350, 0.0, 3.1416, 0.0]  # 350 mm Z
+global const POS_START       = p[0.450, 0.0,   0.200, 0.0, 3.1416, 0.0]  # 200 mm Z
+global const POS_END         = p[0.450, 0.300, 0.200, 0.0, 3.1416, 0.0]  # 300 mm Y
+global const POS_ABOVE_END   = p[0.450, 0.300, 0.350, 0.0, 3.1416, 0.0]  # 350 mm Z
+
+# Motion parameters (all speeds in m/s, accelerations in m/s²)
+global const ACC_HOME   = 1.4
+global const VEL_HOME   = 0.5          # ≤ max TCP speed
+
+global const ACC_APPROACH = 1.0
+global const VEL_APPROACH = 0.25
+
+global const ACC_DESCEND   = 0.5
+global const VEL_DESCEND   = 0.10
+
+global const ACC_WELD      = 0.2
+global const VEL_WELD      = 0.05
+
+global const ACC_RETRACT   = 1.0
+global const VEL_RETRACT   = 0.20
+
+# Digital/analog I/O mapping
+global const DO_ARC_ENABLE = 0   # digital out for welding arc
+global const DO_GAS_FLOW   = 1   # digital out for shielding gas
+
+global const AO_CURRENT    = 0   # analog out – welding current (0‑1)
+global const AO_WIRE_FEED  = 1   # analog out – wire feed speed (0‑1)
+
+# ----------------------------------------------------------------------
+# Helper functions
+# ----------------------------------------------------------------------
+def check_estop():
+    # Abort if the external E‑Stop (digital input 0) is active
+    if get_digital_in(0):
+        popup("E‑Stop active – aborting program.", error=True)
+        halt
+    end
+end
+
+def arc_on():
+    # Enable welding arc and set process parameters
+    set_digital_out(DO_ARC_ENABLE, True)
+    set_analog_out(AO_CURRENT,   0.40)   # 120 A (normalized)
+    set_analog_out(AO_WIRE_FEED, 0.333)  # 5 m/min (normalized)
+end
+
+def arc_off():
+    # Disable welding arc and clear analog outputs
+    set_digital_out(DO_ARC_ENABLE, False)
+    set_analog_out(AO_CURRENT,   0.0)
+    set_analog_out(AO_WIRE_FEED, 0.0)
+end
+
+def gas_on():
+    set_digital_out(DO_GAS_FLOW, True)
+end
+
+def gas_off():
+    set_digital_out(DO_GAS_FLOW, False)
+end
+
+# ----------------------------------------------------------------------
+# Main task
+# ----------------------------------------------------------------------
+def task_T002():
+    # ---- Safety check -------------------------------------------------
+    check_estop()
+
+    # ---- Move to home -------------------------------------------------
+    movej(HOME_JOINTS, a=ACC_HOME, v=VEL_HOME)
+
+    # ---- Approach above weld start ------------------------------------
+    movel(POS_ABOVE_START, a=ACC_APPROACH, v=VEL_APPROACH, r=0.01)
+
+    # ---- Descend to weld start -----------------------------------------
+    movel(POS_START, a=ACC_DESCEND, v=VEL_DESCEND, r=0.001)
+
+    # ---- Shielding gas pre‑flow ----------------------------------------
+    gas_on()
+    sleep(0.5)   # allow gas stabilization
+
+    # ---- Ignite welding arc --------------------------------------------
+    arc_on()
+    sleep(0.2)   # short dwell before motion
+
+    # ---- Linear weld (300 mm) -----------------------------------------
+    movel(POS_END, a=ACC_WELD, v=VEL_WELD)
+
+    # ---- Turn off arc -------------------------------------------------
+    arc_off()
+
+    # ---- Post‑weld gas flow --------------------------------------------
+    sleep(1.0)    # maintain gas after arc extinction
+    gas_off()
+
+    # ---- Retract above weld end ----------------------------------------
+    movel(POS_ABOVE_END, a=ACC_RETRACT, v=VEL_RETRACT, r=0.01)
+
+    # ---- Return to home ------------------------------------------------
+    movej(HOME_JOINTS, a=ACC_HOME, v=VEL_HOME)
+
+    # ---- End of task --------------------------------------------------
+    popup("Weld task completed.", info=True)
+end
+
+# ----------------------------------------------------------------------
+# Entry point
+# ----------------------------------------------------------------------
+task_T002()

@@ -1,0 +1,89 @@
+# URScript program for Laser Surface Scan — fenced mode (T009)
+
+# ----- Setup -----
+set_fence_mode(True)               # Enable fenced (confinement) safety mode
+set_payload(0.5, [0,0,0])           # Payload 0.5 kg, CoM at TCP
+set_tcp_speed(0.2)                 # Max TCP speed 200 mm/s (0.2 m/s)
+
+# ----- Define Poses (in meters) -----
+home_q = [0, -1.57, 1.57, -1.57, -1.57, 0]                     # Joint target for home
+
+# Scan area: 300 mm (X) by 200 mm (Y)
+# Starting corner (bottom‑left) at (0.2, 0.1, 0.30) in robot base frame
+scan_start_above = p[0.2, 0.1, 0.30, 0, 3.14, 0]               # 150 mm/s approach
+scan_start =       p[0.2, 0.1, 0.25, 0, 3.14, 0]               # 80 mm/s descend to scan height
+
+# Step size between raster lines (200 mm / (4‑1) = 66.67 mm)
+line_step_y = 0.0666667
+
+# Generate raster line end points
+scan_line1_end = p[0.5, 0.1, 0.25, 0, 3.14, 0]                 # X +300 mm
+scan_line2_start = p[0.5, 0.1 + line_step_y, 0.25, 0, 3.14, 0]
+scan_line2_end   = p[0.2, 0.1 + line_step_y, 0.25, 0, 3.14, 0]
+scan_line3_start = p[0.2, 0.1 + 2*line_step_y, 0.25, 0, 3.14, 0]
+scan_line3_end   = p[0.5, 0.1 + 2*line_step_y, 0.25, 0, 3.14, 0]
+scan_line4_start = p[0.5, 0.1 + 3*line_step_y, 0.25, 0, 3.14, 0]
+scan_line4_end   = p[0.2, 0.1 + 3*line_step_y, 0.25, 0, 3.14, 0]
+
+# Safe retract pose after scan
+retract_pose = p[0.2, 0.1, 0.30, 0, 3.14, 0]
+
+# ----- Motion Parameters (in m/s) -----
+v_home    = 0.18   # 180 mm/s
+v_approach= 0.15   # 150 mm/s
+v_descend = 0.08   # 80 mm/s
+v_scan    = 0.05   # 50 mm/s
+v_step    = 0.08   # 80 mm/s
+
+# ----- Begin Program -----
+def main():
+    # 1. Move to Home joint position
+    movej(home_q, a=1.0, v=v_home)
+
+    # 2. Move above scan start point (linear)
+    movel(scan_start_above, a=1.0, v=v_approach)
+
+    # 3. Descend to scan height
+    movel(scan_start, a=1.0, v=v_descend)
+
+    # Activate laser tool (digital output 0)
+    set_digital_out(0, True)
+
+    # 4. Scan line 1 (X direction)
+    movel(scan_line1_end, a=1.0, v=v_scan)
+
+    # 5. Step to line 2 (Y direction)
+    movel(scan_line2_start, a=1.0, v=v_step)
+
+    # 6. Scan line 2 (reverse X)
+    movel(scan_line2_end, a=1.0, v=v_scan)
+
+    # 7. Step to line 3
+    movel(scan_line3_start, a=1.0, v=v_step)
+
+    # 8. Scan line 3 (X direction)
+    movel(scan_line3_end, a=1.0, v=v_scan)
+
+    # 9. Step to line 4
+    movel(scan_line4_start, a=1.0, v=v_step)
+
+    # 10. Scan line 4 (reverse X)
+    movel(scan_line4_end, a=1.0, v=v_scan)
+
+    # Deactivate laser tool
+    set_digital_out(0, False)
+
+    # 11. Retract to safe height above start point
+    movel(retract_pose, a=1.0, v=v_descend)
+
+    # 12. Return to Home joint position
+    movej(home_q, a=1.0, v=v_home)
+
+    # End of fenced operation
+    set_fence_mode(False)
+
+    # Stop program
+    stop()
+
+# Execute main routine
+main()

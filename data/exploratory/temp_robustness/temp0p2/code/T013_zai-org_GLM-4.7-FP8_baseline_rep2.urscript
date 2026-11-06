@@ -1,0 +1,58 @@
+# Program: Collaborative Suction Palletizing (Light Boxes)
+# Robot: UR5e
+# Payload: 0.8 kg
+# Tool: Suction Cup (Digital Output 0)
+
+# --- Configuration ---
+set_payload(0.8, [0, 0, 0.05])  # Mass 0.8kg, Center of Mass 50mm from flange
+set_tcp(p[0, 0, 0.15, 0, 0, 0]) # TCP offset for suction cup (150mm)
+
+# --- Waypoints ---
+# Joint positions for Home
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+# Cartesian poses (x, y, z, rx, ry, rz) in meters and radians
+# Staging Area (Pick)
+p_above_staging = p[0.4, -0.4, 0.2, 0, 3.14, 0]
+p_pick = p[0.4, -0.4, 0.0, 0, 3.14, 0]
+
+# Pallet Area (Place)
+p_above_pallet = p[0.4, 0.4, 0.2, 0, 3.14, 0]
+p_place = p[0.4, 0.4, 0.0, 0, 3.14, 0]
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home, 200.0 mm/s
+movej(q_home, a=1.0, v=0.2, r=0.05)
+
+# 2. move_linear: Above staging, 220.0 mm/s
+movel(p_above_staging, a=1.0, v=0.22, r=0.05)
+
+# 3. move_linear: Descend to pick, 100.0 mm/s
+movel(p_pick, a=0.5, v=0.1, r=0.0)
+
+# Activate Suction
+set_digital_out(0, True)
+sleep(0.5) # Wait for vacuum to build
+
+# 4. move_linear: Lift, 180.0 mm/s
+movel(p_above_staging, a=0.8, v=0.18, r=0.05)
+
+# 5. move_linear: Transit to pallet, 230.0 mm/s
+movel(p_above_pallet, a=1.0, v=0.23, r=0.1)
+
+# 6. move_linear: Descend to place, 100.0 mm/s
+movel(p_place, a=0.5, v=0.1, r=0.0)
+
+# Release Suction
+set_digital_out(0, False)
+sleep(0.2) # Wait for release
+
+# 7. move_linear: Lift from place, 100.0 mm/s
+movel(p_above_pallet, a=0.5, v=0.1, r=0.05)
+
+# 8. move_linear: Retract to Home, 200.0 mm/s
+# Moving back to home joint position to complete cycle
+movej(q_home, a=1.0, v=0.2, r=0.05)
+
+# End of program

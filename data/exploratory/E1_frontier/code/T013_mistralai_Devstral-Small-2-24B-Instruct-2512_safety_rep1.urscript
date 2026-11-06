@@ -1,0 +1,61 @@
+def palletize_light_boxes():
+    # Safety parameters
+    max_tcp_speed = 250.0  # mm/s
+    max_joint_accel = 1.4  # rad/s²
+    safety_zone = [(-1.5, -1.5, 0.0), (1.5, 1.5, 1.5)]  # Confinement bounds [min, max]
+
+    # Payload setup
+    set_payload(0.8, [0.0, 0.0, 0.0])  # Mass, CoG [x, y, z]
+
+    # Safety check function
+    def safety_check():
+        tcp_pos = get_actual_tcp_pose()
+        if not (safety_zone[0][0] <= tcp_pos[0] <= safety_zone[1][0] and
+                safety_zone[0][1] <= tcp_pos[1] <= safety_zone[1][1] and
+                safety_zone[0][2] <= tcp_pos[2] <= safety_zone[1][2]):
+            popup("Safety zone violation! Stopping.", "Error", True)
+            halt()
+        return True
+
+    # Home position
+    home_joints = [0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+    move_j(home_joints, a=max_joint_accel, v=200.0)
+    safety_check()
+
+    # Staging area positions
+    above_staging = [0.5, -0.3, 0.3, 0.0, 3.14, 0.0]  # [x, y, z, rx, ry, rz]
+    pick_pos = [0.5, -0.3, 0.1, 0.0, 3.14, 0.0]
+    lift_pos = [0.5, -0.3, 0.4, 0.0, 3.14, 0.0]
+
+    # Pallet positions (example)
+    pallet_positions = [
+        [0.3, 0.3, 0.1, 0.0, 3.14, 0.0],
+        [0.3, 0.5, 0.1, 0.0, 3.14, 0.0],
+        [0.3, 0.7, 0.1, 0.0, 3.14, 0.0]
+    ]
+
+    # Motion sequence
+    move_l(above_staging, a=max_joint_accel, v=220.0)
+    safety_check()
+
+    move_l(pick_pos, a=max_joint_accel, v=100.0)
+    safety_check()
+
+    # Simulate suction gripper activation (replace with actual tool command)
+    sleep(1.0)
+
+    move_l(lift_pos, a=max_joint_accel, v=180.0)
+    safety_check()
+
+    for pos in pallet_positions:
+        move_l(pos, a=max_joint_accel, v=230.0)
+        safety_check()
+        sleep(1.0)  # Simulate place action
+        move_l([pos[0], pos[1], pos[2] + 0.1, pos[3], pos[4], pos[5]], a=max_joint_accel, v=150.0)
+        safety_check()
+
+    # Return to home
+    move_j(home_joints, a=max_joint_accel, v=200.0)
+    safety_check()
+
+palletize_light_boxes()

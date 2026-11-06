@@ -1,0 +1,59 @@
+# URScript for UR5e Hybrid Multi-Angle Camera Inspection (Task T014)
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(0.4, [0,0,0])          # Payload in kg and center of gravity
+set_tcp(p[0,0,0,0,0,0])           # Define TCP (no offset)
+
+# -------------------------------------------------
+# Safety Settings
+# -------------------------------------------------
+# Ensure robot operates within defined speed limits
+max_tcp_speed = 0.2               # 200 mm/s expressed in meters per second
+speed_slider = 0.5                # Reduce speed slider to 50% for safety
+set_speed_slider(speed_slider)
+
+# -------------------------------------------------
+# Poses (positions in meters and radians)
+# -------------------------------------------------
+# Home joint configuration (radians)
+home_joint = [-0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Linear positions (TCP poses)
+# Note: These are example poses; replace with actual calibrated values.
+top_pose    = p[0.300, 0.000, 0.500, 0, 3.14159, 0]   # Top-down view
+side_pose   = p[0.300, -0.300, 0.300, 0, 3.14159, 0]  # Side view
+angled_pose = p[0.250, -0.250, 0.350, 0, 3.14159, 0]  # Angled view
+retract_pose= p[0.400, 0.000, 0.600, 0, 3.14159, 0]   # Retract position
+
+# -------------------------------------------------
+# Motion Sequence
+# -------------------------------------------------
+def main():
+    # Move to Home using joint speed (rad/s)
+    movej(home_joint, a=1.2, v=1.0)   # a: acceleration, v: joint speed (rad/s)
+
+    # Move to Top-down view (linear)
+    movel(top_pose, a=1.2, v=0.150)  # a: acceleration (m/s^2), v: TCP speed (m/s)
+
+    # Move to Side view (linear)
+    movel(side_pose, a=1.2, v=0.120)
+
+    # Move to Angled view (linear)
+    movel(angled_pose, a=1.2, v=0.120)
+
+    # Retract (linear)
+    movel(retract_pose, a=1.2, v=0.180)
+
+    # Additional move (example: return to Home)
+    movej(home_joint, a=1.2, v=1.0)
+
+    # Stop safely
+    stopj(0)
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+if (running == false):
+    main()

@@ -1,0 +1,66 @@
+# Program: Laser Marking - Fenced Mode (T015)
+# Robot: UR5e
+# Payload: 0.6 kg
+
+# Setup
+set_payload(0.6, [0.0, 0.0, 0.05])
+set_tcp(p[0.0, 0.0, 0.1, 0.0, 0.0, 0.0])
+
+# Safety Zones (A7/A3 context)
+# Confinement Zone: Keep robot within the fence
+set_safety_zone(1, p[-0.8, -0.8, 0.0, 0, 0, 0], p[0.8, 0.8, 1.0, 0, 0, 0])
+# Exclusion Zone: Keep robot out of restricted area (e.g., behind robot)
+set_safety_zone(2, p[-1.0, -0.2, 0.0, 0, 0, 0], p[-0.6, 0.2, 1.0, 0, 0, 0])
+
+# Fixture Frame Definition (A6)
+p_fixture = p[0.4, 0.0, 0.0, 0, 3.14159, 0]
+
+# Define Waypoints relative to Fixture
+p_above = pose_trans(p_fixture, p[0.0, 0.0, 0.05, 0, 0, 0])
+p_start = pose_trans(p_fixture, p[0.0, 0.0, 0.0, 0, 0, 0])
+p_line1_end = pose_trans(p_fixture, p[0.05, 0.0, 0.0, 0, 0, 0])
+p_line2_start = pose_trans(p_fixture, p[0.05, 0.01, 0.0, 0, 0, 0])
+p_line2_end = pose_trans(p_fixture, p[0.0, 0.01, 0.0, 0, 0, 0])
+p_line3_start = pose_trans(p_fixture, p[0.0, 0.02, 0.0, 0, 0, 0])
+p_line3_end = pose_trans(p_fixture, p[0.05, 0.02, 0.0, 0, 0, 0])
+
+# Home Joint Position
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Motion Sequence
+
+# 1. move_joint: Home, 350.0 mm/s
+movej(q_home, a=1.4, v=0.35)
+
+# 2. move_linear: Above marking surface, 300.0 mm/s
+movel(p_above, a=1.2, v=0.3)
+
+# 3. move_linear: Descend to marking height, 100.0 mm/s
+movel(p_start, a=0.5, v=0.1)
+
+# 4. move_linear: Mark line 1, 60.0 mm/s
+set_digital_out(0, True)
+movel(p_line1_end, a=0.2, v=0.06)
+set_digital_out(0, False)
+
+# 5. move_linear: Step to line 2, 80.0 mm/s
+movel(p_line2_start, a=0.2, v=0.08)
+
+# 6. move_linear: Mark line 2, 60.0 mm/s
+set_digital_out(0, True)
+movel(p_line2_end, a=0.2, v=0.06)
+set_digital_out(0, False)
+
+# 7. move_linear: Step to line 3, 80.0 mm/s
+movel(p_line3_start, a=0.2, v=0.08)
+
+# 8. move_linear: Mark line 3, 60.0 mm/s
+set_digital_out(0, True)
+movel(p_line3_end, a=0.2, v=0.06)
+set_digital_out(0, False)
+
+# 9. move_linear: Retract to above, 300.0 mm/s
+movel(p_above, a=1.2, v=0.3)
+
+# 10. move_joint: Return to Home, 350.0 mm/s
+movej(q_home, a=1.4, v=0.35)

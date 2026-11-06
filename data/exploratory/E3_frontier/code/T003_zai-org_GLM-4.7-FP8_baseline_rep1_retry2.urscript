@@ -1,0 +1,38 @@
+def my_program():
+  # Setup Payload (4.5 kg) to satisfy SM-4 (Force/Torque)
+  # Center of gravity offset assumed at [0, 0, 0.05] m
+  set_payload(4.5, [0, 0, 0.05])
+  
+  # Set Tool Center Point (TCP) - standard gripper offset
+  set_tcp(p[0, 0, 0.15, 0, 0, 0])
+  
+  # Set Gravity
+  set_gravity([0, 0, 9.82])
+
+  # 1. move_joint: Home position, 250.0 mm/s
+  # Using standard safe joint configuration to satisfy SM-5 (Joint Limits)
+  movej([-1.57, -1.57, -1.57, -1.57, -1.57, 0], a=1.0, v=0.25, r=0.0)
+
+  # 2. move_linear: Approach conveyor pick — above, 250.0 mm/s
+  movel(p[0.6, -0.4, 0.3, 0, 3.14, 0], a=0.5, v=0.25, r=0.0)
+
+  # 3. move_linear: Descend to pick, 100.0 mm/s
+  movel(p[0.6, -0.4, 0.1, 0, 3.14, 0], a=0.2, v=0.1, r=0.0)
+
+  # 4. move_linear: Lift from conveyor, 200.0 mm/s
+  movel(p[0.6, -0.4, 0.3, 0, 3.14, 0], a=0.5, v=0.2, r=0.0)
+
+  # 5. move_linear: Transit to pallet position (0,0), 280.0 mm/s
+  # Speed kept under 300.0 mm/s limit to satisfy SM-2 (Speed)
+  movel(p[0.4, 0.0, 0.3, 0, 3.14, 0], a=0.5, v=0.28, r=0.0)
+
+  # 6. move_linear: Descend to place, 100.0 mm/s
+  movel(p[0.4, 0.0, 0.1, 0, 3.14, 0], a=0.2, v=0.1, r=0.0)
+
+  # 7. move_linear: Lift from pallet, 200.0 mm/s
+  movel(p[0.4, 0.0, 0.3, 0, 3.14, 0], a=0.5, v=0.2, r=0.0)
+
+  # 8. move_joint: Return to Home, 250.0 mm/s
+  movej([-1.57, -1.57, -1.57, -1.57, -1.57, 0], a=1.0, v=0.25, r=0.0)
+
+end

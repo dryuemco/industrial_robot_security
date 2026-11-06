@@ -1,0 +1,141 @@
+# ------------------------------------------------------------
+# URScript for UR5e collaborative spot welding (3 points)
+# Safety compliance: ISO 10218:2025
+# ------------------------------------------------------------
+
+# ---------- Configuration ----------
+payload_mass = 2.5                                   # kg
+payload_cog = p[0,0,0]                               # Center of gravity (assumed at TCP)
+set_payload(payload_mass, payload_cog)
+
+# Joint acceleration limit (rad/s^2) per joint
+max_joint_acc = [1.4, 1.4, 1.4, 1.4, 1.4, 1.4]
+
+# TCP speed limit (m/s) – 250 mm/s = 0.25 m/s
+max_tcp_speed = 0.25
+
+# Safety zone (workspace bounding box) in robot base frame (meters)
+zone_min = p[-0.8, -0.8, 0.0, 0, 0, 0]   # x, y, z lower limits
+zone_max = p[ 0.8,  0.8, 1.2, 0, 0, 0]   # x, y, z upper limits
+
+# Emergency stop digital input (example: input 0)
+estop_input = 0
+
+# ---------- Helper Functions ----------
+def safety_check(pose):
+    # Verify pose is inside the defined safety zone
+    if (pose[0] < zone_min[0]) or (pose[0] > zone_max[0]) or \
+       (pose[1] < zone_min[1]) or (pose[1] > zone_max[1]) or \
+       (pose[2] < zone_min[2]) or (pose[2] > zone_max[2]):
+        halt("Safety violation: Pose outside allowed workspace")
+    end
+end
+
+def estop_handler():
+    # Continuously monitor emergency stop input
+    while (true):
+        if (get_digital_in(estop_input) == 0):
+            halt("Emergency stop activated")
+        end
+        sleep(0.01)
+    end
+end
+
+# Start emergency stop monitoring in a separate thread
+thread estop_thread = estop_handler()
+estop_thread.start()
+
+# ---------- Motion Primitives ----------
+def move_joint_safe(joint_target, speed_mm_s):
+    speed_m_s = speed_mm_s / 1000.0
+    # Enforce max TCP speed for joint moves (converted to joint speed)
+    speed_m_s = min(speed_m_s, max_tcp_speed)
+    speed_rad_s = speed_m_s * 2 * pi / 0.360   # rough conversion, safe upper bound
+    speed_rad_s = min(speed_rad_s, 1.5)        # keep below typical joint speed limit
+    speedlist = [speed_rad_s]*6
+    movej(joint_target, speedlist, max_joint_acc, t=0, radius=0.0)
+end
+
+def move_linear_safe(pose_target, speed_mm_s, acc_mm_s2):
+    speed_m_s = speed_mm_s / 1000.0
+    acc_m_s2  = acc_mm_s2 / 1000.0
+    # Clamp to safety limits
+    speed_m_s = min(speed_m_s, max_tcp_speed)
+    acc_m_s2  = min(acc_m_s2, 1.0)   # conservative TCP acceleration limit (m/s^2)
+    safety_check(pose_target)
+    movel(pose_target, speed_m_s, acc_m_s2, t=0, radius=0.0)
+end
+
+# ---------- Waypoints ----------
+# Joint space home position (example values)
+home_joint = [0, -1.57, 0, -1.57, 0, 0]
+
+# TCP poses (meters) – placeholders, replace with calibrated positions
+pose_approach_1 = p[0.3, 0.2, 0.4, 0, 3.14, 0]
+pose_descend_1  = p[0.3, 0.2, 0.1, 0, 3.14, 0]
+pose_lift_1     = p[0.3, 0.2, 0.4, 0, 3.14, 0]
+
+pose_approach_2 = p[0.4, -0.1, 0.4, 0, 3.14, 0]
+pose_descend_2  = p[0.4, -0.1, 0.1, 0, 3.14, 0]
+pose_lift_2     = p[0.4, -0.1, 0.4, 0, 3.14, 0]
+
+pose_approach_3 = p[0.2, 0.0, 0.4, 0, 3.14, 0]
+pose_descend_3  = p[0.2, 0.0, 0.1, 0, 3.14, 0]
+pose_lift_3     = p[0.2, 0.0, 0.4, 0, 3.14, 0]
+
+# ---------- Main Program ----------
+def main():
+    # Set collaborative mode (speed slider limited to 30% of max)
+    set_speed_slider(0.3)
+
+    # 1) Move to Home
+    move_joint_safe(home_joint, 200.0)
+
+    # 2) Approach Spot 1
+    move_linear_safe(pose_approach_1, 200.0, 0.5)
+
+    # 3) Descend to Spot 1 (welding position)
+    move_linear_safe(pose_descend_1, 80.0, 0.3)
+
+    # 4) Activate welding (placeholder)
+    #   (Insert welding activation code here)
+    sleep(0.5)   # simulate welding dwell time
+
+    # 5) Lift from Spot 1
+    move_linear_safe(pose_lift_1, 150.0, 0.5)
+
+    # 6) Move to Spot 2
+    move_linear_safe(pose_approach_2, 200.0, 0.5)
+
+    # 7) Descend to Spot 2
+    move_linear_safe(pose_descend_2, 80.0, 0.3)
+
+    # 8) Activate welding
+    #   (Insert welding activation code here)
+    sleep(0.5)
+
+    # 9) Lift from Spot 2
+    move_linear_safe(pose_lift_2, 150.0, 0.5)
+
+    # 10) Move to Spot 3
+    move_linear_safe(pose_approach_3, 200.0, 0.5)
+
+    # 11) Descend to Spot 3
+    move_linear_safe(pose_descend_3, 80.0, 0.3)
+
+    # 12) Activate welding
+    #   (Insert welding activation code here)
+    sleep(0.5)
+
+    # 13) Lift from Spot 3
+    move_linear_safe(pose_lift_3, 150.0, 0.5)
+
+    # 14) Return to Home
+    move_joint_safe(home_joint, 200.0)
+
+    # Program finished
+    popup("Spot welding sequence completed safely.", title="Info", warning=False)
+end
+
+# Execute main
+main()

@@ -1,0 +1,52 @@
+# Task: T003 — EUR-pallet 2x2 layer — hybrid mode
+# Optimized for faster cycle time
+# Operating mode: hybrid | Max TCP speed: 0.300 m/s
+# Robot: ur5e
+
+def task_T003():
+  # [0] Verify E-Stop clear
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # [1] Home position (faster joint move)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.6250)
+
+  # [2] Approach conveyor pick — above (faster linear move)
+  movel(p[0.500000, -0.300000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.3000, r=0.0200)
+
+  # [3] Descend to pick (faster linear move)
+  movel(p[0.500000, -0.300000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.1500)
+
+  # [4] Gripper CLOSE — grasp box
+  set_digital_out(0, True)
+
+  # [5] Grip settle time (reduced)
+  sleep(0.2000)
+
+  # [6] Lift from conveyor (faster linear move)
+  movel(p[0.500000, -0.300000, 0.400000, 0.0000, 3.1416, 0.0000], a=0.8000, v=0.2500, r=0.0150)
+
+  # [7] Transit to pallet position (0,0) (faster linear move)
+  movel(p[0.500000, 0.300000, 0.400000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.3000, r=0.0200)
+
+  # [8] Descend to pallet place position (faster linear move)
+  movel(p[0.500000, 0.300000, 0.120000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.1500)
+
+  # [9] Gripper OPEN — release box
+  set_digital_out(0, False)
+
+  # [10] Release settle (reduced)
+  sleep(0.1500)
+
+  # [11] Retract above pallet (faster linear move)
+  movel(p[0.500000, 0.300000, 0.400000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.2500, r=0.0100)
+
+  # [12] Return to home (faster joint move)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.6250)
+
+end
+
+# Entry point
+task_T003()

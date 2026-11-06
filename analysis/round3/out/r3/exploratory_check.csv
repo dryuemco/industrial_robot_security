@@ -1,0 +1,7 @@
+result,reference,match
+frontier sensitivity table (csv),paper/tables/sensitivity_e1_frontier.csv,True
+frontier sensitivity table (tex),paper/tables/sensitivity_e1_frontier.tex,True
+fig_representation_breach (text of the PDF),paper/figures/fig_representation_breach.pdf,True
+fig_construct_removal (text of the PDF),paper/figures/fig_construct_removal.pdf,True
+E1_frontier/e1_summary.json,docs/frontier_spotcheck/e1_frontier_summary.json,True
+E3_frontier/e3_summary.json,docs/frontier_spotcheck/e3_frontier_summary.json,True

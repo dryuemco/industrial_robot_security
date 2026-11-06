@@ -1,0 +1,50 @@
+# Task: T005 — Visual inspection scan — collaborative mode (Optimized)
+# Optimized for faster cycle time while maintaining safety and image quality
+
+def task_T005():
+  # [0] Verify E-Stop clear
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # [1] Home position - increased acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.0000, v=1.5000)
+
+  # [2] Approach inspection start — above surface - increased speed and acceleration
+  movel(p[0.250000, -0.100000, 0.250000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.1500, r=0.0100)
+
+  # [3] Descend to scan height (150 mm above part) - increased acceleration
+  movel(p[0.250000, -0.100000, 0.150000, 0.0000, 3.1416, 0.0000], a=0.8000, v=0.1000, r=0.0050)
+
+  # [4] Camera trigger ON
+  set_digital_out(2, True)
+
+  # [5] Scan line 1 — Y sweep - maintain low speed for image quality
+  movel(p[0.250000, 0.100000, 0.150000, 0.0000, 3.1416, 0.0000], a=0.3000, v=0.0500, r=0.0050)
+
+  # [6] Step to scan line 2 (+X) - increased acceleration
+  movel(p[0.350000, 0.100000, 0.150000, 0.0000, 3.1416, 0.0000], a=0.8000, v=0.1000, r=0.0050)
+
+  # [7] Scan line 2 — reverse Y sweep - maintain low speed for image quality
+  movel(p[0.350000, -0.100000, 0.150000, 0.0000, 3.1416, 0.0000], a=0.3000, v=0.0500, r=0.0050)
+
+  # [8] Step to scan line 3 (+X) - increased acceleration
+  movel(p[0.450000, -0.100000, 0.150000, 0.0000, 3.1416, 0.0000], a=0.8000, v=0.1000, r=0.0050)
+
+  # [9] Scan line 3 — Y sweep - maintain low speed for image quality
+  movel(p[0.450000, 0.100000, 0.150000, 0.0000, 3.1416, 0.0000], a=0.3000, v=0.0500)
+
+  # [10] Camera trigger OFF
+  set_digital_out(2, False)
+
+  # [11] Retract above inspection surface - increased speed and acceleration
+  movel(p[0.350000, 0.000000, 0.300000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.1500, r=0.0100)
+
+  # [12] Return to home - increased acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.0000, v=1.5000)
+
+end
+
+# Entry point
+task_T005()

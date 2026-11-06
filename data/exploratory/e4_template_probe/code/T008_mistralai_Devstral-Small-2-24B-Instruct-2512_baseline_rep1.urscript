@@ -1,0 +1,28 @@
+def heavy_depalletizing():
+    # Home position
+    movej([0, -1.5708, 0, -1.5708, 0, 0], a=1.35, v=400.0)
+
+    # Above pallet
+    movel(p[0.5, -0.3, 0.3, 0, 3.14159, 0], a=1.35, v=400.0)
+
+    # Descend to top layer
+    movel(p[0.5, -0.3, 0.1, 0, 3.14159, 0], a=1.35, v=150.0)
+
+    # Lift box
+    movel(p[0.5, -0.3, 0.3, 0, 3.14159, 0], a=1.35, v=200.0)
+
+    # Transit to conveyor
+    movel(p[0.5, 0.3, 0.3, 0, 3.14159, 0], a=1.35, v=350.0)
+
+    # Place box on conveyor
+    movel(p[0.5, 0.3, 0.1, 0, 3.14159, 0], a=1.35, v=150.0)
+
+    # Lift after placing
+    movel(p[0.5, 0.3, 0.3, 0, 3.14159, 0], a=1.35, v=200.0)
+
+    # Return to above pallet
+    movel(p[0.5, -0.3, 0.3, 0, 3.14159, 0], a=1.35, v=350.0)
+
+    # Return home
+    movej([0, -1.5708, 0, -1.5708, 0, 0], a=1.35, v=400.0)
+end

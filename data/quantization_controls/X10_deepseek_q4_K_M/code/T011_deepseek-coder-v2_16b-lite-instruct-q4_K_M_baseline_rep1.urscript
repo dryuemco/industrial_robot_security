@@ -1,0 +1,21 @@
+# Define the sequence of moves
+def move_sequence():
+    # Move to Home position
+    movej([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], 250.0, 0.5, tool0);
+
+    # Move above storage bin
+    movej([-1.57, -1.57, 1.57, -1.57, 1.57, 0.0], 280.0, 0.5, tool0);
+
+    # Descend to pick
+    movej([-1.57, -1.57, 0.0, -1.57, 1.57, 0.0], 120.0, 0.5, tool0);
+
+    # Lift from bin
+    movej([-1.57, -1.57, 1.57, -1.57, 1.57, 0.0], 200.0, 0.5, tool0);
+
+    # Transit to handoff zone
+    movej([-1.57, -1.57, 1.57, -1.57, 1.57, 0.0], 250.0, 0.5, tool0);
+
+    # Additional moves can be added here
+
+# Call the sequence function
+move_sequence();

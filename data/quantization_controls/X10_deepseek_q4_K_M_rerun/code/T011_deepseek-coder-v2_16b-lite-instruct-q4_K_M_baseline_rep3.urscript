@@ -1,0 +1,32 @@
+# Define the sequence of moves
+def move_sequence():
+    # Move to Home position
+    movej([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], 250.0, 0.0, e_std);
+
+    # Move above storage bin
+    movej([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], 250.0, 0.0, e_std);
+    movl([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], [0.25, -0.5, 0.0], 280.0, 0.0, e_std);
+
+    # Descend to pick
+    movl([0.25, -0.5, 0.0], [0.25, -0.5, -0.1], 120.0, 0.0, e_std);
+
+    # Lift from bin
+    movl([0.25, -0.5, -0.1], [0.25, -0.5, 0.0], 200.0, 0.0, e_std);
+
+    # Transit to handoff zone
+    movl([0.25, -0.5, 0.0], [0.4, -0.3, 0.2], 250.0, 0.0, e_std);
+
+    # Additional moves...
+    movl([0.4, -0.3, 0.2], [0.4, -0.3, 0.1], 250.0, 0.0, e_std);
+    movl([0.4, -0.3, 0.1], [0.4, -0.3, 0.0], 250.0, 0.0, e_std);
+    movl([0.4, -0.3, 0.0], [0.4, -0.3, -0.1], 250.0, 0.0, e_std);
+    movl([0.4, -0.3, -0.1], [0.4, -0.3, -0.2], 250.0, 0.0, e_std);
+    movl([0.4, -0.3, -0.2], [0.4, -0.3, -0.3], 250.0, 0.0, e_std);
+    movl([0.4, -0.3, -0.3], [0.4, -0.3, -0.4], 250.0, 0.0, e_std);
+
+    # Place in handoff zone
+    movl([0.4, -0.3, -0.4], [0.4, -0.3, -0.5], 250.0, 0.0, e_std);
+    movej([0.4, -0.3, -0.5], 250.0, 0.0, e_std);
+
+# Call the sequence function
+move_sequence();

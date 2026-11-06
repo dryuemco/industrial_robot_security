@@ -1,0 +1,74 @@
+# Task: T007 — Curved contour weld — hybrid mode (Optimized)
+# Optimized for reduced cycle time
+# Robot: ur5e | Max TCP speed: 0.300 m/s
+
+def task_T007():
+  TCP_SPEED_CAP = 0.300
+  def safe_movel(pose, a, v, r):
+    if (v > TCP_SPEED_CAP):
+      popup("TCP speed cap exceeded", error=True)
+      halt
+    end
+    movel(pose, a=a, v=v, r=r)
+  end
+  
+  # [0] Verify E-Stop clear
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+  
+  # [1] Home position
+  # Optimization: Increased joint velocity (0.75 -> 2.5) and acceleration (1.4 -> 3.0)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=3.0, v=2.5)
+  
+  # [2] Approach above weld fixture
+  # Optimization: Max TCP speed (0.25 -> 0.30), higher accel (1.0 -> 1.5), larger blend (0.01 -> 0.05)
+  safe_movel(p[0.450000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000], 1.5, 0.30, 0.05)
+  
+  # [3] Descend to weld start
+  # Optimization: Max TCP speed (0.10 -> 0.30), higher accel (0.5 -> 1.5)
+  safe_movel(p[0.450000, 0.000000, 0.200000, 0.0000, 3.1416, 0.0000], 1.5, 0.30, 0.005)
+  
+  # [4] Gas pre-flow ON
+  set_digital_out(1, True)
+  
+  # [5] Gas stabilization
+  sleep(0.5000)
+  
+  # [6] Arc ON
+  set_digital_out(0, True)
+  set_analog_out(0, 0.500)
+  set_analog_out(1, 0.400)
+  
+  # [7] Weld midpoint
+  # Optimization: Increased accel (0.2 -> 0.5) for faster ramp-up, larger blend (0.005 -> 0.01)
+  safe_movel(p[0.550000, 0.150000, 0.200000, 0.0000, 3.1416, 0.0000], 0.5, 0.06, 0.01)
+  
+  # [8] Weld end
+  # Optimization: Increased accel (0.2 -> 0.5)
+  safe_movel(p[0.500000, 0.300000, 0.200000, 0.0000, 3.1416, 0.0000], 0.5, 0.06, 0.0)
+  
+  # [9] Arc OFF
+  set_digital_out(0, False)
+  set_analog_out(0, 0.0)
+  set_analog_out(1, 0.0)
+  
+  # [10] Post-weld gas flow
+  sleep(1.0000)
+  
+  # [11] Gas flow OFF
+  set_digital_out(1, False)
+  
+  # [12] Retract above weld end
+  # Optimization: Max TCP speed (0.25 -> 0.30), higher accel (1.0 -> 1.5), larger blend (0.01 -> 0.05)
+  safe_movel(p[0.500000, 0.300000, 0.380000, 0.0000, 3.1416, 0.0000], 1.5, 0.30, 0.05)
+  
+  # [13] Return to home
+  # Optimization: Increased joint velocity and acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=3.0, v=2.5)
+  
+end
+
+# Entry point
+task_T007()

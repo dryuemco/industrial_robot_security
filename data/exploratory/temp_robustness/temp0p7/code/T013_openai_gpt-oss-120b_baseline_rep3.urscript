@@ -1,0 +1,87 @@
+def main():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    # Payload: 0.8 kg, assume center of gravity 10 cm above TCP
+    set_payload(0.8, [0,0,0.1])
+    # TCP: suction cup (10 cm offset in Z)
+    set_tcp(p[0,0,0.1,0,0,0])
+    # Collaborative mode (force limited, speed limited)
+    set_robot_mode(2)   # 2 = collaborative (as per UR safety settings)
+
+    # Safety confinement (example cubic zone, 1.0 m side centred at origin)
+    # Note: adjust limits to match the actual workcell
+    set_confinement_boundary([-0.5, -0.5, 0.0, 0.5, 0.5, 1.0])
+
+    # -------------------------------------------------
+    # Positions (all in metres, radians)
+    # -------------------------------------------------
+    home            = p[0.0, -0.5, 0.5, 0.0, 3.1416, 0.0]   # Joint zero, safe start
+    above_staging   = p[0.30, -0.20, 0.60, 0.0, 3.1416, 0.0] # 10 cm above pick area
+    pick_pos        = p[0.30, -0.20, 0.30, 0.0, 3.1416, 0.0] # Contact with box
+    lift_pos        = p[0.30, -0.20, 0.60, 0.0, 3.1416, 0.0] # Same as above_staging
+    pallet_approach = p[0.60,  0.00, 0.55, 0.0, 3.1416, 0.0] # 5 cm above pallet
+    place_pos       = p[0.60,  0.00, 0.30, 0.0, 3.1416, 0.0] # Release height
+    retreat_pos     = p[0.60,  0.00, 0.55, 0.0, 3.1416, 0.0] # Retract after release
+    home2           = p[0.0, -0.5, 0.5, 0.0, 3.1416, 0.0]   # Return home (same as home)
+
+    # -------------------------------------------------
+    # Motion parameters (converted to m/s)
+    # -------------------------------------------------
+    # Joint move to Home – 200 mm/s = 0.20 m/s
+    joint_speed_home = 0.20
+    # Linear moves – speeds as given
+    speed_above_staging = 0.22   # 220 mm/s
+    speed_descend       = 0.10   # 100 mm/s
+    speed_lift          = 0.18   # 180 mm/s
+    speed_transit       = 0.23   # 230 mm/s
+    speed_place         = 0.20   # reuse 200 mm/s for final move
+    # Default accelerations (m/s²)
+    a_joint  = 1.2
+    a_linear = 1.0
+
+    # -------------------------------------------------
+    # Sequence
+    # -------------------------------------------------
+    # 1) Move to Home (joint)
+    movej(home, a=a_joint, v=joint_speed_home)
+
+    # 2) Move above staging area (linear)
+    movel(above_staging, a=a_linear, v=speed_above_staging)
+
+    # 3) Descend to pick position (linear)
+    movel(pick_pos, a=a_linear, v=speed_descend)
+
+    # 4) Activate suction to grasp box
+    set_digital_out(0, True)   # assume DO0 controls vacuum pump
+    sync()                     # wait for vacuum valve to settle
+
+    # 5) Lift the box (linear)
+    movel(lift_pos, a=a_linear, v=speed_lift)
+
+    # 6) Transit to pallet (linear)
+    movel(pallet_approach, a=a_linear, v=speed_transit)
+
+    # 7) Move down to place position (linear)
+    movel(place_pos, a=a_linear, v=speed_descend)
+
+    # 8) Release suction
+    set_digital_out(0, False)
+    sync()
+
+    # 9) Retract from pallet (linear)
+    movel(retreat_pos, a=a_linear, v=speed_lift)
+
+    # 10) Return to Home (joint)
+    movej(home2, a=a_joint, v=joint_speed_home)
+
+    # -------------------------------------------------
+    # End of program
+    # -------------------------------------------------
+    stopj(2.0)   # smooth stop
+end
+
+# -------------------------------------------------
+# Run the program
+# -------------------------------------------------
+main()

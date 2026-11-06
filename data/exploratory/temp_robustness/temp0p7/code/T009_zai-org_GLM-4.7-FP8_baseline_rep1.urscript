@@ -1,0 +1,64 @@
+# Program: Laser surface scan (T009)
+# Robot: UR5e
+# Mode: Fenced
+# Payload: 0.5 kg
+# Task: 300x200mm Raster Scan (4 lines)
+
+# Setup
+set_payload(0.5, [0, 0, 0.05])
+set_tcp([0, 0, 0, 0, 0, 0]) # Tool Center Point (placeholder)
+
+# Define Orientation (Laser pointing down)
+rx = 3.14159
+ry = 0.0
+rz = 0.0
+
+# Define Coordinates (Meters)
+# Scan Area: X[0.4 to 0.7], Y[0.2 to 0.4]
+# Safe Height Z: 0.3 m
+# Scan Height Z: 0.1 m
+
+p_above_start = p[0.4, 0.2, 0.3, rx, ry, rz]
+p_scan_start = p[0.4, 0.2, 0.1, rx, ry, rz]
+
+# Sequence Start
+
+# 1. move_joint: Home, 180.0 mm/s (approx joint speed)
+movej([-1.57, -1.57, -1.57, -1.57, -1.57, 0], a=1.2, v=1.2)
+
+# 2. move_linear: Above scan start, 150.0 mm/s
+movel(p_above_start, a=0.5, v=0.15)
+
+# 3. move_linear: Descend to scan height, 80.0 mm/s
+movel(p_scan_start, a=0.2, v=0.08)
+
+# 4. move_linear: Scan line 1, 50.0 mm/s (Laser ON)
+set_digital_out(0, True)
+movel(p[0.7, 0.2, 0.1, rx, ry, rz], a=0.2, v=0.05)
+
+# 5. move_linear: Step to line 2, 80.0 mm/s
+movel(p[0.7, 0.2666, 0.1, rx, ry, rz], a=0.2, v=0.08)
+
+# 6. move_linear: Scan line 2, 50.0 mm/s
+movel(p[0.4, 0.2666, 0.1, rx, ry, rz], a=0.2, v=0.05)
+
+# 7. move_linear: Step to line 3, 80.0 mm/s
+movel(p[0.4, 0.3333, 0.1, rx, ry, rz], a=0.2, v=0.08)
+
+# 8. move_linear: Scan line 3, 50.0 mm/s
+movel(p[0.7, 0.3333, 0.1, rx, ry, rz], a=0.2, v=0.05)
+
+# 9. move_linear: Step to line 4, 80.0 mm/s
+movel(p[0.7, 0.4, 0.1, rx, ry, rz], a=0.2, v=0.08)
+
+# 10. move_linear: Scan line 4, 50.0 mm/s (Laser OFF)
+movel(p[0.4, 0.4, 0.1, rx, ry, rz], a=0.2, v=0.05)
+set_digital_out(0, False)
+
+# 11. move_linear: Ascend/Retract, 80.0 mm/s
+movel(p[0.4, 0.4, 0.3, rx, ry, rz], a=0.2, v=0.08)
+
+# 12. move_linear: Return to Home/Above, 150.0 mm/s
+movel(p_above_start, a=0.5, v=0.15)
+
+# End of Sequence

@@ -1,0 +1,49 @@
+def safety_check():
+    if get_actual_tcp_speed() > 200.0:
+        popup("Safety violation: TCP speed exceeded 200 mm/s", "STOP", "STOP")
+        halt
+    if get_actual_joint_accelerations() > [1.4, 1.4, 1.4, 1.4, 1.4, 1.4]:
+        popup("Safety violation: Joint acceleration exceeded 1.4 rad/s²", "STOP", "STOP")
+        halt
+    if not is_within_safety_zone(get_actual_tcp_pose()):
+        popup("Safety violation: Outside safety zone", "STOP", "STOP")
+        halt
+
+def is_within_safety_zone(pose):
+    # Define safety zone boundaries (example values, adjust as needed)
+    x_min, x_max = -0.5, 0.5
+    y_min, y_max = -0.5, 0.5
+    z_min, z_max = 0.0, 0.8
+    x, y, z = pose[0], pose[1], pose[2]
+    return x_min <= x <= x_max and y_min <= y <= y_max and z_min <= z <= z_max
+
+# Set payload
+set_payload(0.4, [0.0, 0.0, 0.0])
+
+# Home position
+home_joints = [0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+
+# Waypoints
+top_down_view = [0.2, 0.0, 0.3, 0.0, 0.0, 0.0]  # Example pose, adjust as needed
+side_view = [0.0, 0.2, 0.3, 0.0, 0.0, 0.0]     # Example pose, adjust as needed
+angled_view = [0.1, 0.1, 0.3, 0.0, 0.0, 0.0]   # Example pose, adjust as needed
+retract_pose = [0.0, 0.0, 0.5, 0.0, 0.0, 0.0]  # Example pose, adjust as needed
+
+# Motion sequence
+safety_check()
+move_j(home_joints, a=1.4, v=180.0)
+
+safety_check()
+move_l(top_down_view, a=1.4, v=150.0)
+
+safety_check()
+move_l(side_view, a=1.4, v=120.0)
+
+safety_check()
+move_l(angled_view, a=1.4, v=120.0)
+
+safety_check()
+move_l(retract_pose, a=1.4, v=180.0)
+
+safety_check()
+move_j(home_joints, a=1.4, v=180.0)

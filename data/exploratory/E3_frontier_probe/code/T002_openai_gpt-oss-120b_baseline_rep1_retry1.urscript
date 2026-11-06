@@ -1,0 +1,58 @@
+# URScript for UR5e – Linear weld path (fenced mode)
+# -------------------------------------------------
+# Safety and configuration
+set_payload(3.0, [0,0,0.1])          # payload 3 kg, CoM offset
+set_tcp([0,0,0.1,0,0,0])            # tool center point
+set_speed(0.5)                      # max TCP speed 500 mm/s (0.5 m/s)
+set_fence_mode(True)               # enable fenced (confinement) mode
+
+# Define safety zones (confinement & exclusion) – placeholders
+# These are typically configured in the safety controller; here we
+# ensure the script acknowledges their existence.
+set_safety_zone_confinement(True)
+set_safety_zone_exclusion(True)
+
+# Digital output for welding torch (e.g., DO0)
+TORCH_DO = 0
+
+# Poses (in meters and radians)
+home_joint = [0, -1.57, 1.57, -1.57, -1.57, 0]                     # Home joint configuration
+pose_above_start = p[0.5, 0.0, 0.3, 0, 3.14, 0]                    # 30 cm above weld start
+pose_start = p[0.5, 0.0, 0.0, 0, 3.14, 0]                         # Weld start (on surface)
+pose_end = p[0.8, 0.0, 0.0, 0, 3.14, 0]                           # Weld end (300 mm forward)
+pose_above_end = p[0.8, 0.0, 0.3, 0, 3.14, 0]                     # 30 cm above weld end
+safe_pose = p[0.4, -0.4, 0.5, 0, 3.14, 0]                         # Safe standby pose
+
+# Motion sequence
+def main():
+    # 1) Move to home position (joint move)
+    movej(home_joint, a=1.2, v=0.3)   # 300 mm/s = 0.3 m/s
+
+    # 2) Approach above weld start (linear move)
+    movel(pose_above_start, a=1.0, v=0.25)   # 250 mm/s
+
+    # 3) Descend to weld start position
+    movel(pose_start, a=0.8, v=0.1)          # 100 mm/s
+
+    # 4) Activate welding torch
+    set_digital_out(TORCH_DO, True)
+    sync()                                   # ensure output is set
+
+    # 5) Weld seam – linear 300 mm path
+    movel(pose_end, a=0.5, v=0.05)           # 50 mm/s
+
+    # 6) Deactivate welding torch
+    set_digital_out(TORCH_DO, False)
+    sync()
+
+    # 7) Retract above weld end
+    movel(pose_above_end, a=0.8, v=0.2)      # 200 mm/s
+
+    # 8) Return to safe standby pose
+    movel(safe_pose, a=1.0, v=0.3)
+
+    # 9) Return to home joint position
+    movej(home_joint, a=1.2, v=0.3)
+
+# Execute program
+main()

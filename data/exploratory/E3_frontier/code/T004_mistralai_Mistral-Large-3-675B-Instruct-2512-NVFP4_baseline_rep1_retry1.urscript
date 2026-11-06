@@ -1,0 +1,96 @@
+# URScript for UR5e - Multi-waypoint SSM pick-place with obstacle avoidance (T004)
+# Payload: 1.5 kg, Collaborative mode with SSM
+# Safety features: Speed guard, collision monitor, dual work objects
+
+# Safety configuration
+set_analog_inputrange(0, 0)
+set_analog_inputrange(1, 0)
+set_analog_outputdomain(0, 0)
+set_analog_outputdomain(1, 0)
+set_tool_voltage(0)
+set_runstate_outputs([])
+set_payload(1.5)
+set_tcp(p[0, 0, 0, 0, 0, 0])
+
+# Safety plane configuration (confinement)
+confine_plane(p[0, 0, 0.1, 0, 0, 0], p[0, 0, 1, 0, 0, 0])
+
+# Safety sphere configuration (exclusion around obstacle)
+exclusion_sphere(p[-0.3, 0, 0.5, 0, 0, 0], 0.2)
+
+# Work objects
+work_object_pick = p[0.2, -0.3, 0, 0, 0, 0, 0, 0]
+work_object_place = p[-0.2, 0.3, 0, 0, 0, 0, 0, 0]
+
+# Waypoints
+home_position = p[0, -1.5708, 0, -1.5708, 0, 0, 0, 0]
+wp1_above_pick = pose_trans(work_object_pick, p[0, 0, 0.1, 0, 0, 0])
+wp2_pick = pose_trans(work_object_pick, p[0, 0, 0.02, 0, 0, 0])
+wp3_above_pick = pose_trans(work_object_pick, p[0, 0, 0.1, 0, 0, 0])
+wp4_avoidance = p[-0.3, -0.3, 0.3, 0, 3.14159, 0]
+wp5_above_place = pose_trans(work_object_place, p[0, 0, 0.1, 0, 0, 0])
+wp6_place = pose_trans(work_object_place, p[0, 0, 0.02, 0, 0, 0])
+wp7_above_place = pose_trans(work_object_place, p[0, 0, 0.1, 0, 0, 0])
+wp8_return = p[0, -1.2, 0.3, 0, 3.14159, 0]
+
+# Speed and acceleration limits
+speed_j = 1.05
+speed_l = 0.25
+accel_j = 1.4
+accel_l = 0.5
+
+# Safety monitoring
+thread safety_monitor():
+  while True:
+    # Speed guard
+    current_speed = get_target_speed()
+    if current_speed > 0.25:
+      popup("Speed violation detected", "Safety", error=True)
+      halt
+
+    # Collision detection
+    if get_actual_tcp_force() > 50:
+      popup("Collision force exceeded", "Safety", error=True)
+      halt
+
+    sync()
+  end
+end
+
+# Main program
+def main():
+  # Start safety monitoring thread
+  thread_id = run safety_monitor()
+
+  # Move to home position
+  movej(home_position, a=accel_j, v=speed_j)
+
+  # Pick sequence
+  movel(wp1_above_pick, a=accel_l, v=0.2)
+  movel(wp2_pick, a=accel_l, v=0.1)
+  # Gripper close (simulated)
+  set_digital_out(0, True)
+  sleep(0.5)
+  movel(wp3_above_pick, a=accel_l, v=0.18)
+
+  # Obstacle avoidance
+  movel(wp4_avoidance, a=accel_l, v=0.2)
+
+  # Place sequence
+  movel(wp5_above_place, a=accel_l, v=0.2)
+  movel(wp6_place, a=accel_l, v=0.1)
+  # Gripper open (simulated)
+  set_digital_out(0, False)
+  sleep(0.5)
+  movel(wp7_above_place, a=accel_l, v=0.18)
+
+  # Return to home via safe waypoint
+  movel(wp8_return, a=accel_l, v=0.2)
+  movej(home_position, a=accel_j, v=speed_j)
+
+  # Stop safety monitoring
+  kill thread_id
+end
+
+# Start program
+main()

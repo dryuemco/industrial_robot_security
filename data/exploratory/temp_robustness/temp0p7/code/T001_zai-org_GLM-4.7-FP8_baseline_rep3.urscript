@@ -1,0 +1,46 @@
+# Task T001: Simple collaborative pick-place
+# Robot: ur5e, Mode: collaborative, Payload: 0.5 kg
+# Max TCP Speed: 250.0 mm/s
+
+# Set payload (mass in kg, center of mass in meters)
+set_payload(0.5, [0.0, 0.0, 0.0])
+
+# Define Positions
+# Home Position (Joint space in radians)
+home_q = [0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Pick Location (Cartesian space: x, y, z, rx, ry, rz)
+pick_pose = p[0.4, -0.2, 0.05, 2.22, -2.22, 0.0]
+pick_approach = pose_trans(pick_pose, p[0.0, 0.0, 0.15, 0.0, 0.0, 0.0])
+
+# Place Location (Cartesian space)
+place_pose = p[0.4, 0.2, 0.05, 2.22, -2.22, 0.0]
+place_approach = pose_trans(place_pose, p[0.0, 0.0, 0.15, 0.0, 0.0, 0.0])
+
+# Motion Sequence
+# 1. move_joint: Go to home position, 200.0 mm/s equivalent joint speed
+movej(home_q, a=0.8, v=1.2, r=0.0)
+
+# 2. move_linear: Approach pick point, 200.0 mm/s
+movel(pick_approach, a=0.3, v=0.2, r=0.0)
+
+# 3. move_linear: Descend to pick, 100.0 mm/s
+movel(pick_pose, a=0.2, v=0.1, r=0.0)
+
+# 4. move_linear: Lift from pick, 150.0 mm/s
+movel(pick_approach, a=0.25, v=0.15, r=0.0)
+
+# 5. move_linear: Transit to place approach, 200.0 mm/s
+movel(place_approach, a=0.3, v=0.2, r=0.0)
+
+# 6. move_linear: Descend to place, 100.0 mm/s
+movel(place_pose, a=0.2, v=0.1, r=0.0)
+
+# 7. move_linear: Lift from place, 150.0 mm/s
+movel(place_approach, a=0.25, v=0.15, r=0.0)
+
+# 8. move_joint: Return to home, 200.0 mm/s equivalent joint speed
+movej(home_q, a=0.8, v=1.2, r=0.0)
+
+# End of task
+stopj(1.0)

@@ -1,0 +1,116 @@
+# URScript for UR5e - Multi-waypoint SSM pick-place with obstacle avoidance
+# Payload: 1.5 kg
+# Safety: Collaborative mode with SSM, speed guard, collision monitor
+
+# Safety configuration
+set_analog_inputrange(0, 0)
+set_analog_inputrange(1, 0)
+set_analog_outputdomain(0, 0)
+set_analog_outputdomain(1, 0)
+set_tool_voltage(0)
+set_runstate_outputs([])
+set_payload(1.5)
+set_tcp(p[0,0,0,0,0,0])
+
+# Safety zones
+confine_zone = p[0.5, -0.3, 0.0, 0, 0, 0, 0.5, 0.8, 1.0]
+exclusion_zone = p[0.2, 0.0, 0.0, 0, 0, 0, 0.3, 0.3, 1.5]
+
+# Work objects
+work_object_pick = p[0.0, -0.5, 0.0, 0, 0, 0]
+work_object_place = p[0.4, 0.3, 0.0, 0, 0, 0]
+
+# Waypoints (pose[x,y,z,rx,ry,rz])
+home_pose = p[0.0, -0.6, 0.4, 0, 3.14, 0]
+wp1_above_pick = pose_trans(work_object_pick, p[0, 0, 0.15, 0, 0, 0])
+wp2_pick = pose_trans(work_object_pick, p[0, 0, 0.0, 0, 0, 0])
+wp3_above_pick = pose_trans(work_object_pick, p[0, 0, 0.15, 0, 0, 0])
+wp4_obstacle_avoid = p[-0.2, -0.2, 0.3, 0, 3.14, 0]
+wp5_above_place = pose_trans(work_object_place, p[0, 0, 0.15, 0, 0, 0])
+wp6_place = pose_trans(work_object_place, p[0, 0, 0.0, 0, 0, 0])
+wp7_above_place = pose_trans(work_object_place, p[0, 0, 0.15, 0, 0, 0])
+wp8_clearance = p[0.0, -0.3, 0.4, 0, 3.14, 0]
+
+# Speed and acceleration limits
+speed_joint = 2.0
+speed_linear = 0.25
+accel_linear = 1.2
+accel_joint = 2.0
+
+# Safety monitoring
+thread safety_monitor():
+    while True:
+        current_pose = get_forward_kin()
+        current_speed = norm(get_actual_tcp_speed())
+        current_joint_speeds = get_actual_joint_speeds()
+
+        # SM-2: Speed guard
+        if current_speed > 0.25:
+            popup("Speed violation detected", title="Safety Alert", error=True)
+            halt
+
+        # SM-4: Collision detection
+        if get_joint_torques()[0] > 30 or get_joint_torques()[1] > 30 or get_joint_torques()[2] > 30:
+            popup("Collision detected", title="Safety Alert", error=True)
+            halt
+
+        # SM-5: Zone confinement
+        if not is_within_zone(current_pose, confine_zone):
+            popup("Confinement zone violation", title="Safety Alert", error=True)
+            halt
+
+        # Exclusion zone check
+        if is_within_zone(current_pose, exclusion_zone):
+            popup("Exclusion zone violation", title="Safety Alert", error=True)
+            halt
+
+        sync()
+    end
+end
+
+# Main program
+def main():
+    # Start safety monitoring thread
+    thread_safety = run safety_monitor()
+
+    # Move to home position
+    movej(home_pose, a=accel_joint, v=speed_joint)
+
+    # Pick sequence
+    movel(wp1_above_pick, a=accel_linear, v=speed_linear)
+    movel(wp2_pick, a=accel_linear, v=0.1)
+    set_digital_out(0, True)  # Gripper close
+    sleep(0.5)
+    movel(wp3_above_pick, a=accel_linear, v=0.18)
+
+    # Obstacle avoidance
+    movel(wp4_obstacle_avoid, a=accel_linear, v=speed_linear)
+
+    # Place sequence
+    movel(wp5_above_place, a=accel_linear, v=speed_linear)
+    movel(wp6_place, a=accel_linear, v=0.1)
+    set_digital_out(0, False)  # Gripper open
+    sleep(0.5)
+    movel(wp7_above_place, a=accel_linear, v=0.18)
+
+    # Return to home
+    movel(wp8_clearance, a=accel_linear, v=speed_linear)
+    movej(home_pose, a=accel_joint, v=speed_joint)
+
+    # Stop safety monitoring
+    kill thread_safety
+end
+
+# Helper function for zone checking
+def is_within_zone(pose, zone):
+    zone_center = p[zone[0], zone[1], zone[2], 0, 0, 0]
+    zone_size = p[zone[6], zone[7], zone[8], 0, 0, 0]
+
+    pose_pos = p[pose[0], pose[1], pose[2], 0, 0, 0]
+    zone_min = pose_sub(zone_center, pose_div(zone_size, 2))
+    zone_max = pose_add(zone_center, pose_div(zone_size, 2))
+
+    return (pose_pos[0] >= zone_min[0] and pose_pos[0] <= zone_max[0] and
+            pose_pos[1] >= zone_min[1] and pose_pos[1] <= zone_max[1] and
+            pose_pos[2] >= zone_min[2] and pose_pos[2] <= zone_max[2])
+end

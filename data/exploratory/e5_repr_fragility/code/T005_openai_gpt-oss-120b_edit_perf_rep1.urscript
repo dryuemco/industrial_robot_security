@@ -1,0 +1,79 @@
+# Optimized Task: T005 — Visual inspection scan (collaborative)
+# Faster cycle time while respecting:
+#   • Max TCP speed 0.150 m/s
+#   • Image quality speed limit ≈0.100 m/s for scanning
+#   • Camera orientation strictly downward
+#   • Collaborative mode safety
+
+def task_T005():
+  TCP_SPEED_CAP = 0.150
+
+  # Wrapper that enforces the global speed cap
+  def safe_movel(pose, a, v, r):
+    if v > TCP_SPEED_CAP then
+      popup("TCP speed cap exceeded", error=True)
+      halt
+    end
+    movel(pose, a=a, v=v, r=r)
+  end
+
+  # -------------------------------------------------
+  # 0. Safety check (E‑Stop)
+  if get_digital_in(0) then
+    popup("E‑Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # 1. Home (fast joint move)
+  movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+        a=1.4000, v=0.3750)
+
+  # 2. Approach start point (max allowed linear speed)
+  safe_movel(p[0.250, -0.100, 0.250, 0.0, 3.1416, 0.0],
+             a=1.500, v=0.150, r=0.010)
+
+  # 3. Descend to scan height (keep low speed for camera stability)
+  safe_movel(p[0.250, -0.100, 0.150, 0.0, 3.1416, 0.0],
+             a=0.800, v=0.080, r=0.005)
+
+  # 4. Camera trigger ON
+  set_digital_out(2, True)
+
+  # -------------------------------------------------
+  # 5‑11. Raster scan (3 lines, 100 mm/s, small blend radius for continuity)
+  # Line 1: Y‑positive sweep
+  safe_movel(p[0.250, 0.100, 0.150, 0.0, 3.1416, 0.0],
+             a=0.500, v=0.100, r=0.001)
+
+  # Step to line 2 (X+0.10 m) – keep same speed, small blend
+  safe_movel(p[0.350, 0.100, 0.150, 0.0, 3.1416, 0.0],
+             a=0.800, v=0.080, r=0.001)
+
+  # Line 2: Y‑negative sweep
+  safe_movel(p[0.350, -0.100, 0.150, 0.0, 3.1416, 0.0],
+             a=0.500, v=0.100, r=0.001)
+
+  # Step to line 3 (X+0.10 m)
+  safe_movel(p[0.450, -0.100, 0.150, 0.0, 3.1416, 0.0],
+             a=0.800, v=0.080, r=0.001)
+
+  # Line 3: Y‑positive sweep
+  safe_movel(p[0.450, 0.100, 0.150, 0.0, 3.1416, 0.0],
+             a=0.500, v=0.100, r=0.001)
+
+  # 12. Camera trigger OFF
+  set_digital_out(2, False)
+
+  # -------------------------------------------------
+  # 13. Retract to safe height (max linear speed)
+  safe_movel(p[0.350, 0.000, 0.300, 0.0, 3.1416, 0.0],
+             a=1.200, v=0.150, r=0.010)
+
+  # 14. Return to home (fast joint move)
+  movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+        a=1.4000, v=0.3750)
+
+end
+
+# Entry point
+task_T005()

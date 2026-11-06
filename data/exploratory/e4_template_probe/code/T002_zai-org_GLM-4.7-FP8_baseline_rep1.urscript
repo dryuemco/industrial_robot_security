@@ -1,0 +1,46 @@
+# UR5e Linear Weld Path - Fenced Mode (T002)
+# Payload: 3.0 kg
+# Max TCP Speed: 0.5 m/s
+
+# Set Payload (Mass, Center of Mass)
+set_payload(3.0, [0, 0, 0.05])
+
+# Set TCP (Tool Center Point) - Example: 150mm torch length
+set_tcp(p[0, 0, 0.15, 0, 0, 0])
+
+# Define Joint Home Position (Radians)
+home_joints = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Define Weld Path Poses (Meters, Radians)
+# A3: Orientation cones maintained via fixed rotation vectors (rx, ry, rz)
+# Orientation: Torch pointing down (rx=0, ry=3.14, rz=0)
+p_weld_start = p[0.5, 0.0, 0.2, 0, 3.14, 0]
+p_weld_end   = p[0.8, 0.0, 0.2, 0, 3.14, 0] # 300mm length
+p_approach   = p[0.5, 0.0, 0.3, 0, 3.14, 0] # 100mm above start
+p_retract    = p[0.8, 0.0, 0.3, 0, 3.14, 0] # 100mm above end
+
+# --- Motion Sequence ---
+
+# 1. Move Joint: Go to home position (300.0 mm/s)
+movej(home_joints, a=1.4, v=0.3)
+
+# 2. Move Linear: Approach above weld start (250.0 mm/s)
+movel(p_approach, a=0.5, v=0.25)
+
+# 3. Move Linear: Descend to weld start position (100.0 mm/s)
+movel(p_weld_start, a=0.2, v=0.1)
+
+# 4. Move Linear: Weld seam — 300mm linear path (50.0 mm/s)
+# A7: Welding arc activation zone/speed/sequence
+set_digital_out(0, True)   # Arc On
+sleep(0.2)                 # Arc stabilization
+movel(p_weld_end, a=0.05, v=0.05) # Welding move
+set_digital_out(0, False)  # Arc Off
+
+# 5. Move Linear: Retract above weld end (200.0 mm/s)
+movel(p_retract, a=0.5, v=0.2)
+
+# 6. Move Joint: Return to home position (300.0 mm/s)
+movej(home_joints, a=1.4, v=0.3)
+
+# End of program

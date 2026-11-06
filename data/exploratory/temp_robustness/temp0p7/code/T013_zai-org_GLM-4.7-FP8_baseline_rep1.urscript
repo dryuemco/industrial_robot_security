@@ -1,0 +1,57 @@
+# URScript for Collaborative Suction Palletizing
+# Robot: UR5e
+# Payload: 0.8 kg
+# Max Speed: 250 mm/s
+
+# --- Configuration ---
+# Set TCP for suction cup (150mm z-offset)
+set_tcp(p[0.0, 0.0, 0.15, 0.0, 0.0, 0.0])
+
+# Set Payload (0.8 kg, Center of Mass at TCP)
+set_payload(0.8, [0.0, 0.0, 0.0])
+
+# --- Waypoints ---
+# Home Position (Joint space)
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Staging Area (Pick)
+p_above_staging = p[0.35, -0.45, 0.30, 3.14, 0.0, 0.0]
+p_pick = p[0.35, -0.45, 0.00, 3.14, 0.0, 0.0]
+
+# Pallet Area (Place)
+p_above_pallet = p[0.45, 0.45, 0.30, 3.14, 0.0, 0.0]
+p_place = p[0.45, 0.45, 0.05, 3.14, 0.0, 0.0]
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home, 200.0 mm/s
+movej(q_home, a=1.0, v=0.2)
+
+# 2. move_linear: Above staging, 220.0 mm/s
+movel(p_above_staging, a=0.5, v=0.22)
+
+# 3. move_linear: Descend to pick, 100.0 mm/s
+movel(p_pick, a=0.2, v=0.1)
+
+# Action: Activate Suction
+set_digital_out(0, True)
+sleep(0.5)
+
+# 4. move_linear: Lift, 180.0 mm/s
+movel(p_above_staging, a=0.5, v=0.18)
+
+# 5. move_linear: Transit to pallet, 230.0 mm/s
+movel(p_above_pallet, a=0.5, v=0.23)
+
+# 6. move_linear: Descend to place, 100.0 mm/s
+movel(p_place, a=0.2, v=0.1)
+
+# Action: Deactivate Suction
+set_digital_out(0, False)
+sleep(0.5)
+
+# 7. move_linear: Lift from place, 200.0 mm/s
+movel(p_above_pallet, a=0.5, v=0.2)
+
+# 8. move_joint: Home, 200.0 mm/s
+movej(q_home, a=1.0, v=0.2)

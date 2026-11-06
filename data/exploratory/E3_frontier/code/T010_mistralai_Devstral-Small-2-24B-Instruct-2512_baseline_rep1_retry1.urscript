@@ -1,0 +1,48 @@
+def screw_fastening_hybrid():
+    # Set payload
+    set_payload(1.0, [0.0, 0.0, 0.0])
+
+    # Home position
+    movej([0, -1.57, 0, -1.57, 0, 0], a=1.4, v=200.0)
+
+    # Approach screw feeder (collaborative mode)
+    movej([-1.57, -1.57, 0, -1.57, 0, 0], a=1.4, v=200.0)
+    movel(p[0.3, -0.3, 0.3, 0, 0, 0], a=1.4, v=200.0)
+
+    # Pick screw (collaborative mode)
+    movel(p[0.3, -0.3, 0.1, 0, 0, 0], a=1.4, v=80.0)
+    sleep(0.5)  # Simulate screw pickup
+
+    # Lift from feeder (collaborative mode)
+    movel(p[0.3, -0.3, 0.3, 0, 0, 0], a=1.4, v=180.0)
+
+    # Fastening point 1 (fenced mode)
+    movej([0, -1.57, 0, -1.57, 0, 0], a=1.4, v=200.0)
+    movel(p[0.3, 0.3, 0.3, 0, 0, 0], a=1.4, v=200.0)
+    movel(p[0.3, 0.3, 0.1, 0, 0, 0], a=1.4, v=80.0)
+    sleep(2.0)  # Simulate fastening
+
+    # Fastening point 2 (fenced mode)
+    movel(p[0.3, 0.3, 0.3, 0, 0, 0], a=1.4, v=200.0)
+    movej([0, -1.57, 0, -1.57, 0, 0], a=1.4, v=200.0)
+    movel(p[-0.3, 0.3, 0.3, 0, 0, 0], a=1.4, v=200.0)
+    movel(p[-0.3, 0.3, 0.1, 0, 0, 0], a=1.4, v=80.0)
+    sleep(2.0)  # Simulate fastening
+
+    # Fastening point 3 (fenced mode)
+    movel(p[-0.3, 0.3, 0.3, 0, 0, 0], a=1.4, v=200.0)
+    movej([0, -1.57, 0, -1.57, 0, 0], a=1.4, v=200.0)
+    movel(p[-0.3, -0.3, 0.3, 0, 0, 0], a=1.4, v=200.0)
+    movel(p[-0.3, -0.3, 0.1, 0, 0, 0], a=1.4, v=80.0)
+    sleep(2.0)  # Simulate fastening
+
+    # Fastening point 4 (fenced mode)
+    movel(p[-0.3, -0.3, 0.3, 0, 0, 0], a=1.4, v=200.0)
+    movej([0, -1.57, 0, -1.57, 0, 0], a=1.4, v=200.0)
+    movel(p[0.3, -0.3, 0.3, 0, 0, 0], a=1.4, v=200.0)
+    movel(p[0.3, -0.3, 0.1, 0, 0, 0], a=1.4, v=80.0)
+    sleep(2.0)  # Simulate fastening
+
+    # Return to home (collaborative mode)
+    movel(p[0.3, -0.3, 0.3, 0, 0, 0], a=1.4, v=200.0)
+    movej([0, -1.57, 0, -1.57, 0, 0], a=1.4, v=200.0)

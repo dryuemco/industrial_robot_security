@@ -1,0 +1,119 @@
+# URScript for UR5e collaborative pick‑place (T001) with safety checks and error handling
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+payload(0.5)               # payload in kg
+set_tcp(p[0,0,0.2,0,0,0])   # example TCP offset (200 mm along Z)
+
+# Workspace limits (mm) – adjust to your cell
+workspace_min = p[0.0, -500.0, 0.0, -3.14, -3.14, -3.14]
+workspace_max = p[800.0, 500.0, 1000.0, 3.14, 3.14, 3.14]
+
+# Motion speeds (mm/s) – converted to rad/s for joint moves where needed
+speed_home      = 0.2   # m/s for joint move (UR uses m/s for linear, rad/s for joint)
+speed_approach  = 0.2
+speed_descend   = 0.1
+speed_lift      = 0.15
+speed_transit   = 0.2
+speed_place     = 0.1
+speed_retreat   = 0.2
+
+# -------------------------------------------------
+# Helper functions
+# -------------------------------------------------
+def within_workspace(pose):
+    # Simple axis‑wise check for Cartesian limits
+    for i in range(3):
+        if pose[i] < workspace_min[i] or pose[i] > workspace_max[i]:
+            textmsg("Workspace violation on axis " + str(i) + ": " + str(pose[i]))
+            return False
+    return True
+
+def safe_movej(target, a=1.2, v=speed_home):
+    # Joint move with error handling
+    try:
+        movej(target, a=a, v=v)
+        return True
+    except:
+        textmsg("ERROR: movej to " + str(target) + " failed")
+        stopj(0)          # emergency stop of joints
+        return False
+
+def safe_movel(target, a=1.2, v=0.2):
+    # Linear move with workspace and error handling
+    if not within_workspace(target):
+        textmsg("ERROR: Target pose out of workspace, aborting movel")
+        stopj(0)
+        return False
+    try:
+        movel(target, a=a, v=v)
+        return True
+    except:
+        textmsg("ERROR: movel to " + str(target) + " failed")
+        stopj(0)
+        return False
+
+# -------------------------------------------------
+# Pose definitions (all in meters)
+# -------------------------------------------------
+home_pose          = p[0.4, -0.2, 0.5, 0, 3.14, 0]
+
+pick_approach_pose = p[0.5, -0.1, 0.3, 0, 3.14, 0]   # above the object
+pick_pose          = p[0.5, -0.1, 0.1, 0, 3.14, 0]   # at grasp height
+
+place_approach_pose= p[0.2, 0.3, 0.3, 0, 3.14, 0]   # above place location
+place_pose         = p[0.2, 0.3, 0.1, 0, 3.14, 0]   # at place height
+
+retreat_pose       = p[0.4, -0.2, 0.5, 0, 3.14, 0]   # same as home for clarity
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # 1) Move to home position (joint move)
+    if not safe_movej(home_pose, v=speed_home):
+        return
+
+    # 2) Approach pick point (linear)
+    if not safe_movel(pick_approach_pose, v=speed_approach):
+        return
+
+    # 3) Descend to pick (linear, slower)
+    if not safe_movel(pick_pose, v=speed_descend):
+        return
+
+    # 4) Close gripper (placeholder – replace with actual I/O)
+    set_digital_out(0, True)   # close
+    sleep(0.5)
+
+    # 5) Lift from pick (linear)
+    if not safe_movel(pick_approach_pose, v=speed_lift):
+        return
+
+    # 6) Transit to place approach (linear)
+    if not safe_movel(place_approach_pose, v=speed_transit):
+        return
+
+    # 7) Descend to place (linear, slower)
+    if not safe_movel(place_pose, v=speed_place):
+        return
+
+    # 8) Open gripper (placeholder)
+    set_digital_out(0, False)  # open
+    sleep(0.5)
+
+    # 9) Lift from place (linear)
+    if not safe_movel(place_approach_pose, v=speed_lift):
+        return
+
+    # 10) Return to home (joint move)
+    if not safe_movej(retreat_pose, v=speed_retreat):
+        return
+
+    textmsg("Pick‑place task completed successfully")
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

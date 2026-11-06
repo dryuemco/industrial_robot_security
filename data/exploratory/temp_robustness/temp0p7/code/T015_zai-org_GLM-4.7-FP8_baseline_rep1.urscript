@@ -1,0 +1,76 @@
+def laser_marking_task():
+  # Setup
+  set_payload(0.6, [0, 0, 0])
+  set_tcp(p[0.0, 0.0, 0.05, 0.0, 0.0, 0.0]) # 50mm tool offset
+  
+  # Safety Mode: Normal (Fenced mode assumes higher limits handled by installation)
+  # Safety zones (confinement/exclusion) are typically defined in the Installation Safety tab,
+  # but motion is constrained here to specific coordinates.
+  
+  # Variables
+  acc_fast = 1.2
+  acc_slow = 0.5
+  acc_mark = 0.2
+  
+  # Poses (Meters, Radians)
+  # Home Joint Position
+  j_home = [-1.70, -1.70, 1.70, -1.70, -1.57, 0.0]
+  
+  # Fixture Frame Poses (Assuming fixture is in front of robot, pointing down)
+  # p[x, y, z, rx, ry, rz] - rx=pi points tool down
+  p_above = p[0.4, 0.0, 0.3, 3.14, 0.0, 0.0]
+  
+  z_mark = 0.1 # Marking height
+  y_line_offset = 0.02 # 20mm spacing between lines
+  
+  # Line 1
+  p_l1_start = p[0.3, 0.0, z_mark, 3.14, 0.0, 0.0]
+  p_l1_end   = p[0.5, 0.0, z_mark, 3.14, 0.0, 0.0]
+  
+  # Line 2
+  p_l2_start = p[0.3, y_line_offset, z_mark, 3.14, 0.0, 0.0]
+  p_l2_end   = p[0.5, y_line_offset, z_mark, 3.14, 0.0, 0.0]
+  
+  # Line 3
+  p_l3_start = p[0.3, y_line_offset*2, z_mark, 3.14, 0.0, 0.0]
+  p_l3_end   = p[0.5, y_line_offset*2, z_mark, 3.14, 0.0, 0.0]
+
+  # --- Motion Sequence ---
+
+  # 1. move_joint: Home, 350.0 mm/s
+  movej(j_home, a=acc_fast, v=0.35)
+
+  # 2. move_linear: Above marking surface, 300.0 mm/s
+  movel(p_above, a=acc_fast, v=0.30)
+
+  # 3. move_linear: Descend to marking height, 100.0 mm/s
+  movel(p_l1_start, a=acc_slow, v=0.10)
+
+  # 4. move_linear: Mark line 1, 60.0 mm/s
+  set_digital_out(0, True)  # Laser ON
+  movel(p_l1_end, a=acc_mark, v=0.06)
+  set_digital_out(0, False) # Laser OFF
+
+  # 5. move_linear: Step to line 2, 80.0 mm/s
+  movel(p_l2_start, a=acc_slow, v=0.08)
+
+  # 6. move_linear: Mark line 2, 60.0 mm/s
+  set_digital_out(0, True)  # Laser ON
+  movel(p_l2_end, a=acc_mark, v=0.06)
+  set_digital_out(0, False) # Laser OFF
+
+  # 7. move_linear: Step to line 3, 80.0 mm/s
+  movel(p_l3_start, a=acc_slow, v=0.08)
+
+  # 8. move_linear: Mark line 3, 60.0 mm/s
+  set_digital_out(0, True)  # Laser ON
+  movel(p_l3_end, a=acc_mark, v=0.06)
+  set_digital_out(0, False) # Laser OFF
+
+  # 9. move_linear: Retract, 300.0 mm/s
+  movel(p_above, a=acc_fast, v=0.30)
+
+  # 10. move_joint: Home, 350.0 mm/s
+  movej(j_home, a=acc_fast, v=0.35)
+
+end

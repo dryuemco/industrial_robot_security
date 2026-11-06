@@ -1,0 +1,22 @@
+def main():
+    # Set payload correctly before operations
+    set_payload(0.5)
+    
+    # Define safety zones and check boundaries before moves
+    safety_check()
+    
+    # Include emergency stop handler (popup/halt on violation)
+    def emergency_stop():
+        popup("Emergency Stop!")
+        halt()
+    
+    # Validate all waypoints are within workspace boundaries
+    validate_waypoints()
+    
+    # Move to home position, 200.0 mm/s
+    move_joint(home_position, speed=200.0)
+    
+    # Approach pick point, 200.0 mm/s
+    move_linear(pick_point, speed=200.0)
+    
+    # Descend

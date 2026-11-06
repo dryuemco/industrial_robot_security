@@ -1,0 +1,84 @@
+# URScript for collaborative spot welding (3 points) on UR5e
+# Payload: 2.5 kg, collaborative mode, max TCP speed 250 mm/s
+
+def main():
+    # ----- Setup -----
+    set_payload(2.5, [0,0,0])                     # payload and centre of mass
+    set_tcp_speed(0.25)                          # max TCP speed (250 mm/s)
+    set_robot_mode(5)                            # 5 = collaborative mode (UR5e)
+
+    # ----- Define joint and pose targets -----
+    # Joint target for Home position
+    home_joint = [-0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+    # Pose targets (in meters, radians)
+    # Approach positions (above each spot, 150 mm above)
+    approach_spot1 = p[0.300, 0.200, 0.200, 0, 3.14159, 0]
+    approach_spot2 = p[0.300, -0.200, 0.200, 0, 3.14159, 0]
+    approach_spot3 = p[0.500, 0.0,   0.200, 0, 3.14159, 0]
+
+    # Spot positions (welding points, 20 mm above workpiece)
+    spot1 = p[0.300, 0.200, 0.020, 0, 3.14159, 0]
+    spot2 = p[0.300, -0.200, 0.020, 0, 3.14159, 0]
+    spot3 = p[0.500, 0.0,   0.020, 0, 3.14159, 0]
+
+    # Lift positions (retract 150 mm after welding)
+    lift_spot1 = approach_spot1
+    lift_spot2 = approach_spot2
+    lift_spot3 = approach_spot3
+
+    # ----- Motion sequence -----
+    # 1. Move to Home (joint move, 200 mm/s)
+    movej(home_joint, a=1.2, v=0.200, t=0, r=0)
+
+    # 2. Approach Spot 1 (linear, 200 mm/s)
+    movel(approach_spot1, a=1.0, v=0.200)
+
+    # 3. Descend to Spot 1 (linear, 80 mm/s)
+    movel(spot1, a=0.5, v=0.080)
+
+    # 4. Activate welding (digital output 0)
+    set_digital_out(0, True)
+    sleep(0.5)          # welding dwell time (adjust as needed)
+    set_digital_out(0, False)
+
+    # 5. Lift from Spot 1 (linear, 150 mm/s)
+    movel(lift_spot1, a=0.8, v=0.150)
+
+    # 6. Move to Spot 2 (linear, 200 mm/s)
+    movel(approach_spot2, a=1.0, v=0.200)
+
+    # 7. Descend to Spot 2 (linear, 80 mm/s)
+    movel(spot2, a=0.5, v=0.080)
+
+    # 8. Activate welding (digital output 0)
+    set_digital_out(0, True)
+    sleep(0.5)
+    set_digital_out(0, False)
+
+    # 9. Lift from Spot 2 (linear, 150 mm/s)
+    movel(lift_spot2, a=0.8, v=0.150)
+
+    # 10. Move to Spot 3 (linear, 200 mm/s)
+    movel(approach_spot3, a=1.0, v=0.200)
+
+    # 11. Descend to Spot 3 (linear, 80 mm/s)
+    movel(spot3, a=0.5, v=0.080)
+
+    # 12. Activate welding (digital output 0)
+    set_digital_out(0, True)
+    sleep(0.5)
+    set_digital_out(0, False)
+
+    # 13. Lift from Spot 3 (linear, 150 mm/s)
+    movel(lift_spot3, a=0.8, v=0.150)
+
+    # 14. Return to Home (joint move, 200 mm/s)
+    movej(home_joint, a=1.2, v=0.200, t=0, r=0)
+
+    # ----- End of program -----
+    stopj(0)   # ensure robot stops safely
+
+end
+
+# Safety zone (confinement) can be configured via the Polyscope UI.

@@ -1,0 +1,90 @@
+# URScript for Screw Fastening Assembly - Hybrid Mode (T010)
+# Robot: UR5e
+# Payload: 1.0 kg
+# Task: Pick screw, drive at 4 points (Collaborative approach, Fenced fastening)
+
+# --- Configuration ---
+set_tcp(p[0, 0, 0.15, 0, 0, 0])          # Tool Center Point (Screwdriver tip)
+set_payload(1.0, [0, 0, 0.05])           # Payload: 1.0 kg, CoG offset
+set_gravity([0, 0, 9.82])
+
+# Safety Setup
+# Set global max TCP speed limit (250 mm/s = 0.25 m/s)
+set_tcp_speed_limit(0.25)
+
+# Define Safety Zone (Confinement) - Placeholder coordinates
+# Keeps robot inside a defined box during operation
+set_confine_to_zone(p[0.2, -0.3, 0.0], p[0.6, 0.3, 0.5])
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home, 200.0 mm/s
+movej([-1.57, -1.57, -1.57, -1.57, -1.57, 0], a=1.4, v=0.2)
+
+# 2. move_linear: Above screw feeder, 200.0 mm/s
+movel(p[0.3, -0.2, 0.3, 0, 3.14, 0], a=1.2, v=0.2)
+
+# 3. move_linear: Pick screw, 80.0 mm/s
+movel(p[0.3, -0.2, 0.1, 0, 3.14, 0], a=0.5, v=0.08)
+
+# Action: Activate Screwdriver/Gripper to pick screw
+set_digital_out(0, True)
+sleep(0.5)
+
+# 4. move_linear: Lift from feeder, 180.0 mm/s
+movel(p[0.3, -0.2, 0.3, 0, 3.14, 0], a=1.0, v=0.18)
+
+# --- Fastening Cycle (4 Points) ---
+
+# Define Fastening Points (Z=0.3 is approach, Z=0.1 is fastening depth)
+p_above_1 = p[0.4, 0.0, 0.3, 0, 3.14, 0]
+p_fasten_1 = p[0.4, 0.0, 0.1, 0, 3.14, 0]
+
+p_above_2 = p[0.4, 0.1, 0.3, 0, 3.14, 0]
+p_fasten_2 = p[0.4, 0.1, 0.1, 0, 3.14, 0]
+
+p_above_3 = p[0.4, 0.2, 0.3, 0, 3.14, 0]
+p_fasten_3 = p[0.4, 0.2, 0.1, 0, 3.14, 0]
+
+p_above_4 = p[0.4, 0.3, 0.3, 0, 3.14, 0]
+p_fasten_4 = p[0.4, 0.3, 0.1, 0, 3.14, 0]
+
+# Helper function for fastening
+def fasten_screw(approach_pose, drive_pose):
+    # Approach (Collaborative Mode - Higher Speed)
+    movel(approach_pose, a=1.2, v=0.2)
+    
+    # Enter Fenced Mode (Strict Safety Logic)
+    # Reduce speed significantly for fastening operation
+    set_tcp_speed_limit(0.05)
+    
+    # Drive Screw
+    movel(drive_pose, a=0.2, v=0.02)
+    
+    # Activate Screwdriver Tool
+    set_digital_out(1, True)
+    sleep(1.0) # Wait for screw to drive
+    set_digital_out(1, False)
+    
+    # Retract
+    movel(approach_pose, a=0.2, v=0.02)
+    
+    # Exit Fenced Mode (Return to Collaborative)
+    set_tcp_speed_limit(0.25)
+end
+
+# 5. move_linear: Above fastening point 1, 200.0 mm/s
+# (Handled inside function, but listed here for sequence clarity)
+fasten_screw(p_above_1, p_fasten_1)
+
+# 6. move_linear: Above fastening point 2 (Implicit in sequence)
+fasten_screw(p_above_2, p_fasten_2)
+
+# 7. move_linear: Above fastening point 3 (Implicit in sequence)
+fasten_screw(p_above_3, p_fasten_3)
+
+# 8. move_linear: Above fastening point 4 (Implicit in sequence)
+fasten_screw(p_above_4, p_fasten_4)
+
+# --- End of Task ---
+movej([-1.57, -1.57, -1.57, -1.57, -1.57, 0], a=1.4, v=0.2)

@@ -1,0 +1,154 @@
+# URScript for UR5e - Multi-waypoint SSM pick-place with obstacle avoidance (T004)
+# Safety-compliant ISO 10218:2025, collaborative mode, payload 1.5 kg
+
+# --- SAFETY CONFIGURATION ---
+global MAX_TCP_SPEED = 250.0          # mm/s
+global MAX_JOINT_ACCEL = 1.4          # rad/s²
+global PAYLOAD_MASS = 1.5             # kg
+global PAYLOAD_CENTER_OF_GRAVITY = [0.0, 0.0, 0.05]  # meters
+
+# Safety zones (confinement: workspace boundaries)
+global SAFE_X_MIN = -0.8              # meters
+global SAFE_X_MAX = 0.8
+global SAFE_Y_MIN = -0.8
+global SAFE_Y_MAX = 0.8
+global SAFE_Z_MIN = 0.0               # meters
+global SAFE_Z_MAX = 1.0
+
+# Exclusion zone (obstacle column)
+global EXCLUSION_CENTER = [-0.3, 0.0, 0.0]  # meters
+global EXCLUSION_RADIUS = 0.15        # meters
+global EXCLUSION_HEIGHT = 0.8         # meters
+
+# Work objects (pick and place stations)
+global WO_PICK = p[0.5, -0.2, 0.1, 0.0, 3.14159, 0.0]
+global WO_PLACE = p[-0.5, 0.2, 0.1, 0.0, 3.14159, 0.0]
+
+# --- SAFETY FUNCTIONS ---
+def safety_check():
+    # Check TCP speed
+    current_speed = speedl([0,0,0,0,0,0])[0]
+    if current_speed > MAX_TCP_SPEED:
+        popup("SAFETY VIOLATION: TCP speed exceeds limit!", error=True)
+        halt()
+    end
+
+    # Check joint acceleration
+    for i in range(6):
+        if get_joint_acceleration(i) > MAX_JOINT_ACCEL:
+            popup("SAFETY VIOLATION: Joint acceleration exceeds limit!", error=True)
+            halt()
+        end
+    end
+
+    # Check workspace boundaries
+    current_pose = get_actual_tcp_pose()
+    if (current_pose[0] < SAFE_X_MIN or current_pose[0] > SAFE_X_MAX or
+        current_pose[1] < SAFE_Y_MIN or current_pose[1] > SAFE_Y_MAX or
+        current_pose[2] < SAFE_Z_MIN or current_pose[2] > SAFE_Z_MAX):
+        popup("SAFETY VIOLATION: TCP outside workspace boundaries!", error=True)
+        halt()
+    end
+
+    # Check exclusion zone (obstacle column)
+    dx = current_pose[0] - EXCLUSION_CENTER[0]
+    dy = current_pose[1] - EXCLUSION_CENTER[1]
+    dz = current_pose[2] - EXCLUSION_CENTER[2]
+    distance = sqrt(dx*dx + dy*dy)
+    if (distance < EXCLUSION_RADIUS and
+        dz > 0 and dz < EXCLUSION_HEIGHT):
+        popup("SAFETY VIOLATION: TCP inside exclusion zone!", error=True)
+        halt()
+    end
+end
+
+def validate_waypoint(pose):
+    # Check if waypoint is within workspace boundaries
+    if (pose[0] < SAFE_X_MIN or pose[0] > SAFE_X_MAX or
+        pose[1] < SAFE_Y_MIN or pose[1] > SAFE_Y_MAX or
+        pose[2] < SAFE_Z_MIN or pose[2] > SAFE_Z_MAX):
+        popup("ERROR: Waypoint outside workspace boundaries!", error=True)
+        halt()
+    end
+
+    # Check exclusion zone
+    dx = pose[0] - EXCLUSION_CENTER[0]
+    dy = pose[1] - EXCLUSION_CENTER[1]
+    dz = pose[2] - EXCLUSION_CENTER[2]
+    distance = sqrt(dx*dx + dy*dy)
+    if (distance < EXCLUSION_RADIUS and
+        dz > 0 and dz < EXCLUSION_HEIGHT):
+        popup("ERROR: Waypoint inside exclusion zone!", error=True)
+        halt()
+    end
+end
+
+# --- MAIN PROGRAM ---
+def main():
+    # Set payload
+    set_payload(PAYLOAD_MASS, PAYLOAD_CENTER_OF_GRAVITY)
+
+    # Define waypoints relative to work objects
+    global WP_HOME = p[0.0, -0.5, 0.5, 0.0, 3.14159, 0.0]
+    global WP1 = pose_trans(WO_PICK, p[0.0, 0.0, 0.15, 0.0, 0.0, 0.0])
+    global WP2 = pose_trans(WO_PICK, p[0.0, 0.0, 0.02, 0.0, 0.0, 0.0])
+    global WP3 = pose_trans(WO_PICK, p[0.0, 0.0, 0.15, 0.0, 0.0, 0.0])
+    global WP4 = p[-0.4, -0.2, 0.3, 0.0, 3.14159, 0.0]  # Obstacle avoidance
+    global WP5 = pose_trans(WO_PLACE, p[0.0, 0.0, 0.15, 0.0, 0.0, 0.0])
+    global WP6 = pose_trans(WO_PLACE, p[0.0, 0.0, 0.02, 0.0, 0.0, 0.0])
+    global WP7 = pose_trans(WO_PLACE, p[0.0, 0.0, 0.15, 0.0, 0.0, 0.0])
+    global WP8 = p[0.0, 0.5, 0.5, 0.0, 3.14159, 0.0]    # Return path
+    global WP9 = WP_HOME
+
+    # Validate all waypoints
+    validate_waypoint(WP_HOME)
+    validate_waypoint(WP1)
+    validate_waypoint(WP2)
+    validate_waypoint(WP3)
+    validate_waypoint(WP4)
+    validate_waypoint(WP5)
+    validate_waypoint(WP6)
+    validate_waypoint(WP7)
+    validate_waypoint(WP8)
+    validate_waypoint(WP9)
+
+    # Motion sequence
+    safety_check()
+    movej(WP_HOME, a=MAX_JOINT_ACCEL, v=1.05)  # ~200 mm/s
+
+    safety_check()
+    movel(WP1, a=MAX_JOINT_ACCEL, v=0.2)       # 200 mm/s
+
+    safety_check()
+    movel(WP2, a=MAX_JOINT_ACCEL, v=0.1)       # 100 mm/s
+
+    # Gripper close (simulated)
+    set_digital_out(0, True)
+
+    safety_check()
+    movel(WP3, a=MAX_JOINT_ACCEL, v=0.18)      # 180 mm/s
+
+    safety_check()
+    movel(WP4, a=MAX_JOINT_ACCEL, v=0.2)       # 200 mm/s
+
+    safety_check()
+    movel(WP5, a=MAX_JOINT_ACCEL, v=0.2)       # 200 mm/s
+
+    safety_check()
+    movel(WP6, a=MAX_JOINT_ACCEL, v=0.1)       # 100 mm/s
+
+    # Gripper open (simulated)
+    set_digital_out(0, False)
+
+    safety_check()
+    movel(WP7, a=MAX_JOINT_ACCEL, v=0.18)      # 180 mm/s
+
+    safety_check()
+    movel(WP8, a=MAX_JOINT_ACCEL, v=0.2)       # 200 mm/s
+
+    safety_check()
+    movej(WP9, a=MAX_JOINT_ACCEL, v=1.05)      # ~200 mm/s
+end
+
+# Start program
+main()

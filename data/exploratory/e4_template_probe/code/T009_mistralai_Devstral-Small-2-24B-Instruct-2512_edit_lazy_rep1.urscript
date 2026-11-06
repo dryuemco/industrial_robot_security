@@ -1,0 +1,86 @@
+# Task: T009 — Laser surface scan — fenced mode
+# Improved version with better structure, safety checks, and efficiency
+# Operating mode: fenced | Max TCP speed: 0.200 m/s
+# Robot: ur5e
+
+def task_T009():
+    # Safety checks
+    if get_digital_in(0) == True:
+        popup("E-Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # Constants
+    HOME_JOINT_POSITIONS = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+    SCAN_HEIGHT = 0.120
+    SAFE_HEIGHT = 0.250
+    RETRACT_HEIGHT = 0.300
+    SCAN_SPEED = 0.050
+    STEP_SPEED = 0.080
+    APPROACH_SPEED = 0.150
+    HOME_SPEED = 0.450
+    ACCELERATION = 0.6000
+    STEP_ACCEL = 0.3000
+    SCAN_ACCEL = 0.2000
+    LASER_OUTPUT = 3
+
+    # Helper function for scan lines
+    def scan_line(start_x, end_x, y_pos, reverse=False):
+        if reverse:
+            movel(p[start_x, y_pos, SCAN_HEIGHT, 0.0000, 3.1416, 0.0000], a=SCAN_ACCEL, v=SCAN_SPEED, r=0.0050)
+        else:
+            movel(p[end_x, y_pos, SCAN_HEIGHT, 0.0000, 3.1416, 0.0000], a=SCAN_ACCEL, v=SCAN_SPEED, r=0.0050)
+        end
+    end
+
+    # 1. Home position
+    movej(HOME_JOINT_POSITIONS, a=ACCELERATION, v=HOME_SPEED)
+
+    # 2. Approach scan area
+    movel(p[0.250000, -0.100000, SAFE_HEIGHT, 0.0000, 3.1416, 0.0000], a=ACCELERATION, v=APPROACH_SPEED, r=0.0100)
+
+    # 3. Descend to scan height
+    movel(p[0.250000, -0.100000, SCAN_HEIGHT, 0.0000, 3.1416, 0.0000], a=STEP_ACCEL, v=STEP_SPEED, r=0.0050)
+
+    # 4. Activate laser
+    set_digital_out(LASER_OUTPUT, True)
+
+    # 5-11. Perform scan pattern
+    # Line 1
+    scan_line(0.250000, 0.250000, -0.100000)
+    movel(p[0.250000, 0.100000, SCAN_HEIGHT, 0.0000, 3.1416, 0.0000], a=SCAN_ACCEL, v=SCAN_SPEED, r=0.0050)
+
+    # Step to line 2
+    movel(p[0.350000, 0.100000, SCAN_HEIGHT, 0.0000, 3.1416, 0.0000], a=STEP_ACCEL, v=STEP_SPEED, r=0.0050)
+
+    # Line 2 reverse
+    scan_line(0.350000, 0.350000, 0.100000, True)
+    movel(p[0.350000, -0.100000, SCAN_HEIGHT, 0.0000, 3.1416, 0.0000], a=SCAN_ACCEL, v=SCAN_SPEED, r=0.0050)
+
+    # Step to line 3
+    movel(p[0.450000, -0.100000, SCAN_HEIGHT, 0.0000, 3.1416, 0.0000], a=STEP_ACCEL, v=STEP_SPEED, r=0.0050)
+
+    # Line 3
+    scan_line(0.450000, 0.450000, -0.100000)
+    movel(p[0.450000, 0.100000, SCAN_HEIGHT, 0.0000, 3.1416, 0.0000], a=SCAN_ACCEL, v=SCAN_SPEED, r=0.0050)
+
+    # Step to line 4
+    movel(p[0.550000, 0.100000, SCAN_HEIGHT, 0.0000, 3.1416, 0.0000], a=STEP_ACCEL, v=STEP_SPEED, r=0.0050)
+
+    # Line 4 reverse
+    scan_line(0.550000, 0.550000, 0.100000, True)
+    movel(p[0.550000, -0.100000, SCAN_HEIGHT, 0.0000, 3.1416, 0.0000], a=SCAN_ACCEL, v=SCAN_SPEED)
+
+    # 12. Deactivate laser
+    set_digital_out(LASER_OUTPUT, False)
+
+    # 13. Retract from scan area
+    movel(p[0.400000, 0.000000, RETRACT_HEIGHT, 0.0000, 3.1416, 0.0000], a=ACCELERATION, v=APPROACH_SPEED, r=0.0100)
+
+    # 14. Return to home
+    movej(HOME_JOINT_POSITIONS, a=ACCELERATION, v=HOME_SPEED)
+
+end
+
+# Entry point
+task_T009()

@@ -1,0 +1,138 @@
+# URScript for UR5e - Multi-waypoint SSM Pick-Place with Obstacle Avoidance
+# Collaborative mode with Speed and Separation Monitoring (SSM)
+# Payload: 1.5 kg
+
+def main():
+    # -------------------------------------------------
+    # Safety Configuration
+    # -------------------------------------------------
+    # Set collaborative safety mode (SSM)
+    set_safety_mode(2)                     # 2 = Speed and Separation Monitoring
+
+    # Define maximum allowed TCP speed (m/s) and joint speed (rad/s)
+    # Max TCP speed = 250 mm/s = 0.25 m/s
+    set_safety_limits(0.25, 0.5)           # (max_tcp_speed, max_joint_speed)
+
+    # Speed Guard: (speed_threshold [m/s], distance_threshold [m])
+    set_speed_guard(0.2, 0.1)              # trigger if speed >0.2 m/s within 0.1 m
+
+    # Collision Monitor: default safe values
+    set_collision_behavior(
+        stop_distance=0.02,               # stop distance [m]
+        stop_speed=0.1,                   # stop speed [m/s]
+        deceleration=0.5,                # deceleration [m/s^2]
+        lower_stop_distance=0.01,
+        lower_stop_speed=0.05,
+        lower_deceleration=0.3,
+        higher_stop_distance=0.03,
+        higher_stop_speed=0.15,
+        higher_deceleration=0.7
+    )
+
+    # -------------------------------------------------
+    # Safety Zones (Confinement & Exclusion)
+    # -------------------------------------------------
+    # Simple cubic confinement zone (centered at origin, 1 m side)
+    confinement_zone = [
+        p[ 0.5,  0.5, 0.0, 0, 0, 0],
+        p[-0.5,  0.5, 0.0, 0, 0, 0],
+        p[-0.5, -0.5, 0.0, 0, 0, 0],
+        p[ 0.5, -0.5, 0.0, 0, 0, 0]
+    ]
+
+    # Simple exclusion zone around the obstacle column (center at [0.3,0,0], radius 0.1 m)
+    exclusion_zone = [
+        p[ 0.4,  0.1, 0.0, 0, 0, 0],
+        p[ 0.2,  0.1, 0.0, 0, 0, 0],
+        p[ 0.2, -0.1, 0.0, 0, 0, 0],
+        p[ 0.4, -0.1, 0.0, 0, 0, 0]
+    ]
+
+    set_safety_zone(confinement_zone, exclusion_zone)
+
+    # -------------------------------------------------
+    # Work Objects (Pick & Place Stations)
+    # -------------------------------------------------
+    # Define pick station work object (relative to robot base)
+    pick_station_pose = p[0.4, -0.3, 0.2, 0, 3.14159, 0]   # example pose
+    set_workobject(pick_station_pose, "pick_station")
+
+    # Define place station work object
+    place_station_pose = p[0.6, 0.3, 0.2, 0, 3.14159, 0]  # example pose
+    set_workobject(place_station_pose, "place_station")
+
+    # -------------------------------------------------
+    # Joint Configuration
+    # -------------------------------------------------
+    # Home joint configuration (rad)
+    home_joints = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+    # -------------------------------------------------
+    # Waypoint Poses (TCP) – all expressed in base frame
+    # -------------------------------------------------
+    # WP1 – Above pick station
+    wp1 = p[0.4, -0.3, 0.4, 0, 3.14159, 0]
+
+    # WP2 – Descend to pick
+    wp2 = p[0.4, -0.3, 0.15, 0, 3.14159, 0]
+
+    # WP3 – Lift above pick
+    wp3 = p[0.4, -0.3, 0.45, 0, 3.14159, 0]
+
+    # WP4 – Obstacle avoidance waypoint (offset -X)
+    wp4 = p[0.2, -0.3, 0.45, 0, 3.14159, 0]
+
+    # WP5 – Transition towards place (clear of obstacle)
+    wp5 = p[0.5, 0.0, 0.45, 0, 3.14159, 0]
+
+    # WP6 – Above place station
+    wp6 = p[0.6, 0.3, 0.4, 0, 3.14159, 0]
+
+    # WP7 – Descend to place
+    wp7 = p[0.6, 0.3, 0.15, 0, 3.14159, 0]
+
+    # WP8 – Lift after place
+    wp8 = p[0.6, 0.3, 0.45, 0, 3.14159, 0]
+
+    # -------------------------------------------------
+    # Motion Sequence
+    # -------------------------------------------------
+    # 1) Move to Home (joint move)
+    movej(home_joints, a=0.5, v=0.5, t=0, r=0)
+
+    # 2) Move linear to WP1 – Above pick station
+    movel(wp1, a=0.2, v=0.2, t=0, r=0)
+
+    # 3) Move linear to WP2 – Descend to pick
+    movel(wp2, a=0.1, v=0.1, t=0, r=0)
+
+    # (Pick operation would be triggered here, e.g., set_digital_out(0, True))
+
+    # 4) Move linear to WP3 – Lift above pick
+    movel(wp3, a=0.18, v=0.18, t=0, r=0)
+
+    # 5) Move linear to WP4 – Obstacle avoidance waypoint
+    movel(wp4, a=0.2, v=0.2, t=0, r=0)
+
+    # 6) Move linear to WP5 – Transition towards place
+    movel(wp5, a=0.2, v=0.2, t=0, r=0)
+
+    # 7) Move linear to WP6 – Above place station
+    movel(wp6, a=0.2, v=0.2, t=0, r=0)
+
+    # 8) Move linear to WP7 – Descend to place
+    movel(wp7, a=0.1, v=0.1, t=0, r=0)
+
+    # (Place operation would be triggered here, e.g., set_digital_out(0, False))
+
+    # 9) Move linear to WP8 – Lift after place
+    movel(wp8, a=0.2, v=0.2, t=0, r=0)
+
+    # Return to Home
+    movej(home_joints, a=0.5, v=0.5, t=0, r=0)
+
+end
+
+# -------------------------------------------------
+# End of script
+# -------------------------------------------------

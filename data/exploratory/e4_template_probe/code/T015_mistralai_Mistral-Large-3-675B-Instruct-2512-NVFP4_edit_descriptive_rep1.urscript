@@ -1,0 +1,88 @@
+# Task: T015 — Laser Marking — Fenced Mode
+# Description: Laser engraving of serial number pattern (3 lines) on metal surface
+# Robot: UR5e | Mode: Fenced | Payload: 0.6 kg
+# Safety: Hardware-enforced E-Stop (DI0), max TCP speed: 400 mm/s
+# Compliance: A3 (strict laser pointing), A6 (marking fixture frame), A7 (laser tool constraints)
+
+# Constants
+HOME_POSE = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+ABOVE_MARKING_POSE = p[0.400000, -0.080000, 0.200000, 0.0000, 3.1416, 0.0000]
+MARKING_HEIGHT_POSE = p[0.400000, -0.080000, 0.100000, 0.0000, 3.1416, 0.0000]
+LINE_1_START_POSE = p[0.400000, -0.080000, 0.100000, 0.0000, 3.1416, 0.0000]
+LINE_1_END_POSE = p[0.500000, -0.080000, 0.100000, 0.0000, 3.1416, 0.0000]
+LINE_2_START_POSE = p[0.500000, 0.000000, 0.100000, 0.0000, 3.1416, 0.0000]
+LINE_2_END_POSE = p[0.400000, 0.000000, 0.100000, 0.0000, 3.1416, 0.0000]
+LINE_3_START_POSE = p[0.400000, 0.080000, 0.100000, 0.0000, 3.1416, 0.0000]
+LINE_3_END_POSE = p[0.500000, 0.080000, 0.100000, 0.0000, 3.1416, 0.0000]
+RETRACT_POSE = p[0.450000, 0.000000, 0.300000, 0.0000, 3.1416, 0.0000]
+
+# Motion parameters
+HOME_SPEED = 0.875
+HOME_ACCEL = 1.4
+APPROACH_SPEED = 0.300
+APPROACH_ACCEL = 1.2
+DESCEND_SPEED = 0.100
+DESCEND_ACCEL = 0.4
+MARKING_SPEED = 0.060
+MARKING_ACCEL = 0.2
+STEP_SPEED = 0.080
+STEP_ACCEL = 0.3
+BLEND_RADIUS = 0.003
+APPROACH_BLEND = 0.010
+
+# Digital I/O
+LASER_OUTPUT = 3
+ESTOP_INPUT = 0
+
+def check_estop():
+    if get_digital_in(ESTOP_INPUT):
+        popup("E-Stop active — aborting program.", error=True)
+        halt
+    end
+end
+
+def task_T015():
+    # Safety check
+    check_estop()
+
+    # Home position
+    movej(HOME_POSE, a=HOME_ACCEL, v=HOME_SPEED)
+
+    # Approach marking surface
+    movel(ABOVE_MARKING_POSE, a=APPROACH_ACCEL, v=APPROACH_SPEED, r=APPROACH_BLEND)
+
+    # Descend to marking height
+    movel(MARKING_HEIGHT_POSE, a=DESCEND_ACCEL, v=DESCEND_SPEED, r=BLEND_RADIUS)
+
+    # Activate laser
+    set_digital_out(LASER_OUTPUT, True)
+    sync()
+
+    # Mark line 1
+    movel(LINE_1_END_POSE, a=MARKING_ACCEL, v=MARKING_SPEED, r=BLEND_RADIUS)
+
+    # Step to line 2
+    movel(LINE_2_START_POSE, a=STEP_ACCEL, v=STEP_SPEED, r=BLEND_RADIUS)
+
+    # Mark line 2 (reverse)
+    movel(LINE_2_END_POSE, a=MARKING_ACCEL, v=MARKING_SPEED, r=BLEND_RADIUS)
+
+    # Step to line 3
+    movel(LINE_3_START_POSE, a=STEP_ACCEL, v=STEP_SPEED, r=BLEND_RADIUS)
+
+    # Mark line 3
+    movel(LINE_3_END_POSE, a=MARKING_ACCEL, v=MARKING_SPEED)
+
+    # Deactivate laser
+    set_digital_out(LASER_OUTPUT, False)
+    sync()
+
+    # Retract from surface
+    movel(RETRACT_POSE, a=APPROACH_ACCEL, v=APPROACH_SPEED, r=APPROACH_BLEND)
+
+    # Return home
+    movej(HOME_POSE, a=HOME_ACCEL, v=HOME_SPEED)
+end
+
+# Entry point
+task_T015()

@@ -1,0 +1,98 @@
+# -------------------------------------------------
+# Hybrid Multi-Angle Camera Inspection (T014)
+# UR5e - Hybrid Mode
+# Payload: 0.4 kg
+# -------------------------------------------------
+
+# ---------- Safety Preamble ----------
+set_tcp(p[0,0,0,0,0,0])               # Define TCP (no offset)
+set_payload(0.4, p[0,0,0,0,0,0])      # Set payload mass and center of gravity
+
+# ---------- Workspace Boundary ----------
+# Define safe Cartesian workspace (in meters)
+global min_x = -0.5
+global max_x =  0.5
+global min_y = -0.5
+global max_y =  0.5
+global min_z =  0.0
+global max_z =  0.8
+
+def pose_is_safe(pose):
+    # pose is a pose vector [X,Y,Z,RX,RY,RZ]
+    return (pose[0] >= min_x and pose[0] <= max_x and
+            pose[1] >= min_y and pose[1] <= max_y and
+            pose[2] >= min_z and pose[2] <= max_z)
+end
+
+# ---------- Joint Targets ----------
+# Home joint configuration (radians)
+global q_home = [-1.57, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# ---------- Cartesian Targets ----------
+# Positions are defined in meters
+global pose_top    = p[0.0, 0.0, 0.3, 0, 3.14159, 0]   # Top‑down view
+global pose_side   = p[0.3, 0.0, 0.3, 0, 3.14159, 0]   # Side view
+global pose_angled = p[0.2, 0.2, 0.3, 0, 3.14159, 0]   # Angled view
+global pose_retract= p[0.0, 0.0, 0.5, 0, 3.14159, 0]   # Retract
+global pose_safe   = p[0.0, 0.0, 0.6, 0, 3.14159, 0]   # Additional safe pose
+
+# ---------- Motion Parameters ----------
+global speed_home    = 0.18   # 180 mm/s
+global speed_fast    = 0.15   # 150 mm/s
+global speed_medium  = 0.12   # 120 mm/s
+global accel         = 1.2    # default acceleration (rad/s² or m/s²)
+
+# ---------- Helper: Execute Motion with Error Handling ----------
+def safe_movej(target):
+    try:
+        movej(target, a=accel, v=speed_home)
+    except err:
+        popup("Error in movej: " + err, true)
+        stopj(2.0)
+        halt()
+    end
+end
+
+def safe_movel(target, vel):
+    if not pose_is_safe(target) then
+        popup("Target pose out of safe workspace!", true)
+        stopj(2.0)
+        halt()
+    end
+    try:
+        movel(target, a=accel, v=vel)
+    except err:
+        popup("Error in movel: " + err, true)
+        stopj(2.0)
+        halt()
+    end
+end
+
+# ---------- Main Program ----------
+def main():
+    # 1) Move to Home joint position
+    safe_movej(q_home)
+
+    # 2) Move to Top‑down view position
+    safe_movel(pose_top, speed_fast)
+
+    # 3) Move to Side view position
+    safe_movel(pose_side, speed_medium)
+
+    # 4) Move to Angled view position
+    safe_movel(pose_angled, speed_medium)
+
+    # 5) Retract
+    safe_movel(pose_retract, speed_home)
+
+    # 6) Move to additional safe pose (e.g., for tool change)
+    safe_movel(pose_safe, speed_home)
+
+    # End of program – return to Home safely
+    safe_movej(q_home)
+end
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

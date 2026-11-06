@@ -1,0 +1,27 @@
+# Home position
+def move_home():
+    movej([0.0, -1.5, 1.5, -1.5, 1.5, 0.0], 300.0, 0.0, e_std);
+
+# Approach above weld start
+def approach_above_weld_start():
+    movej([0.0, -1.5, 1.5, -1.5, 1.5, 0.0], 300.0, 0.0, e_std);
+    movl([0.0, -1.5, 1.5, -1.5, 1.5, 0.0], [0.0, -1.5, 1.5, -1.5, 1.5, 0.0], 250.0, 0.0, e_std);
+
+# Descend to weld start position
+def descend_to_weld_start():
+    movl([0.0, -1.5, 1.5, -1.5, 1.5, 0.0], [0.0, -1.5, 1.5, -1.5, 1.5, 0.0], 100.0, 0.0, e_std);
+
+# Weld seam - 300mm linear path
+def weld_seam():
+    movl([0.0, -1.5, 1.5, -1.5, 1.5, 0.0], [0.0, -1.5, 1.5, -1.5, 1.5, 0.0], 50.0, 0.0, e_std);
+
+# Retract above weld end
+def retract_above_weld_end():
+    movl([0.0, -1.5, 1.5, -1.5, 1.5, 0.0], [0.0, -1.5, 1.5, -1.5, 1.5, 0.0], 200.0, 0.0, e_std);
+
+# Main program
+move_home();
+approach_above_weld_start();
+descend_to_weld_start();
+weld_seam();
+retract_above_weld_end();

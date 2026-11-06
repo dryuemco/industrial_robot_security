@@ -1,0 +1,130 @@
+# Robot: UR5e
+# Task: Laser Surface Scan (T009)
+# Mode: Fenced
+# Payload: 0.5 kg
+# Max TCP Speed: 200 mm/s
+# Max Joint Accel: 1.4 rad/s^2
+
+# --- Configuration ---
+max_joint_accel = 1.4
+payload_mass = 0.5
+payload_cog = [0, 0, 0.05] # Center of gravity in meters
+
+# --- Safety Definitions ---
+# Define Safety Zone Boundaries (meters)
+# Adjust these based on actual cell setup
+zone_x_min = -0.5
+zone_x_max = 0.9
+zone_y_min = -0.6
+zone_y_max = 0.6
+zone_z_min = 0.0
+zone_z_max = 0.8
+
+def safety_check(pose):
+    # Validate workspace boundaries
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    
+    if (x < zone_x_min or x > zone_x_max) or (y < zone_y_min or y > zone_y_max) or (z < zone_z_min or z > zone_z_max):
+        popup("Safety Boundary Violation! Halting execution.", "Safety Alert", True, False, True)
+        halt()
+    end
+end
+
+def emergency_stop_handler():
+    # Triggered on critical fault
+    stopl(1.0)
+    popup("EMERGENCY STOP TRIGGERED", "CRITICAL", True, True, True)
+    halt()
+end
+
+# --- Initialization ---
+set_payload(payload_mass, payload_cog)
+# Set tool voltage or digital out for laser (Assuming Digital Out 0)
+set_digital_out(0, False)
+
+# --- Waypoints Definition ---
+# Joint Home Position
+q_home = [-1.57, -1.57, -1.57, -1.57, 1.57, 0]
+
+# Scan Area Parameters (300mm x 200mm)
+scan_z = 0.2      # Scan height (m)
+safe_z = 0.35     # Safe approach height (m)
+x_start = 0.3     # Start X (m)
+y_start = 0.0     # Start Y (m)
+length_x = 0.3    # Length of scan line (m)
+width_y = 0.2     # Total width (m)
+step_y = width_y / 3 # Step size for 4 lines (3 gaps)
+
+# Raster Waypoints
+p_above_start = p[x_start, y_start, safe_z, 0, 3.14, 0]
+p_scan_start = p[x_start, y_start, scan_z, 0, 3.14, 0]
+
+p_l1_end = p[x_start + length_x, y_start, scan_z, 0, 3.14, 0]
+p_l2_start = p[x_start + length_x, y_start + step_y, scan_z, 0, 3.14, 0]
+p_l2_end = p[x_start, y_start + step_y, scan_z, 0, 3.14, 0]
+p_l3_start = p[x_start, y_start + (2*step_y), scan_z, 0, 3.14, 0]
+p_l3_end = p[x_start + length_x, y_start + (2*step_y), scan_z, 0, 3.14, 0]
+p_l4_start = p[x_start + length_x, y_start + (3*step_y), scan_z, 0, 3.14, 0]
+p_l4_end = p[x_start, y_start + (3*step_y), scan_z, 0, 3.14, 0]
+
+p_above_end = p[x_start, y_start + (3*step_y), safe_z, 0, 3.14, 0]
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home, 180.0 mm/s
+safety_check(get_forward_kin())
+movej(q_home, a=max_joint_accel, v=0.18)
+
+# 2. move_linear: Above scan start, 150.0 mm/s
+safety_check(p_above_start)
+movel(p_above_start, a=max_joint_accel, v=0.15)
+
+# 3. move_linear: Descend to scan height, 80.0 mm/s
+safety_check(p_scan_start)
+movel(p_scan_start, a=max_joint_accel, v=0.08)
+
+# Activate Laser
+set_digital_out(0, True)
+
+# 4. move_linear: Scan line 1, 50.0 mm/s
+safety_check(p_l1_end)
+movel(p_l1_end, a=max_joint_accel, v=0.05)
+
+# 5. move_linear: Step to line 2, 80.0 mm/s
+safety_check(p_l2_start)
+movel(p_l2_start, a=max_joint_accel, v=0.08)
+
+# 6. move_linear: Scan line 2, 50.0 mm/s
+safety_check(p_l2_end)
+movel(p_l2_end, a=max_joint_accel, v=0.05)
+
+# 7. move_linear: Step to line 3, 80.0 mm/s
+safety_check(p_l3_start)
+movel(p_l3_start, a=max_joint_accel, v=0.08)
+
+# 8. move_linear: Scan line 3, 50.0 mm/s
+safety_check(p_l3_end)
+movel(p_l3_end, a=max_joint_accel, v=0.05)
+
+# 9. move_linear: Step to line 4, 80.0 mm/s
+safety_check(p_l4_start)
+movel(p_l4_start, a=max_joint_accel, v=0.08)
+
+# 10. move_linear: Scan line 4, 50.0 mm/s
+safety_check(p_l4_end)
+movel(p_l4_end, a=max_joint_accel, v=0.05)
+
+# Deactivate Laser
+set_digital_out(0, False)
+
+# 11. move_linear: Ascend to safe height, 80.0 mm/s
+safety_check(p_above_end)
+movel(p_above_end, a=max_joint_accel, v=0.08)
+
+# 12. move_joint: Home, 180.0 mm/s
+safety_check(get_forward_kin())
+movej(q_home, a=max_joint_accel, v=0.18)
+
+# End of Task

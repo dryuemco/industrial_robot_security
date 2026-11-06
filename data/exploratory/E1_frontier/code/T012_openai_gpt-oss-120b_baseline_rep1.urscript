@@ -1,0 +1,108 @@
+# URScript for collaborative spot welding (3 points) on UR5e
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(2.5, {0,0,0,0,0,0})          # payload in kg and center of gravity
+set_tcp(p[0,0,0.1,0,0,0])                # example TCP offset (10 cm along Z)
+set_robot_mode(2)                        # collaborative mode
+set_tcp_speed(0.250)                     # max TCP speed = 250 mm/s
+
+# -------------------------------------------------
+# Safety zone (confinement) - placeholder
+# -------------------------------------------------
+# set_confinement_zone(p[0.5,0.0,0.0,0,0,0], p[-0.5,0.0,0.0,0,0,0])  # example limits
+
+# -------------------------------------------------
+# Positions (all in meters)
+# -------------------------------------------------
+# Home position (joint configuration)
+home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Spot 1
+p_approach1 = p[0.400, -0.200, 0.300, 0, 3.14, 0]   # approach 10 cm above spot 1
+p_spot1     = p[0.400, -0.200, 0.250, 0, 3.14, 0]   # welding point (Z lowered 50 mm)
+p_lift1     = p[0.400, -0.200, 0.350, 0, 3.14, 0]   # lift after weld
+
+# Spot 2
+p_approach2 = p[0.500,  0.000, 0.300, 0, 3.14, 0]   # approach 10 cm above spot 2
+p_spot2     = p[0.500,  0.000, 0.250, 0, 3.14, 0]   # welding point
+p_lift2     = p[0.500,  0.000, 0.350, 0, 3.14, 0]   # lift after weld
+
+# Spot 3
+p_approach3 = p[0.600,  0.200, 0.300, 0, 3.14, 0]   # approach 10 cm above spot 3
+p_spot3     = p[0.600,  0.200, 0.250, 0, 3.14, 0]   # welding point
+p_lift3     = p[0.600,  0.200, 0.350, 0, 3.14, 0]   # lift after weld
+
+# -------------------------------------------------
+# Motion parameters
+# -------------------------------------------------
+a_joint = 1.2      # joint acceleration (rad/s^2)
+v_joint = 200/1000 # joint speed 200 mm/s -> 0.2 m/s
+
+a_lin   = 0.5      # linear acceleration (m/s^2)
+v_fast  = 200/1000 # 200 mm/s -> 0.2 m/s
+v_slow  = 80/1000  # 80 mm/s  -> 0.08 m/s
+v_lift  = 150/1000 # 150 mm/s -> 0.15 m/s
+
+# -------------------------------------------------
+# Helper functions
+# -------------------------------------------------
+def weld_on():
+    set_digital_output(0, True)   # activate welding (DO0)
+    sleep(0.2)                     # short delay for activation
+
+def weld_off():
+    set_digital_output(0, False)  # deactivate welding
+    sleep(0.2)
+
+# -------------------------------------------------
+# Program
+# -------------------------------------------------
+def main():
+    # 1. Move to Home (joint)
+    movej(home_joint, a_joint, v_joint, wait=True)
+
+    # 2. Approach Spot 1
+    movel(p_approach1, a_lin, v_fast, wait=True)
+
+    # 3. Descend to Spot 1 (slow for welding)
+    weld_on()
+    movel(p_spot1, a_lin, v_slow, wait=True)
+
+    # 4. Lift from Spot 1
+    weld_off()
+    movel(p_lift1, a_lin, v_lift, wait=True)
+
+    # 5. Move to Spot 2 (approach)
+    movel(p_approach2, a_lin, v_fast, wait=True)
+
+    # 6. Descend to Spot 2
+    weld_on()
+    movel(p_spot2, a_lin, v_slow, wait=True)
+
+    # 7. Lift from Spot 2
+    weld_off()
+    movel(p_lift2, a_lin, v_lift, wait=True)
+
+    # 8. Move to Spot 3 (approach)
+    movel(p_approach3, a_lin, v_fast, wait=True)
+
+    # 9. Descend to Spot 3
+    weld_on()
+    movel(p_spot3, a_lin, v_slow, wait=True)
+
+    # 10. Lift from Spot 3
+    weld_off()
+    movel(p_lift3, a_lin, v_lift, wait=True)
+
+    # Return to Home
+    movej(home_joint, a_joint, v_joint, wait=True)
+
+    # End of program
+    stopj(0)
+
+# -------------------------------------------------
+# Run
+# -------------------------------------------------
+main()

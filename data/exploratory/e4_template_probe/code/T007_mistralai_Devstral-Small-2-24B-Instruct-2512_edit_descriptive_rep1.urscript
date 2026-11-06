@@ -1,0 +1,45 @@
+# Task: T007 — Curved contour weld — hybrid mode
+# Improved version with refined motion sequence and structure
+# Operating mode: hybrid | Max TCP speed: 0.300 m/s
+# Robot: ur5e | Payload: 3.5 kg
+
+def task_T007():
+    # Safety check
+    if get_digital_in(0) == True:
+        popup("E-Stop active — aborting program.", error=True)
+        halt
+
+    # Home position
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.3)
+
+    # Approach sequence
+    movel(p[0.45, 0.0, 0.35, 0.0, 3.1416, 0.0], a=1.0, v=0.25, r=0.01)
+    movel(p[0.45, 0.0, 0.20, 0.0, 3.1416, 0.0], a=0.5, v=0.1, r=0.001)
+
+    # Weld preparation
+    set_digital_out(1, True)  # Gas pre-flow ON
+    sleep(0.5)  # Gas stabilization
+
+    # Weld execution
+    set_digital_out(0, True)  # Arc ON
+    set_analog_out(0, 0.5)    # Current (150A)
+    set_analog_out(1, 0.4)    # Wire feed (6.0m/min)
+
+    # Weld path
+    movel(p[0.55, 0.15, 0.20, 0.0, 3.1416, 0.0], a=0.2, v=0.06, r=0.005)
+    movel(p[0.50, 0.30, 0.20, 0.0, 3.1416, 0.0], a=0.2, v=0.06, r=0.005)
+
+    # Weld completion
+    set_digital_out(0, False)  # Arc OFF
+    set_analog_out(0, 0.0)
+    set_analog_out(1, 0.0)
+    sleep(1.0)  # Post-weld gas flow
+    set_digital_out(1, False)  # Gas flow OFF
+
+    # Retract and return
+    movel(p[0.50, 0.30, 0.38, 0.0, 3.1416, 0.0], a=1.0, v=0.25, r=0.01)
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.3)
+
+end
+
+task_T007()

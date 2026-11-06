@@ -1,0 +1,133 @@
+# URScript program for laser surface scan in fenced mode (T009)
+# -----------------------------------------------------------
+# Safety: workspace confinement, error handling for all motions,
+# and payload configuration.
+
+# ------------------- Configuration -------------------
+payload_mass = 0.5                     # kg
+payload_cog  = [0,0,0]                  # centre of gravity (m)
+
+# TCP speed limit (mm/s)
+max_tcp_speed = 200.0
+
+# Workspace bounds (meters) – adjust to actual fenced area
+workspace_min = [0.0, -0.3, 0.0]        # [x_min, y_min, z_min]
+workspace_max = [0.6,  0.3, 0.5]        # [x_max, y_max, z_max]
+
+# Joint speed for movej (rad/s) – converted from mm/s where needed
+home_speed      = 0.18   # 180 mm/s equivalent
+scan_speed_fast = 0.15   # 150 mm/s
+scan_speed_slow = 0.08   # 80 mm/s
+line_speed      = 0.05   # 50 mm/s
+step_speed      = 0.08   # 80 mm/s
+
+# Joint target for Home position (radians)
+home_joint = [0, -1.57, 1.57, 0, 1.57, 0]
+
+# Poses (meters) – define according to the actual workpiece
+above_start = p[0.300, 0.0, 0.300, 0, 3.14, 0]   # 30 cm above scan start
+scan_start  = p[0.300, 0.0, 0.100, 0, 3.14, 0]   # descend to scan height (10 cm)
+
+# Scan line vectors (300 mm length, 200 mm total width, 4 lines)
+line_length = 0.300
+line_step   = 0.0667   # 200 mm / 3 steps ≈ 66.7 mm
+
+# ------------------- Helper Functions -------------------
+def within_workspace(pose):
+    # Checks if a pose is inside the defined rectangular workspace
+    return (pose[0] >= workspace_min[0] and pose[0] <= workspace_max[0] and
+            pose[1] >= workspace_min[1] and pose[1] <= workspace_max[1] and
+            pose[2] >= workspace_min[2] and pose[2] <= workspace_max[2])
+
+def safe_movej(target, speed):
+    # Executes movej with error handling
+    try:
+        movej(target, a=1.2, v=speed)
+        return True
+    except:
+        popup("Error: movej failed", error=True)
+        return False
+
+def safe_movel(target, speed):
+    # Executes movel with error handling and workspace check
+    if not within_workspace(target):
+        popup("Error: Target pose outside workspace", error=True)
+        return False
+    try:
+        movel(target, a=1.2, v=speed)
+        return True
+    except:
+        popup("Error: movel failed", error=True)
+        return False
+
+def safe_set_digital_out(port, value):
+    # Sets a digital output with error handling
+    try:
+        set_digital_out(port, value)
+        return True
+    except:
+        popup("Error: set_digital_out failed", error=True)
+        return False
+
+# ------------------- Main Program -------------------
+def main():
+    # Payload and speed configuration
+    set_payload(payload_mass, payload_cog)
+    set_tcp_speed(max_tcp_speed)
+
+    # 1) Move to Home
+    if not safe_movej(home_joint, home_speed):
+        halt()
+
+    # 2) Move above scan start
+    if not safe_movel(above_start, scan_speed_fast):
+        halt()
+
+    # 3) Descend to scan height
+    if not safe_movel(scan_start, scan_speed_slow):
+        halt()
+
+    # 4) Activate laser (digital output 0)
+    if not safe_set_digital_out(0, True):
+        halt()
+
+    # 5) Perform raster scan (4 lines)
+    for i in range(4):
+        # Compute end pose of current line
+        line_end = p[
+            scan_start[0] + line_length,
+            scan_start[1] + i * line_step,
+            scan_start[2],
+            scan_start[3],
+            scan_start[4],
+            scan_start[5]
+        ]
+
+        # Scan line i
+        if not safe_movel(line_end, line_speed):
+            halt()
+
+        # If not the last line, step to next line start
+        if i < 3:
+            step_pose = p[
+                scan_start[0],
+                scan_start[1] + (i + 1) * line_step,
+                scan_start[2],
+                scan_start[3],
+                scan_start[4],
+                scan_start[5]
+            ]
+            if not safe_movel(step_pose, step_speed):
+                halt()
+
+    # 6) Deactivate laser
+    if not safe_set_digital_out(0, False):
+        halt()
+
+    # 7) Return to Home
+    if not safe_movej(home_joint, home_speed):
+        halt()
+
+# -----------------------------------------------------------
+if __name__ == "main":
+    main()

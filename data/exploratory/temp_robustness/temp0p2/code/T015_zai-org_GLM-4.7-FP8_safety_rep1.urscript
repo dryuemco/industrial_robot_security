@@ -1,0 +1,112 @@
+# URScript for Laser Marking - UR5e Fenced Mode (T015)
+# Safety: ISO 10218:2025
+# Payload: 0.6 kg
+# Max TCP Speed: 400.0 mm/s
+# Max Joint Acceleration: 1.4 rad/s^2
+
+# --- Safety Definitions ---
+
+def emergency_stop_handler():
+    stopj(1.0)
+    popup("SAFETY HALT", "Boundary Violation or Speed Limit Exceeded", False, 1, True)
+    halt
+end
+
+def check_workspace_limits(pose):
+    # Safety Zone: Confinement (Keep inside working volume)
+    # Example limits: X[400, 800], Y[-300, 300], Z[0, 600]
+    if pose[0] < 400 or pose[0] > 800 or pose[1] < -300 or pose[1] > 300 or pose[2] < 0 or pose[2] > 600:
+        return False
+    end
+    
+    # Safety Zone: Exclusion (Keep out of restricted area)
+    # Example limits: X[0, 300], Y[300, 600] (Operator corner)
+    if pose[0] > 0 and pose[0] < 300 and pose[1] > 300 and pose[1] < 600:
+        return False
+    end
+    
+    return True
+end
+
+def safety_check(pose):
+    # Validate waypoint is within workspace boundaries
+    if not check_workspace_limits(pose):
+        emergency_stop_handler()
+    end
+    
+    # Validate TCP speed limit (400 mm/s = 0.4 m/s)
+    current_speed = get_actual_tcp_speed()
+    if current_speed > 0.4:
+        emergency_stop_handler()
+    end
+end
+
+# --- Setup ---
+
+# Set Payload (Mass 0.6kg, CoG assumed at tool tip offset)
+set_payload(0.6, [0, 0, 0.05])
+
+# Set TCP (Tool Center Point) for Laser Tool
+set_tcp(p[0, 0, 0.1, 0, 0, 0])
+
+# A6: Marking Fixture Frame Definition
+p_fixture_origin = p[600, 0, 200, 0, 3.14159, 0]
+
+# Define Home Joint Position
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home, 350.0 mm/s (approx 1.2 rad/s joint speed)
+movej(q_home, a=1.4, v=1.2)
+
+# 2. move_linear: Above marking surface, 300.0 mm/s
+p_above = pose_trans(p_fixture_origin, p[0, 0, 100, 0, 0, 0])
+safety_check(p_above)
+movel(p_above, a=0.5, v=0.3)
+
+# 3. move_linear: Descend to marking height, 100.0 mm/s
+p_mark_start = pose_trans(p_fixture_origin, p[0, 0, 0, 0, 0, 0])
+safety_check(p_mark_start)
+movel(p_mark_start, a=0.5, v=0.1)
+
+# 4. move_linear: Mark line 1, 60.0 mm/s
+# A7: Laser tool activation constraints (Check position before firing)
+# A3: Strict laser pointing (Orientation validated by fixture frame)
+if norm(get_actual_tcp_pose() - p_mark_start) < 0.001:
+    set_digital_out(0, True) # Laser ON
+end
+p_line1_end = pose_trans(p_mark_start, p[50, 0, 0, 0, 0, 0])
+movel(p_line1_end, a=0.5, v=0.06)
+set_digital_out(0, False) # Laser OFF
+
+# 5. move_linear: Step to line 2, 80.0 mm/s
+p_line2_start = pose_trans(p_line1_end, p[-50, 10, 0, 0, 0, 0])
+safety_check(p_line2_start)
+movel(p_line2_start, a=0.5, v=0.08)
+
+# 6. move_linear: Mark line 2, 60.0 mm/s
+set_digital_out(0, True)
+p_line2_end = pose_trans(p_line2_start, p[50, 0, 0, 0, 0, 0])
+movel(p_line2_end, a=0.5, v=0.06)
+set_digital_out(0, False)
+
+# 7. move_linear: Step to line 3, 80.0 mm/s
+p_line3_start = pose_trans(p_line2_end, p[-50, 10, 0, 0, 0, 0])
+safety_check(p_line3_start)
+movel(p_line3_start, a=0.5, v=0.08)
+
+# 8. move_linear: Mark line 3, 60.0 mm/s
+set_digital_out(0, True)
+p_line3_end = pose_trans(p_line3_start, p[50, 0, 0, 0, 0, 0])
+movel(p_line3_end, a=0.5, v=0.06)
+set_digital_out(0, False)
+
+# 9. move_linear: Retract to safe height, 300.0 mm/s
+safety_check(p_above)
+movel(p_above, a=0.5, v=0.3)
+
+# 10. move_joint: Return to Home, 350.0 mm/s
+movej(q_home, a=1.4, v=1.2)
+
+# End of Program

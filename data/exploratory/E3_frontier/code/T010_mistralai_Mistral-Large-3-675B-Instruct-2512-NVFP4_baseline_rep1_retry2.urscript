@@ -1,0 +1,101 @@
+# URScript for screw fastening assembly - hybrid mode (T010)
+# Payload: 1.0 kg
+# Safety: Hybrid mode (collaborative during approach, fenced during fastening)
+
+# Safety configuration
+set_analog_inputrange(0, 0)
+set_analog_inputrange(1, 0)
+set_analog_outputdomain(0, 0)
+set_analog_outputdomain(1, 0)
+set_tool_voltage(0)
+set_runstate_outputs([])
+set_payload(1.0)
+set_gravity([0.0, 0.0, 9.82])
+
+# Tool definition (screwdriver)
+tool_pose = p[0.0, 0.0, 0.1, 0.0, 0.0, 0.0]
+set_tcp(tool_pose)
+
+# Waypoints definition
+home_pose = p[0.0, -0.6, 0.4, 0.0, 1.57, 0.0]
+above_feeder_pose = p[0.2, -0.4, 0.15, 0.0, 1.57, 0.0]
+pick_pose = p[0.2, -0.4, 0.05, 0.0, 1.57, 0.0]
+lift_pose = p[0.2, -0.4, 0.15, 0.0, 1.57, 0.0]
+above_fastening1_pose = p[0.1, -0.3, 0.1, 0.0, 1.57, 0.0]
+fastening1_pose = p[0.1, -0.3, 0.02, 0.0, 1.57, 0.0]
+above_fastening2_pose = p[0.15, -0.3, 0.1, 0.0, 1.57, 0.0]
+fastening2_pose = p[0.15, -0.3, 0.02, 0.0, 1.57, 0.0]
+above_fastening3_pose = p[0.1, -0.25, 0.1, 0.0, 1.57, 0.0]
+fastening3_pose = p[0.1, -0.25, 0.02, 0.0, 1.57, 0.0]
+above_fastening4_pose = p[0.15, -0.25, 0.1, 0.0, 1.57, 0.0]
+fastening4_pose = p[0.15, -0.25, 0.02, 0.0, 1.57, 0.0]
+
+# Safety I/O configuration
+set_configurable_digital_input_action(0, "none")
+set_configurable_digital_input_action(1, "none")
+set_standard_digital_input_action(0, "none")
+set_standard_digital_input_action(1, "none")
+set_tool_digital_input_action(0, "none")
+set_tool_digital_input_action(1, "none")
+
+# Main program
+def main():
+    # Enable watchdog for safety
+    watchdog = 0.5
+    watchdog_input = 0
+    set_standard_digital_output(0, False)
+
+    # Collaborative approach phase
+    set_safety_mode_transition_hardness("normal")
+    speedj([-0.5, -1.5, 1.5, -1.5, -1.5, 0.5], 1.0, 2.0)
+    movej(home_pose, a=1.2, v=1.0, t=0, r=0)
+
+    # Pick screw from feeder
+    movel(above_feeder_pose, a=1.2, v=0.2, t=0, r=0)
+    movel(pick_pose, a=0.5, v=0.08, t=0, r=0)
+    # Activate screwdriver to pick screw (digital output)
+    set_standard_digital_output(0, True)
+    sleep(0.5)
+    set_standard_digital_output(0, False)
+    movel(lift_pose, a=1.2, v=0.18, t=0, r=0)
+
+    # Transition to fenced mode for fastening
+    set_safety_mode_transition_hardness("hard")
+    sleep(0.1)
+    set_standard_digital_output(1, True)  # Signal to safety PLC for fenced mode
+
+    # Fastening sequence
+    for i in range(1, 5):
+        above_pose = locals()["above_fastening" + str(i) + "_pose"]
+        fastening_pose = locals()["fastening" + str(i) + "_pose"]
+
+        movel(above_pose, a=1.2, v=0.2, t=0, r=0)
+        movel(fastening_pose, a=0.5, v=0.05, t=0, r=0)
+        # Drive screw (digital output)
+        set_standard_digital_output(0, True)
+        sleep(2.0)
+        set_standard_digital_output(0, False)
+        movel(above_pose, a=1.2, v=0.2, t=0, r=0)
+
+    # Return to collaborative mode
+    set_standard_digital_output(1, False)  # Signal to safety PLC for collaborative mode
+    set_safety_mode_transition_hardness("normal")
+    sleep(0.1)
+
+    # Return to home
+    movel(lift_pose, a=1.2, v=0.2, t=0, r=0)
+    movej(home_pose, a=1.2, v=1.0, t=0, r=0)
+
+    # Reset outputs
+    set_standard_digital_output(0, False)
+    set_standard_digital_output(1, False)
+
+    # Watchdog feedback
+    watchdog_input = get_standard_digital_input(0)
+    if watchdog_input:
+        textmsg("Watchdog active")
+    else:
+        popup("Watchdog timeout", "Safety violation", error=True)
+        halt
+
+end

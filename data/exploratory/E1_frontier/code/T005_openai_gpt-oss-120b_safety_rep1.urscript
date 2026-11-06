@@ -1,0 +1,135 @@
+# -------------------------------------------------
+# URScript for UR5e collaborative visual inspection
+# -------------------------------------------------
+# Safety configuration (ISO 10218:2025 compliance)
+
+# Payload definition
+set_payload(0.3, [0,0,0])   # 0.3 kg payload, CoG at TCP
+
+# TCP orientation: camera points strictly downward (Z axis points to part)
+# Rotation of 180° around X to make Z point downwards
+set_tcp([0,0,0, 1,0,0, 0,0,1, 0,-1,0])   # Position offset (0,0,0), orientation matrix
+
+# Maximum allowed speeds and accelerations
+MAX_TCP_SPEED      = 0.15      # 150 mm/s in collaborative mode
+MAX_JOINT_ACC      = 1.4       # rad/s² per joint
+DEFAULT_LINEAR_ACC = 0.5       # m/s² (safe default)
+DEFAULT_JOINT_ACC  = 1.4       # rad/s²
+
+# Workspace boundaries (meters)
+X_MIN = -0.5; X_MAX = 0.5
+Y_MIN = -0.5; Y_MAX = 0.5
+Z_MIN = 0.0;  Z_MAX = 0.8
+
+# -------------------------------------------------
+# Helper functions
+# -------------------------------------------------
+def safety_check(p):
+    # p is a pose [x,y,z,rx,ry,rz]
+    if (p[0] < X_MIN) or (p[0] > X_MAX) or \
+       (p[1] < Y_MIN) or (p[1] > Y_MAX) or \
+       (p[2] < Z_MIN) or (p[2] > Z_MAX):
+        popup("Safety violation: Pose out of workspace!", true)
+        halt()
+    end
+end
+
+def emergency_stop_handler():
+    # Assume digital input 0 is the emergency stop button (normally high)
+    if (get_digital_in(0) == false):
+        popup("Emergency stop activated!", true)
+        halt()
+    end
+end
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # Register emergency stop monitoring (simple polling)
+    while (true):
+        emergency_stop_handler()
+        sleep(0.1)
+    end
+
+    # Set global speed/acceleration limits
+    set_tcp_speed(MAX_TCP_SPEED)
+    set_joint_acceleration([MAX_JOINT_ACC]*6)
+
+    # -------------------------------------------------
+    # 1) Home position (joint move)
+    # -------------------------------------------------
+    home_q = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]   # example home joint values (rad)
+    safety_check(pose_home := get_forward_kin(home_q))
+    movej(home_q, a=MAX_JOINT_ACC, v=1.5)   # joint speed 1.5 rad/s (well below limits)
+
+    # -------------------------------------------------
+    # 2) Approach inspection start – above surface
+    # -------------------------------------------------
+    approach_pose = p[0.0, 0.0, 0.4, 0, 3.14159, 0]   # 400 mm above part centre, camera down
+    safety_check(approach_pose)
+    movel(approach_pose, a=DEFAULT_LINEAR_ACC, v=0.13)   # 130 mm/s
+
+    # -------------------------------------------------
+    # 3) Descend to scan height (150 mm above part)
+    # -------------------------------------------------
+    scan_height_pose = p[0.0, 0.0, 0.15, 0, 3.14159, 0]   # 150 mm above part
+    safety_check(scan_height_pose)
+    movel(scan_height_pose, a=DEFAULT_LINEAR_ACC, v=0.08)   # 80 mm/s
+
+    # -------------------------------------------------
+    # 4) Scan line 1 – Y sweep (200 mm length)
+    # -------------------------------------------------
+    line1_start = scan_height_pose
+    line1_end   = p[0.0, 0.20, 0.15, 0, 3.14159, 0]   # +200 mm in Y
+    safety_check(line1_end)
+    movel(line1_end, a=DEFAULT_LINEAR_ACC, v=0.05)   # 50 mm/s
+
+    # -------------------------------------------------
+    # 5) Step to scan line 2 (+X offset 0.10 m)
+    # -------------------------------------------------
+    step_to_line2 = p[0.10, 0.20, 0.15, 0, 3.14159, 0]
+    safety_check(step_to_line2)
+    movel(step_to_line2, a=DEFAULT_LINEAR_ACC, v=0.08)   # 80 mm/s
+
+    # -------------------------------------------------
+    # 6) Scan line 2 – Y sweep back to start Y
+    # -------------------------------------------------
+    line2_end = p[0.10, 0.0, 0.15, 0, 3.14159, 0]
+    safety_check(line2_end)
+    movel(line2_end, a=DEFAULT_LINEAR_ACC, v=0.05)   # 50 mm/s
+
+    # -------------------------------------------------
+    # 7) Step to scan line 3 (+X offset another 0.10 m)
+    # -------------------------------------------------
+    step_to_line3 = p[0.20, 0.0, 0.15, 0, 3.14159, 0]
+    safety_check(step_to_line3)
+    movel(step_to_line3, a=DEFAULT_LINEAR_ACC, v=0.08)   # 80 mm/s
+
+    # -------------------------------------------------
+    # 8) Scan line 3 – Y sweep forward
+    # -------------------------------------------------
+    line3_end = p[0.20, 0.20, 0.15, 0, 3.14159, 0]
+    safety_check(line3_end)
+    movel(line3_end, a=DEFAULT_LINEAR_ACC, v=0.05)   # 50 mm/s
+
+    # -------------------------------------------------
+    # 9) Retract to safe height
+    # -------------------------------------------------
+    retract_pose = p[0.20, 0.20, 0.4, 0, 3.14159, 0]   # 400 mm above part
+    safety_check(retract_pose)
+    movel(retract_pose, a=DEFAULT_LINEAR_ACC, v=0.13)   # 130 mm/s
+
+    # -------------------------------------------------
+    # 10) Return to Home position
+    # -------------------------------------------------
+    safety_check(pose_home)
+    movej(home_q, a=MAX_JOINT_ACC, v=1.5)
+
+    popup("Inspection task completed safely.", false)
+end
+
+# -------------------------------------------------
+# Start program
+# -------------------------------------------------
+main()

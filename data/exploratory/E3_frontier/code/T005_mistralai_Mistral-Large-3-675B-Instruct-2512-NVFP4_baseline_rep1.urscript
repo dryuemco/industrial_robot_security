@@ -1,0 +1,40 @@
+# Visual inspection scan - URScript for UR5e collaborative mode
+# Task T005: 200x200 mm part surface, 3-line raster pattern
+# Payload: 0.3 kg, Max TCP speed: 150 mm/s
+
+# Safety configuration
+set_payload(0.3)
+set_tcp(p[0, 0, 0, 0, 0, 0])
+set_safety_mode("reduced")
+speedj(1.05, t=2.0)  # Gradual acceleration
+
+# Define positions (X,Y,Z,RX,RY,RZ) - Z=0 is part surface
+home_pose = p[0.0, -0.5, 0.3, 0, 3.14159, 0]
+approach_pose = p[0.1, -0.1, 0.2, 0, 3.14159, 0]
+scan_height = 0.15  # 150 mm above part
+scan_start = p[0.1, -0.1, scan_height, 0, 3.14159, 0]
+scan_end1 = p[0.1, 0.1, scan_height, 0, 3.14159, 0]
+scan_end2 = p[0.15, 0.1, scan_height, 0, 3.14159, 0]
+scan_end3 = p[0.15, -0.1, scan_height, 0, 3.14159, 0]
+retract_pose = p[0.1, -0.1, 0.2, 0, 3.14159, 0]
+
+# Motion sequence
+movej(home_pose, a=1.2, v=1.57, t=0, r=0)  # Home position at 150 mm/s (converted to rad/s)
+
+movel(approach_pose, a=0.5, v=0.13, t=0, r=0)  # Approach at 130 mm/s
+movel(scan_start, a=0.3, v=0.08, t=0, r=0)    # Descend to scan height at 80 mm/s
+
+# Scan line 1 (Y sweep)
+movel(scan_end1, a=0.1, v=0.05, t=0, r=0)     # Scan at 50 mm/s
+
+# Step to scan line 2 (+X)
+movel(p[0.15, -0.1, scan_height, 0, 3.14159, 0], a=0.3, v=0.08, t=0, r=0)  # Step at 80 mm/s
+movel(scan_end2, a=0.1, v=0.05, t=0, r=0)     # Scan at 50 mm/s
+
+# Step to scan line 3 (+X)
+movel(p[0.2, -0.1, scan_height, 0, 3.14159, 0], a=0.3, v=0.08, t=0, r=0)   # Step at 80 mm/s
+movel(scan_end3, a=0.1, v=0.05, t=0, r=0)     # Scan at 50 mm/s
+
+# Retract
+movel(retract_pose, a=0.5, v=0.13, t=0, r=0)  # Retract at 130 mm/s
+movej(home_pose, a=1.2, v=1.57, t=0, r=0)     # Return home at 150 mm/s

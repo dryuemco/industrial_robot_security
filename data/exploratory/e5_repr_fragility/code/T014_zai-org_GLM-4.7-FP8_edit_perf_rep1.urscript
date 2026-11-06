@@ -1,0 +1,69 @@
+# Task: T014 — Hybrid multi-angle camera inspection (Optimized)
+# Optimized for reduced cycle time: Increased speeds/accelerations, reduced dwell times.
+# Robot: ur5e | Payload: 0.4 kg | Max TCP speed: 0.200 m/s
+
+def task_T014():
+  TCP_SPEED_CAP = 0.200
+  def safe_movel(pose, a, v, r):
+    if (v > TCP_SPEED_CAP):
+      popup("TCP speed cap exceeded", error=True)
+      halt
+    end
+    movel(pose, a=a, v=v, r=r)
+  end
+  
+  # [0] E-Stop verify
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+  
+  # [1] Home - Increased joint velocity and acceleration for faster transit
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.8000, v=2.0000)
+  
+  # [2] Top-down view position - Max TCP speed, increased acceleration, zero blend for stability
+  safe_movel(p[0.400000, 0.000000, 0.250000, 0.0000, 3.1416, 0.0000], 1.2000, 0.2000, 0.0000)
+  
+  # [3] Camera trigger ON
+  set_digital_out(2, True)
+  
+  # [4] Capture top view - Reduced sleep time for faster cycle
+  sleep(0.1000)
+  
+  # [5] Camera trigger OFF
+  set_digital_out(2, False)
+  
+  # [6] Side view position - Max TCP speed, increased acceleration
+  safe_movel(p[0.400000, -0.150000, 0.150000, 0.0000, 3.1416, 0.0000], 1.2000, 0.2000, 0.0000)
+  
+  # [7] Camera trigger ON
+  set_digital_out(2, True)
+  
+  # [8] Capture side view - Reduced sleep time
+  sleep(0.1000)
+  
+  # [9] Camera trigger OFF
+  set_digital_out(2, False)
+  
+  # [10] Angled view position - Max TCP speed, increased acceleration
+  safe_movel(p[0.350000, 0.100000, 0.200000, 0.0000, 3.1416, 0.0000], 1.2000, 0.2000, 0.0000)
+  
+  # [11] Camera trigger ON
+  set_digital_out(2, True)
+  
+  # [12] Capture angled view - Reduced sleep time
+  sleep(0.1000)
+  
+  # [13] Camera trigger OFF
+  set_digital_out(2, False)
+  
+  # [14] Retract - Max TCP speed, increased acceleration
+  safe_movel(p[0.350000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000], 1.2000, 0.2000, 0.0000)
+  
+  # [15] Return home - Increased joint velocity and acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.8000, v=2.0000)
+  
+end
+
+# Entry point
+task_T014()

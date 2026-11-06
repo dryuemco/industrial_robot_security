@@ -1,0 +1,150 @@
+# ------------------------------------------------------------
+# URScript for UR5e – Dual‑zone Pick‑Place (Hybrid Mode)
+# Safety‑compliant (ISO 10218:2025)
+# ------------------------------------------------------------
+
+# ----------------------- Parameters -------------------------
+max_tcp_speed      = 0.25          # [m/s]  = 250 mm/s (collaborative limit)
+max_joint_acc      = 1.4           # [rad/s^2] per joint
+payload_mass       = 1.2           # [kg]
+payload_cog        = [0,0,0.1]     # approximated centre of gravity [m]
+
+# Workspace bounding box (example values – adapt to real cell)
+workspace_min = p[-0.8, -0.8, 0.0, 0, 0, 0]
+workspace_max = p[ 0.8,  0.8, 0.8, 0, 0, 0]
+
+# Safety zones (example boxes – replace with actual coordinates)
+# Confinement zone (fenced storage)
+confine_min = p[-0.6, -0.4, 0.0, 0, 0, 0]
+confine_max = p[-0.2,  0.0, 0.5, 0, 0, 0]
+
+# Exclusion zone (operator hand‑off)
+excl_min = p[ 0.2, -0.4, 0.0, 0, 0, 0]
+excl_max = p[ 0.6,  0.0, 0.5, 0, 0, 0]
+
+# ----------------------- Helper Functions --------------------
+def safety_check():
+    # Generic safety guard – can be expanded with sensor checks
+    if not is_running():
+        textmsg("Safety check failed – program stopped.")
+        halt()
+    end
+end
+
+def in_workspace(pose):
+    return (pose[1] >= workspace_min[1] and pose[1] <= workspace_max[1] and
+            pose[2] >= workspace_min[2] and pose[2] <= workspace_max[2] and
+            pose[3] >= workspace_min[3] and pose[3] <= workspace_max[3])
+end
+
+def in_zone(pose, zone_min, zone_max):
+    return (pose[1] >= zone_min[1] and pose[1] <= zone_max[1] and
+            pose[2] >= zone_min[2] and pose[2] <= zone_max[2] and
+            pose[3] >= zone_min[3] and pose[3] <= zone_max[3])
+end
+
+def validate_pose(pose, zone_name):
+    if not in_workspace(pose):
+        textmsg("ERROR: Pose outside workspace – aborting.")
+        halt()
+    end
+    # Optional: enforce zone entry rules
+    if zone_name == "confine" and not in_zone(pose, confine_min, confine_max):
+        textmsg("ERROR: Pose not inside confinement zone.")
+        halt()
+    elif zone_name == "excl" and not in_zone(pose, excl_min, excl_max):
+        textmsg("ERROR: Pose not inside exclusion (handoff) zone.")
+        halt()
+    end
+end
+
+def emergency_stop_handler():
+    # Simple pop‑up style emergency stop (URCap UI can be used in practice)
+    popup("Emergency stop triggered!", "OK", True)
+    halt()
+end
+
+# ----------------------- Payload -----------------------------
+set_payload(payload_mass, payload_cog)
+
+# ----------------------- Motion Limits -----------------------
+# Joint move limits (speed & acceleration)
+joint_speed = 0.5          # [rad/s] safe joint speed (well below max)
+joint_acc   = max_joint_acc
+
+# Linear move limits (speed & acceleration)
+lin_speed   = max_tcp_speed   # [m/s]
+lin_acc     = 1.2              # [m/s^2] typical safe linear acceleration
+
+# ----------------------- Waypoints --------------------------
+# Joint space home (example values)
+home_joint   = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Cartesian poses (example – replace with real cell coordinates)
+above_bin    = p[-0.4, -0.3, 0.4, 0, 3.14, 0]   # above storage bin
+pick_pose    = p[-0.4, -0.3, 0.15, 0, 3.14, 0]  # descend to pick
+lift_pose    = p[-0.4, -0.3, 0.35, 0, 3.14, 0]  # lift from bin
+handoff_pose = p[ 0.4, -0.3, 0.35, 0, 3.14, 0]  # hand‑off zone (center)
+# Additional placeholder poses
+intermediate1 = p[ 0.0, -0.3, 0.4, 0, 3.14, 0]
+intermediate2 = p[ 0.2, -0.2, 0.3, 0, 3.14, 0]
+intermediate3 = p[ 0.5, -0.1, 0.25, 0, 3.14, 0]
+
+# ----------------------- Main Program -----------------------
+def main():
+    # ---- Step 1: Joint move to Home -----------------------
+    safety_check()
+    movej(home_joint, a=joint_acc, v=joint_speed)
+    
+    # ---- Step 2: Linear move above storage bin ------------
+    safety_check()
+    validate_pose(above_bin, "confine")
+    movel(above_bin, a=lin_acc, v=lin_speed)
+    
+    # ---- Step 3: Descend to pick ---------------------------
+    safety_check()
+    validate_pose(pick_pose, "confine")
+    movel(pick_pose, a=lin_acc, v=lin_speed)   # speed limited to 0.25 m/s
+    
+    # ---- Step 4: Lift from bin -----------------------------
+    safety_check()
+    validate_pose(lift_pose, "confine")
+    movel(lift_pose, a=lin_acc, v=lin_speed)
+    
+    # ---- Step 5: Transit to hand‑off zone -----------------
+    safety_check()
+    validate_pose(intermediate1, "excl")
+    movel(intermediate1, a=lin_acc, v=lin_speed)
+    
+    safety_check()
+    validate_pose(intermediate2, "excl")
+    movel(intermediate2, a=lin_acc, v=lin_speed)
+    
+    safety_check()
+    validate_pose(handoff_pose, "excl")
+    movel(handoff_pose, a=lin_acc, v=lin_speed)
+    
+    # ---- Step 6: Placeholder – place operation ------------
+    safety_check()
+    # (e.g., open gripper here)
+    # pause for operator hand‑off
+    sleep(1.0)
+    
+    # ---- Step 7: Return to intermediate pose ---------------
+    safety_check()
+    validate_pose(intermediate3, "excl")
+    movel(intermediate3, a=lin_acc, v=lin_speed)
+    
+    # ---- Step 8: Back to Home ------------------------------
+    safety_check()
+    movej(home_joint, a=joint_acc, v=joint_speed)
+    
+    textmsg("Program completed safely.")
+end
+
+# ------------------------------------------------------------
+# Register emergency stop callback (URCaps can call this)
+set_stop_condition(emergency_stop_handler)
+
+# Run the program
+main()

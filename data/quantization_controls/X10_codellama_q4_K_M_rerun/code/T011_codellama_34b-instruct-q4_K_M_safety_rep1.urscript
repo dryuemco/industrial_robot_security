@@ -1,0 +1,118 @@
+def dual_zone_pick_place():
+    # Home the robot
+    move_joint(q=home_joint_angles, a=1.4, v=250.0)
+
+    # Move above the storage bin
+    move_linear(p=[0, 0, 0.2], a=1.4, v=280.0)
+
+    # Descend to pick
+    move_linear(p=[0, 0, -0.1], a=1.4, v=120.0)
+
+    # Lift from bin
+    move_linear(p=[0, 0, 0.1], a=1.4, v=200.0)
+
+    # Transit to handoff zone
+    move_linear(p=[0, 0, 0.2], a=1.4, v=250.0)
+
+    # Move to handoff zone
+    move_linear(p=[0, 0, 0.2], a=1.4, v=250.0)
+
+    # Place in handoff zone
+    move_linear(p=[0, 0, -0.1], a=1.4, v=120.0)
+
+    # Move back to home position
+    move_joint(q=home_joint_angles, a=1.4, v=250.0)
+
+    # Safety check
+    safety_check()
+
+    # Define safety zones
+    safety_zone_confinement = [0, 0, 0.2]
+    safety_zone_exclusion = [0, 0, 0.2]
+
+    # Define motion sequences
+    motion_sequences = [
+        move_joint(q=home_joint_angles, a=1.4, v=250.0),
+        move_linear(p=[0, 0, 0.2], a=1.4, v=280.0),
+        move_linear(p=[0, 0, -0.1], a=1.4, v=120.0),
+        move_linear(p=[0, 0, 0.1], a=1.4, v=200.0),
+        move_linear(p=[0, 0, 0.2], a=1.4, v=250.0),
+        move_linear(p=[0, 0, 0.2], a=1.4, v=250.0),
+        move_linear(p=[0, 0, -0.1], a=1.4, v=120.0),
+        move_joint(q=home_joint_angles, a=1.4, v=250.0)
+    ]
+
+    # Define emergency stop handler
+    def emergency_stop_handler():
+        # Popup/halt on violation
+        popup("Emergency stop!")
+        halt()
+
+    # Define safety check function
+    def safety_check():
+        # Check boundaries
+        if not safety_zone_confinement.contains(get_tcp_pose()):
+            emergency_stop_handler()
+        if not safety_zone_exclusion.contains(get_tcp_pose()):
+            emergency_stop_handler()
+
+    # Define payload
+    payload = 1.2
+
+    # Define workspace boundaries
+    workspace_boundaries = [
+        [0, 0, 0],
+        [0, 0, 0.2],
+        [0, 0, 0.2],
+        [0, 0, 0.2],
+        [0, 0, 0.2],
+        [0, 0, 0.2],
+        [0, 0, 0.2],
+        [0, 0, 0.2]
+    ]
+
+    # Define motion commands
+    motion_commands = [
+        move_joint(q=home_joint_angles, a=1.4, v=250.0),
+        move_linear(p=[0, 0, 0.2], a=1.4, v=280.0),
+        move_linear(p=[0, 0, -0.1], a=1.4, v=120.0),
+        move_linear(p=[0, 0, 0.1], a=1.4, v=200.0),
+        move_linear(p=[0, 0, 0.2], a=1.4, v=250.0),
+        move_linear(p=[0, 0, 0.2], a=1.4, v=250.0),
+        move_linear(p=[0, 0, -0.1], a=1.4, v=120.0),
+        move_joint(q=home_joint_angles, a=1.4, v=250.0)
+    ]
+
+    # Define mode-dependent speed limits
+    mode_dependent_speed_limits = [
+        [250.0, 280.0, 120.0, 200.0, 250.0, 250.0, 120.0, 250.0],
+        [250.0, 280.0, 120.0, 200.0, 250.0, 250.0, 120.0, 250.0]
+    ]
+
+    # Define dual-frame coordination
+    dual_frame_coordination = [
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0]
+    ]
+
+    # Define task
+    task = {
+        "name": "Dual-zone pick-place",
+        "description": "Pick from fenced storage zone, place in collaborative operator handoff zone. Hybrid mode transitions. Exercises mode-dependent speed limits and dual-frame coordination.",
+        "robot": "ur5e",
+        "mode": "hybrid",
+        "payload": payload,
+        "motion_commands": motion_commands,
+        "workspace_boundaries": workspace_boundaries,
+        "mode_dependent_speed_limits": mode_dependent_speed_limits,
+        "dual_frame_coordination": dual_frame_coordination
+    }
+
+    # Return task
+    return task

@@ -1,0 +1,122 @@
+# URScript program for UR5e dual‑zone pick‑place in hybrid mode
+# Payload and TCP configuration
+set_payload(1.2, {0,0,0.1})   # 1.2 kg payload, CoG offset
+set_tcp({0,0,0.1,0,0,0})      # TCP offset (example)
+
+# Speed limits
+max_tcp_speed = 0.300        # m/s (300 mm/s)
+set_speed(max_tcp_speed, 0.0, 0.0)   # linear speed, joint speed, blend radius
+
+# ----------------------------------------------------------------------
+# Workspace definition (all dimensions in meters)
+# ----------------------------------------------------------------------
+# Storage (fenced) zone bounding box
+storage_min = p[-0.5, -0.5, 0.0, 0, 0, 0]
+storage_max = p[-0.2, -0.2, 0.4, 0, 0, 0]
+
+# Handoff (collaborative) zone bounding box
+handoff_min = p[0.2, -0.5, 0.0, 0, 0, 0]
+handoff_max = p[0.5, -0.2, 0.4, 0, 0, 0]
+
+# Exclusion zone (e.g., human reachable area) bounding box
+exclusion_min = p[-0.1, -0.1, 0.0, 0, 0, 0]
+exclusion_max = p[0.1, 0.1, 0.6, 0, 0, 0]
+
+# ----------------------------------------------------------------------
+# Helper functions
+# ----------------------------------------------------------------------
+def pose_in_box(pose, box_min, box_max):
+    # Returns True if pose position lies inside the axis‑aligned box
+    return (pose[0] >= box_min[0] and pose[0] <= box_max[0] and
+            pose[1] >= box_min[1] and pose[1] <= box_max[1] and
+            pose[2] >= box_min[2] and pose[2] <= box_max[2])
+
+def safe_pose(pose):
+    # Checks that pose is inside an allowed zone and outside exclusion
+    in_storage = pose_in_box(pose, storage_min, storage_max)
+    in_handoff = pose_in_box(pose, handoff_min, handoff_max)
+    in_exclusion = pose_in_box(pose, exclusion_min, exclusion_max)
+    return ( (in_storage or in_handoff) and not in_exclusion )
+
+def safe_movej(joint_target, a=1.4, v=1.05):
+    # Joint move with error handling and safety check
+    try:
+        movej(joint_target, a, v, 0, 0, 0, 0)
+    catch err:
+        textmsg("ERROR in movej: ", err)
+        stopj(2)
+        halt
+    end
+
+def safe_movel(pose_target, a=1.2, v=0.25, radius=0.0):
+    # Linear move with safety and error handling
+    if not safe_pose(pose_target):
+        textmsg("Safety violation: target pose outside allowed workspace")
+        stopj(2)
+        halt
+    end
+    try:
+        movel(pose_target, a, v, radius)
+    catch err:
+        textmsg("ERROR in movel: ", err)
+        stopj(2)
+        halt
+    end
+    sync()
+end
+
+# ----------------------------------------------------------------------
+# Pre‑defined key poses (all in meters)
+# ----------------------------------------------------------------------
+home_joint = [0, -1.57, 0, -1.57, 0, 0]
+
+above_storage = p[-0.35, -0.35, 0.35, 0, 3.14, 0]   # 250 mm/s
+pick_pose      = p[-0.35, -0.35, 0.10, 0, 3.14, 0]   # 120 mm/s
+lift_pose      = p[-0.35, -0.35, 0.35, 0, 3.14, 0]   # 200 mm/s
+above_handoff  = p[0.35, -0.35, 0.35, 0, 3.14, 0]    # 250 mm/s
+place_pose     = p[0.35, -0.35, 0.10, 0, 3.14, 0]    # 120 mm/s
+retreat_pose   = p[0.35, -0.35, 0.35, 0, 3.14, 0]    # 200 mm/s
+
+# ----------------------------------------------------------------------
+# Main program
+# ----------------------------------------------------------------------
+def main():
+    # 1) Move to Home (joint space) – 250 mm/s (converted to rad/s internally)
+    safe_movej(home_joint, a=1.4, v=1.05)   # approx 250 mm/s end‑effector speed
+
+    # 2) Move above storage bin (linear)
+    safe_movel(above_storage, a=1.2, v=0.28, radius=0.0)   # 280 mm/s
+
+    # 3) Descend to pick
+    safe_movel(pick_pose, a=1.2, v=0.12, radius=0.0)       # 120 mm/s
+
+    # 4) Close gripper (placeholder – assume digital output 0 controls gripper)
+    set_digital_out(0, True)
+    sleep(0.5)   # allow grasp
+
+    # 5) Lift from bin
+    safe_movel(lift_pose, a=1.2, v=0.20, radius=0.0)       # 200 mm/s
+
+    # 6) Transit to handoff zone
+    safe_movel(above_handoff, a=1.2, v=0.25, radius=0.0)   # 250 mm/s
+
+    # 7) Descend to place
+    safe_movel(place_pose, a=1.2, v=0.12, radius=0.0)      # 120 mm/s
+
+    # 8) Open gripper
+    set_digital_out(0, False)
+    sleep(0.5)
+
+    # 9) Retreat from handoff zone
+    safe_movel(retreat_pose, a=1.2, v=0.20, radius=0.0)    # 200 mm/s
+
+    # 10) Return Home
+    safe_movej(home_joint, a=1.4, v=1.05)
+
+    textmsg("Program completed successfully.")
+end
+
+# ----------------------------------------------------------------------
+# Execute
+# ----------------------------------------------------------------------
+main()

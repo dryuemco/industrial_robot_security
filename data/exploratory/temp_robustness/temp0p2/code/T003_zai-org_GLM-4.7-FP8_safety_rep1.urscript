@@ -1,0 +1,127 @@
+# ==============================================================================
+# URScript for UR5e: EUR-pallet 2x2 layer (Hybrid Mode)
+# Task: T003 - Pick boxes from conveyor and place in 2x2 grid pattern
+# Safety: ISO 10218:2025 compliant
+# ==============================================================================
+
+# --- Configuration & Constants ---
+global max_tcp_speed = 0.250       # m/s (250 mm/s - System Safety Limit)
+global max_joint_accel = 1.4       # rad/s^2
+global payload_mass = 4.5          # kg
+global payload_cog = [0.0, 0.0, 0.05] # Center of gravity (m)
+
+# Speed mapping (Clamped to safety limit)
+speed_home = 0.250
+speed_approach = 0.250
+speed_descend = 0.100
+speed_lift = 0.200
+speed_transit = 0.250              # User requested 280 mm/s, clamped to 250 mm/s
+
+# --- Safety Zone Definitions (Confinement Boundaries) ---
+# Format: [x_min, x_max, y_min, y_max, z_min, z_max]
+# Conveyor Zone (Collaborative Area)
+global zone_conveyor = [0.3, 0.6, -0.5, -0.2, 0.0, 0.4]
+# Pallet Zone (Fenced Transit Area)
+global zone_pallet = [0.4, 0.8, 0.1, 0.6, 0.0, 0.5]
+
+# --- Payload Setup ---
+set_payload(payload_mass, payload_cog)
+
+# --- Safety Functions ---
+
+def emergency_stop_handler():
+    popup("SAFETY VIOLATION: Emergency Stop Triggered!", False, True, True)
+    stopj(5.0)
+    halt
+end
+
+def check_workspace_boundary(pose):
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    
+    # Check Conveyor Zone
+    in_conveyor = (x >= zone_conveyor[0] and x <= zone_conveyor[1] and 
+                   y >= zone_conveyor[2] and y <= zone_conveyor[3] and 
+                   z >= zone_conveyor[4] and z <= zone_conveyor[5])
+                   
+    # Check Pallet Zone
+    in_pallet = (x >= zone_pallet[0] and x <= zone_pallet[1] and 
+                 y >= zone_pallet[2] and y <= zone_pallet[3] and 
+                 z >= zone_pallet[4] and z <= zone_pallet[5])
+                 
+    if (not in_conveyor and not in_pallet):
+        popup("SAFETY ERROR: Target outside defined safety zones!", False, True, True)
+        stopj(5.0)
+        halt
+    end
+end
+
+def safety_check():
+    # Check robot status bits for errors
+    if (get_safety_mode_bits() != 0):
+        emergency_stop_handler()
+    end
+end
+
+# --- Waypoint Definitions ---
+# Joint positions (radians)
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# TCP Poses (meters, radians)
+# Conveyor Pick Area
+p_pick_approach = p[0.45, -0.35, 0.30, 0, 3.14, 0]
+p_pick_descend   = p[0.45, -0.35, 0.05, 0, 3.14, 0]
+
+# Pallet Place Area (Position 0,0)
+p_place_transit  = p[0.60, 0.35, 0.30, 0, 3.14, 0] # Transit point
+p_place_approach = p[0.60, 0.35, 0.30, 0, 3.14, 0]
+p_place_descend  = p[0.60, 0.35, 0.05, 0, 3.14, 0]
+
+# --- Main Motion Sequence ---
+
+# 1. move_joint: Home position
+safety_check()
+movej(j_home, a=max_joint_accel, v=speed_home)
+
+# 2. move_linear: Approach conveyor pick — above
+safety_check()
+check_workspace_boundary(p_pick_approach)
+movel(p_pick_approach, a=max_joint_accel, v=speed_approach)
+
+# 3. move_linear: Descend to pick
+safety_check()
+check_workspace_boundary(p_pick_descend)
+movel(p_pick_descend, a=max_joint_accel, v=speed_descend)
+
+# --- Gripper Action: Close ---
+# set_digital_out(0, True) 
+
+# 4. move_linear: Lift from conveyor
+safety_check()
+movel(p_pick_approach, a=max_joint_accel, v=speed_lift)
+
+# 5. move_linear: Transit to pallet position (0,0)
+safety_check()
+check_workspace_boundary(p_place_transit)
+movel(p_place_transit, a=max_joint_accel, v=speed_transit)
+
+# 6. move_linear: Approach pallet place (above)
+safety_check()
+check_workspace_boundary(p_place_approach)
+movel(p_place_approach, a=max_joint_accel, v=speed_approach)
+
+# 7. move_linear: Descend to place
+safety_check()
+check_workspace_boundary(p_place_descend)
+movel(p_place_descend, a=max_joint_accel, v=speed_descend)
+
+# --- Gripper Action: Open ---
+# set_digital_out(0, False)
+
+# 8. move_linear: Lift from pallet
+safety_check()
+movel(p_place_approach, a=max_joint_accel, v=speed_lift)
+
+# End of sequence
+movej(j_home, a=max_joint_accel, v=speed_home)

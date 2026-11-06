@@ -1,0 +1,202 @@
+# ==============================================================================
+# URScript: Laser Marking Task (Fenced Mode T015)
+# Robot: UR5e
+# Payload: 0.6 kg
+# Compliance: ISO 10218:2025
+# ==============================================================================
+
+# --- Configuration & Constants ---
+max_tcp_speed = 0.4           # 400 mm/s (Fenced Mode Limit)
+max_joint_accel = 1.4         # 1.4 rad/s^2
+payload_mass = 0.6            # kg
+payload_cog = [0.0, 0.0, 0.05] # Center of Gravity (m)
+
+# Digital I/O
+LASER_OUTPUT = 0
+ESTOP_INPUT = 0               # Simulated E-Stop input
+
+# Safety Zone Definitions (Confinement Box)
+zone_x_min = -0.6
+zone_x_max = 0.6
+zone_y_min = -0.6
+zone_y_max = 0.6
+zone_z_min = 0.0
+zone_z_max = 0.8
+
+# Safety Zone Definitions (Exclusion - e.g., obstacle)
+excl_center = [0.3, 0.3, 0.4]
+excl_radius = 0.15
+
+# A6: Marking Fixture Frame (Relative to Base)
+# Fixture located 40cm forward, rotated 180 around Z (tool pointing back/down)
+p_fixture = p[0.4, 0.0, 0.0, 0, 0, 3.14159]
+
+# --- Initialization ---
+
+# Set Payload
+set_payload(payload_mass, payload_cog)
+
+# Global State
+global laser_active = False
+global emergency_stop_triggered = False
+
+# --- Helper Functions ---
+
+def set_laser(state):
+    global laser_active = state
+    if state:
+        # A7: Laser tool activation constraints
+        # Ensure we are at correct height and orientation before firing
+        current_pose = get_actual_tcp_pose()
+        # Check orientation (Tool Z pointing down, Rx approx pi)
+        if (current_pose[3] < 3.0 or current_pose[3] > 3.28) or \
+           (current_pose[4] < -0.1 or current_pose[4] > 0.1):
+            popup("Safety Error: Orientation invalid for laser activation")
+            halt()
+        # Check height (Must be close to marking surface e.g., 0.05m +/- 0.01m)
+        if current_pose[2] > 0.06 or current_pose[2] < 0.04:
+            popup("Safety Error: Height invalid for laser activation")
+            halt()
+            
+        set_digital_out(LASER_OUTPUT, True)
+    else
+        set_digital_out(LASER_OUTPUT, False)
+    end
+end
+
+def check_safety_zones(pose):
+    # Check Confinement
+    if pose[0] < zone_x_min or pose[0] > zone_x_max or \
+       pose[1] < zone_y_min or pose[1] > zone_y_max or \
+       pose[2] < zone_z_min or pose[2] > zone_z_max:
+        popup("Safety Violation: Robot outside Confinement Zone")
+        stopl(2.0)
+        halt()
+    end
+    
+    # Check Exclusion (Simple sphere check)
+    dist = sqrt(pose[0]-excl_center[0])**2 + (pose[1]-excl_center[1])**2 + (pose[2]-excl_center[2])**2
+    if dist < excl_radius:
+        popup("Safety Violation: Robot inside Exclusion Zone")
+        stopl(2.0)
+        halt()
+    end
+end
+
+def safety_check():
+    # Check Emergency Stop Input
+    if get_digital_in(ESTOP_INPUT) == False:
+        popup("EMERGENCY STOP TRIGGERED")
+        stopj(2.0)
+        halt()
+    end
+    
+    # Validate Workspace Boundaries for current pose
+    check_safety_zones(get_actual_tcp_pose())
+    
+    # Validate Speed Limits (Runtime check)
+    current_tcp_speed = get_actual_tcp_speed()
+    if current_tcp_speed > (max_tcp_speed + 0.05):
+        popup("Safety Violation: TCP Speed Limit Exceeded")
+        stopj(2.0)
+        halt()
+    end
+end
+
+# --- Safety Monitor Thread ---
+thread safety_monitor():
+    while True:
+        # A3: Strict laser pointing (Continuous monitoring while active)
+        if laser_active:
+            pose = get_actual_tcp_pose()
+            # Check Rx (Roll) and Ry (Pitch) for stability
+            if (pose[3] < 3.0 or pose[3] > 3.28) or (pose[4] < -0.1 or pose[4] > 0.1):
+                set_laser(False)
+                popup("Safety Alert: Laser Orientation Deviation Detected")
+                stopl(0.5)
+            end
+        end
+        sync()
+    end
+end
+
+# --- Waypoints Definition ---
+# Calculated relative to Fixture Frame (A6)
+
+# 1. Home Position (Joint space)
+j_home = [0.0, -1.5708, 0.0, -1.5708, 0.0, 0.0]
+
+# 2. Above Marking Surface (Safe Height Z=0.2 relative to fixture)
+p_above = pose_trans(p_fixture, p[0.0, 0.0, 0.2, 0, 0, 0])
+
+# 3. Descend to Marking Height (Z=0.05)
+p_mark_start = pose_trans(p_fixture, p[0.0, 0.0, 0.05, 0, 0, 0])
+
+# 4. Line 1 End (X+50mm)
+p_line1_end = pose_trans(p_fixture, p[0.05, 0.0, 0.05, 0, 0, 0])
+
+# 5. Step to Line 2 Start (Y+20mm, Laser Off)
+p_line2_start = pose_trans(p_fixture, p[0.05, 0.02, 0.05, 0, 0, 0])
+
+# 6. Line 2 End (X-50mm)
+p_line2_end = pose_trans(p_fixture, p[-0.05, 0.02, 0.05, 0, 0, 0])
+
+# 7. Step to Line 3 Start (Y+20mm, Laser Off)
+p_line3_start = pose_trans(p_fixture, p[-0.05, 0.04, 0.05, 0, 0, 0])
+
+# 8. Line 3 End (X+50mm)
+p_line3_end = pose_trans(p_fixture, p[0.05, 0.04, 0.05, 0, 0, 0])
+
+# --- Main Motion Sequence ---
+
+# Start Safety Thread
+# (Note: In actual implementation, thread is started via installation or separate trigger)
+
+# Move 1: move_joint: Home, 350.0 mm/s (approx 1.0 rad/s)
+# Using movej with safe joint acceleration
+safety_check()
+movej(j_home, a=max_joint_accel, v=1.0)
+
+# Move 2: move_linear: Above marking surface, 300.0 mm/s
+safety_check()
+movel(p_above, a=0.5, v=0.3)
+
+# Move 3: move_linear: Descend to marking height, 100.0 mm/s
+safety_check()
+movel(p_mark_start, a=0.2, v=0.1)
+
+# Move 4: move_linear: Mark line 1, 60.0 mm/s
+safety_check()
+set_laser(True)
+movel(p_line1_end, a=0.1, v=0.06)
+
+# Move 5: move_linear: Step to line 2, 80.0 mm/s
+safety_check()
+set_laser(False)
+movel(p_line2_start, a=0.15, v=0.08)
+
+# Move 6: move_linear: Mark line 2, 60.0 mm/s
+safety_check()
+set_laser(True)
+movel(p_line2_end, a=0.1, v=0.06)
+
+# Move 7: move_linear: Step to line 3, 80.0 mm/s
+safety_check()
+set_laser(False)
+movel(p_line3_start, a=0.15, v=0.08)
+
+# Move 8: move_linear: Mark line 3, 60.0 mm/s
+safety_check()
+set_laser(True)
+movel(p_line3_end, a=0.1, v=0.06)
+
+# Move 9: move_linear: Retract to safe height, 100.0 mm/s
+safety_check()
+set_laser(False)
+movel(p_above, a=0.2, v=0.1)
+
+# Move 10: move_joint: Return to Home, 350.0 mm/s
+safety_check()
+movej(j_home, a=max_joint_accel, v=1.0)
+
+# End of Program

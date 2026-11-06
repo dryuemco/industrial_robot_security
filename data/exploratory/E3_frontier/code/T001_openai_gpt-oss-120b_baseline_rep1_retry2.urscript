@@ -1,0 +1,60 @@
+def main():
+    # ---- Safety and payload configuration ----
+    # Set payload (mass, center of gravity) for 0.5 kg object
+    set_payload(0.5, [0,0,0.1])   # CoG approx 10 cm along Z of the tool
+    # Define TCP (tool center point) if needed; identity here
+    set_tcp(p[0,0,0,0,0,0])
+    # Apply speed scaling for collaborative mode (e.g., 50% of max)
+    set_speed_slider(0.5)        # 0.0 – 1.0 range
+
+    # ---- Motion parameters ----
+    # Joint speed (rad/s) and acceleration for joint moves
+    joint_speed = 0.5            # rad/s (approx 200 mm/s end‑effector speed)
+    joint_acc   = 1.2            # rad/s^2
+
+    # Linear speed (mm/s) and acceleration for linear moves
+    lin_speed_fast   = 200.0     # mm/s
+    lin_speed_medium = 150.0     # mm/s
+    lin_speed_slow   = 100.0     # mm/s
+    lin_acc          = 500.0    # mm/s^2 (within UR5e limits)
+
+    # ---- Pose definitions (in meters) ----
+    # Home position (joint configuration)
+    home_joints = [-1.57, -1.57, -1.57, -1.57, 1.57, 0]
+
+    # Pick location
+    pick_approach = p[0.5, -0.2, 0.3, 0, 3.14, 0]   # 200 mm above the object
+    pick_down    = p[0.5, -0.2, 0.1, 0, 3.14, 0]   # at object height
+
+    # Place location
+    place_approach = p[0.3, 0.2, 0.3, 0, 3.14, 0]  # 200 mm above target
+    place_down    = p[0.3, 0.2, 0.1, 0, 3.14, 0]  # at target height
+
+    # ---- Sequence of moves ----
+    # 1. Move to home joint position
+    movej(home_joints, a=joint_acc, v=joint_speed)
+
+    # 2. Approach pick point (linear)
+    movel(pick_approach, a=lin_acc, v=lin_speed_fast)
+
+    # 3. Descend to pick (linear, slower)
+    movel(pick_down, a=lin_acc, v=lin_speed_slow)
+
+    # 4. Lift from pick (linear, medium speed)
+    movel(pick_approach, a=lin_acc, v=lin_speed_medium)
+
+    # 5. Transit to place approach (linear, fast)
+    movel(place_approach, a=lin_acc, v=lin_speed_fast)
+
+    # 6. Descend to place (linear, slow)
+    movel(place_down, a=lin_acc, v=lin_speed_slow)
+
+    # 7. Lift from place (linear, medium speed)
+    movel(place_approach, a=lin_acc, v=lin_speed_medium)
+
+    # 8. Return to home joint position
+    movej(home_joints, a=joint_acc, v=joint_speed)
+
+    # ---- End of program ----
+    stopj(2)   # safe stop with deceleration
+end

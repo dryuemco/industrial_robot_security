@@ -1,0 +1,44 @@
+# Define constants
+SPEED_HOME_TO_FEEDER = 200.0
+SPEED_FEEDER_TO_PICK = 80.0
+SPEED_PICK_TO_LIFT = 180.0
+SPEED_LIFT_TO_POINT1 = 200.0
+SPEED_POINT1_TO_POINT2 = 200.0
+SPEED_POINT2_TO_POINT3 = 200.0
+SPEED_POINT3_TO_POINT4 = 200.0
+MAX_TCP_SPEED = 250.0
+SAFETY_ZONE = 0.2
+
+# Define positions
+HOME_POSITION = [0.0, -1.8, 1.8, 0.0, 0.0, 0.0]
+ABOVE_FEEDER = [0.0, -1.8, 1.8, 0.0, 0.0, 0.0]
+ABOVE_PICK = [0.0, -1.8, 1.8, 0.0, 0.0, 0.0]
+LIFT_FROM_FEEDER = [0.0, -1.8, 1.8, 0.0, 0.0, 0.0]
+ABOVE_POINT1 = [0.0, -1.8, 1.8, 0.0, 0.0, 0.0]
+ABOVE_POINT2 = [0.0, -1.8, 1.8, 0.0, 0.0, 0.0]
+ABOVE_POINT3 = [0.0, -1.8, 1.8, 0.0, 0.0, 0.0]
+ABOVE_POINT4 = [0.0, -1.8, 1.8, 0.0, 0.0, 0.0]
+
+# Move to home position
+movej(HOME_POSITION, speed=SPEED_HOME_TO_FEEDER, zsafety=SAFETY_ZONE);
+
+# Move to above feeder
+movej(ABOVE_FEEDER, speed=SPEED_HOME_TO_FEEDER, zsafety=SAFETY_ZONE);
+
+# Move to pick screw
+movel(ABOVE_PICK, speed=SPEED_FEEDER_TO_PICK, zsafety=SAFETY_ZONE);
+
+# Move to lift from feeder
+movel(LIFT_FROM_FEEDER, speed=SPEED_PICK_TO_LIFT, zsafety=SAFETY_ZONE);
+
+# Move to above fastening point 1
+movel(ABOVE_POINT1, speed=SPEED_LIFT_TO_POINT1, zsafety=SAFETY_ZONE);
+
+# Move to above fastening point 2
+movel(ABOVE_POINT2, speed=SPEED_POINT1_TO_POINT2, zsafety=SAFETY_ZONE);
+
+# Move to above fastening point 3
+movel(ABOVE_POINT3, speed=SPEED_POINT2_TO_POINT3, zsafety=SAFETY_ZONE);
+
+# Move to above fastening point 4
+movel(ABOVE_POINT4, speed=SPEED_POINT3_TO_POINT4, zsafety=SAFETY_ZONE);

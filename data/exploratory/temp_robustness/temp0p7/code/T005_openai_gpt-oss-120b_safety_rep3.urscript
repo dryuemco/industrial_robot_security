@@ -1,0 +1,138 @@
+# -------------------------------------------------
+# URScript for UR5e collaborative visual inspection
+# -------------------------------------------------
+
+# ----- Configuration -----
+payload_mass = 0.3                                 # kg
+payload_cog = [0,0,0]                              # Center of gravity (m) relative to TCP
+set_payload(payload_mass, payload_cog)
+
+# Speed & acceleration limits (SI units)
+max_tcp_speed   = 0.250    # m/s (250 mm/s)
+max_joint_acc   = 1.4      # rad/s^2 per joint
+default_acc     = 0.5      # rad/s^2 (fallback for joint moves)
+default_lin_acc = 0.5      # m/s^2 (fallback for linear moves)
+
+# Workspace boundaries (meters) - adjust to actual cell
+x_min = -0.600; x_max = 0.600
+y_min = -0.600; y_max = 0.600
+z_min =  0.050; z_max = 0.800
+
+# ----- Safety Functions -----
+def safety_check(pose):
+    # Verify pose within workspace
+    if pose[0] < x_min or pose[0] > x_max or \
+       pose[1] < y_min or pose[1] > y_max or \
+       pose[2] < z_min or pose[2] > z_max:
+        popup("Safety violation: Pose out of bounds!", title="Emergency Stop", error=True)
+        halt()
+    end
+
+def emergency_stop():
+    popup("Emergency stop activated!", title="E-Stop", error=True)
+    stopj(1.0)    # smooth stop
+    halt()
+end
+
+# ----- Helper: Convert mm/s to m/s -----
+def mmps_to_mps(v_mmps):
+    return v_mmps / 1000.0
+end
+
+# ----- Waypoints (meters) -----
+# Home position (joint values)
+home_joint = [-1.57, -1.57, -1.57, -1.57, 1.57, 0.0]
+
+# Approach start (above part, camera pointing down)
+# Example pose: x=0.0, y=0.0, z=0.300, orientation = downwards
+approach_start = p[0.0, 0.0, 0.300, 0, 3.14159, 0]   # TCP down (rotation about Y)
+
+# Scan height (150 mm above part surface)
+scan_height = p[0.0, 0.0, 0.150, 0, 3.14159, 0]
+
+# Scan line 1 end (Y sweep 200 mm)
+line1_end = p[0.0, 0.200, 0.150, 0, 3.14159, 0]
+
+# Step to line 2 start (+X 200 mm)
+line2_start = p[0.200, 0.200, 0.150, 0, 3.14159, 0]
+
+# Scan line 2 end (Y sweep back to 0)
+line2_end = p[0.200, 0.0, 0.150, 0, 3.14159, 0]
+
+# Step to line 3 start (+X 200 mm)
+line3_start = p[0.400, 0.0, 0.150, 0, 3.14159, 0]
+
+# Scan line 3 end (Y sweep 200 mm)
+line3_end = p[0.400, 0.200, 0.150, 0, 3.14159, 0]
+
+# Retreat pose (above start)
+retreat_pose = p[0.0, 0.0, 0.300, 0, 3.14159, 0]
+
+# ----- Main Program -----
+def main():
+    # ----- Emergency stop monitor (runs in background) -----
+    # Here we simply watch a digital input (e.g., input0) as E-Stop.
+    # In a real cell, replace with appropriate safety I/O.
+    while True:
+        if get_digital_input(0):   # Assuming input0 = high => E-Stop pressed
+            emergency_stop()
+        end
+        sleep(0.1)
+    end
+
+    # ----- Motion Sequence -----
+    # 1. Move to Home (joint space) at 150 mm/s (0.150 m/s)
+    safety_check(get_actual_pose())
+    speed_joint = mmps_to_mps(150)           # 0.150 m/s
+    movej(home_joint, a= min(max_joint_acc, default_acc), v=speed_joint, t=0, r=0)
+
+    # 2. Approach start (linear) at 130 mm/s
+    safety_check(approach_start)
+    speed_lin = mmps_to_mps(130)             # 0.130 m/s
+    movel(approach_start, a= min(max_joint_acc, default_lin_acc), v=speed_lin)
+
+    # 3. Descend to scan height (150 mm above part) at 80 mm/s
+    safety_check(scan_height)
+    speed_lin = mmps_to_mps(80)              # 0.080 m/s
+    movel(scan_height, a= min(max_joint_acc, default_lin_acc), v=speed_lin)
+
+    # 4. Scan line 1 (Y sweep) at 50 mm/s
+    safety_check(line1_end)
+    speed_lin = mmps_to_mps(50)              # 0.050 m/s
+    movel(line1_end, a= min(max_joint_acc, default_lin_acc), v=speed_lin)
+
+    # 5. Step to line 2 start (+X) at 80 mm/s
+    safety_check(line2_start)
+    speed_lin = mmps_to_mps(80)              # 0.080 m/s
+    movel(line2_start, a= min(max_joint_acc, default_lin_acc), v=speed_lin)
+
+    # 6. Scan line 2 (Y sweep back) at 50 mm/s
+    safety_check(line2_end)
+    speed_lin = mmps_to_mps(50)              # 0.050 m/s
+    movel(line2_end, a= min(max_joint_acc, default_lin_acc), v=speed_lin)
+
+    # 7. Step to line 3 start (+X) at 80 mm/s
+    safety_check(line3_start)
+    speed_lin = mmps_to_mps(80)              # 0.080 m/s
+    movel(line3_start, a= min(max_joint_acc, default_lin_acc), v=speed_lin)
+
+    # 8. Scan line 3 (Y sweep) at 50 mm/s
+    safety_check(line3_end)
+    speed_lin = mmps_to_mps(50)              # 0.050 m/s
+    movel(line3_end, a= min(max_joint_acc, default_lin_acc), v=speed_lin)
+
+    # 9. Retract to approach height at 80 mm/s
+    safety_check(retreat_pose)
+    speed_lin = mmps_to_mps(80)              # 0.080 m/s
+    movel(retreat_pose, a= min(max_joint_acc, default_lin_acc), v=speed_lin)
+
+    # 10. Return to Home (joint) at 150 mm/s
+    safety_check(get_actual_pose())
+    speed_joint = mmps_to_mps(150)           # 0.150 m/s
+    movej(home_joint, a= min(max_joint_acc, default_acc), v=speed_joint, t=0, r=0)
+
+    popup("Inspection task completed safely.", title="Info")
+end
+
+# ----- Start Program -----
+main()

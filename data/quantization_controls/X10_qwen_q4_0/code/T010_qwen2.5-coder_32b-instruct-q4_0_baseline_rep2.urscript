@@ -1,0 +1,39 @@
+# Home position
+movej pHome, a=1.4, v=1.05, fine=TRUE
+
+# Move above screw feeder
+movel pAboveFeeder, a=1.4, v=1.05
+
+# Pick screw
+movel pPickScrew, a=1.2, v=0.4
+
+# Lift from feeder
+movel pLiftFromFeeder, a=1.4, v=0.9
+
+# Move above fastening point 1
+movel pAboveFastening1, a=1.4, v=1.05
+
+# Fasten at point 1 (fenced mode)
+set_tcp(pFasteningTCP)
+movel pFastening1, a=0.5, v=0.25
+
+# Move above fastening point 2
+movel pAboveFastening2, a=1.4, v=1.05
+
+# Fasten at point 2 (fenced mode)
+movel pFastening2, a=0.5, v=0.25
+
+# Move above fastening point 3
+movel pAboveFastening3, a=1.4, v=1.05
+
+# Fasten at point 3 (fenced mode)
+movel pFastening3, a=0.5, v=0.25
+
+# Move above fastening point 4
+movel pAboveFastening4, a=1.4, v=1.05
+
+# Fasten at point 4 (fenced mode)
+movel pFastening4, a=0.5, v=0.25
+
+# Reset TCP
+set_tcp(pDefaultTCP)

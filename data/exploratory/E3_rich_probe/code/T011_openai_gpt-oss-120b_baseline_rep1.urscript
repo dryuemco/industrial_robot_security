@@ -1,0 +1,108 @@
+# URScript for Dual‑zone Pick‑Place (Hybrid Mode) – T011
+# Robot: UR5e, Payload: 1.2 kg, Max TCP speed: 300 mm/s
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(1.2, [0,0,0.05])          # payload mass and CoM
+set_tcp(p[0,0,0.1,0,0,0])            # default TCP offset
+set_max_tcp_speed(0.300)             # 300 mm/s safety limit
+
+# Safety zones (confinement & exclusion)
+# Confinement zone: keep robot inside a 1 m radius sphere around origin
+set_confinement_zone(p[0,0,0,0,0,0], 1.0)
+# Exclusion zone: keep robot away from a 0.3 m radius sphere at (0.2, -0.2, 0.2)
+set_exclusion_zone(p[0.2,-0.2,0.2,0,0,0], 0.3)
+
+# -------------------------------------------------
+# Poses
+# -------------------------------------------------
+# Joint configuration for Home position
+home_joint = [-1.57, -1.57, -1.57, -1.57, 1.57, 0]
+
+# Cartesian waypoints (all in metres)
+above_storage   = p[0.5, -0.2, 0.30, 0, 3.14, 0]
+pick_position    = p[0.5, -0.2, 0.10, 0, 3.14, 0]
+lift_position    = p[0.5, -0.2, 0.30, 0, 3.14, 0]
+above_handoff    = p[0.3,  0.4, 0.40, 0, 3.14, 0]
+place_position   = p[0.3,  0.4, 0.20, 0, 3.14, 0]
+retreat_position = p[0.3,  0.4, 0.50, 0, 3.14, 0]
+
+# -------------------------------------------------
+# Speed / Acceleration settings
+# -------------------------------------------------
+joint_speed      = 0.250   # 250 mm/s → 0.250 m/s
+linear_speed_fast = 0.280  # 280 mm/s
+linear_speed_slow = 0.120  # 120 mm/s
+linear_speed_mid  = 0.200  # 200 mm/s
+linear_speed_mid2 = 0.250  # 250 mm/s
+
+joint_acceleration = 1.2   # rad/s² (default)
+cartesian_acceleration = 1.2 # m/s² (default)
+
+# -------------------------------------------------
+# Hybrid (Force) Mode definition
+# -------------------------------------------------
+# Force mode will be active while descending to pick and while placing.
+# Selection vector: [Fx, Fy, Fz, Tx, Ty, Tz] → we control force in Z only.
+selection_vector = [0,0,1,0,0,0]
+# Desired wrench (force) – 5 N downwards for pick, 5 N upwards for place.
+wrench_pick  = [0,0,-5,0,0,0]
+wrench_place = [0,0, 5,0,0,0]
+# Type 2 → Cartesian impedance (position + force)
+force_type = 2
+# Limits for the force mode (max deviation in each DOF)
+force_limits = [0.02,0.02,0.02, 0.1,0.1,0.1]
+
+# -------------------------------------------------
+# Program
+# -------------------------------------------------
+def main():
+    # 1) Move to Home (joint space)
+    set_joint_acceleration(joint_acceleration)
+    movej(home_joint, a=joint_acceleration, v=joint_speed)
+
+    # 2) Move above storage bin (linear, fast)
+    set_cartesian_impedance([2000,2000,2000,200,200,200])  # stiff for transport
+    movel(above_storage, a=cartesian_acceleration, v=linear_speed_fast)
+
+    # 3) Descend to pick (hybrid force control, slow)
+    # Activate force mode before the descent
+    force_mode(above_storage, selection_vector, wrench_pick, force_type, force_limits)
+    movel(pick_position, a=cartesian_acceleration, v=linear_speed_slow)
+    # Release force mode after contact is made
+    end_force_mode()
+
+    # 4) Lift from bin (linear, medium speed)
+    movel(lift_position, a=cartesian_acceleration, v=linear_speed_mid)
+
+    # 5) Transit to handoff zone (linear, fast)
+    movel(above_handoff, a=cartesian_acceleration, v=linear_speed_mid2)
+
+    # 6) Descend to place (hybrid force control, slow)
+    force_mode(above_handoff, selection_vector, wrench_place, force_type, force_limits)
+    movel(place_position, a=cartesian_acceleration, v=linear_speed_slow)
+    end_force_mode()
+
+    # 7) Retreat from handoff zone (linear, medium speed)
+    movel(retreat_position, a=cartesian_acceleration, v=linear_speed_mid)
+
+    # 8) Return to Home (joint space)
+    movej(home_joint, a=joint_acceleration, v=joint_speed)
+
+    # Program finished – keep robot in stop mode
+    stopj(2)
+
+# -------------------------------------------------
+# Helper: End force mode safely
+# -------------------------------------------------
+def end_force_mode():
+    # Switch back to normal Cartesian impedance
+    set_cartesian_impedance([1500,1500,1500,150,150,150])
+    # Small pause to ensure mode change
+    sleep(0.1)
+
+# -------------------------------------------------
+# Run
+# -------------------------------------------------
+main()

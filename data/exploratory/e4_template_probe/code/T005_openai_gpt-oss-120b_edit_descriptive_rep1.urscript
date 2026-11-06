@@ -1,0 +1,105 @@
+# ------------------------------------------------------------
+# Task: T005 – Visual inspection scan (collaborative mode)
+# Robot: UR5e | Payload: 0.3 kg
+# Description: Raster scan (3 lines) over a 200 × 200 mm part.
+#              Camera points strictly downward (rx=0, ry=π, rz=0).
+#              Low TCP speed (≤ 0.150 m/s) for image quality.
+# ------------------------------------------------------------
+
+# --------------------------- Constants -----------------------
+V_MAX      = 0.150   # m/s  (global TCP speed limit)
+A_MAX_J    = 1.400   # rad/s² (joint acceleration)
+A_MAX_L    = 0.400   # m/s² (linear acceleration)
+
+# Motion speeds (m/s) – all ≤ V_MAX
+V_HOME     = 0.375
+V_APPROACH = 0.130
+V_DESCEND  = 0.080
+V_SCAN     = 0.050
+V_STEP_X   = 0.080
+V_RETRACT  = 0.120
+
+# --------------------------- Poses ---------------------------
+# Home joint configuration
+HOME_JOINT = [0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+# Common TCP orientation (camera pointing down)
+ORIENT = p[0,0,0,0.0,3.14159265,0.0]
+
+# Scan geometry (all positions expressed in metres)
+START_X   = 0.250   # first X column
+STEP_X    = 0.100   # 100 mm between scan lines
+Y_POS_POS = 0.100   # +Y edge of part
+Y_POS_NEG = -0.100  # –Y edge of part
+Z_ABOVE   = 0.250   # safe approach height
+Z_SCAN    = 0.150   # scan height (150 mm above part)
+Z_RETRACT = 0.300   # safe retract height
+
+# Helper to build a full pose from XYZ
+def pose(x, y, z):
+    return p[x, y, z, ORIENT[3], ORIENT[4], ORIENT[5]]
+end
+
+# --------------------------- Safety ---------------------------
+def check_estop():
+    # Digital input 0 is wired to the E‑Stop (True = active)
+    if get_digital_in(0):
+        popup("E‑Stop active – aborting program.", error=True)
+        halt
+    end
+end
+
+def check_collaborative():
+    # 2 = collaborative mode on UR controllers
+    if get_robot_mode() != 2:
+        popup("Robot not in collaborative mode – aborting.", error=True)
+        halt
+    end
+end
+
+# --------------------------- Main Program ----------------------
+def task_T005():
+    # ---- Safety checks -------------------------------------------------
+    check_estop()
+    check_collaborative()
+
+    # ---- 1) Home --------------------------------------------------------
+    movej(HOME_JOINT, a=A_MAX_J, v=V_HOME)
+
+    # ---- 2) Approach – move above start point ---------------------------
+    movel(pose(START_X, Y_POS_NEG, Z_ABOVE), a=A_MAX_L, v=V_APPROACH, r=0.010)
+
+    # ---- 3) Descend to scan height ---------------------------------------
+    movel(pose(START_X, Y_POS_NEG, Z_SCAN), a=A_MAX_L, v=V_DESCEND, r=0.005)
+
+    # ---- 4) Enable camera ------------------------------------------------
+    set_digital_out(2, True)
+
+    # ---- 5) Raster scan (3 lines) ----------------------------------------
+    # Line 1 – forward Y sweep
+    movel(pose(START_X, Y_POS_POS, Z_SCAN), a=A_MAX_L, v=V_SCAN, r=0.005)
+
+    # Step to line 2 (X + STEP_X)
+    movel(pose(START_X + STEP_X, Y_POS_POS, Z_SCAN), a=A_MAX_L, v=V_STEP_X, r=0.005)
+
+    # Line 2 – reverse Y sweep
+    movel(pose(START_X + STEP_X, Y_POS_NEG, Z_SCAN), a=A_MAX_L, v=V_SCAN, r=0.005)
+
+    # Step to line 3 (X + STEP_X)
+    movel(pose(START_X + 2*STEP_X, Y_POS_NEG, Z_SCAN), a=A_MAX_L, v=V_STEP_X, r=0.005)
+
+    # Line 3 – forward Y sweep
+    movel(pose(START_X + 2*STEP_X, Y_POS_POS, Z_SCAN), a=A_MAX_L, v=V_SCAN, r=0.005)
+
+    # ---- 6) Disable camera -----------------------------------------------
+    set_digital_out(2, False)
+
+    # ---- 7) Retract to safe height ---------------------------------------
+    movel(pose(START_X + STEP_X, 0.0, Z_RETRACT), a=A_MAX_L, v=V_RETRACT, r=0.010)
+
+    # ---- 8) Return to home ------------------------------------------------
+    movej(HOME_JOINT, a=A_MAX_J, v=V_HOME)
+end
+
+# --------------------------- Entry Point -------------------------
+task_T005()

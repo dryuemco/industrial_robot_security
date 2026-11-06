@@ -1,0 +1,115 @@
+# URScript program for heavy depalletizing in fenced mode
+# All safety preamble, speed limits, error handling and workspace checks are included.
+
+# ------------------- Safety Preamble -------------------
+# Define the tool center point (TCP) and payload
+set_tcp(p[0,0,0.1,0,0,0])          # 10 cm offset along Z, no rotation
+set_payload(5.0, p[0,0,0.1])       # 5 kg payload, CoM 10 cm along Z
+
+# ------------------- Configuration -------------------
+# Speed limits (collaborative limit = 0.25 m/s)
+MAX_LINEAR_SPEED   = 0.25          # m/s (250 mm/s)
+MAX_JOINT_SPEED    = 0.5           # rad/s (example safe joint speed)
+
+# Acceleration values
+LIN_ACCEL          = 1.2           # m/s^2
+JOINT_ACCEL        = 1.0           # rad/s^2
+
+# Workspace limits (approximate rectangular box around the work cell, in meters)
+WORKSPACE_MIN = p[-0.8, -0.8, 0.0]
+WORKSPACE_MAX = p[ 0.8,  0.8, 1.2]
+
+# UR5e joint limits (radians)
+JOINT_LIMITS = [
+    [-6.283185307, 6.283185307],   # Joint 1
+    [-6.283185307, 6.283185307],   # Joint 2
+    [-6.283185307, 6.283185307],   # Joint 3
+    [-6.283185307, 6.283185307],   # Joint 4
+    [-6.283185307, 6.283185307],   # Joint 5
+    [-6.283185307, 6.283185307]    # Joint 6
+]
+
+# ------------------- Helper Functions -------------------
+def check_joint_limits(joints):
+    # Verify each joint is within its allowed range
+    for i in range(6):
+        if joints[i] < JOINT_LIMITS[i][0] or joints[i] > JOINT_LIMITS[i][1]:
+            textmsg("Joint limit violation on joint " + str(i+1))
+            return False
+    return True
+
+def check_workspace(position):
+    # Verify the TCP position is inside the defined workspace box
+    if position[0] < WORKSPACE_MIN[0] or position[0] > WORKSPACE_MAX[0] or \
+       position[1] < WORKSPACE_MIN[1] or position[1] > WORKSPACE_MAX[1] or \
+       position[2] < WORKSPACE_MIN[2] or position[2] > WORKSPACE_MAX[2]:
+        textmsg("Workspace boundary violation at position " + str(position))
+        return False
+    return True
+
+def safe_movej(target, a, v):
+    try:
+        movej(target, a, v)
+        # Post‑move checks
+        if not check_joint_limits(get_actual_joint_positions()):
+            raise Exception("Joint limits exceeded after movej")
+    except Exception as e:
+        textmsg("movej error: " + str(e))
+        stop()
+
+def safe_movel(target, a, v):
+    try:
+        movel(target, a, v)
+        # Post‑move checks
+        if not check_workspace(get_actual_tcp_pose()[0:3]):
+            raise Exception("TCP left workspace after movel")
+        if not check_joint_limits(get_actual_joint_positions()):
+            raise Exception("Joint limits exceeded after movel")
+    except Exception as e:
+        textmsg("movel error: " + str(e))
+        stop()
+
+# ------------------- Main Program -------------------
+def main():
+    # Predefined poses (in meters and radians)
+    home_pose          = p[0.0, -0.5, 0.5, 0, 3.14, 0]          # Joint configuration for Home
+    above_pallet_pose  = p[0.3, -0.4, 0.6, 0, 3.14, 0]          # Safe height above pallet
+    descend_pose       = p[0.3, -0.4, 0.2, 0, 3.14, 0]          # Top layer of pallet
+    lift_pose          = p[0.3, -0.4, 0.5, 0, 3.14, 0]          # Lifted box
+    conveyor_pose      = p[0.6, 0.0, 0.5, 0, 3.14, 0]           # Position over conveyor
+    place_pose         = p[0.6, 0.0, 0.2, 0, 3.14, 0]           # Release height
+    retreat_pose       = p[0.6, 0.0, 0.6, 0, 3.14, 0]           # Safe retreat
+    final_home_pose    = home_pose                               # Return to Home
+
+    # 1) Move to Home (joint space)
+    safe_movej(home_pose, JOINT_ACCEL, MAX_JOINT_SPEED)
+
+    # 2) Move above pallet (linear)
+    safe_movel(above_pallet_pose, LIN_ACCEL, MAX_LINEAR_SPEED)
+
+    # 3) Descend to top layer (linear, slower for precision)
+    safe_movel(descend_pose, LIN_ACCEL, 0.15)   # 0.15 m/s < 0.25 m/s limit
+
+    # 4) Lift the box (linear)
+    safe_movel(lift_pose, LIN_ACCEL, 0.20)      # 0.20 m/s
+
+    # 5) Transit to conveyor (linear, faster but within limit)
+    safe_movel(conveyor_pose, LIN_ACCEL, 0.25)  # 0.25 m/s (max allowed)
+
+    # 6) Lower box onto conveyor (linear, slower)
+    safe_movel(place_pose, LIN_ACCEL, 0.15)
+
+    # 7) Open gripper / release (placeholder for I/O)
+    set_digital_out(0, False)   # Assume digital_out(0) controls the gripper
+
+    # 8) Retreat to safe height (linear)
+    safe_movel(retreat_pose, LIN_ACCEL, 0.25)
+
+    # 9) Return to Home (joint space)
+    safe_movej(final_home_pose, JOINT_ACCEL, MAX_JOINT_SPEED)
+
+    textmsg("Depalletizing sequence completed successfully.")
+
+# ------------------- Execution -------------------
+if __name__ == "main":
+    main()

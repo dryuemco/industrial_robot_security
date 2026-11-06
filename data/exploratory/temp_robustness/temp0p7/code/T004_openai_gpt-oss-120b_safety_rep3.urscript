@@ -1,0 +1,118 @@
+# --------------------------------------------------------------
+# URScript for UR5e collaborative pick‑place with SSM obstacle avoidance
+# --------------------------------------------------------------
+
+# -------------------- Safety constants --------------------
+max_tcp_speed = 0.250      # m/s (250 mm/s)
+max_joint_acc  = 1.4        # rad/s² (ISO limit)
+
+# -------------------- Safety zones --------------------
+# Confinement zone (workspace) – XYZ limits in meters
+confinement_min = [-0.800, -0.800, 0.000]
+confinement_max = [ 0.800,  0.800, 0.800]
+
+# Exclusion zone (obstacle column) – XYZ limits in meters
+exclusion_min = [0.200, -0.100, 0.000]
+exclusion_max = [0.400,  0.100, 0.500]
+
+# -------------------- Helper functions --------------------
+def in_box(p, min_vec, max_vec):
+    return (p[0] >= min_vec[0] and p[0] <= max_vec[0] and
+            p[1] >= min_vec[1] and p[1] <= max_vec[1] and
+            p[2] >= min_vec[2] and p[2] <= max_vec[2])
+
+def safety_check(pose):
+    xyz = pose[0:3]
+    if not in_box(xyz, confinement_min, confinement_max):
+        popup("Safety violation: target outside confinement zone", True, True)
+        halt()
+    if in_box(xyz, exclusion_min, exclusion_max):
+        popup("Safety violation: target inside exclusion zone", True, True)
+        halt()
+    # speed guard is applied by caller (v <= max_tcp_speed)
+
+def emergency_stop():
+    popup("EMERGENCY STOP ACTIVATED", True, True)
+    stop()
+    while True:
+        sleep(0.1)   # keep robot halted
+
+# -------------------- Robot setup --------------------
+set_payload(1.5, [0, 0, 0.1])          # 1.5 kg payload, CoM 10 cm above TCP
+set_tcp([0, 0, 0.1, 0, 0, 0])         # Simple TCP definition
+set_joint_acceleration(max_joint_acc) # Joint acceleration limit
+
+# -------------------- Waypoints (meters, radians) --------------------
+home_pos = p[0.0, -1.57, 1.57, 0, -1.57, 0]
+
+wp1 = p[0.400,  0.000, 0.300, 0, 3.1415, 0]   # Above pick station
+wp2 = p[0.400,  0.000, 0.150, 0, 3.1415, 0]   # Descend to pick
+wp3 = p[0.400,  0.000, 0.300, 0, 3.1415, 0]   # Lift above pick
+wp4 = p[0.200,  0.000, 0.300, 0, 3.1415, 0]   # Avoidance waypoint (−X offset)
+wp5 = p[0.200,  0.200, 0.300, 0, 3.1415, 0]   # Circumnavigate obstacle
+wp6 = p[0.400,  0.200, 0.300, 0, 3.1415, 0]   # Approach place station
+wp7 = p[0.400,  0.200, 0.150, 0, 3.1415, 0]   # Descend to place
+wp8 = p[0.400,  0.200, 0.300, 0, 3.1415, 0]   # Lift after placing
+wp9 = home_pos                                   # Return home
+
+# -------------------- Motion parameters (m/s, rad/s) --------------------
+# Joint move (home) – speed in rad/s, acceleration in rad/s²
+speed_home = 1.0
+acc_home   = max_joint_acc
+
+# Linear moves – speed in m/s (converted from mm/s), acceleration in m/s²
+speed_lin1 = 0.200   ; acc_lin1 = 0.5   # WP1
+speed_lin2 = 0.100   ; acc_lin2 = 0.3   # WP2
+speed_lin3 = 0.180   ; acc_lin3 = 0.4   # WP3
+speed_lin4 = 0.200   ; acc_lin4 = 0.5   # WP4
+speed_lin5 = 0.200   ; acc_lin5 = 0.5   # WP5
+speed_lin6 = 0.200   ; acc_lin6 = 0.5   # WP6
+speed_lin7 = 0.100   ; acc_lin7 = 0.3   # WP7
+speed_lin8 = 0.180   ; acc_lin8 = 0.4   # WP8
+
+# -------------------- Main program --------------------
+def main():
+    # Home position
+    safety_check(home_pos)
+    movej(home_pos, a=acc_home, v=speed_home)
+
+    # WP1 – Above pick
+    safety_check(wp1)
+    movel(wp1, a=acc_lin1, v=speed_lin1)
+
+    # WP2 – Descend to pick
+    safety_check(wp2)
+    movel(wp2, a=acc_lin2, v=speed_lin2)
+
+    # WP3 – Lift from pick
+    safety_check(wp3)
+    movel(wp3, a=acc_lin3, v=speed_lin3)
+
+    # WP4 – Obstacle avoidance offset
+    safety_check(wp4)
+    movel(wp4, a=acc_lin4, v=speed_lin4)
+
+    # WP5 – Circumnavigate obstacle
+    safety_check(wp5)
+    movel(wp5, a=acc_lin5, v=speed_lin5)
+
+    # WP6 – Approach place station
+    safety_check(wp6)
+    movel(wp6, a=acc_lin6, v=speed_lin6)
+
+    # WP7 – Descend to place
+    safety_check(wp7)
+    movel(wp7, a=acc_lin7, v=speed_lin7)
+
+    # WP8 – Lift after placing
+    safety_check(wp8)
+    movel(wp8, a=acc_lin8, v=speed_lin8)
+
+    # Return home
+    safety_check(home_pos)
+    movej(home_pos, a=acc_home, v=speed_home)
+
+# --------------------------------------------------------------
+# Execute program
+main()
+# --------------------------------------------------------------

@@ -1,0 +1,50 @@
+# Task: T006 — Bin picking with suction — fenced mode (Optimized for speed)
+# Robot: ur5e | Mode: fenced | Payload: 2.0 kg
+# Max TCP speed: 400.0 mm/s
+
+def task_T006():
+  # E-Stop safety check
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # Home position (increased acceleration)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=3.0000, v=1.2000)
+
+  # Above bin (increased acceleration, higher speed)
+  movel(p[0.450000, -0.200000, 0.350000, 0.0000, 3.1416, 0.0000], a=3.0000, v=0.4000, r=0.0100)
+
+  # Descend into bin (reduced acceleration for precision)
+  movel(p[0.450000, -0.200000, 0.100000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.2000)
+
+  # Suction ON
+  set_digital_out(0, True)
+
+  # Vacuum settle (reduced time)
+  sleep(0.1500)
+
+  # Lift from bin (increased acceleration and speed)
+  movel(p[0.450000, -0.200000, 0.400000, 0.0000, 3.1416, 0.0000], a=3.0000, v=0.4000, r=0.0100)
+
+  # Transit to conveyor (max speed, increased acceleration)
+  movel(p[0.450000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=3.5000, v=0.4000, r=0.0150)
+
+  # Descend to drop (increased speed)
+  movel(p[0.450000, 0.250000, 0.150000, 0.0000, 3.1416, 0.0000], a=2.0000, v=0.3000)
+
+  # Suction OFF (fixed: was incorrectly set to True)
+  set_digital_out(0, False)
+
+  # Release settle (reduced time)
+  sleep(0.1000)
+
+  # Retract above conveyor (increased acceleration and speed)
+  movel(p[0.450000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=3.0000, v=0.4000, r=0.0100)
+
+  # Return to home (increased acceleration)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=3.0000, v=1.2000)
+end
+
+# Entry point
+task_T006()

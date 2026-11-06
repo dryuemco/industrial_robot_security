@@ -1,0 +1,147 @@
+# -------------------------------------------------
+# UR5e Hybrid Mode Task - EUR-pallet 2x2 Layer
+# Safety‑Compliant URScript (ISO 10218:2025)
+# -------------------------------------------------
+
+# ---------- Configuration ----------
+payload_mass = 4.5                         # kg
+payload_cog  = p[0,0,0.1,0,0,0]             # Approx. centre of gravity
+set_payload(payload_mass, payload_cog)
+
+# Joint limits (max 1.4 rad/s² per joint)
+joint_acc_limit = 1.2                      # rad/s² (below 1.4 for safety)
+set_joint_acceleration(joint_acc_limit)
+
+# TCP speed limits
+collab_tcp_max = 0.250                     # m/s (250 mm/s)
+fenced_tcp_max = 0.350                     # m/s (allowed in fenced zone)
+
+# Workspace boundaries (metres) – adjust to your cell
+workspace = {
+  "x_min": -0.800, "x_max": 0.800,
+  "y_min": -0.800, "y_max": 0.800,
+  "z_min":  0.050, "z_max": 1.200
+}
+
+# Safety zones (metres)
+# Collaborative zone – near conveyor pick area
+collab_zone = {
+  "x_min": -0.300, "x_max":  0.300,
+  "y_min": -0.500, "y_max":  0.200,
+  "z_min":  0.050, "z_max":  0.500
+}
+# Fenced zone – rest of the workspace (transit to pallet)
+# Implicitly everything else inside workspace but outside collab_zone
+
+# ---------- Helper Functions ----------
+def within_bounds(pose, bounds):
+    x = pose[0]; y = pose[1]; z = pose[2]
+    return (bounds["x_min"] <= x <= bounds["x_max"] and
+            bounds["y_min"] <= y <= bounds["y_max"] and
+            bounds["z_min"] <= z <= bounds["z_max"])
+
+def in_collab_zone(pose):
+    return within_bounds(pose, collab_zone)
+
+def safety_check(pose):
+    if not within_bounds(pose, workspace):
+        popup("Safety violation: Pose outside allowed workspace!", True, False)
+        stopj(0)
+    # No further action – zone‑specific speed limits are handled in move commands
+
+def e_stop():
+    popup("EMERGENCY STOP ACTIVATED!", True, False)
+    stopj(0)
+
+# ---------- Emergency Stop Handler ----------
+# The UR controller already halts on the red button; the function
+# can be bound to a digital input if required.
+set_standard_digital_out(0, False)   # Example: reset output used for E‑Stop signal
+
+# ---------- Waypoints ----------
+# All positions are expressed as [X,Y,Z,RX,RY,RZ] in metres / radians
+
+home_pose          = p[0.0, -0.5, 0.5, 0, 3.14, 0]
+
+# Conveyor pick area (example coordinates)
+pick_above         = p[0.4, -0.6, 0.35, 0, 3.14, 0]   # 100 mm above the belt
+pick_down          = p[0.4, -0.6, 0.10, 0, 3.14, 0]   # at the belt height
+
+# Pallet positions (2×2 grid, example spacing 0.20 m)
+pallet_00          = p[0.0, 0.0, 0.10, 0, 3.14, 0]
+pallet_10          = p[0.2, 0.0, 0.10, 0, 3.14, 0]
+pallet_01          = p[0.0, 0.2, 0.10, 0, 3.14, 0]
+pallet_11          = p[0.2, 0.2, 0.10, 0, 3.14, 0]
+
+# -----------------------------------------------------------------
+# Main Program
+# -----------------------------------------------------------------
+def main():
+    # ----- Initial Safety Check -----
+    safety_check(home_pose)
+
+    # ----- 1️⃣ Move to Home (joint move) -----
+    # Joint speed (rad/s) limited by joint_acc_limit; use a safe value.
+    movej(home_pose, a=joint_acc_limit, v=0.5)   # v = 0.5 rad/s
+
+    # ----- 2️⃣ Approach conveyor (linear, collaborative) -----
+    safety_check(pick_above)
+    if in_collab_zone(pick_above):
+        tcp_speed = collab_tcp_max
+    else:
+        tcp_speed = fenced_tcp_max
+    movel(pick_above, a=1.0, v=tcp_speed)
+
+    # ----- 3️⃣ Descend to pick (linear, collaborative) -----
+    safety_check(pick_down)
+    if in_collab_zone(pick_down):
+        tcp_speed = collab_tcp_max
+    else:
+        tcp_speed = fenced_tcp_max
+    movel(pick_down, a=0.8, v=0.10)   # 100 mm/s = 0.10 m/s
+
+    # ----- 4️⃣ Lift from conveyor (linear, collaborative) -----
+    safety_check(pick_above)
+    movel(pick_above, a=1.0, v=0.20)   # 200 mm/s = 0.20 m/s
+
+    # ----- 5️⃣ Transit to pallet position (0,0) – fenced zone -----
+    safety_check(pallet_00)
+    movel(pallet_00, a=1.2, v=fenced_tcp_max)   # up to 0.35 m/s in fenced zone
+
+    # ----- 6️⃣ Place first box (linear down & up) -----
+    # Down
+    place_down = copy(pallet_00)
+    place_down[2] = 0.03                     # 30 mm above pallet surface
+    safety_check(place_down)
+    movel(place_down, a=0.8, v=0.10)          # 100 mm/s
+
+    # Simulate release (placeholder for gripper command)
+    # set_digital_output(2, False)  # Open gripper
+
+    # Up
+    movel(pallet_00, a=0.8, v=0.20)          # 200 mm/s
+
+    # ----- 7️⃣ Move to second pallet cell (0,1) -----
+    safety_check(pallet_01)
+    movel(pallet_01, a=1.2, v=fenced_tcp_max)
+
+    # ----- 8️⃣ Place second box (down & up) -----
+    place_down = copy(pallet_01)
+    place_down[2] = 0.03
+    safety_check(place_down)
+    movel(place_down, a=0.8, v=0.10)
+    # set_digital_output(2, False)  # Open gripper
+    movel(pallet_01, a=0.8, v=0.20)
+
+    # ----- Return to Home -----
+    safety_check(home_pose)
+    movej(home_pose, a=joint_acc_limit, v=0.5)
+
+# -----------------------------------------------------------------
+# Run the program
+# -----------------------------------------------------------------
+if (get_actual_tcp_speed() <= collab_tcp_max) or (not in_collab_zone(pick_above)):
+    main()
+else:
+    popup("Initial speed exceeds safety limits!", True, False)
+    e_stop()

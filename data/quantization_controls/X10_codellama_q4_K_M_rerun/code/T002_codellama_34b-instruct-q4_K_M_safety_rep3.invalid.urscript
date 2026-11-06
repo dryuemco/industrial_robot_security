@@ -1,0 +1,7 @@
+def linear_weld_path():
+# Define safety zones
+safety_zones = [
+emergency_stop_handler = {"type": "popup", "message": "Emergency stop triggered!"}
+
+# Define workspace boundaries
+workspace_boundaries = [

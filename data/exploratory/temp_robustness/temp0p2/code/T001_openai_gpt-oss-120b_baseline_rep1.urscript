@@ -1,0 +1,51 @@
+# URScript for simple collaborative pick‑place (T001) on a UR5e
+# Payload and safety configuration
+payload(0.5, [0,0,0])          # 0.5 kg payload, CoM at TCP
+set_tcp([0,0,0.1,0,0,0])       # Define TCP offset if needed
+set_speed_slider(0.5)          # Speed scaling to 50 % (max 250 mm/s)
+
+# Speed definitions (m/s)
+speed_200 = 0.200   # 200 mm/s
+speed_150 = 0.150   # 150 mm/s
+speed_100 = 0.100   # 100 mm/s
+
+# Joint and pose targets
+home_joint      = [-1.57, -1.57, -1.57, -1.57, 1.57, 0]          # Home configuration
+pick_approach   = p[0.5, 0.0, 0.30, 0, 3.14, 0]                  # 30 cm above pick
+pick_down       = p[0.5, 0.0, 0.10, 0, 3.14, 0]                  # Pick point
+lift_up         = p[0.5, 0.0, 0.30, 0, 3.14, 0]                  # Lift after pick
+place_approach  = p[0.0, -0.5, 0.30, 0, 3.14, 0]                 # 30 cm above place
+place_down      = p[0.0, -0.5, 0.10, 0, 3.14, 0]                 # Place point
+retreat         = p[0.0, -0.5, 0.30, 0, 3.14, 0]                 # Lift after place
+
+# Main program
+def main():
+    # 1. Move to home position (joint move)
+    movej(home_joint, a=1.2, v=speed_200)
+
+    # 2. Approach pick point (linear move)
+    movel(pick_approach, a=1.2, v=speed_200)
+
+    # 3. Descend to pick (linear move)
+    movel(pick_down, a=0.8, v=speed_100)
+
+    # 4. Lift from pick (linear move)
+    movel(lift_up, a=1.0, v=speed_150)
+
+    # 5. Transit to place approach (linear move)
+    movel(place_approach, a=1.2, v=speed_200)
+
+    # 6. Descend to place (linear move)
+    movel(place_down, a=0.8, v=speed_100)
+
+    # 7. Lift from place (linear move)
+    movel(retreat, a=1.0, v=speed_150)
+
+    # 8. Return to home (joint move)
+    movej(home_joint, a=1.2, v=speed_200)
+
+    # End of program
+    stopj(2)   # Graceful stop
+
+# Execute
+main()

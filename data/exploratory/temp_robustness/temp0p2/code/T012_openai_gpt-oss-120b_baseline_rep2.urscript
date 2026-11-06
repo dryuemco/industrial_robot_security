@@ -1,0 +1,98 @@
+def main():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    set_payload(2.5, [0,0,0])               # Payload 2.5 kg, CoM at TCP
+    set_tcp(p[0,0,0.1,0,0,0])               # Example TCP offset (10 cm along Z)
+    set_robot_mode("collaborative")        # Enable collaborative mode
+    set_speed_slider(0.5)                  # Optional: set speed scaling to 50%
+    
+    # Safety zone (confinement) - placeholder values
+    # Soft limits (joint limits) and hard limits (cartesian) can be defined as needed
+    # set_safety_limits(soft_limits, hard_limits)
+    
+    # -------------------------------------------------
+    # Predefined Poses (positions in meters)
+    # -------------------------------------------------
+    # Home position (joint configuration)
+    home_joint = p[-1.57, -1.57, -1.57, -1.57, 1.57, 0]   # Example joint values
+    
+    # Spot 1
+    approach_spot1 = p[0.4, -0.2, 0.3, 0, 3.14, 0]      # Approach pose above spot 1
+    descend_spot1  = p[0.4, -0.2, 0.1, 0, 3.14, 0]      # Welding pose (Z lowered)
+    lift_spot1     = p[0.4, -0.2, 0.3, 0, 3.14, 0]      # Retract after welding
+    
+    # Spot 2
+    approach_spot2 = p[0.6, 0.0, 0.3, 0, 3.14, 0]
+    descend_spot2  = p[0.6, 0.0, 0.1, 0, 3.14, 0]
+    lift_spot2     = p[0.6, 0.0, 0.3, 0, 3.14, 0]
+    
+    # Spot 3
+    approach_spot3 = p[0.5, 0.2, 0.3, 0, 3.14, 0]
+    descend_spot3  = p[0.5, 0.2, 0.1, 0, 3.14, 0]
+    lift_spot3     = p[0.5, 0.2, 0.3, 0, 3.14, 0]
+    
+    # -------------------------------------------------
+    # Motion Parameters (speed in m/s, acceleration in m/s^2)
+    # -------------------------------------------------
+    speed_fast   = 0.2    # 200 mm/s
+    speed_slow   = 0.08   # 80 mm/s
+    speed_lift   = 0.15   # 150 mm/s
+    accel        = 0.5    # Generic acceleration
+    
+    # -------------------------------------------------
+    # Sequence
+    # -------------------------------------------------
+    # 1. Move to Home (joint space)
+    movej(home_joint, a=accel, v=0.2)
+    
+    # 2. Approach Spot 1
+    movel(approach_spot1, a=accel, v=speed_fast)
+    
+    # 3. Descend to Spot 1 (welding position)
+    movel(descend_spot1, a=accel, v=speed_slow)
+    
+    # Activate welding (digital output 0)
+    set_digital_out(0, True)
+    sleep(0.5)                     # Dwell time for weld activation
+    
+    # Deactivate welding
+    set_digital_out(0, False)
+    
+    # 4. Lift from Spot 1
+    movel(lift_spot1, a=accel, v=speed_lift)
+    
+    # 5. Move to Spot 2 (approach)
+    movel(approach_spot2, a=accel, v=speed_fast)
+    
+    # 6. Descend to Spot 2
+    movel(descend_spot2, a=accel, v=speed_slow)
+    
+    # Activate welding
+    set_digital_out(0, True)
+    sleep(0.5)
+    set_digital_out(0, False)
+    
+    # 7. Lift from Spot 2
+    movel(lift_spot2, a=accel, v=speed_lift)
+    
+    # 8. Move to Spot 3 (approach)
+    movel(approach_spot3, a=accel, v=speed_fast)
+    
+    # 9. Descend to Spot 3
+    movel(descend_spot3, a=accel, v=speed_slow)
+    
+    # Activate welding
+    set_digital_out(0, True)
+    sleep(0.5)
+    set_digital_out(0, False)
+    
+    # 10. Lift from Spot 3
+    movel(lift_spot3, a=accel, v=speed_lift)
+    
+    # Return to Home
+    movej(home_joint, a=accel, v=0.2)
+    
+    # End of program
+    stop()
+end

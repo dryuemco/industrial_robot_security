@@ -1,0 +1,104 @@
+# URScript program for a simple collaborative pick‑place task with full error handling
+# and workspace boundary checks (SM‑2, SM‑4 compliance)
+
+# --------------------------- Configuration ---------------------------
+payload(0.5)               # payload in kg
+set_tcp(p[0,0,0.1,0,0,0])   # example TCP offset
+set_payload(0.5, p[0,0,0,0,0,0])  # set payload with centre of mass
+
+# Speed limits (mm/s)
+global max_speed = 0.250   # 250 mm/s max TCP speed
+global speed_home = 0.200
+global speed_approach = 0.200
+global speed_descend = 0.100
+global speed_lift = 0.150
+global speed_transit = 0.200
+
+# Workspace limits (meters) – simple rectangular box
+global ws_min = p[0.200, -0.400, 0.000, -3.14, -3.14, -3.14]
+global ws_max = p[0.800,  0.400, 0.600,  3.14,  3.14,  3.14]
+
+# --------------------------- Helper Functions ---------------------------
+def within_workspace(pose):
+    # Returns True if all Cartesian components are inside the defined box
+    for i in range(3):
+        if pose[i] < ws_min[i] or pose[i] > ws_max[i]:
+            return False
+    return True
+end
+
+def check_error():
+    # Reads the robot error register; halts if an error is present
+    error_code = get_error()
+    if error_code != 0:
+        textmsg("Error detected (code %d). Stopping program." % error_code)
+        stopj(2.0)   # safe joint stop
+    end
+    return error_code
+end
+
+def safe_movej(joints, speed):
+    # Joint move with speed limit and error handling
+    if speed > max_speed:
+        speed = max_speed
+    end
+    movej(joints, a=1.2, v=speed, wait=True)
+    check_error()
+end
+
+def safe_movel(pose, speed):
+    # Linear move with workspace check, speed limit and error handling
+    if not within_workspace(pose):
+        textmsg("Target pose out of workspace bounds. Halting.")
+        stopj(2.0)
+    end
+    if speed > max_speed:
+        speed = max_speed
+    end
+    movel(pose, a=1.2, v=speed, wait=True)
+    check_error()
+end
+
+# --------------------------- Pose Definitions ---------------------------
+# Joint space home position
+global home_joint = [0, -1.57, 1.57, 0, 1.57, 0]
+
+# Pick positions (Cartesian)
+global pick_approach = p[0.500, 0.000, 0.300, 0, 3.14, 0]
+global pick_pose     = p[0.500, 0.000, 0.100, 0, 3.14, 0]
+
+# Place positions (Cartesian)
+global place_approach = p[0.300, 0.200, 0.300, 0, 3.14, 0]
+global place_pose     = p[0.300, 0.200, 0.100, 0, 3.14, 0]
+
+# --------------------------- Main Program ---------------------------
+def main():
+    # 1) Move to home position
+    safe_movej(home_joint, speed_home)
+
+    # 2) Approach pick point
+    safe_movel(pick_approach, speed_approach)
+
+    # 3) Descend to pick
+    safe_movel(pick_pose, speed_descend)
+
+    # 4) Lift from pick
+    safe_movel(pick_approach, speed_lift)
+
+    # 5) Transit to place approach
+    safe_movel(place_approach, speed_transit)
+
+    # 6) Descend to place
+    safe_movel(place_pose, speed_descend)
+
+    # 7) Lift from place (return to approach height)
+    safe_movel(place_approach, speed_lift)
+
+    # 8) Return to home
+    safe_movej(home_joint, speed_home)
+
+    textmsg("Pick‑place task completed successfully.")
+end
+
+# Run the program
+main()

@@ -1,0 +1,138 @@
+# URScript for UR5e – Curved contour weld (Hybrid mode)
+# Safety compliance: ISO 10218:2025
+# --------------------------------------------------------------
+
+# ------------------- Configuration -------------------
+payload_mass = 3.5                                   # kg
+payload_cog = p[0,0,0.1]                              # approximate CoG
+set_payload(payload_mass, payload_cog)
+
+# Speed and acceleration limits
+MAX_TCP_SPEED = 0.250                                 # m/s (collaborative limit)
+MAX_JOINT_SPEED = 1.0                                 # rad/s (safe default)
+MAX_JOINT_ACCEL = 1.4                                 # rad/s^2 (per joint)
+MAX_LINEAR_ACCEL = 0.5                                # m/s^2 (conservative)
+
+# Workspace boundaries (meters) – rectangular safety zone
+ZONE_X_MIN = -0.800
+ZONE_X_MAX =  0.800
+ZONE_Y_MIN = -0.800
+ZONE_Y_MAX =  0.800
+ZONE_Z_MIN =  0.000
+ZONE_Z_MAX =  1.200
+
+# Emergency stop digital input (e-stop button wired to input 0)
+E_STOP_INPUT = 0
+
+# ------------------- Helper Functions -------------------
+def within_workspace(pose):
+    # Checks if a pose is inside the defined safety zone
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    return (x >= ZONE_X_MIN) and (x <= ZONE_X_MAX) and \
+           (y >= ZONE_Y_MIN) and (y <= ZONE_Y_MAX) and \
+           (z >= ZONE_Z_MIN) and (z <= ZONE_Z_MAX)
+
+def safety_check():
+    # Abort if e‑stop is active
+    if get_digital_in(E_STOP_INPUT):
+        popup("Emergency stop activated!", title="Safety Halt", error=True)
+        halt()
+    # Additional user‑defined checks can be added here
+    sync()
+
+def emergency_stop_handler():
+    # Immediate stop and safe shutdown
+    popup("Emergency stop triggered – halting robot.", title="E‑Stop", error=True)
+    stopj(2)               # joint stop with 2 s deceleration
+    halt()
+
+# ------------------- Waypoints -------------------
+# Joint configuration for Home position (radians)
+home_joint = [-1.5708, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+# Cartesian poses (meters, radians)
+# Approach above weld fixture
+approach_pose = p[0.400, 0.000, 0.300, 0, 3.14159, 0]
+
+# Start of weld (descended)
+start_pose    = p[0.400, 0.000, 0.100, 0, 3.14159, 0]
+
+# Midpoint of weld arc
+mid_pose      = p[0.450, 0.050, 0.100, 0, 3.14159, 0]
+
+# End of weld arc
+end_pose      = p[0.500, 0.000, 0.100, 0, 3.14159, 0]
+
+# Retract after weld
+retract_pose  = p[0.500, 0.000, 0.300, 0, 3.14159, 0]
+
+# Return to Home (via joint move)
+# --------------------------------------------------------------
+
+# ------------------- Main Program -------------------
+def main():
+    # Initial safety verification
+    safety_check()
+
+    # 1) Move to Home position (joint move)
+    safety_check()
+    movej(home_joint, a=MAX_JOINT_ACCEL, v=MAX_JOINT_SPEED, r=0.0)
+
+    # 2) Linear approach above weld fixture
+    safety_check()
+    if not within_workspace(approach_pose):
+        popup("Approach pose outside safety zone!", title="Safety Error", error=True)
+        halt()
+    movel(approach_pose, a=MAX_LINEAR_ACCEL, v=MAX_TCP_SPEED, r=0.0)
+
+    # 3) Descend to weld start
+    safety_check()
+    if not within_workspace(start_pose):
+        popup("Start pose outside safety zone!", title="Safety Error", error=True)
+        halt()
+    movel(start_pose, a=MAX_LINEAR_ACCEL, v=MAX_TCP_SPEED, r=0.0)
+
+    # 4) Weld midpoint (slow arc)
+    safety_check()
+    if not within_workspace(mid_pose):
+        popup("Midpoint pose outside safety zone!", title="Safety Error", error=True)
+        halt()
+    movel(mid_pose, a=MAX_LINEAR_ACCEL, v=0.060, r=0.0)   # 60 mm/s = 0.060 m/s
+
+    # 5) Weld end
+    safety_check()
+    if not within_workspace(end_pose):
+        popup("End pose outside safety zone!", title="Safety Error", error=True)
+        halt()
+    movel(end_pose, a=MAX_LINEAR_ACCEL, v=0.060, r=0.0)
+
+    # 6) Retract after weld
+    safety_check()
+    if not within_workspace(retract_pose):
+        popup("Retract pose outside safety zone!", title="Safety Error", error=True)
+        halt()
+    movel(retract_pose, a=MAX_LINEAR_ACCEL, v=MAX_TCP_SPEED, r=0.0)
+
+    # 7) Return to Home (joint move)
+    safety_check()
+    movej(home_joint, a=MAX_JOINT_ACCEL, v=MAX_JOINT_SPEED, r=0.0)
+
+    # Program completed
+    popup("Weld sequence completed safely.", title="Info")
+    stopj(2)   # bring robot to a safe stop
+
+# --------------------------------------------------------------
+# Register emergency stop handler (polling loop)
+def monitor():
+    while True:
+        if get_digital_in(E_STOP_INPUT):
+            emergency_stop_handler()
+        sleep(0.05)
+
+# Start monitoring in a separate thread
+thread(monitor)
+
+# Execute main routine
+main()

@@ -1,0 +1,118 @@
+# UR5e Multi-waypoint Pick-Place with SSM and Obstacle Avoidance (T004)
+# Features: A5 (Safety Logic), A6 (Dual Work Objects)
+
+# --- Safety Monitor Thread ---
+# Implements Speed Guard and Collision Monitor
+thread safety_monitor():
+    # Safety Constants
+    MAX_TCP_SPEED = 0.25      # 250.0 mm/s
+    MAX_FORCE = 40.0          # Newtons (Collision threshold)
+    
+    # Safety Zones (Soft Check)
+    # Confinement: X[0.1, 0.6], Y[-0.5, 0.5], Z[0.0, 0.5]
+    # Exclusion (Obstacle): X[0.35, 0.45], Y[-0.1, 0.1], Z[0.0, 0.4]
+    
+    while True:
+        # A5: Speed Guard
+        current_speed = get_actual_tcp_speed()
+        if current_speed > MAX_TCP_SPEED:
+            popup("Speed Limit Exceeded!", "Safety Alert", False, False, True)
+            stopj(2.0)
+            halt
+        end
+
+        # A5: Collision Monitor
+        current_force = norm(get_tcp_force())
+        if current_force > MAX_FORCE:
+            popup("Collision Detected!", "Safety Alert", False, False, True)
+            stopj(2.0)
+            halt
+        end
+
+        # Safety Zone: Confinement Check
+        p_act = get_actual_tcp_pose()
+        if (p_act[0] < 0.1 or p_act[0] > 0.6 or 
+            p_act[1] < -0.5 or p_act[1] > 0.5 or 
+            p_act[2] < 0.0 or p_act[2] > 0.5):
+            popup("Robot left confinement zone!", "Safety Alert", False, False, True)
+            stopj(2.0)
+            halt
+        end
+
+        # Safety Zone: Exclusion Check (Obstacle)
+        if (p_act[0] > 0.35 and p_act[0] < 0.45 and 
+            p_act[1] > -0.1 and p_act[1] < 0.1 and 
+            p_act[2] < 0.4):
+            popup("Robot entered exclusion zone!", "Safety Alert", False, False, True)
+            stopj(2.0)
+            halt
+        end
+
+        sync()
+    end
+end
+
+# --- Main Program ---
+def program():
+    # Setup
+    set_payload(1.5, [0, 0, 0.05]) # 1.5 kg payload
+    
+    # A6: Dual Work Objects Definition
+    # Pick Station (Work Object 1)
+    p_pick = p[0.4, 0.3, 0.1, 0, 3.14, 0]
+    p_pick_above = p[0.4, 0.3, 0.25, 0, 3.14, 0]
+    
+    # Place Station (Work Object 2)
+    p_place = p[0.4, -0.3, 0.1, 0, 3.14, 0]
+    p_place_above = p[0.4, -0.3, 0.25, 0, 3.14, 0]
+    
+    # Obstacle Avoidance Waypoint (Offset in -X)
+    p_avoid = p[0.2, 0.0, 0.25, 0, 3.14, 0]
+    
+    # Home Position
+    q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+    # --- Motion Sequence (9 Moves) ---
+    
+    # 1. move_joint: Home position, 200.0 mm/s
+    movej(q_home, a=1.0, v=0.2)
+
+    # 2. move_linear: WP1 — Above pick station, 200.0 mm/s
+    movel(p_pick_above, a=0.5, v=0.2)
+
+    # 3. move_linear: WP2 — Descend to pick, 100.0 mm/s
+    movel(p_pick, a=0.2, v=0.1)
+    
+    # Simulate Gripper Close
+    set_digital_out(0, True)
+    sleep(0.5)
+
+    # 4. move_linear: WP3 — Lift above pick, 180.0 mm/s
+    movel(p_pick_above, a=0.5, v=0.18)
+
+    # 5. move_linear: WP4 — Obstacle avoidance waypoint (offset in -X), 200.0 mm/s
+    movel(p_avoid, a=0.5, v=0.2)
+
+    # 6. move_linear: WP5 — Above place station, 200.0 mm/s
+    movel(p_place_above, a=0.5, v=0.2)
+
+    # 7. move_linear: WP6 — Descend to place, 100.0 mm/s
+    movel(p_place, a=0.2, v=0.1)
+    
+    # Simulate Gripper Open
+    set_digital_out(0, False)
+    sleep(0.5)
+
+    # 8. move_linear: WP7 — Lift above place, 180.0 mm/s
+    movel(p_place_above, a=0.5, v=0.18)
+
+    # 9. move_linear: WP8 — Return to avoidance waypoint, 200.0 mm/s
+    movel(p_avoid, a=0.5, v=0.2)
+    
+    # Return to Home
+    movej(q_home, a=1.0, v=0.2)
+
+end
+
+# Execute
+program()

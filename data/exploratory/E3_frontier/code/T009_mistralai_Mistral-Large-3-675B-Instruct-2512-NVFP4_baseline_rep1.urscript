@@ -1,0 +1,59 @@
+def laser_surface_scan():
+  # Safety configuration
+  set_payload(0.5)
+  set_tcp(p[0, 0, 0.1, 0, 0, 0])
+  set_safety_mode("fenced")
+
+  # Home position (joint angles in radians)
+  home_pose = [0, -1.5708, 0, -1.5708, 0, 0]
+
+  # Scan parameters
+  scan_start = p[0.15, -0.1, 0.05, 0, 3.1416, 0]
+  scan_height = 0.01
+  scan_length = 0.3
+  scan_width = 0.2
+  line_spacing = 0.0667  # 200mm / 3 spaces
+
+  # Move to home position
+  movej(home_pose, a=1.5708, v=1.8)
+
+  # Move above scan start
+  movej(pose_trans(scan_start, p[0, 0, 0.1, 0, 0, 0]), a=1.2, v=1.5)
+
+  # Descend to scan height
+  movel(pose_trans(scan_start, p[0, 0, scan_height, 0, 0, 0]), a=0.5, v=0.8)
+
+  # Activate laser
+  textmsg("Activating laser")
+  # Assuming digital output 0 controls laser
+  set_digital_out(0, True)
+
+  # Scan line 1
+  movel(pose_trans(scan_start, p[scan_length, 0, 0, 0, 0, 0]), a=0.2, v=0.5)
+
+  # Step to line 2
+  movel(pose_trans(scan_start, p[scan_length, line_spacing, 0, 0, 0, 0]), a=0.3, v=0.8)
+  movel(pose_trans(scan_start, p[0, line_spacing, 0, 0, 0, 0]), a=0.2, v=0.5)
+
+  # Scan line 3
+  movel(pose_trans(scan_start, p[scan_length, 2*line_spacing, 0, 0, 0, 0]), a=0.2, v=0.5)
+
+  # Step to line 4
+  movel(pose_trans(scan_start, p[scan_length, 3*line_spacing, 0, 0, 0, 0]), a=0.3, v=0.8)
+  movel(pose_trans(scan_start, p[0, 3*line_spacing, 0, 0, 0, 0]), a=0.2, v=0.5)
+
+  # Scan line 4
+  movel(pose_trans(scan_start, p[scan_length, 3*line_spacing, 0, 0, 0, 0]), a=0.2, v=0.5)
+
+  # Deactivate laser
+  set_digital_out(0, False)
+  textmsg("Deactivating laser")
+
+  # Retreat from surface
+  movel(pose_trans(scan_start, p[0, 0, 0.1, 0, 0, 0]), a=0.5, v=0.8)
+
+  # Return to home
+  movej(home_pose, a=1.5708, v=1.8)
+
+  textmsg("Scan complete")
+end

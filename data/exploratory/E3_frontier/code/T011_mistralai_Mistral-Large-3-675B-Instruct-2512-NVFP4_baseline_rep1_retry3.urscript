@@ -1,0 +1,105 @@
+# URScript for dual-zone pick-place in hybrid mode (T011)
+# Payload: 1.2 kg
+# Safety zones: confinement and exclusion configured
+
+def task_program():
+    # Safety configuration
+    set_payload(1.2)
+    set_tcp(p[0, 0, 0.1, 0, 0, 0])
+    set_safety_mode_transition_hardness(1)
+
+    # Zone definitions (confinement and exclusion)
+    confinement_zone = p[0.0, 0.0, 0.0, 0, 0, 0]  # Example values - adjust to actual zone
+    exclusion_zone = p[0.5, 0.5, 0.2, 0, 0, 0]    # Example values - adjust to actual zone
+
+    # Waypoints
+    home_pose = p[0.0, -0.5, 0.5, 0, 3.14, 0]
+    above_bin_pose = p[0.3, -0.4, 0.3, 0, 3.14, 0]
+    pick_pose = p[0.3, -0.4, 0.15, 0, 3.14, 0]
+    lift_pose = p[0.3, -0.4, 0.3, 0, 3.14, 0]
+    transit_pose = p[0.0, 0.4, 0.4, 0, 3.14, 0]
+    above_handoff_pose = p[-0.2, 0.4, 0.3, 0, 3.14, 0]
+    handoff_pose = p[-0.2, 0.4, 0.15, 0, 3.14, 0]
+    return_pose = p[-0.2, 0.4, 0.3, 0, 3.14, 0]
+
+    # Motion sequence with proper speed limits and zone transitions
+    textmsg("Starting dual-zone pick-place task")
+
+    # Move 1: Home position (joint move)
+    speed_j = 1.05  # ~250 mm/s
+    movej(home_pose, a=1.2, v=speed_j, t=0, r=0)
+    textmsg("Reached home position")
+
+    # Transition to confinement zone
+    set_confinement(confinement_zone)
+    textmsg("Entered confinement zone")
+
+    # Move 2: Above storage bin (linear move)
+    speed_l = 0.28  # 280 mm/s
+    movel(above_bin_pose, a=0.5, v=speed_l, t=0, r=0)
+    textmsg("Above storage bin")
+
+    # Move 3: Descend to pick (linear move)
+    speed_l = 0.12  # 120 mm/s
+    movel(pick_pose, a=0.3, v=speed_l, t=0, r=0)
+    textmsg("At pick position")
+
+    # Gripper close (simulated)
+    textmsg("Closing gripper")
+    sleep(0.5)
+
+    # Move 4: Lift from bin (linear move)
+    speed_l = 0.2  # 200 mm/s
+    movel(lift_pose, a=0.5, v=speed_l, t=0, r=0)
+    textmsg("Lifted from bin")
+
+    # Transition to exclusion zone
+    set_confinement(exclusion_zone)
+    textmsg("Entered exclusion zone")
+
+    # Move 5: Transit to handoff zone (linear move)
+    speed_l = 0.25  # 250 mm/s
+    movel(transit_pose, a=0.8, v=speed_l, t=0, r=0)
+    textmsg("Transit to handoff zone")
+
+    # Move 6: Above handoff position (linear move)
+    speed_l = 0.2  # 200 mm/s
+    movel(above_handoff_pose, a=0.5, v=speed_l, t=0, r=0)
+    textmsg("Above handoff position")
+
+    # Move 7: Descend to handoff (linear move)
+    speed_l = 0.1  # 100 mm/s
+    movel(handoff_pose, a=0.3, v=speed_l, t=0, r=0)
+    textmsg("At handoff position")
+
+    # Gripper open (simulated)
+    textmsg("Opening gripper")
+    sleep(0.5)
+
+    # Move 8: Return from handoff (linear move)
+    speed_l = 0.2  # 200 mm/s
+    movel(return_pose, a=0.5, v=speed_l, t=0, r=0)
+    textmsg("Returned from handoff")
+
+    # Return to home
+    set_confinement(confinement_zone)
+    movej(home_pose, a=1.2, v=speed_j, t=0, r=0)
+    textmsg("Task completed")
+end
+
+# Main program
+thread WatchdogThread():
+    while True:
+        watchdog_feed()
+        sleep(0.1)
+    end
+end
+
+# Start watchdog thread
+threadId = run WatchdogThread()
+
+# Execute task
+task_program()
+
+# Stop watchdog thread
+kill threadId

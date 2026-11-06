@@ -1,0 +1,36 @@
+def program():
+    # Home position
+    move_joint(300.0, 300.0, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Approach above weld fixture
+    move_linear(250.0, 250.0, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Descend to weld start
+    move_linear(100.0, 100.0, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Weld midpoint
+    move_linear(60.0, 60.0, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Weld end
+    move_linear(60.0, 60.0, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move to home position
+    move_joint(300.0, 300.0, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Safety check
+    safety_check()
+
+    # Define safety zones
+    safety_zone(300.0, 300.0, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Define emergency stop handler
+    emergency_stop_handler()
+
+    # Validate waypoints
+    validate_waypoints()
+
+    # Set payload
+    set_payload(3.5)
+
+    # Start program
+    program_start()

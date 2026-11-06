@@ -1,0 +1,41 @@
+def main():
+    # --- Configuration ---
+    set_payload(0.8, [0,0,0,0,0,0])          # payload 0.8 kg, CoG at TCP
+    set_tcp(p[0,0,0,0,0,0])                 # default TCP (placeholder)
+    set_safety_mode(0)                      # collaborative mode (normal operation)
+
+    # --- Positions (in meters) ---
+    home          = p[0.0, -0.500, 0.300, 0, 3.1416, 0]
+    above_staging = p[0.300, -0.200, 0.400, 0, 3.1416, 0]
+    pick          = p[0.300, -0.200, 0.100, 0, 3.1416, 0]
+    lift          = p[0.300, -0.200, 0.400, 0, 3.1416, 0]
+    pallet        = p[0.500, 0.000, 0.400, 0, 3.1416, 0]
+    place1        = p[0.500, 0.100, 0.200, 0, 3.1416, 0]
+    place2        = p[0.500, 0.200, 0.200, 0, 3.1416, 0]
+    place3        = p[0.500, 0.300, 0.200, 0, 3.1416, 0]
+
+    # --- Speed settings (m/s) ---
+    speed_home      = 0.200   # 200 mm/s
+    speed_above     = 0.220   # 220 mm/s
+    speed_descend   = 0.100   # 100 mm/s
+    speed_lift      = 0.180   # 180 mm/s
+    speed_transit   = 0.230   # 230 mm/s
+    speed_place     = 0.200   # 200 mm/s (default for remaining moves)
+
+    # --- Acceleration (m/s^2) ---
+    a = 1.2
+
+    # --- Motion sequence ---
+    movej(home, a, speed_home)                     # 1. Home
+    movel(above_staging, a, speed_above)           # 2. Above staging
+    movel(pick, a, speed_descend)                  # 3. Descend to pick
+    set_digital_out(0, True)                       # Activate suction
+    movel(lift, a, speed_lift)                     # 4. Lift
+    movel(pallet, a, speed_transit)                # 5. Transit to pallet
+    set_digital_out(0, False)                      # Release suction
+    movel(place1, a, speed_place)                  # 6. Place 1
+    movel(place2, a, speed_place)                  # 7. Place 2
+    movel(place3, a, speed_place)                  # 8. Place 3
+    movej(home, a, speed_home)                     # Return to Home
+
+end

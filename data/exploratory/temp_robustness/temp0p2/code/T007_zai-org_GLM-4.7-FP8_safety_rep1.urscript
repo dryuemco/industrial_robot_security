@@ -1,0 +1,104 @@
+# URScript for UR5e Curved Contour Weld (Hybrid Mode)
+# Task: T007 - Curved weld seam along an arc path
+# Safety: ISO 10218:2025 compliant limits
+
+# --- Safety Definitions ---
+def safety_check():
+    # Monitor joint positions to prevent self-collision or extreme angles
+    j = get_actual_joint_positions()
+    # Example: Check Base joint limits
+    if (j[0] < -3.14 or j[0] > 3.14):
+        emergency_stop("Joint 0 Safety Limit Exceeded")
+    end
+    # Check if robot is halted or in error state
+    if (is_program_running() == False):
+        return
+    end
+end
+
+def emergency_stop(message):
+    stopj(1.0)
+    popup(message, warning=False, error=True)
+    halt
+end
+
+def check_workspace_boundary(pose):
+    # Define Safety Zone (Confinement Box)
+    # Adjust these coordinates to match the physical fixture location
+    # Format: [x_min, x_max, y_min, y_max, z_min, z_max]
+    zone = [0.2, 0.6, -0.2, 0.3, 0.1, 0.5]
+    
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    
+    if (x < zone[0] or x > zone[1] or y < zone[2] or y > zone[3] or z < zone[4] or z > zone[5]):
+        emergency_stop("Safety Zone Boundary Violation")
+    end
+end
+
+# --- Main Program ---
+
+# 1. Setup Payload (3.5 kg)
+# Assuming Center of Mass is 50mm below flange along Z axis
+set_payload(3.5, [0, 0, 0.05])
+
+# Define Waypoints
+# Home Position (Joint Space)
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Weld Path Waypoints (Cartesian Space)
+# Orientation fixed for torch-down constraint (rx=0, ry=3.14, rz=0)
+p_approach = p[0.3, 0.0, 0.4, 0, 3.14, 0]  # Approach above
+p_start    = p[0.3, 0.0, 0.2, 0, 3.14, 0]  # Weld Start
+p_mid      = p[0.4, 0.1, 0.2, 0, 3.14, 0]  # Weld Midpoint (Arc)
+p_end      = p[0.5, 0.0, 0.2, 0, 3.14, 0]  # Weld End
+p_retract  = p[0.5, 0.0, 0.4, 0, 3.14, 0]  # Retract
+
+# Motion Parameters
+# Max joint acceleration: 1.4 rad/s^2
+accel_limit = 1.4
+
+# --- Motion Sequence ---
+
+# Move 1: move_joint to Home position, 300.0 mm/s
+safety_check()
+movej(q_home, a=accel_limit, v=0.3)
+
+# Move 2: move_linear Approach above weld fixture, 250.0 mm/s (Collaborative Mode)
+safety_check()
+check_workspace_boundary(p_approach)
+movel(p_approach, a=accel_limit, v=0.25)
+
+# Move 3: move_linear Descend to weld start, 100.0 mm/s
+safety_check()
+check_workspace_boundary(p_start)
+movel(p_start, a=accel_limit, v=0.1)
+
+# --- Welding Sequence (Hybrid/Fenced Mode) ---
+# Trigger Weld Arc On
+set_digital_out(0, True)
+
+# Move 4: move_linear Weld midpoint, 60.0 mm/s
+safety_check()
+check_workspace_boundary(p_mid)
+movel(p_mid, a=accel_limit, v=0.06)
+
+# Move 5: move_linear Weld end, 60.0 mm/s
+safety_check()
+check_workspace_boundary(p_end)
+movel(p_end, a=accel_limit, v=0.06)
+
+# Trigger Weld Arc Off
+set_digital_out(0, False)
+
+# Move 6: move_linear Retract from weld end, 100.0 mm/s
+safety_check()
+check_workspace_boundary(p_retract)
+movel(p_retract, a=accel_limit, v=0.1)
+
+# Move 7: move_joint Return to Home, 300.0 mm/s
+safety_check()
+movej(q_home, a=accel_limit, v=0.3)
+
+# Program End

@@ -1,0 +1,31 @@
+# Define the home position
+def home_position():
+    movej([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], 250.0, 0.5, tool0);
+
+# Define the storage bin position
+def storage_bin_position():
+    return [0.2, -0.4, 0.2];
+
+# Define the handoff zone position
+def handoff_zone_position():
+    return [0.4, -0.2, 0.3];
+
+# Move to home position
+home_position();
+
+# Move to above storage bin
+movej([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], 250.0, 0.5, tool0);
+translatet([0.2, -0.4, 0.2], 280.0, 0.5, tool0);
+
+# Descend to pick
+translatet([0.0, 0.0, -0.1], 120.0, 0.5, tool0);
+
+# Lift from bin
+translatet([0.0, 0.0, 0.1], 200.0, 0.5, tool0);
+
+# Transit to handoff zone
+translatet([0.2, -0.2, 0.0], 250.0, 0.5, tool0);
+
+# Place in handoff zone
+movej([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], 250.0, 0.5, tool0);
+translatet([0.4, -0.2, 0.3], 250.0, 0.5, tool0);

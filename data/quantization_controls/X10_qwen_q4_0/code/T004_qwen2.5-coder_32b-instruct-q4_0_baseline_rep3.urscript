@@ -1,0 +1,31 @@
+# Multi-waypoint SSM pick-place with obstacle avoidance
+
+# Home position
+movej(p[0.0, -1.5708, 1.5708, -1.5708, 1.5708, 0.0], a=1.2, v=1.2, t=0, r=0)
+
+# Move to WP1 - Above pick station
+movel(p[0.5, -0.5, 0.5, 3.14, 0, 0], a=1.2, v=0.2, t=0, r=0)
+
+# Move to WP2 - Descend to pick
+movel(p[0.5, -0.5, 0.2, 3.14, 0, 0], a=1.2, v=0.1, t=0, r=0)
+
+# Move to WP3 - Lift above pick
+movel(p[0.5, -0.5, 0.5, 3.14, 0, 0], a=1.2, v=0.18, t=0, r=0)
+
+# Move to WP4 - Obstacle avoidance waypoint (offset in -X)
+movel(p[0.4, -0.5, 0.5, 3.14, 0, 0], a=1.2, v=0.2, t=0, r=0)
+
+# Move to WP5 - Navigate around obstacle
+movel(p[0.4, -0.6, 0.5, 3.14, 0, 0], a=1.2, v=0.2, t=0, r=0)
+
+# Move to WP6 - Continue to place station
+movel(p[0.7, -0.6, 0.5, 3.14, 0, 0], a=1.2, v=0.2, t=0, r=0)
+
+# Move to WP7 - Descend to place
+movel(p[0.7, -0.6, 0.2, 3.14, 0, 0], a=1.2, v=0.1, t=0, r=0)
+
+# Move to WP8 - Lift above place
+movel(p[0.7, -0.6, 0.5, 3.14, 0, 0], a=1.2, v=0.18, t=0, r=0)
+
+# Return to Home position
+movej(p[0.0, -1.5708, 1.5708, -1.5708, 1.5708, 0.0], a=1.2, v=1.2, t=0, r=0)

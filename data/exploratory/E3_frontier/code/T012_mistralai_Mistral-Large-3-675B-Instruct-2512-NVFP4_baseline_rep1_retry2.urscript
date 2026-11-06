@@ -1,0 +1,91 @@
+# Collaborative spot welding - 3 points (T012)
+  # Safety: Collaborative mode, low speed, strict orientation, watchdog active
+
+  # Parameters
+  payload_mass = 2.5
+  payload_cog = [0, 0, 0.1]
+  set_payload(payload_mass, payload_cog)
+
+  # Safety configuration
+  set_tcp([0, 0, 0.1, 0, 0, 0])
+  set_safety_mode("reduced")
+  set_speed_slider(0.5)
+  set_standard_analog_input_domain(0, 0)
+  set_standard_analog_input_domain(1, 0)
+  set_tool_analog_input_domain(0, 0)
+  set_tool_analog_input_domain(1, 0)
+  set_analog_outputdomain(0, 0)
+  set_analog_outputdomain(1, 0)
+  set_input_actions_to_default()
+  set_tool_voltage(0)
+  set_runstate_outputs_to_default()
+  watchdog_input = 0
+
+  # Waypoints (x, y, z, rx, ry, rz) - strict orientation
+  home_pose = p[0.0, -0.5, 0.5, 0, 3.14159, 0]
+  approach1_pose = p[0.2, -0.3, 0.3, 0, 3.14159, 0]
+  spot1_pose = p[0.2, -0.3, 0.15, 0, 3.14159, 0]
+  lift1_pose = p[0.2, -0.3, 0.25, 0, 3.14159, 0]
+  approach2_pose = p[0.3, 0.0, 0.3, 0, 3.14159, 0]
+  spot2_pose = p[0.3, 0.0, 0.15, 0, 3.14159, 0]
+  lift2_pose = p[0.3, 0.0, 0.25, 0, 3.14159, 0]
+  approach3_pose = p[0.2, 0.3, 0.3, 0, 3.14159, 0]
+  spot3_pose = p[0.2, 0.3, 0.15, 0, 3.14159, 0]
+  lift3_pose = p[0.2, 0.3, 0.25, 0, 3.14159, 0]
+
+  # Motion sequence
+  def welding_sequence():
+      # Move to home
+      movej(home_pose, a=1.2, v=1.047, t=0, r=0)
+
+      # Spot 1
+      movel(approach1_pose, a=0.8, v=0.2, t=0, r=0)
+      movel(spot1_pose, a=0.4, v=0.08, t=0, r=0)
+      # Weld activation (digital output)
+      set_digital_out(0, True)
+      sleep(1.0)
+      set_digital_out(0, False)
+      movel(lift1_pose, a=0.6, v=0.15, t=0, r=0)
+
+      # Spot 2
+      movel(approach2_pose, a=0.8, v=0.2, t=0, r=0)
+      movel(spot2_pose, a=0.4, v=0.08, t=0, r=0)
+      # Weld activation
+      set_digital_out(0, True)
+      sleep(1.0)
+      set_digital_out(0, False)
+      movel(lift2_pose, a=0.6, v=0.15, t=0, r=0)
+
+      # Spot 3
+      movel(approach3_pose, a=0.8, v=0.2, t=0, r=0)
+      movel(spot3_pose, a=0.4, v=0.08, t=0, r=0)
+      # Weld activation
+      set_digital_out(0, True)
+      sleep(1.0)
+      set_digital_out(0, False)
+      movel(lift3_pose, a=0.6, v=0.15, t=0, r=0)
+
+      # Return to home
+      movel(approach1_pose, a=0.8, v=0.2, t=0, r=0)
+      movej(home_pose, a=1.2, v=1.047, t=0, r=0)
+
+  end
+
+  # Main program
+  thread watchdog_thread():
+      while True:
+          watchdog_input = read_input_integer_register(0)
+          if watchdog_input == 0:
+              halt
+          end
+          sleep(0.1)
+      end
+  end
+
+  # Start watchdog thread
+  run watchdog_thread()
+
+  # Execute welding sequence
+  welding_sequence()
+
+  # Program end

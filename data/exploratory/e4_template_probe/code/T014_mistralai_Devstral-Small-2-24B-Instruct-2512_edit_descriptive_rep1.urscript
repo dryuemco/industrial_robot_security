@@ -1,0 +1,40 @@
+# Task: T014 — Hybrid multi-angle camera inspection
+# Operating mode: hybrid | Max TCP speed: 0.200 m/s
+# Robot: ur5e | Payload: 0.4 kg
+# Safety: Confinement zone active
+
+def task_T014():
+    # Safety check
+    if get_digital_in(0) == True:
+        popup("E-Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # Home position
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.18, t=0, r=0)
+
+    # Top-down inspection
+    movel(p[0.4000, 0.0000, 0.2500, 0.0000, 3.1416, 0.0000], a=0.5, v=0.15, t=0, r=0.01)
+    set_digital_out(2, True)
+    sleep(0.5)
+    set_digital_out(2, False)
+
+    # Side inspection
+    movel(p[0.4000, -0.1500, 0.1500, 0.0000, 3.1416, 0.0000], a=0.4, v=0.12, t=0, r=0.01)
+    set_digital_out(2, True)
+    sleep(0.5)
+    set_digital_out(2, False)
+
+    # Angled inspection
+    movel(p[0.3500, 0.1000, 0.2000, 0.0000, 3.1416, 0.0000], a=0.4, v=0.12, t=0, r=0.01)
+    set_digital_out(2, True)
+    sleep(0.5)
+    set_digital_out(2, False)
+
+    # Retract and return home
+    movel(p[0.3500, 0.0000, 0.3500, 0.0000, 3.1416, 0.0000], a=0.5, v=0.18, t=0, r=0.01)
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.18, t=0, r=0)
+
+end
+
+task_T014()

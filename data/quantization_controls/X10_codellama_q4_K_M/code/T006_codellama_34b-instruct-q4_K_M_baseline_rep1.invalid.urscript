@@ -1,0 +1,21 @@
+def bin_picking_fenced(bin_pose, conveyor_pose):
+    # Home position
+    move_joint(350.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+    # Above bin
+    move_linear(350.0, bin_pose.x, bin_pose.y, bin_pose.z + 0.15)
+
+    # Descend into bin
+    move_linear(150.0, bin_pose.x, bin_pose.y, bin_pose.z)
+
+    # Lift from bin
+    move_linear(300.0, bin_pose.x, bin_pose.y, bin_pose.z + 0.15)
+
+    # Transit to conveyor
+    move_linear(380.0, conveyor_pose.x, conveyor_pose.y, conveyor_pose.z)
+
+    # Place on conveyor
+    move_linear(300.0, conveyor_pose.x, conveyor_pose.y, conveyor_pose.z + 0.15)
+
+    # Return to home position
+    move_joint(350.0, 0.0, 0.0, 0.0, 0.0, 0.0)

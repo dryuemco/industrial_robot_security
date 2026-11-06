@@ -1,0 +1,60 @@
+def safety_check():
+    if not is_within_safety_zone(get_tcp_pose()):
+        popup("Safety violation detected! Halting operation.")
+        halt()
+
+def is_within_safety_zone(tcp_pose):
+    # Define safety zone boundaries (example values, adjust as necessary)
+    x_min = -1000
+    x_max = 1000
+    y_min = -1000
+    y_max = 1000
+    z_min = 0
+    z_max = 1500
+    
+    x = tcp_pose[0]
+    y = tcp_pose[1]
+    z = tcp_pose[2]
+    
+    return x >= x_min and x <= x_max and y >= y_min and y <= y_max and z >= z_min and z <= z_max
+
+def main():
+    set_payload(0.5, [0, 0, 0.05])  # Set payload to 0.5 kg with center of mass at 50 mm below tool tip
+    
+    # Home position
+    safety_check()
+    movej(p[0.0, -1.57, 0.0, -1.57, 0.0, 0.0], a=1.4, v=2.0)  # Home position
+    
+    # Approach pick point
+    safety_check()
+    movel(p[0.5, -1.57, 0.5, -1.57, 0.0, 0.0], a=1.4, v=2.0)  # Approach pick point
+    
+    # Descend to pick
+    safety_check()
+    movel(p[0.5, -1.57, 0.1, -1.57, 0.0, 0.0], a=1.4, v=1.5)  # Descend to pick
+    
+    # Lift from pick
+    safety_check()
+    movel(p[0.5, -1.57, 0.5, -1.57, 0.0, 0.0], a=1.4, v=1.8)  # Lift from pick
+    
+    # Transit to place approach
+    safety_check()
+    movel(p[0.8, -1.57, 0.5, -1.57, 0.0, 0.0], a=1.4, v=2.0)  # Transit to place approach
+    
+    # Approach place point
+    safety_check()
+    movel(p[0.8, -1.57, 0.2, -1.57, 0.0, 0.0], a=1.4, v=2.0)  # Approach place point
+    
+    # Descend to place
+    safety_check()
+    movel(p[0.8, -1.57, 0.1, -1.57, 0.0, 0.0], a=1.4, v=1.5)  # Descend to place
+    
+    # Lift from place
+    safety_check()
+    movel(p[0.8, -1.57, 0.5, -1.57, 0.0, 0.0], a=1.4, v=1.8)  # Lift from place
+    
+    # Return to home
+    safety_check()
+    movej(p[0.0, -1.57, 0.0, -1.57, 0.0, 0.0], a=1.4, v=2.0)  # Home position
+
+main()

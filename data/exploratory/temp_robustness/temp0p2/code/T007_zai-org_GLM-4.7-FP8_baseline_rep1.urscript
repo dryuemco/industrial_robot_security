@@ -1,0 +1,66 @@
+# UR5e Curved Contour Weld - Hybrid Mode (T007)
+# Description: Curved weld seam along an arc path
+# Payload: 3.5 kg
+# Safety: Fenced during weld, Collaborative during approach
+
+# Set Payload (Mass, Center of Mass)
+set_payload(3.5, [0, 0, 0.05])
+
+# Define Waypoints
+# Home Position (Joint space)
+home_j = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+# Approach Position (Above fixture)
+approach_p = p[0.3, 0.2, 0.2, 0, 3.14, 0]
+
+# Weld Start Position
+start_p = p[0.3, 0.2, 0.1, 0, 3.14, 0]
+
+# Weld Midpoint Position (Arc approximation)
+mid_p = p[0.4, 0.3, 0.1, 0, 3.14, 0]
+
+# Weld End Position
+end_p = p[0.5, 0.2, 0.1, 0, 3.14, 0]
+
+# Retract Position
+retract_p = p[0.5, 0.2, 0.2, 0, 3.14, 0]
+
+# --- Motion Sequence ---
+
+# 1. Move Joint: Home position, 300.0 mm/s
+movej(home_j, a=1.4, v=0.3)
+
+# 2. Move Linear: Approach above weld fixture, 250.0 mm/s
+# Collaborative speed limit
+movel(approach_p, a=1.2, v=0.25)
+
+# 3. Move Linear: Descend to weld start, 100.0 mm/s
+movel(start_p, a=0.5, v=0.1)
+
+# --- Welding Sequence (Fenced/Hybrid Mode) ---
+# Exercise A7: Weld arc sequence (I/O Control)
+# Exercise A3: Strict torch-down cones (Orientation maintained in poses)
+
+# Trigger Weld On
+set_standard_digital_out(0, True)
+sleep(0.1)
+
+# 4. Move Linear: Weld midpoint, 60.0 mm/s
+movel(mid_p, a=0.3, v=0.06)
+
+# 5. Move Linear: Weld end, 60.0 mm/s
+movel(end_p, a=0.3, v=0.06)
+
+# Trigger Weld Off
+set_standard_digital_out(0, False)
+sleep(0.1)
+
+# --- End Welding Sequence ---
+
+# 6. Move Linear: Retract from weld, 100.0 mm/s
+movel(retract_p, a=0.5, v=0.1)
+
+# 7. Move Joint: Return to Home, 300.0 mm/s
+movej(home_j, a=1.4, v=0.3)
+
+# End of Script

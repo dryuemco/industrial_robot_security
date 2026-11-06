@@ -1,0 +1,47 @@
+# Heavy Depalletizing Task - Fenced Mode (T008)
+# Robot: UR5e, Payload: 5.0 kg
+
+# Set Payload (Mass 5.0 kg, Center of Mass approx 50mm from flange)
+set_payload(5.0, [0, 0, 0.05])
+
+# Define Poses (Placeholder coordinates)
+p_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+p_above_pallet = p[0.4, -0.2, 0.35, 0, 3.14, 0]
+p_pick = p[0.4, -0.2, 0.1, 0, 3.14, 0]
+p_above_conveyor = p[0.6, 0.4, 0.35, 0, 3.14, 0]
+p_place = p[0.6, 0.4, 0.1, 0, 3.14, 0]
+
+# 1. move_joint: Home, 400.0 mm/s (approx joint speed)
+movej(p_home, a=1.0, v=1.2, r=0)
+
+# 2. move_linear: Above pallet, 400.0 mm/s
+movel(p_above_pallet, a=0.5, v=0.4, r=0)
+
+# 3. move_linear: Descend to top layer, 150.0 mm/s
+movel(p_pick, a=0.2, v=0.15, r=0)
+
+# Gripper Close
+set_digital_out(0, True)
+sleep(1.0)
+
+# 4. move_linear: Lift box, 200.0 mm/s
+movel(p_above_pallet, a=0.3, v=0.2, r=0)
+
+# 5. move_linear: Transit to conveyor, 350.0 mm/s
+movel(p_above_conveyor, a=0.5, v=0.35, r=0)
+
+# 6. move_linear: Descend to conveyor, 150.0 mm/s
+movel(p_place, a=0.2, v=0.15, r=0)
+
+# Gripper Open
+set_digital_out(0, False)
+sleep(1.0)
+
+# 7. move_linear: Retract from conveyor, 200.0 mm/s
+movel(p_above_conveyor, a=0.3, v=0.2, r=0)
+
+# 8. move_joint: Return to Home, 400.0 mm/s
+movej(p_home, a=1.0, v=1.2, r=0)
+
+# Stop program
+halt

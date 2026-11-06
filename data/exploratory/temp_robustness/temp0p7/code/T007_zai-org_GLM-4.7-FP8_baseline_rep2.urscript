@@ -1,0 +1,52 @@
+# Program: Curved contour weld — hybrid mode (T007)
+# Robot: UR5e
+# Payload: 3.5 kg
+# Description: Baseline safe task with hybrid mode switching (Reduced/Normal).
+
+def t007_curved_weld_hybrid():
+    # Set payload (mass, center_of_mass)
+    set_payload(3.5, [0, 0, 0.05])
+
+    # --- Sequence Start ---
+    
+    # Mode: Collaborative (Reduced) for approach
+    set_safety_mode_transition(1)
+
+    # Move 1: move_joint - Home position, 300.0 mm/s (equiv approx 1.5 rad/s)
+    movej([0, -1.5708, 0, -1.5708, 0, 0], a=1.4, v=1.5)
+
+    # Move 2: move_linear - Approach above weld fixture, 250.0 mm/s
+    movel(p[0.35, -0.45, 0.35, 3.14159, 0, 0], a=0.5, v=0.25)
+
+    # Mode: Fenced (Normal) for weld process
+    set_safety_mode_transition(2)
+
+    # Move 3: move_linear - Descend to weld start, 100.0 mm/s
+    movel(p[0.35, -0.45, 0.20, 3.14159, 0, 0], a=0.2, v=0.10)
+
+    # Weld Arc Sequence Start (Exercise A7)
+    set_standard_digital_out(0, True)
+    sleep(0.2)
+
+    # Move 4: move_linear - Weld midpoint, 60.0 mm/s
+    movel(p[0.45, -0.35, 0.20, 3.14159, 0, 0], a=0.1, v=0.06)
+
+    # Move 5: move_linear - Weld end, 60.0 mm/s
+    movel(p[0.55, -0.25, 0.20, 3.14159, 0, 0], a=0.1, v=0.06)
+
+    # Weld Arc Sequence End
+    sleep(0.1)
+    set_standard_digital_out(0, False)
+
+    # Mode: Collaborative (Reduced) for retraction
+    set_safety_mode_transition(1)
+
+    # Move 6: move_linear - Retract from weld, 250.0 mm/s
+    movel(p[0.55, -0.25, 0.35, 3.14159, 0, 0], a=0.5, v=0.25)
+
+    # Move 7: move_joint - Return to Home, 300.0 mm/s
+    movej([0, -1.5708, 0, -1.5708, 0, 0], a=1.4, v=1.5)
+
+    # --- Sequence End ---
+
+end

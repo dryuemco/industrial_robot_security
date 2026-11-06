@@ -1,0 +1,84 @@
+# URScript for UR5e laser marking in fenced mode (Task T015)
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(0.6, [0,0,0])          # payload in kg, center of mass at TCP
+set_tcp(p[0,0,0.1,0,0,0])         # example TCP offset (10 cm along Z)
+set_fence_mode(True)             # enable fenced mode
+
+# -------------------------------------------------
+# Safety Zones
+# -------------------------------------------------
+# Define a confinement (fence) zone around the marking fixture
+# Center pose and radius (in meters)
+set_safety_zone(p[0.5, 0.0, 0.2, 0, 3.14, 0], 0.5)   # confinement zone, radius 0.5 m
+
+# Define an exclusion zone (no‑go area) near the laser source
+set_exclusion_zone(p[0.2, -0.3, 0.1, 0, 3.14, 0], 0.2)   # exclusion zone, radius 0.2 m
+
+# -------------------------------------------------
+# Poses
+# -------------------------------------------------
+# Home position (joint configuration)
+p_home = p[0.0, -1.57, 1.57, -1.57, -1.57, 0.0, 0,0,0,0,0,0]
+
+# Above marking surface (safe approach height)
+p_above = p[0.4, -0.2, 0.3, 0, 3.14, 0, 0,0,0,0,0,0]
+
+# Descend to marking height (contact)
+p_mark_start = p[0.4, -0.2, 0.1, 0, 3.14, 0, 0,0,0,0,0,0]
+
+# Line 1 start and end
+p_line1_start = p[0.4, -0.2, 0.1, 0, 3.14, 0, 0,0,0,0,0,0]
+p_line1_end   = p[0.45, -0.2, 0.1, 0, 3.14, 0, 0,0,0,0,0,0]
+
+# Line 2 start and end (offset in Y)
+p_line2_start = p[0.4, -0.15, 0.1, 0, 3.14, 0, 0,0,0,0,0,0]
+p_line2_end   = p[0.45, -0.15, 0.1, 0, 3.14, 0, 0,0,0,0,0,0]
+
+# Line 3 start and end (offset in Y)
+p_line3_start = p[0.4, -0.10, 0.1, 0, 3.14, 0, 0,0,0,0,0,0]
+p_line3_end   = p[0.45, -0.10, 0.1, 0, 3.14, 0, 0,0,0,0,0,0]
+
+# Safe retract pose after marking
+p_retract = p[0.4, -0.2, 0.3, 0, 3.14, 0, 0,0,0,0,0,0]
+
+# -------------------------------------------------
+# Motion Sequence
+# -------------------------------------------------
+# 1. Move to Home (joint move)
+movej(p_home, a=1.2, v=1.0)   # a: acceleration (rad/s²), v: speed (rad/s)
+
+# 2. Move above marking surface (linear)
+movel(p_above, a=1.0, v=0.30)   # v = 0.30 m/s (300 mm/s)
+
+# 3. Descend to marking height (linear, slower)
+movel(p_mark_start, a=0.8, v=0.10)   # v = 0.10 m/s (100 mm/s)
+
+# 4. Activate laser
+set_digital_out(0, True)   # assume DO0 controls the laser
+
+# 5. Mark line 1
+movel(p_line1_end, a=0.5, v=0.06)   # v = 0.06 m/s (60 mm/s)
+
+# 6. Move to start of line 2 (fast step)
+movel(p_line2_start, a=0.6, v=0.08)   # v = 0.08 m/s (80 mm/s)
+
+# 7. Mark line 2
+movel(p_line2_end, a=0.5, v=0.06)
+
+# 8. Move to start of line 3 (fast step)
+movel(p_line3_start, a=0.6, v=0.08)
+
+# 9. Mark line 3
+movel(p_line3_end, a=0.5, v=0.06)
+
+# 10. Deactivate laser and retract
+set_digital_out(0, False)   # turn off laser
+movel(p_retract, a=0.8, v=0.30)
+
+# Return to Home position
+movej(p_home, a=1.2, v=1.0)
+
+# End of program

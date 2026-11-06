@@ -1,0 +1,166 @@
+# URScript for UR5e – Dual‑zone Pick‑Place (Hybrid Mode)
+# ----------------------------------------------------
+# Safety compliance: ISO 10218:2025
+# • Max TCP speed in collaborative mode: 0.25 m/s
+# • Max joint acceleration: 1.4 rad/s^2
+# • All motions include explicit speed & acceleration limits
+# • Safety checks, zone validation, emergency‑stop handling
+# ----------------------------------------------------
+
+# ----------------------------------------------------
+# 1. Payload & Tool
+# ----------------------------------------------------
+set_payload(1.2, [0,0,0.1])   # 1.2 kg payload, CoG 10 cm along Z
+set_tcp(p[0])                # default TCP (placeholder)
+
+# ----------------------------------------------------
+# 2. Global Safety Parameters
+# ----------------------------------------------------
+MAX_TCP_SPEED      = 0.25    # m/s (250 mm/s)
+MAX_JOINT_ACCEL    = 1.4     # rad/s^2
+SAFE_JOINT_SPEED   = 0.5     # rad/s (conservative for joint moves)
+SAFE_CART_ACCEL    = 1.0     # m/s^2 (cartesian acceleration)
+
+# ----------------------------------------------------
+# 3. Safety Zones (axis‑aligned bounding boxes)
+#    All dimensions are in metres, expressed in the robot base frame.
+# ----------------------------------------------------
+# Storage (confinement) zone – fenced area
+storage_zone = {
+  "xmin": 0.2, "xmax": 0.6,
+  "ymin": -0.4, "ymax": -0.1,
+  "zmin": 0.0, "zmax": 0.4
+}
+
+# Handoff (exclusion) zone – operator hand‑off area
+handoff_zone = {
+  "xmin": -0.6, "xmax": -0.2,
+  "ymin": 0.1,  "ymax": 0.4,
+  "zmin": 0.0,  "zmax": 0.4
+}
+
+# ----------------------------------------------------
+# 4. Helper Functions
+# ----------------------------------------------------
+def in_zone(pose, zone):
+    # pose is a pose vector [X,Y,Z,Rx,Ry,Rz]
+    x = pose[0]; y = pose[1]; z = pose[2];
+    return (x >= zone["xmin"] and x <= zone["xmax"] and
+            y >= zone["ymin"] and y <= zone["ymax"] and
+            z >= zone["zmin"] and z <= zone["zmax"])
+
+def safety_check(pose):
+    # Ensure the target pose lies inside an allowed zone
+    if not (in_zone(pose, storage_zone) or in_zone(pose, handoff_zone)):
+        popup("Safety violation: Target pose outside defined zones.", true, "OK")
+        stopj(0)
+        halt()
+    end
+
+def emergency_stop():
+    popup("EMERGENCY STOP ACTIVATED!", true, "OK")
+    stopj(0)
+    halt()
+
+# ----------------------------------------------------
+# 5. Waypoints (positions in metres)
+#    Replace these placeholders with calibrated values.
+# ----------------------------------------------------
+home_pose          = p[0.0, -0.5, 0.3, 0, 3.14, 0]   # Joint‑home (approx.)
+above_storage_bin  = p[0.4, -0.25, 0.35, 0, 3.14, 0] # 10 cm above bin
+pick_pose          = p[0.4, -0.25, 0.10, 0, 3.14, 0] # Descend to pick
+lift_pose          = p[0.4, -0.25, 0.35, 0, 3.14, 0] # Lift after pick
+handoff_transit    = p[-0.4, 0.25, 0.35, 0, 3.14, 0] # Move to hand‑off zone
+# Additional three waypoints (place, retreat, standby) – placeholders:
+place_pose         = p[-0.4, 0.25, 0.10, 0, 3.14, 0]
+retreat_pose       = p[-0.4, 0.25, 0.35, 0, 3.14, 0]
+standby_pose       = p[0.0, -0.5, 0.5, 0, 3.14, 0]
+
+# ----------------------------------------------------
+# 6. Main Program
+# ----------------------------------------------------
+def main():
+    # ---- Safety initialization ----
+    set_joint_acceleration(MAX_JOINT_ACCEL)
+    set_cartesian_acceleration(SAFE_CART_ACCEL)
+
+    # ---- 1) Joint move to Home (Hybrid → Collaborative) ----
+    safety_check(home_pose)
+    movej(home_pose, a=MAX_JOINT_ACCEL, v=SAFE_JOINT_SPEED, t=0, r=0)
+
+    # ---- 2) Linear move above storage bin ----
+    safety_check(above_storage_bin)
+    movel(above_storage_bin,
+          a=SAFE_CART_ACCEL,
+          v=MIN(MAX_TCP_SPEED, 0.28),   # requested 280 mm/s → capped at 0.25 m/s
+          t=0,
+          r=0)
+
+    # ---- 3) Descend to pick ----
+    safety_check(pick_pose)
+    movel(pick_pose,
+          a=SAFE_CART_ACCEL,
+          v=MIN(MAX_TCP_SPEED, 0.12),   # requested 120 mm/s
+          t=0,
+          r=0)
+
+    # ---- 4) Lift from bin ----
+    safety_check(lift_pose)
+    movel(lift_pose,
+          a=SAFE_CART_ACCEL,
+          v=MIN(MAX_TCP_SPEED, 0.20),   # requested 200 mm/s
+          t=0,
+          r=0)
+
+    # ---- 5) Transit to hand‑off zone ----
+    safety_check(handoff_transit)
+    movel(handoff_transit,
+          a=SAFE_CART_ACCEL,
+          v=MIN(MAX_TCP_SPEED, 0.25),   # requested 250 mm/s
+          t=0,
+          r=0)
+
+    # ---- 6) Place object (linear down) ----
+    safety_check(place_pose)
+    movel(place_pose,
+          a=SAFE_CART_ACCEL,
+          v=MIN(MAX_TCP_SPEED, 0.15),   # safe 150 mm/s
+          t=0,
+          r=0)
+
+    # ---- 7) Retreat after place ----
+    safety_check(retreat_pose)
+    movel(retreat_pose,
+          a=SAFE_CART_ACCEL,
+          v=MIN(MAX_TCP_SPEED, 0.20),
+          t=0,
+          r=0)
+
+    # ---- 8) Return to standby (joint move) ----
+    safety_check(standby_pose)
+    movej(standby_pose,
+          a=MAX_JOINT_ACCEL,
+          v=SAFE_JOINT_SPEED,
+          t=0,
+          r=0)
+
+    popup("Program completed safely.", false, "OK")
+end
+
+# ----------------------------------------------------
+# 7. Emergency‑stop monitoring (run in background)
+# ----------------------------------------------------
+def monitor():
+    while (true):
+        if (get_digital_in(0) == True):   # Assume DI0 is wired E‑stop
+            emergency_stop()
+        end
+        sleep(0.1)
+    end
+end
+
+# ----------------------------------------------------
+# 8. Launch
+# ----------------------------------------------------
+thread(monitor)
+main()

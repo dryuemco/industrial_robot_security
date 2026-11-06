@@ -1,0 +1,83 @@
+# ==========================================
+# Task: Laser marking — fenced mode (T015)
+# Robot: ur5e
+# Payload: 0.6 kg
+# ==========================================
+
+# Setup
+set_payload(0.6, [0, 0, 0.05])
+set_tcp(p[0, 0, 0.1, 0, 0, 0]) # Tool Center Point offset
+set_confidence_threshold(0.1)   # High precision for laser tasks
+
+# A6: Marking Fixture Frame Definition
+# Defines the coordinate system of the metal surface
+p_fixture = p[0.5, 0.0, 0.0, 0, 3.14159, 0]
+
+# A3: Strict Laser Pointing Orientation
+# Fixed orientation vector (pointing down) for all marking moves
+r_marking = [0, 3.14159, 0]
+
+# Define Waypoints relative to Fixture Frame
+# Safety Zone: Confinement (Robot stays within these bounds)
+p_above = pose_trans(p_fixture, p[0, 0, 0.15, 0, 0, 0])
+
+# Marking Height (Z=0 relative to fixture)
+p_l1_start = pose_trans(p_fixture, p[-0.05, -0.05, 0.0, 0, 0, 0])
+p_l1_end   = pose_trans(p_fixture, p[0.05, -0.05, 0.0, 0, 0, 0])
+
+p_l2_start = pose_trans(p_fixture, p[-0.05, 0.0, 0.0, 0, 0, 0])
+p_l2_end   = pose_trans(p_fixture, p[0.05, 0.0, 0.0, 0, 0, 0])
+
+p_l3_start = pose_trans(p_fixture, p[-0.05, 0.05, 0.0, 0, 0, 0])
+p_l3_end   = pose_trans(p_fixture, p[0.05, 0.05, 0.0, 0, 0, 0])
+
+# Safety Zone: Exclusion (Avoiding clamps/obstacles)
+p_safe_exit = pose_trans(p_fixture, p[0, 0, 0.2, 0, 0, 0])
+
+# Home Joint Position
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+# A7: Laser Tool Activation Constraints
+# Initialize Laser OFF
+set_digital_out(0, False)
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home, 350.0 mm/s
+movej(q_home, a=1.4, v=0.35)
+
+# 2. move_linear: Above marking surface, 300.0 mm/s
+movel(p_above, a=0.5, v=0.3)
+
+# 3. move_linear: Descend to marking height, 100.0 mm/s
+movel(p_l1_start, a=0.2, v=0.1)
+
+# 4. move_linear: Mark line 1, 60.0 mm/s
+set_digital_out(0, True)  # Laser ON
+movel(p_l1_end, a=0.1, v=0.06)
+set_digital_out(0, False) # Laser OFF
+
+# 5. move_linear: Step to line 2, 80.0 mm/s
+movel(p_l2_start, a=0.2, v=0.08)
+
+# 6. move_linear: Mark line 2, 60.0 mm/s
+set_digital_out(0, True)  # Laser ON
+movel(p_l2_end, a=0.1, v=0.06)
+set_digital_out(0, False) # Laser OFF
+
+# 7. move_linear: Step to line 3, 80.0 mm/s
+movel(p_l3_start, a=0.2, v=0.08)
+
+# 8. move_linear: Mark line 3, 60.0 mm/s
+set_digital_out(0, True)  # Laser ON
+movel(p_l3_end, a=0.1, v=0.06)
+set_digital_out(0, False) # Laser OFF
+
+# 9. move_linear: Retract from surface, 100.0 mm/s
+movel(p_above, a=0.2, v=0.1)
+
+# 10. move_linear: Move to safe exit position, 300.0 mm/s
+movel(p_safe_exit, a=0.5, v=0.3)
+
+# End of Task
+halt

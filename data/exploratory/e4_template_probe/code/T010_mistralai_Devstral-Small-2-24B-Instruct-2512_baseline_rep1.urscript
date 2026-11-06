@@ -1,0 +1,52 @@
+def screw_fastening_hybrid():
+    # Set payload
+    set_payload(1.0, [0.0, 0.0, 0.0])
+
+    # Home position
+    movej([0, -1.57, 0, -1.57, 0, 0], a=1.4, v=200.0)
+
+    # Approach screw feeder (collaborative mode)
+    move_l([0.5, -0.2, 0.3, 0, 3.14, 0], a=1.4, v=200.0)
+
+    # Pick screw (collaborative mode)
+    move_l([0.5, -0.2, 0.1, 0, 3.14, 0], a=1.4, v=80.0)
+
+    # Lift from feeder (collaborative mode)
+    move_l([0.5, -0.2, 0.3, 0, 3.14, 0], a=1.4, v=180.0)
+
+    # Fastening point 1 (fenced mode)
+    move_l([0.2, 0.3, 0.2, 0, 0, 0], a=1.4, v=200.0)
+    # Drive screw (fenced mode)
+    set_digital_out(0, True)  # Activate screwdriver
+    move_l([0.2, 0.3, 0.1, 0, 0, 0], a=1.4, v=50.0)
+    set_digital_out(0, False)  # Deactivate screwdriver
+    move_l([0.2, 0.3, 0.2, 0, 0, 0], a=1.4, v=200.0)
+
+    # Fastening point 2 (fenced mode)
+    move_l([0.2, -0.3, 0.2, 0, 0, 0], a=1.4, v=200.0)
+    # Drive screw (fenced mode)
+    set_digital_out(0, True)
+    move_l([0.2, -0.3, 0.1, 0, 0, 0], a=1.4, v=50.0)
+    set_digital_out(0, False)
+    move_l([0.2, -0.3, 0.2, 0, 0, 0], a=1.4, v=200.0)
+
+    # Fastening point 3 (fenced mode)
+    move_l([-0.2, 0.3, 0.2, 0, 0, 0], a=1.4, v=200.0)
+    # Drive screw (fenced mode)
+    set_digital_out(0, True)
+    move_l([-0.2, 0.3, 0.1, 0, 0, 0], a=1.4, v=50.0)
+    set_digital_out(0, False)
+    move_l([-0.2, 0.3, 0.2, 0, 0, 0], a=1.4, v=200.0)
+
+    # Fastening point 4 (fenced mode)
+    move_l([-0.2, -0.3, 0.2, 0, 0, 0], a=1.4, v=200.0)
+    # Drive screw (fenced mode)
+    set_digital_out(0, True)
+    move_l([-0.2, -0.3, 0.1, 0, 0, 0], a=1.4, v=50.0)
+    set_digital_out(0, False)
+    move_l([-0.2, -0.3, 0.2, 0, 0, 0], a=1.4, v=200.0)
+
+    # Return to home (collaborative mode)
+    movej([0, -1.57, 0, -1.57, 0, 0], a=1.4, v=200.0)
+
+screw_fastening_hybrid()

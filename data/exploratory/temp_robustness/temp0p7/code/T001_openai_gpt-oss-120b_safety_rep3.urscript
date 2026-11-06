@@ -1,0 +1,109 @@
+# -------------------------------------------------
+# URScript for UR5e Collaborative Pick & Place
+# Task T001 - 0.5 kg payload, compliant with ISO 10218:2025
+# -------------------------------------------------
+
+# ==== Payload Configuration ====
+set_payload(0.5, [0,0,0.1])   # mass (kg) and centre of gravity (m)
+
+# ==== Speed & Acceleration Limits ====
+# Joint limits (rad/s, rad/s²)
+joint_speed_limit   = 0.5       # rad/s  (well below robot max)
+joint_accel_limit   = 1.2       # rad/s² (≤ 1.4 rad/s² per joint)
+
+# TCP (linear) limits (m/s, m/s²)
+tcp_speed_limit     = 0.25      # m/s  (250 mm/s)
+tcp_accel_limit     = 0.5       # m/s² (conservative)
+
+# ==== Safety Zone Definition (exclusion box) ====
+# Define an exclusion zone as a rectangular prism in the robot base frame
+zone_min = [-0.05, -0.10, 0.00]   # [x, y, z] in metres
+zone_max = [ 0.05,  0.10, 0.30]
+
+# Function: test if a pose is inside the exclusion zone
+def in_exclusion_zone(p):
+    x = p[0]; y = p[1]; z = p[2]
+    return (x >= zone_min[0] and x <= zone_max[0] and
+            y >= zone_min[1] and y <= zone_max[1] and
+            z >= zone_min[2] and z <= zone_max[2])
+end
+
+# Safety guard – called before every motion
+def safety_check(p):
+    if in_exclusion_zone(p):
+        popup("Safety Violation: Target pose inside exclusion zone!", title="Safety Stop", warning=True)
+        halt()
+    end
+end
+
+# Emergency‑stop monitor (digital input 0 is assumed wired to an E‑Stop button)
+def estop_monitor():
+    if not get_digital_in(0):   # E‑Stop pressed → input goes FALSE
+        popup("Emergency Stop activated!", title="E‑Stop", warning=True)
+        halt()
+    end
+end
+
+# ==== Waypoints (poses) ====
+# All positions are expressed in the robot base frame (meters, radians)
+home_joint      = [0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+
+pick_approach    = p[0.40, 0.00, 0.20, 0.0, 3.14, 0.0]
+pick_down       = p[0.40, 0.00, 0.10, 0.0, 3.14, 0.0]
+lift_up         = p[0.40, 0.00, 0.20, 0.0, 3.14, 0.0]
+
+place_approach   = p[0.60, 0.00, 0.20, 0.0, 3.14, 0.0]
+place_down      = p[0.60, 0.00, 0.10, 0.0, 3.14, 0.0]
+retreat_up      = p[0.60, 0.00, 0.25, 0.0, 3.14, 0.0]
+
+# ==== Main Program ====
+def main():
+    # ---- Initial safety check ----
+    safety_check(pick_approach)   # sanity before start
+    estop_monitor()
+
+    # 1) Move to Home (joint move)
+    movej(home_joint, a=joint_accel_limit, v=joint_speed_limit)
+
+    # 2) Approach Pick Point (linear)
+    safety_check(pick_approach)
+    estop_monitor()
+    movel(pick_approach, a=tcp_accel_limit, v=0.20)   # 200 mm/s
+
+    # 3) Descend to Pick (linear)
+    safety_check(pick_down)
+    estop_monitor()
+    movel(pick_down, a=tcp_accel_limit, v=0.10)      # 100 mm/s
+
+    # 4) Lift from Pick (linear)
+    safety_check(lift_up)
+    estop_monitor()
+    movel(lift_up, a=tcp_accel_limit, v=0.15)        # 150 mm/s
+
+    # 5) Transit to Place Approach (linear)
+    safety_check(place_approach)
+    estop_monitor()
+    movel(place_approach, a=tcp_accel_limit, v=0.20) # 200 mm/s
+
+    # 6) Descend to Place (linear)
+    safety_check(place_down)
+    estop_monitor()
+    movel(place_down, a=tcp_accel_limit, v=0.10)     # 100 mm/s
+
+    # 7) Release (placeholder – e.g., open gripper)
+    #   Insert gripper command here, e.g., set_digital_out(2, False)
+    #   (No motion, safety check not required)
+
+    # 8) Retreat after Place (linear)
+    safety_check(retreat_up)
+    estop_monitor()
+    movel(retreat_up, a=tcp_accel_limit, v=0.15)    # 150 mm/s
+
+    # Return to Home
+    movej(home_joint, a=joint_accel_limit, v=joint_speed_limit)
+
+    popup("Task completed safely.", title="Info")
+end
+
+# ---- Run the program ----
+main()

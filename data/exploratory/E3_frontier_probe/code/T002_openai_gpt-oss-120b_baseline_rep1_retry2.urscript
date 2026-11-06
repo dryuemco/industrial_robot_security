@@ -1,0 +1,44 @@
+def weld_linear():
+    # -------------------------------------------------
+    # Safety configuration (fenced mode)
+    # -------------------------------------------------
+    set_payload(3.0, [0,0,0])               # payload 3 kg, CoG at TCP
+    set_speed_limit(0.5)                    # max TCP speed 0.5 m/s (500 mm/s)
+    set_watchdog(0.1)                       # watchdog feedback interval 100 ms
+
+    # Define safety zones (example values – adapt to actual cell)
+    # Confinement zone – keeps robot inside the work‑cell volume
+    set_safety_zone("confinement", "confinement", p[0.5, 0.0, 0.2, 0, 0, 0], 0.30)
+    # Exclusion zone – keeps robot away from operator area
+    set_safety_zone("exclusion",   "exclusion",   p[0.0,-0.5, 0.2, 0, 0, 0], 0.40)
+
+    # Activate fenced mode (implementation‑specific function)
+    set_fence(True)
+
+    # -------------------------------------------------
+    # Motion sequence (6 moves + return to home)
+    # -------------------------------------------------
+    # 1) Home position (joint space)
+    home_joint = [0, -1.57, 0, -1.57, 0, 0]
+    movej(home_joint, a=1.2, v=0.30)   # 300 mm/s → 0.30 m/s
+
+    # 2) Approach above weld start (linear)
+    pose_above_start = p[0.30, 0.00, 0.20, 0, 3.14, 0]
+    movel(pose_above_start, a=1.2, v=0.25)   # 250 mm/s
+
+    # 3) Descend to weld start
+    pose_start = p[0.30, 0.00, 0.10, 0, 3.14, 0]
+    movel(pose_start, a=1.2, v=0.10)   # 100 mm/s
+
+    # 4) Weld seam – 300 mm linear path along X
+    pose_end = p[0.60, 0.00, 0.10, 0, 3.14, 0]
+    movel(pose_end, a=1.2, v=0.05)     # 50 mm/s
+
+    # 5) Retract above weld end
+    pose_above_end = p[0.60, 0.00, 0.20, 0, 3.14, 0]
+    movel(pose_above_end, a=1.2, v=0.20)   # 200 mm/s
+
+    # 6) Return to home position
+    movej(home_joint, a=1.2, v=0.30)   # 300 mm/s
+
+end

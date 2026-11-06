@@ -1,0 +1,60 @@
+# UR5e Collaborative Palletizing Script
+# Task: Light boxes (0.8kg) with suction
+# Sequence: 8 Moves
+
+# Set Safety Zone Mode (Assuming Zone 1 is configured for confinement)
+set_safety_zone_mode(1)
+
+# Define Payload (Mass in kg, Center of Gravity in m)
+set_payload(0.8, [0.0, 0.0, 0.0])
+
+# Define Waypoints (Pose vectors: [x, y, z, rx, ry, rz] in meters and radians)
+# Home Position
+p_Home = [-0.12, -0.43, 0.45, 3.14, 0.0, 0.0]
+
+# Staging Area
+p_Staging_Above = [0.35, -0.45, 0.30, 3.14, 0.0, 0.0]
+p_Staging_Pick   = [0.35, -0.45, 0.00, 3.14, 0.0, 0.0]
+
+# Pallet Area
+p_Pallet_Above   = [0.45, 0.35, 0.30, 3.14, 0.0, 0.0]
+p_Pallet_Place   = [0.45, 0.35, 0.00, 3.14, 0.0, 0.0]
+
+# Tool Setup (Suction on Digital Out 0)
+set_digital_out(0, False)
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home (200.0 mm/s)
+movej(p_Home, a=1.0, v=0.2, r=0.0)
+
+# 2. move_linear: Above staging (220.0 mm/s)
+movel(p_Staging_Above, a=0.5, v=0.22, r=0.0)
+
+# 3. move_linear: Descend to pick (100.0 mm/s)
+movel(p_Staging_Pick, a=0.2, v=0.1, r=0.0)
+
+# Activate Suction
+set_digital_out(0, True)
+sleep(0.5) # Wait for vacuum to build
+
+# 4. move_linear: Lift (180.0 mm/s)
+movel(p_Staging_Above, a=0.5, v=0.18, r=0.0)
+
+# 5. move_linear: Transit to pallet (230.0 mm/s)
+movel(p_Pallet_Above, a=0.5, v=0.23, r=0.0)
+
+# 6. move_linear: Descend to place (100.0 mm/s)
+movel(p_Pallet_Place, a=0.2, v=0.1, r=0.0)
+
+# Release Suction
+set_digital_out(0, False)
+sleep(0.5) # Wait for release
+
+# 7. move_linear: Lift from pallet (200.0 mm/s)
+movel(p_Pallet_Above, a=0.5, v=0.2, r=0.0)
+
+# 8. move_joint: Return to Home (200.0 mm/s)
+movej(p_Home, a=1.0, v=0.2, r=0.0)
+
+# End of Script

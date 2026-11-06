@@ -1,0 +1,104 @@
+# URScript for collaborative suction palletizing (light boxes)
+# Robot: UR5e, collaborative mode, payload 0.8 kg
+# Safety: max TCP speed 250 mm/s, speed scaling limited to 50%
+
+# -------------------------------------------------
+# Setup
+# -------------------------------------------------
+# Define the TCP (suction cup) - adjust offset as needed
+set_tcp(p[0,0,0.1], 0.0)   # position of suction cup tip relative to tool flange
+
+# Set payload (mass and centre of gravity)
+set_payload(0.8, p[0,0,0])  # 0.8 kg, CoG at TCP
+
+# Limit speed scaling for collaborative safety (max 50% of full speed)
+set_speed_slider(0.5)
+
+# -------------------------------------------------
+# Motion Parameters
+# -------------------------------------------------
+# Joint speed (rad/s) and acceleration (rad/s^2) for movej
+joint_speed = 1.0          # rad/s (well below UR5e max)
+joint_acc   = 1.2          # rad/s^2
+
+# Cartesian speed (m/s) and acceleration (m/s^2) for movel
+# All speeds are below the 0.250 m/s (250 mm/s) limit
+speed_home      = 0.200    # 200 mm/s
+speed_above     = 0.220    # 220 mm/s
+speed_descend   = 0.100    # 100 mm/s
+speed_lift      = 0.180    # 180 mm/s
+speed_transit   = 0.230    # 230 mm/s
+speed_place     = 0.150    # 150 mm/s
+speed_return    = 0.200    # 200 mm/s
+accel_cartesian = 1.0      # m/s^2 (safe for collaborative mode)
+
+# -------------------------------------------------
+# Positions (in meters, relative to robot base)
+# -------------------------------------------------
+# Home position (joint configuration)
+home_joints = [-1.57, -1.57, -1.57, -1.57, 1.57, 0.0]
+
+# Staging area (above the box)
+above_staging = p[0.5, -0.2, 0.3, 0, 3.14, 0]   # adjust XYZ as required
+# Pick position (box surface)
+pick_position = p[0.5, -0.2, 0.05, 0, 3.14, 0]
+
+# Pallet area (above placement point)
+above_pallet = p[0.6, 0.0, 0.35, 0, 3.14, 0]
+# Place position (box release point)
+place_position = p[0.6, 0.0, 0.07, 0, 3.14, 0]
+
+# -------------------------------------------------
+# Helper Functions
+# -------------------------------------------------
+def activate_suction():
+    # Activate vacuum (digital output 0)
+    set_digital_out(0, True)
+
+def deactivate_suction():
+    # Deactivate vacuum (digital output 0)
+    set_digital_out(0, False)
+
+# -------------------------------------------------
+# Main Program
+# -------------------------------------------------
+def main():
+    # 1) Move to Home (joint move)
+    movej(home_joints, a=joint_acc, v=joint_speed)
+
+    # 2) Move above staging area (linear)
+    movel(above_staging, a=accel_cartesian, v=speed_above)
+
+    # 3) Descend to pick the box
+    movel(pick_position, a=accel_cartesian, v=speed_descend)
+
+    # 4) Activate suction to grasp the box
+    activate_suction()
+    sleep(0.2)   # allow vacuum to engage
+
+    # 5) Lift the box
+    movel(above_staging, a=accel_cartesian, v=speed_lift)
+
+    # 6) Transit to pallet area
+    movel(above_pallet, a=accel_cartesian, v=speed_transit)
+
+    # 7) Lower to place the box
+    movel(place_position, a=accel_cartesian, v=speed_place)
+
+    # 8) Release suction
+    deactivate_suction()
+    sleep(0.2)   # ensure box is released
+
+    # 9) Retract to above pallet
+    movel(above_pallet, a=accel_cartesian, v=speed_lift)
+
+    # 10) Return to Home
+    movej(home_joints, a=joint_acc, v=joint_speed)
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+if (running == False):
+    running = True
+    main()
+    running = False

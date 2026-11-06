@@ -1,0 +1,102 @@
+# ==========================================
+# Task: Visual Inspection Scan (T005)
+# Robot: UR5e (Collaborative Mode)
+# Payload: 0.3 kg
+# ==========================================
+
+# Safety Definitions
+def safety_check():
+    # 1. Check TCP Speed (ISO Limit 250 mm/s, Task Limit 150 mm/s)
+    # get_actual_tcp_speed returns [vx, vy, vz, wx, wy, wz]
+    speed_vec = get_actual_tcp_speed()
+    linear_speed = sqrt(speed_vec[0]*speed_vec[0] + speed_vec[1]*speed_vec[1] + speed_vec[2]*speed_vec[2])
+    
+    if linear_speed > 0.25:
+        popup("SAFETY VIOLATION: TCP Speed > 250 mm/s", error=True, warning=False)
+        halt
+    end
+
+    # 2. Safety Zone Check (Confinement)
+    # Zone: X[-0.6, 0.6], Y[-0.6, 0.6], Z[0.0, 0.5] meters
+    pose = get_actual_tcp_pose()
+    if pose[0] < -0.6 or pose[0] > 0.6 or pose[1] < -0.6 or pose[1] > 0.6 or pose[2] < 0.0 or pose[2] > 0.5:
+        popup("SAFETY VIOLATION: Robot out of Safety Zone", error=True, warning=False)
+        halt
+    end
+end
+
+# Setup Payload
+# Mass: 0.3 kg, CoM: [0, 0, 0.05] (approximate tool center)
+set_payload(0.3, [0, 0, 0.05])
+
+# Motion Parameters
+# Max Joint Acceleration: 1.4 rad/s^2
+max_joint_accel = 1.4
+# Safe Joint Speed (approx 150 mm/s TCP equivalent)
+safe_joint_vel = 1.0 
+# Linear Acceleration limit (conservative for collaborative)
+linear_accel = 0.5
+
+# Waypoint Definitions
+# Home Position (Joint space)
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+# Inspection Orientation (Pointing strictly downward)
+# rx=0, ry=3.14159 (pi), rz=0
+rot_down = [0, 3.14159, 0]
+
+# Scan Area: 200x200mm box
+# Z-height: 150mm (0.15m) above part surface
+# Coordinates (meters):
+# Start: X=-0.1, Y=0.1
+p_approach = p[0.0, 0.0, 0.25, rot_down[0], rot_down[1], rot_down[2]]
+p_scan_start = p[-0.1, 0.1, 0.15, rot_down[0], rot_down[1], rot_down[2]]
+p_scan1_end  = p[0.1, 0.1, 0.15, rot_down[0], rot_down[1], rot_down[2]]
+p_scan2_start = p[0.1, 0.0, 0.15, rot_down[0], rot_down[1], rot_down[2]]
+p_scan2_end  = p[-0.1, 0.0, 0.15, rot_down[0], rot_down[1], rot_down[2]]
+p_scan3_start = p[-0.1, -0.1, 0.15, rot_down[0], rot_down[1], rot_down[2]]
+p_scan3_end  = p[0.1, -0.1, 0.15, rot_down[0], rot_down[1], rot_down[2]]
+
+# ==========================================
+# Motion Sequence (10 moves)
+# ==========================================
+
+# 1. Move Joint: Home position, 150.0 mm/s
+safety_check()
+movej(j_home, a=max_joint_accel, v=safe_joint_vel)
+
+# 2. Move Linear: Approach inspection start, 130.0 mm/s
+safety_check()
+movel(p_approach, a=linear_accel, v=0.13)
+
+# 3. Move Linear: Descend to scan height, 80.0 mm/s
+safety_check()
+movel(p_scan_start, a=linear_accel, v=0.08)
+
+# 4. Move Linear: Scan line 1 (Y sweep), 50.0 mm/s
+safety_check()
+movel(p_scan1_end, a=linear_accel, v=0.05)
+
+# 5. Move Linear: Step to scan line 2 (+X), 80.0 mm/s
+safety_check()
+movel(p_scan2_start, a=linear_accel, v=0.08)
+
+# 6. Move Linear: Scan line 2 (Y sweep), 50.0 mm/s
+safety_check()
+movel(p_scan2_end, a=linear_accel, v=0.05)
+
+# 7. Move Linear: Step to scan line 3 (+X), 80.0 mm/s
+safety_check()
+movel(p_scan3_start, a=linear_accel, v=0.08)
+
+# 8. Move Linear: Scan line 3 (Y sweep), 50.0 mm/s
+safety_check()
+movel(p_scan3_end, a=linear_accel, v=0.05)
+
+# 9. Move Linear: Retract from surface, 80.0 mm/s
+safety_check()
+movel(p_approach, a=linear_accel, v=0.08)
+
+# 10. Move Joint: Return to Home, 150.0 mm/s
+safety_check()
+movej(j_home, a=max_joint_accel, v=safe_joint_vel)

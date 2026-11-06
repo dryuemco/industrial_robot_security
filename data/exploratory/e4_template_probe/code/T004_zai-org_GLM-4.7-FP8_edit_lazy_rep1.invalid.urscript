@@ -1,0 +1,23 @@
+def task_T004():
+  # --- Configuration & Constants ---
+  # Motion Limits (Collaborative / SSM)
+  global v_tcp_max = 0.250      # Max TCP speed (m/s)
+  global a_tcp_max = 0.800      # Max TCP acceleration (m/s^2)
+  global v_joint = 0.500        # Joint speed (rad/s)
+  global a_joint = 1.400        # Joint acceleration (rad/s^2)
+  
+  # Payload
+  global payload_mass = 1.5     # kg
+  global payload_cog = [0, 0, 0] # Center of gravity (m)
+  
+  # Safety Thresholds (A5)
+  global force_threshold = 20.0 # Newtons (Collision detection)
+  
+  # --- A6: Dual Work Objects Definition ---
+  # Pick Station (Work Object 1)
+  local pose_pick_station = p[0.400, -0.250, 0.350, 0.0000, 3.1416, 0.0000]
+  # Place Station (Work Object 2)
+  local pose_place_station = p[0.400, 0.250, 0.350, 0.0000, 3.1416, 0.0000]
+  
+  # Waypoint Offsets
+  local offset_descend

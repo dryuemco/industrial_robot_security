@@ -1,0 +1,96 @@
+# -------------------------------------------------
+# UR5e Collaborative Pick & Place with SSM
+# Payload, TCP speed, safety zones, work objects,
+# speed guard and collision monitoring
+# -------------------------------------------------
+
+# ---- Payload & TCP ----
+set_payload(1.5, [0, 0, 0.1])          # 1.5 kg payload, CoG 10 cm above TCP
+set_tcp_speed(0.25)                    # Max TCP speed = 250 mm/s (0.25 m/s)
+
+# ---- Safety Mode (Collaborative with SSM) ----
+# SSM is enabled by default in collaborative mode
+# Speed and separation monitoring parameters
+set_speed_safety(0.5, 0.2)              # speed factor, minimum distance (m)
+
+# ---- Collision Monitoring ----
+set_collision_threshold(0.2, 0.2)       # Force (N) & torque (Nm) thresholds
+
+# ---- Speed Guard (protective speed reduction near obstacle) ----
+# Reduce speed to 0.1 m/s when within 5 cm of obstacle in -X direction
+speed_guard(0.1, 0.05, [-1,0,0], 0.01)
+
+# ---- Safety Zones ----
+# Confinement zone (allowed working volume)
+add_confinement_zone(p[0.0, 0.0, 0.0, 0, 0, 0], [1.2, 1.2, 0.8])   # 1.2 m³ box centered at base
+
+# Exclusion zone (obstacle column)
+add_exclusion_zone(p[0.4, 0.0, 0.0, 0, 0, 0], [0.1, 0.1, 0.8])    # 10 cm × 10 cm column at X=0.4 m
+
+# ---- Work Objects (Pick & Place stations) ----
+pick_wo  = pose(p[0.5, 0.0, 0.0, 0, 0, 0])   # Pick station frame
+place_wo = pose(p[0.2, 0.4, 0.0, 0, 0, 0])   # Place station frame
+
+# ---- Joint Home Position ----
+home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]   # Example home configuration
+
+# ---- Waypoints (poses expressed in base frame) ----
+WP1 = p[0.5, 0.0, 0.30, 0, 3.14, 0]   # Above pick station
+WP2 = p[0.5, 0.0, 0.10, 0, 3.14, 0]   # Descend to pick
+WP3 = p[0.5, 0.0, 0.30, 0, 3.14, 0]   # Lift from pick
+WP4 = p[0.30, 0.0, 0.30, 0, 3.14, 0]  # Obstacle avoidance waypoint (−X offset)
+WP5 = p[0.30, 0.4, 0.30, 0, 3.14, 0]  # Above place station
+WP6 = p[0.30, 0.4, 0.10, 0, 3.14, 0]  # Descend to place
+WP7 = p[0.30, 0.4, 0.30, 0, 3.14, 0]  # Lift after place
+WP8 = p[0.0, 0.0, 0.50, 0, 3.14, 0]   # Safe retreat before returning home
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # Set initial work object (pick station)
+    set_workobject(pick_wo)
+
+    # 1) Move to Home (joint space)
+    movej(home_joint, a=1.2, v=0.20)   # 200 mm/s => 0.20 m/s
+
+    # 2) Above pick station
+    movel(WP1, a=1.2, v=0.20)
+
+    # 3) Descend to pick
+    movel(WP2, a=1.0, v=0.10)
+
+    # 4) Lift up with object
+    movel(WP3, a=1.2, v=0.18)
+
+    # 5) Obstacle avoidance waypoint
+    movel(WP4, a=1.2, v=0.20)
+
+    # Switch work object to place station
+    set_workobject(place_wo)
+
+    # 6) Above place station
+    movel(WP5, a=1.2, v=0.20)
+
+    # 7) Descend to place
+    movel(WP6, a=1.0, v=0.10)
+
+    # 8) Lift after release
+    movel(WP7, a=1.2, v=0.18)
+
+    # 9) Retreat to safe position
+    movel(WP8, a=1.2, v=0.20)
+
+    # Return to Home (joint space)
+    movej(home_joint, a=1.2, v=0.20)
+
+    # Reset work object to base frame
+    set_workobject(p[0,0,0,0,0,0])
+
+    # End of program
+    stop()
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

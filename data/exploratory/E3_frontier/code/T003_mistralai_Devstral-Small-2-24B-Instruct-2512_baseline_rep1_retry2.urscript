@@ -1,0 +1,36 @@
+def pick_and_place():
+    # Home position
+    movej([0, -1.57, 0, -1.57, 0, 0], a=1.4, v=250.0)
+
+    # Approach conveyor pick - above
+    tool_zero_frame_accel = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+    move_l([0.5, -0.2, 0.3, 0, 0, 0], a=1.4, v=250.0, t=0, r=0)
+
+    # Descend to pick
+    move_l([0.5, -0.2, 0.1, 0, 0, 0], a=1.4, v=100.0, t=0, r=0)
+
+    # Lift from conveyor
+    move_l([0.5, -0.2, 0.3, 0, 0, 0], a=1.4, v=200.0, t=0, r=0)
+
+    # Transit to pallet position (0,0)
+    move_l([0.2, 0.2, 0.3, 0, 0, 0], a=1.4, v=280.0, t=0, r=0)
+
+    # Descend to place (0,0)
+    move_l([0.2, 0.2, 0.1, 0, 0, 0], a=1.4, v=100.0, t=0, r=0)
+
+    # Lift from pallet (0,0)
+    move_l([0.2, 0.2, 0.3, 0, 0, 0], a=1.4, v=200.0, t=0, r=0)
+
+    # Transit to pallet position (0,0.4)
+    move_l([0.2, 0.6, 0.3, 0, 0, 0], a=1.4, v=280.0, t=0, r=0)
+
+    # Descend to place (0,0.4)
+    move_l([0.2, 0.6, 0.1, 0, 0, 0], a=1.4, v=100.0, t=0, r=0)
+
+    # Lift from pallet (0,0.4)
+    move_l([0.2, 0.6, 0.3, 0, 0, 0], a=1.4, v=200.0, t=0, r=0)
+
+    # Return to home
+    movej([0, -1.57, 0, -1.57, 0, 0], a=1.4, v=250.0)
+
+pick_and_place()

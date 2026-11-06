@@ -1,0 +1,42 @@
+# Define safety parameters
+set_tool_digital_out(0, true); # Ensure gripper is closed for safety
+set_payload(0.3, [0, 0, 0]); # Set payload
+
+# Define safety zones
+set_safe_distance(0.1); # Set safe distance for robot movements
+set_safe_orientation_limit([1.57, 0, 1.57]); # Limit orientation to ensure camera points downward
+
+# Define TCP speed limits
+set_tcp_speed(150.0); # Set maximum TCP speed
+
+# Define acceleration limits
+set_acceleration([1.4, 1.4, 1.4, 1.4, 1.4, 1.4]); # Set joint acceleration limits
+
+# Define safety_check()
+def safety_check():
+    if not safety_mode():
+        popup("Safety violation detected. Halt the robot.");
+        stop;
+
+# Define waypoints
+waypoints = [
+    [0.2, -0.4, 0.3, -1.8, 1.6, 0], # Home position
+    [0.2, -0.4, 0.1, -1.8, 1.6, 0], # Approach inspection start
+    [0.2, -0.4, 0.15, -1.8, 1.6, 0], # Descend to scan height
+    [0.2, -0.3, 0.15, -1.8, 1.6, 0], # Scan line 1
+    [0.3, -0.3, 0.15, -1.8, 1.6, 0], # Step to scan line 2
+    # Continue defining waypoints for all 10 moves
+];
+
+# Define speeds
+speeds = [150.0, 130.0, 80.0, 50.0, 80.0, 50.0, 80.0, 50.0, 80.0, 50.0];
+
+# Define accelerations
+accelerations = [1.4, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4];
+
+# Execute safety_check() before each move
+for i in range(len(waypoints)):
+    safety_check();
+    move_linear(waypoints[i], speed=speeds[i], acceleration=accelerations[i]);
+
+# End of script

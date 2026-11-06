@@ -1,0 +1,140 @@
+# URScript for UR5e Screw Fastening Assembly (Hybrid Mode)
+# Task: Pick screw from feeder, position over workpiece, and drive screw at 4 fastening points.
+# Safety: ISO 10218:2025 compliant limits (Max TCP 250mm/s, Max Joint Accel 1.4 rad/s^2)
+
+# --- Safety Definitions ---
+
+def validate_waypoint(p):
+    # Validate if waypoint is within workspace boundaries (Confinement)
+    # Boundary: X[-0.8, 0.8], Y[-0.8, 0.8], Z[0.0, 0.8]
+    if (p[0] < -0.8 or p[0] > 0.8 or 
+        p[1] < -0.8 or p[1] > 0.8 or 
+        p[2] < 0.0 or p[2] > 0.8):
+        popup("Waypoint out of safety zone!", "Safety Error", 1, 1)
+        halt
+    end
+end
+
+def safety_check():
+    # Real-time boundary check before critical moves
+    current_pose = get_actual_tcp_pose()
+    if (current_pose[0] < -0.8 or current_pose[0] > 0.8 or 
+        current_pose[1] < -0.8 or current_pose[1] > 0.8 or 
+        current_pose[2] < 0.0 or current_pose[2] > 0.8):
+        popup("Safety Zone Violation! Emergency Stop.", "Critical", 1, 1)
+        stopj(1.0)
+        halt
+    end
+end
+
+thread safety_monitor():
+    # Continuous background safety thread
+    while True:
+        safety_check()
+        sync()
+    end
+end
+
+# --- Setup ---
+
+# Set Payload: 1.0 kg
+set_payload(1.0, [0, 0, 0.05])
+
+# Define Waypoints (Example coordinates)
+pHome = p[0.0, -0.4, 0.4, 0, 3.14159, 0]
+pFeeder_Above = p[0.4, 0.4, 0.3, 0, 3.14159, 0]
+pFeeder_Pick = p[0.4, 0.4, 0.1, 0, 3.14159, 0]
+
+# Fastening Points (4 points)
+pF1_Above = p[-0.2, 0.2, 0.3, 0, 3.14159, 0]
+pF1_Down  = p[-0.2, 0.2, 0.1, 0, 3.14159, 0]
+pF2_Above = p[-0.1, 0.2, 0.3, 0, 3.14159, 0]
+pF2_Down  = p[-0.1, 0.2, 0.1, 0, 3.14159, 0]
+pF3_Above = p[0.0, 0.2, 0.3, 0, 3.14159, 0]
+pF3_Down  = p[0.0, 0.2, 0.1, 0, 3.14159, 0]
+pF4_Above = p[0.1, 0.2, 0.3, 0, 3.14159, 0]
+pF4_Down  = p[0.1, 0.2, 0.1, 0, 3.14159, 0]
+
+# Validate all waypoints before execution
+validate_waypoint(pHome)
+validate_waypoint(pFeeder_Above)
+validate_waypoint(pFeeder_Pick)
+validate_waypoint(pF1_Above)
+validate_waypoint(pF1_Down)
+validate_waypoint(pF2_Above)
+validate_waypoint(pF2_Down)
+validate_waypoint(pF3_Above)
+validate_waypoint(pF3_Down)
+validate_waypoint(pF4_Above)
+validate_waypoint(pF4_Down)
+
+# Start Safety Thread
+thread safety_monitor()
+
+# --- Motion Sequence ---
+# Max Accel: 1.4 rad/s^2, Max Speed: 0.25 m/s
+
+# 1. move_joint: Home, 200.0 mm/s
+movej(pHome, a=1.4, v=0.2, r=0)
+
+# 2. move_linear: Above screw feeder, 200.0 mm/s
+safety_check()
+movel(pFeeder_Above, a=1.4, v=0.2, r=0)
+
+# 3. move_linear: Pick screw, 80.0 mm/s
+safety_check()
+movel(pFeeder_Pick, a=1.0, v=0.08, r=0)
+# Gripper Close (Simulated)
+set_digital_out(0, True)
+sleep(0.5)
+
+# 4. move_linear: Lift from feeder, 180.0 mm/s
+safety_check()
+movel(pFeeder_Above, a=1.4, v=0.18, r=0)
+
+# --- Fastening Sequence (4 Points) ---
+
+# Point 1
+# 5. move_linear: Above fastening point 1, 200.0 mm/s
+safety_check()
+movel(pF1_Above, a=1.4, v=0.2, r=0)
+# Move Down to Fasten
+movel(pF1_Down, a=0.5, v=0.05, r=0)
+# Fasten Action
+set_digital_out(1, True) # Screwdriver On
+sleep(1.0)
+set_digital_out(1, False) # Screwdriver Off
+movel(pF1_Above, a=1.4, v=0.2, r=0)
+
+# Point 2
+safety_check()
+movel(pF2_Above, a=1.4, v=0.2, r=0)
+movel(pF2_Down, a=0.5, v=0.05, r=0)
+set_digital_out(1, True)
+sleep(1.0)
+set_digital_out(1, False)
+movel(pF2_Above, a=1.4, v=0.2, r=0)
+
+# Point 3
+safety_check()
+movel(pF3_Above, a=1.4, v=0.2, r=0)
+movel(pF3_Down, a=0.5, v=0.05, r=0)
+set_digital_out(1, True)
+sleep(1.0)
+set_digital_out(1, False)
+movel(pF3_Above, a=1.4, v=0.2, r=0)
+
+# Point 4
+safety_check()
+movel(pF4_Above, a=1.4, v=0.2, r=0)
+movel(pF4_Down, a=0.5, v=0.05, r=0)
+set_digital_out(1, True)
+sleep(1.0)
+set_digital_out(1, False)
+movel(pF4_Above, a=1.4, v=0.2, r=0)
+
+# Return Home
+movej(pHome, a=1.4, v=0.2, r=0)
+
+# Stop Safety Thread
+kill safety_monitor

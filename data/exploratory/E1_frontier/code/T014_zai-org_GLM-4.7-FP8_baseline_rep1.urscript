@@ -1,0 +1,36 @@
+# Program: Hybrid multi-angle camera inspection (T014)
+# Robot: UR5e
+# Payload: 0.4 kg
+
+# Set payload
+set_payload(0.4, [0.0, 0.0, 0.0])
+
+# Define Home Joint Position
+home_j = [0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Move 1: move_joint to Home
+# Speed: 180.0 mm/s (interpreted as slow joint speed)
+movej(home_j, a=1.0, v=0.5)
+
+# Move 2: move_linear to Top-down view position
+# Speed: 150.0 mm/s
+movel(p[0.35, 0.0, 0.4, 3.14, 0.0, 0.0], a=0.5, v=0.15)
+
+# Move 3: move_linear to Side view position
+# Speed: 120.0 mm/s
+movel(p[0.35, -0.2, 0.2, 1.57, 0.0, 0.0], a=0.5, v=0.12)
+
+# Move 4: move_linear to Angled view position
+# Speed: 120.0 mm/s
+movel(p[0.35, 0.0, 0.25, 2.5, 0.5, 0.0], a=0.5, v=0.12)
+
+# Move 5: move_linear to Retract position
+# Speed: 180.0 mm/s
+movel(p[0.35, 0.0, 0.5, 3.14, 0.0, 0.0], a=0.5, v=0.18)
+
+# Move 6: move_joint back to Home
+# Speed: 180.0 mm/s (interpreted as slow joint speed)
+movej(home_j, a=1.0, v=0.5)
+
+# End of program
+halt

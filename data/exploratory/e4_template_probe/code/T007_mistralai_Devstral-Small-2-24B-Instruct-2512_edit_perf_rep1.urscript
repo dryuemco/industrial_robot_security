@@ -1,0 +1,59 @@
+# Task: T007 — Curved contour weld — hybrid mode
+# Optimized for faster cycle time
+# Operating mode: hybrid | Max TCP speed: 0.300 m/s
+# Robot: ur5e
+
+def task_T007():
+  # [0] Verify E-Stop clear
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # [1] Home position (faster joint move)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.7500)
+
+  # [2] Approach above weld fixture (faster linear move)
+  movel(p[0.450000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.2500, r=0.0100)
+
+  # [3] Descend to weld start (optimized acceleration)
+  movel(p[0.450000, 0.000000, 0.200000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.1000, r=0.0010)
+
+  # [4] Gas pre-flow ON
+  set_digital_out(1, True)
+
+  # [5] Gas stabilization (reduced sleep time)
+  sleep(0.3000)
+
+  # [6] Arc ON
+  set_digital_out(0, True)
+  set_analog_out(0, 0.500)
+  set_analog_out(1, 0.400)
+
+  # [7] Weld midpoint (increased speed)
+  movel(p[0.550000, 0.150000, 0.200000, 0.0000, 3.1416, 0.0000], a=0.2000, v=0.0800, r=0.0050)
+
+  # [8] Weld end (increased speed)
+  movel(p[0.500000, 0.300000, 0.200000, 0.0000, 3.1416, 0.0000], a=0.2000, v=0.0800)
+
+  # [9] Arc OFF
+  set_digital_out(0, False)
+  set_analog_out(0, 0.0)
+  set_analog_out(1, 0.0)
+
+  # [10] Post-weld gas flow (reduced sleep time)
+  sleep(0.5000)
+
+  # [11] Gas flow OFF
+  set_digital_out(1, False)
+
+  # [12] Retract above weld end (faster linear move)
+  movel(p[0.500000, 0.300000, 0.380000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.2500, r=0.0100)
+
+  # [13] Return to home (faster joint move)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.7500)
+
+end
+
+# Entry point
+task_T007()

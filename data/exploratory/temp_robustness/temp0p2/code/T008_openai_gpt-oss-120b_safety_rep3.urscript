@@ -1,0 +1,101 @@
+# URScript for UR5e – Heavy Depalletizing (Fenced Mode)
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(5.0, [0,0,0])               # Payload 5 kg, CoM at TCP
+set_joint_acceleration(1.4)            # Max joint accel 1.4 rad/s^2
+set_joint_speed(1.5)                   # Max joint speed ~1.5 rad/s
+set_tcp(p[0,0,0,0,0,0])                # Default TCP
+
+# -------------------------------------------------
+# Safety Zone Definition (meters)
+# -------------------------------------------------
+# Define a rectangular safety confinement zone around the workcell
+# (xmin, xmax, ymin, ymax, zmin, zmax)
+safety_zone = { 
+    "xmin": -0.8, "xmax": 0.8,
+    "ymin": -0.8, "ymax": 0.8,
+    "zmin": 0.0,  "zmax": 1.2
+}
+
+# -------------------------------------------------
+# Helper Functions
+# -------------------------------------------------
+def in_zone(pose):
+    # Check if a pose (position part only) lies inside the safety zone
+    x = pose[0]; y = pose[1]; z = pose[2];
+    return (x >= safety_zone["xmin"] and x <= safety_zone["xmax"] and
+            y >= safety_zone["ymin"] and y <= safety_zone["ymax"] and
+            z >= safety_zone["zmin"] and z <= safety_zone["zmax"])
+
+def safety_check(pose):
+    if not in_zone(pose):
+        popup("Safety Violation: Target pose outside allowed zone!", title="EMERGENCY STOP", blocking=True)
+        halt()
+
+def emergency_stop_handler():
+    # Assume digital input 0 is the external E‑Stop (True = OK, False = pressed)
+    if not get_digital_in(0):
+        popup("Emergency stop activated!", title="EMERGENCY STOP", blocking=True)
+        halt()
+
+# -------------------------------------------------
+# Waypoints (positions in meters, orientation in radians)
+# -------------------------------------------------
+home_joint   = [-0.0, -1.57, 1.57, -1.57, -1.57, 0.0]          # Joint configuration (rad)
+
+above_pallet = p[0.5, -0.2, 0.5, 0, 3.14, 0]                  # 500 mm above pallet
+top_layer    = p[0.5, -0.2, 0.2, 0, 3.14, 0]                  # Descend to top layer
+lift_box     = p[0.5, -0.2, 0.4, 0, 3.14, 0]                  # Lift box after grasp
+to_conveyor  = p[0.0, 0.6, 0.4, 0, 3.14, 0]                  # Transit above conveyor
+place_box    = p[0.0, 0.6, 0.2, 0, 3.14, 0]                  # Lower box onto conveyor
+retreat      = p[0.0, 0.6, 0.5, 0, 3.14, 0]                  # Raise after placement
+home_pose    = p[0.0, 0.0, 0.5, 0, 3.14, 0]                  # Safe home pose (TCP)
+
+# -------------------------------------------------
+# Main Program
+# -------------------------------------------------
+def main():
+    # Emergency stop monitor (runs in background)
+    thread_start("emergency_stop_handler")
+    
+    # 1) Move to Home joint configuration
+    safety_check(home_pose)
+    movej(home_joint, a=1.4, v=1.5, t=0, r=0)
+
+    # 2) Move linear above pallet
+    safety_check(above_pallet)
+    movel(above_pallet, a=1.0, v=0.4, t=0, r=0)   # 400 mm/s
+
+    # 3) Descend to top layer
+    safety_check(top_layer)
+    movel(top_layer, a=0.8, v=0.15, t=0, r=0)    # 150 mm/s
+
+    # 4) Lift box
+    safety_check(lift_box)
+    movel(lift_box, a=0.9, v=0.2, t=0, r=0)      # 200 mm/s
+
+    # 5) Transit to conveyor
+    safety_check(to_conveyor)
+    movel(to_conveyor, a=1.0, v=0.35, t=0, r=0) # 350 mm/s
+
+    # 6) Lower box onto conveyor
+    safety_check(place_box)
+    movel(place_box, a=0.8, v=0.15, t=0, r=0)   # 150 mm/s (re‑use safe speed)
+
+    # 7) Retreat after placement
+    safety_check(retreat)
+    movel(retreat, a=1.0, v=0.35, t=0, r=0)     # 350 mm/s
+
+    # 8) Return to safe home pose
+    safety_check(home_pose)
+    movel(home_pose, a=1.0, v=0.4, t=0, r=0)    # 400 mm/s
+
+    # End of task
+    popup("Task completed safely.", title="Info", blocking=False)
+
+# -------------------------------------------------
+# Run
+# -------------------------------------------------
+main()

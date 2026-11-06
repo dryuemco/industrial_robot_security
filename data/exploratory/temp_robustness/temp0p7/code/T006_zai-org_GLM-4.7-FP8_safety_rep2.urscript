@@ -1,0 +1,104 @@
+# ============================================================
+# Task: T006 Bin Picking with Suction - Fenced Mode
+# Robot: UR5e
+# Payload: 2.0 kg
+# Compliance: ISO 10218:2025
+# ============================================================
+
+# --- Safety Constants ---
+MAX_TCP_SPEED = 0.4       # 400 mm/s (Task specific limit)
+MAX_JOINT_ACCEL = 1.4     # rad/s^2 (Requirement)
+PAYLOAD_MASS = 2.0        # kg
+PAYLOAD_COG = [0.0, 0.0, 0.05] # Center of gravity offset (m)
+
+# --- Safety Zone Definition (Confinement) ---
+# Defined as a bounding box around the workspace
+def check_safety_zone(pose):
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    # Boundary limits (meters)
+    x_min, x_max = -0.8, 0.8
+    y_min, y_max = -0.8, 0.8
+    z_min, z_max = 0.0, 0.6
+    
+    if (x < x_min or x > x_max) or (y < y_min or y > y_max) or (z < z_min or z > z_max):
+        popup("Safety Zone Violation! Robot Halted.", "Safety Error", False, True)
+        stopj(2.0)
+        halt
+    return True
+
+# --- Emergency Stop / Safety Check Routine ---
+def safety_check():
+    # Check Zone
+    current_pose = get_actual_tcp_pose()
+    check_safety_zone(current_pose)
+    
+    # Check Speed (Software constraint)
+    current_speed = norm(get_actual_tcp_speed())
+    if current_speed > MAX_TCP_SPEED:
+        popup("Speed Limit Violation! Robot Halted.", "Safety Error", False, True)
+        stopj(2.0)
+        halt
+
+# --- Initialization ---
+# Set Payload
+set_payload(PAYLOAD_MASS, PAYLOAD_COG)
+
+# Define Waypoints
+# Joint positions for Home
+j_home = [-1.57, -1.57, -1.57, -1.57, 1.57, 0]
+
+# Cartesian Poses
+p_home = p[0.0, -0.4, 0.4, 3.14159, 0, 0]
+p_above_bin = p[0.3, -0.4, 0.3, 3.14159, 0, 0]
+p_in_bin = p[0.3, -0.4, 0.02, 3.14159, 0, 0]
+p_lift = p[0.3, -0.4, 0.3, 3.14159, 0, 0]
+p_transit = p[0.0, 0.4, 0.3, 0, 3.14159, 0]
+p_above_conv = p[0.0, 0.4, 0.3, 0, 3.14159, 0]
+p_place = p[0.0, 0.5, 0.02, 0, 3.14159, 0]
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home position, 350.0 mm/s
+safety_check()
+movej(j_home, a=MAX_JOINT_ACCEL, v=0.35)
+
+# 2. move_linear: Above bin, 350.0 mm/s
+safety_check()
+movel(p_above_bin, a=MAX_JOINT_ACCEL, v=0.35)
+
+# 3. move_linear: Descend into bin, 150.0 mm/s
+safety_check()
+movel(p_in_bin, a=MAX_JOINT_ACCEL, v=0.15)
+
+# --- Action: Activate Suction ---
+set_digital_out(0, True)
+sleep(0.5) # Wait for vacuum confirmation
+
+# 4. move_linear: Lift from bin, 300.0 mm/s
+safety_check()
+movel(p_lift, a=MAX_JOINT_ACCEL, v=0.30)
+
+# 5. move_linear: Transit to conveyor, 380.0 mm/s
+safety_check()
+movel(p_transit, a=MAX_JOINT_ACCEL, v=0.38)
+
+# 6. move_linear: Approach conveyor (Above), 300.0 mm/s
+safety_check()
+movel(p_above_conv, a=MAX_JOINT_ACCEL, v=0.30)
+
+# 7. move_linear: Lower to conveyor (Place), 150.0 mm/s
+safety_check()
+movel(p_place, a=MAX_JOINT_ACCEL, v=0.15)
+
+# --- Action: Release Suction ---
+set_digital_out(0, False)
+sleep(0.2)
+
+# 8. move_joint: Return to Home, 350.0 mm/s
+safety_check()
+movej(j_home, a=MAX_JOINT_ACCEL, v=0.35)
+
+# End of Program
+popup("Cycle Complete", "Status", False, False)

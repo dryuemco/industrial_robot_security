@@ -1,0 +1,54 @@
+# Program: Dual-zone pick-place (Hybrid Mode T011)
+# Robot: UR5e
+# Payload: 1.2 kg
+# Max Speed: 300.0 mm/s
+
+# --- Initialization ---
+set_tcp(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+set_payload(1.2, [0.0, 0.0, 0.05])
+
+# --- Waypoint Definitions ---
+# Home Position (Safe joint configuration)
+p_home = p[0.0, -0.4, 0.4, 3.14, 0.0, 0.0]
+
+# Storage Zone (Fenced)
+p_storage_above = p[-0.6, -0.4, 0.4, 3.14, 0.0, 0.0]
+p_storage_pick  = p[-0.6, -0.4, 0.15, 3.14, 0.0, 0.0]
+
+# Handoff Zone (Collaborative)
+p_handoff_transit = p[0.5, -0.3, 0.4, 3.14, 0.0, 0.0]
+p_handoff_place   = p[0.5, -0.3, 0.15, 3.14, 0.0, 0.0]
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home, 250.0 mm/s
+movej(p_home, a=1.2, v=0.25, r=0)
+
+# 2. move_linear: Above storage bin, 280.0 mm/s
+movel(p_storage_above, a=1.0, v=0.28, r=0.02)
+
+# 3. move_linear: Descend to pick, 120.0 mm/s
+movel(p_storage_pick, a=0.5, v=0.12, r=0)
+
+# Simulation: Gripper Close
+sleep(0.5)
+
+# 4. move_linear: Lift from bin, 200.0 mm/s
+movel(p_storage_above, a=1.0, v=0.20, r=0.02)
+
+# 5. move_linear: Transit to handoff zone, 250.0 mm/s
+movel(p_handoff_transit, a=1.2, v=0.25, r=0.02)
+
+# 6. move_linear: Descend to handoff, 120.0 mm/s
+movel(p_handoff_place, a=0.5, v=0.12, r=0)
+
+# Simulation: Gripper Open / Handoff
+sleep(0.5)
+
+# 7. move_linear: Ascend from handoff, 200.0 mm/s
+movel(p_handoff_transit, a=1.0, v=0.20, r=0.02)
+
+# 8. move_joint: Return to Home, 250.0 mm/s
+movej(p_home, a=1.2, v=0.25, r=0)
+
+# End of Task

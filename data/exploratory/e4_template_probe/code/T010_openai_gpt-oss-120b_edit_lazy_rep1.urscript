@@ -1,0 +1,26 @@
+def task_T010():
+    # --------------------------------------------------------
+    # Global configuration
+    # --------------------------------------------------------
+    set_payload(1.0, [0,0,0])               # payload + centre of gravity
+    set_tcp(p[0,0,0,0,0,0])                 # use default tool centre point
+    set_speed_slider(1.0)                  # ensure full speed scaling
+    set_digital_out(0, False)              # screwdriver OFF
+    set_digital_out(4, False)              # magnet OFF
+
+    # --------------------------------------------------------
+    # Safety & emergency stop check
+    # --------------------------------------------------------
+    if get_digital_in(0):                  # E‑Stop input (normally DI0)
+        popup("E‑Stop active — aborting program.", error=True)
+        halt
+    end
+
+def set_screwdriver(state):
+        # state: True = ON, False = OFF
+        set_digital_out(0, state)
+    end
+
+def set_magnet(state):
+        set_digital_out(4, state)
+    end

@@ -1,0 +1,124 @@
+# ==============================================================================
+# URScript: Heavy Depalletizing (Fenced Mode)
+# Robot: UR5e
+# Payload: 5.0 kg
+# Task: Move boxes from pallet to conveyor
+# Compliance: ISO 10218:2025 (Safety checks, boundary limits, accel limits)
+# ==============================================================================
+
+# --- Configuration & Setup ---
+set_payload(5.0, [0.0, 0.0, 0.05])  # 5.0kg mass, CoM offset 50mm
+
+# --- Safety Limits ---
+# Max Joint Acceleration per safety requirement (1.4 rad/s^2)
+MAX_JOINT_ACC = 1.4
+# Max TCP Speed per task requirement (450 mm/s = 0.45 m/s)
+MAX_TCP_SPEED = 0.45
+
+# --- Safety Zone Definition (Confinement) ---
+# Defines a cubic working zone around the pallet and conveyor
+ZONE_MIN_X = -0.5
+ZONE_MAX_X = 0.9
+ZONE_MIN_Y = -0.8
+ZONE_MAX_Y = 0.8
+ZONE_MIN_Z = 0.0
+ZONE_MAX_Z = 1.2
+
+def safety_check():
+    # Check if TCP is within defined boundaries
+    current_pose = get_actual_tcp_pose()
+    x = current_pose[0]
+    y = current_pose[1]
+    z = current_pose[2]
+    
+    violation = False
+    
+    if (x < ZONE_MIN_X) or (x > ZONE_MAX_X):
+        violation = True
+    end
+    if (y < ZONE_MIN_Y) or (y > ZONE_MAX_Y):
+        violation = True
+    end
+    if (z < ZONE_MIN_Z) or (z > ZONE_MAX_Z):
+        violation = True
+    end
+
+    if violation:
+        popup("SAFETY ZONE VIOLATION DETECTED", "Emergency Stop", 1, True)
+        stopj(1.0)
+        halt
+    end
+end
+
+def emergency_stop_handler():
+    # Simulates checking a safety input (e.g., E-Stop button or Gate)
+    # Assumes digital input 0 is the safety circuit signal (Active High)
+    if get_digital_in(0) == True:
+        popup("EMERGENCY STOP TRIGGERED", "Safety Fault", 1, True)
+        stopj(1.0)
+        halt
+    end
+end
+
+def safe_move_joint(target_joints, speed):
+    emergency_stop_handler()
+    safety_check()
+    movej(target_joints, a=MAX_JOINT_ACC, v=speed, r=0.0)
+end
+
+def safe_move_linear(target_pose, speed, accel=1.0):
+    emergency_stop_handler()
+    safety_check()
+    # accel parameter in movel is tool accel (m/s^2). 
+    # Kept conservative to respect joint limits indirectly.
+    movel(target_pose, a=accel, v=speed, r=0.0)
+end
+
+# --- Waypoint Definitions ---
+# Joint Space
+j_home = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Cartesian Space (p[x, y, z, rx, ry, rz])
+p_above_pallet = p[0.35, -0.35, 0.35, 0, 3.14, 0]
+p_pick_layer   = p[0.35, -0.35, 0.05, 0, 3.14, 0] # Top layer
+p_lift_box     = p[0.35, -0.35, 0.20, 0, 3.14, 0]
+p_transit_mid  = p[0.50, 0.00, 0.35, 0, 3.14, 0]
+p_above_conv   = p[0.70, 0.40, 0.35, 0, 3.14, 0]
+p_place_conv   = p[0.70, 0.40, 0.05, 0, 3.14, 0]
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home, 400.0 mm/s
+safe_move_joint(j_home, 0.4)
+
+# 2. move_linear: Above pallet, 400.0 mm/s
+safe_move_linear(p_above_pallet, 0.4)
+
+# 3. move_linear: Descend to top layer, 150.0 mm/s
+safe_move_linear(p_pick_layer, 0.15)
+
+# Action: Close Gripper (Simulated)
+set_digital_out(1, True)
+sleep(0.5)
+
+# 4. move_linear: Lift box, 200.0 mm/s
+safe_move_linear(p_lift_box, 0.2)
+
+# 5. move_linear: Transit to conveyor, 350.0 mm/s
+safe_move_linear(p_transit_mid, 0.35)
+
+# 6. move_linear: Above Conveyor (Arrive), 350.0 mm/s
+safe_move_linear(p_above_conv, 0.35)
+
+# 7. move_linear: Descend to Conveyor (Place), 150.0 mm/s
+safe_move_linear(p_place_conv, 0.15)
+
+# Action: Open Gripper (Simulated)
+set_digital_out(1, False)
+sleep(0.5)
+
+# 8. move_joint: Return to Home, 400.0 mm/s
+safe_move_linear(p_above_conv, 0.2) # Small retract before joint move
+safe_move_joint(j_home, 0.4)
+
+textmsg("Depalletizing Sequence Completed Successfully")

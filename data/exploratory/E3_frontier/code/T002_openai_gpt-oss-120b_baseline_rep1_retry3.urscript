@@ -1,0 +1,58 @@
+# URScript for UR5e – Linear weld path in fenced mode (T002)
+
+# -------------------------------------------------
+# Safety and configuration
+# -------------------------------------------------
+set_fence_mode(True)                     # Enable fenced (restricted) mode
+set_payload(3.0, [0,0,0.1])               # Payload: 3 kg, CoM 100 mm along Z
+set_tcp_speed(0.5)                       # Max TCP speed 500 mm/s (0.5 m/s)
+
+# Define safety zones (confinement and exclusion)
+# Empty lists indicate no additional zones; placeholders can be filled as needed.
+confinement_zone = []    # e.g., [[x1,y1,z1,rx,ry,rz], [x2,y2,z2,rx,ry,rz], ...]
+exclusion_zone  = []    # e.g., [[x1,y1,z1,rx,ry,rz], [x2,y2,z2,rx,ry,rz], ...]
+set_safety_zone(confinement_zone, exclusion_zone)
+
+# -------------------------------------------------
+# Poses
+# -------------------------------------------------
+# Home joint configuration (example values)
+home_joints = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Weld start (above) pose – 100 mm above the seam start point
+pose_start_above = p[0.5, 0.0, 0.3, 0, 3.14, 0]   # Adjust XYZ as required
+
+# Weld start (contact) pose – at the seam start point
+pose_start = p[0.5, 0.0, 0.2, 0, 3.14, 0]       # Adjust XYZ as required
+
+# Weld end (contact) pose – 300 mm along X from start
+pose_end = p[0.8, 0.0, 0.2, 0, 3.14, 0]         # Adjust XYZ as required
+
+# Weld end (above) pose – 100 mm above the seam end point
+pose_end_above = p[0.8, 0.0, 0.3, 0, 3.14, 0]   # Adjust XYZ as required
+
+# Safe pose after welding (optional)
+safe_pose = p[0.4, -0.4, 0.5, 0, 3.14, 0]       # Adjust XYZ as required
+
+# -------------------------------------------------
+# Motion sequence
+# -------------------------------------------------
+# 1. Move to home position
+movej(home_joints, a=1.2, v=0.3)   # 300 mm/s = 0.3 m/s
+
+# 2. Approach above weld start
+movel(pose_start_above, a=1.2, v=0.25)   # 250 mm/s = 0.25 m/s
+
+# 3. Descend to weld start position
+movel(pose_start, a=1.2, v=0.1)          # 100 mm/s = 0.1 m/s
+
+# 4. Weld seam – linear 300 mm path
+movel(pose_end, a=1.2, v=0.05)           # 50 mm/s = 0.05 m/s
+
+# 5. Retract above weld end
+movel(pose_end_above, a=1.2, v=0.2)      # 200 mm/s = 0.2 m/s
+
+# 6. Move to safe pose (post‑weld)
+movel(safe_pose, a=1.2, v=0.3)           # 300 mm/s = 0.3 m/s
+
+# End of program

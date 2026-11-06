@@ -1,0 +1,135 @@
+# ============================================================
+# URScript for UR5e: Bin Picking with Suction (Fenced Mode)
+# Task T006: High-speed single pick-place cycle
+# ISO 10218:2025 Compliance enabled
+# ============================================================
+
+# --- Configuration & Constants ---
+global max_tcp_speed = 0.400       # 400 mm/s in m/s
+global max_joint_accel = 1.4       # 1.4 rad/s^2
+global payload_mass = 2.0          # 2.0 kg
+global gripper_io = 0              # Digital Output for suction
+
+# Safety Zone Boundaries (Meters) - Confinement Box
+global safe_x_min = -0.8
+global safe_x_max = 0.8
+global safe_y_min = -0.8
+global safe_y_max = 0.8
+global safe_z_min = 0.0
+global safe_z_max = 1.2
+
+# --- Waypoint Definitions (Placeholders) ---
+# Home Position
+p_home = [-0.12, -0.43, 0.45, 2.21, -2.12, -0.08]
+
+# Bin Area
+p_above_bin = [0.4, -0.2, 0.35, 2.21, -2.12, -0.08]
+p_pick =      [0.4, -0.2, 0.10, 2.21, -2.12, -0.08] # Descend into bin
+
+# Conveyor Area
+p_above_conv = [0.4, 0.5, 0.35, 2.21, -2.12, -0.08]
+p_place =     [0.4, 0.5, 0.15, 2.21, -2.12, -0.08] # Descend to conveyor
+
+# --- Safety Functions ---
+
+def safety_check():
+    # Check global speed limits
+    current_tcp_speed = speed_scaling()
+    if (current_tcp_speed > 1.1): # 10% tolerance buffer
+        popup("Safety Violation: Speed limit exceeded")
+        stopj(2.0)
+        halt
+    end
+    
+    # Check robot mode (ensure it's not in a fault state)
+    if (robot_mode() < 3):
+        popup("Safety Violation: Robot not ready")
+        halt
+    end
+end
+
+def check_boundary(pose):
+    # Validate if waypoint is within defined safety zone
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    
+    if (x < safe_x_min or x > safe_x_max or y < safe_y_min or y > safe_y_max or z < safe_z_min or z > safe_z_max):
+        popup("Safety Violation: Waypoint outside confinement zone")
+        halt
+    end
+end
+
+# --- Emergency Stop Handler Thread ---
+thread emergency_handler():
+    while True:
+        if (get_digital_in(1)): # Assuming external E-stop signal on DI 1
+            popup("EMERGENCY STOP TRIGGERED")
+            stopj(5.0)
+            halt
+        end
+        sync()
+    end
+end
+
+# --- Main Program ---
+
+# 1. Initialization
+set_payload(payload_mass, [0, 0, 0])
+set_gravity([0, 0, 9.82])
+
+# Start Safety Thread
+thread_emerg = run emergency_handler()
+
+# 2. Validate Waypoints against Safety Zone
+check_boundary(p_home)
+check_boundary(p_above_bin)
+check_boundary(p_pick)
+check_boundary(p_above_conv)
+check_boundary(p_place)
+
+# 3. Execute Motion Sequence
+safety_check()
+
+# Move 1: move_joint: Home position, 350.0 mm/s
+movej(p_home, a=max_joint_accel, v=0.35)
+
+# Move 2: move_linear: Above bin, 350.0 mm/s
+safety_check()
+movel(p_above_bin, a=max_joint_accel, v=0.35)
+
+# Move 3: move_linear: Descend into bin, 150.0 mm/s
+safety_check()
+movel(p_pick, a=max_joint_accel, v=0.15)
+
+# Activate Suction
+set_digital_out(gripper_io, True)
+sleep(0.5) # Wait for vacuum to build
+
+# Move 4: move_linear: Lift from bin, 300.0 mm/s
+safety_check()
+movel(p_above_bin, a=max_joint_accel, v=0.30)
+
+# Move 5: move_linear: Transit to conveyor, 380.0 mm/s
+safety_check()
+movel(p_above_conv, a=max_joint_accel, v=0.38)
+
+# Move 6: move_linear: Descend to conveyor, 150.0 mm/s
+safety_check()
+movel(p_place, a=max_joint_accel, v=0.15)
+
+# Deactivate Suction
+set_digital_out(gripper_io, False)
+sleep(0.2) # Wait for release
+
+# Move 7: move_linear: Lift from conveyor, 300.0 mm/s
+safety_check()
+movel(p_above_conv, a=max_joint_accel, v=0.30)
+
+# Move 8: move_joint: Return Home, 350.0 mm/s
+safety_check()
+movej(p_home, a=max_joint_accel, v=0.35)
+
+# Cleanup
+kill thread_emerg
+popup("Cycle Complete: Bin Picking Finished")

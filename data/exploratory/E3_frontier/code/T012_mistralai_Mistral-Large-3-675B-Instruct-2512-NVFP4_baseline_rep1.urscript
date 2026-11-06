@@ -1,0 +1,44 @@
+def collaborative_spot_welding():
+  # Set payload
+  set_payload(2.5)
+
+  # Safety settings
+  set_tcp([0, 0, 0.1, 0, 0, 0])
+  set_safety_mode("reduced")
+  set_speed(250.0)
+
+  # Define waypoints (example positions - adjust to your actual setup)
+  home_pose = p[0.0, -0.5, 0.5, 0, 3.14, 0]
+  approach1 = p[0.2, -0.3, 0.3, 0, 3.14, 0]
+  spot1 = p[0.2, -0.3, 0.1, 0, 3.14, 0]
+  lift1 = p[0.2, -0.3, 0.2, 0, 3.14, 0]
+  approach2 = p[0.3, -0.2, 0.3, 0, 3.14, 0]
+  spot2 = p[0.3, -0.2, 0.1, 0, 3.14, 0]
+  lift2 = p[0.3, -0.2, 0.2, 0, 3.14, 0]
+  approach3 = p[0.1, -0.4, 0.3, 0, 3.14, 0]
+  spot3 = p[0.1, -0.4, 0.1, 0, 3.14, 0]
+
+  # Motion sequence
+  movej(home_pose, a=1.2, v=1.047)  # 200 mm/s ≈ 1.047 rad/s
+  movel(approach1, a=1.2, v=0.2)    # 200 mm/s
+  movel(spot1, a=0.5, v=0.08)       # 80 mm/s
+  # Weld activation (simulated)
+  textmsg("Welding at spot 1")
+  sleep(1.0)
+  movel(lift1, a=0.8, v=0.15)       # 150 mm/s
+  movel(approach2, a=1.2, v=0.2)    # 200 mm/s
+  movel(spot2, a=0.5, v=0.08)       # 80 mm/s
+  # Weld activation
+  textmsg("Welding at spot 2")
+  sleep(1.0)
+  movel(lift2, a=0.8, v=0.15)       # 150 mm/s
+  movel(approach3, a=1.2, v=0.2)    # 200 mm/s
+  movel(spot3, a=0.5, v=0.08)       # 80 mm/s
+  # Weld activation
+  textmsg("Welding at spot 3")
+  sleep(1.0)
+  movel(home_pose, a=1.2, v=0.2)    # Return to home
+
+  # Reset safety
+  set_safety_mode("normal")
+end

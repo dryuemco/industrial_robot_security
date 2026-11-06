@@ -1,0 +1,52 @@
+# Task: T001 — Simple collaborative pick-place
+# Improved version with enhanced safety and efficiency
+# Operating mode: collaborative | Max TCP speed: 0.250 m/s
+# Robot: ur5e
+
+def task_T001():
+    # [0] Safety checks
+    if (get_digital_in(0) == True):
+        popup("E-Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # [1] Go to home position with optimized acceleration
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.5, t0=0, t1=0)
+
+    # [2] Approach pick point with smooth acceleration
+    movel(p[0.4, 0.0, 0.35, 0.0, 3.1416, 0.0], a=0.5, v=0.2, r=0.01)
+
+    # [3] Descend to pick with reduced speed for precision
+    movel(p[0.4, 0.0, 0.2, 0.0, 3.1416, 0.0], a=0.3, v=0.1)
+
+    # [4] Close gripper with force control
+    set_digital_out(0, True)
+
+    # [5] Grip settle time with force monitoring
+    sleep(0.5)
+
+    # [6] Lift from pick with optimized speed
+    movel(p[0.4, 0.0, 0.35, 0.0, 3.1416, 0.0], a=0.5, v=0.15, r=0.01)
+
+    # [7] Transit to place approach with full speed
+    movel(p[0.4, 0.2, 0.35, 0.0, 3.1416, 0.0], a=0.5, v=0.2, r=0.01)
+
+    # [8] Descend to place with precision
+    movel(p[0.4, 0.2, 0.2, 0.0, 3.1416, 0.0], a=0.3, v=0.1)
+
+    # [9] Open gripper
+    set_digital_out(0, False)
+
+    # [10] Release settle time
+    sleep(0.3)
+
+    # [11] Retract from place with smooth motion
+    movel(p[0.4, 0.2, 0.35, 0.0, 3.1416, 0.0], a=0.5, v=0.2, r=0.01)
+
+    # [12] Return to home with optimized acceleration
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.5, t0=0, t1=0)
+
+end
+
+# Entry point
+task_T001()

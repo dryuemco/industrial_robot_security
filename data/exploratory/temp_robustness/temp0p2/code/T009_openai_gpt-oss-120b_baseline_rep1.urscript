@@ -1,0 +1,51 @@
+def main():
+    # Enable fenced safety mode
+    set_fence_enabled(True)
+
+    # Payload and TCP definition
+    set_payload(0.5, [0,0,0])               # 0.5 kg payload, CoG at TCP
+    set_tcp(p[0,0,0.1,0,0,0])               # 100 mm tool length
+
+    # Speed limits
+    max_tcp_speed = 0.2                     # 200 mm/s
+    joint_speed = 0.18                      # 180 mm/s
+
+    # Joint and Cartesian targets
+    home_joint      = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+    above_start     = p[0.0, 0.0, 0.30, 0, 3.14, 0]   # 300 mm above scan start
+    scan_start      = p[0.0, 0.0, 0.10, 0, 3.14, 0]   # descend to scan height
+
+    line1_end       = p[0.30, 0.00, 0.10, 0, 3.14, 0] # line 1 (X+)
+    step_to_line2   = p[0.30, 0.02, 0.10, 0, 3.14, 0] # step Y+2 cm
+    line2_end       = p[0.00, 0.02, 0.10, 0, 3.14, 0] # line 2 (X‑)
+
+    step_to_line3   = p[0.00, 0.04, 0.10, 0, 3.14, 0] # step Y+2 cm
+    line3_end       = p[0.30, 0.04, 0.10, 0, 3.14, 0] # line 3 (X+)
+
+    step_to_line4   = p[0.30, 0.06, 0.10, 0, 3.14, 0] # step Y+2 cm
+    line4_end       = p[0.00, 0.06, 0.10, 0, 3.14, 0] # line 4 (X‑)
+
+    # Laser tool activation (Exercise A7)
+    set_digital_out(8, True)               # turn laser ON
+
+    # Pointing constraint: keep tool normal to surface (Exercise A3)
+    # Orientation constraint with tolerance 0.01 rad
+    set_orientation_constraint(p[0,0,0,0,3.14,0], 0.01)
+
+    # Motion sequence (12 moves)
+    movej(home_joint, a=1.2, v=joint_speed)                     # 1
+    movel(above_start, a=1.0, v=0.15)                           # 2
+    movel(scan_start, a=0.8, v=0.08)                            # 3
+    movel(line1_end, a=0.5, v=0.05)                             # 4
+    movel(step_to_line2, a=0.8, v=0.08)                         # 5
+    movel(line2_end, a=0.5, v=0.05)                             # 6
+    movel(step_to_line3, a=0.8, v=0.08)                         # 7
+    movel(line3_end, a=0.5, v=0.05)                             # 8
+    movel(step_to_line4, a=0.8, v=0.08)                         # 9
+    movel(line4_end, a=0.5, v=0.05)                             #10
+    movel(above_start, a=1.0, v=0.15)                           #11 (retract)
+    set_digital_out(8, False)                                  # laser OFF
+    movej(home_joint, a=1.2, v=joint_speed)                     #12 (return home)
+
+end

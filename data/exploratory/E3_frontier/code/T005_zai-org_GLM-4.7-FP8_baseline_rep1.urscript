@@ -1,0 +1,83 @@
+# Visual Inspection Scan - Collaborative Mode (T005)
+# Robot: UR5e
+# Payload: 0.3 kg
+# Pattern: Raster (3 lines) over 200x200mm area
+# Constraints: Max speed 150mm/s, Camera pointing down
+
+def inspection_scan():
+  # Set payload (mass, center of gravity)
+  set_payload(0.3, [0, 0, 0.05])
+  
+  # Define TCP (Tool Center Point) for camera
+  # Assuming camera is mounted pointing down, offset by 120mm from flange
+  set_tcp(p[0, 0, 0.12, 0, 0, 0])
+
+  # Define Orientation: Pointing strictly downward (Rotated PI around Y axis)
+  # rx=0, ry=3.14159, rz=0
+  rot_down = [0, 3.14159, 0]
+
+  # Define Positions (Base Frame)
+  # Part Center: x=400mm, y=0mm, z=0mm
+  # Scan Height: 150mm above part (z=150mm)
+  # Area: 200x200mm (X: 300-500mm, Y: -100 to 100mm)
+  
+  # 1. Home Position
+  pose_home = p[0.0, -0.4, 0.5, 0, 3.14159, 0]
+  
+  # 2. Approach Position (Above surface)
+  pose_approach = p[0.4, 0.0, 0.3, rot_down[0], rot_down[1], rot_down[2]]
+  
+  # 3. Scan Start (Line 1) - X=300mm, Y=-100mm
+  pose_l1_start = p[0.3, -0.1, 0.15, rot_down[0], rot_down[1], rot_down[2]]
+  
+  # 4. Scan End (Line 1) - X=300mm, Y=100mm
+  pose_l1_end = p[0.3, 0.1, 0.15, rot_down[0], rot_down[1], rot_down[2]]
+  
+  # 5. Step to Line 2 Start - X=400mm, Y=100mm (Zigzag)
+  pose_l2_start = p[0.4, 0.1, 0.15, rot_down[0], rot_down[1], rot_down[2]]
+  
+  # 6. Scan End (Line 2) - X=400mm, Y=-100mm
+  pose_l2_end = p[0.4, -0.1, 0.15, rot_down[0], rot_down[1], rot_down[2]]
+  
+  # 7. Step to Line 3 Start - X=500mm, Y=-100mm
+  pose_l3_start = p[0.5, -0.1, 0.15, rot_down[0], rot_down[1], rot_down[2]]
+  
+  # 8. Scan End (Line 3) - X=500mm, Y=100mm
+  pose_l3_end = p[0.5, 0.1, 0.15, rot_down[0], rot_down[1], rot_down[2]]
+
+  # --- Motion Sequence ---
+  
+  # Move 1: Home position, 150.0 mm/s
+  movej(pose_home, a=0.5, v=0.15)
+  
+  # Move 2: Approach inspection start, 130.0 mm/s
+  movel(pose_approach, a=0.5, v=0.13)
+  
+  # Move 3: Descend to scan height, 80.0 mm/s
+  movel(pose_l1_start, a=0.3, v=0.08)
+  
+  # Move 4: Scan line 1 (Y sweep), 50.0 mm/s
+  movel(pose_l1_end, a=0.2, v=0.05)
+  
+  # Move 5: Step to scan line 2 (+X), 80.0 mm/s
+  movel(pose_l2_start, a=0.3, v=0.08)
+  
+  # Move 6: Scan line 2 (Y sweep), 50.0 mm/s
+  movel(pose_l2_end, a=0.2, v=0.05)
+  
+  # Move 7: Step to scan line 3 (+X), 80.0 mm/s
+  movel(pose_l3_start, a=0.3, v=0.08)
+  
+  # Move 8: Scan line 3 (Y sweep), 50.0 mm/s
+  movel(pose_l3_end, a=0.2, v=0.05)
+  
+  # Move 9: Retract to approach height, 80.0 mm/s
+  movel(pose_approach, a=0.3, v=0.08)
+  
+  # Move 10: Return to Home, 150.0 mm/s
+  movej(pose_home, a=0.5, v=0.15)
+  
+end
+
+# Run the program
+inspection_scan()

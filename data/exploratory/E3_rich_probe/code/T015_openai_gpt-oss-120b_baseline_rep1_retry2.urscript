@@ -1,0 +1,107 @@
+# URScript program for laser marking in fenced mode (T015)
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(0.6, [0,0,0])          # Payload in kg, center of mass at TCP
+set_tcp_speed(0.4)                # Max TCP speed in m/s (400 mm/s)
+set_fence_mode(True)              # Enable fenced mode for safety
+
+# -------------------------------------------------
+# Positions (in meters)
+# -------------------------------------------------
+home = p[0.0, -0.5, 0.5, 0, 3.14, 0]
+
+above_surface = p[0.2, 0.0, 0.12, 0, 3.14, 0]   # 120 mm above metal surface
+descend = p[0.2, 0.0, 0.02, 0, 3.14, 0]        # Marking height (20 mm above surface)
+
+# Define line start/end points for three lines (example offsets)
+line1_start = descend
+line1_end   = p[0.3, 0.0, 0.02, 0, 3.14, 0]
+
+line2_start = p[0.2, 0.02, 0.02, 0, 3.14, 0]
+line2_end   = p[0.3, 0.02, 0.02, 0, 3.14, 0]
+
+line3_start = p[0.2, -0.02, 0.02, 0, 3.14, 0]
+line3_end   = p[0.3, -0.02, 0.02, 0, 3.14, 0]
+
+# Additional placeholder moves (5 more) – using small offsets for illustration
+extra1 = p[0.35, 0.0, 0.02, 0, 3.14, 0]
+extra2 = p[0.35, 0.02, 0.02, 0, 3.14, 0]
+extra3 = p[0.35, -0.02, 0.02, 0, 3.14, 0]
+extra4 = p[0.4, 0.0, 0.02, 0, 3.14, 0]
+extra5 = p[0.4, 0.02, 0.02, 0, 3.14, 0]
+
+# -------------------------------------------------
+# Helper functions with error handling
+# -------------------------------------------------
+def safe_movej(target, speed):
+    try:
+        movej(target, a=1.2, v=speed, t=0, r=0)
+    except err:
+        textmsg("movej failed: " + err)
+        halt()
+
+def safe_movel(target, speed):
+    try:
+        movel(target, a=1.2, v=speed, t=0, r=0)
+    except err:
+        textmsg("movel failed: " + err)
+        halt()
+
+def safe_set_digital_out(port, value):
+    try:
+        set_digital_out(port, value)
+    except err:
+        textmsg("set_digital_out failed on port " + str(port) + ": " + err)
+        halt()
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # 1. Move to Home position (joint move, 350 mm/s)
+    safe_movej(home, 0.35)
+
+    # 2. Move above marking surface (linear, 300 mm/s)
+    safe_movel(above_surface, 0.30)
+
+    # 3. Descend to marking height (linear, 100 mm/s)
+    safe_movel(descend, 0.10)
+
+    # Activate laser (example digital output 0)
+    safe_set_digital_out(0, True)
+
+    # 4. Mark line 1 (linear, 60 mm/s)
+    safe_movel(line1_end, 0.06)
+
+    # 5. Step to line 2 start (linear, 80 mm/s)
+    safe_movel(line2_start, 0.08)
+
+    # 6. Mark line 2 (linear, 60 mm/s)
+    safe_movel(line2_end, 0.06)
+
+    # 7. Step to line 3 start (linear, 80 mm/s)
+    safe_movel(line3_start, 0.08)
+
+    # 8. Mark line 3 (linear, 60 mm/s)
+    safe_movel(line3_end, 0.06)
+
+    # 9. Additional move 1 (linear, 100 mm/s)
+    safe_movel(extra1, 0.10)
+
+    # 10. Additional move 2 (linear, 100 mm/s)
+    safe_movel(extra2, 0.10)
+
+    # Deactivate laser
+    safe_set_digital_out(0, False)
+
+    # Return to Home safely
+    safe_movej(home, 0.35)
+
+    textmsg("Laser marking sequence completed successfully.")
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

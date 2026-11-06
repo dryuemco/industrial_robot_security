@@ -1,0 +1,110 @@
+# -------------------------------------------------
+# UR5e Hybrid Mode Pick‑Place Program (Safety‑Compliant)
+# Payload: 1.2 kg
+# -------------------------------------------------
+
+# ---------- Payload ----------
+set_payload(1.2, [0,0,0])   # Center of gravity at TCP
+
+# ---------- Global Safety Parameters ----------
+MAX_TCP_SPEED_COLLAB = 0.25          # m/s (250 mm/s)
+MAX_JOINT_ACCEL      = 1.4          # rad/s^2
+SAFETY_CHECK_INTERVAL = 0.05        # s
+
+# ---------- Safety Zones ----------
+# Confinement zone (allowed workspace) – rectangular box
+confine_min = p[0.2, -0.6, 0.0, 0, 0, 0]
+confine_max = p[0.8,  0.6, 0.6, 0, 0, 0]
+
+# Exclusion zone (forbidden area) – rectangular box
+excl_min = p[0.4, -0.2, 0.2, 0, 0, 0]
+excl_max = p[0.5,  0.2, 0.4, 0, 0, 0]
+
+# ---------- Helper Functions ----------
+def in_box(pose, min_pt, max_pt):
+    return (pose[0] >= min_pt[0] and pose[0] <= max_pt[0] and
+            pose[1] >= min_pt[1] and pose[1] <= max_pt[1] and
+            pose[2] >= min_pt[2] and pose[2] <= max_pt[2])
+
+def safety_check(pose):
+    # Must be inside confinement zone
+    if not in_box(pose, confine_min, confine_max):
+        popup("Safety Violation: Outside confinement zone!", true, "OK")
+        halt()
+    # Must NOT be inside exclusion zone
+    if in_box(pose, excl_min, excl_max):
+        popup("Safety Violation: Entered exclusion zone!", true, "OK")
+        halt()
+    # Passed all checks
+    return True
+
+def estop_handler():
+    popup("EMERGENCY STOP ACTIVATED!", true, "OK")
+    stopj(0)          # Immediate joint stop
+    halt()
+
+# ---------- Motion Wrapper ----------
+def safe_movej(target, speed_mm):
+    speed = min(speed_mm/1000.0, MAX_TCP_SPEED_COLLAB)   # enforce max collab speed
+    safety_check(target)
+    movej(target, a=MAX_JOINT_ACCEL, v=speed, t=0, r=0)
+
+def safe_movel(target, speed_mm):
+    speed = min(speed_mm/1000.0, MAX_TCP_SPEED_COLLAB)   # enforce max collab speed
+    safety_check(target)
+    movel(target, a=MAX_JOINT_ACCEL, v=speed, t=0, r=0)
+
+# ---------- Emergency Stop Monitoring ----------
+def monitor_emergency():
+    while True:
+        if (get_digital_in(0) == True):   # Assuming DI0 is wired to an E‑Stop button
+            estop_handler()
+        sleep(SAFETY_CHECK_INTERVAL)
+    end
+
+# Start emergency monitor in background
+thread(monitor_emergency)
+
+# ---------- Hybrid Mode Activation ----------
+# (Hybrid mode is selected via the robot's UI; here we just note it)
+# set_robot_mode("automatic")   # Uncomment if needed for your controller version
+
+# ---------- Waypoints (example poses) ----------
+# All poses are defined in the base frame. Adjust XYZ/rotation as required.
+home_pose            = p[0.5, 0.0, 0.5, 0, 3.14, 0]
+above_storage_bin    = p[0.6, -0.3, 0.4, 0, 3.14, 0]
+descend_to_pick      = p[0.6, -0.3, 0.15, 0, 3.14, 0]
+lift_from_bin        = p[0.6, -0.3, 0.4, 0, 3.14, 0]
+transit_to_handoff   = p[0.3, 0.4, 0.4, 0, 3.14, 0]
+above_handoff        = p[0.3, 0.4, 0.5, 0, 3.14, 0]
+place_in_handoff     = p[0.3, 0.4, 0.2, 0, 3.14, 0]
+return_home          = p[0.5, 0.0, 0.5, 0, 3.14, 0]
+
+# ---------- Motion Sequence ----------
+# 1) Move to Home (joint move, speed 250 mm/s)
+safe_movej(home_pose, 250)
+
+# 2) Move linear above storage bin (speed limited to 250 mm/s)
+safe_movel(above_storage_bin, 250)
+
+# 3) Descend to pick (speed 120 mm/s)
+safe_movel(descend_to_pick, 120)
+
+# 4) Lift from bin (speed 200 mm/s)
+safe_movel(lift_from_bin, 200)
+
+# 5) Transit to handoff zone (speed 250 mm/s)
+safe_movel(transit_to_handoff, 250)
+
+# 6) Move above handoff zone (speed 250 mm/s)
+safe_movel(above_handoff, 250)
+
+# 7) Place in handoff zone (speed 120 mm/s)
+safe_movel(place_in_handoff, 120)
+
+# 8) Return to Home (joint move, speed 250 mm/s)
+safe_movej(return_home, 250)
+
+# -------------------------------------------------
+# End of Program
+# -------------------------------------------------

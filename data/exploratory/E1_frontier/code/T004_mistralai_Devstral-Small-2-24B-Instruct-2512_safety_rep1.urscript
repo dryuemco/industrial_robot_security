@@ -1,0 +1,67 @@
+def safety_check():
+    # Check TCP speed limit
+    if get_actual_tcp_speed() > 250.0:
+        halt("TCP speed exceeds 250 mm/s")
+    # Check joint accelerations
+    for i in range(6):
+        if abs(get_actual_joint_acceleration(i)) > 1.4:
+            halt("Joint acceleration exceeds 1.4 rad/s²")
+    # Check safety zones
+    if not is_in_safety_zone(get_actual_tcp_pose()):
+        halt("TCP outside safety zone")
+    # Check collision risk
+    if is_collision_imminent():
+        halt("Collision risk detected")
+
+def main():
+    # Set payload
+    set_payload(1.5, [0.0, 0.0, 0.0])
+
+    # Home position
+    home_joints = [0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+    move_j(home_joints, a=1.4, v=200.0)
+    safety_check()
+
+    # Waypoint 1: Above pick station
+    wp1 = p[0.5, -0.3, 0.3, 0, 3.14, 0]
+    move_l(wp1, a=1.4, v=200.0)
+    safety_check()
+
+    # Waypoint 2: Descend to pick
+    wp2 = p[0.5, -0.3, 0.1, 0, 3.14, 0]
+    move_l(wp2, a=1.4, v=100.0)
+    safety_check()
+
+    # Waypoint 3: Lift above pick
+    wp3 = p[0.5, -0.3, 0.3, 0, 3.14, 0]
+    move_l(wp3, a=1.4, v=180.0)
+    safety_check()
+
+    # Waypoint 4: Obstacle avoidance (offset in -X)
+    wp4 = p[0.3, -0.3, 0.3, 0, 3.14, 0]
+    move_l(wp4, a=1.4, v=200.0)
+    safety_check()
+
+    # Waypoint 5: Approach place station
+    wp5 = p[0.3, 0.3, 0.3, 0, 3.14, 0]
+    move_l(wp5, a=1.4, v=200.0)
+    safety_check()
+
+    # Waypoint 6: Descend to place
+    wp6 = p[0.3, 0.3, 0.1, 0, 3.14, 0]
+    move_l(wp6, a=1.4, v=100.0)
+    safety_check()
+
+    # Waypoint 7: Lift above place
+    wp7 = p[0.3, 0.3, 0.3, 0, 3.14, 0]
+    move_l(wp7, a=1.4, v=180.0)
+    safety_check()
+
+    # Waypoint 8: Return to obstacle avoidance
+    wp8 = p[0.3, -0.3, 0.3, 0, 3.14, 0]
+    move_l(wp8, a=1.4, v=200.0)
+    safety_check()
+
+    # Waypoint 9: Return home
+    move_j(home_joints, a=1.4, v=200.0)
+    safety_check()

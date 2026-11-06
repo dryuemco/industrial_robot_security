@@ -1,0 +1,110 @@
+# -------------------------------------------------
+# UR5e Heavy Depalletizing - Fenced Mode (T008)
+# Payload: 5.0 kg
+# -------------------------------------------------
+
+# ---------- Configuration ----------
+set_payload(5.0, [0,0,0.05])          # payload mass and centre of gravity
+set_tcp([0,0,0.1,0,0,0])              # tool centre point (example)
+set_joint_acceleration([1.4,1.4,1.4,1.4,1.4,1.4])  # max joint acceleration (rad/s^2)
+
+# ---------- Safety Zone Definition ----------
+# Workspace boundaries (in robot base frame, meters)
+global safety_min = [-0.8, -0.8, 0.0, -3.14, -3.14, -3.14]
+global safety_max = [ 0.8,  0.8, 1.2,  3.14,  3.14,  3.14]
+
+# ---------- Helper Functions ----------
+def within_bounds(p):
+    # p is a pose [x,y,z,rx,ry,rz]
+    for i in range(6):
+        if p[i] < safety_min[i] or p[i] > safety_max[i]:
+            return false
+    end
+    return true
+end
+
+def safety_check(p):
+    if not within_bounds(p):
+        popup("Safety violation: Pose out of allowed workspace!", title="EMERGENCY STOP", blocking=True)
+        stopj(2.0)               # emergency stop
+    end
+end
+
+def emergency_monitor():
+    # Digital input 0 is wired to an E‑Stop button (active high)
+    if get_digital_in(0):
+        popup("Emergency stop activated!", title="EMERGENCY STOP", blocking=True)
+        stopj(2.0)
+    end
+end
+
+# ---------- Waypoints ----------
+# All poses are defined in meters / radians
+global pose_home          = p[0.0, -0.5, 0.5, 0, 3.14, 0]
+global pose_above_pallet  = p[0.2, -0.4, 0.8, 0, 3.14, 0]
+global pose_descend_layer = p[0.2, -0.4, 0.3, 0, 3.14, 0]
+global pose_lift_box      = p[0.2, -0.4, 0.6, 0, 3.14, 0]
+global pose_conveyor      = p[-0.5, 0.3, 0.6, 0, 3.14, 0]
+global pose_place_box     = p[-0.5, 0.3, 0.3, 0, 3.14, 0]
+global pose_return_above  = p[0.0, -0.5, 0.8, 0, 3.14, 0]
+global pose_safe_home     = p[0.0, -0.5, 0.5, 0, 3.14, 0]
+
+# ---------- Motion Parameters ----------
+# Speed (m/s) and acceleration (m/s^2) for linear moves
+global lin_speed_fast   = 0.45   # 450 mm/s (allowed in fenced mode)
+global lin_speed_med    = 0.20   # 200 mm/s
+global lin_speed_slow   = 0.15   # 150 mm/s
+global lin_acc_fast     = 0.5
+global lin_acc_med      = 0.3
+global lin_acc_slow     = 0.2
+
+# Speed (rad/s) and acceleration (rad/s^2) for joint moves
+global joint_speed_home = 1.0    # approx 400 mm/s in joint space
+global joint_acc_home   = 1.4
+
+# ---------- Main Program ----------
+def main():
+    # Emergency monitor thread
+    while True:
+        emergency_monitor()
+        sleep(0.1)
+    end
+end
+
+# Start emergency monitor in background
+thread start(emergency_monitor)
+
+# 1) Move to Home (joint move)
+safety_check(pose_home)
+movej(pose_home, a=joint_acc_home, v=joint_speed_home, t=0, r=0)
+
+# 2) Move above pallet (linear)
+safety_check(pose_above_pallet)
+movel(pose_above_pallet, a=lin_acc_fast, v=lin_speed_fast, t=0, r=0)
+
+# 3) Descend to top layer (linear, slower)
+safety_check(pose_descend_layer)
+movel(pose_descend_layer, a=lin_acc_slow, v=lin_speed_slow, t=0, r=0)
+
+# 4) Lift box (linear, medium speed)
+safety_check(pose_lift_box)
+movel(pose_lift_box, a=lin_acc_med, v=lin_speed_med, t=0, r=0)
+
+# 5) Transit to conveyor (linear, fast)
+safety_check(pose_conveyor)
+movel(pose_conveyor, a=lin_acc_fast, v=lin_speed_fast, t=0, r=0)
+
+# 6) Lower box onto conveyor (linear, slow)
+safety_check(pose_place_box)
+movel(pose_place_box, a=lin_acc_slow, v=lin_speed_slow, t=0, r=0)
+
+# 7) Retract to safe height above conveyor (linear, medium)
+safety_check(pose_lift_box)
+movel(pose_lift_box, a=lin_acc_med, v=lin_speed_med, t=0, r=0)
+
+# 8) Return to Home (joint move)
+safety_check(pose_home)
+movej(pose_home, a=joint_acc_home, v=joint_speed_home, t=0, r=0)
+
+# End of program
+popup("Task completed safely.", title="Info", blocking=False)

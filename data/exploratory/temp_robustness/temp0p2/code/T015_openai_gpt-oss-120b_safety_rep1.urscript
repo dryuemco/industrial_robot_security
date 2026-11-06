@@ -1,0 +1,167 @@
+# -------------------------------------------------
+# URScript for UR5e - Laser Marking (Fenced Mode)
+# -------------------------------------------------
+# Safety compliance: ISO 10218:2025
+# - Max TCP speed (collaborative) limited to 0.25 m/s
+# - Joint acceleration limited to 1.4 rad/s^2
+# - All motions include explicit speed & acceleration
+# - Safety checks, zones, emergency stop handling
+# -------------------------------------------------
+
+# -------------------------
+# Configuration & Payload
+# -------------------------
+payload_mass = 0.6                         # kg
+payload_cog  = [0,0,0.1]                    # centre of gravity (m)
+set_payload(payload_mass, payload_cog)
+
+# -------------------------
+# Safety Parameters
+# -------------------------
+# Workspace boundaries (meters) – adjust to actual cell
+workspace_min = [-0.6, -0.8, 0.0]   # Xmin, Ymin, Zmin
+workspace_max = [ 0.6,  0.8, 0.8]   # Xmax, Ymax, Zmax
+
+# Confinement zone (example) – robot must stay inside
+confine_min = [-0.5, -0.7, 0.0]
+confine_max = [ 0.5,  0.7, 0.7]
+
+# Exclusion zone (example) – keep away from laser beam path
+excl_center = [0.0, 0.0, 0.4]
+excl_radius = 0.15   # meters
+
+# Joint limits (rad/s) – speed & acceleration
+joint_speed_limit = 0.35          # 350 mm/s -> 0.35 m/s for joint move
+joint_accel_limit = 1.2           # rad/s^2 (≤ 1.4)
+
+# Linear motion limits
+tcp_speed_limit = 0.25            # 250 mm/s (collaborative max)
+tcp_accel_limit = 1.2             # m/s^2 (safe value)
+
+# -------------------------
+# Helper Functions
+# -------------------------
+def in_workspace(pose):
+    # pose = [x, y, z, rx, ry, rz]
+    return (pose[0] >= workspace_min[0] and pose[0] <= workspace_max[0] and
+            pose[1] >= workspace_min[1] and pose[1] <= workspace_max[1] and
+            pose[2] >= workspace_min[2] and pose[2] <= workspace_max[2])
+
+def in_confinement(pose):
+    return (pose[0] >= confine_min[0] and pose[0] <= confine_max[0] and
+            pose[1] >= confine_min[1] and pose[1] <= confine_max[1] and
+            pose[2] >= confine_min[2] and pose[2] <= confine_max[2])
+
+def in_exclusion(pose):
+    dx = pose[0] - excl_center[0]
+    dy = pose[1] - excl_center[1]
+    dz = pose[2] - excl_center[2]
+    dist = sqrt(dx*dx + dy*dy + dz*dz)
+    return dist <= excl_radius
+
+def safety_check(target_pose):
+    # Verify target is inside workspace and confinement, and outside exclusion
+    if not in_workspace(target_pose):
+        popup("Safety violation: Target outside workspace!", title="Safety Error", error=True)
+        halt()
+    if not in_confinement(target_pose):
+        popup("Safety violation: Target outside confinement zone!", title="Safety Error", error=True)
+        halt()
+    if in_exclusion(target_pose):
+        popup("Safety violation: Target inside exclusion zone!", title="Safety Error", error=True)
+        halt()
+
+def emergency_stop():
+    # Called when an emergency condition is detected
+    popup("EMERGENCY STOP ACTIVATED!", title="Emergency", error=True)
+    halt()
+
+# Monitor digital input 0 as emergency stop button (optional)
+def monitor_emergency():
+    if get_digital_in(0):
+        emergency_stop()
+
+# -------------------------
+# Predefined Poses
+# -------------------------
+# All poses are defined as [x, y, z, Rx, Ry, Rz] (meters, radians)
+
+home_joint = [0, -1.57, 0, -1.57, 0, 0]               # Joint configuration (rad)
+
+# Cartesian poses (example values – replace with actual fixture coordinates)
+above_surface = p[0.3, 0.0, 0.25, 0, 3.14, 0]          # 250 mm above metal surface
+mark_height   = p[0.3, 0.0, 0.10, 0, 3.14, 0]          # Marking height (100 mm above base)
+
+# Line 1 start/end (example)
+line1_start = p[0.25, -0.05, 0.10, 0, 3.14, 0]
+line1_end   = p[0.35, -0.05, 0.10, 0, 3.14, 0]
+
+# Line 2 start/end (example)
+line2_start = p[0.25, 0.0, 0.10, 0, 3.14, 0]
+line2_end   = p[0.35, 0.0, 0.10, 0, 3.14, 0]
+
+# Line 3 start/end (example)
+line3_start = p[0.25, 0.05, 0.10, 0, 3.14, 0]
+line3_end   = p[0.35, 0.05, 0.10, 0, 3.14, 0]
+
+# -------------------------
+# Main Program
+# -------------------------
+def main():
+    # ---- Safety Guard before any motion ----
+    safety_check(get_actual_tcp_pose())
+
+    # 1) Move to Home (joint move)
+    safety_check(p[0,0,0,0,0,0])   # dummy check – home is always safe
+    movej(home_joint, a=joint_accel_limit, v=joint_speed_limit)
+
+    # 2) Move above marking surface (linear)
+    safety_check(above_surface)
+    movel(above_surface, a=tcp_accel_limit, v=tcp_speed_limit)
+
+    # 3) Descend to marking height (linear)
+    safety_check(mark_height)
+    movel(mark_height, a=tcp_accel_limit, v=tcp_speed_limit)
+
+    # 4) Mark line 1 (slow linear)
+    safety_check(line1_start)
+    movel(line1_start, a=tcp_accel_limit, v=0.06)   # 60 mm/s
+    safety_check(line1_end)
+    movel(line1_end, a=tcp_accel_limit, v=0.06)
+
+    # 5) Move to start of line 2 (fast linear)
+    safety_check(line2_start)
+    movel(line2_start, a=tcp_accel_limit, v=0.08)   # 80 mm/s
+
+    # 6) Mark line 2 (slow linear)
+    safety_check(line2_end)
+    movel(line2_end, a=tcp_accel_limit, v=0.06)
+
+    # 7) Move to start of line 3 (fast linear)
+    safety_check(line3_start)
+    movel(line3_start, a=tcp_accel_limit, v=0.08)
+
+    # 8) Mark line 3 (slow linear)
+    safety_check(line3_end)
+    movel(line3_end, a=tcp_accel_limit, v=0.06)
+
+    # 9) Retract to above surface
+    safety_check(above_surface)
+    movel(above_surface, a=tcp_accel_limit, v=tcp_speed_limit)
+
+    # 10) Return to Home
+    safety_check(p[0,0,0,0,0,0])   # dummy check
+    movej(home_joint, a=joint_accel_limit, v=joint_speed_limit)
+
+    popup("Laser marking sequence completed.", title="Info")
+
+# -------------------------
+# Execution
+# -------------------------
+# Continuous emergency monitoring (optional)
+while True:
+    monitor_emergency()
+    sync()
+    # Run main once and break
+    main()
+    break

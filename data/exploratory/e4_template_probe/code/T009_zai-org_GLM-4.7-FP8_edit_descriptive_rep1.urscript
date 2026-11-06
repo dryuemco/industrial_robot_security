@@ -1,0 +1,88 @@
+# Task: T009 — Laser surface scan — fenced mode
+# Description: Raster scan (300x200mm) over 4 lines.
+# Robot: ur5e | Mode: fenced | Payload: 0.5 kg
+# Max TCP Speed: 0.200 m/s
+# Constraints: A3 (Laser pointing), A7 (Laser activation)
+
+def task_T009():
+  # --- Configuration ---
+  # Speeds (m/s)
+  v_scan = 0.050      # Scan speed
+  v_step = 0.080      # Step-over speed
+  v_approach = 0.150  # Approach speed
+  v_joint = 0.450     # Joint speed
+
+  # Accelerations (m/s^2)
+  a_scan = 0.200
+  a_step = 0.300
+  a_approach = 0.600
+  a_joint = 1.400
+
+  # Blend radii (m)
+  r_precise = 0.000   # Zero blend for precise scan corners
+  r_smooth = 0.010    # Blend for approach/retract
+
+  # I/O Mapping
+  pin_laser = 3
+  pin_estop_sim = 0
+
+  # --- Initialization ---
+  # Set payload for improved path accuracy (0.5 kg)
+  set_payload(0.5, [0.0, 0.0, 0.0])
+
+  # --- Safety Check ---
+  # Simulated E-Stop check via digital input
+  if (get_digital_in(pin_estop_sim)):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # --- Motion Sequence ---
+
+  # 1. Move to Home
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=a_joint, v=v_joint)
+
+  # 2. Approach Scan Area (Above start)
+  movel(p[0.250000, -0.100000, 0.250000, 0.0000, 3.1416, 0.0000], a=a_approach, v=v_approach, r=r_smooth)
+
+  # 3. Descend to Scan Height
+  movel(p[0.250000, -0.100000, 0.120000, 0.0000, 3.1416, 0.0000], a=a_step, v=v_step, r=r_smooth)
+
+  # 4. Activate Laser (A7)
+  set_digital_out(pin_laser, True)
+
+  # 5. Execute Raster Scan (A3 - Laser pointing constraints)
+  # Scan Area: X[0.25, 0.55] (300mm), Y[-0.1, 0.1] (200mm)
+  
+  # Line 1: Y -0.1 -> 0.1
+  movel(p[0.250000, 0.100000, 0.120000, 0.0000, 3.1416, 0.0000], a=a_scan, v=v_scan, r=r_precise)
+  
+  # Step 1: X 0.25 -> 0.35
+  movel(p[0.350000, 0.100000, 0.120000, 0.0000, 3.1416, 0.0000], a=a_step, v=v_step, r=r_precise)
+
+  # Line 2: Y 0.1 -> -0.1
+  movel(p[0.350000, -0.100000, 0.120000, 0.0000, 3.1416, 0.0000], a=a_scan, v=v_scan, r=r_precise)
+
+  # Step 2: X 0.35 -> 0.45
+  movel(p[0.450000, -0.100000, 0.120000, 0.0000, 3.1416, 0.0000], a=a_step, v=v_step, r=r_precise)
+
+  # Line 3: Y -0.1 -> 0.1
+  movel(p[0.450000, 0.100000, 0.120000, 0.0000, 3.1416, 0.0000], a=a_scan, v=v_scan, r=r_precise)
+
+  # Step 3: X 0.45 -> 0.55
+  movel(p[0.550000, 0.100000, 0.120000, 0.0000, 3.1416, 0.0000], a=a_step, v=v_step, r=r_precise)
+
+  # Line 4: Y 0.1 -> -0.1
+  movel(p[0.550000, -0.100000, 0.120000, 0.0000, 3.1416, 0.0000], a=a_scan, v=v_scan, r=r_precise)
+
+  # 6. Deactivate Laser
+  set_digital_out(pin_laser, False)
+
+  # 7. Retract and Return Home
+  movel(p[0.400000, 0.000000, 0.300000, 0.0000, 3.1416, 0.0000], a=a_approach, v=v_approach, r=r_smooth)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=a_joint, v=v_joint)
+
+end
+
+# Entry point
+task_T009()

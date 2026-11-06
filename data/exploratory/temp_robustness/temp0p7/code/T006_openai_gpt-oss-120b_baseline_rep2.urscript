@@ -1,0 +1,56 @@
+# URScript for UR5e bin picking with suction in fenced mode
+# -------------------------------------------------------
+# Payload and tool definition
+set_payload(2.0, [0,0,0,0,0,0])     # 2 kg payload, centre of mass at tool tip
+set_tcp(p[0,0,0.1,0,0,0])           # Example TCP offset (10 cm along Z)
+
+# Speed limits
+set_tcp_speed(400)                 # Global TCP speed limit (mm/s)
+
+# Joint and pose targets (values are placeholders – replace with calibrated positions)
+home_joint      = [-1.57, -1.57, 0.0, -2.0, 0.0, 0.0]      # Home position
+above_bin_pose  = p[0.5, -0.3, 0.4, 0, 3.14, 0]           # Safe approach above bin
+descend_bin_pose= p[0.5, -0.3, 0.1, 0, 3.14, 0]           # Inside bin (suction)
+lift_bin_pose   = p[0.5, -0.3, 0.4, 0, 3.14, 0]           # Lift out of bin
+conveyor_pose   = p[0.8, 0.2, 0.3, 0, 3.14, 0]            # Above conveyor
+place_pose      = p[0.8, 0.2, 0.1, 0, 3.14, 0]            # Release point on conveyor
+retreat_pose    = p[0.8, 0.2, 0.4, 0, 3.14, 0]            # Retreat after release
+back_home_pose  = p[0.0, -0.5, 0.5, 0, 3.14, 0]            # Intermediate pose before home
+
+# Main program
+def main():
+    # 1. Move to Home (joint space) – 350 mm/s
+    movej(home_joint, a=1.2, v=0.35, t=0, r=0)
+
+    # 2. Move linear above bin – 350 mm/s
+    movel(above_bin_pose, a=1.2, v=0.35, t=0, r=0)
+
+    # 3. Descend into bin – 150 mm/s
+    movel(descend_bin_pose, a=1.2, v=0.15, t=0, r=0)
+
+    # 4. Activate suction to pick part
+    set_digital_out(0, True)      # Digital out 0 drives suction valve
+    sleep(0.2)                    # Allow suction to stabilise
+
+    # 5. Lift from bin – 300 mm/s
+    movel(lift_bin_pose, a=1.2, v=0.30, t=0, r=0)
+
+    # 6. Transit to conveyor – 380 mm/s
+    movel(conveyor_pose, a=1.2, v=0.38, t=0, r=0)
+
+    # 7. Move down to place – 150 mm/s (reuse descend speed)
+    movel(place_pose, a=1.2, v=0.15, t=0, r=0)
+
+    # 8. Deactivate suction to release part
+    set_digital_out(0, False)
+    sleep(0.2)
+
+    # 9. Lift away from conveyor – 300 mm/s
+    movel(retreat_pose, a=1.2, v=0.30, t=0, r=0)
+
+    # 10. Return to home via intermediate pose – 350 mm/s
+    movel(back_home_pose, a=1.2, v=0.35, t=0, r=0)
+    movej(home_joint, a=1.2, v=0.35, t=0, r=0)
+
+# Execute
+main()

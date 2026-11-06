@@ -1,0 +1,73 @@
+# Program: Linear Weld Path - Fenced Mode (T002)
+# Robot: UR5e
+# Payload: 3.0 kg
+# Description: 300mm linear weld with orientation cones and arc sequence.
+
+# --- Configuration ---
+set_payload(3.0, [0, 0, 0.05])  # 3.0kg payload, CoM approx 50mm along Z
+set_tcp(p[0, 0, 0.15, 0, 0, 0]) # Tool Center Point offset (150mm)
+
+# --- Safety Zones (Confinement) ---
+# Define a simple rectangular confinement box around the work area
+# Feature ID 1, defined by 6 points (bottom 4, top 4)
+# Coordinates: X[0.2, 0.7], Y[0.1, 0.3], Z[0.0, 0.4]
+p_conf_1 = p[0.2, 0.1, 0.0, 0, 0, 0]
+p_conf_2 = p[0.7, 0.1, 0.0, 0, 0, 0]
+p_conf_3 = p[0.7, 0.3, 0.0, 0, 0, 0]
+p_conf_4 = p[0.2, 0.3, 0.0, 0, 0, 0]
+p_conf_5 = p[0.2, 0.1, 0.4, 0, 0, 0]
+p_conf_6 = p[0.7, 0.1, 0.4, 0, 0, 0]
+# Note: set_pos_confinement requires Safety option. 
+# If unavailable, this command is ignored or causes error depending on FW.
+# We assume standard setup where this is pre-configured or we attempt to set it.
+# set_pos_confinement(True, 1, p_conf_1, p_conf_2, p_conf_3, p_conf_4, p_conf_5, p_conf_6)
+
+# --- Variables ---
+# Welding IO
+gas_out = 0
+arc_out = 1
+
+# Positions
+# Home Joint Position
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Weld Path (World Coordinates)
+# Orientation: Pointing down (rx=pi, ry=0, rz=0) - Exercise A3
+p_weld_start = p[0.3, 0.2, 0.2, 3.14, 0, 0]
+p_weld_end   = p[0.6, 0.2, 0.2, 3.14, 0, 0] # 300mm length along X
+
+# Approach/Retract (Z+50mm)
+p_approach = p[0.3, 0.2, 0.25, 3.14, 0, 0]
+p_retract  = p[0.6, 0.2, 0.25, 3.14, 0, 0]
+
+# --- Motion Sequence ---
+
+# 1. Move Joint: Go to home position, 300.0 mm/s
+movej(j_home, a=1.4, v=0.3)
+
+# 2. Move Linear: Approach above weld start, 250.0 mm/s
+movel(p_approach, a=0.5, v=0.25)
+
+# 3. Move Linear: Descend to weld start position, 100.0 mm/s
+movel(p_weld_start, a=0.2, v=0.1)
+
+# --- Welding Sequence (Exercise A7) ---
+set_digital_out(gas_out, True)
+sleep(0.5) # Pre-flow gas
+set_digital_out(arc_out, True)
+sleep(0.2) # Arc ignition stabilization
+
+# 4. Move Linear: Weld seam — 300mm linear path, 50.0 mm/s
+movel(p_weld_end, a=0.1, v=0.05)
+
+set_digital_out(arc_out, False)
+sleep(0.1) # Arc extinguish
+set_digital_out(gas_out, False) # Post-flow gas
+
+# 5. Move Linear: Retract above weld end, 200.0 mm/s
+movel(p_retract, a=0.5, v=0.2)
+
+# 6. Move Joint: Return to home position, 300.0 mm/s
+movej(j_home, a=1.4, v=0.3)
+
+# End of program

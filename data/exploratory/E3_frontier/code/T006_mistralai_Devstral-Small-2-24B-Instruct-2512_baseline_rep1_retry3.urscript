@@ -1,0 +1,32 @@
+def pick_and_place():
+    # Home position
+    movej([0, -1.5708, 0, -1.5708, -1.5708, 0], a=1.57, v=0.35, t=0, r=0)
+
+    # Above bin
+    tool_on()
+    movel(p[0.3, -0.3, 0.3, 0, 0, 0], a=1.57, v=0.35, t=0, r=0)
+
+    # Descend into bin
+    movel(p[0.3, -0.3, 0.1, 0, 0, 0], a=1.57, v=0.15, t=0, r=0)
+
+    # Lift from bin
+    movel(p[0.3, -0.3, 0.3, 0, 0, 0], a=1.57, v=0.3, t=0, r=0)
+
+    # Transit to conveyor
+    movel(p[0.6, 0.3, 0.3, 0, 0, 0], a=1.57, v=0.38, t=0, r=0)
+
+    # Descend to conveyor
+    movel(p[0.6, 0.3, 0.1, 0, 0, 0], a=1.57, v=0.15, t=0, r=0)
+
+    # Place object
+    tool_off()
+    movel(p[0.6, 0.3, 0.1, 0, 0, 0], a=1.57, v=0.15, t=0, r=0)
+
+    # Lift from conveyor
+    movel(p[0.6, 0.3, 0.3, 0, 0, 0], a=1.57, v=0.3, t=0, r=0)
+
+    # Return to home
+    movej([0, -1.5708, 0, -1.5708, -1.5708, 0], a=1.57, v=0.35, t=0, r=0)
+
+    tool_on()
+end

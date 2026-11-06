@@ -1,0 +1,35 @@
+urscript
+def bin_picking_fenced():
+    # Home position
+    move_joint(350.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+    # Above bin
+    move_linear(350.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+    # Descend into bin
+    move_linear(150.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+    # Lift from bin
+    move_linear(300.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+    # Transit to conveyor
+    move_linear(380.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+    # ... (3 more)
+
+    # Max TCP speed
+    speed = 400.0
+
+    # Safety zone
+    safety_zone = 0.0
+
+    # Execute motion commands
+    for i in range(8):
+        move_joint(speed, 0.0, 0.0, 0.0, 0.0, 0.0)
+        move_linear(speed, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+    # Return to home position
+    move_joint(350.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+    # End of program
+    end

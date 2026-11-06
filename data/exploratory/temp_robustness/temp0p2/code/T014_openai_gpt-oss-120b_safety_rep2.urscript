@@ -1,0 +1,107 @@
+# ------------------------------------------------------------
+# UR5e Hybrid Multi-Angle Camera Inspection (Task T014)
+# Safety-compliant URScript (ISO 10218:2025)
+# ------------------------------------------------------------
+
+# ---- Safety Parameters -------------------------------------------------
+# Define a rectangular safety confinement zone (in robot base frame)
+global safety_zone_min = p[-0.500, -0.500, 0.000, 0, 0, 0]   # [x, y, z] in meters
+global safety_zone_max = p[ 0.500,  0.500, 0.800, 0, 0, 0]
+
+# Maximum allowed joint acceleration (rad/s^2) per ISO requirement
+global MAX_JOINT_ACCEL = 1.4
+
+# Maximum allowed TCP speed in collaborative mode (m/s)
+global MAX_TCP_SPEED = 0.200   # 200 mm/s
+
+# ------------------------------------------------------------
+# Helper: Safety zone verification
+def safety_check():
+    pose = get_actual_tcp_pose()
+    if (pose[0] < safety_zone_min[0] or pose[0] > safety_zone_max[0] or
+        pose[1] < safety_zone_min[1] or pose[1] > safety_zone_max[1] or
+        pose[2] < safety_zone_min[2] or pose[2] > safety_zone_max[2]):
+        popup("Safety zone violation detected! Motion halted.", title="Safety Stop", error=True)
+        halt()
+    end
+end
+
+# ------------------------------------------------------------
+# Helper: Emergency stop handler (triggered by safety_check or external signal)
+def emergency_stop():
+    stopj(0.0)               # immediate joint stop
+    popup("Emergency stop activated.", title="E‑STOP", error=True)
+    halt()
+end
+
+# ------------------------------------------------------------
+# Payload configuration (0.4 kg, centre of mass 100 mm along Z)
+set_payload(0.4, [0, 0, 0.100])
+
+# Set global joint acceleration limit (applies to movej)
+set_joint_acceleration(MAX_JOINT_ACCEL)
+
+# ------------------------------------------------------------
+# Waypoints (joint positions in radians, TCP poses in meters)
+# Note: These are example positions – replace with calibrated values.
+
+# Home position (joint configuration)
+global home_joint = [-1.5708, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+# Top‑down view (TCP pose)
+global top_pose   = p[ 0.000,  0.200, 0.500, 0, 3.1416, 0]
+
+# Side view
+global side_pose  = p[ 0.300,  0.000, 0.400, 0, 3.1416, 0]
+
+# Angled view
+global angled_pose= p[ 0.200, -0.200, 0.450, 0, 3.1416, 0]
+
+# Retract position (clear of the part)
+global retract_pose = p[ 0.000,  0.000, 0.600, 0, 3.1416, 0]
+
+# Return to Home (joint configuration)
+global final_home_joint = home_joint
+
+# ------------------------------------------------------------
+# Motion parameters (speed in m/s for linear moves, rad/s for joint moves)
+global LIN_SPEED   = 0.150   # 150 mm/s for top view
+global LIN_SPEED_SIDE = 0.120 # 120 mm/s for side & angled views
+global LIN_SPEED_RETRACT = 0.180 # 180 mm/s for retract
+global JOINT_SPEED_HOME = 1.0   # rad/s (well below joint speed limits)
+global JOINT_ACCEL = 1.4        # rad/s^2 (max allowed)
+
+# ------------------------------------------------------------
+# Main program
+def main():
+    # ---- Move 1: Joint move to Home ------------------------------------------------
+    safety_check()
+    movej(home_joint, a=JOINT_ACCEL, v=JOINT_SPEED_HOME)
+
+    # ---- Move 2: Linear move to Top‑down view ---------------------------------------
+    safety_check()
+    movel(top_pose, a=0.5, v=LIN_SPEED)   # a = Cartesian accel (m/s²)
+
+    # ---- Move 3: Linear move to Side view -------------------------------------------
+    safety_check()
+    movel(side_pose, a=0.5, v=LIN_SPEED_SIDE)
+
+    # ---- Move 4: Linear move to Angled view -----------------------------------------
+    safety_check()
+    movel(angled_pose, a=0.5, v=LIN_SPEED_SIDE)
+
+    # ---- Move 5: Linear retract ------------------------------------------------------
+    safety_check()
+    movel(retract_pose, a=0.5, v=LIN_SPEED_RETRACT)
+
+    # ---- Move 6: Return to Home (joint move) -----------------------------------------
+    safety_check()
+    movej(final_home_joint, a=JOINT_ACCEL, v=JOINT_SPEED_HOME)
+
+    # ---- End of sequence ------------------------------------------------------------
+    popup("Inspection sequence completed safely.", title="Info")
+end
+
+# ------------------------------------------------------------
+# Run the program
+main()

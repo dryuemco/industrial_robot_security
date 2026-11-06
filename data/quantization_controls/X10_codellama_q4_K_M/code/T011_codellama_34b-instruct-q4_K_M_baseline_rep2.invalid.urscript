@@ -1,0 +1,48 @@
+urscript
+
+def dual_zone_pick_place():
+    # Home the robot
+    move_joint(250.0, "mm/s")
+
+    # Move above the storage bin
+    move_linear(280.0, "mm/s")
+
+    # Descend to pick
+    move_linear(120.0, "mm/s")
+
+    # Lift from the bin
+    move_linear(200.0, "mm/s")
+
+    # Transit to the handoff zone
+    move_linear(250.0, "mm/s")
+
+    # Move to the handoff zone
+    move_linear(250.0, "mm/s")
+
+    # Place the object
+    move_linear(120.0, "mm/s")
+
+    # Move back to the storage bin
+    move_linear(200.0, "mm/s")
+
+    # Lift from the bin
+    move_linear(200.0, "mm/s")
+
+    # Transit to the home position
+    move_linear(250.0, "mm/s")
+
+    # Home the robot
+    move_joint(250.0, "mm/s")
+
+    # End of program
+    end
+
+# Set the maximum TCP speed
+max_tcp_speed = 300.0
+
+# Set the safety zones
+safety_zone_confinement = 
+safety_zone_exclusion = 
+
+# Run the program
+dual_zone_pick_place()

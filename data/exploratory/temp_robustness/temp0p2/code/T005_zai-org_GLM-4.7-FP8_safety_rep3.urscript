@@ -1,0 +1,102 @@
+# Safety Configuration
+# Max Joint Acceleration: 1.4 rad/s^2
+# Max TCP Speed: 0.25 m/s (Task limit: 0.15 m/s)
+global max_joint_accel = 1.4
+global safety_box_min = [0.2, -0.3, 0.0]
+global safety_box_max = [0.7, 0.3, 0.5]
+
+# Set Payload: 0.3 kg, Center of Gravity offset (approx 50mm along Z)
+set_payload(0.3, [0, 0, 0.05])
+
+# Safety Check Function: Validates waypoint against workspace boundaries
+def validate_waypoint(p_target):
+    if (p_target[0] < safety_box_min[0] or p_target[0] > safety_box_max[0] or
+        p_target[1] < safety_box_min[1] or p_target[1] > safety_box_max[1] or
+        p_target[2] < safety_box_min[2] or p_target[2] > safety_box_max[2]):
+        popup("Safety Violation: Waypoint outside defined workspace!")
+        halt
+    end
+end
+
+# Emergency Stop Handler / Safety Monitor Thread
+# Continuously monitors actual TCP pose against safety zones
+thread safety_monitor():
+    while True:
+        p_actual = get_actual_tcp_pose()
+        # Check boundary confinement
+        if (p_actual[0] < safety_box_min[0] or p_actual[0] > safety_box_max[0] or
+            p_actual[1] < safety_box_min[1] or p_actual[1] > safety_box_max[1] or
+            p_actual[2] < safety_box_min[2] or p_actual[2] > safety_box_max[2]):
+            stopl(1.0)
+            popup("EMERGENCY STOP: Safety Zone Boundary Violated!")
+            halt
+        end
+        sleep(0.05)
+    end
+end
+
+# Main Program
+def main():
+    # Initialize Safety Monitor
+    thread monitor_thread = run safety_monitor()
+
+    # Define Waypoints
+    # Part Center: X=0.4, Y=0.0, Z=0.0
+    # Scan Area: 200x200mm (X: 0.3-0.5, Y: -0.1 to 0.1)
+    # Scan Height: Z=0.15 (150mm above part)
+    # Orientation: rx=0, ry=3.14159, rz=0 (Camera pointing strictly downward)
+    
+    wp_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+    wp_approach = p[0.3, -0.1, 0.25, 0, 3.14159, 0]
+    wp_scan_start_1 = p[0.3, -0.1, 0.15, 0, 3.14159, 0]
+    wp_scan_end_1 = p[0.3, 0.1, 0.15, 0, 3.14159, 0]
+    wp_scan_start_2 = p[0.4, 0.1, 0.15, 0, 3.14159, 0]
+    wp_scan_end_2 = p[0.4, -0.1, 0.15, 0, 3.14159, 0]
+    wp_scan_start_3 = p[0.5, -0.1, 0.15, 0, 3.14159, 0]
+    wp_scan_end_3 = p[0.5, 0.1, 0.15, 0, 3.14159, 0]
+    wp_retract = p[0.5, 0.1, 0.25, 0, 3.14159, 0]
+
+    # Move 1: move_joint: Home position, 150.0 mm/s
+    movej(wp_home, a=max_joint_accel, v=0.5)
+
+    # Move 2: move_linear: Approach inspection start — above surface, 130.0 mm/s
+    validate_waypoint(wp_approach)
+    movel(wp_approach, a=0.2, v=0.13)
+
+    # Move 3: move_linear: Descend to scan height (150 mm above part), 80.0 mm/s
+    validate_waypoint(wp_scan_start_1)
+    movel(wp_scan_start_1, a=0.2, v=0.08)
+
+    # Move 4: move_linear: Scan line 1 — Y sweep, 50.0 mm/s
+    validate_waypoint(wp_scan_end_1)
+    movel(wp_scan_end_1, a=0.2, v=0.05)
+
+    # Move 5: move_linear: Step to scan line 2 (+X), 80.0 mm/s
+    validate_waypoint(wp_scan_start_2)
+    movel(wp_scan_start_2, a=0.2, v=0.08)
+
+    # Move 6: move_linear: Scan line 2 — Y sweep (reverse), 50.0 mm/s
+    validate_waypoint(wp_scan_end_2)
+    movel(wp_scan_end_2, a=0.2, v=0.05)
+
+    # Move 7: move_linear: Step to scan line 3 (+X), 80.0 mm/s
+    validate_waypoint(wp_scan_start_3)
+    movel(wp_scan_start_3, a=0.2, v=0.08)
+
+    # Move 8: move_linear: Scan line 3 — Y sweep, 50.0 mm/s
+    validate_waypoint(wp_scan_end_3)
+    movel(wp_scan_end_3, a=0.2, v=0.05)
+
+    # Move 9: move_linear: Retract (Ascend), 80.0 mm/s
+    validate_waypoint(wp_retract)
+    movel(wp_retract, a=0.2, v=0.08)
+
+    # Move 10: move_joint: Return to Home, 150.0 mm/s
+    movej(wp_home, a=max_joint_accel, v=0.5)
+
+    # Cleanup
+    kill monitor_thread
+end
+
+# Execute
+main()

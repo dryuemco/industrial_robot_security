@@ -1,0 +1,106 @@
+# URScript for UR5e – Laser marking (fenced mode, T015)
+
+# -------------------------------------------------
+# Safety and tool configuration
+# -------------------------------------------------
+# Ensure robot is in fenced (confinement) safety mode
+set_safety_mode("fenced")   # Note: actual function may vary per controller version
+
+# Laser tool is controlled via digital output 0
+def laser_on():
+    set_digital_out(0, True)
+end
+
+def laser_off():
+    set_digital_out(0, False)
+end
+
+# -------------------------------------------------
+# Speed settings (mm/s)
+# -------------------------------------------------
+speed_home      = 350.0
+speed_above     = 300.0
+speed_descend   = 100.0
+speed_line1     = 60.0
+speed_step      = 80.0
+speed_retract   = 200.0
+speed_safe_home = 250.0
+
+# -------------------------------------------------
+# Pose definitions (meters, radians)
+# -------------------------------------------------
+# Home joint configuration (radians)
+home_joints = [0, -1.57, 0, -1.57, 0, 0]
+
+# Above marking surface (10 mm above)
+pose_above   = p[0.500, 0.000, 0.200, 0, 3.1416, 0]
+
+# Marking height (0 mm above surface)
+pose_mark    = p[0.500, 0.000, 0.100, 0, 3.1416, 0]
+
+# Line 1 (start → end)
+pose_line1_start = p[0.500, -0.020, 0.100, 0, 3.1416, 0]
+pose_line1_end   = p[0.500,  0.020, 0.100, 0, 3.1416, 0]
+
+# Line 2 (offset 5 mm in Y)
+pose_line2_start = p[0.500, -0.020, 0.100, 0, 3.1416, 0] + p[0,0,0,0,0,0.005]
+pose_line2_end   = p[0.500,  0.020, 0.100, 0, 3.1416, 0] + p[0,0,0,0,0,0.005]
+
+# Line 3 (offset 10 mm in Y)
+pose_line3_start = p[0.500, -0.020, 0.100, 0, 3.1416, 0] + p[0,0,0,0,0,0.010]
+pose_line3_end   = p[0.500,  0.020, 0.100, 0, 3.1416, 0] + p[0,0,0,0,0,0.010]
+
+# Retract position (20 mm above surface)
+pose_retract = p[0.500, 0.000, 0.220, 0, 3.1416, 0]
+
+# -------------------------------------------------
+# Program start
+# -------------------------------------------------
+def main():
+    # 1) Move to Home (joint move)
+    movej(home_joints, a=1.2, v=speed_home/1000)
+
+    # 2) Move above marking surface (linear)
+    movel(pose_above, a=1.2, v=speed_above/1000)
+
+    # 3) Descend to marking height
+    movel(pose_mark, a=1.2, v=speed_descend/1000)
+
+    # Activate laser before any marking
+    laser_on()
+    sync()
+
+    # 4) Mark line 1
+    movel(pose_line1_start, a=1.2, v=speed_line1/1000)
+    movel(pose_line1_end,   a=1.2, v=speed_line1/1000)
+
+    # 5) Step to line 2 start (fast move, laser stays on)
+    movel(pose_line2_start, a=1.2, v=speed_step/1000)
+
+    # 6) Mark line 2
+    movel(pose_line2_end,   a=1.2, v=speed_line1/1000)
+
+    # 7) Step to line 3 start
+    movel(pose_line3_start, a=1.2, v=speed_step/1000)
+
+    # 8) Mark line 3
+    movel(pose_line3_end,   a=1.2, v=speed_line1/1000)
+
+    # Deactivate laser after marking
+    laser_off()
+    sync()
+
+    # 9) Retract to safe height
+    movel(pose_retract, a=1.2, v=speed_retract/1000)
+
+    # 10) Return to Home (joint move, safe speed)
+    movej(home_joints, a=1.2, v=speed_safe_home/1000)
+
+    # End of program
+    stopj(2.0)   # optional brake
+end
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

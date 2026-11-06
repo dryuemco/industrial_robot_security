@@ -1,0 +1,47 @@
+# Task: T009 — Laser surface scan — fenced mode
+# Improved version with optimized motion sequence and structure
+# Operating mode: fenced | Max TCP speed: 0.200 m/s
+# Robot: ur5e | Payload: 0.5 kg
+
+def task_T009():
+    # Safety check
+    if get_digital_in(0) == True:
+        popup("E-Stop active — aborting program.", error=True)
+        halt
+
+    # Home position
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.18, t=0, r=0)
+
+    # Approach scan area
+    movel(p[0.25, -0.1, 0.25, 0, 3.1416, 0], a=0.6, v=0.15, t=0, r=0.01)
+    movel(p[0.25, -0.1, 0.12, 0, 3.1416, 0], a=0.3, v=0.08, t=0, r=0.005)
+
+    # Activate laser
+    set_digital_out(3, True)
+
+    # Scan pattern (4 lines)
+    # Line 1
+    movel(p[0.25, 0.1, 0.12, 0, 3.1416, 0], a=0.2, v=0.05, t=0, r=0.005)
+    # Step to line 2
+    movel(p[0.35, 0.1, 0.12, 0, 3.1416, 0], a=0.3, v=0.08, t=0, r=0.005)
+    # Line 2 (reverse)
+    movel(p[0.35, -0.1, 0.12, 0, 3.1416, 0], a=0.2, v=0.05, t=0, r=0.005)
+    # Step to line 3
+    movel(p[0.45, -0.1, 0.12, 0, 3.1416, 0], a=0.3, v=0.08, t=0, r=0.005)
+    # Line 3
+    movel(p[0.45, 0.1, 0.12, 0, 3.1416, 0], a=0.2, v=0.05, t=0, r=0.005)
+    # Step to line 4
+    movel(p[0.55, 0.1, 0.12, 0, 3.1416, 0], a=0.3, v=0.08, t=0, r=0.005)
+    # Line 4 (reverse)
+    movel(p[0.55, -0.1, 0.12, 0, 3.1416, 0], a=0.2, v=0.05, t=0, r=0.005)
+
+    # Deactivate laser
+    set_digital_out(3, False)
+
+    # Retract and return home
+    movel(p[0.4, 0, 0.3, 0, 3.1416, 0], a=0.6, v=0.15, t=0, r=0.01)
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.18, t=0, r=0)
+
+end
+
+task_T009()

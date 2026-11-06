@@ -1,0 +1,96 @@
+# URScript for UR5e – Curved contour weld (Hybrid mode)
+# Payload: 3.5 kg, TCP speed limit: 0.30 m/s
+# Safety: Confinement box defined below
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(3.5, [0,0,0.1])          # payload + centre of mass
+set_tcp_speed(0.30)                 # max TCP speed (m/s)
+
+# -------------------------------------------------
+# Safety zone (confinement box) – values in meters
+# -------------------------------------------------
+global min_x = -0.600
+global max_x =  0.600
+global min_y = -0.600
+global max_y =  0.600
+global min_z =  0.000
+global max_z =  0.800
+
+# -------------------------------------------------
+# Helper functions
+# -------------------------------------------------
+def within_confinement(p):
+    # p is a pose [X,Y,Z,RX,RY,RZ]
+    return (p[0] >= min_x and p[0] <= max_x and
+            p[1] >= min_y and p[1] <= max_y and
+            p[2] >= min_z and p[2] <= max_z)
+
+def check_pose(p):
+    if not within_confinement(p):
+        popup("Safety violation: target pose outside confinement box", title="Error")
+        stop()
+    end
+
+def safe_movel(p, a=1.2, v=0.25):
+    check_pose(p)
+    movel(p, a=a, v=v)
+    # error handling – URScript provides get_error()
+    if get_error() != "":
+        popup(strcat("Motion error (movel): ", get_error()), title="Error")
+        stop()
+    end
+
+def safe_movej(q, a=1.4, v=0.30):
+    # Joint limits are enforced by the controller; we only add a generic check
+    if len(q) != 6:
+        popup("Invalid joint target length", title="Error")
+        stop()
+    end
+    movej(q, a=a, v=v)
+    if get_error() != "":
+        popup(strcat("Motion error (movej): ", get_error()), title="Error")
+        stop()
+    end
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # 1) Home position (joint target)
+    home_q = [0, -1.57, 1.57, -1.57, -1.57, 0]   # example home pose
+    safe_movej(home_q, a=1.4, v=0.30)
+
+    # 2) Approach above weld fixture (linear move)
+    approach_pose = p[0.300, 0.200, 0.250, 0, 3.14, 0]   # 250 mm above fixture
+    safe_movel(approach_pose, a=1.2, v=0.25)
+
+    # 3) Descend to weld start
+    start_pose = p[0.300, 0.200, 0.100, 0, 3.14, 0]      # 100 mm above base
+    safe_movel(start_pose, a=1.0, v=0.10)
+
+    # 4) Weld midpoint (arc)
+    mid_pose = p[0.350, 0.250, 0.100, 0, 3.14, 0]
+    safe_movel(mid_pose, a=0.8, v=0.06)
+
+    # 5) Weld end
+    end_pose = p[0.400, 0.300, 0.100, 0, 3.14, 0]
+    safe_movel(end_pose, a=0.8, v=0.06)
+
+    # 6) Retract after weld
+    retract_pose = p[0.400, 0.300, 0.250, 0, 3.14, 0]
+    safe_movel(retract_pose, a=1.0, v=0.10)
+
+    # 7) Return to safe standby pose
+    standby_pose = p[0.200, -0.300, 0.300, 0, 3.14, 0]
+    safe_movel(standby_pose, a=1.2, v=0.25)
+
+    # Program finished
+    popup("Weld contour completed successfully.", title="Info")
+end
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

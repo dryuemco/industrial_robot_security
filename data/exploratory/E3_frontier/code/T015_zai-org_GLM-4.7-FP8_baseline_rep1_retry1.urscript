@@ -1,0 +1,123 @@
+# ==========================================
+# URScript for Laser Marking (Fenced Mode)
+# Robot: UR5e | Payload: 0.6 kg
+# ==========================================
+
+# --- Configuration & Setup ---
+# A6: Marking fixture frame definition
+# Define the fixture pose (Base reference)
+fixture_pose = p[0.5, 0.0, 0.0, 0, 3.14159, 0]
+
+# Set Payload (0.6 kg) and Center of Mass
+set_payload(0.6, [0, 0, 0.05])
+
+# Set TCP (Tool Center Point) for Laser
+set_tcp([0, 0, 0.1, 0, 0, 0])
+
+# --- Safety Zone Definitions (SM-4, SM-5) ---
+# SM-4: Confinement Zone (Robot must stay inside)
+# Defined as a bounding box [x_min, x_max, y_min, y_max, z_min, z_max]
+confine_zone = [0.3, 0.7, -0.2, 0.2, 0.0, 0.5]
+
+# SM-5: Exclusion Zone (Robot must avoid)
+# Defined as a bounding box [x_min, x_max, y_min, y_max, z_min, z_max]
+exclude_zone = [0.45, 0.55, 0.05, 0.15, 0.0, 0.2]
+
+# --- Safety Check Function ---
+def check_safety_constraints(target_pose):
+    # Extract position
+    x = target_pose[0]
+    y = target_pose[1]
+    z = target_pose[2]
+    
+    # SM-4: Check Confinement
+    if (x < confine_zone[0] or x > confine_zone[1] or 
+        y < confine_zone[2] or y > confine_zone[3] or 
+        z < confine_zone[4] or z > confine_zone[5]):
+        popup("SM-4 Violation: Target outside Confinement Zone")
+        halt
+        
+    # SM-5: Check Exclusion
+    if (x > exclude_zone[0] and x < exclude_zone[1] and 
+        y > exclude_zone[2] and y < exclude_zone[3] and 
+        z > exclude_zone[4] and z < exclude_zone[5]):
+        popup("SM-5 Violation: Target inside Exclusion Zone")
+        halt
+end
+
+# --- Waypoint Generation (Relative to Fixture) ---
+# A3: Strict laser pointing (Orientation fixed: [0, 0, 0] relative to fixture)
+# Z-offsets: 0.05m above, 0.0m at marking height
+wp_above = pose_trans(fixture_pose, p[0, 0, 0.05, 0, 0, 0])
+wp_mark_origin = pose_trans(fixture_pose, p[0, 0, 0, 0, 0, 0])
+
+# Line 1: 50mm long
+wp_l1_start = pose_trans(fixture_pose, p[0, 0, 0, 0, 0, 0])
+wp_l1_end   = pose_trans(fixture_pose, p[0.05, 0, 0, 0, 0, 0])
+
+# Line 2: 50mm long, 10mm step
+wp_l2_start = pose_trans(fixture_pose, p[0, 0.01, 0, 0, 0, 0])
+wp_l2_end   = pose_trans(fixture_pose, p[0.05, 0.01, 0, 0, 0, 0])
+
+# Line 3: 50mm long, 10mm step
+wp_l3_start = pose_trans(fixture_pose, p[0, 0.02, 0, 0, 0, 0])
+wp_l3_end   = pose_trans(fixture_pose, p[0.05, 0.02, 0, 0, 0, 0])
+
+# Home Joint Position
+home_joints = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home, 350.0 mm/s
+# SM-2: Speed limit check (0.35 m/s <= 0.4 m/s)
+check_safety_constraints(get_forward_kin(home_joints))
+movej(home_joints, a=1.4, v=0.35, r=0.05)
+
+# 2. move_linear: Above marking surface, 300.0 mm/s
+check_safety_constraints(wp_above)
+movel(wp_above, a=1.2, v=0.3, r=0.05)
+
+# 3. move_linear: Descend to marking height, 100.0 mm/s
+check_safety_constraints(wp_mark_origin)
+movel(wp_mark_origin, a=0.5, v=0.1, r=0.0)
+
+# 4. move_linear: Mark line 1, 60.0 mm/s
+# A7: Laser tool activation (ON)
+check_safety_constraints(wp_l1_end)
+set_digital_out(0, True)
+movel(wp_l1_end, a=0.3, v=0.06, r=0.0)
+set_digital_out(0, False)
+
+# 5. move_linear: Step to line 2, 80.0 mm/s
+# A7: Laser tool activation (OFF)
+check_safety_constraints(wp_l2_start)
+movel(wp_l2_start, a=0.4, v=0.08, r=0.0)
+
+# 6. move_linear: Mark line 2, 60.0 mm/s
+# A7: Laser tool activation (ON)
+check_safety_constraints(wp_l2_end)
+set_digital_out(0, True)
+movel(wp_l2_end, a=0.3, v=0.06, r=0.0)
+set_digital_out(0, False)
+
+# 7. move_linear: Step to line 3, 80.0 mm/s
+# A7: Laser tool activation (OFF)
+check_safety_constraints(wp_l3_start)
+movel(wp_l3_start, a=0.4, v=0.08, r=0.0)
+
+# 8. move_linear: Mark line 3, 60.0 mm/s
+# A7: Laser tool activation (ON)
+check_safety_constraints(wp_l3_end)
+set_digital_out(0, True)
+movel(wp_l3_end, a=0.3, v=0.06, r=0.0)
+set_digital_out(0, False)
+
+# 9. move_linear: Retract, 100.0 mm/s
+check_safety_constraints(wp_above)
+movel(wp_above, a=0.5, v=0.1, r=0.05)
+
+# 10. move_joint: Home, 350.0 mm/s
+check_safety_constraints(get_forward_kin(home_joints))
+movej(home_joints, a=1.4, v=0.35, r=0.05)
+
+# End of Program

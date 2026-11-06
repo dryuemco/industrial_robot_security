@@ -1,0 +1,115 @@
+# ------------------------------------------------------------
+# Task: T015 — Laser marking — fenced mode (Improved Version)
+# Robot: UR5e | Payload: 0.6 kg
+# Max TCP speed: 0.400 m/s (400 mm/s)
+# Safety: fenced mode, laser activation interlock (DI1)
+# ------------------------------------------------------------
+
+# ------------------- Configuration -------------------------
+# Joint target for home position
+global const HOME_JOINTS = [0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+# Cartesian targets (meters, radians)
+global const POS_ABOVE   = p[0.400, -0.080, 0.200, 0.0, 3.1416, 0.0]
+global const POS_MARK    = p[0.400, -0.080, 0.100, 0.0, 3.1416, 0.0]
+global const POS_RETRACT = p[0.450, 0.0,   0.300, 0.0, 3.1416, 0.0]
+
+# Line end points (meters)
+global const LINE1_END = p[0.500, -0.080, 0.100, 0.0, 3.1416, 0.0]
+global const LINE2_START = p[0.500, 0.0,    0.100, 0.0, 3.1416, 0.0]
+global const LINE2_END   = p[0.400, 0.0,    0.100, 0.0, 3.1416, 0.0]
+global const LINE3_START = p[0.400, 0.080,  0.100, 0.0, 3.1416, 0.0]
+global const LINE3_END   = p[0.500, 0.080,  0.100, 0.0, 3.1416, 0.0]
+
+# Motion parameters (acceleration [m/s^2], velocity [m/s], blend radius [m])
+global const ACC_JOINT   = 1.4
+global const ACC_FAST    = 1.2
+global const ACC_SLOW    = 0.4
+global const ACC_MARK    = 0.2
+global const V_FAST      = 0.300   # 300 mm/s
+global const V_SLOW      = 0.100   # 100 mm/s
+global const V_MARK      = 0.060   # 60  mm/s
+global const V_STEP      = 0.080   # 80  mm/s
+global const R_FAST      = 0.010
+global const R_MARK      = 0.003
+
+# Digital I/O
+global const DI_ESTOP   = 0   # Emergency stop input
+global const DI_LASER_OK = 1  # Laser safety interlock (must be True)
+global const DO_LASER   = 3   # Laser control output
+
+# ------------------------------------------------------------
+def safety_check():
+    # Abort if E‑Stop is active
+    if get_digital_in(DI_ESTOP):
+        popup("E‑Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # Verify laser interlock before enabling laser
+    if not get_digital_in(DI_LASER_OK):
+        popup("Laser safety interlock not satisfied — aborting.", error=True)
+        halt
+    end
+end
+
+def laser_on():
+    set_digital_out(DO_LASER, True)
+    sync()  # ensure command is processed before motion starts
+end
+
+def laser_off():
+    set_digital_out(DO_LASER, False)
+    sync()
+end
+
+def task_T015():
+    # ---- Initial Setup -------------------------------------------------
+    set_payload(0.6, [0,0,0])          # payload definition
+    set_tcp(p[0,0,0,0,0,0])            # default TCP (modify if tool offset exists)
+    set_fence_mode(True)              # enforce fenced safety zone
+    safety_check()
+
+    # ---- 1. Home --------------------------------------------------------
+    movej(HOME_JOINTS, a=ACC_JOINT, v=V_FAST)
+
+    # ---- 2. Move above marking surface ----------------------------------
+    movel(POS_ABOVE, a=ACC_FAST, v=V_FAST, r=R_FAST)
+
+    # ---- 3. Descend to marking height ------------------------------------
+    movel(POS_MARK, a=ACC_SLOW, v=V_SLOW, r=R_MARK)
+
+    # ---- 4. Laser activation ---------------------------------------------
+    safety_check()        # re‑check before turning laser on
+    laser_on()
+
+    # ---- 5. Mark line 1 --------------------------------------------------
+    movel(LINE1_END, a=ACC_MARK, v=V_MARK, r=R_MARK)
+
+    # ---- 6. Step to line 2 start -----------------------------------------
+    movel(LINE2_START, a=ACC_MARK, v=V_STEP, r=R_MARK)
+
+    # ---- 7. Mark line 2 (reverse) ----------------------------------------
+    movel(LINE2_END, a=ACC_MARK, v=V_MARK, r=R_MARK)
+
+    # ---- 8. Step to line 3 start -----------------------------------------
+    movel(LINE3_START, a=ACC_MARK, v=V_STEP, r=R_MARK)
+
+    # ---- 9. Mark line 3 --------------------------------------------------
+    movel(LINE3_END, a=ACC_MARK, v=V_MARK, r=R_MARK)
+
+    # ---- 10. Laser deactivation -----------------------------------------
+    laser_off()
+
+    # ---- 11. Retract ----------------------------------------------------
+    movel(POS_RETRACT, a=ACC_FAST, v=V_FAST, r=R_FAST)
+
+    # ---- 12. Return home ------------------------------------------------
+    movej(HOME_JOINTS, a=ACC_JOINT, v=V_FAST)
+
+    # ---- End of task ---------------------------------------------------
+    popup("Task T015 completed successfully.", warning=False)
+end
+
+# ------------------- Entry point ---------------------------------------
+task_T015()

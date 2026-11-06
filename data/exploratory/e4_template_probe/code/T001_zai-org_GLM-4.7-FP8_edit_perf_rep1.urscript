@@ -1,0 +1,62 @@
+# Task: T001 — Simple collaborative pick-place (Optimized)
+# Operating mode: collaborative | Max TCP speed: 0.250 m/s
+# Robot: ur5e
+# Optimization: Increased speeds/accelerations to max limits, added blending, reduced settle times.
+
+def task_T001():
+  # [0] Verify E-Stop before start
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+  
+  # [1] Go to home position
+  # Increased joint velocity and acceleration for faster repositioning
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.0, v=1.5)
+  
+  # [2] Approach pick point
+  # Max TCP speed (0.25), increased acceleration, larger blend radius (0.05)
+  movel(p[0.400000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.2, v=0.25, r=0.05)
+  
+  # [3] Descend to pick
+  # Max TCP speed, increased acceleration, zero blend for precision
+  movel(p[0.400000, 0.000000, 0.200000, 0.0000, 3.1416, 0.0000], a=1.2, v=0.25, r=0)
+  
+  # [4] Close gripper
+  set_digital_out(0, True)
+  
+  # [5] Grip settle time
+  # Reduced from 0.5s to 0.2s
+  sleep(0.2)
+  
+  # [6] Lift from pick
+  # Max TCP speed, blend into next move
+  movel(p[0.400000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.2, v=0.25, r=0.05)
+  
+  # [7] Transit to place approach
+  # Max TCP speed, blend into next move
+  movel(p[0.400000, 0.200000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.2, v=0.25, r=0.05)
+  
+  # [8] Descend to place
+  # Max TCP speed, zero blend for precision
+  movel(p[0.400000, 0.200000, 0.200000, 0.0000, 3.1416, 0.0000], a=1.2, v=0.25, r=0)
+  
+  # [9] Open gripper
+  set_digital_out(0, False)
+  
+  # [10] Release settle time
+  # Reduced from 0.3s to 0.1s
+  sleep(0.1)
+  
+  # [11] Retract from place
+  # Max TCP speed, blend into return
+  movel(p[0.400000, 0.200000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.2, v=0.25, r=0.05)
+  
+  # [12] Return to home
+  # Increased joint velocity and acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.0, v=1.5)
+  
+end
+
+# Entry point
+task_T001()

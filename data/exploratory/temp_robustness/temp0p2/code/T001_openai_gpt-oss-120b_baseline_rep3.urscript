@@ -1,0 +1,49 @@
+def pick_place():
+    # Payload configuration (mass in kg, center of mass in robot base frame)
+    set_payload(0.5, [0,0,0,0,0,0])
+
+    # Maximum TCP speed (m/s) – 250 mm/s
+    set_tcp_speed(0.25)
+
+    # Joint configuration for home position (radians)
+    home = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+    # Cartesian poses (meters, radians)
+    # Pick approach (above the object)
+    pick_approach = p[0.400, -0.200, 0.300, 0, 3.14, 0]
+    # Pick pose (grasping height)
+    pick_pose = p[0.400, -0.200, 0.100, 0, 3.14, 0]
+
+    # Place approach (above the target)
+    place_approach = p[0.600, 0.200, 0.300, 0, 3.14, 0]
+    # Place pose (release height)
+    place_pose = p[0.600, 0.200, 0.100, 0, 3.14, 0]
+
+    # Safe retreat pose after placing
+    retreat = p[0.500, 0.000, 0.400, 0, 3.14, 0]
+
+    # 1) Move to home joint position
+    movej(home, a=1.2, v=0.2)
+
+    # 2) Linear move to pick approach
+    movel(pick_approach, a=1.2, v=0.2)
+
+    # 3) Linear descend to pick
+    movel(pick_pose, a=1.2, v=0.1)
+
+    # 4) Linear lift from pick
+    movel(pick_approach, a=1.2, v=0.15)
+
+    # 5) Linear transit to place approach
+    movel(place_approach, a=1.2, v=0.2)
+
+    # 6) Linear move to place pose
+    movel(place_pose, a=1.2, v=0.2)
+
+    # 7) Linear lift from place
+    movel(place_approach, a=1.2, v=0.15)
+
+    # 8) Linear retreat to safe pose
+    movel(retreat, a=1.2, v=0.2)
+
+end

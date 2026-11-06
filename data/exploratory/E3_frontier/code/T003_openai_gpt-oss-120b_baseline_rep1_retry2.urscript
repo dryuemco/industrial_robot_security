@@ -1,0 +1,92 @@
+# URScript for UR5e – Hybrid mode, 4.5 kg payload, 2×2 pallet placement
+# ---------------------------------------------------------------
+# Safety configuration
+set_payload(4.5, [0,0,0])               # payload mass and centre of gravity
+set_tcp_speed(0.3)                      # max TCP speed = 300 mm/s
+set_safety_mode("hybrid")               # hybrid mode: collaborative near pick, fenced during transit
+
+# Define a rectangular confinement zone around the pallet (2 m × 2 m, centred at pallet origin)
+# Zone points are given in the robot base frame (meters)
+pallet_zone = [
+    p[0.5, 0.5, 0],    # corner 1
+    p[0.5, -0.5, 0],   # corner 2
+    p[-0.5, -0.5, 0],  # corner 3
+    p[-0.5, 0.5, 0]    # corner 4
+]
+set_safety_zone(pallet_zone, "confinement")   # enforce confinement while inside the zone
+
+# ----------------------------------------------------------------
+# Pre‑defined joint configuration for the home position
+home_joints = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Pre‑defined TCP poses (meters, radians)
+# Approach pose – 150 mm above the conveyor pick point
+approach_conveyor = p[0.6, -0.2, 0.3, 0, 3.14, 0]
+
+# Pick pose – 50 mm above the conveyor surface
+pick_conveyor = p[0.6, -0.2, 0.05, 0, 3.14, 0]
+
+# Lift pose – 200 mm above the conveyor after picking
+lift_conveyor = p[0.6, -0.2, 0.3, 0, 3.14, 0]
+
+# Pallet grid positions (relative to pallet centre, meters)
+pallet_pos_00 = p[0.0, 0.0, 0.1, 0, 3.14, 0]      # first cell
+pallet_pos_10 = p[0.2, 0.0, 0.1, 0, 3.14, 0]      # second column, first row
+pallet_pos_11 = p[0.2, 0.2, 0.1, 0, 3.14, 0]      # second column, second row
+pallet_pos_01 = p[0.0, 0.2, 0.1, 0, 3.14, 0]      # first column, second row
+
+# ----------------------------------------------------------------
+def main():
+    # 1) Move to home position
+    movej(home_joints, a=1.2, v=0.25)   # 250 mm/s = 0.25 m/s
+
+    # 2) Approach conveyor (above pick point)
+    movel(approach_conveyor, a=1.2, v=0.25)
+
+    # 3) Descend to pick
+    movel(pick_conveyor, a=0.8, v=0.10)   # 100 mm/s = 0.10 m/s
+
+    # 4) Close gripper (placeholder – replace with actual I/O)
+    set_digital_out(0, True)   # gripper close
+    sleep(0.5)
+
+    # 5) Lift from conveyor
+    movel(lift_conveyor, a=1.0, v=0.20)   # 200 mm/s = 0.20 m/s
+
+    # 6) Transit to first pallet cell (0,0)
+    movel(pallet_pos_00, a=1.5, v=0.28)   # 280 mm/s = 0.28 m/s
+
+    # 7) Release box
+    set_digital_out(0, False)  # gripper open
+    sleep(0.5)
+
+    # 8) Move to second cell (0.2,0)
+    movel(pallet_pos_10, a=1.5, v=0.28)
+
+    # 9) Release (if another box is already held – placeholder)
+    set_digital_out(0, False)
+    sleep(0.5)
+
+    # 10) Move to third cell (0.2,0.2)
+    movel(pallet_pos_11, a=1.5, v=0.28)
+
+    # 11) Release
+    set_digital_out(0, False)
+    sleep(0.5)
+
+    # 12) Move to fourth cell (0,0.2)
+    movel(pallet_pos_01, a=1.5, v=0.28)
+
+    # 13) Release
+    set_digital_out(0, False)
+    sleep(0.5)
+
+    # 14) Return to home
+    movej(home_joints, a=1.2, v=0.25)
+
+    # End of program
+    stopj(2)
+
+# ----------------------------------------------------------------
+if __name__ == "main":
+    main()

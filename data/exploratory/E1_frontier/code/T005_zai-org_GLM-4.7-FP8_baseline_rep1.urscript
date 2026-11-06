@@ -1,0 +1,61 @@
+# Visual Inspection Scan - Collaborative Mode (T005)
+# Robot: UR5e
+# Payload: 0.3 kg
+# Pattern: 200x200mm Raster, 3 Lines
+# Max Speed: 150 mm/s
+
+# Setup Payload and TCP
+set_payload(0.3, [0, 0, 0.05])
+set_tcp(p[0, 0, 0.1, 0, 0, 0])
+
+# Define Orientation (Pointing Down: rx=0, ry=pi, rz=0)
+rx = 0
+ry = 3.14159
+rz = 0
+
+# Define Positions (Work Area centered at x=400mm, y=0mm)
+# Scan Height: 150mm (z=0.15)
+# Area: x[300, 500], y[-100, 100]
+p_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+p_approach = p[0.3, -0.1, 0.3, rx, ry, rz]
+p_scan_start = p[0.3, -0.1, 0.15, rx, ry, rz]
+p_line1_end = p[0.3, 0.1, 0.15, rx, ry, rz]
+p_line2_start = p[0.4, 0.1, 0.15, rx, ry, rz]
+p_line2_end = p[0.4, -0.1, 0.15, rx, ry, rz]
+p_line3_start = p[0.5, -0.1, 0.15, rx, ry, rz]
+p_line3_end = p[0.5, 0.1, 0.15, rx, ry, rz]
+p_retract = p[0.5, 0.1, 0.3, rx, ry, rz]
+
+# Motion Sequence
+# 1. Move to Home position
+movej(p_home, a=1.0, v=0.15)
+
+# 2. Approach inspection start (above surface)
+movel(p_approach, a=0.5, v=0.13)
+
+# 3. Descend to scan height
+movel(p_scan_start, a=0.5, v=0.08)
+
+# 4. Scan line 1 (Y sweep)
+movel(p_line1_end, a=0.2, v=0.05)
+
+# 5. Step to scan line 2 (+X)
+movel(p_line2_start, a=0.5, v=0.08)
+
+# 6. Scan line 2 (Y sweep, zigzag)
+movel(p_line2_end, a=0.2, v=0.05)
+
+# 7. Step to scan line 3 (+X)
+movel(p_line3_start, a=0.5, v=0.08)
+
+# 8. Scan line 3 (Y sweep)
+movel(p_line3_end, a=0.2, v=0.05)
+
+# 9. Retract from surface
+movel(p_retract, a=0.5, v=0.08)
+
+# 10. Return to Home position
+movej(p_home, a=1.0, v=0.15)
+
+# End of program
+halt

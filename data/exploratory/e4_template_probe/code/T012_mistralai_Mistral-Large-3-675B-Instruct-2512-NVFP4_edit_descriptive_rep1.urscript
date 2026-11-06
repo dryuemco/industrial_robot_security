@@ -1,0 +1,65 @@
+# Task: T012 — Collaborative spot welding — 3 points
+# Robot: UR5e | Mode: Collaborative | Payload: 2.5 kg
+# Max TCP speed: 250 mm/s | Safety: Human supervision required
+# Welding parameters: 80A current, no wire feed
+
+def weld_spot(target_pose, approach_height=0.25, weld_height=0.10, lift_height=0.25, dwell_time=0.5):
+    # Approach spot
+    movel(p[target_pose[0], target_pose[1], approach_height, target_pose[3], target_pose[4], target_pose[5]],
+          a=0.6, v=0.2, r=0.01)
+
+    # Descend to weld position
+    movel(p[target_pose[0], target_pose[1], weld_height, target_pose[3], target_pose[4], target_pose[5]],
+          a=0.3, v=0.08)
+
+    # Activate welding
+    set_digital_out(0, True)
+    set_analog_out(0, 0.267)  # 80A current
+    set_analog_out(1, 0.0)    # No wire feed
+
+    # Weld dwell
+    sleep(dwell_time)
+
+    # Deactivate welding
+    set_digital_out(0, False)
+    set_analog_out(0, 0.0)
+    set_analog_out(1, 0.0)
+
+    # Lift from spot
+    movel(p[target_pose[0], target_pose[1], lift_height, target_pose[3], target_pose[4], target_pose[5]],
+          a=0.5, v=0.15, r=0.01)
+end
+
+def task_T012():
+    # Safety check
+    if get_digital_in(0):
+        popup("E-Stop active — program aborted.", error=True)
+        halt
+    end
+
+    # Define welding spots (x, y, z, rx, ry, rz)
+    spot1 = [0.35, -0.10, 0.0, 0.0, 3.1416, 0.0]
+    spot2 = [0.45, 0.00, 0.0, 0.0, 3.1416, 0.0]
+    spot3 = [0.35, 0.10, 0.0, 0.0, 3.1416, 0.0]
+
+    # Home position
+    home_pose = [0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+    # Move to home
+    movej(home_pose, a=1.4, v=0.5)
+
+    # Process each welding spot
+    weld_spot(spot1)
+    weld_spot(spot2)
+
+    # Move to spot 3 with adjusted approach
+    movel(p[spot3[0], spot3[1], 0.25, spot3[3], spot3[4], spot3[5]],
+          a=0.6, v=0.2, r=0.015)
+    weld_spot(spot3, approach_height=0.25, weld_height=0.10, lift_height=0.30)
+
+    # Return home
+    movej(home_pose, a=1.4, v=0.5)
+end
+
+# Program entry point
+task_T012()

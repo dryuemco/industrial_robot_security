@@ -1,0 +1,88 @@
+# Task: T008 — Heavy depalletizing — fenced mode (Production)
+# Robot: UR5e | Payload: 5.0 kg | Mode: Fenced
+# Safety: Confined space, max payload boundary
+# Max TCP speed: 450 mm/s (0.450 m/s)
+
+def task_T008():
+  # [0] Safety checks
+  if (get_digital_in(0) == True):  # E-Stop active
+    popup("E-Stop active — program aborted.", error=True, title="SAFETY ALERT")
+    halt
+  end
+
+  if (not get_configurable_digital_in(0)):  # Safety fence closed?
+    popup("Safety fence open — program aborted.", error=True, title="SAFETY ALERT")
+    halt
+  end
+
+  # [1] Set payload and tool center point
+  set_payload(5.0, [0.0, 0.0, 0.12])  # 5.0 kg, center of mass 120 mm from flange
+  set_tcp(p[0.0, 0.0, 0.15, 0.0, 0.0, 0.0])  # TCP 150 mm from flange
+
+  # [2] Home position (joint move)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=1.0, r=0.02)
+
+  # [3] Above pallet (linear move)
+  movel(p[0.5000, -0.2500, 0.5000, 0.0, 3.1416, 0.0], a=1.5, v=0.4, r=0.02)
+
+  # [4] Descend to top layer (slow approach)
+  movel(p[0.5000, -0.2500, 0.3200, 0.0, 3.1416, 0.0], a=0.6, v=0.15)
+
+  # [5] Gripper close (force-limited)
+  set_digital_out(0, True)
+  sleep(0.2)
+  force_mode(tool_pose(), [0, 0, 1, 0, 0, 0], [0, 0, 120, 0, 0, 0], 2, [0.1, 0.1, 0.1, 0.17, 0.17, 0.17])
+  sleep(0.3)
+  end_force_mode()
+
+  # [6] Lift box (controlled acceleration)
+  movel(p[0.5000, -0.2500, 0.5000, 0.0, 3.1416, 0.0], a=0.8, v=0.2, r=0.015)
+
+  # [7] Transit to conveyor (safe path)
+  movel(p[0.5000, 0.2500, 0.4000, 0.0, 3.1416, 0.0], a=1.2, v=0.35, r=0.02)
+
+  # [8] Place on conveyor (slow descent)
+  movel(p[0.5000, 0.2500, 0.1200, 0.0, 3.1416, 0.0], a=0.5, v=0.12)
+
+  # [9] Gripper open
+  set_digital_out(0, False)
+  sleep(0.1)
+
+  # [10] Release settle
+  force_mode(tool_pose(), [0, 0, 1, 0, 0, 0], [0, 0, -10, 0, 0, 0], 2, [0.1, 0.1, 0.1, 0.17, 0.17, 0.17])
+  sleep(0.2)
+  end_force_mode()
+
+  # [11] Retract (safe clearance)
+  movel(p[0.5000, 0.2500, 0.4000, 0.0, 3.1416, 0.0], a=1.5, v=0.35, r=0.01)
+
+  # [12] Return home
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=1.0, r=0.02)
+
+  # [13] Reset payload (optional)
+  set_payload(0.0)
+end
+
+# Entry point with safety wrapper
+thread safety_monitor():
+  while (True):
+    if (get_digital_in(0) == True):  # E-Stop
+      popup("E-Stop triggered — program halted.", error=True, title="SAFETY ALERT")
+      halt
+    end
+    if (not get_configurable_digital_in(0)):  # Safety fence
+      popup("Safety fence opened — program halted.", error=True, title="SAFETY ALERT")
+      halt
+    end
+    sleep(0.1)
+  end
+end
+
+# Start safety monitor thread
+thrd = run safety_monitor()
+
+# Execute main task
+task_T008()
+
+# Cleanup
+kill thrd

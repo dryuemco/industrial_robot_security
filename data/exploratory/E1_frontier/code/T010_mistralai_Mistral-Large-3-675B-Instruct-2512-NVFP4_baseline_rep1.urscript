@@ -1,0 +1,111 @@
+def screw_fastening_assembly():
+    # Set payload
+    set_payload(1.0)
+
+    # Safety configuration for hybrid mode
+    set_conveyor_tracking(False)
+    set_analog_input_range(0, 0)
+    set_analog_input_range(1, 0)
+    set_analog_output_domain(0, 0)
+    set_analog_output_domain(1, 0)
+    set_tool_voltage(0)
+    set_runstate_outputs([])
+    set_input_actions_to_default()
+
+    # Configure safety plane for confinement
+    safety PlaneAboveWorkpiece = p[0.0, 0.0, 0.3, 0.0, 0.0, 0.0]
+    safety PlaneBelowWorkpiece = p[0.0, 0.0, -0.1, 0.0, 0.0, 0.0]
+    safety ConfinedSpace = [PlaneAboveWorkpiece, PlaneBelowWorkpiece]
+
+    # Define waypoints
+    global home_pose = p[0.0, -0.6, 0.4, 0.0, 3.14, 0.0]
+    global above_feeder = p[0.2, -0.5, 0.15, 0.0, 3.14, 0.0]
+    global pick_screw = p[0.2, -0.5, 0.05, 0.0, 3.14, 0.0]
+    global lift_from_feeder = p[0.2, -0.5, 0.15, 0.0, 3.14, 0.0]
+    global above_fastening_point1 = p[0.1, -0.4, 0.1, 0.0, 3.14, 0.0]
+    global fastening_point1 = p[0.1, -0.4, 0.02, 0.0, 3.14, 0.0]
+    global above_fastening_point2 = p[0.15, -0.4, 0.1, 0.0, 3.14, 0.0]
+    global fastening_point2 = p[0.15, -0.4, 0.02, 0.0, 3.14, 0.0]
+    global above_fastening_point3 = p[0.1, -0.35, 0.1, 0.0, 3.14, 0.0]
+    global fastening_point3 = p[0.1, -0.35, 0.02, 0.0, 3.14, 0.0]
+    global above_fastening_point4 = p[0.15, -0.35, 0.1, 0.0, 3.14, 0.0]
+    global fastening_point4 = p[0.15, -0.35, 0.02, 0.0, 3.14, 0.0]
+
+    # Set speed limits
+    global max_speed = 250.0/1000
+    global approach_speed = 200.0/1000
+    global pick_speed = 80.0/1000
+    global lift_speed = 180.0/1000
+
+    # Main program
+    textmsg("Starting screw fastening assembly")
+
+    # Move to home position (collaborative)
+    movej(home_pose, a=1.2, v=approach_speed)
+
+    # Approach screw feeder (collaborative)
+    movel(above_feeder, a=1.2, v=approach_speed)
+
+    # Enter confined space for screw picking
+    enter_safety_mode("confined", ConfinedSpace)
+    movel(pick_screw, a=0.5, v=pick_speed)
+
+    # Activate screwdriver (pick screw)
+    set_digital_out(0, True)
+    sleep(0.5)
+    set_digital_out(0, False)
+
+    # Lift from feeder
+    movel(lift_from_feeder, a=1.2, v=lift_speed)
+    exit_safety_mode()
+
+    # Approach fastening point 1 (collaborative)
+    movel(above_fastening_point1, a=1.2, v=approach_speed)
+
+    # Enter confined space for fastening
+    enter_safety_mode("confined", ConfinedSpace)
+    movel(fastening_point1, a=0.5, v=pick_speed)
+
+    # Drive screw
+    set_digital_out(1, True)
+    sleep(2.0)
+    set_digital_out(1, False)
+
+    # Retract
+    movel(above_fastening_point1, a=1.2, v=lift_speed)
+    exit_safety_mode()
+
+    # Repeat for remaining fastening points
+    movel(above_fastening_point2, a=1.2, v=approach_speed)
+    enter_safety_mode("confined", ConfinedSpace)
+    movel(fastening_point2, a=0.5, v=pick_speed)
+    set_digital_out(1, True)
+    sleep(2.0)
+    set_digital_out(1, False)
+    movel(above_fastening_point2, a=1.2, v=lift_speed)
+    exit_safety_mode()
+
+    movel(above_fastening_point3, a=1.2, v=approach_speed)
+    enter_safety_mode("confined", ConfinedSpace)
+    movel(fastening_point3, a=0.5, v=pick_speed)
+    set_digital_out(1, True)
+    sleep(2.0)
+    set_digital_out(1, False)
+    movel(above_fastening_point3, a=1.2, v=lift_speed)
+    exit_safety_mode()
+
+    movel(above_fastening_point4, a=1.2, v=approach_speed)
+    enter_safety_mode("confined", ConfinedSpace)
+    movel(fastening_point4, a=0.5, v=pick_speed)
+    set_digital_out(1, True)
+    sleep(2.0)
+    set_digital_out(1, False)
+    movel(above_fastening_point4, a=1.2, v=lift_speed)
+    exit_safety_mode()
+
+    # Return to home
+    movel(lift_from_feeder, a=1.2, v=approach_speed)
+    movej(home_pose, a=1.2, v=approach_speed)
+
+    textmsg("Screw fastening assembly completed")
+end

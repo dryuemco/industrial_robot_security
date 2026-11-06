@@ -1,0 +1,122 @@
+# ------------------------------------------------------------
+# Task: T003 — EUR-pallet 2x2 layer — hybrid mode (improved)
+# Robot: UR5e | Payload: 4.5 kg | Max TCP speed: 0.300 m/s
+# ------------------------------------------------------------
+# Safety notes:
+#   • E‑Stop (digital input 0) is checked before each cycle.
+#   • Payload and TCP are set explicitly.
+#   • Speed scaling is monitored; motion pauses if below 10 %.
+#   • All linear moves use a small blending radius for smoothness.
+# ------------------------------------------------------------
+
+def task_T003():
+    # -----------------------------------------------------------------
+    # Configuration
+    # -----------------------------------------------------------------
+    # Joint target for home position
+    const HOME_JOINTS = [0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+    # Poses (meters, radians)
+    const CONVEYOR_ABOVE = p[0.500, -0.300, 0.350, 0.0, 3.1416, 0.0]
+    const CONVEYOR_PICK  = p[0.500, -0.300, 0.100, 0.0, 3.1416, 0.0]
+    const PALLET_ORIGIN  = p[0.500,  0.300, 0.400, 0.0, 3.1416, 0.0]  # above first cell
+    const PALLET_Z_PLACE = 0.120   # height of box placement (m)
+
+    # Grid offsets (meters) for a 2×2 layout relative to PALLET_ORIGIN
+    const GRID_OFFSETS = [[0.0, 0.0],
+                          [0.200, 0.0],
+                          [0.0, 0.200],
+                          [0.200, 0.200]]
+
+    # Motion parameters
+    const ACC_JOINT   = 1.4    # rad/s²
+    const VEL_JOINT   = 0.30   # rad/s (max TCP speed 0.300 m/s)
+    const ACC_LINEAR  = 1.0    # m/s²
+    const VEL_APPROACH= 0.250  # m/s
+    const VEL_DESCEND = 0.100  # m/s
+    const VEL_LIFT    = 0.200  # m/s
+    const VEL_TRANSIT = 0.280  # m/s
+    const RADIUS      = 0.020  # m blending radius
+
+    # Gripper I/O
+    const GRIPPER_OUT = 0   # digital out for gripper actuation
+
+    # -----------------------------------------------------------------
+    # Initialise robot
+    # -----------------------------------------------------------------
+    set_payload(4.5, [0,0,0.1])          # payload + centre of mass
+    set_tcp(p[0,0,0.1,0,0,0])           # generic TCP (adjust if needed)
+
+    # Verify E‑Stop before start
+    if (get_digital_in(0)):
+        popup("E‑Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # Move to home safely
+    movej(HOME_JOINTS, a=ACC_JOINT, v=VEL_JOINT)
+
+    # -----------------------------------------------------------------
+    # Main pick‑and‑place loop (4 cells)
+    # -----------------------------------------------------------------
+    for idx = 0 to 3 do
+        # ---- safety: re‑check E‑Stop each iteration ----
+        if (get_digital_in(0)):
+            popup("E‑Stop triggered during cycle — aborting.", error=True)
+            halt
+        end
+
+        # ---- safety: enforce minimum speed scaling (10 %) ----
+        while speed_scale() < 0.10 do
+            popup("Speed scaling below 10 % – waiting...", warning=True)
+            sleep(0.1)
+        end
+
+        # ---- approach conveyor (above) ----
+        movel(CONVEYOR_ABOVE, a=ACC_LINEAR, v=VEL_APPROACH, r=RADIUS)
+
+        # ---- descend to pick ----
+        movel(CONVEYOR_PICK, a=ACC_LINEAR*0.5, v=VEL_DESCEND)
+
+        # ---- close gripper (force‑controlled if supported) ----
+        set_digital_out(GRIPPER_OUT, True)
+        sleep(0.300)   # allow grasp to settle
+
+        # ---- lift object ----
+        movel(CONVEYOR_ABOVE, a=ACC_LINEAR*0.8, v=VEL_LIFT, r=RADIUS)
+
+        # ---- compute pallet target for current cell ----
+        #   offset only X/Y; Z stays at PALLET_ORIGIN[2] (above)
+        target_pose = pose_add(PALLET_ORIGIN,
+                               p[GRID_OFFSETS[idx][0],
+                                 GRID_OFFSETS[idx][1],
+                                 0.0, 0.0, 0.0, 0.0])
+
+        # ---- transit to pallet above cell ----
+        movel(target_pose, a=ACC_LINEAR*1.2, v=VEL_TRANSIT, r=RADIUS)
+
+        # ---- descend to place height ----
+        place_pose = pose_add(target_pose,
+                              p[0.0, 0.0, PALLET_Z_PLACE - PALLET_ORIGIN[2], 0.0, 0.0, 0.0])
+        movel(place_pose, a=ACC_LINEAR*0.5, v=VEL_DESCEND)
+
+        # ---- open gripper ----
+        set_digital_out(GRIPPER_OUT, False)
+        sleep(0.200)   # allow box to settle
+
+        # ---- retract to safe height above pallet ----
+        movel(target_pose, a=ACC_LINEAR, v=VEL_LIFT, r=RADIUS)
+    end
+
+    # -----------------------------------------------------------------
+    # Return to home and finish
+    # -----------------------------------------------------------------
+    movej(HOME_JOINTS, a=ACC_JOINT, v=VEL_JOINT)
+
+    popup("Task T003 completed successfully.", info=True)
+end
+
+# -----------------------------------------------------------------
+# Entry point
+# -----------------------------------------------------------------
+task_T003()

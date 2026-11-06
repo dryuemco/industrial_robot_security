@@ -1,0 +1,88 @@
+# URScript for UR5e – Dual‑zone Pick‑Place (Hybrid Mode)
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(1.2, {0,0,0.1})          # payload 1.2 kg, CoG 100 mm along Z of TCP
+set_tcp(p[0,0,0.1,0,0,0])           # TCP offset 100 mm along Z
+set_joint_acceleration(1.2)        # joint acceleration (rad/s²)
+set_cartesian_impedance({3000,3000,3000,300,300,300})  # default impedance
+
+# Safety limits (max TCP speed 300 mm/s = 0.30 m/s)
+MAX_TCP_SPEED = 0.30
+
+# -------------------------------------------------
+# Safety Zones (defined in Polyscope, referenced here)
+# -------------------------------------------------
+# Confinement zone:   (e.g., a box around the storage area)
+# Exclusion zone:     (e.g., operator hand‑off area)
+# The zones are enforced by the safety controller; script checks speed.
+
+def enforce_speed_limit():
+    if get_actual_tcp_speed() > MAX_TCP_SPEED:
+        stopj(2)                     # emergency stop if speed exceeded
+    end
+end
+
+# -------------------------------------------------
+# Poses
+# -------------------------------------------------
+# Joint configuration for Home position
+home_joint = [-1.5708, -1.5708, 1.5708, -1.5708, -1.5708, 0]
+
+# Cartesian poses (in metres)
+above_storage = p[0.500, -0.200, 0.400, 0, 3.1416, 0]   # 250 mm above bin
+descend_pick  = p[0.500, -0.200, 0.100, 0, 3.1416, 0]   # pick height
+lift_bin      = p[0.500, -0.200, 0.400, 0, 3.1416, 0]   # lift back up
+transit_handoff = p[0.300, 0.400, 0.300, 0, 3.1416, 0]  # above hand‑off zone
+above_handoff = p[0.300, 0.400, 0.500, 0, 3.1416, 0]    # safe approach height
+release_pose  = p[0.300, 0.400, 0.200, 0, 3.1416, 0]    # release height
+home_pose     = p[0.0, -0.5, 0.5, 0, 3.1416, 0]         # optional return pose
+
+# -------------------------------------------------
+# Hybrid Mode Activation (Polyscope handles the transition)
+# -------------------------------------------------
+# In Polyscope the robot is set to "Hybrid" mode; script only needs to
+# respect the mode‑dependent speed limits defined above.
+
+# -------------------------------------------------
+# Motion Sequence (8 moves)
+# -------------------------------------------------
+# 1) Move to Home (joint move)
+movej(home_joint, a=1.2, v=0.25, t=0, r=0)
+enforce_speed_limit()
+
+# 2) Move linear – Above storage bin
+movel(above_storage, a=1.2, v=0.28, t=0, r=0)
+enforce_speed_limit()
+
+# 3) Move linear – Descend to pick
+movel(descend_pick, a=1.2, v=0.12, t=0, r=0)
+enforce_speed_limit()
+
+# 4) Move linear – Lift from bin
+movel(lift_bin, a=1.2, v=0.20, t=0, r=0)
+enforce_speed_limit()
+
+# 5) Move linear – Transit to hand‑off zone
+movel(transit_handoff, a=1.2, v=0.25, t=0, r=0)
+enforce_speed_limit()
+
+# 6) Move linear – Approach hand‑off from above
+movel(above_handoff, a=1.2, v=0.20, t=0, r=0)
+enforce_speed_limit()
+
+# 7) Move linear – Release pose (lower into hand‑off)
+movel(release_pose, a=1.2, v=0.12, t=0, r=0)
+enforce_speed_limit()
+
+# 8) Move linear – Return to Home (via safe pose)
+movel(above_handoff, a=1.2, v=0.25, t=0, r=0)
+enforce_speed_limit()
+movel(home_pose, a=1.2, v=0.25, t=0, r=0)
+enforce_speed_limit()
+movej(home_joint, a=1.2, v=0.25, t=0, r=0)
+
+# -------------------------------------------------
+# End of Program
+# -------------------------------------------------

@@ -1,0 +1,82 @@
+# Visual inspection scan - collaborative mode (T005)
+# Safety-compliant URScript for UR5e
+
+# Safety configuration
+set_analog_inputrange(0, 0)
+set_analog_inputrange(1, 0)
+set_analog_outputdomain(0, 0)
+set_analog_outputdomain(1, 0)
+set_tool_voltage(0)
+set_runstate_outputs([])
+set_payload(0.3)
+set_tcp(p[0, 0, 0.1, 0, 0, 0])
+
+# Speed limits
+global max_speed = 150.0/1000
+global scan_speed = 50.0/1000
+global approach_speed = 130.0/1000
+global descend_speed = 80.0/1000
+global step_speed = 80.0/1000
+global home_speed = 150.0/1000
+
+# Waypoints
+global home_pose = p[0.0, -0.5, 0.3, 0, 3.14159, 0]
+global approach_pose = p[0.1, -0.1, 0.2, 0, 3.14159, 0]
+global scan_height = 0.15
+global scan_start = p[0.1, -0.1, scan_height, 0, 3.14159, 0]
+global scan_end1 = p[0.1, 0.1, scan_height, 0, 3.14159, 0]
+global scan_end2 = p[0.133, 0.1, scan_height, 0, 3.14159, 0]
+global scan_end3 = p[0.166, 0.1, scan_height, 0, 3.14159, 0]
+global retreat_pose = p[0.1, -0.1, 0.2, 0, 3.14159, 0]
+
+# Main program
+def main():
+    # Enable watchdog
+    watchdog = 0.1
+    watchdog_start(watchdog)
+
+    # Home position
+    movej(home_pose, a=1.2, v=home_speed, r=0)
+    watchdog_feed()
+
+    # Approach inspection start
+    movel(approach_pose, a=0.8, v=approach_speed, r=0)
+    watchdog_feed()
+
+    # Descend to scan height
+    movel(scan_start, a=0.5, v=descend_speed, r=0)
+    watchdog_feed()
+
+    # Scan line 1
+    movel(scan_end1, a=0.3, v=scan_speed, r=0)
+    watchdog_feed()
+
+    # Step to scan line 2
+    movel(p[scan_end1[0]+0.033, scan_end1[1], scan_height, 0, 3.14159, 0], a=0.5, v=step_speed, r=0)
+    watchdog_feed()
+
+    # Scan line 2
+    movel(p[scan_end1[0]+0.033, scan_start[1], scan_height, 0, 3.14159, 0], a=0.3, v=scan_speed, r=0)
+    watchdog_feed()
+
+    # Step to scan line 3
+    movel(p[scan_end1[0]+0.066, scan_start[1], scan_height, 0, 3.14159, 0], a=0.5, v=step_speed, r=0)
+    watchdog_feed()
+
+    # Scan line 3
+    movel(p[scan_end1[0]+0.066, scan_end1[1], scan_height, 0, 3.14159, 0], a=0.3, v=scan_speed, r=0)
+    watchdog_feed()
+
+    # Retreat
+    movel(retreat_pose, a=0.8, v=approach_speed, r=0)
+    watchdog_feed()
+
+    # Return home
+    movej(home_pose, a=1.2, v=home_speed, r=0)
+    watchdog_feed()
+
+    # Disable watchdog
+    watchdog_stop()
+end
+
+main()

@@ -1,0 +1,187 @@
+# -------------------------------------------------
+# UR5e Hybrid Mode Screw Fastening Task (ISO 10218:2025)
+# -------------------------------------------------
+# Payload and Tool
+set_payload(1.0, [0,0,0,0,0,0])   # 1 kg payload, CoM at tool origin
+set_tcp([0,0,0,0,0,0])            # Default TCP
+
+# Safety Parameters
+MAX_TCP_SPEED = 0.250              # m/s (250 mm/s)
+MAX_JOINT_ACCEL = 1.4              # rad/s^2 per joint
+SAFE_JOINT_SPEED = 2.0             # rad/s (for collaborative moves, below 200 mm/s TCP)
+SAFE_JOINT_ACCEL = 1.0             # rad/s^2 (below max)
+
+# Safety Zone (confinement box) – values in meters
+ZONE_MIN = p[-0.8, -0.8, 0.0, 0, 0, 0]
+ZONE_MAX = p[ 0.8,  0.8, 1.2, 0, 0, 0]
+
+# -----------------------------------------------------------------
+# Helper Functions
+# -----------------------------------------------------------------
+def safety_check():
+    # Placeholder for additional runtime safety verification
+    # (e.g., force limits, external stop, operator presence)
+    # Returns true if safe, false otherwise.
+    true
+end
+
+def inside_zone(pose):
+    # Checks if a pose is inside the defined safety box
+    x = pose[0]; y = pose[1]; z = pose[2];
+    return (x >= ZONE_MIN[0] and x <= ZONE_MAX[0] and
+            y >= ZONE_MIN[1] and y <= ZONE_MAX[1] and
+            z >= ZONE_MIN[2] and z <= ZONE_MAX[2])
+end
+
+def validate_waypoint(pose):
+    if not inside_zone(pose):
+        textmsg("Waypoint out of safety zone! Halting.")
+        halt()
+    end
+end
+
+def emergency_stop():
+    textmsg("EMERGENCY STOP ACTIVATED")
+    stopj(0)
+    # Additional user notification can be added here
+end
+
+# Register emergency stop handler (URScript callback)
+def on_stop():
+    emergency_stop()
+end
+
+# -----------------------------------------------------------------
+# Predefined Poses (all coordinates in meters)
+# -----------------------------------------------------------------
+home_pose                = p[0.0, -0.5, 0.5, 0, 3.14, 0]          # Joint space home (converted to pose)
+above_feeder_pose        = p[0.3, -0.2, 0.3, 0, 3.14, 0]
+pick_screw_pose          = p[0.3, -0.2, 0.1, 0, 3.14, 0]
+lift_from_feeder_pose    = p[0.3, -0.2, 0.35, 0, 3.14, 0]
+above_fp1_pose           = p[0.4, 0.0, 0.4, 0, 3.14, 0]
+above_fp2_pose           = p[0.4, 0.1, 0.4, 0, 3.14, 0]
+above_fp3_pose           = p[0.4, -0.1, 0.4, 0, 3.14, 0]
+above_fp4_pose           = p[0.4, 0.0, 0.4, 0, 3.14, 0]
+
+# Validate all waypoints before execution
+for wp in [home_pose, above_feeder_pose, pick_screw_pose, lift_from_feeder_pose,
+           above_fp1_pose, above_fp2_pose, above_fp3_pose, above_fp4_pose]:
+    validate_waypoint(wp)
+end
+
+# -----------------------------------------------------------------
+# Motion Execution
+# -----------------------------------------------------------------
+def main():
+    # ----- 1. Move to Home (collaborative) -----
+    if safety_check():
+        movej(get_inverse_kin(home_pose),
+              a=SAFE_JOINT_ACCEL,
+              v=SAFE_JOINT_SPEED,
+              t=0,
+              r=0)
+    end
+
+    # Switch to collaborative mode (approach)
+    set_robot_mode("collaborative")   # Placeholder – actual implementation depends on controller
+
+    # ----- 2. Move above screw feeder (linear) -----
+    if safety_check():
+        movel(above_feeder_pose,
+              a=MAX_JOINT_ACCEL,
+              v=MAX_TCP_SPEED,
+              t=0,
+              r=0)
+    end
+
+    # ----- 3. Move to pick screw (linear, slower) -----
+    if safety_check():
+        movel(pick_screw_pose,
+              a=MAX_JOINT_ACCEL,
+              v=0.080,          # 80 mm/s
+              t=0,
+              r=0)
+    end
+
+    # Simulate gripper close (placeholder)
+    set_digital_output(0, True)   # Activate vacuum/ gripper
+
+    # ----- 4. Lift from feeder (linear) -----
+    if safety_check():
+        movel(lift_from_feeder_pose,
+              a=MAX_JOINT_ACCEL,
+              v=0.180,          # 180 mm/s
+              t=0,
+              r=0)
+    end
+
+    # ----- 5‑8. Fastening points (fenced mode) -----
+    # Switch to fenced (restricted) mode for forceful fastening
+    set_robot_mode("fenced")       # Placeholder – actual implementation depends on controller
+
+    # Fastening point 1
+    if safety_check():
+        movel(above_fp1_pose,
+              a=MAX_JOINT_ACCEL,
+              v=MAX_TCP_SPEED,
+              t=0,
+              r=0)
+    end
+    # Insert screwdriver operation (placeholder)
+    set_digital_output(1, True)   # Activate screwdriver
+    sleep(1.0)                     # Dwell for fastening
+    set_digital_output(1, False)  # Deactivate screwdriver
+
+    # Fastening point 2
+    if safety_check():
+        movel(above_fp2_pose,
+              a=MAX_JOINT_ACCEL,
+              v=MAX_TCP_SPEED,
+              t=0,
+              r=0)
+    end
+    set_digital_output(1, True)
+    sleep(1.0)
+    set_digital_output(1, False)
+
+    # Fastening point 3
+    if safety_check():
+        movel(above_fp3_pose,
+              a=MAX_JOINT_ACCEL,
+              v=MAX_TCP_SPEED,
+              t=0,
+              r=0)
+    end
+    set_digital_output(1, True)
+    sleep(1.0)
+    set_digital_output(1, False)
+
+    # Fastening point 4
+    if safety_check():
+        movel(above_fp4_pose,
+              a=MAX_JOINT_ACCEL,
+              v=MAX_TCP_SPEED,
+              t=0,
+              r=0)
+    end
+    set_digital_output(1, True)
+    sleep(1.0)
+    set_digital_output(1, False)
+
+    # Return to home after task completion
+    if safety_check():
+        movej(get_inverse_kin(home_pose),
+              a=SAFE_JOINT_ACCEL,
+              v=SAFE_JOINT_SPEED,
+              t=0,
+              r=0)
+    end
+
+    # Reset to normal collaborative mode
+    set_robot_mode("collaborative")
+end
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

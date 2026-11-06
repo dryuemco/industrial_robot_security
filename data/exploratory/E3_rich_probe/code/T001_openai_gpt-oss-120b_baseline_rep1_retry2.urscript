@@ -1,0 +1,84 @@
+def pick_place():
+    # -------------------------------------------------
+    # Safety preamble (required before any motion)
+    # -------------------------------------------------
+    # Define the tool center point (TCP) relative to the robot flange.
+    # Here we assume a simple cylindrical gripper: 0.1 m along Z.
+    set_tcp(p[0,0,0.1,0,0,0])
+    
+    # Define payload: 0.5 kg, CoG at the TCP (default)
+    set_payload(0.5, [0,0,0.1])
+    
+    # -------------------------------------------------
+    # Motion parameters (all speeds in m/s, accelerations in m/s^2)
+    # -------------------------------------------------
+    v_home      = 0.2   # 200 mm/s
+    v_approach  = 0.2   # 200 mm/s
+    v_descend   = 0.1   # 100 mm/s
+    v_lift      = 0.15  # 150 mm/s
+    v_transit   = 0.2   # 200 mm/s
+    v_place_approach = 0.2
+    v_place_descend  = 0.1
+    v_return    = 0.2   # 200 mm/s
+    
+    a_home      = 1.0   # 1000 mm/s^2
+    a_approach  = 1.0
+    a_descend   = 1.0
+    a_lift      = 1.0
+    a_transit   = 1.0
+    a_place_approach = 1.0
+    a_place_descend  = 1.0
+    a_return    = 1.0
+    
+    # -------------------------------------------------
+    # Pose definitions (in meters, radians)
+    # -------------------------------------------------
+    # Home joint configuration (joint space)
+    home_joints = [-1.57, -1.57, -1.57, -1.57, 1.57, 0.0]
+    
+    # Pick approach pose (above the object)
+    pick_approach = p[0.4, -0.2, 0.3, 0, 3.14, 0]
+    # Pick pose (down to grasp)
+    pick_pose = p[0.4, -0.2, 0.1, 0, 3.14, 0]
+    # Lift pose (after picking)
+    lift_pose = p[0.4, -0.2, 0.3, 0, 3.14, 0]
+    
+    # Place approach pose (above the target location)
+    place_approach = p[0.6, 0.2, 0.3, 0, 3.14, 0]
+    # Place pose (down to release)
+    place_pose = p[0.6, 0.2, 0.1, 0, 3.14, 0]
+    # Post‑place lift pose
+    post_place_lift = p[0.6, 0.2, 0.3, 0, 3.14, 0]
+    
+    # -------------------------------------------------
+    # Sequence of motions (8 moves)
+    # -------------------------------------------------
+    # 1) Move to home joint configuration
+    movej(home_joints, a=a_home, v=v_home)
+    
+    # 2) Linear move to pick approach (above the object)
+    movel(pick_approach, a=a_approach, v=v_approach)
+    
+    # 3) Linear descend to pick pose
+    movel(pick_pose, a=a_descend, v=v_descend)
+    
+    # 4) Linear lift after grasping
+    movel(lift_pose, a=a_lift, v=v_lift)
+    
+    # 5) Linear transit to place approach
+    movel(place_approach, a=a_transit, v=v_transit)
+    
+    # 6) Linear descend to place pose
+    movel(place_pose, a=a_place_descend, v=v_place_descend)
+    
+    # 7) Linear lift after releasing
+    movel(post_place_lift, a=a_lift, v=v_lift)
+    
+    # 8) Return to home joint configuration
+    movej(home_joints, a=a_home, v=v_return)
+    
+    # End of program
+end
+
+# Call the routine
+pick_place()

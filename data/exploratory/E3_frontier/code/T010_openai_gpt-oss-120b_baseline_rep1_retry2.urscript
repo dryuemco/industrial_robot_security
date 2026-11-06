@@ -1,0 +1,103 @@
+# URScript for UR5e - Hybrid mode screw fastening assembly
+# -------------------------------------------------------
+# Payload and tool configuration
+set_payload(1.0, [0,0,0])          # 1.0 kg payload, CoG at TCP
+set_tcp([0,0,0,0,0,0])            # Default TCP (no offset)
+
+# Safety configuration
+set_safety_mode("hybrid")         # Enable hybrid collaborative/fenced mode
+set_safety_limits(0.0, 250.0)     # No speed scaling, max TCP speed 250 mm/s
+
+# Define key poses (positions in meters, orientation as quaternion)
+# Note: Replace the placeholder values with the actual calibrated poses.
+home_pose          = p[0.0, -0.5, 0.5, 0, 3.14, 0]          # Home joint pose (converted to pose)
+above_feeder_pose  = p[0.3, -0.2, 0.4, 0, 3.14, 0]          # Above screw feeder
+pick_screw_pose    = p[0.3, -0.2, 0.2, 0, 3.14, 0]          # Pick screw
+lift_pose          = p[0.3, -0.2, 0.4, 0, 3.14, 0]          # Lift after pick
+above_fp1_pose     = p[0.5, 0.0, 0.3, 0, 3.14, 0]           # Above fastening point 1
+fp1_pose           = p[0.5, 0.0, 0.1, 0, 3.14, 0]           # Fastening point 1
+above_fp2_pose     = p[0.5, 0.1, 0.3, 0, 3.14, 0]           # Above fastening point 2
+fp2_pose           = p[0.5, 0.1, 0.1, 0, 3.14, 0]           # Fastening point 2
+above_fp3_pose     = p[0.5, -0.1, 0.3, 0, 3.14, 0]          # Above fastening point 3
+fp3_pose           = p[0.5, -0.1, 0.1, 0, 3.14, 0]          # Fastening point 3
+above_fp4_pose     = p[0.6, 0.0, 0.3, 0, 3.14, 0]           # Above fastening point 4
+fp4_pose           = p[0.6, 0.0, 0.1, 0, 3.14, 0]           # Fastening point 4
+
+# Motion parameters
+joint_acc  = 1.2      # rad/s^2
+joint_vel  = 2.0      # rad/s (≈200 mm/s end‑effector speed)
+lin_acc    = 1.2      # m/s^2
+lin_vel    = 0.2      # m/s (200 mm/s)
+slow_vel   = 0.08     # m/s (80 mm/s)
+fast_vel   = 0.18     # m/s (180 mm/s)
+
+# -------------------------------------------------------
+# Sequence
+# -------------------------------------------------------
+
+# 1. Move to Home (joint move)
+movej(get_inverse_kin(home_pose), a=joint_acc, v=joint_vel)
+
+# 2. Approach above screw feeder (linear)
+movel(above_feeder_pose, a=lin_acc, v=lin_vel)
+
+# 3. Move down to pick screw (slow for precision)
+movel(pick_screw_pose, a=lin_acc, v=slow_vel)
+
+# 4. Close gripper / activate screwdriver (placeholder)
+#   (Insert actual I/O command here, e.g., set_digital_out(0, True))
+#   For demonstration we just wait a short time.
+sleep(0.2)
+
+# 5. Lift the screw
+movel(lift_pose, a=lin_acc, v=fast_vel)
+
+# 6. Move above fastening point 1
+movel(above_fp1_pose, a=lin_acc, v=lin_vel)
+
+# 7. Fasten screw at point 1 (fenced segment)
+movel(fp1_pose, a=lin_acc, v=slow_vel)
+#   Activate screwdriver torque (placeholder)
+#   set_digital_out(1, True)
+sleep(0.5)                     # simulate fastening time
+#   Deactivate screwdriver
+#   set_digital_out(1, False)
+
+# 8. Retract from point 1
+movel(above_fp1_pose, a=lin_acc, v=fast_vel)
+
+# 9. Move above fastening point 2
+movel(above_fp2_pose, a=lin_acc, v=lin_vel)
+
+# 10. Fasten screw at point 2
+movel(fp2_pose, a=lin_acc, v=slow_vel)
+sleep(0.5)
+#   (tool actuation commands)
+
+# 11. Retract from point 2
+movel(above_fp2_pose, a=lin_acc, v=fast_vel)
+
+# 12. Move above fastening point 3
+movel(above_fp3_pose, a=lin_acc, v=lin_vel)
+
+# 13. Fasten screw at point 3
+movel(fp3_pose, a=lin_acc, v=slow_vel)
+sleep(0.5)
+
+# 14. Retract from point 3
+movel(above_fp3_pose, a=lin_acc, v=fast_vel)
+
+# 15. Move above fastening point 4
+movel(above_fp4_pose, a=lin_acc, v=lin_vel)
+
+# 16. Fasten screw at point 4
+movel(fp4_pose, a=lin_acc, v=slow_vel)
+sleep(0.5)
+
+# 17. Retract from point 4
+movel(above_fp4_pose, a=lin_acc, v=fast_vel)
+
+# 18. Return to Home (joint move)
+movej(get_inverse_kin(home_pose), a=joint_acc, v=joint_vel)
+
+# End of program

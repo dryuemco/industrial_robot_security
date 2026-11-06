@@ -1,0 +1,8 @@
+def safety_check():
+    current_pose = get_actual_tcp_pose()
+    if (current_pose[0] < zone_min[0] or current_pose[0] > zone_max[0] or
+        current_pose[1] < zone_min[1] or current_pose[1] > zone_max[1] or
+        current_pose[2] < zone_min[2] or current_pose[2] > zone_max[2]):
+        return False
+    return True
+end

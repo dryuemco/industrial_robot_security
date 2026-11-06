@@ -1,0 +1,117 @@
+# ==============================================================================
+# Task: Hybrid multi-angle camera inspection (T014)
+# Robot: UR5e
+# Payload: 0.4 kg
+# Compliance: ISO 10218:2025
+# ==============================================================================
+
+# -----------------------------------------------------------------------------
+# Safety Configuration
+# -----------------------------------------------------------------------------
+global max_tcp_speed = 0.200      # 200 mm/s (Task Requirement)
+global max_joint_acc = 1.4        # 1.4 rad/s^2 (ISO Requirement)
+global safety_zone_min = p[-0.6, -0.6, 0.05, 0, 0, 0]
+global safety_zone_max = p[0.6, 0.6, 0.8, 0, 0, 0]
+
+# -----------------------------------------------------------------------------
+# Function: emergency_handler
+# Description: Halts robot and displays alert on safety violation
+# -----------------------------------------------------------------------------
+def emergency_handler(msg):
+    stopj(1.0)
+    popup("SAFETY VIOLATION: " + msg, False, False, True)
+    halt()
+end
+
+# -----------------------------------------------------------------------------
+# Function: check_workspace
+# Description: Validates if target pose is within defined safety boundaries
+# -----------------------------------------------------------------------------
+def check_workspace(target_pose):
+    # Check X bounds
+    if target_pose[0] < safety_zone_min[0] or target_pose[0] > safety_zone_max[0]:
+        emergency_handler("X-Axis Boundary Exceeded")
+    end
+    # Check Y bounds
+    if target_pose[1] < safety_zone_min[1] or target_pose[1] > safety_zone_max[1]:
+        emergency_handler("Y-Axis Boundary Exceeded")
+    end
+    # Check Z bounds
+    if target_pose[2] < safety_zone_min[2] or target_pose[2] > safety_zone_max[2]:
+        emergency_handler("Z-Axis Boundary Exceeded")
+    end
+end
+
+# -----------------------------------------------------------------------------
+# Function: safety_check
+# Description: Pre-motion validation (E-Stop, Mode, Speed)
+# -----------------------------------------------------------------------------
+def safety_check():
+    # Check Emergency Stop Status
+    if (get_safety_mode_bits() & 1) != 0:
+        emergency_handler("Emergency Stop Active")
+    end
+    
+    # Check Robot Mode (Running = 3)
+    if get_robot_mode() != 3:
+        emergency_handler("Robot not in Running mode")
+    end
+end
+
+# -----------------------------------------------------------------------------
+# Initialization
+# -----------------------------------------------------------------------------
+# Set Payload: Mass (kg) and Center of Mass (m)
+set_payload(0.4, [0, 0, 0.05])
+
+# Define Waypoints
+# Home Position (Joint space)
+q_home = [0, -1.5708, 0, -1.5708, 0, 0]
+
+# Inspection Poses (Cartesian space)
+# Top-down view
+p_top = p[0.4, 0.0, 0.4, 0, 3.1415, 0]
+
+# Side view (A6 inspection fixture frame)
+p_side = p[0.5, 0.2, 0.3, 0, 1.57, 0]
+
+# Angled view (A3 varied orientations near cone boundary)
+p_angled = p[0.55, -0.2, 0.25, 0.5, 2.0, 0.5]
+
+# Retract position
+p_retract = p[0.4, 0.0, 0.5, 0, 3.1415, 0]
+
+# -----------------------------------------------------------------------------
+# Motion Sequence
+# -----------------------------------------------------------------------------
+
+# 1. Move Joint: Home (180.0 mm/s)
+safety_check()
+movej(q_home, a=max_joint_acc, v=0.18)
+
+# 2. Move Linear: Top-down view position (150.0 mm/s)
+safety_check()
+check_workspace(p_top)
+movel(p_top, a=max_joint_acc, v=0.15)
+
+# 3. Move Linear: Side view position (120.0 mm/s)
+safety_check()
+check_workspace(p_side)
+movel(p_side, a=max_joint_acc, v=0.12)
+
+# 4. Move Linear: Angled view position (120.0 mm/s)
+safety_check()
+check_workspace(p_angled)
+movel(p_angled, a=max_joint_acc, v=0.12)
+
+# 5. Move Linear: Retract (180.0 mm/s)
+safety_check()
+check_workspace(p_retract)
+movel(p_retract, a=max_joint_acc, v=0.18)
+
+# 6. Move Joint: Return to Home (180.0 mm/s)
+safety_check()
+movej(q_home, a=max_joint_acc, v=0.18)
+
+# End of Task
+textmsg("Inspection Sequence T014 Completed Successfully.")

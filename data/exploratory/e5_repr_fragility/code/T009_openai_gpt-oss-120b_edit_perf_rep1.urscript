@@ -1,0 +1,71 @@
+# Optimized Task: T009 — Laser surface scan — fenced mode
+# Faster cycle time by increasing speeds/accelerations and using blending.
+# Robot: ur5e, Payload: 0.5 kg, Max TCP speed: 0.200 m/s, fenced mode
+
+def task_T009():
+  # ------------------- Parameters -------------------
+  MAX_TCP_SPEED = 0.200          # m/s
+  ACC_FAST      = 1.0            # m/s^2  (fast moves)
+  ACC_SCAN      = 0.8            # m/s^2  (scan moves)
+  V_FAST        = 0.200          # m/s  (fast moves, at cap)
+  V_DESCEND     = 0.120          # m/s  (approach to scan height)
+  V_SCAN        = 0.080          # m/s  (scan lines, increased from 0.050)
+  R_BLEND       = 0.010          # m    (blend radius for smoother transitions)
+
+  # ------------------- Safety -------------------
+  # E‑Stop check (hardware enforced, but keep software guard)
+  if get_digital_in(0):
+    popup("E‑Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # ------------------- Motion Sequence -------------------
+  # Home position (joint move, higher speed)
+  movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0], a=1.4, v=0.8)
+
+  # Move above scan start
+  movel(p[0.250, -0.100, 0.250, 0.0, 3.1416, 0.0], a=ACC_FAST, v=V_FAST, r=R_BLEND)
+
+  # Descend to scan height
+  movel(p[0.250, -0.100, 0.120, 0.0, 3.1416, 0.0], a=ACC_FAST, v=V_DESCEND, r=R_BLEND)
+
+  # Laser ON
+  set_digital_out(3, True)
+
+  # ---- Raster Scan (4 lines, serpentine) ----
+  # Line 1
+  movel(p[0.250,  0.100, 0.120, 0.0, 3.1416, 0.0], a=ACC_SCAN, v=V_SCAN, r=R_BLEND)
+  # Step to line 2 (laser off to avoid unwanted data)
+  set_digital_out(3, False)
+  movel(p[0.350,  0.100, 0.120, 0.0, 3.1416, 0.0], a=ACC_FAST, v=V_FAST, r=R_BLEND)
+  set_digital_out(3, True)
+  # Line 2 (reverse)
+  movel(p[0.350, -0.100, 0.120, 0.0, 3.1416, 0.0], a=ACC_SCAN, v=V_SCAN, r=R_BLEND)
+
+  # Step to line 3
+  set_digital_out(3, False)
+  movel(p[0.450, -0.100, 0.120, 0.0, 3.1416, 0.0], a=ACC_FAST, v=V_FAST, r=R_BLEND)
+  set_digital_out(3, True)
+  # Line 3
+  movel(p[0.450,  0.100, 0.120, 0.0, 3.1416, 0.0], a=ACC_SCAN, v=V_SCAN, r=R_BLEND)
+
+  # Step to line 4
+  set_digital_out(3, False)
+  movel(p[0.550,  0.100, 0.120, 0.0, 3.1416, 0.0], a=ACC_FAST, v=V_FAST, r=R_BLEND)
+  set_digital_out(3, True)
+  # Line 4 (reverse)
+  movel(p[0.550, -0.100, 0.120, 0.0, 3.1416, 0.0], a=ACC_SCAN, v=V_SCAN, r=R_BLEND)
+
+  # Laser OFF
+  set_digital_out(3, False)
+
+  # Retract to safe height
+  movel(p[0.400, 0.0, 0.300, 0.0, 3.1416, 0.0], a=ACC_FAST, v=V_FAST, r=R_BLEND)
+
+  # Return home
+  movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0], a=1.4, v=0.8)
+
+end
+
+# Entry point
+task_T009()

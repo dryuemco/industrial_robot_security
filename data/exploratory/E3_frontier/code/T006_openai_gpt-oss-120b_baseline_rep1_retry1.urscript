@@ -1,0 +1,37 @@
+def bin_pick():
+    # Enable fenced mode and configure safety parameters
+    set_fence_mode(True)
+    set_payload(2.0, [0,0,0.1])          # payload 2 kg, CoG offset
+    set_tcp([0,0,0,0,0,0])               # default TCP
+    set_speed_slider(0.5)                # limit speed scaling to 50 %
+
+    # Define key poses (meters, radians)
+    home            = p[0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
+    above_bin       = p[0.30, -0.20, 0.50, -2.00, 1.57, 0.0]
+    descend_bin     = p[0.30, -0.20, 0.20, -2.00, 1.57, 0.0]
+    lift_bin        = p[0.30, -0.20, 0.50, -2.00, 1.57, 0.0]
+    above_conveyor  = p[0.60,  0.00, 0.50, -2.00, 1.57, 0.0]
+    place           = p[0.60,  0.00, 0.20, -2.00, 1.57, 0.0]
+
+    # Helper to enforce safety stop before each move
+    def safe_move(target, speed):
+        if not get_digital_in(0):        # safety‑stop input (e.g., E‑stop)
+            stopj(2)
+        movel(target, speed, 1.2)        # speed in m/s, accel 1.2 m/s²
+
+    # ---- Pick‑Place Cycle -------------------------------------------------
+    safe_move(home,            0.35)   # 350 mm/s
+    safe_move(above_bin,      0.35)
+    safe_move(descend_bin,    0.15)   # 150 mm/s
+    set_digital_out(2, True)          # suction ON
+    sleep(0.2)
+    safe_move(lift_bin,       0.30)   # 300 mm/s
+    safe_move(above_conveyor, 0.38)   # 380 mm/s
+    safe_move(place,          0.20)   # 200 mm/s (slow for release)
+    set_digital_out(2, False)         # suction OFF
+    sleep(0.2)
+    safe_move(above_conveyor, 0.30)
+    safe_move(home,           0.35)
+
+    # End of program
+end

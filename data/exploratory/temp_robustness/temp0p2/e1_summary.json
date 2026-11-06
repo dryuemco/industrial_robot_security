@@ -1,0 +1,40 @@
+{
+  "experiment": "E1",
+  "timestamp": "2026-06-16T12:49:09.551782+00:00",
+  "total_calls": 180,
+  "successful": 176,
+  "errors": 4,
+  "refusals": 0,
+  "per_model": {
+    "openai/gpt-oss-120b": {
+      "calls": 89,
+      "attempted_calls": 90,
+      "invalid_pseudocode_calls": 0,
+      "gate_pass_rate": 0.989,
+      "mean_violations": 3.94,
+      "violation_rate": 1.0,
+      "mean_latency_ms": 8000
+    },
+    "zai-org/GLM-4.7-FP8": {
+      "calls": 87,
+      "attempted_calls": 90,
+      "invalid_pseudocode_calls": 0,
+      "gate_pass_rate": 0.967,
+      "mean_violations": 4.87,
+      "violation_rate": 1.0,
+      "mean_latency_ms": 55648
+    }
+  },
+  "per_condition": {
+    "baseline": {
+      "calls": 87,
+      "mean_violations": 5.2,
+      "violation_rate": 1.0
+    },
+    "safety": {
+      "calls": 89,
+      "mean_violations": 3.63,
+      "violation_rate": 1.0
+    }
+  }
+}

@@ -1,0 +1,93 @@
+# Task: T015 — Laser marking — fenced mode (Improved)
+# Description: Laser engraving of serial number pattern (3 lines) on metal surface.
+# Robot: ur5e | Payload: 0.6 kg | Max TCP speed: 0.400 m/s
+# Improvements: Added payload definition, discrete laser control for clean lines,
+#               zero-blending for sharp corners, and structured variables.
+
+def task_T015():
+  # --- Configuration & Constants ---
+  payload_mass = 0.6
+  io_laser = 3
+  io_estop = 0
+  
+  # Speeds (m/s)
+  v_fast = 0.300
+  v_slow = 0.100
+  v_mark = 0.060
+  v_step = 0.080
+  
+  # Accelerations (m/s^2)
+  a_fast = 1.200
+  a_slow = 0.400
+  a_mark = 0.200
+  a_step = 0.300
+  
+  # Blending radii (m)
+  r_precise = 0.000  # Zero blend for sharp marking corners
+  r_smooth  = 0.010  # Standard blend for approach/retract
+  
+  # Positions
+  q_home = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+  z_safe = 0.200
+  z_mark = 0.100
+  
+  # --- Initialization ---
+  set_payload(payload_mass)
+  
+  # [0] Safety Check
+  if (get_digital_in(io_estop) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+  
+  # --- Motion Sequence ---
+  
+  # [1] Move to Home
+  movej(q_home, a=1.4000, v=0.8750)
+  
+  # [2] Move Above marking surface
+  movel(p[0.400000, -0.080000, z_safe, 0.0000, 3.1416, 0.0000], a=a_fast, v=v_fast, r=r_smooth)
+  
+  # [3] Descend to marking height
+  movel(p[0.400000, -0.080000, z_mark, 0.0000, 3.1416, 0.0000], a=a_slow, v=v_slow, r=r_smooth)
+  
+  # --- Marking Cycle ---
+  
+  # [5] Mark Line 1
+  set_digital_out(io_laser, True)
+  sleep(0.05) # Ensure laser activation before motion
+  movel(p[0.500000, -0.080000, z_mark, 0.0000, 3.1416, 0.0000], a=a_mark, v=v_mark, r=r_precise)
+  set_digital_out(io_laser, False)
+  sleep(0.05) # Ensure laser deactivation before move
+  
+  # [6] Step to Line 2 (Laser OFF to prevent connecting lines)
+  movel(p[0.500000, 0.000000, z_mark, 0.0000, 3.1416, 0.0000], a=a_step, v=v_step, r=r_smooth)
+  
+  # [7] Mark Line 2 (Reverse direction)
+  set_digital_out(io_laser, True)
+  sleep(0.05)
+  movel(p[0.400000, 0.000000, z_mark, 0.0000, 3.1416, 0.0000], a=a_mark, v=v_mark, r=r_precise)
+  set_digital_out(io_laser, False)
+  sleep(0.05)
+  
+  # [8] Step to Line 3 (Laser OFF)
+  movel(p[0.400000, 0.080000, z_mark, 0.0000, 3.1416, 0.0000], a=a_step, v=v_step, r=r_smooth)
+  
+  # [9] Mark Line 3
+  set_digital_out(io_laser, True)
+  sleep(0.05)
+  movel(p[0.500000, 0.080000, z_mark, 0.0000, 3.1416, 0.0000], a=a_mark, v=v_mark, r=r_precise)
+  set_digital_out(io_laser, False)
+  
+  # --- Retraction & Reset ---
+  
+  # [11] Retract to safe height
+  movel(p[0.450000, 0.000000, 0.300000, 0.0000, 3.1416, 0.0000], a=a_fast, v=v_fast, r=r_smooth)
+  
+  # [12] Return to Home
+  movej(q_home, a=1.4000, v=0.8750)
+  
+end
+
+# Entry point
+task_T015()

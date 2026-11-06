@@ -1,0 +1,41 @@
+# Define safety parameters
+set_tool_payload(2.0);
+set_digital_out(0, true);  # Suction cup on
+
+# Define safety zones
+safety_zone([[0.2, 0.2, 0.0], [0.8, 0.8, 1.0]]);
+
+# Define joint acceleration
+set_joint_acceleration([1.4, 1.4, 1.4, 1.4, 1.4, 1.4]);
+
+# Define TCP speeds
+set_tcp_speed(350.0);  # Home position
+set_tcp_speed(400.0);  # Above bin, Descend into bin, Lift from bin, Transit to conveyor
+
+# Define joint speeds
+set_joint_speed(350.0);  # Home position
+set_joint_speed(150.0);  # Descend into bin
+set_joint_speed(300.0);  # Lift from bin
+set_joint_speed(380.0);  # Transit to conveyor
+
+# Define emergency stop
+def safety_check():
+    if get_safety_status() == 1:
+        popup("Safety violation detected!");
+        stop;
+
+# Define waypoints
+waypoints = [
+    [0.2, 0.2, 0.0],  # Home position
+    [0.3, -0.4, 0.6],  # Above bin
+    [0.3, -0.4, 0.3],  # Descend into bin
+    [0.3, -0.4, 0.6],  # Lift from bin
+    [0.5, -0.4, 0.6]   # Transit to conveyor
+];
+
+# Execute motion commands
+for i in range(len(waypoints)):
+    move_to(waypoints[i], speed=get_tcp_speed(), acceleration=get_joint_acceleration());
+    safety_check();
+
+# End of script

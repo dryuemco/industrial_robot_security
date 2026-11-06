@@ -1,0 +1,104 @@
+# URScript for heavy depalletizing in fenced mode (T008)
+# Payload: 5.0 kg, max TCP speed 0.45 m/s
+# All motion commands include explicit speed (v) and acceleration (a) parameters.
+# Each critical call is wrapped with pcall and checked for success.
+
+def abort(msg):
+    textmsg(msg)
+    halt()
+end
+
+# ----------------------------------------------------------------------
+# Configuration
+# ----------------------------------------------------------------------
+# Set payload (kg) and centre of gravity (m)
+payload_success = pcall(set_payload, 5.0, [0,0,0.1])
+if not payload_success then abort("Failed to set payload") end
+
+# Set TCP (tool) if required (example: standard gripper)
+# tcp_success = pcall(set_tcp, [0,0,0,0,0,0])
+# if not tcp_success then abort("Failed to set TCP") end
+
+# ----------------------------------------------------------------------
+# Pose definitions (in meters and radians)
+# ----------------------------------------------------------------------
+# Home position (joint configuration)
+home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Above pallet (Cartesian pose)
+above_pallet = p[0.5, -0.3, 0.4, 0, 3.14, 0]
+
+# Top layer of pallet (descend 0.15 m)
+top_layer = p[0.5, -0.3, 0.25, 0, 3.14, 0]
+
+# Lift box (raise 0.2 m from top layer)
+lift_box = p[0.5, -0.3, 0.45, 0, 3.14, 0]
+
+# Conveyor position
+conveyor = p[0.8, 0.0, 0.4, 0, 3.14, 0]
+
+# Safe standby pose after task
+standby_joint = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+# ----------------------------------------------------------------------
+# Motion parameters (within max limits)
+# ----------------------------------------------------------------------
+# Linear speeds (m/s) and accelerations (m/s^2)
+v_fast   = 0.40   # 400 mm/s
+v_slow   = 0.15   # 150 mm/s
+v_lift   = 0.20   # 200 mm/s
+v_trans  = 0.35   # 350 mm/s
+a_linear = 1.2    # reasonable linear acceleration
+
+# Joint speeds (rad/s) and accelerations (rad/s^2)
+v_joint  = 1.0    # joint speed (rad/s) – well below limits
+a_joint  = 1.2    # joint acceleration
+
+# ----------------------------------------------------------------------
+# Helper to execute motion with error handling
+# ----------------------------------------------------------------------
+def safe_movej(q):
+    success = pcall(movej, q, a=a_joint, v=v_joint)
+    if not success then abort("movej failed") end
+end
+
+def safe_movel(pose, speed, accel):
+    success = pcall(movel, pose, a=accel, v=speed)
+    if not success then abort("movel failed") end
+end
+
+# ----------------------------------------------------------------------
+# Main program
+# ----------------------------------------------------------------------
+def main():
+    # 1) Move to Home joint configuration
+    safe_movej(home_joint)
+
+    # 2) Move linearly above the pallet
+    safe_movel(above_pallet, v_fast, a_linear)
+
+    # 3) Descend to top layer of pallet
+    safe_movel(top_layer, v_slow, a_linear)
+
+    # 4) Lift the box
+    safe_movel(lift_box, v_lift, a_linear)
+
+    # 5) Transit to conveyor
+    safe_movel(conveyor, v_trans, a_linear)
+
+    # 6) Lower box onto conveyor (example offset)
+    lower_pose = p[0.8, 0.0, 0.25, 0, 3.14, 0]
+    safe_movel(lower_pose, v_slow, a_linear)
+
+    # 7) Release box (placeholder for gripper command)
+    # release_success = pcall(set_digital_out, 0, False)
+    # if not release_success then abort("Failed to open gripper") end
+
+    # 8) Return to standby joint position
+    safe_movej(standby_joint)
+
+    textmsg("Depalletizing task completed successfully.")
+end
+
+# Execute the program
+main()

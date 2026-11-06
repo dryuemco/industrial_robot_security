@@ -1,0 +1,31 @@
+{
+  "experiment": "E1",
+  "timestamp": "2026-09-08T04:55:35.644018+00:00",
+  "total_calls": 24,
+  "successful": 22,
+  "errors": 2,
+  "refusals": 0,
+  "per_model": {
+    "deepseek-coder-v2:16b-lite-instruct-q4_K_M": {
+      "calls": 22,
+      "attempted_calls": 24,
+      "invalid_pseudocode_calls": 2,
+      "gate_pass_rate": 0.917,
+      "mean_violations": 8.09,
+      "violation_rate": 0.909,
+      "mean_latency_ms": 2102
+    }
+  },
+  "per_condition": {
+    "baseline": {
+      "calls": 12,
+      "mean_violations": 12.67,
+      "violation_rate": 1.0
+    },
+    "safety": {
+      "calls": 10,
+      "mean_violations": 2.6,
+      "violation_rate": 0.8
+    }
+  }
+}

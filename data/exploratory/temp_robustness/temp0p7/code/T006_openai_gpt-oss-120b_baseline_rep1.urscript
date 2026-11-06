@@ -1,0 +1,78 @@
+def main():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    set_payload(2.0, [0,0,0])                # payload 2 kg, CoG at tool center
+    set_tcp(p[0,0,0.1,0,0,0])                # 100 mm tool length (example)
+
+    # -------------------------------------------------
+    # Pose definitions (all positions are in robot base frame)
+    # -------------------------------------------------
+    # Joint space home position
+    home_joint = [-0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+    # Linear poses
+    above_bin      = p[0.500, 0.200, 0.300, 0.0, 3.1416, 0.0]   # 30 cm above bin
+    bin_pick       = p[0.500, 0.200, 0.100, 0.0, 3.1416, 0.0]   # descend into bin
+    above_conveyor = p[0.000, -0.300, 0.400, 0.0, 3.1416, 0.0]  # over conveyor
+    place_pose     = p[0.000, -0.300, 0.200, 0.0, 3.1416, 0.0]  # place down
+    # Additional safety poses (optional)
+    safe_pose      = p[0.300, 0.000, 0.500, 0.0, 3.1416, 0.0]   # neutral safe pose
+
+    # -------------------------------------------------
+    # Motion parameters
+    # -------------------------------------------------
+    a_joint = 1.2      # joint acceleration (rad/s²)
+    v_joint = 0.35     # joint velocity (~350 mm/s tip speed)
+
+    a_lin   = 1.2      # linear acceleration (m/s²)
+    v_home  = 0.35     # 350 mm/s
+    v_desc  = 0.15     # 150 mm/s (slow approach)
+    v_lift  = 0.30     # 300 mm/s
+    v_fast  = 0.38     # 380 mm/s (max allowed <400 mm/s)
+
+    # -------------------------------------------------
+    # Sequence: pick from bin, place on conveyor
+    # -------------------------------------------------
+    # 1) Move to home joint configuration
+    movej(home_joint, a=a_joint, v=v_joint, t=0, r=0)
+
+    # 2) Move above the bin (linear)
+    movel(above_bin, a=a_lin, v=v_home, t=0, r=0)
+
+    # 3) Descend into the bin
+    movel(bin_pick, a=a_lin, v=v_desc, t=0, r=0)
+
+    # 4) Activate suction
+    set_digital_output(0, True)   # 0 = suction valve
+    sync()                         # ensure valve is on before lifting
+
+    # 5) Lift the part from the bin
+    movel(above_bin, a=a_lin, v=v_lift, t=0, r=0)
+
+    # 6) Transit to above the conveyor
+    movel(above_conveyor, a=a_lin, v=v_fast, t=0, r=0)
+
+    # 7) Lower to place the part on the conveyor
+    movel(place_pose, a=a_lin, v=v_fast, t=0, r=0)
+
+    # 8) Deactivate suction (release part)
+    set_digital_output(0, False)
+    sync()
+
+    # 9) Retract to above conveyor
+    movel(above_conveyor, a=a_lin, v=v_fast, t=0, r=0)
+
+    # 10) Return to home position
+    movej(home_joint, a=a_joint, v=v_joint, t=0, r=0)
+
+    # -------------------------------------------------
+    # End of program
+    # -------------------------------------------------
+    stopj(2)   # smooth stop
+end
+
+# -------------------------------------------------
+# Run the program
+# -------------------------------------------------
+main()

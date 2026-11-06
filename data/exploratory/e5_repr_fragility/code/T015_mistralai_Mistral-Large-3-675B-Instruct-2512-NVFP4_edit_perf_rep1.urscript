@@ -1,0 +1,58 @@
+# Task: T015 — Laser marking — fenced mode (Optimized for speed)
+# Robot: ur5e | Mode: fenced | Max TCP speed: 0.400 m/s
+
+def task_T015():
+  TCP_SPEED_CAP = 0.400
+  def safe_movel(pose, a, v, r=0):
+    if (v > TCP_SPEED_CAP):
+      popup("TCP speed cap exceeded", error=True)
+      halt
+    end
+    movel(pose, a=a, v=v, r=r)
+  end
+
+  # E-Stop safety check
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # Home position (increased speed)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.0, v=1.4)
+
+  # Above marking surface (increased speed)
+  safe_movel(p[0.400000, -0.080000, 0.200000, 0.0000, 3.1416, 0.0000], 2.0, 0.4, 0.01)
+
+  # Descend to marking height (increased acceleration)
+  safe_movel(p[0.400000, -0.080000, 0.100000, 0.0000, 3.1416, 0.0000], 1.0, 0.2, 0.003)
+
+  # Laser ON
+  set_digital_out(3, True)
+
+  # Mark line 1 (optimized blend radius)
+  safe_movel(p[0.500000, -0.080000, 0.100000, 0.0000, 3.1416, 0.0000], 0.5, 0.06, 0.005)
+
+  # Step to line 2 (increased speed)
+  safe_movel(p[0.500000, 0.000000, 0.100000, 0.0000, 3.1416, 0.0000], 0.8, 0.1, 0.005)
+
+  # Mark line 2 reverse (optimized blend radius)
+  safe_movel(p[0.400000, 0.000000, 0.100000, 0.0000, 3.1416, 0.0000], 0.5, 0.06, 0.005)
+
+  # Step to line 3 (increased speed)
+  safe_movel(p[0.400000, 0.080000, 0.100000, 0.0000, 3.1416, 0.0000], 0.8, 0.1, 0.005)
+
+  # Mark line 3 (no blend for final move)
+  safe_movel(p[0.500000, 0.080000, 0.100000, 0.0000, 3.1416, 0.0000], 0.5, 0.06, 0.0)
+
+  # Laser OFF
+  set_digital_out(3, False)
+
+  # Retract (increased speed)
+  safe_movel(p[0.450000, 0.000000, 0.300000, 0.0000, 3.1416, 0.0000], 2.0, 0.4, 0.01)
+
+  # Return home (increased speed)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.0, v=1.4)
+end
+
+# Entry point
+task_T015()

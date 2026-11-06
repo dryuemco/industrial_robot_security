@@ -1,0 +1,128 @@
+# ==========================================
+# URScript: Screw Fastening Assembly (Hybrid Mode)
+# Robot: UR5e | Payload: 1.0 kg
+# Constraints: ISO 10218:2025 compliant
+# Max TCP Speed: 250 mm/s | Max Joint Accel: 1.4 rad/s^2
+# ==========================================
+
+# --- Configuration & Constants ---
+global max_tcp_speed = 0.25          # meters/sec (250 mm/s)
+global max_joint_accel = 1.4         # rad/s^2
+global safe_payload_mass = 1.0       # kg
+global safe_payload_cog = [0, 0, 0.05] # Center of gravity (m)
+
+# Safety Zone Boundaries (Cartesian limits relative to Base)
+global safety_zone_min = [-0.8, -0.8, 0.0]
+global safety_zone_max = [0.8, 0.8, 0.8]
+
+# Waypoints (Pose [x, y, z, rx, ry, rz] in meters and radians)
+p_home = [0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
+p_feeder_above = [0.3, -0.4, 0.3, 3.14, 0.0, 0.0]
+p_feeder_pick = [0.3, -0.4, 0.1, 3.14, 0.0, 0.0]
+p_lift = [0.3, -0.4, 0.25, 3.14, 0.0, 0.0]
+
+# Fastening Points (4 points total)
+p_fp1_above = [0.5, 0.2, 0.3, 2.5, 2.5, 0.0]
+p_fp1 = [0.5, 0.2, 0.1, 2.5, 2.5, 0.0]
+p_fp2 = [0.5, 0.3, 0.1, 2.5, 2.5, 0.0]
+p_fp3 = [0.6, 0.2, 0.1, 2.5, 2.5, 0.0]
+
+# --- Safety Functions ---
+
+def emergency_stop_handler(error_msg):
+    popup(error_msg, title="EMERGENCY STOP", warning=True)
+    stopj(2.0)
+    halt
+    end
+
+def validate_workspace(target_pose):
+    # Extract X, Y, Z from pose vector
+    x = target_pose[0]
+    y = target_pose[1]
+    z = target_pose[2]
+    
+    if x < safety_zone_min[0] or x > safety_zone_max[0]:
+        return False
+    if y < safety_zone_min[1] or y > safety_zone_max[1]:
+        return False
+    if z < safety_zone_min[2] or z > safety_zone_max[2]:
+        return False
+    return True
+
+def safety_check(pose):
+    if not validate_workspace(pose):
+        emergency_stop_handler("Workspace Boundary Violation!")
+    
+    # Check if robot is ready (optional simplified check)
+    if not is_program_running():
+        emergency_stop_handler("Program execution interrupted!")
+
+def set_robot_payload():
+    set_payload(safe_payload_mass, safe_payload_cog)
+
+# --- Main Program ---
+
+def main():
+    # Initialize
+    set_robot_payload()
+    
+    textmsg("Starting Screw Fastening Task - Hybrid Mode")
+
+    # 1. move_joint: Home (200.0 mm/s)
+    safety_check(p_home)
+    movej(p_home, a=max_joint_accel, v=0.2, r=0.0)
+
+    # 2. move_linear: Above screw feeder (200.0 mm/s)
+    safety_check(p_feeder_above)
+    movel(p_feeder_above, a=0.5, v=0.2, r=0.0) # a=0.5 m/s^2 path accel approx
+
+    # 3. move_linear: Pick screw (80.0 mm/s) - Collaborative Speed
+    safety_check(p_feeder_pick)
+    movel(p_feeder_pick, a=0.2, v=0.08, r=0.0)
+    
+    # Simulate gripper close
+    sleep(0.5)
+
+    # 4. move_linear: Lift from feeder (180.0 mm/s)
+    safety_check(p_lift)
+    movel(p_lift, a=0.4, v=0.18, r=0.0)
+
+    # --- Fastening Phase (Fenced/Strict Mode) ---
+    textmsg("Entering Fastening Zone")
+
+    # 5. move_linear: Above fastening point 1 (200.0 mm/s)
+    safety_check(p_fp1_above)
+    movel(p_fp1_above, a=0.5, v=0.2, r=0.0)
+
+    # 6. move_linear: Fasten at Point 1 (Drive Screw) - 150.0 mm/s
+    safety_check(p_fp1)
+    movel(p_fp1, a=0.3, v=0.15, r=0.0)
+    # Simulate screwdriver action
+    set_digital_out(0, True)
+    sleep(1.0)
+    set_digital_out(0, False)
+    
+    # Move to next point (Fasten Point 2)
+    # 7. move_linear: Fasten at Point 2 (Drive Screw) - 150.0 mm/s
+    # Note: Assuming linear move between points for efficiency in fenced mode
+    safety_check(p_fp2)
+    movel(p_fp2, a=0.3, v=0.15, r=0.0)
+    set_digital_out(0, True)
+    sleep(1.0)
+    set_digital_out(0, False)
+
+    # 8. move_linear: Fasten at Point 3 (Drive Screw) - 150.0 mm/s
+    safety_check(p_fp3)
+    movel(p_fp3, a=0.3, v=0.15, r=0.0)
+    set_digital_out(0, True)
+    sleep(1.0)
+    set_digital_out(0, False)
+
+    textmsg("Task Sequence Completed")
+    # Return to home
+    movej(p_home, a=max_joint_accel, v=0.2, r=0.0)
+
+end
+
+# Execute
+main()

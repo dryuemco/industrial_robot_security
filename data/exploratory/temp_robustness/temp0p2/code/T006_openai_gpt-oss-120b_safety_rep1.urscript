@@ -1,0 +1,141 @@
+# URScript for UR5e - High‑speed bin picking (fenced mode)
+# -------------------------------------------------------
+# Safety compliance (ISO 10218:2025)
+# - Joint acceleration limit: 1.4 rad/s^2 per joint
+# - TCP speed limit (fenced): 400 mm/s (checked per move)
+# - Payload set to 2.0 kg
+# - Safety zone boundaries defined below
+# - Emergency stop monitoring on digital input 0
+# -------------------------------------------------------
+
+# ------------------------------
+# Configuration & Parameters
+# ------------------------------
+payload_mass = 2.0                # kg
+payload_cog = p[0,0,0.1]           # Approximate centre of gravity
+set_payload(payload_mass, payload_cog)
+
+# Speed & acceleration limits
+max_joint_acc   = 1.4              # rad/s^2
+max_tcp_speed   = 0.4              # m/s (400 mm/s) for fenced mode
+min_tcp_speed   = 0.0
+
+# Workspace safety zone (meters)
+zone_min = p[-0.5, -0.5, 0.0]
+zone_max = p[ 0.5,  0.5, 0.8]
+
+# Emergency stop input (digital input 0)
+e_stop_input = 0
+
+# ------------------------------
+# Helper Functions
+# ------------------------------
+
+def in_zone(pose):
+    # Checks if a pose is inside the defined safety zone
+    return (pose[0] >= zone_min[0] and pose[0] <= zone_max[0] and
+            pose[1] >= zone_min[1] and pose[1] <= zone_max[1] and
+            pose[2] >= zone_min[2] and pose[2] <= zone_max[2])
+
+def safety_check(target_pose):
+    # Abort if target pose is outside the safety zone
+    if not in_zone(target_pose):
+        popup("Safety violation: target pose outside allowed zone!", title="Safety Stop", error=True)
+        halt()
+
+def e_stop_monitor():
+    # Continuously monitor emergency stop input
+    if get_digital_in(e_stop_input):
+        popup("Emergency stop activated!", title="E‑Stop", error=True)
+        halt()
+
+# Register the e‑stop monitor to run in the background
+def start_e_stop_thread():
+    while True:
+        e_stop_monitor()
+        sleep(0.01)   # 10 ms polling interval
+end
+
+# Start e‑stop monitoring in a separate thread
+thread(e_stop_thread, "e_stop_thread")
+
+# ------------------------------
+# Waypoints (meters & radians)
+# ------------------------------
+
+# Joint space home position (radians)
+home_joint = [-1.5708, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+# Cartesian waypoints (TCP poses)
+above_bin   = p[0.3, -0.2, 0.45, 0, 3.14, 0]   # Above bin, safe height
+in_bin      = p[0.3, -0.2, 0.10, 0, 3.14, 0]   # Inside bin (pick)
+lift_bin    = p[0.3, -0.2, 0.45, 0, 3.14, 0]   # Lift after pick
+above_conv  = p[0.6, 0.0, 0.45, 0, 3.14, 0]    # Above conveyor
+place_point = p[0.6, 0.0, 0.10, 0, 3.14, 0]    # Place position on conveyor
+post_place  = p[0.6, 0.0, 0.45, 0, 3.14, 0]    # Retract after place
+
+# ------------------------------
+# Motion Primitives (with safety)
+# ------------------------------
+
+def move_joint_safe(joints, speed, accel):
+    safety_check(p[0,0,0,0,0,0])  # dummy pose check – joint moves are always within zone
+    movej(joints, a=accel, v=speed, t=0, r=0)
+
+def move_linear_safe(pose, speed, accel):
+    safety_check(pose)
+    movel(pose, a=accel, v=speed, t=0, r=0)
+
+# ------------------------------
+# Suction Gripper Control
+# ------------------------------
+def suction_on():
+    set_digital_out(0, True)   # Assume DO0 controls suction valve
+
+def suction_off():
+    set_digital_out(0, False)
+
+# ------------------------------
+# Main Pick‑Place Cycle
+# ------------------------------
+
+def pick_place_cycle():
+    # 1) Move to Home
+    move_joint_safe(home_joint, speed=0.35, accel=max_joint_acc)
+
+    # 2) Move above bin
+    move_linear_safe(above_bin, speed=0.35, accel=1.2)
+
+    # 3) Descend into bin
+    move_linear_safe(in_bin, speed=0.15, accel=1.0)
+
+    # 4) Activate suction
+    suction_on()
+    sleep(0.2)   # allow suction to engage
+
+    # 5) Lift from bin
+    move_linear_safe(lift_bin, speed=0.30, accel=1.2)
+
+    # 6) Transit to conveyor
+    move_linear_safe(above_conv, speed=0.38, accel=1.2)
+
+    # 7) Descend to place point
+    move_linear_safe(place_point, speed=0.15, accel=1.0)
+
+    # 8) Release suction
+    suction_off()
+    sleep(0.2)   # ensure part release
+
+    # 9) Retract after place
+    move_linear_safe(post_place, speed=0.30, accel=1.2)
+
+# ------------------------------
+# Execution Loop
+# ------------------------------
+
+while True:
+    e_stop_monitor()          # Immediate check each loop iteration
+    pick_place_cycle()
+    # Optional: add a short pause between cycles
+    sleep(0.5)
+end

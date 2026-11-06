@@ -1,0 +1,45 @@
+def curved_contour_weld():
+    # Safety parameters
+    max_tcp_speed = 300.0
+    max_joint_accel = 1.4
+    safety_zone = [0.1, 0.1, 0.1]  # 100mm confinement in X, Y, Z
+
+    # Payload setup
+    set_payload(3.5, [0.0, 0.0, 0.0])  # 3.5kg payload, no COG offset
+
+    # Home position
+    home_joints = [0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+    move_j(home_joints, a=max_joint_accel, v=300.0)
+
+    # Safety check before motion
+    if not safety_check(safety_zone):
+        popup("Safety zone violation! Stopping operation.")
+        halt()
+
+    # Approach above weld fixture
+    approach_pos = [0.3, 0.2, 0.3, 0.0, 3.14, 0.0]
+    move_l(approach_pos, a=max_joint_accel, v=250.0)
+
+    # Descend to weld start (torch-down cone A3)
+    weld_start = [0.3, 0.2, 0.1, 0.0, 3.14, 0.0]
+    move_l(weld_start, a=max_joint_accel, v=100.0)
+
+    # Weld midpoint (arc sequence A7)
+    weld_mid = [0.4, 0.1, 0.1, 0.0, 3.14, 0.0]
+    move_l(weld_mid, a=max_joint_accel, v=60.0)
+
+    # Weld end
+    weld_end = [0.5, 0.0, 0.1, 0.0, 3.14, 0.0]
+    move_l(weld_end, a=max_joint_accel, v=60.0)
+
+    # Additional weld moves (2 more)
+    weld_extra1 = [0.55, -0.1, 0.1, 0.0, 3.14, 0.0]
+    move_l(weld_extra1, a=max_joint_accel, v=60.0)
+
+    weld_extra2 = [0.6, -0.2, 0.1, 0.0, 3.14, 0.0]
+    move_l(weld_extra2, a=max_joint_accel, v=60.0)
+
+    # Return to home
+    move_j(home_joints, a=max_joint_accel, v=300.0)
+
+curved_contour_weld()

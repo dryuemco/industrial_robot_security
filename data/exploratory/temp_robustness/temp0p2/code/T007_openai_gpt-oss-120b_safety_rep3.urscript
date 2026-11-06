@@ -1,0 +1,106 @@
+# -------------------------------------------------
+# URScript for UR5e – Curved Contour Weld (Hybrid Mode)
+# Safety compliant with ISO 10218:2025
+# -------------------------------------------------
+
+# ---------- Configuration ----------
+payload_mass = 3.5                         # kg
+payload_cog  = [0,0,0.1]                    # m, approx. 10 cm along tool
+set_payload(payload_mass, payload_cog)
+
+# TCP definition (default tool)
+set_tcp(p[0,0,0.2,0,0,0])                   # 200 mm offset along Z
+
+# Speed & acceleration limits
+MAX_TCP_SPEED_COLLAB = 0.250               # m/s (250 mm/s) for collaborative moves
+MAX_JOINT_ACCEL      = 1.4                 # rad/s^2 per joint
+MAX_TCP_ACCEL        = 1.2                 # m/s^2 (conservative)
+
+# Workspace safety zone (meters)
+zone_min = p[-0.800, -0.800, 0.000, 0, 0, 0]
+zone_max = p[ 0.800,  0.800, 1.200, 0, 0, 0]
+
+# ---------- Helper Functions ----------
+def safety_check(pose):
+    # Verify pose is inside the defined safety zone
+    for i in range(3):
+        if pose[i] < zone_min[i] or pose[i] > zone_max[i]:
+            textmsg("Safety violation: pose out of bounds on axis %d" % i)
+            halt()
+    return True
+end
+
+def emergency_stop_handler():
+    # Digital input 0 is wired to the E‑Stop button
+    if get_digital_in(0):
+        textmsg("Emergency stop activated!")
+        halt()
+    end
+end
+
+def safe_movej(joint_target, speed, accel):
+    # Joint move with explicit limits and safety check after move
+    movej(joint_target, a=accel, v=speed)
+    # Joint limits are enforced by the controller; additional checks can be added if needed
+    emergency_stop_handler()
+end
+
+def safe_movel(target_pose, speed, accel):
+    # Ensure the target pose respects the collaborative speed limit
+    if speed > MAX_TCP_SPEED_COLLAB:
+        speed = MAX_TCP_SPEED_COLLAB
+    end
+    safety_check(target_pose)
+    movel(target_pose, a=accel, v=speed)
+    emergency_stop_handler()
+end
+
+# ---------- Safety Zone Definition ----------
+def define_safety_zone():
+    # This placeholder could be expanded to use UR's built‑in safety zones
+    textmsg("Safety zone defined: X[%.3f, %.3f] Y[%.3f, %.3f] Z[%.3f, %.3f]" %
+            (zone_min[0], zone_max[0], zone_min[1], zone_max[1], zone_min[2], zone_max[2]))
+end
+
+# -------------------------------------------------
+# Main Program
+# -------------------------------------------------
+def main():
+    define_safety_zone()
+    safety_check(get_actual_tcp_pose())
+
+    # 1) Home position (joint move) – speed limited to 0.300 m/s (300 mm/s)
+    home_joints = [-1.57, -1.57, -1.57, -1.57, 1.57, 0.0]   # example home pose
+    safe_movej(home_joints, speed=0.300, accel=MAX_JOINT_ACCEL)
+
+    # 2) Approach above weld fixture (linear) – collaborative speed 0.250 m/s
+    approach_pose = p[0.400, 0.000, 0.300, 0, 3.14, 0]    # 300 mm above fixture
+    safe_movel(approach_pose, speed=0.250, accel=MAX_TCP_ACCEL)
+
+    # 3) Descend to weld start – slower for precision
+    start_pose = p[0.400, 0.000, 0.100, 0, 3.14, 0]       # 100 mm height (start)
+    safe_movel(start_pose, speed=0.100, accel=MAX_TCP_ACCEL)
+
+    # 4) Weld midpoint – arc motion (approximated by linear segment)
+    mid_pose = p[0.500, 0.050, 0.100, 0, 3.14, 0]         # midpoint of arc
+    safe_movel(mid_pose, speed=0.060, accel=MAX_TCP_ACCEL)
+
+    # 5) Weld end – final point of arc
+    end_pose = p[0.600, 0.000, 0.100, 0, 3.14, 0]         # end of weld
+    safe_movel(end_pose, speed=0.060, accel=MAX_TCP_ACCEL)
+
+    # 6) Retract after weld – move up 150 mm
+    retract_pose = p[0.600, 0.000, 0.250, 0, 3.14, 0]
+    safe_movel(retract_pose, speed=0.150, accel=MAX_TCP_ACCEL)
+
+    # 7) Return to safe standby position (joint move)
+    standby_joints = [0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
+    safe_movej(standby_joints, speed=0.200, accel=MAX_JOINT_ACCEL)
+
+    textmsg("Program completed safely.")
+end
+
+# -------------------------------------------------
+# Run the main routine
+# -------------------------------------------------
+main()

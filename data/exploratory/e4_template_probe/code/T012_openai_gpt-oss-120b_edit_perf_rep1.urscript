@@ -1,0 +1,66 @@
+# Optimized Task: T012 — Collaborative spot welding — 3 points
+# Speed improvements: TCP speed increased to max 0.250 m/s where safe,
+# joint moves used for inter‑spot travel, redundant re‑tractions removed.
+# Robot: ur5e, Payload: 2.5 kg, Collaborative mode.
+
+def task_T012():
+    # ---- Safety check -------------------------------------------------
+    if get_digital_in(0):
+        popup("E‑Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # ---- Pre‑defined poses ---------------------------------------------
+    pose_home   = p[0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+    pose_spot1  = p[0.3500, -0.1000, 0.1000, 0.0000, 3.1416, 0.0000]
+    pose_spot2  = p[0.4500,  0.0000, 0.1000, 0.0000, 3.1416, 0.0000]
+    pose_above1 = p[0.3500, -0.1000, 0.2500, 0.0000, 3.1416, 0.0000]
+    pose_above2 = p[0.4500,  0.0000, 0.2500, 0.0000, 3.1416, 0.0000]
+    pose_ret    = p[0.4500,  0.0000, 0.3000, 0.0000, 3.1416, 0.0000]
+
+    # ---- Parameters ----------------------------------------------------
+    a_fast   = 1.400   # joint acceleration (rad/s²)
+    v_fast   = 0.250   # max TCP speed (m/s)
+    a_mid    = 0.600   # linear acceleration (m/s²)
+    a_slow   = 0.300   # descent acceleration
+    v_approach = 0.250 # approach speed
+    v_descend  = 0.080 # descent speed (keep low for welding)
+    v_lift    = 0.250  # lift speed
+    r_blend   = 0.010  # blending radius
+
+    # ---- Home -----------------------------------------------------------
+    movej(pose_home, a=a_fast, v=v_fast)
+
+    # ---- Spot 1 ---------------------------------------------------------
+    movel(pose_above1, a=a_mid, v=v_approach, r=r_blend)
+    movel(pose_spot1,  a=a_slow, v=v_descend)               # descend
+    set_digital_out(0, True)      # arc enable
+    set_analog_out(0, 0.267)      # current
+    set_analog_out(1, 0.0)        # wire feed
+    sleep(0.500)                  # weld dwell
+    set_digital_out(0, False)    # arc off
+    set_analog_out(0, 0.0)
+    set_analog_out(1, 0.0)
+    movel(pose_above1, a=a_mid, v=v_lift, r=r_blend)       # lift
+
+    # ---- Travel to Spot 2 (joint space, faster) ------------------------
+    movej(pose_above2, a=a_fast, v=v_fast)                # joint move to above spot 2
+
+    # ---- Spot 2 ---------------------------------------------------------
+    movel(pose_spot2, a=a_slow, v=v_descend)               # descend
+    set_digital_out(0, True)
+    set_analog_out(0, 0.267)
+    set_analog_out(1, 0.0)
+    sleep(0.500)
+    set_digital_out(0, False)
+    set_analog_out(0, 0.0)
+    set_analog_out(1, 0.0)
+    movel(pose_ret, a=a_mid, v=v_lift, r=r_blend)         # retract to safe height
+
+    # ---- Return Home ----------------------------------------------------
+    movej(pose_home, a=a_fast, v=v_fast)
+
+end
+
+# Entry point
+task_T012()

@@ -1,0 +1,120 @@
+# --------------------------------------------------------------
+# Improved URScript for Task T004 – Multi‑waypoint SSM pick‑place
+# with obstacle avoidance, dual work objects and enhanced safety.
+# --------------------------------------------------------------
+# Robot: UR5e | Payload: 1.5 kg | Max TCP speed: 0.250 m/s
+# Collaborative mode with Speed & Separation Monitoring (SSM)
+# --------------------------------------------------------------
+
+def task_T004():
+    # ----------------------------------------------------------
+    # 0. Global safety & robot configuration
+    # ----------------------------------------------------------
+    # Verify E‑Stop (hardware enforced, but add software guard)
+    if get_digital_in(0):               # E‑Stop input (normally NC)
+        popup("E‑Stop active – aborting program.", error=True)
+        halt
+    end
+
+    # Set payload and TCP (adjust to actual tool)
+    set_payload(1.5, [0,0,0])            # 1.5 kg payload, CoG at TCP
+    set_tcp(p[0,0,0.1,0,0,0])            # Example TCP, modify as needed
+
+    # Enforce max TCP speed (250 mm/s) and a moderate speed slider
+    set_tcp_speed(0.250)                # m/s
+    set_speed_slider(0.5)               # 50 % of max speed for safety
+
+    # Define work objects for pick and place stations
+    # (position only – orientation aligns with world frame)
+    pick_wo  = p[0.400, -0.250, 0.100, 0, 3.1416, 0]
+    place_wo = p[0.400,  0.250, 0.100, 0, 3.1416, 0]
+
+    # ----------------------------------------------------------
+    # 1. Safety zones (confinement & exclusion)
+    # ----------------------------------------------------------
+    # Confinement zone – simple cubic workspace (example)
+    # set_confinement_zone(0, [[0.0,0.0,0.0], [0.8,0.8,0.8]])  # Uncomment & adjust
+
+    # Exclusion zone – cylindrical obstacle at X=0.25 m, Y=0 m
+    # set_exclusion_zone(0, [[0.250,0.0,0.0], 0.05])        # radius 50 mm, uncomment & adjust
+
+    # ----------------------------------------------------------
+    # 2. Motion sequence with speed scaling around obstacle
+    # ----------------------------------------------------------
+
+    # Home position (joint space) – safe joint limits
+    movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+          a=1.4, v=0.5, r=0.0)
+
+    # ---- Pick phase ------------------------------------------------
+    # Set work object to pick station
+    set_workobject(pick_wo)
+
+    # Above pick (WP1)
+    movel(p[0.400, -0.250, 0.350, 0, 3.1416, 0],
+          a=0.8, v=0.2, r=0.015)
+
+    # Descend to pick (WP2)
+    movel(p[0.400, -0.250, 0.100, 0, 3.1416, 0],
+          a=0.5, v=0.1, r=0.0)
+
+    # Close gripper (digital out 0) – add simple force feedback placeholder
+    set_digital_out(0, True)
+    sleep(0.2)   # allow grip to settle
+
+    # Lift up (WP3)
+    movel(p[0.400, -0.250, 0.400, 0, 3.1416, 0],
+          a=0.7, v=0.18, r=0.02)
+
+    # ----------------------------------------------------------
+    # 3. Obstacle avoidance – reduce speed before crossing
+    # ----------------------------------------------------------
+    set_speed_scaling(0.5)   # 50 % speed scaling for safety near obstacle
+
+    # Waypoint around obstacle (WP4) – offset -X
+    movel(p[0.250, 0.000, 0.400, 0, 3.1416, 0],
+          a=0.8, v=0.2, r=0.03)
+
+    # Restore full speed after cleared obstacle
+    set_speed_scaling(1.0)
+
+    # ----------------------------------------------------------
+    # 4. Place phase ------------------------------------------------
+    # Switch to place work object
+    set_workobject(place_wo)
+
+    # Above place (WP5)
+    movel(p[0.400, 0.250, 0.400, 0, 3.1416, 0],
+          a=0.8, v=0.2, r=0.02)
+
+    # Descend to place (WP6)
+    movel(p[0.400, 0.250, 0.100, 0, 3.1416, 0],
+          a=0.5, v=0.1, r=0.0)
+
+    # Open gripper
+    set_digital_out(0, False)
+    sleep(0.2)   # allow object release
+
+    # Retract (WP7)
+    movel(p[0.400, 0.250, 0.400, 0, 3.1416, 0],
+          a=0.7, v=0.18, r=0.01)
+
+    # ----------------------------------------------------------
+    # 5. Return home & cleanup
+    # ----------------------------------------------------------
+    # Reset work object to world (optional)
+    set_workobject(p[0,0,0,0,0,0])
+
+    # Home position
+    movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+          a=1.4, v=0.5, r=0.0)
+
+    # Turn off any auxiliary outputs
+    set_digital_out(0, False)
+
+end
+
+# --------------------------------------------------------------
+# Entry point
+# --------------------------------------------------------------
+task_T004()

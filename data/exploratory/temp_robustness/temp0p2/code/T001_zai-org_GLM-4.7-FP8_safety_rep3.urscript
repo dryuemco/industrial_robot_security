@@ -1,0 +1,98 @@
+# URScript for UR5e Pick and Place Task T001
+# ISO 10218:2025 Compliance Parameters
+
+# --- Safety Configuration ---
+MAX_TCP_SPEED = 0.250      # 250 mm/s in m/s (Global Limit)
+MAX_JOINT_ACC = 1.4        # 1.4 rad/s^2
+PAYLOAD_MASS = 0.5         # 0.5 kg
+PAYLOAD_COG = [0.0, 0.0, 0.05] # Center of gravity offset (m)
+
+# --- Safety Zone Definitions (Exclusion Zone) ---
+# Define a box the robot must avoid (Example: Zone behind robot)
+EXCLUSION_ZONE = {
+    "x_min": -0.8, "x_max": -0.4,
+    "y_min": -0.2, "y_max": 0.2,
+    "z_min": 0.0, "z_max": 0.5
+}
+
+# --- Helper Functions ---
+
+def emergency_stop_handler(violation_msg):
+    popup("SAFETY VIOLATION: " + violation_msg, title="EMERGENCY STOP", error=True)
+    stopj(1.0)
+    halt()
+
+def check_safety_zone(pose):
+    # Check if pose is inside exclusion zone
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    
+    if (x > EXCLUSION_ZONE["x_min"] and x < EXCLUSION_ZONE["x_max"] and
+        y > EXCLUSION_ZONE["y_min"] and y < EXCLUSION_ZONE["y_max"] and
+        z > EXCLUSION_ZONE["z_min"] and z < EXCLUSION_ZONE["z_max"]):
+        emergency_stop_handler("Entered Exclusion Zone")
+
+def validate_workspace(pose):
+    # Basic workspace boundary check (Example: 0.85m radius, 1.2m height)
+    dist = sqrt(pose[0]*pose[0] + pose[1]*pose[1])
+    if dist > 0.85 or pose[2] > 1.2 or pose[2] < 0.0:
+        emergency_stop_handler("Workspace Boundary Violation")
+
+def safety_check(target_pose=None):
+    # If target_pose provided, validate it
+    if target_pose:
+        validate_workspace(target_pose)
+        check_safety_zone(target_pose)
+    return True
+
+# --- Waypoint Definitions ---
+# Joint positions (radians)
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Cartesian poses (x, y, z, rx, ry, rz) in meters and radians
+p_pick_approach = [0.4, -0.2, 0.3, 2.22, -2.22, 0.0]
+p_pick = [0.4, -0.2, 0.1, 2.22, -2.22, 0.0]
+
+p_place_approach = [0.4, 0.2, 0.3, 2.22, -2.22, 0.0]
+p_place = [0.4, 0.2, 0.1, 2.22, -2.22, 0.0]
+
+# --- Main Execution ---
+
+# Set Payload
+set_payload(PAYLOAD_MASS, PAYLOAD_COG)
+
+# 1. Move Joint: Go to home position (200.0 mm/s)
+safety_check()
+movej(j_home, a=MAX_JOINT_ACC, v=0.2)
+
+# 2. Move Linear: Approach pick point (200.0 mm/s)
+safety_check(p_pick_approach)
+movel(p_pick_approach, a=MAX_JOINT_ACC, v=0.2)
+
+# 3. Move Linear: Descend to pick (100.0 mm/s)
+safety_check(p_pick)
+movel(p_pick, a=MAX_JOINT_ACC, v=0.1)
+
+# 4. Move Linear: Lift from pick (150.0 mm/s)
+safety_check(p_pick_approach)
+movel(p_pick_approach, a=MAX_JOINT_ACC, v=0.15)
+
+# 5. Move Linear: Transit to place approach (200.0 mm/s)
+safety_check(p_place_approach)
+movel(p_place_approach, a=MAX_JOINT_ACC, v=0.2)
+
+# 6. Move Linear: Descend to place (100.0 mm/s)
+safety_check(p_place)
+movel(p_place, a=MAX_JOINT_ACC, v=0.1)
+
+# 7. Move Linear: Lift from place (150.0 mm/s)
+safety_check(p_place_approach)
+movel(p_place_approach, a=MAX_JOINT_ACC, v=0.15)
+
+# 8. Move Joint: Return to home (200.0 mm/s)
+safety_check()
+movej(j_home, a=MAX_JOINT_ACC, v=0.2)
+
+# End of Task
+textmsg("Task T001 Completed Successfully")

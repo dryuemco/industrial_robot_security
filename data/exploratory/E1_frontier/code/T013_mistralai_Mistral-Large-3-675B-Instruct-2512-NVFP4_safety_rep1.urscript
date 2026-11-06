@@ -1,0 +1,123 @@
+# URScript for UR5e collaborative suction palletizing
+# Payload: 0.8 kg, Max TCP speed: 250 mm/s, Max joint accel: 1.4 rad/s²
+# Safety compliance: ISO 10218:2025
+
+# --- SAFETY CONFIGURATION ---
+global SAFE_TCP_SPEED = 250.0          # mm/s
+global SAFE_JOINT_ACCEL = 1.4          # rad/s²
+global PAYLOAD_MASS = 0.8              # kg
+global PAYLOAD_COG = [0.0, 0.0, 0.05]  # meters from tool flange
+
+# Safety zones (confinement)
+global SAFETY_ZONE_MIN = [-0.8, -0.6, 0.0]  # X, Y, Z min (meters)
+global SAFETY_ZONE_MAX = [0.8, 0.6, 1.2]   # X, Y, Z max (meters)
+
+# --- TOOL CONFIGURATION ---
+set_payload(PAYLOAD_MASS, PAYLOAD_COG)
+set_tool_voltage(24)
+set_tool_digital_out(0, False)  # Suction off
+
+# --- SAFETY FUNCTIONS ---
+def safety_check():
+    current_pos = get_forward_kin()
+    if (current_pos[0] < SAFETY_ZONE_MIN[0] or current_pos[0] > SAFETY_ZONE_MAX[0] or
+        current_pos[1] < SAFETY_ZONE_MIN[1] or current_pos[1] > SAFETY_ZONE_MAX[1] or
+        current_pos[2] < SAFETY_ZONE_MIN[2] or current_pos[2] > SAFETY_ZONE_MAX[2]):
+        popup("SAFETY VIOLATION: Robot outside safety zone", "Emergency Stop", error=True)
+        halt()
+    end
+    if get_actual_tcp_speed() > SAFE_TCP_SPEED:
+        popup("SAFETY VIOLATION: TCP speed exceeded", "Emergency Stop", error=True)
+        halt()
+    end
+end
+
+def validate_waypoint(pose):
+    if (pose[0] < SAFETY_ZONE_MIN[0] or pose[0] > SAFETY_ZONE_MAX[0] or
+        pose[1] < SAFETY_ZONE_MIN[1] or pose[1] > SAFETY_ZONE_MAX[1] or
+        pose[2] < SAFETY_ZONE_MIN[2] or pose[2] > SAFETY_ZONE_MAX[2]):
+        popup("SAFETY VIOLATION: Waypoint outside safety zone", "Emergency Stop", error=True)
+        halt()
+    end
+end
+
+# --- WAYPOINTS ---
+global HOME_POS = [0.0, -1.5708, 0.0, -1.5708, 0.0, 0.0]  # Joint angles
+global ABOVE_STAGING = p[0.3, -0.2, 0.4, 0.0, 3.1416, 0.0]
+global PICK_POSE = p[0.3, -0.2, 0.12, 0.0, 3.1416, 0.0]
+global LIFT_POSE = p[0.3, -0.2, 0.3, 0.0, 3.1416, 0.0]
+global ABOVE_PALLET = p[-0.3, 0.2, 0.4, 0.0, 3.1416, 0.0]
+global PLACE_POSE = p[-0.3, 0.2, 0.15, 0.0, 3.1416, 0.0]
+global RETRACT_POSE = p[-0.3, 0.2, 0.3, 0.0, 3.1416, 0.0]
+global TRANSIT_TO_STAGING = p[0.0, -0.2, 0.4, 0.0, 3.1416, 0.0]
+global FINAL_RETRACT = p[0.0, -0.2, 0.5, 0.0, 3.1416, 0.0]
+
+# Validate all waypoints
+validate_waypoint(ABOVE_STAGING)
+validate_waypoint(PICK_POSE)
+validate_waypoint(LIFT_POSE)
+validate_waypoint(ABOVE_PALLET)
+validate_waypoint(PLACE_POSE)
+validate_waypoint(RETRACT_POSE)
+validate_waypoint(TRANSIT_TO_STAGING)
+validate_waypoint(FINAL_RETRACT)
+
+# --- MAIN PROGRAM ---
+def main():
+    # Initial safety check
+    safety_check()
+
+    # Move to home position
+    movej(HOME_POS, a=SAFE_JOINT_ACCEL, v=1.05)  # ~200 mm/s equivalent
+    safety_check()
+
+    while True:
+        # Wait for operator signal (simulated with digital input)
+        while not get_digital_in(0):
+            sync()
+        end
+
+        # Move above staging area
+        movel(ABOVE_STAGING, a=SAFE_JOINT_ACCEL, v=220.0/1000)
+        safety_check()
+
+        # Descend to pick
+        movel(PICK_POSE, a=SAFE_JOINT_ACCEL, v=100.0/1000)
+        safety_check()
+
+        # Activate suction
+        set_tool_digital_out(0, True)
+        sleep(0.5)
+
+        # Lift box
+        movel(LIFT_POSE, a=SAFE_JOINT_ACCEL, v=180.0/1000)
+        safety_check()
+
+        # Transit to pallet
+        movel(ABOVE_PALLET, a=SAFE_JOINT_ACCEL, v=230.0/1000)
+        safety_check()
+
+        # Descend to place
+        movel(PLACE_POSE, a=SAFE_JOINT_ACCEL, v=100.0/1000)
+        safety_check()
+
+        # Release suction
+        set_tool_digital_out(0, False)
+        sleep(0.3)
+
+        # Retract from pallet
+        movel(RETRACT_POSE, a=SAFE_JOINT_ACCEL, v=180.0/1000)
+        safety_check()
+
+        # Return to staging area
+        movel(TRANSIT_TO_STAGING, a=SAFE_JOINT_ACCEL, v=230.0/1000)
+        safety_check()
+
+        # Final retract
+        movel(FINAL_RETRACT, a=SAFE_JOINT_ACCEL, v=200.0/1000)
+        safety_check()
+    end
+end
+
+# Start program
+main()

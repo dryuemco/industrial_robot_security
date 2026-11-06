@@ -1,0 +1,86 @@
+def multi_waypoint_ssm():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    # Payload (mass in kg, CoG in meters)
+    set_payload(1.5, [0, 0, 0.1])
+    
+    # Maximum TCP speed (m/s) – 250 mm/s
+    set_tcp_speed(0.250)
+    
+    # Collaborative mode with Speed and Separation Monitoring (SSM)
+    # (using the built‑in safety mode for SSM)
+    set_safety_mode(safety_mode.speed_and_separation_monitoring)
+    
+    # Speed guard (max speed, guard distance) – 200 mm/s, 50 mm
+    set_speed_guard(0.200, 0.050)
+    
+    # Collision monitor activation
+    set_collision_monitor(True)
+    
+    # -------------------------------------------------
+    # Work objects (pick & place stations)
+    # -------------------------------------------------
+    # Define pick station work object
+    pick_station_pose = p[0.500, -0.200, 0.100, 0, 3.14, 0]
+    set_workobject(pick_station_pose, 0)   # frame 0 = world
+    
+    # Define place station work object
+    place_station_pose = p[0.300,  0.300, 0.100, 0, 3.14, 0]
+    set_workobject(place_station_pose, 0)
+    
+    # -------------------------------------------------
+    # Safety zones
+    # -------------------------------------------------
+    # Confinement zone (keep robot inside)
+    confinement_pose = p[0.400, 0.000, 0.300, 0, 3.14, 0]
+    set_safety_zone("confinement", confinement_pose, 0.500)   # radius 0.5 m
+    
+    # Exclusion zone (keep robot away from obstacle column)
+    exclusion_pose = p[0.250, -0.250, 0.300, 0, 3.14, 0]
+    set_safety_zone("exclusion", exclusion_pose, 0.300)      # radius 0.3 m
+    
+    # -------------------------------------------------
+    # Motion sequence (9 moves)
+    # -------------------------------------------------
+    # 1) Home position (joint space) – 200 mm/s
+    home_joint = [-1.57, -1.57, -1.57, -1.57, 1.57, 0]
+    movej(home_joint, a=1.4, v=0.200)
+    
+    # 2) WP1 – Above pick station, 200 mm/s
+    wp1 = p[0.500, -0.200, 0.400, 0, 3.14, 0]
+    movel(wp1, a=1.2, v=0.200)
+    
+    # 3) WP2 – Descend to pick, 100 mm/s
+    wp2 = p[0.500, -0.200, 0.100, 0, 3.14, 0]
+    movel(wp2, a=1.0, v=0.100)
+    
+    # 4) WP3 – Lift above pick, 180 mm/s
+    wp3 = p[0.500, -0.200, 0.400, 0, 3.14, 0]
+    movel(wp3, a=1.2, v=0.180)
+    
+    # 5) WP4 – Obstacle avoidance waypoint (offset -X), 200 mm/s
+    wp4 = p[0.300, -0.200, 0.400, 0, 3.14, 0]
+    movel(wp4, a=1.4, v=0.200)
+    
+    # 6) WP5 – Travel towards place station, 200 mm/s
+    wp5 = p[0.300,  0.300, 0.400, 0, 3.14, 0]
+    movel(wp5, a=1.4, v=0.200)
+    
+    # 7) WP6 – Descend to place, 100 mm/s
+    wp6 = p[0.300,  0.300, 0.100, 0, 3.14, 0]
+    movel(wp6, a=1.0, v=0.100)
+    
+    # 8) WP7 – Lift after place, 180 mm/s
+    wp7 = p[0.300,  0.300, 0.400, 0, 3.14, 0]
+    movel(wp7, a=1.2, v=0.180)
+    
+    # 9) WP8 – Return to a safe home‑above pose, 200 mm/s
+    wp8 = p[0.000, 0.000, 0.500, 0, 3.14, 0]
+    movel(wp8, a=1.4, v=0.200)
+    
+    # -------------------------------------------------
+    # End of program
+    # -------------------------------------------------
+    stopj(2)
+end

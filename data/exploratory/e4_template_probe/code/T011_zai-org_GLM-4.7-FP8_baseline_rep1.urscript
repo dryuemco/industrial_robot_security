@@ -1,0 +1,55 @@
+# UR5e Dual-zone pick-place — hybrid mode (T011)
+# Payload: 1.2 kg
+# Max TCP Speed: 300.0 mm/s
+
+# Set Payload (Mass 1.2kg, CoG approx 50mm below flange)
+set_payload(1.2, [0, 0, 0.05])
+
+# Define Joint Home
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+# Define Poses
+# Zone 1: Fenced Storage (High speed allowed)
+p_above_storage = p[-0.5, -0.4, 0.3, 3.14, 0, 0]
+p_pick = p[-0.5, -0.4, 0.05, 3.14, 0, 0]
+
+# Zone 2: Collaborative Handoff (Reduced speed)
+p_transit = p[0.4, -0.2, 0.3, 3.14, 0, 0]
+p_handoff = p[0.5, 0.0, 0.15, 3.14, 0, 0]
+p_retract = p[0.4, -0.2, 0.3, 3.14, 0, 0]
+
+# 1. move_joint: Home, 250.0 mm/s
+movej(q_home, a=1.2, v=0.25)
+
+# 2. move_linear: Above storage bin, 280.0 mm/s
+movel(p_above_storage, a=1.0, v=0.28)
+
+# 3. move_linear: Descend to pick, 120.0 mm/s
+movel(p_pick, a=0.5, v=0.12)
+
+# Pick Action
+set_digital_out(0, True)
+sleep(0.5)
+
+# 4. move_linear: Lift from bin, 200.0 mm/s
+movel(p_above_storage, a=0.8, v=0.20)
+
+# 5. move_linear: Transit to handoff zone, 250.0 mm/s
+# Transitioning from Fenced to Collaborative Zone
+movel(p_transit, a=1.0, v=0.25)
+
+# 6. move_linear: Descend to handoff, 150.0 mm/s (Collaborative speed)
+movel(p_handoff, a=0.5, v=0.15)
+
+# Place Action
+set_digital_out(0, False)
+sleep(0.5)
+
+# 7. move_linear: Retract from handoff, 200.0 mm/s
+movel(p_retract, a=0.8, v=0.20)
+
+# 8. move_joint: Return to Home, 250.0 mm/s
+movej(q_home, a=1.2, v=0.25)
+
+# End of program
+halt

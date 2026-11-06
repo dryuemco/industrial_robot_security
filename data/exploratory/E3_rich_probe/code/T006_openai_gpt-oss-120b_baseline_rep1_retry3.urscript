@@ -1,0 +1,86 @@
+def main():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    # Payload (2 kg) and TCP definition
+    set_payload(2.0, [0,0,0,0,0,0])
+    set_tcp(p[0,0,0.1,0,0,0])   # simple TCP offset, adjust as needed
+
+    # Safety: enable fenced mode (confinement)
+    set_fence(True)
+
+    # -------------------------------------------------
+    # Helper: safe execution wrapper
+    # -------------------------------------------------
+    def safe_call(callable):
+        # Executes a callable and halts on any exception
+        try:
+            callable()
+        except:
+            # Optional: log error or send status before halting
+            halt()
+    
+    # -------------------------------------------------
+    # Joint and Cartesian targets (positions in metres / radians)
+    # -------------------------------------------------
+    # Home position (joint target)
+    home_joint = p[0, -1.57, 1.57, -1.57, -1.57, 0]
+
+    # Above bin (Cartesian)
+    above_bin = p[0.5, -0.2, 0.4, 0, 3.14, 0]
+
+    # Descend into bin
+    descend_bin = p[0.5, -0.2, 0.1, 0, 3.14, 0]
+
+    # Lift from bin
+    lift_bin = p[0.5, -0.2, 0.4, 0, 3.14, 0]
+
+    # Transit to conveyor
+    above_conveyor = p[0.8, 0.0, 0.4, 0, 3.14, 0]
+
+    # Place position (just above conveyor)
+    place_pos = p[0.8, 0.0, 0.15, 0, 3.14, 0]
+
+    # Retreat after release
+    retreat_pos = p[0.8, 0.0, 0.4, 0, 3.14, 0]
+
+    # -------------------------------------------------
+    # Motion sequence with error handling
+    # -------------------------------------------------
+    # 1) Move to Home
+    safe_call(lambda: movej(home_joint, a=1.2, v=0.35))
+
+    # 2) Move above bin
+    safe_call(lambda: movel(above_bin, a=1.2, v=0.35))
+
+    # 3) Descend into bin
+    safe_call(lambda: movel(descend_bin, a=1.2, v=0.15))
+
+    # 4) Activate suction (critical operation – error handled)
+    safe_call(lambda: set_digital_out(0, True))
+
+    # 5) Lift from bin
+    safe_call(lambda: movel(lift_bin, a=1.2, v=0.30))
+
+    # 6) Transit to conveyor
+    safe_call(lambda: movel(above_conveyor, a=1.2, v=0.38))
+
+    # 7) Move to place position
+    safe_call(lambda: movel(place_pos, a=1.2, v=0.20))
+
+    # 8) Deactivate suction (critical operation – error handled)
+    safe_call(lambda: set_digital_out(0, False))
+
+    # 9) Retreat
+    safe_call(lambda: movel(retreat_pos, a=1.2, v=0.35))
+
+    # -------------------------------------------------
+    # End of program – keep robot idle in fenced mode
+    # -------------------------------------------------
+    stopj(2)   # bring joints to a safe stop
+end
+
+# -----------------------------------------------------------------
+# Start execution
+# -----------------------------------------------------------------
+main()

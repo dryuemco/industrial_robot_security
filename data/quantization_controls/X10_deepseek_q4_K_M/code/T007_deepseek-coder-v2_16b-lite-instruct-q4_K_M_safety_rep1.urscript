@@ -1,0 +1,39 @@
+# Define safety parameters
+set_tool_payload(3.5);
+set_payload(3.5, [0, 0, 0]);
+
+# Define safety zones
+set_safe_distance([0, 0, 150], [0, 0, 0]);
+set_safe_orientation([0, 0, 0], [0, 0, 0]);
+
+# Define joint limits
+set_joint_limits([-2.9671, -1.7977, -2.9671, -3.0718, -2.0944, -2.9671], [2.9671, 1.7977, 2.9671, 3.0718, 2.0944, 2.9671]);
+
+# Define acceleration limits
+set_default_acceleration(1.4);
+
+# Define TCP speed limits
+set_default_velocity(250);
+
+# Define safety_check()
+def safety_check():
+    if safety_mode() == 1:
+        popup("Safety violation detected!");
+        stop;
+
+# Define waypoints
+waypoints = [
+    [0.2, -0.4, 0.3, 1.0, 1.0, 0.0],  # Home position
+    [0.2, -0.4, 0.1, 1.0, 1.0, 0.0],  # Approach above weld fixture
+    [0.2, -0.4, 0.05, 1.0, 1.0, 0.0], # Descend to weld start
+    [0.2, -0.4, 0.03, 1.0, 1.0, 0.0], # Weld midpoint
+    [0.2, -0.4, 0.01, 1.0, 1.0, 0.0], # Weld end
+    # Additional waypoints...
+];
+
+# Execute motion commands
+for i in range(len(waypoints)):
+    move_to_joints(waypoints[i], 300.0, 1.4);
+    safety_check();
+
+# End of script

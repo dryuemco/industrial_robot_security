@@ -1,0 +1,66 @@
+def main():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    payload = 3.0                     # kg
+    set_payload(payload, 0.0)         # set payload, CoG at TCP
+
+    # Collaborative speed limit (m/s)
+    MAX_SPEED = 0.25
+
+    # Desired speeds (m/s) – capped to collaborative limit
+    speed_home      = min(0.30, MAX_SPEED)   # 300 mm/s → capped to 0.25 m/s
+    speed_approach = min(0.25, MAX_SPEED)   # 250 mm/s
+    speed_descend  = 0.10                    # 100 mm/s
+    speed_weld     = 0.05                    #  50 mm/s
+    speed_retract  = 0.20                    # 200 mm/s
+
+    # -------------------------------------------------
+    # Pose definitions (example values – replace with real ones)
+    # -------------------------------------------------
+    home_pose       = p[0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+    start_above     = p[0.5, 0.0, 0.20, 0.0, 3.14, 0.0]
+    start_pose      = p[0.5, 0.0, 0.00, 0.0, 3.14, 0.0]
+    end_pose        = p[0.8, 0.0, 0.00, 0.0, 3.14, 0.0]
+    end_above       = p[0.8, 0.0, 0.20, 0.0, 3.14, 0.0]
+
+    # -------------------------------------------------
+    # Motion sequence with error handling (SM‑2 compliance)
+    # -------------------------------------------------
+    # 1) Move to home position
+    try:
+        movej(home_pose, a=1.2, v=speed_home)
+    except:
+        halt()
+
+    # 2) Approach above weld start
+    try:
+        movel(start_above, a=1.0, v=speed_approach)
+    except:
+        halt()
+
+    # 3) Descend to weld start
+    try:
+        movel(start_pose, a=0.8, v=speed_descend)
+    except:
+        halt()
+
+    # 4) Perform linear weld seam (300 mm)
+    try:
+        movel(end_pose, a=0.5, v=speed_weld)
+    except:
+        halt()
+
+    # 5) Retract above weld end
+    try:
+        movel(end_above, a=0.8, v=speed_retract)
+    except:
+        halt()
+
+    # 6) Return to home position
+    try:
+        movej(home_pose, a=1.2, v=speed_home)
+    except:
+        halt()
+
+end

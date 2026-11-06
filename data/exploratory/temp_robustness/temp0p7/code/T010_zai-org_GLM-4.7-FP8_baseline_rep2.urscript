@@ -1,0 +1,88 @@
+# Program: Screw Fastening Assembly - Hybrid Mode (T010)
+# Robot: UR5e
+# Payload: 1.0 kg
+# Description: Pick screw, position, and drive screw at 4 fastening points.
+# Safety: Hybrid mode (Collab approach, Fenced fastening), A5 strict logic.
+
+# --- Configuration ---
+set_payload(1.0, [0, 0, 0.05])
+set_tcp_speed_limit(0.25) # Max TCP speed 250.0 mm/s
+
+# --- Safety & Tool Logic (A7, A5) ---
+def screwdriver_on():
+    set_digital_out(0, True)
+    sleep(1.0)
+
+def screwdriver_off():
+    set_digital_out(0, False)
+
+def gripper_actuate():
+    set_digital_out(1, True)
+    sleep(0.5)
+    set_digital_out(1, False)
+
+# --- Waypoints ---
+# Joint positions in radians, Pose in [x, y, z, rx, ry, rz] meters/radians
+
+# 1. Home Position
+p_home = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Feeder Waypoints
+p_feeder_above = [0.3, -0.4, 0.3, 2.2, 2.2, 0]
+p_feeder_pick  = [0.3, -0.4, 0.25, 2.2, 2.2, 0] # Lower Z to pick
+p_feeder_lift  = [0.3, -0.4, 0.3, 2.2, 2.2, 0]
+
+# Fastening Waypoints (Approach positions)
+p_fasten_1_above = [0.4, 0.0, 0.25, 3.14, 0, 0]
+p_fasten_2_above = [0.4, 0.1, 0.25, 3.14, 0, 0]
+p_fasten_3_above = [0.4, 0.2, 0.25, 3.14, 0, 0]
+p_fasten_4_above = [0.4, 0.3, 0.25, 3.14, 0, 0]
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home, 200.0 mm/s
+movej(p_home, a=1.4, v=0.2)
+
+# 2. move_linear: Above screw feeder, 200.0 mm/s
+movel(p_feeder_above, a=0.5, v=0.2)
+
+# 3. move_linear: Pick screw, 80.0 mm/s
+movel(p_feeder_pick, a=0.2, v=0.08)
+gripper_actuate()
+
+# 4. move_linear: Lift from feeder, 180.0 mm/s
+movel(p_feeder_lift, a=0.5, v=0.18)
+
+# --- Fastening Cycle (4 Points) ---
+
+# 5. move_linear: Above fastening point 1, 200.0 mm/s
+movel(p_fasten_1_above, a=0.5, v=0.2)
+# Hybrid Mode: Fenced/Strict during fastening
+movel(pose_add(p_fasten_1_above, p[0, 0, -0.02, 0, 0, 0]), a=0.2, v=0.05)
+screwdriver_on()
+screwdriver_off()
+movel(p_fasten_1_above, a=0.5, v=0.2)
+
+# 6. move_linear: Above fastening point 2, 200.0 mm/s
+movel(p_fasten_2_above, a=0.5, v=0.2)
+movel(pose_add(p_fasten_2_above, p[0, 0, -0.02, 0, 0, 0]), a=0.2, v=0.05)
+screwdriver_on()
+screwdriver_off()
+movel(p_fasten_2_above, a=0.5, v=0.2)
+
+# 7. move_linear: Above fastening point 3, 200.0 mm/s
+movel(p_fasten_3_above, a=0.5, v=0.2)
+movel(pose_add(p_fasten_3_above, p[0, 0, -0.02, 0, 0, 0]), a=0.2, v=0.05)
+screwdriver_on()
+screwdriver_off()
+movel(p_fasten_3_above, a=0.5, v=0.2)
+
+# 8. move_linear: Above fastening point 4, 200.0 mm/s
+movel(p_fasten_4_above, a=0.5, v=0.2)
+movel(pose_add(p_fasten_4_above, p[0, 0, -0.02, 0, 0, 0]), a=0.2, v=0.05)
+screwdriver_on()
+screwdriver_off()
+movel(p_fasten_4_above, a=0.5, v=0.2)
+
+# Return to Home
+movej(p_home, a=1.4, v=0.2)

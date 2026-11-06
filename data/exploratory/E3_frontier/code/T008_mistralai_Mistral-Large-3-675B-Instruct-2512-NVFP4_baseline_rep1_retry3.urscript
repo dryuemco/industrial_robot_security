@@ -1,0 +1,65 @@
+# Heavy depalletizing - fenced mode (T008)
+# Safety-compliant URScript for UR5e (5.0 kg payload)
+
+# Safety configuration
+set_payload(5.0)
+set_tcp(p[0, 0, 0.1, 0, 0, 0])
+set_safety_mode_transition_hardness(1)
+set_standard_analog_input_domain(0, 1)
+set_standard_analog_input_domain(1, 1)
+set_tool_analog_input_domain(0, 1)
+set_tool_analog_input_domain(1, 1)
+set_analog_outputdomain(0, 0)
+set_analog_outputdomain(1, 0)
+set_input_actions_to_default()
+
+# Waypoints (mm, rad, mm/s, rad/s, acceleration)
+global home_pose = p[0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+global above_pallet = p[-0.5, -1.5, 0.3, -1.8, -1.5708, 0.0]
+global top_layer = p[-0.5, -1.5, 0.1, -1.8, -1.5708, 0.0]
+global lift_box = p[-0.5, -1.5, 0.25, -1.8, -1.5708, 0.0]
+global above_conveyor = p[0.5, -1.5, 0.3, -1.8, -1.5708, 0.0]
+global place_conveyor = p[0.5, -1.5, 0.15, -1.8, -1.5708, 0.0]
+global retreat_conveyor = p[0.5, -1.5, 0.3, -1.8, -1.5708, 0.0]
+global return_home = p[0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+# Speed and acceleration limits
+global max_speed = 0.45
+global max_accel = 1.2
+
+# Watchdog timer (100ms)
+thread watchdog_thread():
+  while True:
+    watchdog_reset()
+    sleep(0.1)
+  end
+end
+thread_id = run watchdog_thread()
+
+# Main program
+def main():
+  # Enable safety modes
+  safety_mode_transition("normal")
+  set_safety_mode("reduced")
+
+  # Motion sequence
+  movej(home_pose, a=max_accel, v=0.8*max_speed, r=0)
+  movel(above_pallet, a=max_accel, v=0.8*max_speed, r=0)
+  movel(top_layer, a=max_accel, v=0.3*max_speed, r=0)
+  set_digital_out(0, True)  # Gripper close
+  sync()
+  movel(lift_box, a=max_accel, v=0.4*max_speed, r=0)
+  movel(above_conveyor, a=max_accel, v=0.7*max_speed, r=0)
+  movel(place_conveyor, a=max_accel, v=0.3*max_speed, r=0)
+  set_digital_out(0, False)  # Gripper open
+  sync()
+  movel(retreat_conveyor, a=max_accel, v=0.6*max_speed, r=0)
+  movej(return_home, a=max_accel, v=0.8*max_speed, r=0)
+
+  # Disable safety modes
+  set_safety_mode("normal")
+end
+
+# Start program
+main()
+kill thread_id

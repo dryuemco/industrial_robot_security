@@ -1,0 +1,67 @@
+# Task: T011 — Dual-zone pick-place — hybrid mode (Improved)
+# Description: Pick from fenced storage zone, place in collaborative operator handoff zone.
+# Robot: ur5e | Mode: hybrid | Payload: 1.2 kg | Max TCP speed: 0.300 m/s
+# Note: Relies on pre-configured Safety Zones (Confinement/Exclusion) in Installation.
+
+def task_T011():
+  # --- Configuration ---
+  # Set payload mass (kg) for accurate motion dynamics
+  set_payload(1.2)
+
+  # Define Waypoints
+  q_home = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+  
+  # Storage Zone (Fenced)
+  p_storage_above = p[0.500000, -0.250000, 0.350000, 0.0000, 3.1416, 0.0000]
+  p_storage_pick  = p[0.500000, -0.250000, 0.100000, 0.0000, 3.1416, 0.0000]
+  p_storage_lift  = p[0.500000, -0.250000, 0.400000, 0.0000, 3.1416, 0.0000]
+  
+  # Handoff Zone (Collaborative)
+  p_handoff_above = p[0.350000, 0.250000, 0.350000, 0.0000, 3.1416, 0.0000]
+  p_handoff_place = p[0.350000, 0.250000, 0.120000, 0.0000, 3.1416, 0.0000]
+
+  # --- Safety Check ---
+  # Verify E-Stop status via digital input (if configured)
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # --- Motion Sequence ---
+
+  # 1. Move to Home (Joint move)
+  movej(q_home, a=1.4000, v=0.6250)
+
+  # 2. Move Above Storage Bin (Linear, 280 mm/s)
+  movel(p_storage_above, a=1.0000, v=0.2800, r=0.0150)
+
+  # 3. Descend to Pick (Linear, 120 mm/s)
+  movel(p_storage_pick, a=0.5000, v=0.1200, r=0.0)
+
+  # 4. Gripper CLOSE
+  set_digital_out(0, True)
+  sleep(0.3000)
+
+  # 5. Lift from Bin (Linear, 200 mm/s)
+  movel(p_storage_lift, a=0.8000, v=0.2000, r=0.0150)
+
+  # 6. Transit to Handoff Zone (Linear, 250 mm/s)
+  movel(p_handoff_above, a=1.0000, v=0.2500, r=0.0200)
+
+  # 7. Place at Handoff (Linear, 100 mm/s)
+  movel(p_handoff_place, a=0.4000, v=0.1000, r=0.0)
+
+  # 8. Gripper OPEN
+  set_digital_out(0, False)
+  sleep(0.2000)
+
+  # 9. Retract from Handoff (Linear, 250 mm/s)
+  movel(p_handoff_above, a=1.0000, v=0.2500, r=0.0100)
+
+  # 10. Return to Home (Joint move)
+  movej(q_home, a=1.4000, v=0.6250)
+
+end
+
+# Entry point
+task_T011()

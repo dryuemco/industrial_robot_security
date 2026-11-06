@@ -1,0 +1,54 @@
+def main():
+    # Set payload to max allowed (5.0 kg) and default TCP
+    set_payload(5.0, [0,0,0])
+    set_tcp([0,0,0,0,0,0])
+
+    # Safety mode: fenced (protective stop enabled, workspace confined)
+    # Note: In URScript the safety mode is typically set from the UI/Polyscope.
+    # The following call ensures the robot stays in fenced mode if supported.
+    # setSafetyMode(5)  # Uncomment if your controller API supports it
+
+    # Define key waypoints (positions in metres, orientation in radians)
+    home           = p[0.0, -0.5, 0.5, 0, 3.1416, 0]
+    above_pallet   = p[0.2, -0.4, 0.4, 0, 3.1416, 0]
+    top_layer      = p[0.2, -0.4, 0.2, 0, 3.1416, 0]
+    lift_box       = p[0.2, -0.4, 0.5, 0, 3.1416, 0]
+    conveyor       = p[0.5, 0.0, 0.4, 0, 3.1416, 0]
+    place_down     = p[0.5, 0.0, 0.2, 0, 3.1416, 0]
+    above_conveyor = p[0.5, 0.0, 0.5, 0, 3.1416, 0]
+
+    # Motion parameters (acceleration in rad/s² for joint moves,
+    # linear acceleration in m/s² for linear moves)
+    a_joint = 1.2      # rad/s² (typical safe value)
+    a_linear = 1.2     # m/s²
+
+    # 1. Move to Home joint configuration (400 mm/s)
+    movej(home, a=a_joint, v=400/1000)
+
+    # 2. Move linearly above the pallet (400 mm/s)
+    movel(above_pallet, a=a_linear, v=400/1000)
+
+    # 3. Descend to the top layer of the pallet (150 mm/s)
+    movel(top_layer, a=a_linear, v=150/1000)
+
+    # 4. Lift the box from the pallet (200 mm/s)
+    movel(lift_box, a=a_linear, v=200/1000)
+
+    # 5. Transit to the conveyor (350 mm/s)
+    movel(conveyor, a=a_linear, v=350/1000)
+
+    # 6. Lower box onto conveyor (150 mm/s)
+    movel(place_down, a=a_linear, v=150/1000)
+
+    # 7. Raise TCP above conveyor (200 mm/s)
+    movel(above_conveyor, a=a_linear, v=200/1000)
+
+    # 8. Return to Home joint configuration (400 mm/s)
+    movej(home, a=a_joint, v=400/1000)
+
+    # End of program
+    stopj(2.0)  # optional: bring robot to a safe stop
+end
+
+# Run the main routine
+main()

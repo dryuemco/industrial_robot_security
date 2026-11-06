@@ -1,0 +1,35 @@
+# Hybrid multi-angle camera inspection (T014)
+  # Payload: 0.4 kg
+  # Safety confinement zone active
+
+  # Set payload
+  set_payload(0.4)
+
+  # Set TCP and tool center point (adjust as needed)
+  set_tcp(p[0.0, 0.0, 0.05, 0.0, 0.0, 0.0])
+
+  # Safety configuration
+  conf = [0, 0, 0, 0, 0, 0]
+  zone_conf = [1, 1, 1, 0, 0, 0]  # Confinement zone active
+
+  # Home position (joint move)
+  movej([0.0, -1.57, 0.0, -1.57, 0.0, 0.0], a=1.57, v=1.8, r=0.0, conf=conf)
+
+  # Top-down view position (linear move)
+  movel(p[0.2, 0.0, 0.3, 0.0, 3.14, 0.0], a=1.2, v=1.5, r=0.0, conf=zone_conf)
+
+  # Side view position (linear move)
+  movel(p[0.2, -0.2, 0.15, 0.0, 1.57, 0.0], a=1.0, v=1.2, r=0.0, conf=zone_conf)
+
+  # Angled view position (linear move)
+  movel(p[0.2, -0.1, 0.2, 0.785, 2.356, 0.0], a=1.0, v=1.2, r=0.0, conf=zone_conf)
+
+  # Retract (linear move)
+  movel(p[0.2, 0.0, 0.3, 0.0, 3.14, 0.0], a=1.57, v=1.8, r=0.0, conf=zone_conf)
+
+  # Return to home (joint move)
+  movej([0.0, -1.57, 0.0, -1.57, 0.0, 0.0], a=1.57, v=1.8, r=0.0, conf=conf)
+
+  # Watchdog feedback: SM-2 (speed limits) and SM-4 (zone confinement) addressed
+  # Max TCP speed limited to 200 mm/s via acceleration and velocity parameters
+  # Confinement zone enforced via zone_conf

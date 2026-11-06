@@ -1,0 +1,127 @@
+# =============================================================================
+# Task: T004 — Multi-waypoint SSM pick-place with obstacle avoidance
+# Description: 5-waypoint trajectory with SSM, dual work objects, and safety logic.
+# Robot: ur5e | Mode: collaborative | Payload: 1.5 kg
+# =============================================================================
+
+# Global Configuration
+global max_tcp_speed = 0.250        # Max allowed TCP speed (m/s)
+global safety_threshold = 0.26      # Speed monitor threshold (m/s)
+global payload_mass = 1.5           # Payload mass (kg)
+global gripper_settle_time = 0.2    # Time to wait for gripper (s)
+
+# Work Objects (A6: Dual work objects for Pick and Place)
+# Defined as base poses for the pick and place locations
+local wobj_pick = p[0.400, -0.250, 0.100, 0.000, 3.1416, 0.000]
+local wobj_place = p[0.400, 0.250, 0.100, 0.000, 3.1416, 0.000]
+
+# Offsets
+local offset_approach = p[0.000, 0.000, 0.300, 0.000, 0.000, 0.000] # Z+300mm
+local wp_avoidance = p[0.250, 0.000, 0.400, 0.000, 3.1416, 0.000]   # Fixed obstacle waypoint
+
+# Joint Home Position
+local q_home = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+
+# =============================================================================
+# Safety Logic (A5: Speed Guard + Collision Monitor)
+# =============================================================================
+thread safety_monitor():
+    while True:
+        # Speed Guard: Monitor actual TCP speed
+        actual_speed = get_actual_tcp_speed()
+        if actual_speed > safety_threshold:
+            popup("Safety Alert: TCP Speed Exceeded!", error=True)
+            stopj(1.0)
+            halt
+        end
+        
+        # Collision Monitor: Check for sudden force spikes (simplified)
+        # Note: Detailed collision handling is typically done via Force Mode 
+        # or Safety Config, but script-level monitoring adds a layer of logic.
+        if get_actual_joint_torques(0) > 150.0: # Example threshold check on Base joint
+            popup("Safety Alert: High Torque Detected!", error=True)
+            stopj(1.0)
+            halt
+        end
+        
+        sleep(0.01)
+    end
+end
+
+# =============================================================================
+# Helper Functions
+# =============================================================================
+def gripper_close():
+    set_digital_out(0, True)
+    sleep(gripper_settle_time)
+end
+
+def gripper_open():
+    set_digital_out(0, False)
+    sleep(gripper_settle_time)
+end
+
+# =============================================================================
+# Main Task Routine
+# =============================================================================
+def task_T004():
+    # [0] Safety Initialization
+    set_payload(payload_mass)
+    
+    # Check Safety Gate / E-Stop (Input 0)
+    if (get_digital_in(0) == True):
+        popup("E-Stop or Safety Gate active — aborting program.", error=True)
+        halt
+    end
+    
+    # Start Safety Monitor Thread
+    run safety_monitor()
+
+    # [1] Move to Home (Joint move)
+    movej(q_home, a=1.4, v=0.5)
+
+    # --- Pick Sequence ---
+    
+    # [2] WP1 — Above Pick Station (Calculated via Work Object)
+    local p_pick_above = pose_trans(wobj_pick, offset_approach)
+    movel(p_pick_above, a=0.8, v=0.2, r=0.015)
+
+    # [3] WP2 — Descend to Pick
+    movel(wobj_pick, a=0.5, v=0.1)
+
+    # [4] Gripper Action
+    gripper_close()
+
+    # [5] WP3 — Lift above Pick
+    movel(p_pick_above, a=0.7, v=0.18, r=0.02)
+
+    # --- Transfer & Obstacle Avoidance ---
+
+    # [6] WP4 — Obstacle Avoidance Waypoint
+    # Moves to intermediate point to navigate around column
+    movel(wp_avoidance, a=0.8, v=0.2, r=0.03)
+
+    # --- Place Sequence ---
+
+    # [7] WP5 — Above Place Station (Calculated via Work Object)
+    local p_place_above = pose_trans(wobj_place, offset_approach)
+    movel(p_place_above, a=0.8, v=0.2, r=0.02)
+
+    # [8] WP6 — Descend to Place
+    movel(wobj_place, a=0.5, v=0.1)
+
+    # [9] Gripper Action
+    gripper_open()
+
+    # [10] WP7 — Retract above Place
+    movel(p_place_above, a=0.7, v=0.18, r=0.01)
+
+    # [11] Return to Home
+    movej(q_home, a=1.4, v=0.5)
+    
+    # Stop Safety Monitor
+    kill safety_monitor
+end
+
+# Entry Point
+task_T004()

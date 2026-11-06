@@ -1,0 +1,103 @@
+# URScript for UR5e - Hybrid mode palletizing (2x2 grid) with 4.5 kg payload
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(4.5, [0,0,0.1])      # payload mass and centre of gravity
+set_tcp(p[0,0,0.2,0,0,0])       # default TCP (adjust as needed)
+
+# Define safety zones (confinement)
+#   - "transit_zone": fenced area for robot movement between conveyor and pallet
+#   - "collab_zone": collaborative area near the conveyor pick point
+set_safety_boundary("transit_zone",
+    [[0.0, -0.6, 0.0], [0.8, -0.6, 0.0], [0.8, 0.8, 0.0], [0.0, 0.8, 0.0]],
+    "restricted")               # fenced (restricted) zone
+set_safety_boundary("collab_zone",
+    [[0.4, -0.3, 0.0], [0.6, -0.3, 0.0], [0.6, -0.1, 0.0], [0.4, -0.1, 0.0]],
+    "collaborative")            # collaborative zone
+
+# Switch to hybrid safety mode (fence during transit, collaborative near pick)
+set_safety_mode(2)               # 2 = hybrid mode (depends on robot firmware)
+
+# -------------------------------------------------
+# Pose definitions (all units in meters, radians)
+# -------------------------------------------------
+# Home joint configuration
+home_joint = [-0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+
+# Conveyor pick positions
+pick_above   = p[0.55, -0.20, 0.30, 0, 3.1415, 0]   # 30 cm above the belt
+pick_pose    = p[0.55, -0.20, 0.10, 0, 3.1415, 0]   # pick height (10 cm)
+
+# Lifting pose after pick
+lift_pose    = p[0.55, -0.20, 0.30, 0, 3.1415, 0]   # same as pick_above
+
+# Pallet grid (2 × 2) – centre of each cell (10 cm above pallet surface)
+pallet_grid = [
+    p[0.30, 0.30, 0.10, 0, 3.1415, 0],
+    p[0.50, 0.30, 0.10, 0, 3.1415, 0],
+    p[0.30, 0.50, 0.10, 0, 3.1415, 0],
+    p[0.50, 0.50, 0.10, 0, 3.1415, 0]
+]
+
+# Above each pallet cell (30 cm above surface)
+pallet_grid_above = [
+    p[0.30, 0.30, 0.30, 0, 3.1415, 0],
+    p[0.50, 0.30, 0.30, 0, 3.1415, 0],
+    p[0.30, 0.50, 0.30, 0, 3.1415, 0],
+    p[0.50, 0.50, 0.30, 0, 3.1415, 0]
+]
+
+# -------------------------------------------------
+# Motion parameters
+# -------------------------------------------------
+speed_joint   = 0.250   # m/s  (250 mm/s)
+speed_linear_fast = 0.280   # m/s (280 mm/s)
+speed_linear_med  = 0.200   # m/s (200 mm/s)
+speed_linear_slow = 0.100   # m/s (100 mm/s)
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # 1) Move to home joint position
+    movej(home_joint, a=1.2, v=speed_joint, t=0, r=0)
+
+    # 2) Approach conveyor – above pick point
+    movel(pick_above, a=1.2, v=speed_joint, t=0, r=0)
+
+    # 3) Descend to pick
+    movel(pick_pose, a=1.2, v=speed_linear_slow, t=0, r=0)
+
+    # 4) Grasp (placeholder – replace with actual I/O)
+    set_digital_out(0, True)   # close gripper
+    sync()
+
+    # 5) Lift from conveyor
+    movel(lift_pose, a=1.2, v=speed_linear_med, t=0, r=0)
+
+    # -------------------------------------------------
+    # 2×2 palletizing loop (4 boxes)
+    # -------------------------------------------------
+    for i in range(4):
+        # 6) Move fast to above the target pallet cell (transit zone)
+        movel(pallet_grid_above[i], a=1.2, v=speed_linear_fast, t=0, r=0)
+
+        # 7) Descend to place height
+        movel(pallet_grid[i], a=1.2, v=speed_linear_slow, t=0, r=0)
+
+        # 8) Release (placeholder – replace with actual I/O)
+        set_digital_out(0, False)  # open gripper
+        sync()
+
+        # Lift after release (except after last placement)
+        if i < 3:
+            movel(pallet_grid_above[i], a=1.2, v=speed_linear_med, t=0, r=0)
+
+    # Return to home after task
+    movej(home_joint, a=1.2, v=speed_joint, t=0, r=0)
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

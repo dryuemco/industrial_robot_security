@@ -1,0 +1,50 @@
+def palletizing_sequence():
+  # Set payload and tool center point
+  set_payload(0.8)
+  set_tcp(p[0, 0, 0.1, 0, 0, 0])
+
+  # Safety configuration for collaborative mode
+  set_standard_digital_out(0, False)  # Ensure vacuum off at start
+  set_safety_mode_transition_hardness(1)  # Soft transition for collaborative mode
+
+  # Waypoints definition (example coordinates - adjust to your setup)
+  home_pose = p[0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+  above_staging = p[0.3, -0.5, 0.3, 0, 3.14159, 0]
+  pick_pose = p[0.3, -0.5, 0.1, 0, 3.14159, 0]
+  lift_pose = p[0.3, -0.5, 0.3, 0, 3.14159, 0]
+  above_pallet = p[0.6, -0.2, 0.4, 0, 3.14159, 0]
+  place_pose = p[0.6, -0.2, 0.15, 0, 3.14159, 0]
+  retreat_pose = p[0.6, -0.2, 0.3, 0, 3.14159, 0]
+  return_to_above_staging = p[0.3, -0.5, 0.3, 0, 3.14159, 0]
+
+  # Motion sequence
+  movej(home_pose, a=1.2, v=2.0)  # Home, 200 mm/s (converted to rad/s)
+  movel(above_staging, a=1.2, v=2.2)  # Above staging, 220 mm/s
+  movel(pick_pose, a=0.5, v=1.0)  # Descend to pick, 100 mm/s
+
+  # Activate suction
+  set_standard_digital_out(0, True)
+  sleep(0.5)  # Wait for suction to engage
+
+  movel(lift_pose, a=1.0, v=1.8)  # Lift, 180 mm/s
+  movel(above_pallet, a=1.2, v=2.3)  # Transit to pallet, 230 mm/s
+  movel(place_pose, a=0.5, v=1.0)  # Descend to place, 100 mm/s
+
+  # Release suction
+  set_standard_digital_out(0, False)
+  sleep(0.3)  # Wait for release
+
+  movel(retreat_pose, a=1.0, v=1.8)  # Retreat, 180 mm/s
+  movel(return_to_above_staging, a=1.2, v=2.2)  # Return to above staging, 220 mm/s
+
+  # Safety check before next cycle
+  if not get_standard_digital_in(0):  # Check if operator is clear
+    textmsg("Operator detected in safety zone, pausing")
+    pause()
+  end
+end
+
+# Main program
+while True:
+  palletizing_sequence()
+end

@@ -1,0 +1,92 @@
+# URScript for UR5e – Laser Surface Scan (Fenced Mode, Task T009)
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(0.5, p[0,0,0,0,0,0])          # Payload 0.5 kg, CoG at TCP
+set_tcp_speed(0.2)                       # Max TCP speed = 200 mm/s
+set_joint_acceleration(1.2)              # Joint acceleration (rad/s²)
+set_tcp_acceleration(1.0)                # TCP acceleration (m/s²)
+
+# -------------------------------------------------
+# Safety Fence (confinement) – covers scan area + margin
+# Dimensions: X: -0.25 m to +0.55 m, Y: -0.25 m to +0.35 m, Z: 0.0 m to +0.6 m
+# -------------------------------------------------
+set_fence(-0.25, -0.25, 0.0, 0.80, 0.60, 0.60)  # (xmin, ymin, zmin, xmax, ymax, zmax)
+
+# -------------------------------------------------
+# Define Poses (all units in meters & radians)
+# -------------------------------------------------
+# Home joint position (example configuration)
+home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Scan parameters
+scan_start = p[0.2, -0.1, 0.3, 0, 3.14159, 0]      # Above start point (300 mm x, 200 mm y)
+scan_height = p[0.2, -0.1, 0.1, 0, 3.14159, 0]    # Descended to scanning height (Z=0.1 m)
+
+# Raster step size (distance between lines)
+step_y = 0.05   # 50 mm between lines (4 lines over 200 mm)
+
+# Helper function to generate line end pose
+def line_pose(x_offset, y_offset):
+    return p[0.2 + x_offset, -0.1 + y_offset, 0.1, 0, 3.14159, 0]
+
+# -------------------------------------------------
+# Main Program
+# -------------------------------------------------
+def main():
+    # 1. Move to Home (joint space)
+    movej(home_joint, a=1.2, v=0.18)   # 180 mm/s = 0.18 m/s
+
+    # 2. Move above scan start (linear)
+    movel(scan_start, a=1.0, v=0.15)   # 150 mm/s
+
+    # 3. Descend to scan height
+    movel(scan_height, a=1.0, v=0.08)  # 80 mm/s
+
+    # Activate laser tool (digital output 0)
+    set_digital_out(0, True)
+    sync()
+
+    # -------------------------------------------------
+    # Raster Scan – 4 lines
+    # -------------------------------------------------
+    # Line 1 (X direction 0.3 m)
+    movel(line_pose(0.30, 0.0), a=1.0, v=0.05)   # 50 mm/s
+
+    # Step to Line 2
+    movel(line_pose(0.30, step_y), a=1.0, v=0.08)  # 80 mm/s
+
+    # Line 2
+    movel(line_pose(0.0, step_y), a=1.0, v=0.05)
+
+    # Step to Line 3
+    movel(line_pose(0.0, 2*step_y), a=1.0, v=0.08)
+
+    # Line 3
+    movel(line_pose(0.30, 2*step_y), a=1.0, v=0.05)
+
+    # Step to Line 4
+    movel(line_pose(0.30, 3*step_y), a=1.0, v=0.08)
+
+    # Line 4
+    movel(line_pose(0.0, 3*step_y), a=1.0, v=0.05)
+
+    # -------------------------------------------------
+    # End of Scan – Retract and deactivate laser
+    # -------------------------------------------------
+    # Retract to safe height
+    movel(p[0.2, -0.1, 0.3, 0, 3.14159, 0], a=1.0, v=0.15)  # Same as above start
+
+    # Deactivate laser
+    set_digital_out(0, False)
+    sync()
+
+    # Return Home
+    movej(home_joint, a=1.2, v=0.18)
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+if running == False:
+    main()

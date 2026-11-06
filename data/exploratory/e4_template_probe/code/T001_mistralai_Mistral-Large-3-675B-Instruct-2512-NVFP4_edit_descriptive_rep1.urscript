@@ -1,0 +1,64 @@
+# Task: T001 — Simple collaborative pick-place
+# Robot: UR5e | Mode: Collaborative | Payload: 0.5 kg
+# Max TCP speed: 250 mm/s | Compliance: ISO 10218:2025
+# Safety: All motions within collaborative limits
+
+def task_T001():
+    # --- Safety Check ---
+    if get_digital_in(0):  # E-Stop active
+        popup("E-Stop engaged - Program aborted.", error=True)
+        halt
+    end
+
+    # --- Constants ---
+    HOME_POS = [0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+    PICK_APPROACH = p[0.4, 0.0, 0.35, 0.0, 3.1416, 0.0]
+    PICK_POINT = p[0.4, 0.0, 0.2, 0.0, 3.1416, 0.0]
+    PLACE_APPROACH = p[0.4, 0.2, 0.35, 0.0, 3.1416, 0.0]
+    PLACE_POINT = p[0.4, 0.2, 0.2, 0.0, 3.1416, 0.0]
+
+    # Motion parameters
+    SPEED_FAST = 0.200  # m/s
+    SPEED_MEDIUM = 0.150  # m/s
+    SPEED_SLOW = 0.100  # m/s
+    ACCEL_FAST = 0.5    # m/s²
+    ACCEL_MEDIUM = 0.3  # m/s²
+    BLEND_RADIUS = 0.01 # m
+
+    # --- Main Sequence ---
+    # 1. Go to home position
+    movej(HOME_POS, a=1.4, v=SPEED_FAST)
+
+    # 2. Approach pick location
+    movel(PICK_APPROACH, a=ACCEL_FAST, v=SPEED_FAST, r=BLEND_RADIUS)
+
+    # 3. Descend to pick point
+    movel(PICK_POINT, a=ACCEL_MEDIUM, v=SPEED_SLOW)
+
+    # 4. Grip object
+    set_digital_out(0, True)  # Close gripper
+    sleep(0.5)  # Grip settle time
+
+    # 5. Lift from pick
+    movel(PICK_APPROACH, a=ACCEL_FAST, v=SPEED_MEDIUM, r=BLEND_RADIUS)
+
+    # 6. Transit to place approach
+    movel(PLACE_APPROACH, a=ACCEL_FAST, v=SPEED_FAST, r=BLEND_RADIUS)
+
+    # 7. Descend to place point
+    movel(PLACE_POINT, a=ACCEL_MEDIUM, v=SPEED_SLOW)
+
+    # 8. Release object
+    set_digital_out(0, False)  # Open gripper
+    sleep(0.3)  # Release settle time
+
+    # 9. Retract from place
+    movel(PLACE_APPROACH, a=ACCEL_FAST, v=SPEED_FAST, r=BLEND_RADIUS)
+
+    # 10. Return to home
+    movej(HOME_POS, a=1.4, v=SPEED_FAST)
+
+end
+
+# Program entry point
+task_T001()

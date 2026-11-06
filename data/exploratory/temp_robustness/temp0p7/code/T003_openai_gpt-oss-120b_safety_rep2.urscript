@@ -1,0 +1,128 @@
+# -------------------------------------------------
+# UR5e Hybrid Mode Task – EUR-pallet 2x2 Layer
+# Safety‑compliant URScript (ISO 10218:2025)
+# -------------------------------------------------
+
+# ------------------- Safety Parameters -------------------
+MAX_TCP_SPEED      = 0.25      # m/s  (250 mm/s limit)
+MAX_JNT_ACCEL      = 1.4       # rad/s^2 per joint
+HOME_SPEED         = 0.25      # m/s for linear moves
+HOME_JNT_SPEED     = 0.5       # rad/s for joint move
+HOME_JNT_ACCEL     = 1.0       # rad/s^2 (≤ MAX_JNT_ACCEL)
+
+# Workspace boundaries (meters) – must contain all waypoints
+WS_MIN = [-0.8, -0.8, 0.0]    # X, Y, Z minimum
+WS_MAX = [ 0.8,  0.8, 0.8]    # X, Y, Z maximum
+
+# Safety zones (confinement)
+# Conveyor pick zone
+CONV_ZONE_MIN = [0.30, -0.20, 0.00]
+CONV_ZONE_MAX = [0.60,  0.20, 0.30]
+
+# Pallet placement zone (2x2 grid, centered at origin)
+PAL_ZONE_MIN  = [-0.30, -0.30, 0.00]
+PAL_ZONE_MAX  = [ 0.30,  0.30, 0.30]
+
+# ------------------- Helper Functions -------------------
+def within_bounds(pose, min_vec, max_vec):
+    # Pose is a 6‑DOF vector [X,Y,Z,RX,RY,RZ]
+    for i in range(3):
+        if pose[i] < min_vec[i] or pose[i] > max_vec[i]:
+            return False
+    return True
+
+def safety_check(pose):
+    if not within_bounds(pose, WS_MIN, WS_MAX):
+        popup("Workspace violation! Halting.", True, True)
+        halt()
+    # Zone specific checks can be added here if needed
+    # (e.g., ensure collaborative zone when near conveyor)
+    # No further action – just validation
+
+def emergency_stop():
+    popup("Emergency stop triggered!", True, True)
+    stopj(0)          # Stop all joints smoothly
+    halt()
+
+# Register emergency stop callback (triggered by external signal)
+set_stop_program(emergency_stop)
+
+# ------------------- Payload Setup -------------------
+set_payload(4.5, [0,0,0.1])   # 4.5 kg payload, centre of mass 10 cm above TCP
+
+# ------------------- Joint Limits (Optional) -------------------
+# Ensure joint accelerations never exceed the limit
+set_joint_acceleration(MAX_JNT_ACCEL)
+
+# ------------------- Define Waypoints -------------------
+# Home position (joint configuration)
+home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Approach above conveyor (TCP pose)
+approach_conveyor = p[0.45, 0.0, 0.25, 0, 3.14, 0]
+
+# Pick position (down 150 mm from approach)
+pick_position = p[0.45, 0.0, 0.10, 0, 3.14, 0]
+
+# Lift after pick
+lift_position = p[0.45, 0.0, 0.30, 0, 3.14, 0]
+
+# Pallet grid positions (2×2) – centered around origin
+pallet_positions = [
+    p[-0.15, -0.15, 0.10, 0, 3.14, 0],   # Cell 1
+    p[ 0.15, -0.15, 0.10, 0, 3.14, 0],   # Cell 2
+    p[-0.15,  0.15, 0.10, 0, 3.14, 0],   # Cell 3
+    p[ 0.15,  0.15, 0.10, 0, 3.14, 0]    # Cell 4
+]
+
+# ------------------- Main Program -------------------
+def main():
+    # 1) Move to Home (joint move)
+    safety_check(p[0,0,0,0,0,0])   # dummy pose – home is always safe
+    movej(home_joint, a=HOME_JNT_ACCEL, v=HOME_JNT_SPEED)
+
+    # 2) Approach conveyor (linear move above pick)
+    safety_check(approach_conveyor)
+    movel(approach_conveyor, a=0.5, v=HOME_SPEED)
+
+    # 3) Descend to pick
+    safety_check(pick_position)
+    movel(pick_position, a=0.3, v=0.10)   # 100 mm/s = 0.10 m/s
+
+    # 4) Close gripper (placeholder – replace with actual I/O)
+    set_digital_out(8, True)   # gripper close
+    sleep(0.5)
+
+    # 5) Lift from conveyor
+    safety_check(lift_position)
+    movel(lift_position, a=0.4, v=0.20)   # 200 mm/s
+
+    # 6) Transit to first pallet cell (collaborative zone)
+    for idx, cell in enumerate(pallet_positions):
+        # Move to above cell
+        above_cell = pose_add(cell, p[0,0,0.15,0,0,0])   # 150 mm clearance
+        safety_check(above_cell)
+        movel(above_cell, a=0.5, v=MAX_TCP_SPEED)      # max allowed speed
+
+        # Lower to place
+        safety_check(cell)
+        movel(cell, a=0.3, v=0.10)                     # 100 mm/s for precise placement
+
+        # Open gripper
+        set_digital_out(8, False)  # gripper open
+        sleep(0.5)
+
+        # Retract upward
+        safety_check(above_cell)
+        movel(above_cell, a=0.4, v=0.20)               # 200 mm/s retreat
+
+    # 7) Return to Home
+    safety_check(p[0,0,0,0,0,0])
+    movej(home_joint, a=HOME_JNT_ACCEL, v=HOME_JNT_SPEED)
+
+    # Program complete
+    popup("Task completed safely.", False, False)
+
+# ------------------- Execute -------------------
+if running == False:
+    main()

@@ -1,0 +1,58 @@
+# Optimized Task: T003 — EUR-pallet 2x2 layer — hybrid mode
+# Faster cycle time: increased speeds, reduced dwell, looped placement
+# Robot: ur5e | Payload: 4.5 kg | Mode: hybrid | Max TCP speed: 0.300 m/s
+
+def task_T003():
+    # Safety: E‑Stop check (hardware enforced)
+    if get_digital_in(0):
+        popup("E‑Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # Home position
+    movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+          a=1.4, v=0.625)
+
+    # Pre‑defined poses (meters, radians)
+    pose_above_conveyor = p[0.5, -0.3, 0.35, 0.0, 3.1416, 0.0]
+    pose_pick          = p[0.5, -0.3, 0.10, 0.0, 3.1416, 0.0]
+    pose_lift          = p[0.5, -0.3, 0.40, 0.0, 3.1416, 0.0]
+
+    # Pallet grid offsets (x, y) in meters relative to pallet origin
+    pallet_offsets = [[0.0, 0.0],
+                      [0.2, 0.0],
+                      [0.0, 0.2],
+                      [0.2, 0.2]]
+
+    # Loop over the 4 grid positions
+    for i = 0, 3, 1 do
+        # --- Pick sequence -------------------------------------------------
+        movel(pose_above_conveyor, a=1.4, v=0.300, r=0.020)   # approach
+        movel(pose_pick,          a=1.0, v=0.150)               # descend
+        set_digital_out(0, True)                               # gripper close
+        sleep(0.10)                                            # settle (reduced)
+
+        movel(pose_lift, a=1.4, v=0.300, r=0.015)              # lift
+
+        # --- Place sequence ------------------------------------------------
+        # Compute target pose above pallet cell
+        target_x = 0.5 + pallet_offsets[i][0]
+        target_y = 0.3 + pallet_offsets[i][1]
+        pose_above_pallet = p[target_x, target_y, 0.40, 0.0, 3.1416, 0.0]
+        pose_place       = p[target_x, target_y, 0.12, 0.0, 3.1416, 0.0]
+
+        movel(pose_above_pallet, a=1.4, v=0.300, r=0.020)     # transit
+        movel(pose_place,        a=1.0, v=0.150)               # descend
+        set_digital_out(0, False)                              # gripper open
+        sleep(0.10)                                            # release settle
+
+        movel(pose_above_pallet, a=1.4, v=0.300, r=0.010)     # retract
+    end
+
+    # Return home
+    movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+          a=1.4, v=0.625)
+end
+
+# Entry point
+task_T003()

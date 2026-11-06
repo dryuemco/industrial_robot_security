@@ -1,0 +1,64 @@
+# Task: T010 — Screw fastening assembly — hybrid mode
+# Optimized for faster cycle time
+# Operating mode: hybrid | Max TCP speed: 0.250 m/s
+# Robot: ur5e
+
+def task_T010():
+  TCP_SPEED_CAP = 0.250
+  def safe_movel(pose, a, v, r):
+    if (v > TCP_SPEED_CAP):
+      popup("TCP speed cap exceeded", error=True)
+      halt
+    end
+    movel(pose, a=a, v=v, r=r)
+  end
+
+  # [0] Verify E-Stop
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # [1] Home (faster acceleration)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.8000, v=0.8000)
+
+  # [2] Above screw feeder (faster)
+  safe_movel(p[0.300000, -0.200000, 0.250000, 0.0000, 3.1416, 0.0000], 1.0000, 0.2500, 0.0100)
+
+  # [3] Pick screw (faster)
+  safe_movel(p[0.300000, -0.200000, 0.110000, 0.0000, 3.1416, 0.0000], 0.6000, 0.1200, 0.0)
+
+  # [4] Screw pickup magnet ON
+  set_digital_out(4, True)
+
+  # [5] Magnet settle (reduced)
+  sleep(0.1000)
+
+  # [6] Lift from feeder (faster)
+  safe_movel(p[0.300000, -0.200000, 0.300000, 0.0000, 3.1416, 0.0000], 1.0000, 0.2200, 0.0150)
+
+  # [7] Above fastening point 1 (faster)
+  safe_movel(p[0.420000, 0.120000, 0.200000, 0.0000, 3.1416, 0.0000], 1.0000, 0.2500, 0.0100)
+
+  # [8] Descend to fastening point 1 (faster)
+  safe_movel(p[0.420000, 0.120000, 0.080000, 0.0000, 3.1416, 0.0000], 0.3000, 0.0800, 0.0)
+
+  # [9] Screwdriver ON — drive screw
+  set_digital_out(0, True)
+
+  # [10] Fastening time (optimized)
+  sleep(1.5000)
+
+  # [11] Screwdriver OFF
+  set_digital_out(0, False)
+
+  # [12] Retract from fastening (faster)
+  safe_movel(p[0.420000, 0.120000, 0.200000, 0.0000, 3.1416, 0.0000], 0.8000, 0.2000, 0.0100)
+
+  # [13] Return home (faster)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.8000, v=0.8000)
+
+end
+
+# Entry point
+task_T010()

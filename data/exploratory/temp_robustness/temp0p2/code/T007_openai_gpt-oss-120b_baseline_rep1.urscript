@@ -1,0 +1,61 @@
+# URScript for curved contour weld in hybrid mode (T007)
+
+# ----- Configuration -----
+set_payload(3.5, [0,0,0])               # Payload 3.5 kg, CoG at TCP
+set_tcp([0,0,0,0,0,0])                  # Default TCP (placeholder)
+
+# Switch to hybrid safety mode (fenced during weld, collaborative during approach)
+set_safety_mode(2)                      # 2 = Hybrid mode (fence active)
+
+# ----- Motion Parameters -----
+# Speed values (m/s): 300 mm/s = 0.3, 250 mm/s = 0.25, 100 mm/s = 0.1, 60 mm/s = 0.06
+# Acceleration values (m/s^2) chosen for smooth motion
+
+# ----- Joint Positions (radians) -----
+# Home position (example)
+home_joint = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+# ----- Cartesian Poses (meters) -----
+# Approach point above weld fixture
+approach_pose = p[0.500, 0.000, 0.300, 0, 3.1416, 0]
+
+# Weld start (descended)
+start_pose = p[0.500, 0.000, 0.100, 0, 3.1416, 0]
+
+# Weld midpoint (arc)
+mid_pose = p[0.600, 0.000, 0.100, 0, 3.1416, 0]
+
+# Weld end
+end_pose = p[0.700, 0.000, 0.100, 0, 3.1416, 0]
+
+# Retract point after weld
+retract_pose = p[0.700, 0.000, 0.300, 0, 3.1416, 0]
+
+# ----- Motion Sequence -----
+def main():
+    # 1. Move to Home position (joint move, 300 mm/s)
+    movej(home_joint, a=1.2, v=0.3)
+
+    # 2. Approach above weld fixture (linear, 250 mm/s)
+    movel(approach_pose, a=1.2, v=0.25)
+
+    # 3. Descend to weld start (linear, 100 mm/s)
+    movel(start_pose, a=1.2, v=0.10)
+
+    # 4. Weld midpoint (linear, 60 mm/s) – fence active
+    movel(mid_pose, a=0.8, v=0.06)
+
+    # 5. Weld end (linear, 60 mm/s) – fence active
+    movel(end_pose, a=0.8, v=0.06)
+
+    # 6. Retract after weld (linear, 250 mm/s) – fence released
+    movel(retract_pose, a=1.2, v=0.25)
+
+    # 7. Return to Home position (joint move, 300 mm/s)
+    movej(home_joint, a=1.2, v=0.3)
+
+    # Switch back to collaborative safety mode after task
+    set_safety_mode(1)   # 1 = Collaborative mode
+
+# Execute the program
+main()

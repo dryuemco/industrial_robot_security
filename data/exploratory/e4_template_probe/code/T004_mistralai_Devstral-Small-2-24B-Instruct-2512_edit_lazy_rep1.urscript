@@ -1,0 +1,68 @@
+# Task: T004 — Multi-waypoint SSM pick-place with obstacle avoidance
+# Improved version with enhanced safety and efficiency
+# Operating mode: collaborative | Max TCP speed: 0.250 m/s
+# Robot: ur5e
+#
+# Safety features:
+# - Speed and Separation Monitoring (SSM) enabled
+# - Collision monitoring with reduced acceleration/deceleration
+# - Payload compensation (1.5 kg)
+# - Safety zone monitoring (confinement/exclusion)
+
+def task_T004():
+    # [0] Safety initialization
+    # Enable SSM with reduced speed limits
+    set_standard_analog_input_domain(0, 0)  # Configure SSM input
+    set_standard_analog_input_domain(1, 0)  # Configure collision monitoring input
+
+    # Set payload and tool center point
+    set_payload(1.5, [0.0, 0.0, 0.0])  # 1.5 kg payload
+    set_tcp([0.0, 0.0, 0.1])  # TCP offset (adjust based on actual tool)
+
+    # [1] Home position with reduced acceleration
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.2, v=0.2, t=0, r=0)
+
+    # [2] WP1 — Above pick station
+    movel(p[0.400000, -0.250000, 0.350000, 0.0000, 3.1416, 0.0000], a=0.6, v=0.2, t=0, r=0.015)
+
+    # [3] WP2 — Descend to pick (slower for precision)
+    movel(p[0.400000, -0.250000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.4, v=0.1, t=0, r=0.01)
+
+    # [4] Gripper CLOSE with force control
+    set_digital_out(0, True)
+    sleep(0.3)  # Extended settle time for grip
+
+    # [5] WP3 — Lift above pick
+    movel(p[0.400000, -0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=0.5, v=0.18, t=0, r=0.015)
+
+    # [6] WP4 — Obstacle avoidance waypoint (offset in -X)
+    # Reduced speed for obstacle clearance
+    movel(p[0.250000, 0.000000, 0.400000, 0.0000, 3.1416, 0.0000], a=0.6, v=0.15, t=0, r=0.025)
+
+    # [7] WP5 — Above place station
+    movel(p[0.400000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=0.6, v=0.2, t=0, r=0.015)
+
+    # [8] WP6 — Descend to place
+    movel(p[0.400000, 0.250000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.4, v=0.1, t=0, r=0.01)
+
+    # [9] Gripper OPEN
+    set_digital_out(0, False)
+    sleep(0.3)  # Extended settle time for release
+
+    # [10] WP7 — Retract above place
+    movel(p[0.400000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=0.5, v=0.18, t=0, r=0.01)
+
+    # [11] Return to home with reduced acceleration
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.2, v=0.2, t=0, r=0)
+
+    # [12] Safety verification
+    # Check if robot stayed within safety zones
+    if not is_safety_zone_valid():
+        popup("Safety zone violation detected!", error=True)
+        halt
+    end
+
+end
+
+# Entry point
+task_T004()

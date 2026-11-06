@@ -1,0 +1,35 @@
+# Hybrid multi-angle camera inspection (T014)
+
+# Define joint positions
+def home_joints = [0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+def top_view_joints = [0.0, -1.2, 0.0, -1.57, 0.0, 0.0]
+def side_view_joints = [0.785, -1.2, 0.0, -1.57, 0.0, 0.0]
+def angled_view_joints = [1.57, -1.2, 0.0, -1.57, 0.0, 0.0]
+def retract_joints = [0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+
+# Define TCP positions
+def top_view_tcp = p[0.5, 0.0, 0.3, 0, 3.14159, 0]
+def side_view_tcp = p[0.3, 0.5, 0.3, 0, 3.14159, 1.5708]
+def angled_view_tcp = p[0.4, 0.4, 0.3, 0, 3.14159, 0.7854]
+def retract_tcp = p[0.5, 0.0, 0.5, 0, 3.14159, 0]
+
+# Set payload
+set_payload(0.4, [0, 0, 0])
+
+# Move to home position
+movej(home_joints, a=1.4, v=1.05)
+
+# Move to top-down view position
+movel(top_view_tcp, a=1.2, v=0.75)
+
+# Move to side view position
+movel(side_view_tcp, a=1.2, v=0.6)
+
+# Move to angled view position
+movel(angled_view_tcp, a=1.2, v=0.6)
+
+# Retract
+movel(retract_tcp, a=1.4, v=1.05)
+
+# Move back to home position
+movej(home_joints, a=1.4, v=1.05)

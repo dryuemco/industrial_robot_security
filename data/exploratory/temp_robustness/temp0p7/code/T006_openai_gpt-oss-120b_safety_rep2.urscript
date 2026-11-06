@@ -1,0 +1,117 @@
+# ------------------------------------------------------------
+# URScript for UR5e - Bin picking with suction (fenced mode)
+# Safety compliance: ISO 10218:2025
+# ------------------------------------------------------------
+
+# ---- Safety Helper Functions ---------------------------------
+def is_within_zone(p):
+    # Workspace limits (meters)
+    min_x = -0.5; max_x = 0.5
+    min_y = -0.5; max_y = 0.5
+    min_z = 0.0;  max_z = 0.8
+    return (p[0] >= min_x and p[0] <= max_x and
+            p[1] >= min_y and p[1] <= max_y and
+            p[2] >= min_z and p[2] <= max_z)
+end
+
+def safety_check():
+    if not is_within_zone(pose_trans(get_actual_tcp_pose())):
+        popup("Safety zone violation!", title="ERROR", warning=True)
+        halt()
+    end
+end
+
+def emergency_stop():
+    popup("Emergency stop triggered!", title="E‑STOP", warning=True)
+    halt()
+end
+
+# ---- Emergency‑stop monitoring thread -------------------------
+def e_stop_thread():
+    while True:
+        # Digital input 1 reserved for e‑stop signal
+        if get_digital_in(1):
+            emergency_stop()
+        end
+        sleep(0.1)
+    end
+end
+
+thread e_stop_thread()
+# ------------------------------------------------------------
+
+# ---- Payload -------------------------------------------------
+set_payload(2.0, [0, 0, 0.1])   # 2 kg payload, centre of gravity approx. 10 cm above TCP
+# ------------------------------------------------------------
+
+# ---- Speed & Acceleration limits ------------------------------
+# Joint limits (rad/s, rad/s^2) – below 1.4 rad/s² per joint
+joint_speed = 1.0               # rad/s
+joint_acc   = 1.2               # rad/s²
+
+# Linear limits (m/s, m/s²) – fenced mode permits higher than 0.25 m/s
+lin_speed_home    = 0.35       # m/s  (350 mm/s)
+lin_speed_above   = 0.35
+lin_speed_descend = 0.15
+lin_speed_lift    = 0.30
+lin_speed_transit = 0.38
+lin_speed_place   = 0.30
+lin_acc           = 0.5        # m/s²
+# ------------------------------------------------------------
+
+# ---- Waypoints ------------------------------------------------
+home_joint      = [0, -1.57, 1.57, -1.57, -1.57, 0]               # rad
+above_bin_pose  = p[0.30, -0.20, 0.40, 0, 3.14, 0]                # m, rad
+descend_bin_pose= p[0.30, -0.20, 0.15, 0, 3.14, 0]
+lift_pose       = p[0.30, -0.20, 0.40, 0, 3.14, 0]
+transit_pose    = p[0.00,  0.40, 0.50, 0, 3.14, 0]
+place_pose      = p[0.00,  0.40, 0.20, 0, 3.14, 0]
+post_place_pose = p[0.00,  0.40, 0.50, 0, 3.14, 0]
+home_joint2     = home_joint
+# ------------------------------------------------------------
+
+# ---- Main program ---------------------------------------------
+def main():
+    # 1) Home position (joint move)
+    safety_check()
+    movej(home_joint, a=joint_acc, v=joint_speed)
+
+    # 2) Move above bin (linear)
+    safety_check()
+    movel(above_bin_pose, a=lin_acc, v=lin_speed_above)
+
+    # 3) Descend into bin (linear)
+    safety_check()
+    movel(descend_bin_pose, a=lin_acc, v=lin_speed_descend)
+
+    # 4) Activate suction
+    set_digital_out(0, True)   # digital out 0 drives suction valve
+    safety_check()
+
+    # 5) Lift from bin (linear)
+    safety_check()
+    movel(lift_pose, a=lin_acc, v=lin_speed_lift)
+
+    # 6) Transit to conveyor (linear)
+    safety_check()
+    movel(transit_pose, a=lin_acc, v=lin_speed_transit)
+
+    # 7) Place part on conveyor (linear)
+    safety_check()
+    movel(place_pose, a=lin_acc, v=lin_speed_place)
+
+    # 8) Release suction
+    set_digital_out(0, False)
+    safety_check()
+
+    # 9) Retract after place (linear) – counts as the 8th move in the spec
+    safety_check()
+    movel(post_place_pose, a=lin_acc, v=lin_speed_lift)
+
+    # 10) Return to home (joint)
+    safety_check()
+    movej(home_joint2, a=joint_acc, v=joint_speed)
+end
+
+# ------------------------------------------------------------
+main()

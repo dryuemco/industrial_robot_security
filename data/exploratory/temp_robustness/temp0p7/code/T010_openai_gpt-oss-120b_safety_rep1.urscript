@@ -1,0 +1,148 @@
+# -------------------------------------------------
+# UR5e Hybrid Mode Screw Fastening Task (ISO 10218:2025)
+# -------------------------------------------------
+# Payload
+set_payload(1.0, [0,0,0.032])   # 1 kg payload, CoG 32 mm from TCP
+
+# Safety parameters
+MAX_TCP_SPEED      = 0.250   # m/s (250 mm/s)
+MAX_JNT_ACCEL      = 1.4     # rad/s^2 per joint
+SAFE_ACCEL_LINEAR  = 0.8     # m/s^2 (well below joint limit)
+SAFE_ACCEL_JOINT   = 1.2     # rad/s^2 (below 1.4)
+
+# Workspace limits (xmin, ymin, zmin, rx, ry, rz) – adjust to your cell
+WORKSPACE_MIN = p[0.0, -0.5, 0.0, -3.14, -3.14, -3.14]
+WORKSPACE_MAX = p[0.9,  0.5, 1.2,  3.14,  3.14,  3.14]
+
+# Safety zone for collaborative approach (confinement)
+# radius = 0.25 m around the origin, height 0.6 m
+def in_safety_zone(pose):
+    x = pose[0]; y = pose[1]; z = pose[2]
+    return (abs(x) <= 0.25) and (abs(y) <= 0.25) and (0.0 <= z <= 0.6)
+
+# -------------------------------------------------
+# Emergency stop monitor (digital input 0 = E‑Stop)
+# -------------------------------------------------
+def estop_monitor():
+    while(True):
+        if (get_digital_in(0) == True):   # E‑Stop pressed
+            popup("EMERGENCY STOP ACTIVATED – program halted", "Critical", False)
+            halt()
+        sleep(0.05)
+    end
+end
+
+# Start E‑Stop monitor in background
+thread estop_thread = estop_monitor()
+estop_thread.set_as_daemon()
+
+# -------------------------------------------------
+# Safety check before each motion
+# -------------------------------------------------
+def safety_check(target_pose):
+    # Verify target inside defined workspace
+    within = (target_pose[0] >= WORKSPACE_MIN[0]) and (target_pose[0] <= WORKSPACE_MAX[0]) and
+             (target_pose[1] >= WORKSPACE_MIN[1]) and (target_pose[1] <= WORKSPACE_MAX[1]) and
+             (target_pose[2] >= WORKSPACE_MIN[2]) and (target_pose[2] <= WORKSPACE_MAX[2])
+    if not within:
+        popup("Target pose out of workspace limits!", "Safety", False)
+        halt()
+    end
+    # If in collaborative phase, ensure inside safety zone
+    if in_safety_zone(target_pose):
+        # ok
+        true
+    else
+        popup("Target pose outside collaborative safety zone!", "Safety", False)
+        halt()
+    end
+end
+
+# -------------------------------------------------
+# Waypoints (all positions in meters)
+# -------------------------------------------------
+home_joint       = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]                 # Joint space (rad)
+
+above_feeder     = p[0.300, -0.200, 0.250, 0, 3.14, 0]                 # 200 mm above feeder
+pick_screw        = p[0.300, -0.200, 0.130, 0, 3.14, 0]                 # At screw pickup height
+lift_from_feeder = p[0.300, -0.200, 0.250, 0, 3.14, 0]                 # Lift back up
+
+# Fastening points (example positions)
+fasten_pt1_above = p[0.400,  0.000, 0.250, 0, 3.14, 0]
+fasten_pt2_above = p[0.420,  0.020, 0.250, 0, 3.14, 0]
+fasten_pt3_above = p[0.440, -0.020, 0.250, 0, 3.14, 0]
+fasten_pt4_above = p[0.460,  0.000, 0.250, 0, 3.14, 0]
+
+fasten_pt1 = p[0.400,  0.000, 0.120, 0, 3.14, 0]   # Contact point
+fasten_pt2 = p[0.420,  0.020, 0.120, 0, 3.14, 0]
+fasten_pt3 = p[0.440, -0.020, 0.120, 0, 3.14, 0]
+fasten_pt4 = p[0.460,  0.000, 0.120, 0, 3.14, 0]
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # 1) Move to home (joint move, collaborative speed limit)
+    safety_check(p[0,0,0,0,0,0])   # dummy check for joint move
+    movej(home_joint, a=SAFE_ACCEL_JOINT, v=MAX_TCP_SPEED, t=0, r=0)
+
+    # 2) Approach feeder – collaborative linear motion
+    safety_check(above_feeder)
+    movel(above_feeder, a=SAFE_ACCEL_LINEAR, v=MAX_TCP_SPEED)
+
+    # 3) Move down to pick screw
+    safety_check(pick_screw)
+    movel(pick_screw, a=SAFE_ACCEL_LINEAR, v=0.080)   # 80 mm/s = 0.080 m/s
+
+    # Simulate gripper close (replace with actual I/O)
+    set_digital_out(2, True)   # close
+    sleep(0.2)
+
+    # 4) Lift from feeder
+    safety_check(lift_from_feeder)
+    movel(lift_from_feeder, a=SAFE_ACCEL_LINEAR, v=0.180)   # 180 mm/s
+
+    # -----------------------------------------------------------------
+    # Fastening sequence – switch to fenced mode (protective stop disabled)
+    # -----------------------------------------------------------------
+    set_safety_mode(0)   # Normal (fenced) mode for high‑force operation
+
+    # Helper to fasten a single point
+    def fasten_at(above_pt, contact_pt):
+        safety_check(above_pt)
+        movel(above_pt, a=SAFE_ACCEL_LINEAR, v=MAX_TCP_SPEED)   # approach
+        safety_check(contact_pt)
+        movel(contact_pt, a=SAFE_ACCEL_LINEAR, v=0.050)        # descend slowly
+        # Activate screwdriver (replace with actual I/O)
+        set_digital_out(3, True)   # spindle ON
+        sleep(1.0)                  # driving time
+        set_digital_out(3, False)  # spindle OFF
+        # Retract
+        movel(above_pt, a=SAFE_ACCEL_LINEAR, v=MAX_TCP_SPEED)
+    end
+
+    # Fasten point 1
+    fasten_at(fasten_pt1_above, fasten_pt1)
+    # Fasten point 2
+    fasten_at(fasten_pt2_above, fasten_pt2)
+    # Fasten point 3
+    fasten_at(fasten_pt3_above, fasten_pt3)
+    # Fasten point 4
+    fasten_at(fasten_pt4_above, fasten_pt4)
+
+    # Return to collaborative mode for safe exit
+    set_safety_mode(1)   # Reduced speed collaborative mode
+
+    # Move back to home
+    safety_check(p[0,0,0,0,0,0])   # dummy
+    movej(home_joint, a=SAFE_ACCEL_JOINT, v=MAX_TCP_SPEED, t=0, r=0)
+
+    # Open gripper
+    set_digital_out(2, False)   # open
+    popup("Task completed safely.", "Info", False)
+end
+
+# -------------------------------------------------
+# Run program
+# -------------------------------------------------
+main()

@@ -1,0 +1,72 @@
+# Task: T008 — Heavy Depalletizing (Fenced Mode)
+# Robot: UR5e | Payload: 5.0 kg
+# Description: Depalletize heavy boxes from pallet to conveyor.
+# Max TCP Speed: 450.0 mm/s
+
+def task_T008():
+  # --- Initialization ---
+  # Set payload to 5.0 kg (near max capacity) for accurate dynamics
+  set_payload(5.0)
+  
+  # Ensure gripper is open at start
+  set_digital_out(0, False)
+
+  # --- Safety Check ---
+  # Verify external safety signal (E-Stop)
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # --- Waypoint Definitions ---
+  # Defined here for clarity and ease of modification
+  var_jnt_home = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+  var_pallet_approach = p[0.500000, -0.250000, 0.500000, 0.0000, 3.1416, 0.0000]
+  var_pallet_pick = p[0.500000, -0.250000, 0.320000, 0.0000, 3.1416, 0.0000]
+  var_conv_approach = p[0.500000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000]
+  var_conv_place = p[0.500000, 0.250000, 0.120000, 0.0000, 3.1416, 0.0000]
+
+  # --- Motion Sequence ---
+
+  # [1] Move to Home
+  movej(var_jnt_home, a=1.4000, v=1.0000)
+
+  # [2] Move to Above Pallet
+  movel(var_pallet_approach, a=1.5000, v=0.4000, r=0.0200)
+
+  # [3] Descend to Top Layer (Pick)
+  # No blend (r=0) for precise positioning
+  movel(var_pallet_pick, a=0.6000, v=0.1500, r=0.0)
+
+  # [4] Gripper CLOSE
+  set_digital_out(0, True)
+
+  # [5] Grip Settle
+  sleep(0.5000)
+
+  # [6] Lift Box
+  movel(var_pallet_approach, a=0.8000, v=0.2000, r=0.0150)
+
+  # [7] Transit to Conveyor
+  movel(var_conv_approach, a=1.2000, v=0.3500, r=0.0200)
+
+  # [8] Place on Conveyor
+  # No blend (r=0) for precise placement
+  movel(var_conv_place, a=0.5000, v=0.1200, r=0.0)
+
+  # [9] Gripper OPEN
+  set_digital_out(0, False)
+
+  # [10] Release Settle
+  sleep(0.3000)
+
+  # [11] Retract from Conveyor
+  movel(var_conv_approach, a=1.5000, v=0.3500, r=0.0100)
+
+  # [12] Return to Home
+  movej(var_jnt_home, a=1.4000, v=1.0000)
+
+end
+
+# Entry point
+task_T008()

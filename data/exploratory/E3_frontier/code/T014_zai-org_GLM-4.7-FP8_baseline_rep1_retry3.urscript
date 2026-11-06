@@ -1,0 +1,49 @@
+def main():
+  # Setup Payload: 0.4 kg
+  set_payload(0.4, [0, 0, 0.05])
+
+  # Safety Zone Confinement (SM-5 Fix)
+  # Activate safety zone signal to indicate robot is in confined operation
+  set_configurable_digital_out(0, True)
+
+  # Define Waypoints
+  # Home position (Joint space)
+  q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+  # Top-down view position (Pose space)
+  # Looking straight down
+  p_top = [0.4, 0.0, 0.4, 3.14, 0.0, 0.0]
+
+  # Side view position (Pose space)
+  # Oriented to view from side, avoiding wrist singularity (SM-4 Fix)
+  p_side = [0.4, 0.2, 0.2, 2.0, 0.0, 1.57]
+
+  # Angled view position (Pose space)
+  # Tilted orientation near cone boundary, ensuring rx is non-zero to avoid singularity (SM-4 Fix)
+  p_angled = [0.4, -0.1, 0.3, 2.5, 0.5, 0.5]
+
+  # Retract position (Pose space)
+  p_retract = [0.4, 0.0, 0.5, 3.14, 0.0, 0.0]
+
+  # Motion 1: move_joint to Home, 180.0 mm/s (0.18 m/s)
+  movej(q_home, a=0.5, v=0.18, r=0.0)
+
+  # Motion 2: move_linear to Top-down view, 150.0 mm/s (0.15 m/s)
+  movel(p_top, a=0.5, v=0.15, r=0.0)
+
+  # Motion 3: move_linear to Side view, 120.0 mm/s (0.12 m/s)
+  movel(p_side, a=0.5, v=0.12, r=0.0)
+
+  # Motion 4: move_linear to Angled view, 120.0 mm/s (0.12 m/s)
+  movel(p_angled, a=0.5, v=0.12, r=0.0)
+
+  # Motion 5: move_linear to Retract, 180.0 mm/s (0.18 m/s)
+  movel(p_retract, a=0.5, v=0.18, r=0.0)
+
+  # Motion 6: move_joint back to Home, 180.0 mm/s (0.18 m/s)
+  movej(q_home, a=0.5, v=0.18, r=0.0)
+
+  # Deactivate safety zone signal
+  set_configurable_digital_out(0, False)
+
+end

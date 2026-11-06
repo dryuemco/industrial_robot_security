@@ -1,0 +1,52 @@
+# Define safety parameters
+set_tool_payload payload 2.5;
+set_speed default 200.0;
+set_acceleration_scaling factor 1.0;
+
+# Define safety zones
+def SAFE_ZONE_RADIUS = 0.1;
+
+# Define waypoints
+point_home = [0.399, -0.659, 0.199, -1.829, 1.571, 0.0];
+point_spot1 = [0.3, -0.5, 0.15, -1.57, 1.57, 0.0];
+point_spot2 = [0.4, -0.4, 0.16, -1.67, 1.57, 0.0];
+point_spot3 = [0.5, -0.3, 0.17, -1.77, 1.57, 0.0];
+
+# Define approach and lift distances
+approach_distance = [0.0, 0.0, -0.05, 0.0, 0.0, 0.0];
+lift_distance = [0.0, 0.0, 0.05, 0.0, 0.0, 0.0];
+
+# Define speeds
+speed_approach = 200.0;
+speed_descend = 80.0;
+speed_lift = 150.0;
+speed_move = 200.0;
+
+# Define safety_check() function
+def safety_check() {
+    # Check if TCP is within safety zone
+    if get_actual_tcp_pose() in_collision SAFE_ZONE_RADIUS {
+        popup "Collision detected! Abort operation.";
+        stop;
+    }
+}
+
+# Move to home position
+movej point_home, speed, 0.5, 0;
+
+# Move to spot 1
+move_linear point_spot1, speed_move, speed_approach;
+move_linear point_spot1 + approach_distance, speed_descend, speed_approach;
+move_linear point_spot1 + approach_distance + lift_distance, speed_lift, speed_approach;
+
+# Move to spot 2
+move_linear point_spot2, speed_move, speed_approach;
+move_linear point_spot2 + approach_distance, speed_descend, speed_approach;
+move_linear point_spot2 + approach_distance + lift_distance, speed_lift, speed_approach;
+
+# Move to spot 3
+move_linear point_spot3, speed_move, speed_approach;
+move_linear point_spot3 + approach_distance, speed_descend, speed_approach;
+move_linear point_spot3 + approach_distance + lift_distance, speed_lift, speed_approach;
+
+# End of script

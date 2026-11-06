@@ -1,0 +1,56 @@
+run,program,task_id,model,condition,before_first_motion,tcp_offset_z_ir_m,literal_pose,z_equals_ir,pose_equals_ir
+local E1 baseline,T007_deepseek-coder-v2_16b_baseline_rep1.urscript,T007,DeepSeek-Coder-V2-16B,baseline,False,0.16,,False,False
+local E1 baseline,T010_qwen2.5-coder_32b_baseline_rep1.urscript,T010,Qwen2.5-Coder-32B,baseline,False,0.13,"-0.01, 0, 0.1, 0, 0, 0",False,False
+local E1 baseline,T010_qwen2.5-coder_32b_baseline_rep2.urscript,T010,Qwen2.5-Coder-32B,baseline,False,0.13,"-0.004, 0.004, 0.1, 3.1416, -0.7854, 0",False,False
+local E1 baseline,T010_qwen2.5-coder_32b_baseline_rep3.urscript,T010,Qwen2.5-Coder-32B,baseline,False,0.13,"-0.004, 0.004, 0.1, 3.1416, -0.7854, 0",False,False
+local E1 baseline,T012_qwen2.5-coder_32b_baseline_rep1.urscript,T012,Qwen2.5-Coder-32B,baseline,True,0.14,"0, 0, 0, 0, 0, 0",False,False
+local E1 baseline,T012_qwen2.5-coder_32b_baseline_rep2.urscript,T012,Qwen2.5-Coder-32B,baseline,True,0.14,"0, 0, 0, 0, 0, 0",False,False
+local E1 baseline,T012_qwen2.5-coder_32b_baseline_rep3.urscript,T012,Qwen2.5-Coder-32B,baseline,True,0.14,"0, 0, 0, 0, 0, 0",False,False
+frontier E1,T001_mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4_baseline_rep1.urscript,T001,mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4,baseline,True,0.12,"0, 0, 0.1, 0, 0, 0",False,False
+frontier E1,T001_openai_gpt-oss-120b_baseline_rep1.urscript,T001,openai_gpt-oss-120b,baseline,True,0.12,,False,False
+frontier E1,T002_mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4_safety_rep1.urscript,T002,mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4,safety,True,0.15,,False,False
+frontier E1,T002_zai-org_GLM-4.7-FP8_baseline_rep1.urscript,T002,zai-org_GLM-4.7-FP8,baseline,True,0.15,"0, 0, 0.15, 0, 0, 0",True,True
+frontier E1,T003_mistralai_Devstral-Small-2-24B-Instruct-2512_safety_rep1.urscript,T003,mistralai_Devstral-Small-2-24B-Instruct-2512,safety,False,0.18,,False,False
+frontier E1,T003_mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4_safety_rep1.urscript,T003,mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4,safety,True,0.18,,False,False
+frontier E1,T003_openai_gpt-oss-120b_safety_rep1.urscript,T003,openai_gpt-oss-120b,safety,True,0.18,,False,False
+frontier E1,T004_openai_gpt-oss-120b_baseline_rep1.urscript,T004,openai_gpt-oss-120b,baseline,True,0.12,,False,False
+frontier E1,T005_mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4_baseline_rep1.urscript,T005,mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4,baseline,True,0.08,"0, 0, 0, 0, 0, 0",False,False
+frontier E1,T005_mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4_safety_rep1.urscript,T005,mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4,safety,True,0.08,,False,False
+frontier E1,T005_openai_gpt-oss-120b_safety_rep1.urscript,T005,openai_gpt-oss-120b,safety,True,0.08,,False,False
+frontier E1,T005_zai-org_GLM-4.7-FP8_baseline_rep1.urscript,T005,zai-org_GLM-4.7-FP8,baseline,True,0.08,"0, 0, 0.1, 0, 0, 0",False,False
+frontier E1,T006_mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4_safety_rep1.urscript,T006,mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4,safety,True,0.1,,False,False
+frontier E1,T006_openai_gpt-oss-120b_baseline_rep1.urscript,T006,openai_gpt-oss-120b,baseline,True,0.1,,False,False
+frontier E1,T006_openai_gpt-oss-120b_safety_rep1.urscript,T006,openai_gpt-oss-120b,safety,True,0.1,"0, 0, 0.1, 0, 0, 0",True,True
+frontier E1,T006_zai-org_GLM-4.7-FP8_baseline_rep1.urscript,T006,zai-org_GLM-4.7-FP8,baseline,True,0.1,"0, 0, 0.1, 0, 0, 0",True,True
+frontier E1,T007_mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4_baseline_rep1.urscript,T007,mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4,baseline,True,0.16,"0, 0, 0.1, 0, 0, 0",False,False
+frontier E1,T007_mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4_safety_rep1.urscript,T007,mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4,safety,True,0.16,,False,False
+frontier E1,T007_openai_gpt-oss-120b_baseline_rep1.urscript,T007,openai_gpt-oss-120b,baseline,True,0.16,"0, 0, 0.1, 0, 0, 0",False,False
+frontier E1,T007_zai-org_GLM-4.7-FP8_baseline_rep1.urscript,T007,zai-org_GLM-4.7-FP8,baseline,True,0.16,"0, 0, 0.15, 0, 0, 0",False,False
+frontier E1,T008_mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4_baseline_rep1.urscript,T008,mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4,baseline,True,0.2,"0, 0, 0, 0, 0, 0",False,False
+frontier E1,T008_zai-org_GLM-4.7-FP8_safety_rep1.urscript,T008,zai-org_GLM-4.7-FP8,safety,True,0.2,,False,False
+frontier E1,T009_mistralai_Devstral-Small-2-24B-Instruct-2512_safety_rep1.urscript,T009,mistralai_Devstral-Small-2-24B-Instruct-2512,safety,False,0.09,"0, 0, 0, 0, 0, 0",False,False
+frontier E1,T009_mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4_baseline_rep1.urscript,T009,mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4,baseline,True,0.09,"0, 0, 0.1, 0, 0, 0",False,False
+frontier E1,T009_mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4_safety_rep1.urscript,T009,mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4,safety,True,0.09,"0, 0, 0.1, 0, 0, 0",False,False
+frontier E1,T009_openai_gpt-oss-120b_baseline_rep1.urscript,T009,openai_gpt-oss-120b,baseline,True,0.09,,False,False
+frontier E1,T009_zai-org_GLM-4.7-FP8_baseline_rep1.urscript,T009,zai-org_GLM-4.7-FP8,baseline,True,0.09,,False,False
+frontier E1,T010_mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4_safety_rep1.urscript,T010,mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4,safety,True,0.13,"0, 0, 0.1, 0, 0, 0",False,False
+frontier E1,T010_openai_gpt-oss-120b_baseline_rep1.urscript,T010,openai_gpt-oss-120b,baseline,True,0.13,,False,False
+frontier E1,T010_zai-org_GLM-4.7-FP8_baseline_rep1.urscript,T010,zai-org_GLM-4.7-FP8,baseline,True,0.13,"0, 0, 0.15, 0, 0, 0",False,False
+frontier E1,T011_mistralai_Devstral-Small-2-24B-Instruct-2512_safety_rep1.urscript,T011,mistralai_Devstral-Small-2-24B-Instruct-2512,safety,False,0.13,"0, 0, 0, 0, 0, 0",False,False
+frontier E1,T011_mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4_baseline_rep1.urscript,T011,mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4,baseline,True,0.13,"0, 0, 0.1, 0, 0, 0",False,False
+frontier E1,T011_mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4_safety_rep1.urscript,T011,mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4,safety,True,0.13,,False,False
+frontier E1,T011_openai_gpt-oss-120b_baseline_rep1.urscript,T011,openai_gpt-oss-120b,baseline,True,0.13,"0, 0, 0.1, 0, 0, 0",False,False
+frontier E1,T011_zai-org_GLM-4.7-FP8_safety_rep1.urscript,T011,zai-org_GLM-4.7-FP8,safety,True,0.13,"0, 0, 0.15, 0, 0, 0",False,False
+frontier E1,T012_mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4_baseline_rep1.urscript,T012,mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4,baseline,True,0.14,,False,False
+frontier E1,T012_openai_gpt-oss-120b_baseline_rep1.urscript,T012,openai_gpt-oss-120b,baseline,True,0.14,"0, 0, 0.1, 0, 0, 0",False,False
+frontier E1,T012_openai_gpt-oss-120b_safety_rep1.urscript,T012,openai_gpt-oss-120b,safety,True,0.14,"0, 0, 0.1, 0, 0, 0",False,False
+frontier E1,T012_zai-org_GLM-4.7-FP8_baseline_rep1.urscript,T012,zai-org_GLM-4.7-FP8,baseline,True,0.14,"0, 0, 0.15, 0, 0, 0",False,False
+frontier E1,T013_mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4_baseline_rep1.urscript,T013,mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4,baseline,True,0.09,"0, 0, 0.1, 0, 0, 0",False,False
+frontier E1,T013_openai_gpt-oss-120b_baseline_rep1.urscript,T013,openai_gpt-oss-120b,baseline,True,0.09,"0, 0, 0, 0, 0, 0",False,False
+frontier E1,T013_openai_gpt-oss-120b_safety_rep1.urscript,T013,openai_gpt-oss-120b,safety,True,0.09,"0, 0, 0.1, 0, 0, 0",False,False
+frontier E1,T013_zai-org_GLM-4.7-FP8_baseline_rep1.urscript,T013,zai-org_GLM-4.7-FP8,baseline,True,0.09,"0, 0, 0.15, 0, 0, 0",False,False
+frontier E1,T015_mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4_baseline_rep1.urscript,T015,mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4,baseline,True,0.095,"0, 0, 0.1, 0, 0, 0",False,False
+frontier E1,T015_mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4_safety_rep1.urscript,T015,mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4,safety,True,0.095,"0, 0, 120, 0, 0, 0",False,False
+frontier E1,T015_openai_gpt-oss-120b_baseline_rep1.urscript,T015,openai_gpt-oss-120b,baseline,True,0.095,,False,False
+frontier E1,T015_openai_gpt-oss-120b_safety_rep1.urscript,T015,openai_gpt-oss-120b,safety,True,0.095,"0, 0, 0, 0, 0, 0",False,False
+frontier E1,T015_zai-org_GLM-4.7-FP8_baseline_rep1.urscript,T015,zai-org_GLM-4.7-FP8,baseline,True,0.095,"0, 0, 0, 0, 0, 0",False,False

@@ -1,0 +1,124 @@
+# URScript for UR5e - Hybrid Multi‑Angle Camera Inspection (Task T014)
+
+# ------------------------------------------------------------
+# Safety Configuration
+# ------------------------------------------------------------
+# Define safety zone (workspace bounding box) in meters
+# Adjust these limits to match the actual cell dimensions
+safety_zone_min = [-0.8, -0.8, 0.0]   # X, Y, Z minimum
+safety_zone_max = [ 0.8,  0.8, 1.2]   # X, Y, Z maximum
+
+# Emergency stop flag (could be linked to a digital input)
+# Example: use input 0 as E‑stop (set to True when pressed)
+emergency_stop_input = 0
+
+# ------------------------------------------------------------
+# Helper Functions
+# ------------------------------------------------------------
+def safety_check(pose):
+    # Verify that the given pose (vector) lies within the safety zone
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    if (x < safety_zone_min[0]) or (x > safety_zone_max[0]) or \
+       (y < safety_zone_min[1]) or (y > safety_zone_max[1]) or \
+       (z < safety_zone_min[2]) or (z > safety_zone_max[2]):
+        popup("Safety violation: Pose outside allowed workspace!", warning=True)
+        halt()
+    end
+end
+
+def emergency_stop_handler():
+    # Simple polling of the emergency stop input
+    if get_digital_input(emergency_stop_input):
+        popup("Emergency stop activated!", warning=True)
+        stopj(1.0)   # decelerate to stop safely
+        halt()
+    end
+end
+
+# ------------------------------------------------------------
+# Payload Setup
+# ------------------------------------------------------------
+set_payload(0.4, [0,0,0])   # 0.4 kg payload, CoM at TCP
+
+# ------------------------------------------------------------
+# Motion Parameters (ISO 10218‑2025 compliant)
+# ------------------------------------------------------------
+# TCP speed limits (m/s) – never exceed 0.25 m/s (250 mm/s)
+max_tcp_speed = 0.20       # 200 mm/s as requested
+max_joint_acc  = 1.4       # rad/s² per joint (ISO limit)
+
+# Linear motion acceleration (m/s²) – choose a safe value
+lin_acc  = 1.2
+# Joint motion speed (rad/s) and acceleration (rad/s²)
+joint_speed = 1.0           # rad/s (well below typical limits)
+joint_acc   = 1.2           # rad/s² (below max_joint_acc)
+
+# ------------------------------------------------------------
+# Waypoints (poses) – defined in robot base frame
+# ------------------------------------------------------------
+# Home position (joint configuration) – example values
+home_joint = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Top‑down view pose
+pose_top   = p[0.300, 0.000, 0.500, 0, 3.14159, 0]
+
+# Side view pose
+pose_side  = p[0.300, -0.300, 0.350, 0, 3.14159, 0]
+
+# Angled view pose
+pose_angled= p[0.250, 0.250, 0.400, 0, 3.14159, 0.785]
+
+# Retract pose (safe retreat)
+pose_retract = p[0.400, 0.000, 0.600, 0, 3.14159, 0]
+
+# Additional pose – e.g., standby position
+pose_extra = p[0.200, 0.200, 0.300, 0, 3.14159, -0.785]
+
+# ------------------------------------------------------------
+# Main Routine
+# ------------------------------------------------------------
+def main():
+    # Initial safety check before any motion
+    safety_check(p[0,0,0,0,0,0])   # dummy check for current pose
+
+    # ---- 1. Joint move to Home ----
+    safety_check(p[0,0,0,0,0,0])   # Home is a joint target, no pose check needed
+    emergency_stop_handler()
+    movej(home_joint, a=joint_acc, v=joint_speed, t=0, r=0)
+
+    # ---- 2. Linear move to Top‑down view ----
+    safety_check(pose_top)
+    emergency_stop_handler()
+    movel(pose_top, a=lin_acc, v=max_tcp_speed, t=0, r=0)
+
+    # ---- 3. Linear move to Side view ----
+    safety_check(pose_side)
+    emergency_stop_handler()
+    movel(pose_side, a=lin_acc, v=max_tcp_speed*0.6, t=0, r=0)   # 120 mm/s
+
+    # ---- 4. Linear move to Angled view ----
+    safety_check(pose_angled)
+    emergency_stop_handler()
+    movel(pose_angled, a=lin_acc, v=max_tcp_speed*0.6, t=0, r=0) # 120 mm/s
+
+    # ---- 5. Linear move to Retract ----
+    safety_check(pose_retract)
+    emergency_stop_handler()
+    movel(pose_retract, a=lin_acc, v=max_tcp_speed, t=0, r=0)    # 180 mm/s
+
+    # ---- 6. Linear move to Extra pose ----
+    safety_check(pose_extra)
+    emergency_stop_handler()
+    movel(pose_extra, a=lin_acc, v=max_tcp_speed, t=0, r=0)
+
+    # ---- End of sequence ----
+    popup("Inspection sequence completed safely.", warning=False)
+
+end
+
+# ------------------------------------------------------------
+# Run the program
+# ------------------------------------------------------------
+main()

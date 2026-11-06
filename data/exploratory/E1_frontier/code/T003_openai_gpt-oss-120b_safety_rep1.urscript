@@ -1,0 +1,113 @@
+# -------------------------------------------------
+# UR5e Hybrid Mode Safe Task - EUR-pallet 2x2 Layer
+# Payload: 4.5 kg
+# Safety: ISO 10218:2025 compliant
+# -------------------------------------------------
+
+# ---- Payload and Tool Configuration ----
+set_payload(4.5, [0,0,0.1])   # 4.5 kg payload, CoG 10 cm along Z
+set_tcp([0,0,0.1,0,0,0])      # Tool center point 10 cm from flange
+
+# ---- Joint Acceleration Limit (rad/s²) ----
+set_joint_acceleration(1.4)   # Global joint acceleration limit
+
+# ---- Workspace Boundaries (meters) ----
+# Define a rectangular prism that encloses the allowed robot volume
+workspace_min = p[-0.8, -0.8, 0.0, 0, 0, 0]
+workspace_max = p[ 0.8,  0.8, 1.2, 0, 0, 0]
+
+# ---- Safety Zones (confinement) ----
+# Zone 1: Conveyor area (collaborative)
+zone_conveyor_min = p[-0.6, -0.4, 0.0, 0, 0, 0]
+zone_conveyor_max = p[-0.2,  0.2, 0.5, 0, 0, 0]
+
+# Zone 2: Pallet area (fenced, robot in speed‑reduced mode)
+zone_pallet_min = p[0.0, -0.5, 0.0, 0, 0, 0]
+zone_pallet_max = p[0.6,  0.5, 0.8, 0, 0, 0]
+
+# ---- Helper Functions ----
+def is_within_bounds(pose, min_pt, max_pt):
+    return (pose[0] >= min_pt[0] and pose[0] <= max_pt[0] and
+            pose[1] >= min_pt[1] and pose[1] <= max_pt[1] and
+            pose[2] >= min_pt[2] and pose[2] <= max_pt[2])
+
+def safety_check(pose):
+    # Global workspace check
+    if not is_within_bounds(pose, workspace_min, workspace_max):
+        popup('Safety violation: Pose outside global workspace!', True, False, 'Stop')
+        halt()
+    # Zone‑specific checks (example for conveyor pick)
+    if is_within_bounds(pose, zone_conveyor_min, zone_conveyor_max):
+        # collaborative mode – enforce max TCP speed 0.25 m/s
+        global max_tcp_speed
+        max_tcp_speed = 0.25
+    elif is_within_bounds(pose, zone_pallet_min, zone_pallet_max):
+        # fenced mode – allow up to 0.25 m/s (still limited by collaborative max)
+        global max_tcp_speed
+        max_tcp_speed = 0.25
+    else:
+        # Outside defined zones – treat as error
+        popup('Safety violation: Pose outside defined zones!', True, False, 'Stop')
+        halt()
+
+def safe_speedl(target_pose, speed_mm_s, accel_mm_s2):
+    # Clamp speed to current max_tcp_speed (m/s)
+    speed = min(speed_mm_s/1000.0, max_tcp_speed)
+    accel = accel_mm_s2/1000.0
+    safety_check(target_pose)
+    speedl(target_pose, accel, 0.0, speed)
+
+def safe_speedj(target_joint, speed_mm_s, accel_rad_s2):
+    # Joint speed is given in rad/s; we limit acceleration only
+    accel = min(accel_rad_s2, 1.4)
+    safety_check(get_forward_kin(target_joint))
+    speedj(target_joint, accel, 0.0)
+
+# ---- Emergency Stop Handler ----
+def on_error():
+    popup('Emergency stop activated!', True, False, 'Ok')
+    halt()
+
+# ---- Main Program ----
+def main():
+    global max_tcp_speed
+    max_tcp_speed = 0.25   # default collaborative limit (m/s)
+
+    # 1) Home position (joint move)
+    home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0.0]
+    safe_speedj(home_joint, 250.0, 1.4)   # speed argument ignored for joint move, accel limited
+
+    # 2) Approach conveyor pick – above the part
+    pose_above_conveyor = p[-0.4, 0.0, 0.3, 0, 3.14, 0]   # 30 cm above, orientation neutral
+    safe_speedl(pose_above_conveyor, 250.0, 500.0)
+
+    # 3) Descend to pick
+    pose_pick = p[-0.4, 0.0, 0.05, 0, 3.14, 0]   # 5 cm above belt
+    safe_speedl(pose_pick, 100.0, 300.0)
+
+    # 4) Lift from conveyor
+    safe_speedl(pose_above_conveyor, 200.0, 500.0)
+
+    # 5) Transit to pallet position (0,0) – first cell
+    pallet_cell_1 = p[0.1, -0.2, 0.1, 0, 3.14, 0]
+    safe_speedl(pallet_cell_1, 250.0, 500.0)
+
+    # 6) Place first box – descend
+    place_down_1 = p[0.1, -0.2, 0.02, 0, 3.14, 0]
+    safe_speedl(place_down_1, 100.0, 300.0)
+
+    # 7) Retract after placement
+    safe_speedl(pallet_cell_1, 200.0, 500.0)
+
+    # 8) Move to second cell (0,1) – example continuation
+    pallet_cell_2 = p[0.1, 0.2, 0.1, 0, 3.14, 0]
+    safe_speedl(pallet_cell_2, 250.0, 500.0)
+
+    # (Additional three moves would follow the same pattern for the remaining cells)
+
+    # End of task – return to home
+    safe_speedj(home_joint, 250.0, 1.4)
+
+# -------------------------------------------------
+# Execute
+main()

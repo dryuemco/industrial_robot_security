@@ -1,0 +1,142 @@
+# -------------------------------------------------
+# URScript for UR5e – Hybrid Screw Fastening Task
+# -------------------------------------------------
+# Safety compliance: ISO 10218:2025
+# - Max TCP speed: 0.250 m/s (250 mm/s)
+# - Max joint acceleration: 1.4 rad/s^2
+# - All motions include speed & acceleration limits
+# - Safety checks before every motion
+# - Emergency stop handling
+# -------------------------------------------------
+
+# ---------- Configuration ----------
+payload_mass = 1.0                                   # kg
+payload_cog  = [0,0,0.1]                              # approx. 10 cm along tool axis
+set_payload(payload_mass, payload_cog)
+
+# Speed / acceleration limits
+MAX_TCP_SPEED      = 0.250    # m/s
+MAX_JOINT_SPEED    = 1.0      # rad/s (well below robot max)
+MAX_JOINT_ACCEL    = 1.2      # rad/s^2 (below 1.4 limit)
+MAX_LINEAR_ACCEL   = 0.25     # m/s^2 (conservative)
+
+# Safety zone (simple rectangular box in robot base frame)
+ZONE_MIN = [-0.8, -0.8, 0.0]    # [x,y,z] in meters
+ZONE_MAX = [ 0.8,  0.8, 1.2]    # [x,y,z] in meters
+
+# ---------- Helper Functions ----------
+def safety_check():
+    # Placeholder for external safety system integration
+    # Return true if safety condition OK, else false
+    true
+
+def within_workspace(pose):
+    # pose = [x, y, z, rx, ry, rz]
+    x = pose[0]; y = pose[1]; z = pose[2]
+    return (x >= ZONE_MIN[0] and x <= ZONE_MAX[0] and
+            y >= ZONE_MIN[1] and y <= ZONE_MAX[1] and
+            z >= ZONE_MIN[2] and z <= ZONE_MAX[2])
+
+def emergency_stop():
+    popup("Safety violation – execution halted!", "EMERGENCY STOP", True)
+    halt()
+
+def safe_movej(q):
+    if not safety_check():
+        emergency_stop()
+    if not within_workspace(get_forward_kin(q)):
+        emergency_stop()
+    movej(q, a=MAX_JOINT_ACCEL, v=MAX_JOINT_SPEED)
+
+def safe_movel(p):
+    if not safety_check():
+        emergency_stop()
+    if not within_workspace(p):
+        emergency_stop()
+    movel(p, a=MAX_LINEAR_ACCEL, v=MAX_TCP_SPEED)
+
+# ---------- Pose Definitions ----------
+# Note: All poses are defined in meters and radians.
+home_pose          = p[0.0, -0.5, 0.3, 0, 3.14, 0]
+
+above_feeder_pose  = p[0.2, -0.4, 0.35, 0, 3.14, 0]
+pick_screw_pose    = p[0.2, -0.4, 0.15, 0, 3.14, 0]
+lift_pose          = p[0.2, -0.4, 0.35, 0, 3.14, 0]
+
+above_fp1_pose     = p[0.0, 0.2, 0.30, 0, 3.14, 0]
+above_fp2_pose     = p[0.0, 0.0, 0.30, 0, 3.14, 0]
+above_fp3_pose     = p[0.0, -0.2, 0.30, 0, 3.14, 0]
+above_fp4_pose     = p[0.1, 0.0, 0.30, 0, 3.14, 0]
+
+# Fastening points (TCP positions for screw driving)
+fasten_fp1_pose    = p[0.0, 0.2, 0.10, 0, 3.14, 0]
+fasten_fp2_pose    = p[0.0, 0.0, 0.10, 0, 3.14, 0]
+fasten_fp3_pose    = p[0.0, -0.2, 0.10, 0, 3.14, 0]
+fasten_fp4_pose    = p[0.1, 0.0, 0.10, 0, 3.14, 0]
+
+# ---------- Main Program ----------
+def main():
+    # ---- Collaborative Approach Phase ----
+    set_robot_mode("collaborative")   # UR5e specific mode switch (if supported)
+    
+    # 1) Home position (joint move)
+    safe_movej(home_pose)
+    
+    # 2) Move above screw feeder (linear)
+    safe_movel(above_feeder_pose)
+    
+    # 3) Approach pick position
+    safe_movel(pick_screw_pose)
+    
+    # 4) Simulate gripper close (placeholder)
+    # set_digital_out(0, True)   # activate gripper
+    sleep(0.2)
+    
+    # 5) Lift the screw
+    safe_movel(lift_pose)
+    
+    # ---- Fenced Fastening Phase ----
+    set_robot_mode("fenced")         # Switch to fenced mode for high‑force operation
+    
+    # 6) Move above fastening point 1
+    safe_movel(above_fp1_pose)
+    # 7) Fasten screw 1
+    safe_movel(fasten_fp1_pose)
+    # (simulate torque application here)
+    # set_digital_out(1, True)   # activate screwdriver torque
+    sleep(0.5)
+    # Retract
+    safe_movel(above_fp1_pose)
+    
+    # 8) Move above fastening point 2
+    safe_movel(above_fp2_pose)
+    safe_movel(fasten_fp2_pose)
+    sleep(0.5)
+    safe_movel(above_fp2_pose)
+    
+    # 9) Move above fastening point 3
+    safe_movel(above_fp3_pose)
+    safe_movel(fasten_fp3_pose)
+    sleep(0.5)
+    safe_movel(above_fp3_pose)
+    
+    # 10) Move above fastening point 4
+    safe_movel(above_fp4_pose)
+    safe_movel(fasten_fp4_pose)
+    sleep(0.5)
+    safe_movel(above_fp4_pose)
+    
+    # Release screw (placeholder)
+    # set_digital_out(0, False)  # open gripper
+    sleep(0.2)
+    
+    # Return to home
+    safe_movej(home_pose)
+    
+    # End of task
+    popup("Task completed safely.", "Info", False)
+
+# -------------------------------------------------
+# Run the program
+# -------------------------------------------------
+main()

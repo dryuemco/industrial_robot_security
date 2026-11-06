@@ -1,0 +1,96 @@
+# URScript for UR5e hybrid mode palletizing task
+# Payload and TCP
+set_payload(4.5, [0,0,0.1])   # 4.5 kg payload, CoG offset
+set_tcp([0,0,0.1,0,0,0])      # Example TCP
+
+# Safety limits (confinement zone around pallet area)
+# Define a cubic safety zone: lower corner and upper corner in robot base frame (meters)
+set_safety_limits([-0.6, -0.6, 0.0], [0.6, 0.6, 0.5])
+
+# Speed settings (m/s)
+speed_home      = 0.25   # 250 mm/s
+speed_approach  = 0.25   # 250 mm/s
+speed_descend   = 0.10   # 100 mm/s
+speed_lift      = 0.20   # 200 mm/s
+speed_transit   = 0.28   # 280 mm/s
+speed_grid_move = 0.30   # 300 mm/s (max TCP speed)
+
+# Zone settings
+zone_fine = 0.001   # fine zone for pick/place
+zone_approach = 0.01
+
+# Joint configuration for Home position (radians)
+home_joint = [0, -1.5708, 1.5708, -1.5708, -1.5708, 0]
+
+# Poses (meters, radians)
+# Approach above conveyor (above pick point)
+pose_approach = p[0.5, -0.2, 0.30, 0, 3.1416, 0]   # example
+# Pick position (down)
+pose_pick     = p[0.5, -0.2, 0.10, 0, 3.1416, 0]   # example
+# Lift position (after pick)
+pose_lift     = p[0.5, -0.2, 0.30, 0, 3.1416, 0]   # same as approach
+
+# Pallet origin (center of first grid cell) in robot base frame
+pallet_origin = p[0.0, 0.0, 0.10, 0, 3.1416, 0]
+
+# Grid offsets (meters) for 2x2 layout (cell size 0.20 m)
+grid_offsets = [
+    [0.0, 0.0],
+    [0.0, 0.20],
+    [0.20, 0.0],
+    [0.20, 0.20]
+]
+
+def move_to_joint(pos, vel):
+    movej(pos, a=1.2, v=vel, t=0, r=0)
+
+def move_to_pose(pos, vel, zone):
+    movel(pos, a=1.2, v=vel, t=0, r=zone)
+
+def place_box_at(offset):
+    # Compute target pose above the grid cell
+    target = pose_trans(pallet_origin, p[offset[0], offset[1], 0, 0, 0, 0])
+    # Approach above cell
+    approach = pose_trans(target, p[0,0,0.10,0,0,0])
+    # Descend to place
+    place    = pose_trans(target, p[0,0,0.02,0,0,0])
+    # Move sequence
+    move_to_pose(approach, speed_grid_move, zone_approach)
+    move_to_pose(place, speed_descend, zone_fine)
+    # Retract
+    move_to_pose(approach, speed_lift, zone_approach)
+
+# ---- Main Program ----
+def main():
+    # 1. Move to Home
+    move_to_joint(home_joint, speed_home)
+
+    # 2. Approach conveyor pick (above)
+    move_to_pose(pose_approach, speed_approach, zone_approach)
+
+    # 3. Descend to pick
+    move_to_pose(pose_pick, speed_descend, zone_fine)
+
+    # 4. Close gripper (placeholder)
+    # set_digital_out(0, True)   # assume output 0 controls gripper close
+    sleep(0.5)
+
+    # 5. Lift from conveyor
+    move_to_pose(pose_lift, speed_lift, zone_approach)
+
+    # 6. Transit to pallet origin (first cell)
+    move_to_pose(pallet_origin, speed_transit, zone_approach)
+
+    # 7-10. Place boxes in 2x2 grid
+    for offset in grid_offsets:
+        place_box_at(offset)
+
+    # 11. Return to Home
+    move_to_joint(home_joint, speed_home)
+
+    # Open gripper (placeholder)
+    # set_digital_out(0, False)
+    sleep(0.5)
+
+# Execute
+main()

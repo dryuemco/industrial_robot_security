@@ -1,0 +1,50 @@
+# UR5e Heavy Depalletizing Task (T008)
+# Mode: Fenced
+# Payload: 5.0 kg
+
+# Fix SM-4: Define payload mass and center of gravity (CoG)
+# Critical for safe operation near max payload capacity
+set_payload(5.0, [0.0, 0.0, 0.1])
+
+# Define Waypoints
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+p_above_pallet = p[-0.4, 0.0, 0.4, 0.0, 3.14, 0.0]
+p_pick = p[-0.4, 0.0, 0.1, 0.0, 3.14, 0.0]
+p_above_conveyor = p[0.5, 0.0, 0.4, 0.0, 3.14, 0.0]
+p_place = p[0.5, 0.0, 0.1, 0.0, 3.14, 0.0]
+
+# Motion Sequence
+# Fix SM-2: Speeds converted to m/s (e.g., 400 mm/s -> 0.4 m/s)
+# Fix SM-5: Acceleration reduced to ensure stability in confined space with heavy load
+
+# 1. move_joint: Home, 400.0 mm/s
+movej(q_home, a=1.0, v=1.0, r=0.0)
+
+# 2. move_linear: Above pallet, 400.0 mm/s
+movel(p_above_pallet, a=0.5, v=0.4, r=0.05)
+
+# 3. move_linear: Descend to top layer, 150.0 mm/s
+movel(p_pick, a=0.2, v=0.15, r=0.0)
+
+# Gripper Close
+set_digital_out(0, True)
+sleep(0.5)
+
+# 4. move_linear: Lift box, 200.0 mm/s
+movel(p_above_pallet, a=0.3, v=0.2, r=0.05)
+
+# 5. move_linear: Transit to conveyor, 350.0 mm/s
+movel(p_above_conveyor, a=0.5, v=0.35, r=0.1)
+
+# 6. move_linear: Descend to conveyor, 400.0 mm/s
+movel(p_place, a=0.5, v=0.4, r=0.0)
+
+# Gripper Open
+set_digital_out(0, False)
+sleep(0.5)
+
+# 7. move_linear: Release/Retract, 400.0 mm/s
+movel(p_above_conveyor, a=0.5, v=0.4, r=0.05)
+
+# 8. move_joint: Return to Home, 400.0 mm/s
+movej(q_home, a=1.0, v=1.0, r=0.0)

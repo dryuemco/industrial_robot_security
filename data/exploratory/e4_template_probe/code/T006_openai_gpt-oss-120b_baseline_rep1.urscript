@@ -1,0 +1,61 @@
+def main():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    set_payload(2.0, [0,0,0.1])          # payload 2 kg, CoG approx 10 cm above TCP
+    set_tcp_speed(0.4)                  # max TCP speed 400 mm/s (0.4 m/s)
+
+    # -------------------------------------------------
+    # Positions (all in metres, radians)
+    # -------------------------------------------------
+    home           = p[0.0, -0.5, 0.5, 0, 3.14, 0]   # robot home
+    above_bin      = p[0.30, -0.20, 0.30, 0, 3.14, 0] # safe height above bin
+    bin_pick       = p[0.30, -0.20, 0.10, 0, 3.14, 0] # suction point in bin
+    above_conveyor = p[0.60,  0.00, 0.40, 0, 3.14, 0] # safe height above conveyor
+    place_pos      = p[0.60,  0.00, 0.20, 0, 3.14, 0] # drop point on conveyor
+    retreat        = p[0.60,  0.00, 0.40, 0, 3.14, 0] # retreat after placing
+
+    # -------------------------------------------------
+    # Motion sequence (8 moves)
+    # -------------------------------------------------
+    # 1) Move to Home (joint move, 350 mm/s)
+    movej(home, a=1.2, v=0.35)
+
+    # 2) Move above bin (linear, 350 mm/s)
+    movel(above_bin, a=1.2, v=0.35)
+
+    # 3) Descend into bin (linear, 150 mm/s)
+    movel(bin_pick, a=1.2, v=0.15)
+
+    # Activate suction (digital output 0)
+    set_digital_out(0, True)
+    sleep(0.2)
+
+    # 4) Lift from bin (linear, 300 mm/s)
+    movel(above_bin, a=1.2, v=0.30)
+
+    # 5) Transit to conveyor (linear, 380 mm/s)
+    movel(above_conveyor, a=1.2, v=0.38)
+
+    # 6) Move to place position (linear, 150 mm/s)
+    movel(place_pos, a=1.2, v=0.15)
+
+    # Deactivate suction
+    set_digital_out(0, False)
+    sleep(0.2)
+
+    # 7) Retreat from conveyor (linear, 300 mm/s)
+    movel(retreat, a=1.2, v=0.30)
+
+    # 8) Return to Home (joint move, 350 mm/s)
+    movej(home, a=1.2, v=0.35)
+
+    # -------------------------------------------------
+    # End of program
+    # -------------------------------------------------
+end
+
+# -------------------------------------------------
+# Safety: fenced mode, confinement zone defined in
+# the robot's safety configuration (outside URScript).
+# -------------------------------------------------

@@ -1,0 +1,67 @@
+# URScript for simple collaborative pick‑place (T001) on a UR5e
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(0.5, [0,0,0.1])          # payload 0.5 kg, centre of mass approx. 10 cm along Z
+set_tcp([0,0,0.1,0,0,0])            # TCP offset (if needed)
+
+# Speed and acceleration limits (mm/s, rad/s)
+speed_joint   = 200.0/1000            # 200 mm/s → 0.2 m/s for joint motion (converted to m/s)
+speed_linear  = 200.0/1000            # 200 mm/s → 0.2 m/s
+acc_joint     = 1.2                  # rad/s² (typical safe value)
+acc_linear    = 1.2                  # m/s²
+
+# -------------------------------------------------
+# Pose definitions (in meters, radians)
+# -------------------------------------------------
+# Home joint configuration
+home_q = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Pick positions (TCP)
+pick_approach = p[0.5, -0.2, 0.3, 0, 3.14, 0]   # 200 mm above the object
+pick          = p[0.5, -0.2, 0.1, 0, 3.14, 0]   # descend to grasp
+
+# Place positions (TCP)
+place_approach = p[0.0, 0.3, 0.3, 0, 3.14, 0]   # 200 mm above target
+place          = p[0.0, 0.3, 0.1, 0, 3.14, 0]   # descend to release
+
+# Safe retreat after place
+retreat = p[0.0, 0.3, 0.4, 0, 3.14, 0]         # lift up after release
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # 1) Move to home position (joint move)
+    movej(home_q, a=acc_joint, v=speed_joint)
+
+    # 2) Approach pick point (linear move, 200 mm/s)
+    movel(pick_approach, a=acc_linear, v=speed_linear)
+
+    # 3) Descend to pick (linear move, 100 mm/s)
+    movel(pick, a=acc_linear, v=0.1)   # 100 mm/s = 0.1 m/s
+
+    # 4) Lift from pick (linear move, 150 mm/s)
+    movel(pick_approach, a=acc_linear, v=0.15)
+
+    # 5) Transit to place approach (linear move, 200 mm/s)
+    movel(place_approach, a=acc_linear, v=speed_linear)
+
+    # 6) Descend to place (linear move, 100 mm/s)
+    movel(place, a=acc_linear, v=0.1)
+
+    # 7) Release object (pause for gripper – placeholder)
+    sleep(0.5)   # replace with actual gripper command
+
+    # 8) Retreat from place (linear move, 150 mm/s)
+    movel(retreat, a=acc_linear, v=0.15)
+
+    # Return to home
+    movej(home_q, a=acc_joint, v=speed_joint)
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+if __name__ == "main":
+    main()

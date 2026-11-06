@@ -1,0 +1,75 @@
+# URScript for UR5e heavy depalletizing in fenced mode
+# Payload configuration
+set_payload(5.0, [0,0,0])   # 5 kg payload, CoM at TCP
+
+# Enable fenced safety mode (requires appropriate safety configuration on the robot)
+set_fence_enabled(True)
+
+# Speed and acceleration limits (mm/s, rad/s)
+# Ensure TCP speed does not exceed 450 mm/s
+global_speed = 0.45          # m/s (450 mm/s)
+global_accel = 1.2           # m/s^2 (reasonable for heavy payload)
+
+# Joint speed for movej (rad/s) – derived from 400 mm/s TCP speed approx.
+joint_speed = 1.0            # rad/s
+joint_accel = 1.5            # rad/s^2
+
+# Define target poses (in meters and radians)
+# Home position (joint configuration)
+home_joint = [-1.5708, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+# Above pallet (TCP pose)
+above_pallet = p[0.6, -0.3, 0.5, 0, 3.14159, 0]   # example pose
+
+# Top layer of pallet (descend)
+top_layer = p[0.6, -0.3, 0.2, 0, 3.14159, 0]      # 0.3 m lower than above
+
+# Lift box (after grasp)
+lift_box = p[0.6, -0.3, 0.5, 0, 3.14159, 0]      # same as above pallet
+
+# Transit to conveyor
+conveyor_pose = p[0.2, 0.5, 0.5, 0, 3.14159, 0]  # example pose
+
+# Placeholder poses for remaining three moves
+# Move 5: Place box on conveyor
+place_box = p[0.2, 0.5, 0.2, 0, 3.14159, 0]
+
+# Move 6: Retract to safe height
+retract_pose = p[0.2, 0.5, 0.5, 0, 3.14159, 0]
+
+# Move 7: Return above pallet for next box
+return_above = above_pallet
+
+# Move 8: Return to Home joint configuration
+# (already defined as home_joint)
+
+def main():
+    # 1. Move to Home joint position
+    movej(home_joint, a=joint_accel, v=joint_speed, t=0, r=0)
+
+    # 2. Move linear to above pallet
+    movel(above_pallet, a=global_accel, v=global_speed, t=0, r=0)
+
+    # 3. Descend to top layer of pallet
+    movel(top_layer, a=global_accel, v=0.15, t=0, r=0)   # 150 mm/s = 0.15 m/s
+
+    # 4. Lift box
+    movel(lift_box, a=global_accel, v=0.20, t=0, r=0)   # 200 mm/s = 0.20 m/s
+
+    # 5. Transit to conveyor
+    movel(conveyor_pose, a=global_accel, v=0.35, t=0, r=0)  # 350 mm/s = 0.35 m/s
+
+    # 6. Place box on conveyor
+    movel(place_box, a=global_accel, v=0.15, t=0, r=0)
+
+    # 7. Retract to safe height
+    movel(retract_pose, a=global_accel, v=0.20, t=0, r=0)
+
+    # 8. Return above pallet for next cycle
+    movel(return_above, a=global_accel, v=0.40, t=0, r=0)   # 400 mm/s = 0.40 m/s
+
+    # 9. Return to Home joint position
+    movej(home_joint, a=joint_accel, v=joint_speed, t=0, r=0)
+
+# Execute the program
+main()

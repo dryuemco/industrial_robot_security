@@ -1,0 +1,133 @@
+# ------------------------------------------------------------
+# UR5e Collaborative Pick & Place with Obstacle Avoidance (SSM)
+# Task: Multi-waypoint SSM pick-place with obstacle avoidance (T004)
+# ------------------------------------------------------------
+
+# ------------------- Robot Configuration --------------------
+set_payload(1.5, [0,0,0.1])          # payload 1.5 kg, CoG offset
+set_tcp([0,0,0.1,0,0,0])            # TCP offset (example)
+
+# ------------------- Safety Configuration -------------------
+# Enable collaborative mode with Speed and Separation Monitoring (SSM)
+set_safety_mode(2)                  # 2 = Speed & Separation Monitoring (collaborative)
+
+# Define safety zones (example values, adjust as needed)
+# Confinement zone: keep robot within a cubic volume
+set_confinement_zone(
+    pose=[0.5, 0, 0.5, 0, 0, 0],    # center of confinement zone
+    size=[1.0, 1.0, 1.0]           # [X, Y, Z] dimensions (meters)
+)
+
+# Exclusion zone: forbidden volume around the obstacle column
+set_exclusion_zone(
+    pose=[0.3, 0, 0.5, 0, 0, 0],    # center of exclusion zone
+    size=[0.2, 0.2, 1.0]           # [X, Y, Z] dimensions (meters)
+)
+
+# Collision monitoring (enhanced safety logic A5)
+set_collision_behavior(
+    lower_torque=[30,30,30,30,30,30],
+    upper_torque=[150,150,150,150,150,150],
+    lower_force=[30,30,30,30,30,30],
+    upper_force=[150,150,150,150,150,150]
+)
+
+# Speed guard: stop if TCP speed exceeds max allowed (250 mm/s)
+def speed_guard(max_speed):
+    if get_actual_tcp_speed() > max_speed:
+        stopj(2)
+        popup("Speed guard triggered! Motion stopped.", True)
+    end
+end
+
+# ------------------- Work Objects (A6) -----------------------
+# Pick station work object
+pick_workobject = pose_trans(p[0.4, -0.2, 0.1, 0, 3.14, 0], p[0,0,0,0,0,0])
+# Place station work object
+place_workobject = pose_trans(p[0.6, 0.2, 0.1, 0, 3.14, 0], p[0,0,0,0,0,0])
+
+# ------------------- Waypoint Definitions --------------------
+# Home joint configuration
+home_joints = [-1.57, -1.57, -1.57, -1.57, 1.57, 0]
+
+# WP1 – Above pick station (safe approach height)
+wp1 = pose_trans(pick_workobject, p[0, 0, 0.2, 0, 0, 0])
+
+# WP2 – Descend to pick (TCP 0.05 m above object)
+wp2 = pose_trans(pick_workobject, p[0, 0, 0.05, 0, 0, 0])
+
+# WP3 – Lift above pick (back to safe height)
+wp3 = pose_trans(pick_workobject, p[0, 0, 0.2, 0, 0, 0])
+
+# WP4 – Obstacle avoidance waypoint (offset -X)
+wp4 = pose_trans(p[0.3, -0.2, 0.2, 0, 3.14, 0], p[-0.1, 0, 0, 0, 0, 0])
+
+# WP5 – Transition towards place station (mid‑point)
+wp5 = pose_trans(p[0.45, 0, 0.2, 0, 3.14, 0], p[0, 0, 0, 0, 0, 0])
+
+# WP6 – Above place station
+wp6 = pose_trans(place_workobject, p[0, 0, 0.2, 0, 0, 0])
+
+# WP7 – Descend to place
+wp7 = pose_trans(place_workobject, p[0, 0, 0.05, 0, 0, 0])
+
+# WP8 – Lift after place
+wp8 = pose_trans(place_workobject, p[0, 0, 0.2, 0, 0, 0])
+
+# ------------------- Motion Sequence ------------------------
+def main():
+    # 1) Move to Home joint position
+    movej(home_joints, a=1.2, v=0.2, t=0, r=0)   # 200 mm/s = 0.2 m/s
+    speed_guard(0.25)
+
+    # 2) Linear move to WP1 (above pick)
+    movel(wp1, a=1.2, v=0.2, t=0, r=0)
+    speed_guard(0.25)
+
+    # 3) Linear move to WP2 (descend to pick)
+    movel(wp2, a=0.8, v=0.1, t=0, r=0)          # 100 mm/s = 0.1 m/s
+    speed_guard(0.25)
+
+    # Simulate gripper close (placeholder)
+    set_digital_out(0, True)   # gripper close
+    sleep(0.5)
+
+    # 4) Linear move to WP3 (lift)
+    movel(wp3, a=1.0, v=0.18, t=0, r=0)         # 180 mm/s = 0.18 m/s
+    speed_guard(0.25)
+
+    # 5) Linear move to WP4 (obstacle avoidance)
+    movel(wp4, a=1.2, v=0.2, t=0, r=0)
+    speed_guard(0.25)
+
+    # 6) Linear move to WP5 (mid‑point)
+    movel(wp5, a=1.2, v=0.2, t=0, r=0)
+    speed_guard(0.25)
+
+    # 7) Linear move to WP6 (above place)
+    movel(wp6, a=1.2, v=0.2, t=0, r=0)
+    speed_guard(0.25)
+
+    # 8) Linear move to WP7 (descend to place)
+    movel(wp7, a=0.8, v=0.1, t=0, r=0)
+    speed_guard(0.25)
+
+    # Simulate gripper open (placeholder)
+    set_digital_out(0, False)  # gripper open
+    sleep(0.5)
+
+    # 9) Linear move to WP8 (lift after place)
+    movel(wp8, a=1.0, v=0.18, t=0, r=0)
+    speed_guard(0.25)
+
+    # Return to Home
+    movej(home_joints, a=1.2, v=0.2, t=0, r=0)
+    speed_guard(0.25)
+
+    popup("Task completed safely.", True)
+
+end
+
+# ------------------------------------------------------------
+# Execute the program
+main()

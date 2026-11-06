@@ -1,0 +1,72 @@
+# Program: T007_Curved_Contour_Weld_Hybrid
+# Description: Curved weld seam along an arc path in hybrid mode.
+#              Fenced during weld, collaborative during approach.
+# Robot: UR5e
+# Payload: 3.5 kg
+
+# --- Configuration ---
+set_payload(3.5, [0, 0, 0.05])
+set_tcp(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+
+# Define Weld I/O (Assuming Digital Output 0 for Torch)
+weld_on = True
+weld_off = False
+
+# Define Poses (Hypothetical coordinates for arc path)
+# Home Position (Joint space)
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Approach Position (Above fixture)
+p_approach = p[0.35, 0.0, 0.35, 0.0, 3.14, 0.0]
+
+# Weld Start Position
+p_start = p[0.35, 0.0, 0.15, 0.0, 3.14, 0.0]
+
+# Weld Midpoint (Arc approximation)
+p_mid = p[0.45, 0.1, 0.15, 0.5, 3.14, 0.0]
+
+# Weld End Position
+p_end = p[0.55, 0.0, 0.15, 1.0, 3.14, 0.0]
+
+# Retract Position
+p_retract = p[0.55, 0.0, 0.35, 1.0, 3.14, 0.0]
+
+# --- Motion Sequence ---
+
+# 1. Move Joint: Home position, 300.0 mm/s
+# Collaborative speed
+movej(q_home, a=1.4, v=0.3)
+
+# 2. Move Linear: Approach above weld fixture, 250.0 mm/s
+# Collaborative speed
+movel(p_approach, a=1.2, v=0.25)
+
+# 3. Move Linear: Descend to weld start, 100.0 mm/s
+# Precision move
+movel(p_start, a=0.5, v=0.1)
+
+# --- Welding Sequence (Fenced Mode Logic) ---
+# Note: Ensure Safety System allows transition to reduced speed/fenced mode here
+
+# 4. Move Linear: Weld midpoint, 60.0 mm/s
+# Start Arc
+set_digital_out(0, weld_on)
+sleep(0.1) # Arc stabilization delay
+movel(p_mid, a=0.2, v=0.06)
+
+# 5. Move Linear: Weld end, 60.0 mm/s
+movel(p_end, a=0.2, v=0.06)
+# End Arc
+set_digital_out(0, weld_off)
+sleep(0.1) # Gas post-flow delay
+
+# --- Post-Weld Sequence ---
+
+# 6. Move Linear: Retract from weld, 250.0 mm/s
+# Return to collaborative speed
+movel(p_retract, a=1.2, v=0.25)
+
+# 7. Move Joint: Return to Home, 300.0 mm/s
+movej(q_home, a=1.4, v=0.3)
+
+# End of Program

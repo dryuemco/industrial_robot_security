@@ -1,0 +1,69 @@
+# Program: T007 Curved Contour Weld - Hybrid Mode
+# Robot: UR5e
+# Payload: 3.5 kg
+# Description: Curved weld seam along an arc path in hybrid mode
+# Features: A3 (Strict torch-down), A7 (Weld arc sequence)
+
+def t007_curved_weld():
+  # Setup
+  set_payload(3.5)
+  set_tcp(p[0.0, 0.0, 0.15, 0.0, 0.0, 0.0])
+  
+  # Enable safety mode transition for Hybrid operation
+  # Allows switching between Reduced (Collaborative) and Normal (Fenced) modes
+  set_safety_mode_transition(True)
+
+  # Define Waypoints
+  home_j = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+  
+  # Weld Path (Simulated arc via waypoints)
+  # Orientation fixed for strict torch-down (A3)
+  p_approach = p[0.45, 0.0, 0.35, 0.0, 3.14159, 0.0]
+  p_start    = p[0.45, -0.1, 0.20, 0.0, 3.14159, 0.0]
+  p_mid      = p[0.50, 0.0, 0.20, 0.0, 3.14159, 0.0]
+  p_end      = p[0.45, 0.1, 0.20, 0.0, 3.14159, 0.0]
+
+  # --- Motion Sequence ---
+
+  # 1. move_joint: Home position, 300.0 mm/s
+  # Mode: Reduced (Collaborative)
+  movej(home_j, a=1.4, v=0.3)
+
+  # 2. move_linear: Approach above weld fixture, 250.0 mm/s
+  # Mode: Reduced (Collaborative)
+  movel(p_approach, a=0.5, v=0.25)
+
+  # --- Transition to Normal (Fenced) Mode for Welding ---
+  # Robot enters confinement zone
+
+  # 3. move_linear: Descend to weld start, 100.0 mm/s
+  movel(p_start, a=0.5, v=0.1)
+
+  # Weld Arc Sequence Start (A7)
+  set_digital_out(0, True)  # Gas On
+  sleep(0.2)
+  set_digital_out(1, True)  # Arc On
+  sleep(0.1)
+
+  # 4. move_linear: Weld midpoint, 60.0 mm/s
+  # Strict torch-down maintained
+  movel(p_mid, a=0.2, v=0.06)
+
+  # 5. move_linear: Weld end, 60.0 mm/s
+  movel(p_end, a=0.2, v=0.06)
+
+  # Weld Arc Sequence End
+  set_digital_out(1, False) # Arc Off
+  sleep(0.2)
+  set_digital_out(0, False) # Gas Off
+
+  # --- Transition to Reduced (Collaborative) Mode ---
+  # Robot exits confinement zone
+
+  # 6. move_linear: Retract, 250.0 mm/s
+  movel(p_approach, a=0.5, v=0.25)
+
+  # 7. move_joint: Home position, 300.0 mm/s
+  movej(home_j, a=1.4, v=0.3)
+
+end

@@ -1,0 +1,79 @@
+def scan_surface_t009():
+    # Setup
+    set_payload(0.5, [0, 0, 0.05])
+    
+    # Define orientation: Tool Z pointing down (A3 Laser Pointing Constraints)
+    rot_down = 3.14159
+    
+    # Define Home Position (Joint space)
+    q_home = [-1.571, -1.572, -1.745, -1.571, -1.571, 0.000]
+
+    # Define Waypoints (Base frame)
+    # Scan Area: 300mm (x) x 200mm (y)
+    # Safe Z: 200mm, Scan Z: 50mm
+    # Start X: 400mm, Start Y: -100mm
+    
+    p_above_start = p[0.4, -0.1, 0.2, rot_down, 0, 0]
+    p_scan_start   = p[0.4, -0.1, 0.05, rot_down, 0, 0]
+    
+    # Line 1: (0.4, -0.1) -> (0.7, -0.1)
+    p_line1_end    = p[0.7, -0.1, 0.05, rot_down, 0, 0]
+    
+    # Line 2: (0.7, -0.033) -> (0.4, -0.033)
+    p_line2_start  = p[0.7, -0.0333, 0.05, rot_down, 0, 0]
+    p_line2_end    = p[0.4, -0.0333, 0.05, rot_down, 0, 0]
+    
+    # Line 3: (0.4, 0.033) -> (0.7, 0.033)
+    p_line3_start  = p[0.4, 0.0333, 0.05, rot_down, 0, 0]
+    p_line3_end    = p[0.7, 0.0333, 0.05, rot_down, 0, 0]
+    
+    # Line 4: (0.7, 0.1) -> (0.4, 0.1)
+    p_line4_start  = p[0.7, 0.1, 0.05, rot_down, 0, 0]
+    p_line4_end    = p[0.4, 0.1, 0.05, rot_down, 0, 0]
+    
+    p_safe_height  = p[0.4, 0.1, 0.2, rot_down, 0, 0]
+
+    # Motion Sequence (12 moves)
+    # 1. move_joint: Home, 180.0 mm/s (approx joint speed)
+    movej(q_home, a=0.5, v=0.8)
+    
+    # 2. move_linear: Above scan start, 150.0 mm/s
+    movel(p_above_start, a=0.5, v=0.15)
+    
+    # 3. move_linear: Descend to scan height, 80.0 mm/s
+    movel(p_scan_start, a=0.3, v=0.08)
+    
+    # Activate Laser (A7 Tool Activation)
+    set_digital_out(0, True)
+    
+    # 4. move_linear: Scan line 1, 50.0 mm/s
+    movel(p_line1_end, a=0.2, v=0.05)
+    
+    # 5. move_linear: Step to line 2, 80.0 mm/s
+    movel(p_line2_start, a=0.3, v=0.08)
+    
+    # 6. move_linear: Scan line 2, 50.0 mm/s
+    movel(p_line2_end, a=0.2, v=0.05)
+    
+    # 7. move_linear: Step to line 3, 80.0 mm/s
+    movel(p_line3_start, a=0.3, v=0.08)
+    
+    # 8. move_linear: Scan line 3, 50.0 mm/s
+    movel(p_line3_end, a=0.2, v=0.05)
+    
+    # 9. move_linear: Step to line 4, 80.0 mm/s
+    movel(p_line4_start, a=0.3, v=0.08)
+    
+    # 10. move_linear: Scan line 4, 50.0 mm/s
+    movel(p_line4_end, a=0.2, v=0.05)
+    
+    # Deactivate Laser (A7 Tool Activation)
+    set_digital_out(0, False)
+    
+    # 11. move_linear: Ascend to safe height, 80.0 mm/s
+    movel(p_safe_height, a=0.3, v=0.08)
+    
+    # 12. move_linear: Return to Home/Above, 150.0 mm/s
+    movel(p_above_start, a=0.5, v=0.15)
+    
+end

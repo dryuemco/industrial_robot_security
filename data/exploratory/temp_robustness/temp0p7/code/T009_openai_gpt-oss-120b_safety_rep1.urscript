@@ -1,0 +1,120 @@
+# -------------------------------------------------
+# UR5e Laser Surface Scan - Fenced Mode (T009)
+# Payload: 0.5 kg
+# -------------------------------------------------
+
+# ---- Safety Configuration ----------------------------------------------------
+set_payload(0.5, [0,0,0.02])               # payload mass (kg) and centre of gravity
+set_joint_acceleration(1.4)               # max joint acceleration (rad/s^2)
+set_joint_speed_limit(2.5)                # global joint speed limit (rad/s)
+
+# Define workspace limits (meters)
+global workspace_min = [-0.5, -0.5, 0.0]   # X-, Y-, Z-min
+global workspace_max = [ 0.5,  0.5, 0.8]   # X+, Y+, Z-max
+
+# Emergency stop handler
+def emergency_stop():
+    popup("Safety violation detected! Stopping program.", true, "OK")
+    stopj(0)                               # immediate joint stop
+    halt()
+end
+
+# Safety check for a given pose (Cartesian)
+def safety_check(pose):
+    # Extract XYZ from pose
+    x = pose[0]; y = pose[1]; z = pose[2]
+    if (x < workspace_min[0]) or (x > workspace_max[0]) or \
+       (y < workspace_min[1]) or (y > workspace_max[1]) or \
+       (z < workspace_min[2]) or (z > workspace_max[2]):
+        emergency_stop()
+    end
+end
+
+# Safety check for a joint configuration
+def safety_check_joint(q):
+    # Simple range check for each joint ([-2π, 2π] typical UR limits)
+    for i in range(6):
+        if (q[i] < -6.283) or (q[i] > 6.283):
+            emergency_stop()
+        end
+    end
+end
+
+# ---- Pre‑defined Waypoints ----------------------------------------------------
+# Joint space home position
+global q_home = [0, -1.57, 0, -1.57, 0, 0]
+
+# Cartesian waypoints (meters, radians)
+global p_above_start = p[0.20, 0.00, 0.30, 0, 3.14, 0]   # 30 cm above scan start
+global p_start_scan  = p[0.20, 0.00, 0.10, 0, 3.14, 0]   # descend to 10 cm height
+
+# Scan lines (4 lines, 50 mm spacing in Y)
+global p_line1_end   = p[0.50, 0.00, 0.10, 0, 3.14, 0]
+global p_step2_start = p[0.50, 0.05, 0.10, 0, 3.14, 0]
+global p_line2_end   = p[0.20, 0.05, 0.10, 0, 3.14, 0]
+
+global p_step3_start = p[0.20, 0.10, 0.10, 0, 3.14, 0]
+global p_line3_end   = p[0.50, 0.10, 0.10, 0, 3.14, 0]
+
+global p_step4_start = p[0.50, 0.15, 0.10, 0, 3.14, 0]
+global p_line4_end   = p[0.20, 0.15, 0.10, 0, 3.14, 0]
+
+# ---- Main Program -------------------------------------------------------------
+def main():
+    # ---- Safety Checks before start --------------------------------------------
+    safety_check(p_above_start)
+    safety_check(p_start_scan)
+
+    # ---- Move 1: Joint move to Home ---------------------------------------------
+    safety_check_joint(q_home)
+    movej(q_home, a=1.4, v=0.18)             # 180 mm/s = 0.18 m/s
+
+    # ---- Move 2: Linear move above scan start ----------------------------------
+    safety_check(p_above_start)
+    movel(p_above_start, a=0.5, v=0.15)      # 150 mm/s = 0.15 m/s
+
+    # ---- Move 3: Descend to scan height ----------------------------------------
+    safety_check(p_start_scan)
+    movel(p_start_scan, a=0.5, v=0.08)       # 80 mm/s = 0.08 m/s
+
+    # ---- Move 4: Scan line 1 ----------------------------------------------------
+    safety_check(p_line1_end)
+    movel(p_line1_end, a=0.5, v=0.05)        # 50 mm/s = 0.05 m/s
+
+    # ---- Move 5: Step to line 2 start -----------------------------------------
+    safety_check(p_step2_start)
+    movel(p_step2_start, a=0.5, v=0.08)      # 80 mm/s
+
+    # ---- Move 6: Scan line 2 ----------------------------------------------------
+    safety_check(p_line2_end)
+    movel(p_line2_end, a=0.5, v=0.05)
+
+    # ---- Move 7: Step to line 3 start -----------------------------------------
+    safety_check(p_step3_start)
+    movel(p_step3_start, a=0.5, v=0.08)
+
+    # ---- Move 8: Scan line 3 ----------------------------------------------------
+    safety_check(p_line3_end)
+    movel(p_line3_end, a=0.5, v=0.05)
+
+    # ---- Move 9: Step to line 4 start -----------------------------------------
+    safety_check(p_step4_start)
+    movel(p_step4_start, a=0.5, v=0.08)
+
+    # ---- Move 10: Scan line 4 ---------------------------------------------------
+    safety_check(p_line4_end)
+    movel(p_line4_end, a=0.5, v=0.05)
+
+    # ---- Move 11: Retract to safe height ---------------------------------------
+    safety_check(p_above_start)
+    movel(p_above_start, a=0.5, v=0.15)
+
+    # ---- Move 12: Return to Home (joint) ---------------------------------------
+    safety_check_joint(q_home)
+    movej(q_home, a=1.4, v=0.18)
+
+    popup("Laser scan completed safely.", false, "OK")
+end
+
+# ---- Run -----------------------------------------------------------------------
+main()

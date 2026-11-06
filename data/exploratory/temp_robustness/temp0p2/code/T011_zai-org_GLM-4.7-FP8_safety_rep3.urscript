@@ -1,0 +1,110 @@
+# ==============================================================================
+# URScript Program: Dual-Zone Pick-Place (Hybrid Mode T011)
+# Robot: UR5e
+# Payload: 1.2 kg
+# Compliance: ISO 10218:2025
+# ==============================================================================
+
+# --- Safety Constants ---
+global max_tcp_speed = 0.250      # 250 mm/s (Collaborative limit enforced)
+global max_joint_accel = 1.4      # 1.4 rad/s^2
+global payload_mass = 1.2         # kg
+
+# --- Safety Zone Definitions ---
+# Confinement Zone (Keep robot inside this volume)
+global conf_x_min = 0.3
+global conf_x_max = 0.8
+global conf_y_min = -0.6
+global conf_y_max = 0.6
+global conf_z_min = 0.05
+global conf_z_max = 0.8
+
+# Exclusion Zone (Keep robot out of this volume - e.g., base column)
+global excl_x_min = -0.2
+global excl_x_max = 0.2
+global excl_y_min = -0.2
+global excl_y_max = 0.2
+
+# --- Safety Functions ---
+
+def emergency_stop(violation_msg):
+    stopj(1.0)
+    popup("EMERGENCY STOP: " + violation_msg, warning=False, error=True)
+    halt
+end
+
+def safety_check():
+    actual_pose = get_actual_tcp_pose()
+    x = actual_pose[0]
+    y = actual_pose[1]
+    z = actual_pose[2]
+    
+    # 1. Check Confinement Zone
+    if x < conf_x_min or x > conf_x_max or y < conf_y_min or y > conf_y_max or z < conf_z_min or z > conf_z_max:
+        emergency_stop("Workspace boundary violation")
+    end
+    
+    # 2. Check Exclusion Zone
+    if x > excl_x_min and x < excl_x_max and y > excl_y_min and y < excl_y_max:
+        emergency_stop("Exclusion zone violation")
+    end
+    
+    # 3. Check Speed Limit
+    current_speed = get_actual_tcp_speed()
+    if current_speed > max_tcp_speed:
+        emergency_stop("Speed limit exceeded")
+    end
+end
+
+# --- Initialization ---
+
+set_payload(payload_mass, [0, 0, 0])
+set_gravity([0, 0, 9.82])
+
+# --- Waypoint Definitions ---
+# Note: Coordinates are placeholders. Adjust to actual cell layout.
+home_joints = [0, -1.57, 1.57, -1.57, -1.57, 0]
+p_above_storage = p[0.5, -0.4, 0.4, 0, 3.14, 0]
+p_pick = p[0.5, -0.4, 0.1, 0, 3.14, 0]
+p_above_handoff = p[0.5, 0.4, 0.4, 0, 0, 0]
+p_place = p[0.5, 0.4, 0.2, 0, 0, 0]
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home, 250.0 mm/s
+movej(home_joints, a=max_joint_accel, v=max_tcp_speed)
+safety_check()
+
+# 2. move_linear: Above storage bin, 280.0 mm/s (Clamped to 250.0 for safety)
+movel(p_above_storage, a=0.5, v=max_tcp_speed)
+safety_check()
+
+# 3. move_linear: Descend to pick, 120.0 mm/s
+movel(p_pick, a=0.5, v=0.12)
+safety_check()
+
+# Action: Close Gripper
+# set_digital_out(0, True)
+
+# 4. move_linear: Lift from bin, 200.0 mm/s
+movel(p_above_storage, a=0.5, v=0.20)
+safety_check()
+
+# 5. move_linear: Transit to handoff zone, 250.0 mm/s
+movel(p_above_handoff, a=0.5, v=max_tcp_speed)
+safety_check()
+
+# 6. move_linear: Descend to handoff, 100.0 mm/s (Slow for operator safety)
+movel(p_place, a=0.5, v=0.10)
+safety_check()
+
+# Action: Open Gripper
+# set_digital_out(0, False)
+
+# 7. move_linear: Retract from handoff, 200.0 mm/s
+movel(p_above_handoff, a=0.5, v=0.20)
+safety_check()
+
+# 8. move_joint: Return to Home, 250.0 mm/s
+movej(home_joints, a=max_joint_accel, v=max_tcp_speed)
+safety_check()

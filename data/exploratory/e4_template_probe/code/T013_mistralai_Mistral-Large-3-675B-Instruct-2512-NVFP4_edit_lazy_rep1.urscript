@@ -1,0 +1,75 @@
+# Task: T013 — Collaborative suction palletizing — light boxes
+# Robot: UR5e | Mode: Collaborative | Payload: 0.8 kg
+# Max TCP speed: 250 mm/s | Safety: Confinement zone enforced
+
+def task_T013():
+  # Safety checks
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", title="SAFETY ALERT", error=True)
+    halt
+  end
+
+  # Configure payload and tool center point
+  set_payload(0.8, [0.0, 0.0, 0.05])
+  set_tcp(p[0.0, 0.0, 0.12, 0.0, 0.0, 0.0])
+
+  # Home position (collaborative speed)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.2, v=0.8)
+
+  # Main palletizing loop
+  while (True):
+    # Above staging (collaborative approach)
+    movel(p[0.3500, -0.2000, 0.3000, 0.0, 3.1416, 0.0], a=0.7, v=0.22, r=0.01)
+
+    # Descend to pick (slow approach)
+    movel(p[0.3500, -0.2000, 0.0800, 0.0, 3.1416, 0.0], a=0.4, v=0.1)
+
+    # Suction activation with verification
+    set_digital_out(0, True)
+    sleep(0.1)
+    if (not get_digital_in(1)):
+      popup("Vacuum failure detected", title="PROCESS ERROR", error=True)
+      set_digital_out(0, False)
+      halt
+    end
+    sleep(0.2)
+
+    # Lift with box (collaborative speed)
+    movel(p[0.3500, -0.2000, 0.3500, 0.0, 3.1416, 0.0], a=0.6, v=0.18, r=0.015)
+
+    # Transit to pallet (optimized path)
+    movel(p[0.4500, 0.2000, 0.3500, 0.0, 3.1416, 0.0], a=0.8, v=0.23, r=0.015)
+
+    # Place on pallet (slow release)
+    movel(p[0.4500, 0.2000, 0.0800, 0.0, 3.1416, 0.0], a=0.4, v=0.1)
+
+    # Suction release with verification
+    set_digital_out(0, False)
+    sleep(0.1)
+    if (get_digital_in(1)):
+      popup("Box release failure detected", title="PROCESS ERROR", error=True)
+      halt
+    end
+    sleep(0.1)
+
+    # Retract (collaborative speed)
+    movel(p[0.4500, 0.2000, 0.3500, 0.0, 3.1416, 0.0], a=0.7, v=0.2, r=0.01)
+
+    # Check for operator pause request
+    if (get_digital_in(2) == True):
+      popup("Operator pause detected", title="PAUSED", warning=True)
+      while (get_digital_in(2) == True):
+        sleep(0.1)
+      end
+      popup("Resuming operation", title="RESUMED")
+    end
+  end
+end
+
+# Initialize safety configuration
+set_standard_digital_out(0, False)
+set_standard_digital_out(1, False)
+set_tool_voltage(24)
+
+# Entry point
+task_T013()

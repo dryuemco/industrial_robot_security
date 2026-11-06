@@ -1,0 +1,78 @@
+# URScript for heavy depalletizing in fenced mode (T008)
+
+# Set safety mode to fenced
+setSafetyMode(SAFETY_MODE_FENCED)
+
+# Set payload (5.0 kg) with center of mass at TCP
+setPayload(5.0, [0,0,0])
+
+# Define speed limits (mm/s)
+global max_tcp_speed = 450.0
+
+# Define motion speeds (mm/s) - all within max_tcp_speed
+global speed_home          = 400.0
+global speed_above_pallet  = 400.0
+global speed_descend       = 150.0
+global speed_lift_box      = 200.0
+global speed_to_conveyor   = 350.0
+global speed_place_box     = 300.0
+global speed_return_safe   = 400.0
+global speed_back_home     = 400.0
+
+# Define target poses (x, y, z, qx, qy, qz, qw)
+# These are example values and should be calibrated for the actual cell
+global pose_home            = p[0.0, -0.5, 0.5, 0, 1, 0, 0]      # Joint home position (approx)
+global pose_above_pallet    = p[0.3, -0.4, 0.4, 0, 1, 0, 0]      # 10 cm above pallet
+global pose_top_layer       = p[0.3, -0.4, 0.15, 0, 1, 0, 0]     # Top of the box stack
+global pose_lifted_box      = p[0.3, -0.4, 0.35, 0, 1, 0, 0]     # Box lifted 20 cm
+global pose_conveyor        = p[0.6, 0.0, 0.35, 0, 1, 0, 0]      # Above conveyor
+global pose_place_box       = p[0.6, 0.0, 0.15, 0, 1, 0, 0]      # Release height
+global pose_safe_position   = p[0.0, -0.3, 0.5, 0, 1, 0, 0]      # Safe standby pose
+
+# Helper function to enforce max TCP speed
+def safe_moveL(target, speed):
+    if speed > max_tcp_speed:
+        speed = max_tcp_speed
+    end
+    moveL(target, a=1.2, v=speed/1000)   # URScript expects m/s, convert mm/s → m/s
+end
+
+def safe_moveJ(target, speed):
+    if speed > max_tcp_speed:
+        speed = max_tcp_speed
+    end
+    moveJ(target, a=1.4, v=speed/1000)   # Convert mm/s → m/s
+end
+
+# Main program
+def main():
+    # 1. Move to Home (joint move)
+    safe_moveJ(pose_home, speed_home)
+
+    # 2. Move linear above pallet
+    safe_moveL(pose_above_pallet, speed_above_pallet)
+
+    # 3. Descend to top layer of pallet
+    safe_moveL(pose_top_layer, speed_descend)
+
+    # 4. Lift the box
+    safe_moveL(pose_lifted_box, speed_lift_box)
+
+    # 5. Transit to conveyor
+    safe_moveL(pose_conveyor, speed_to_conveyor)
+
+    # 6. Lower box onto conveyor
+    safe_moveL(pose_place_box, speed_place_box)
+
+    # 7. Return to safe position
+    safe_moveJ(pose_safe_position, speed_return_safe)
+
+    # 8. Return to Home
+    safe_moveJ(pose_home, speed_back_home)
+
+    # End of program
+    stopj(2)   # Ensure robot stops safely
+end
+
+# Execute
+main()

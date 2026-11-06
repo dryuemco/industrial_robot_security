@@ -1,0 +1,156 @@
+# -------------------------------------------------
+# Safety Preamble (required before any motion)
+# -------------------------------------------------
+set_tcp(p[0,0,0.102,0,0,0])          # Tool Center Point (example)
+set_payload(4.5, p[0,0,0.102,0,0,0]) # Payload mass and CoG
+
+# -------------------------------------------------
+# Workspace Boundary (confinement for pallet area)
+# -------------------------------------------------
+# Define pallet workspace in meters (example values)
+workspace = {
+  "x_min": -0.5, "x_max": 0.5,
+  "y_min": -0.5, "y_max": 0.5,
+  "z_min": 0.0,  "z_max": 0.6
+}
+
+def within_workspace(pose):
+    # pose is a pose vector p[x,y,z,rx,ry,rz]
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    return (x >= workspace["x_min"] and x <= workspace["x_max"] and
+            y >= workspace["y_min"] and y <= workspace["y_max"] and
+            z >= workspace["z_min"] and z <= workspace["z_max"])
+
+# -------------------------------------------------
+# Safe Motion Wrappers (error handling + workspace check)
+# -------------------------------------------------
+def safe_movej(target_pose, v, a):
+    if not within_workspace(target_pose):
+        textmsg("ERROR: target joint pose out of workspace")
+        stopj(2)
+        return False
+    try:
+        movej(target_pose, a=a, v=v)
+        return True
+    except:
+        textmsg("EXCEPTION: movej failed")
+        stopj(2)
+        return False
+
+def safe_movel(target_pose, v, a):
+    if not within_workspace(target_pose):
+        textmsg("ERROR: target linear pose out of workspace")
+        stopj(2)
+        return False
+    try:
+        movel(target_pose, a=a, v=v)
+        return True
+    except:
+        textmsg("EXCEPTION: movel failed")
+        stopj(2)
+        return False
+
+# -------------------------------------------------
+# Pose Definitions (all poses in meters)
+# -------------------------------------------------
+# Home position (joint configuration)
+home_joint = p[0, -1.57, 1.57, -1.57, -1.57, 0]   # example joint pose
+
+# Conveyor pick positions (example coordinates)
+conveyor_above = p[0.3, -0.2, 0.4, 0, 3.14, 0]   # 250 mm/s approach
+conveyor_pick  = p[0.3, -0.2, 0.1, 0, 3.14, 0]   # 100 mm/s descend
+
+# Pallet grid positions (2x2 grid, 0.2 m spacing)
+pallet_origin   = p[0.0, 0.0, 0.2, 0, 3.14, 0]   # first cell (0,0)
+pallet_cell_01  = p[0.2, 0.0, 0.2, 0, 3.14, 0]   # (0.2,0)
+pallet_cell_11  = p[0.2, 0.2, 0.2, 0, 3.14, 0]   # (0.2,0.2)
+pallet_cell_10  = p[0.0, 0.2, 0.2, 0, 3.14, 0]   # (0,0.2)
+
+# Lift height after pick
+lift_pose = p[0.3, -0.2, 0.4, 0, 3.14, 0]        # 200 mm/s lift
+
+# -------------------------------------------------
+# Motion Parameters (all speeds in m/s, accelerations in m/s^2)
+# -------------------------------------------------
+v_fast   = 0.25   # 250 mm/s
+v_slow   = 0.10   # 100 mm/s
+v_lift   = 0.20   # 200 mm/s
+v_trans  = 0.28   # 280 mm/s (max 0.30 m/s allowed)
+a_joint  = 1.2    # joint acceleration
+a_linear = 1.2    # linear acceleration
+
+# -------------------------------------------------
+# Main Program
+# -------------------------------------------------
+def main():
+    # 1) Move to Home position
+    if not safe_movej(home_joint, v=v_fast, a=a_joint):
+        return
+
+    # 2) Approach conveyor (above the pick)
+    if not safe_movel(conveyor_above, v=v_fast, a=a_linear):
+        return
+
+    # 3) Descend to pick
+    if not safe_movel(conveyor_pick, v=v_slow, a=a_linear):
+        return
+
+    # 4) Lift the box from conveyor
+    if not safe_movel(lift_pose, v=v_lift, a=a_linear):
+        return
+
+    # 5) Transit to first pallet cell (0,0)
+    if not safe_movel(pallet_origin, v=v_trans, a=a_linear):
+        return
+
+    # 6) Place box (lower slightly, release, lift)
+    place_low = p[0.0, 0.0, 0.1, 0, 3.14, 0]
+    if not safe_movel(place_low, v=v_slow, a=a_linear):
+        return
+    # (release action would be here)
+    if not safe_movel(pallet_origin, v=v_lift, a=a_linear):
+        return
+
+    # 7) Move to second pallet cell (0.2,0)
+    if not safe_movel(pallet_cell_01, v=v_trans, a=a_linear):
+        return
+    # (repeat place sequence)
+    place_low = p[0.2, 0.0, 0.1, 0, 3.14, 0]
+    if not safe_movel(place_low, v=v_slow, a=a_linear):
+        return
+    # (release)
+    if not safe_movel(pallet_cell_01, v=v_lift, a=a_linear):
+        return
+
+    # 8) Move to third pallet cell (0.2,0.2)
+    if not safe_movel(pallet_cell_11, v=v_trans, a=a_linear):
+        return
+    place_low = p[0.2, 0.2, 0.1, 0, 3.14, 0]
+    if not safe_movel(place_low, v=v_slow, a=a_linear):
+        return
+    # (release)
+    if not safe_movel(pallet_cell_11, v=v_lift, a=a_linear):
+        return
+
+    # 9) Move to fourth pallet cell (0,0.2)
+    if not safe_movel(pallet_cell_10, v=v_trans, a=a_linear):
+        return
+    place_low = p[0.0, 0.2, 0.1, 0, 3.14, 0]
+    if not safe_movel(place_low, v=v_slow, a=a_linear):
+        return
+    # (release)
+    if not safe_movel(pallet_cell_10, v=v_lift, a=a_linear):
+        return
+
+    # 10) Return to Home
+    if not safe_movej(home_joint, v=v_fast, a=a_joint):
+        return
+
+    textmsg("Program completed successfully.")
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

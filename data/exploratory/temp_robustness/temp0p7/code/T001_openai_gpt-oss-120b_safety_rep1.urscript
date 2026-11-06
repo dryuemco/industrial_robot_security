@@ -1,0 +1,131 @@
+# -------------------------------------------------
+# UR5e Collaborative Pick & Place - Safe Script
+# -------------------------------------------------
+# Safety constants
+MAX_TCP_SPEED = 0.250          # m/s (250 mm/s)
+MAX_JOINT_ACCEL = 1.4          # rad/s^2
+WORKSPACE_MIN = p[-0.8, -0.8, 0.0, 0, 0, 0]   # XYZ lower bounds
+WORKSPACE_MAX = p[ 0.8,  0.8, 1.2, 0, 0, 0]   # XYZ upper bounds
+
+# Exclusion zone (example: keep out of a 0.2m cube in front of robot)
+EXCL_ZONE_MIN = p[0.2, -0.1, 0.0, 0, 0, 0]
+EXCL_ZONE_MAX = p[0.4,  0.1, 0.5, 0, 0, 0]
+
+# -------------------------------------------------
+# Helper functions
+# -------------------------------------------------
+def safety_check():
+    # Verify TCP is inside allowed workspace
+    cur_pose = get_actual_tcp_pose()
+    if not ( (cur_pose[0] >= WORKSPACE_MIN[0]) and (cur_pose[0] <= WORKSPACE_MAX[0]) and
+             (cur_pose[1] >= WORKSPACE_MIN[1]) and (cur_pose[1] <= WORKSPACE_MAX[1]) and
+             (cur_pose[2] >= WORKSPACE_MIN[2]) and (cur_pose[2] <= WORKSPACE_MAX[2]) ):
+        popup("Workspace limit breach!", title="Safety Stop", error=True)
+        stopj(2.0)
+    
+    # Verify TCP is not inside exclusion zone
+    if ( (cur_pose[0] >= EXCL_ZONE_MIN[0]) and (cur_pose[0] <= EXCL_ZONE_MAX[0]) and
+         (cur_pose[1] >= EXCL_ZONE_MIN[1]) and (cur_pose[1] <= EXCL_ZONE_MAX[1]) and
+         (cur_pose[2] >= EXCL_ZONE_MIN[2]) and (cur_pose[2] <= EXCL_ZONE_MAX[2]) ):
+        popup("Entered exclusion zone!", title="Safety Stop", error=True)
+        stopj(2.0)
+    
+    # Joint acceleration safety (URScript limits already enforce this,
+    # but we double‑check for custom acceleration values)
+    for a in get_actual_joint_accelerations():
+        if a > MAX_JOINT_ACCEL:
+            popup("Joint acceleration limit exceeded!", title="Safety Stop", error=True)
+            stopj(2.0)
+
+def emergency_stop_handler():
+    # This function can be called from external safety I/O
+    stopj(2.0)
+    popup("Emergency stop activated!", title="E‑Stop", error=True)
+
+# -------------------------------------------------
+# Payload configuration
+# -------------------------------------------------
+set_payload(0.5, [0,0,0.1])   # 0.5 kg payload, CoG 10 cm above TCP
+
+# -------------------------------------------------
+# Motion parameters (all within limits)
+# -------------------------------------------------
+# Joint move (home) – speed in rad/s, accel in rad/s^2
+HOME_JOINTS   = [-1.57, -1.57, -1.57, -1.57, 1.57, 0.0]
+JOINT_SPEED   = 1.0          # rad/s  (<= safe joint speed)
+JOINT_ACCEL   = 1.0          # rad/s² (<= 1.4)
+
+# Linear moves – speed in m/s, accel in m/s^2
+LIN_SPEED_200 = 0.200        # m/s (200 mm/s)
+LIN_SPEED_150 = 0.150        # m/s (150 mm/s)
+LIN_SPEED_100 = 0.100        # m/s (100 mm/s)
+LIN_ACCEL     = 0.5          # m/s² (well below limits)
+
+# -------------------------------------------------
+# Waypoints (all verified to be inside workspace)
+# -------------------------------------------------
+# Home pose (joint configuration)
+# Pick approach (above the object)
+PICK_APPROACH = p[0.3, -0.2, 0.3, 0, 3.14, 0]
+# Pick pose (down 100 mm)
+PICK_DOWN    = p[0.3, -0.2, 0.2, 0, 3.14, 0]
+# Lift after pick
+PICK_LIFT    = p[0.3, -0.2, 0.35, 0, 3.14, 0]
+# Place approach (above target)
+PLACE_APPROACH = p[-0.3, 0.2, 0.35, 0, 3.14, 0]
+# Place down (release)
+PLACE_DOWN    = p[-0.3, 0.2, 0.25, 0, 3.14, 0]
+# Post‑place lift
+PLACE_LIFT    = p[-0.3, 0.2, 0.40, 0, 3.14, 0]
+# Return to home (via joint move)
+HOME_POSE = p[0.0, -0.5, 0.5, 0, 3.14, 0]
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # Ensure safety before starting
+    safety_check()
+    
+    # 1) Move to Home (joint move)
+    movej(HOME_JOINTS, a=JOINT_ACCEL, v=JOINT_SPEED, t=0, r=0)
+    safety_check()
+    
+    # 2) Approach pick point (linear)
+    movel(PICK_APPROACH, a=LIN_ACCEL, v=LIN_SPEED_200, t=0, r=0)
+    safety_check()
+    
+    # 3) Descend to pick (linear)
+    movel(PICK_DOWN, a=LIN_ACCEL, v=LIN_SPEED_100, t=0, r=0)
+    safety_check()
+    
+    # (Gripper close would be here – omitted for brevity)
+    
+    # 4) Lift from pick (linear)
+    movel(PICK_LIFT, a=LIN_ACCEL, v=LIN_SPEED_150, t=0, r=0)
+    safety_check()
+    
+    # 5) Transit to place approach (linear)
+    movel(PLACE_APPROACH, a=LIN_ACCEL, v=LIN_SPEED_200, t=0, r=0)
+    safety_check()
+    
+    # 6) Descend to place (linear)
+    movel(PLACE_DOWN, a=LIN_ACCEL, v=LIN_SPEED_100, t=0, r=0)
+    safety_check()
+    
+    # (Gripper open would be here – omitted for brevity)
+    
+    # 7) Lift after place (linear)
+    movel(PLACE_LIFT, a=LIN_ACCEL, v=LIN_SPEED_150, t=0, r=0)
+    safety_check()
+    
+    # 8) Return to Home (joint move)
+    movej(HOME_JOINTS, a=JOINT_ACCEL, v=JOINT_SPEED, t=0, r=0)
+    safety_check()
+    
+    popup("Task completed safely.", title="Info", error=False)
+
+# -------------------------------------------------
+# Run the program
+# -------------------------------------------------
+main()

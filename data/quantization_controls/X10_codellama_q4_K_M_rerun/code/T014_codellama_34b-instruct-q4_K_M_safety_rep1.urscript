@@ -1,0 +1,56 @@
+def hybrid_multi_angle_camera_inspection():
+    # Home the robot
+    move_joint(180.0, speed=180.0, acceleration=1.4)
+
+    # Top-down view position
+    move_linear(150.0, speed=200.0, acceleration=1.4)
+
+    # Side view position
+    move_linear(120.0, speed=200.0, acceleration=1.4)
+
+    # Angled view position
+    move_linear(120.0, speed=200.0, acceleration=1.4)
+
+    # Retract
+    move_linear(180.0, speed=180.0, acceleration=1.4)
+
+    # Safety check
+    safety_check()
+
+    # Define safety zones
+    safety_zones = [
+        # Confinement zone
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+    ]
+
+    # Check boundaries
+    for i in range(6):
+        if not safety_zones[i].contains(get_pose()):
+            # Emergency stop
+            halt()
+            break
+
+    # Validate waypoints
+    for i in range(6):
+        if not is_valid_waypoint(get_waypoint(i)):
+            # Emergency stop
+            halt()
+            break
+
+    # Set payload
+    set_payload(0.4)
+
+    # Execute motion sequence
+    for i in range(6):
+        move_linear(get_waypoint(i), speed=200.0, acceleration=1.4)
+
+    # Safety check
+    safety_check()
+
+    # Return to home position
+    move_joint(180.0, speed=180.0, acceleration=1.4)

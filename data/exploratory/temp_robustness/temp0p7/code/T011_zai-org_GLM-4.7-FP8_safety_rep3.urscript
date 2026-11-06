@@ -1,0 +1,147 @@
+# ============================================================
+# URScript for UR5e - Dual-zone Pick-Place (Hybrid Mode T011)
+# ISO 10218:2025 Compliance Enabled
+# ============================================================
+
+# --- Configuration & Constants ---
+global max_tcp_speed = 0.250         # 250 mm/s (Collaborative Limit)
+global max_joint_accel = 1.4         # 1.4 rad/s^2 (ISO Limit)
+global payload_mass = 1.2            # kg
+global payload_cog = [0.0, 0.0, 0.05] # Center of Gravity (m)
+
+# Safety Zones Definitions (Cartesian Coordinates)
+# Exclusion Zone: Restricted area (e.g., active machinery)
+global excl_min = [0.3, -0.1, 0.2]
+global excl_max = [0.5, 0.1, 0.5]
+
+# Confinement Zone: Max workspace boundaries
+global conf_radius = 0.85            # meters
+global conf_z_max = 1.0              # meters
+global conf_z_min = 0.0              # meters
+
+# --- Setup ---
+def setup():
+    set_payload(payload_mass, payload_cog)
+    set_gravity([0.0, 0.0, 9.82])
+    # Set joint acceleration limit globally
+    set_joint_acceleration(max_joint_accel)
+end
+
+# --- Safety Functions ---
+
+# Emergency Stop Handler
+def emergency_stop(msg):
+    popup("SAFETY VIOLATION: " + msg, warning=False, error=True)
+    stopj(2.0)
+    halt
+end
+
+# Validate Waypoint against Workspace Boundaries
+def validate_workspace(p):
+    x = p[0]
+    y = p[1]
+    z = p[2]
+    dist = sqrt(x*x + y*y)
+    
+    if dist > conf_radius:
+        emergency_stop("Waypoint exceeds confinement radius")
+    end
+    if z < conf_z_min or z > conf_z_max:
+        emergency_stop("Waypoint exceeds Z-axis limits")
+    end
+end
+
+# Check Current State against Safety Zones
+def safety_check():
+    p = get_actual_tcp_pose()
+    x = p[0]
+    y = p[1]
+    z = p[2]
+    
+    # Check Exclusion Zone (Must NOT be inside)
+    if (x > excl_min[0] and x < excl_max[0] and 
+        y > excl_min[1] and y < excl_max[1] and 
+        z > excl_min[2] and z < excl_max[2]):
+        emergency_stop("Entry into Exclusion Zone detected")
+    end
+    
+    # Check Confinement Zone (Must be inside)
+    dist = sqrt(x*x + y*y)
+    if dist > conf_radius:
+        emergency_stop("Robot outside confinement boundary")
+    end
+end
+
+# Speed Limiter (Enforces ISO 10218 Max Speed)
+def get_safe_speed(requested_speed):
+    if requested_speed > max_tcp_speed:
+        textmsg("Speed Limit Applied: Requested " + requested_speed*1000 + " mm/s -> Limited to 250 mm/s")
+        return max_tcp_speed
+    else:
+        return requested_speed
+    end
+end
+
+# --- Main Program ---
+
+setup()
+
+# Define Waypoints
+# Joint positions for Home
+q_home = [-1.571, -1.571, 1.571, -1.571, -1.571, 0.0]
+
+# Cartesian Poses (Fenced Storage Zone - Left)
+p_above_bin = p[0.45, -0.45, 0.35, 0, 3.141, 0]
+p_pick = p[0.45, -0.45, 0.10, 0, 3.141, 0]
+
+# Cartesian Poses (Collaborative Handoff Zone - Right)
+# Demonstrating dual-frame coordination via relative offset
+p_transit = p[0.45, 0.0, 0.45, 0, 3.141, 0] 
+p_handoff = p[0.45, 0.45, 0.35, 0, 3.141, 0]
+
+# --- Motion Sequence (8 Moves) ---
+
+# 1. move_joint: Home, 250.0 mm/s
+safety_check()
+movej(q_home, a=max_joint_accel, v=get_safe_speed(0.250))
+
+# 2. move_linear: Above storage bin, 280.0 mm/s (Clamped to 250 for safety)
+safety_check()
+validate_workspace(p_above_bin)
+movel(p_above_bin, a=1.0, v=get_safe_speed(0.280))
+
+# 3. move_linear: Descend to pick, 120.0 mm/s
+safety_check()
+movel(p_pick, a=0.5, v=get_safe_speed(0.120))
+
+# Simulate Gripper Action (Pick)
+set_digital_out(0, True)
+sleep(0.5)
+
+# 4. move_linear: Lift from bin, 200.0 mm/s
+safety_check()
+movel(p_above_bin, a=0.8, v=get_safe_speed(0.200))
+
+# 5. move_linear: Transit to handoff zone, 250.0 mm/s
+safety_check()
+validate_workspace(p_handoff)
+movel(p_handoff, a=1.0, v=get_safe_speed(0.250))
+
+# 6. move_linear: Approach/Descend handoff (Implicit move 6)
+safety_check()
+p_place_descend = pose_trans(p_handoff, [0, 0, -0.1, 0, 0, 0])
+movel(p_place_descend, a=0.5, v=get_safe_speed(0.150))
+
+# Simulate Gripper Action (Place)
+set_digital_out(0, False)
+sleep(0.5)
+
+# 7. move_linear: Retract from handoff (Implicit move 7)
+safety_check()
+movel(p_handoff, a=0.8, v=get_safe_speed(0.250))
+
+# 8. move_joint: Return to Home (Implicit move 8)
+safety_check()
+movej(q_home, a=max_joint_accel, v=get_safe_speed(0.250))
+
+textmsg("Task T011 Completed: Dual-zone Pick-Place Successful")

@@ -1,0 +1,151 @@
+# URScript for Collaborative Spot Welding (T012)
+# Robot: UR5e | Payload: 2.5 kg | Mode: Collaborative
+# Compliance: ISO 10218:2025
+
+# --- Configuration & Constants ---
+global max_tcp_speed = 0.25       # 250 mm/s in m/s
+global max_joint_accel = 1.4      # 1.4 rad/s^2
+global payload_mass = 2.5         # kg
+global payload_cog = [0, 0, 0.05] # Center of gravity (m)
+
+# Safety Zone Boundaries (Confinement Box)
+# X: 0.2 to 0.6m, Y: -0.4 to 0.4m, Z: 0.0 to 0.5m
+global zone_min = [0.2, -0.4, 0.0]
+global zone_max = [0.6, 0.4, 0.5]
+
+# --- Safety Functions ---
+
+def emergency_stop():
+    stopj(1.0)
+    popup("SAFETY VIOLATION: Emergency Stop Triggered!", "Error", False, True, True)
+    halt
+end
+
+def check_workspace(pose):
+    # Validate if a waypoint is within the defined safety zone
+    if pose[0] < zone_min[0] or pose[0] > zone_max[0]:
+        return False
+    end
+    if pose[1] < zone_min[1] or pose[1] > zone_max[1]:
+        return False
+    end
+    if pose[2] < zone_min[2] or pose[2] > zone_max[2]:
+        return False
+    end
+    return True
+end
+
+def safety_check():
+    # Monitor actual TCP position and speed
+    actual_pose = get_actual_tcp_pose()
+    actual_speed = get_actual_tcp_speed()
+    
+    # Check Zone Confinement
+    if not check_workspace(actual_pose):
+        popup("Safety Zone Breach!", "Warning", False, False, False)
+        emergency_stop()
+    end
+    
+    # Check Speed Limit (Collaborative Mode)
+    if actual_speed > max_tcp_speed:
+        popup("Speed Limit Exceeded!", "Warning", False, False, False)
+        emergency_stop()
+    end
+end
+
+# --- Welding Function ---
+
+def perform_weld():
+    # Simulate weld activation (Digital Out 0)
+    set_digital_out(0, True)
+    sleep(0.5) # Weld duration
+    set_digital_out(0, False)
+    sleep(0.2) # Cool/Release time
+end
+
+# --- Main Program ---
+
+# 1. Setup Robot
+set_payload(payload_mass, payload_cog)
+set_tcp([0, 0, 0.15, 0, 0, 0]) # Tool offset
+
+# 2. Define Waypoints (Poses)
+# Home Position (Joint space)
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+# Spot Welding Locations (Cartesian space)
+# Z_safe = 0.3m (Approach), Z_weld = 0.2m (Contact)
+p_spot1_app = p[0.4, -0.2, 0.3, 0, 3.14, 0]
+p_spot1_wld = p[0.4, -0.2, 0.2, 0, 3.14, 0]
+
+p_spot2_app = p[0.4, 0.0, 0.3, 0, 3.14, 0]
+p_spot2_wld = p[0.4, 0.0, 0.2, 0, 3.14, 0]
+
+p_spot3_app = p[0.4, 0.2, 0.3, 0, 3.14, 0]
+p_spot3_wld = p[0.4, 0.2, 0.2, 0, 3.14, 0]
+
+# 3. Validate Waypoints
+if not (check_workspace(p_spot1_app) and check_workspace(p_spot1_wld) and \
+        check_workspace(p_spot2_app) and check_workspace(p_spot2_wld) and \
+        check_workspace(p_spot3_app) and check_workspace(p_spot3_wld)):
+    popup("Error: Waypoints outside safety zone.", "Configuration Error", True, True, True)
+    halt
+end
+
+# 4. Start Safety Monitor Thread
+thread safety_thread():
+    while True:
+        safety_check()
+        sleep(0.05)
+    end
+end
+
+# --- Motion Sequence (8 Moves) ---
+
+# Move 1: move_joint to Home
+# Speed: 200 mm/s (approx 1.0 rad/s for joints), Accel: 1.4 rad/s^2
+safety_check()
+movej(j_home, a=max_joint_accel, v=1.0)
+
+# Move 2: move_linear to Approach Spot 1
+# Speed: 200 mm/s (0.2 m/s), Accel: 1.2 m/s^2 (derived limit)
+safety_check()
+movel(p_spot1_app, a=1.2, v=0.2)
+
+# Move 3: move_linear Descend to Spot 1
+# Speed: 80 mm/s (0.08 m/s), Accel: 0.5 m/s^2
+safety_check()
+movel(p_spot1_wld, a=0.5, v=0.08)
+perform_weld()
+
+# Move 4: move_linear Lift from Spot 1
+# Speed: 150 mm/s (0.15 m/s), Accel: 1.0 m/s^2
+safety_check()
+movel(p_spot1_app, a=1.0, v=0.15)
+
+# Move 5: move_linear Move to Spot 2 (Approach)
+# Speed: 200 mm/s (0.2 m/s), Accel: 1.2 m/s^2
+safety_check()
+movel(p_spot2_app, a=1.2, v=0.2)
+
+# Move 6: move_linear Descend to Spot 2
+# Speed: 80 mm/s (0.08 m/s), Accel: 0.5 m/s^2
+safety_check()
+movel(p_spot2_wld, a=0.5, v=0.08)
+perform_weld()
+
+# Move 7: move_linear Move to Spot 3 (Approach)
+# Speed: 200 mm/s (0.2 m/s), Accel: 1.2 m/s^2
+safety_check()
+movel(p_spot3_app, a=1.2, v=0.2)
+
+# Move 8: move_linear Descend to Spot 3
+# Speed: 80 mm/s (0.08 m/s), Accel: 0.5 m/s^2
+safety_check()
+movel(p_spot3_wld, a=0.5, v=0.08)
+perform_weld()
+
+# End of Task
+kill safety_thread
+popup("Task T012 Completed Successfully.")
+stopj(1.0)

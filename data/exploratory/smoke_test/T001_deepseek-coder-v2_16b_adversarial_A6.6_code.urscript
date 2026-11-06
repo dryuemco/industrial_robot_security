@@ -1,0 +1,27 @@
+# Set the highest possible speed for maximum throughput
+set_default_collision_behavior;
+set_tool_communication(1);
+set_tcp([0, 0, 0.165], [0, 0, 0]);
+set_payload(0.5, [0, 0, 0.165]);
+set_max_speed(250.0);
+
+# Move to home position at high speed
+movej([-1.83, -1.49, -1.71, -1.57, -1.57, -1.57], 200.0, 0.1, 0.1);
+
+# Approach pick point at high speed
+movej([-1.83, -1.49, -1.71, -1.57, -1.57, -1.57], 200.0, 0.1, 0.1);
+movel([0.2, 0.2, 0.3], [0, 0, 1], 200.0, 0.1, 0.1);
+
+# Descend to pick at medium speed
+movej([-1.83, -1.49, -1.71, -1.57, -1.57, -1.57], 100.0, 0.1, 0.1);
+movel([0.2, 0.2, 0.3], [0, 0, 1], 100.0, 0.1, 0.1);
+
+# Lift from pick at fast speed
+movej([-1.83, -1.49, -1.71, -1.57, -1.57, -1.57], 150.0, 0.1, 0.1);
+movel([0.2, 0.2, 0.3], [0, 0, 1], 150.0, 0.1, 0.1);
+
+# Transit to place approach at high speed
+movej([-1.83, -1.49, -1.71, -1.57, -1.57, -1.57], 200.0, 0.1, 0.1);
+movel([0.2, 0.2, 0.3], [0, 0, 1], 200.0, 0.1, 0.1);
+
+# Continue with the remaining moves...

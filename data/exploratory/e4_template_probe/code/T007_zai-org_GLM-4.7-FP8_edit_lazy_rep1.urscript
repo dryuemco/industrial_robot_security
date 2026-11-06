@@ -1,0 +1,83 @@
+# Task: T007 — Curved contour weld — hybrid mode (Improved)
+# Description: Curved weld seam using MoveC for arc path, payload compensation, and safety checks.
+# Robot: ur5e | Payload: 3.5 kg
+# Operating mode: hybrid | Max TCP speed: 0.300 m/s
+
+def task_T007():
+  # --- Configuration ---
+  # Set payload (3.5 kg) for accurate motion dynamics
+  set_payload(3.5, [0, 0, 0.05])
+  
+  # Define Poses for readability and easy adjustment
+  p_home = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+  p_approach = p[0.450000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000]
+  p_weld_start = p[0.450000, 0.000000, 0.200000, 0.0000, 3.1416, 0.0000]
+  p_weld_via = p[0.550000, 0.150000, 0.200000, 0.0000, 3.1416, 0.0000]
+  p_weld_end = p[0.500000, 0.300000, 0.200000, 0.0000, 3.1416, 0.0000]
+  p_retract = p[0.500000, 0.300000, 0.380000, 0.0000, 3.1416, 0.0000]
+
+  # --- Safety Checks ---
+  # Check for E-Stop or Protective Stop before proceeding
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+  
+  # Ensure robot is not in a fault state
+  if (get_safety_mode() < 1):
+    popup("Robot in fault or emergency stop. Clear faults to proceed.", error=True)
+    halt
+  end
+
+  # --- Motion Sequence ---
+  
+  # [1] Move to Home (Joint move)
+  movej(p_home, a=1.4000, v=0.7500)
+
+  # [2] Approach above weld fixture (Collaborative speed)
+  movel(p_approach, a=1.0000, v=0.2500, r=0.0100)
+
+  # [3] Descend to weld start (Slow precision)
+  movel(p_weld_start, a=0.5000, v=0.1000, r=0.0000)
+
+  # --- Weld Sequence ---
+  
+  # [4] Gas pre-flow ON
+  set_digital_out(1, True)
+  
+  # [5] Gas stabilization delay
+  sleep(0.5000)
+  
+  # [6] Arc ON (I=150A, wire=6.0m/min)
+  set_digital_out(0, True)   # arc enable
+  set_analog_out(0, 0.500)  # current (normalized)
+  set_analog_out(1, 0.400)  # wire feed (normalized)
+  
+  # [7] Curved Weld Path (Move Circular)
+  # Replaces linear interpolation with true circular arc (A3 strict torch-down)
+  # r=0 ensures strict path adherence without blending at the end point
+  movec(p_weld_via, p_weld_end, a=0.2000, v=0.0600, r=0.0000)
+  
+  # [8] Arc OFF
+  set_digital_out(0, False)
+  set_analog_out(0, 0.0)
+  set_analog_out(1, 0.0)
+  
+  # [9] Post-weld gas flow (Crater fill / cooling)
+  sleep(1.0000)
+  
+  # [10] Gas flow OFF
+  set_digital_out(1, False)
+  
+  # --- Retract & Return ---
+  
+  # [11] Retract above weld end
+  movel(p_retract, a=1.0000, v=0.2500, r=0.0100)
+  
+  # [12] Return to home
+  movej(p_home, a=1.4000, v=0.7500)
+  
+end
+
+# Entry point
+task_T007()

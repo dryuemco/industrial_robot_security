@@ -1,0 +1,73 @@
+def main():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    set_payload(1.2, [0,0,0])               # payload 1.2 kg, CoM at TCP
+    set_tcp([0,0,0,0,0,0])                  # default TCP
+    set_gravity([0,0,9.81])                 # gravity vector
+
+    # Hybrid mode (position/force) activation
+    set_operational_mode(2)                # 2 = hybrid position/force control
+
+    # Safety zones (confinement & exclusion) – placeholders
+    # set_safety_zone_confinement(...)
+    # set_safety_zone_exclusion(...)
+
+    # -------------------------------------------------
+    # Speed definitions (m/s)
+    # -------------------------------------------------
+    speed_home   = 0.250   # 250 mm/s
+    speed_above  = 0.280   # 280 mm/s
+    speed_descend= 0.120   # 120 mm/s
+    speed_lift   = 0.200   # 200 mm/s
+    speed_transit= 0.250   # 250 mm/s
+    speed_other  = 0.300   # generic max TCP speed (300 mm/s)
+
+    # -------------------------------------------------
+    # Pose definitions
+    # -------------------------------------------------
+    # Joint configuration for Home position (example values)
+    home_joint = [-0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+
+    # Cartesian poses (meters, radians)
+    above_bin   = p[0.500, -0.200, 0.400, 0.0, 3.1416, 0.0]
+    pick_pose   = p[0.500, -0.200, 0.100, 0.0, 3.1416, 0.0]
+    lift_pose   = p[0.500, -0.200, 0.400, 0.0, 3.1416, 0.0]
+    handoff_pose= p[0.300,  0.400, 0.500, 0.0, 3.1416, 0.0]
+
+    # -------------------------------------------------
+    # Motion sequence (8 moves)
+    # -------------------------------------------------
+    # 1) Joint move to Home
+    movej(home_joint, a=1.2, v=speed_home)
+
+    # 2) Linear move to Above storage bin
+    movel(above_bin, a=1.0, v=speed_above)
+
+    # 3) Linear descend to pick
+    movel(pick_pose, a=0.5, v=speed_descend)
+
+    # 4) Linear lift from bin
+    movel(lift_pose, a=0.8, v=speed_lift)
+
+    # 5) Linear transit to handoff zone
+    movel(handoff_pose, a=1.0, v=speed_transit)
+
+    # 6) (Placeholder) Approach handoff pose for operator
+    # Example: small offset for handover
+    handoff_approach = pose_add(handoff_pose, p[0,0,0.05,0,0,0])
+    movel(handoff_approach, a=0.6, v=speed_other)
+
+    # 7) (Placeholder) Retract after handoff
+    handoff_retract = pose_add(handoff_pose, p[0,0,-0.10,0,0,0])
+    movel(handoff_retract, a=0.6, v=speed_other)
+
+    # 8) Return to Home
+    movej(home_joint, a=1.2, v=speed_home)
+
+    # -------------------------------------------------
+    # Cleanup
+    # -------------------------------------------------
+    # Return to normal operational mode
+    set_operational_mode(0)   # 0 = normal position mode
+end

@@ -1,0 +1,30 @@
+# Home position
+def move_home():
+    movej([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], 300.0, 0.0, tool0);
+
+# Approach above weld fixture
+def approach_above_weld_fixture():
+    movej([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], 250.0, 0.0, tool0);
+
+# Descend to weld start
+def descend_to_weld_start():
+    movej([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], 100.0, 0.0, tool0);
+
+# Weld midpoint
+def weld_midpoint():
+    movej([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], 60.0, 0.0, tool0);
+
+# Weld end
+def weld_end():
+    movej([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], 60.0, 0.0, tool0);
+
+# Sequence of moves
+def sequence():
+    move_home();
+    approach_above_weld_fixture();
+    descend_to_weld_start();
+    weld_midpoint();
+    weld_end();
+
+# Call the sequence function
+sequence();

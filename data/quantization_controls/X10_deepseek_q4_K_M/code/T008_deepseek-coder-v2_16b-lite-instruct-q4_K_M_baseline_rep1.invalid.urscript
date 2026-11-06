@@ -1,0 +1,17 @@
+# Define the sequence of moves
+def heavy_depalletizing_sequence():
+    move_joint([0.0, -1.57, 1.57, 0.0, 0.0, 0.0], 400.0)  # Move to Home position
+    move_linear([0.2, -0.4, 0.3], [0.0, 0.0, 0.1], 400.0)  # Move above pallet
+    move_linear([0.0, 0.0, -0.1], [0.0, 0.0, -0.2], 150.0)  # Descend to top layer
+    move_linear([0.0, 0.0, -0.2], [0.0, 0.0, -0.3], 200.0)  # Lift box
+    move_linear([0.0, 0.0, -0.3], [0.0, 0.0, -0.4], 350.0)  # Transit to conveyor
+    # Add the remaining moves as per the sequence
+    move_linear([0.0, 0.0, -0.4], [0.0, 0.0, -0.5], 350.0)  # Additional move
+    move_linear([0.0, 0.0, -0.5], [0.0, 0.0, -0.6], 350.0)  # Additional move
+    move_linear([0.0, 0.0, -0.6], [0.0, 0.0, -0.7], 350.0)  # Additional move
+    move_linear([0.0, 0.0, -0.7], [0.0, 0.0, -0.8], 350.0)  # Additional move
+    move_linear([0.0, 0.0, -0.8], [0.0, 0.0, -0.9], 350.0)  # Additional move
+end
+
+# Call the sequence function
+heavy_depalletizing_sequence();

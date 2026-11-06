@@ -1,0 +1,25 @@
+# Home position
+movej home_q, v100, z10, fine=False
+
+# Define pick and place points in the robot's base frame
+pick_point := [0.3, -0.4, 0.2]; # Example coordinates, adjust as needed
+place_point := [0.3, -0.4, 0.5]; # Example coordinates, adjust as needed
+
+# Move to pick point with reduced speed for approach
+movej pick_point, v200, z10, fine=False
+
+# Descend to pick position at a slower speed
+movel [pick_point[0], pick_point[1], pick_point[2] - 0.1], v100, z10, fine=False
+
+# Lift from the pick position slightly upwards
+movel [pick_point[0], pick_point[1], pick_point[2]], v150, z10, fine=False
+
+# Transit to place approach point with normal speed
+movej place_point, v200, z10, fine=False
+
+# Define the final placement position and move there
+place_position := [place_point[0], place_point[1], place_point[2]]; # Ensure this is adjusted based on actual object dimensions
+movel place_position, v200, z10, fine=False
+
+# Move back to the pick position for verification or re-pick if necessary
+movej [pick_point[0], pick_point[1], pick_point[2]], v200, z10, fine=False

@@ -1,0 +1,121 @@
+# -------------------------------------------------
+# Collaborative Spot Welding Program (T012) - UR5e
+# -------------------------------------------------
+# Safety Preamble (required by ISO 5.1.14 & 5.1.15)
+set_tcp(p[0,0,0.1,0,0,0])          # Tool Center Point (10 cm offset along Z)
+set_payload(2.5, p[0,0,0.02])      # Payload 2.5 kg, CoG 2 cm behind TCP
+
+# -------------------------------------------------
+# Workspace Boundary Definition (confinement)
+# Define a rectangular safety zone (meters)
+safety_min = p[-0.5, -0.5, 0.0, 0, 0, 0]   # X, Y, Z minimum
+safety_max = p[ 0.5,  0.5, 0.5, 0, 0, 0]   # X, Y, Z maximum
+
+def in_workspace(pose):
+    # Check only the Cartesian part (X, Y, Z) of the pose
+    return (pose[0] >= safety_min[0] and pose[0] <= safety_max[0] and
+            pose[1] >= safety_min[1] and pose[1] <= safety_max[1] and
+            pose[2] >= safety_min[2] and pose[2] <= safety_max[2])
+end
+
+def safe_move_linear(target_pose, speed):
+    if not in_workspace(target_pose) then
+        textmsg("ERROR: Target pose out of safety zone. Stopping program.")
+        stop()
+    end
+    movel(target_pose, a=1.2, v=speed)
+end
+
+def safe_move_joint(target_joints, speed):
+    # Joint limits are enforced by the robot controller; we only check for NaN
+    if isnan(target_joints[0]) then
+        textmsg("ERROR: Invalid joint target. Stopping program.")
+        stop()
+    end
+    movej(target_joints, a=1.2, v=speed)
+end
+
+# -------------------------------------------------
+# Motion Parameters (converted to m/s)
+speed_fast   = 0.200   # 200 mm/s
+speed_slow   = 0.080   # 80 mm/s
+speed_lift   = 0.150   # 150 mm/s
+speed_max    = 0.250   # 250 mm/s (global limit)
+
+# -------------------------------------------------
+# Predefined Poses (meters)
+# Home joint configuration
+home_joints = [-0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+
+# Spot 1
+approach1 = p[0.30, 0.10, 0.20, 0, 3.14, 0]   # 20 cm above spot 1
+weld1     = p[0.30, 0.10, 0.10, 0, 3.14, 0]   # Spot 1 (10 cm height)
+lift1     = p[0.30, 0.10, 0.20, 0, 3.14, 0]   # Same as approach1
+
+# Spot 2
+approach2 = p[0.00, -0.20, 0.20, 0, 3.14, 0]  # 20 cm above spot 2
+weld2     = p[0.00, -0.20, 0.10, 0, 3.14, 0]  # Spot 2
+lift2     = p[0.00, -0.20, 0.20, 0, 3.14, 0]  # Same as approach2
+
+# Spot 3
+approach3 = p[-0.30, 0.15, 0.20, 0, 3.14, 0]  # 20 cm above spot 3
+weld3     = p[-0.30, 0.15, 0.10, 0, 3.14, 0]  # Spot 3
+lift3     = p[-0.30, 0.15, 0.20, 0, 3.14, 0]  # Same as approach3
+
+# -------------------------------------------------
+# Program Start
+def main():
+    # 1) Move to Home (joint space)
+    safe_move_joint(home_joints, speed_fast)
+
+    # 2) Approach Spot 1
+    safe_move_linear(approach1, speed_fast)
+
+    # 3) Descend to Spot 1 (welding position)
+    safe_move_linear(weld1, speed_slow)
+
+    # 4) Activate welding (placeholder for I/O)
+    set_digital_out(0, True)   # Turn welding torch ON
+    sleep(0.5)                 # Dwell for weld activation
+    set_digital_out(0, False)  # Turn welding torch OFF
+
+    # 5) Lift from Spot 1
+    safe_move_linear(lift1, speed_lift)
+
+    # 6) Move to Spot 2 (approach)
+    safe_move_linear(approach2, speed_fast)
+
+    # 7) Descend to Spot 2
+    safe_move_linear(weld2, speed_slow)
+
+    # 8) Activate welding at Spot 2
+    set_digital_out(0, True)
+    sleep(0.5)
+    set_digital_out(0, False)
+
+    # 9) Lift from Spot 2
+    safe_move_linear(lift2, speed_lift)
+
+    # 10) Move to Spot 3 (approach)
+    safe_move_linear(approach3, speed_fast)
+
+    # 11) Descend to Spot 3
+    safe_move_linear(weld3, speed_slow)
+
+    # 12) Activate welding at Spot 3
+    set_digital_out(0, True)
+    sleep(0.5)
+    set_digital_out(0, False)
+
+    # 13) Lift from Spot 3
+    safe_move_linear(lift3, speed_lift)
+
+    # 14) Return to Home
+    safe_move_joint(home_joints, speed_fast)
+
+    textmsg("Program completed successfully.")
+end
+
+# -------------------------------------------------
+# Execute
+main()

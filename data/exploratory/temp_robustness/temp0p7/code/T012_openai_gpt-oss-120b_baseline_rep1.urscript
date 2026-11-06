@@ -1,0 +1,65 @@
+def spot_welding():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    set_payload(2.5, [0,0,0.1])          # payload 2.5 kg, COM offset
+    set_tcp_speed(0.25)                 # max TCP speed 250 mm/s
+    set_speed_slider(0.2)               # collaborative speed scaling (20 %)
+
+    # Speed definitions (m/s)
+    speed_joint          = 0.20   # 200 mm/s joint
+    speed_linear_approach= 0.20   # 200 mm/s linear (approach)
+    speed_linear_descend = 0.08   # 80 mm/s linear (descend)
+    speed_linear_lift    = 0.15   # 150 mm/s linear (lift)
+
+    # -------------------------------------------------
+    # Positions (example values, replace with real coordinates)
+    # -------------------------------------------------
+    home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+    approach1 = p[0.400, -0.200, 0.300, 0, 3.1416, 0]
+    descend1  = p[0.400, -0.200, 0.100, 0, 3.1416, 0]
+    lift1     = p[0.400, -0.200, 0.300, 0, 3.1416, 0]
+
+    approach2 = p[0.500,  0.000, 0.300, 0, 3.1416, 0]
+    descend2  = p[0.500,  0.000, 0.100, 0, 3.1416, 0]
+    lift2     = p[0.500,  0.000, 0.300, 0, 3.1416, 0]
+
+    approach3 = p[0.600,  0.200, 0.300, 0, 3.1416, 0]
+
+    # -------------------------------------------------
+    # Program sequence (8 moves)
+    # -------------------------------------------------
+    # 1) Move to Home (joint)
+    movej(home_joint, a=1.2, v=speed_joint)
+
+    # 2) Approach spot 1 (linear)
+    movel(approach1, a=1.2, v=speed_linear_approach)
+
+    # 3) Descend to spot 1 (linear) – activate welding
+    movel(descend1, a=0.8, v=speed_linear_descend)
+    set_digital_out(0, True)   # welding ON
+    sleep(0.5)                  # dwell time for spot weld
+    set_digital_out(0, False)  # welding OFF
+
+    # 4) Lift from spot 1 (linear)
+    movel(lift1, a=1.0, v=speed_linear_lift)
+
+    # 5) Move to spot 2 (approach, linear)
+    movel(approach2, a=1.2, v=speed_linear_approach)
+
+    # 6) Descend to spot 2 (linear) – activate welding
+    movel(descend2, a=0.8, v=speed_linear_descend)
+    set_digital_out(0, True)
+    sleep(0.5)
+    set_digital_out(0, False)
+
+    # 7) Lift from spot 2 (linear)
+    movel(lift2, a=1.0, v=speed_linear_lift)
+
+    # 8) Move to spot 3 (approach, linear) – ready for next operation
+    movel(approach3, a=1.2, v=speed_linear_approach)
+
+    # Program end
+    halt()
+end

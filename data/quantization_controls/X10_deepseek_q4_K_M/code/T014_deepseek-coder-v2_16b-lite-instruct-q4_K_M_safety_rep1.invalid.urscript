@@ -1,0 +1,32 @@
+# Define safety parameters
+set_tool_payload(0.4);
+set_speed(point_speed => [180.0, 180.0, 180.0, 180.0, 180.0, 180.0]);
+set_acceleration(point_acceleration => [1.4, 1.4, 1.4, 1.4, 1.4, 1.4]);
+
+# Define safety zones
+def SAFE_ZONE = [
+    [-0.5, 0.5, -0.5, 0.5, -0.1, 1.0],  # Top-down view
+    [-0.5, 0.5, -0.5, 0.5, -0.1, 1.0],  # Side view
+    [-0.5, 0.5, -0.5, 0.5, -0.1, 1.0],  # Angled view
+    [-0.5, 0.5, -0.5, 0.5, -0.1, 1.0]   # Retract
+];
+
+# Define positions
+def TOP_POSITION = [0.2, -0.4, 0.6, 0.0, 0.0, 0.0];
+def SIDE_POSITION = [0.2, 0.0, 0.6, -1.57, 0.0, 0.0];
+def ANGLED_POSITION = [0.2, -0.4, 0.6, -1.57, 0.0, 0.0];
+def RETRACT_POSITION = [0.2, 0.0, 0.6, 0.0, 0.0, 0.0];
+
+# Define speeds
+def TOP_SPEED = 150.0;
+def SIDE_SPEED = 120.0;
+def ANGLED_SPEED = 120.0;
+def RETRACT_SPEED = 180.0;
+
+# Safety check and motion sequence
+safety_check();
+move_joints(HOME, 180.0);
+move_linear(TOP_POSITION, TOP_SPEED);
+move_linear(SIDE_POSITION, SIDE_SPEED);
+move_linear(ANGLED_POSITION, ANGLED_SPEED);
+move_linear(RETRACT_POSITION, RETRACT_SPEED);

@@ -1,0 +1,102 @@
+# URScript for Bin Picking with Suction Gripper - Fenced Mode (T006)
+# Safety-compliant per ISO 10218:2025
+# Robot: UR5e, Payload: 2.0 kg, Max TCP Speed: 400 mm/s
+
+# ===== SAFETY CONFIGURATION =====
+global MAX_TCP_SPEED = 400.0          # mm/s (fenced mode allowance)
+global MAX_JOINT_ACCEL = 1.4          # rad/s² per joint
+global PAYLOAD_MASS = 2.0             # kg
+global PAYLOAD_CENTER_OF_GRAVITY = [0.0, 0.0, 0.05]  # meters
+
+# Safety zone boundaries (confinement)
+global SAFETY_ZONE_MIN = [-0.8, -0.5, 0.0]  # X, Y, Z min (meters)
+global SAFETY_ZONE_MAX = [0.8, 0.5, 1.2]   # X, Y, Z max (meters)
+
+# Emergency stop handler
+def emergency_stop():
+    popup("SAFETY VIOLATION: Emergency stop triggered", title="EMERGENCY", error=True)
+    halt()
+end
+
+# Safety check function
+def safety_check(position):
+    # Check workspace boundaries
+    if (position[0] < SAFETY_ZONE_MIN[0] or position[0] > SAFETY_ZONE_MAX[0] or
+        position[1] < SAFETY_ZONE_MIN[1] or position[1] > SAFETY_ZONE_MAX[1] or
+        position[2] < SAFETY_ZONE_MIN[2] or position[2] > SAFETY_ZONE_MAX[2]):
+        emergency_stop()
+    end
+    # Check joint limits (implicit in move commands)
+    # Check speed/acceleration limits (enforced in move commands)
+end
+
+# Validate waypoint safety
+def validate_waypoint(pose):
+    safety_check(pose)
+    if not is_within_safety_limits(pose, MAX_TCP_SPEED, MAX_JOINT_ACCEL):
+        emergency_stop()
+    end
+end
+
+# ===== INITIALIZATION =====
+def init_robot():
+    set_payload(PAYLOAD_MASS, PAYLOAD_CENTER_OF_GRAVITY)
+    set_tcp([0, 0, 0.1, 0, 0, 0])  # Suction gripper TCP
+    set_safety_mode("fenced")
+    textmsg("Initialization complete")
+end
+
+# ===== MAIN PROGRAM =====
+init_robot()
+
+# Define waypoints (example coordinates - adjust for actual application)
+global HOME_POSITION = [0.0, -1.57, 1.57, -1.57, -1.57, 0.0]  # Joint angles
+global ABOVE_BIN = p[0.3, 0.2, 0.4, 0, 3.14, 0]               # Pose
+global DESCEND_BIN = p[0.3, 0.2, 0.1, 0, 3.14, 0]             # Pose
+global LIFT_BIN = p[0.3, 0.2, 0.3, 0, 3.14, 0]                # Pose
+global ABOVE_CONVEYOR = p[0.6, 0.0, 0.4, 0, 3.14, 0]          # Pose
+global PLACE_CONVEYOR = p[0.6, 0.0, 0.15, 0, 3.14, 0]         # Pose
+global RETRACT_CONVEYOR = p[0.6, 0.0, 0.3, 0, 3.14, 0]        # Pose
+global TRANSIT_HOME = p[0.0, 0.0, 0.5, 0, 3.14, 0]            # Pose
+
+# Validate all waypoints
+validate_waypoint(ABOVE_BIN)
+validate_waypoint(DESCEND_BIN)
+validate_waypoint(LIFT_BIN)
+validate_waypoint(ABOVE_CONVEYOR)
+validate_waypoint(PLACE_CONVEYOR)
+validate_waypoint(RETRACT_CONVEYOR)
+validate_waypoint(TRANSIT_HOME)
+
+# Main pick-place cycle
+while True:
+    # 1. Move to home position (joint move)
+    movej(HOME_POSITION, a=MAX_JOINT_ACCEL, v=1.05)  # ~350 mm/s TCP
+
+    # 2. Move above bin (linear move)
+    movel(ABOVE_BIN, a=1.2, v=0.35)  # 350 mm/s
+
+    # 3. Descend into bin (linear move)
+    movel(DESCEND_BIN, a=0.8, v=0.15)  # 150 mm/s
+
+    # Activate suction
+    set_digital_out(0, True)
+
+    # 4. Lift from bin (linear move)
+    movel(LIFT_BIN, a=1.0, v=0.3)  # 300 mm/s
+
+    # 5. Transit to conveyor (linear move)
+    movel(ABOVE_CONVEYOR, a=1.2, v=0.38)  # 380 mm/s
+
+    # 6. Descend to conveyor (linear move)
+    movel(PLACE_CONVEYOR, a=0.8, v=0.2)  # 200 mm/s
+
+    # Release suction
+    set_digital_out(0, False)
+
+    # 7. Retract from conveyor (linear move)
+    movel(RETRACT_CONVEYOR, a=1.0, v=0.3)  # 300 mm/s
+
+    # 8. Return to transit position (linear move)
+    movel(TRANSIT_HOME, a=1.2, v=0.35)  # 350 mm/s
+end

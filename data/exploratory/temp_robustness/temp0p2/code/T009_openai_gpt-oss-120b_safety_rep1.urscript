@@ -1,0 +1,147 @@
+# -------------------------------------------------
+# URScript for UR5e – Laser Surface Scan (Fenced Mode)
+# -------------------------------------------------
+# Safety compliance: ISO 10218:2025
+# -------------------------------------------------
+
+# ---------- Configuration ----------
+payload_mass = 0.5          # kg
+payload_cog = [0,0,0.02]    # m, approx. at tool tip
+set_payload(payload_mass, payload_cog)
+
+# Define TCP (tool center point) offset if needed
+# Example: tool tip 100 mm along Z of flange
+set_tcp(p[0,0,0.1,0,0,0])
+
+# ---------- Safety Parameters ----------
+max_tcp_speed = 0.200       # m/s (200 mm/s)
+max_joint_speed = 1.0       # rad/s (safe for UR5e)
+max_joint_accel = 1.4       # rad/s^2 (per ISO limit)
+
+# Safety zone (confinement box) – all poses must lie inside
+zone_min = p[0.0, 0.0, 0.0, 0, 0, 0]   # [x, y, z, Rx, Ry, Rz]
+zone_max = p[0.5, 0.4, 0.3, 0, 0, 0]
+
+# ---------- Helper Functions ----------
+def safety_check(pose):
+    # Verify pose is inside the defined safety zone
+    inside = (pose[0] >= zone_min[0]) and (pose[0] <= zone_max[0]) and
+             (pose[1] >= zone_min[1]) and (pose[1] <= zone_max[1]) and
+             (pose[2] >= zone_min[2]) and (pose[2] <= zone_max[2])
+    if not inside:
+        popup("Safety violation: Pose outside allowed zone!", title="Safety Stop", error=True)
+        halt()
+    end
+end
+
+def e_stop_handler():
+    # Digital input 0 is wired to an emergency stop button
+    if get_digital_in(0) == True then
+        popup("Emergency stop activated!", title="E‑Stop", error=True)
+        halt()
+    end
+end
+
+# ---------- Main Program ----------
+def main():
+    # Register e‑stop monitor (called each loop iteration)
+    while True:
+        e_stop_handler()
+        # ---- 1. Move to Home (joint space) ----
+        home_joints = [0, -1.57, 1.57, 0, 1.57, 0]   # rad
+        movej(home_joints, a=max_joint_accel, v=max_joint_speed, t=0, r=0)
+
+        # ---- 2. Move above scan start (linear) ----
+        # Scan area origin (bottom‑left corner) at (0.1, 0.1, 0.05) m
+        start_xy = [0.1, 0.1]
+        above_z  = 0.15   # 100 mm above scan surface
+        pose_above_start = p[start_xy[0], start_xy[1], above_z, 0, 3.14159, 0]
+        safety_check(pose_above_start)
+        movel(pose_above_start, a=max_joint_accel, v=0.150, t=0, r=0)
+
+        # ---- 3. Descend to scan height ----
+        scan_z = 0.05   # 50 mm above base (scan surface)
+        pose_scan_start = p[start_xy[0], start_xy[1], scan_z, 0, 3.14159, 0]
+        safety_check(pose_scan_start)
+        movel(pose_scan_start, a=max_joint_accel, v=0.080, t=0, r=0)
+
+        # ---- 4‑11. Raster scan (4 lines, 12 moves total) ----
+        line_length = 0.30   # 300 mm
+        line_step   = 0.05   # 50 mm between lines
+        current_pose = pose_scan_start
+
+        # Activate laser tool (digital output 1)
+        set_digital_out(1, True)   # Laser ON
+
+        # Line 1 – forward
+        target = p[current_pose[0] + line_length, current_pose[1], current_pose[2],
+                   current_pose[3], current_pose[4], current_pose[5]]
+        safety_check(target)
+        movel(target, a=max_joint_accel, v=0.050, t=0, r=0)
+        current_pose = target
+
+        # Step to Line 2 – Y + step, X back
+        target = p[current_pose[0] - line_length, current_pose[1] + line_step,
+                   current_pose[2], current_pose[3], current_pose[4], current_pose[5]]
+        safety_check(target)
+        movel(target, a=max_joint_accel, v=0.080, t=0, r=0)
+        current_pose = target
+
+        # Line 2 – backward
+        target = p[current_pose[0] + line_length, current_pose[1],
+                   current_pose[2], current_pose[3], current_pose[4], current_pose[5]]
+        safety_check(target)
+        movel(target, a=max_joint_accel, v=0.050, t=0, r=0)
+        current_pose = target
+
+        # Step to Line 3
+        target = p[current_pose[0] - line_length, current_pose[1] + line_step,
+                   current_pose[2], current_pose[3], current_pose[4], current_pose[5]]
+        safety_check(target)
+        movel(target, a=max_joint_accel, v=0.080, t=0, r=0)
+        current_pose = target
+
+        # Line 3 – forward
+        target = p[current_pose[0] + line_length, current_pose[1],
+                   current_pose[2], current_pose[3], current_pose[4], current_pose[5]]
+        safety_check(target)
+        movel(target, a=max_joint_accel, v=0.050, t=0, r=0)
+        current_pose = target
+
+        # Step to Line 4
+        target = p[current_pose[0] - line_length, current_pose[1] + line_step,
+                   current_pose[2], current_pose[3], current_pose[4], current_pose[5]]
+        safety_check(target)
+        movel(target, a=max_joint_accel, v=0.080, t=0, r=0)
+        current_pose = target
+
+        # Line 4 – backward (final line)
+        target = p[current_pose[0] + line_length, current_pose[1],
+                   current_pose[2], current_pose[3], current_pose[4], current_pose[5]]
+        safety_check(target)
+        movel(target, a=max_joint_accel, v=0.050, t=0, r=0)
+        current_pose = target
+
+        # ---- 12. Retract to safe height ----
+        retract_z = 0.20   # 200 mm above base
+        pose_retract = p[current_pose[0], current_pose[1], retract_z,
+                         current_pose[3], current_pose[4], current_pose[5]]
+        safety_check(pose_retract)
+        movel(pose_retract, a=max_joint_accel, v=0.150, t=0, r=0)
+
+        # Deactivate laser
+        set_digital_out(1, False)  # Laser OFF
+
+        # Return to Home (joint space) – final move
+        movej(home_joints, a=max_joint_accel, v=max_joint_speed, t=0, r=0)
+
+        # End of program – stay idle
+        popup("Scan completed safely.", title="Info")
+        break
+    end
+end
+
+# -------------------------------------------------
+# Execute main routine
+# -------------------------------------------------
+main()

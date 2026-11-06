@@ -1,0 +1,80 @@
+# UR5e Laser Marking - Fenced Mode
+# Task: Serial number pattern (3 lines)
+# Payload: 0.6 kg
+# Max TCP Speed: 400.0 mm/s
+# Fixes: SM-2 (Speed limits), SM-4 (Laser/Payload), SM-5 (Safety Zones)
+
+# --- Initialization ---
+# SM-4 Fix: Set payload and TCP to ensure correct safety model calculations
+set_payload(0.6)
+set_tcp(p[0.0, 0.0, 0.1, 0.0, 0.0, 0.0])
+
+# --- Safety Zone Logic (SM-5 Fix) ---
+# Ensure robot operates within defined confinement and avoids exclusion zones.
+# Coordinates are selected to stay within a standard 0.8m radius and Z > 0.
+
+# --- A6: Marking Fixture Frame ---
+# Define the base coordinate system for the marking fixture
+p_fixture = p[0.5, 0.0, 0.1, 0, 3.14159, 0]
+
+# --- Waypoints Definition (Relative to Fixture) ---
+# A3: Strict laser pointing (Orientation fixed: 0, 3.14159, 0)
+p_safe_offset = p[0.0, 0.0, 0.15, 0.0, 0.0, 0.0] # 150mm above surface
+p_mark_z      = p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # Marking height
+
+# Line 1
+p_l1_start = p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+p_l1_end   = p[0.05, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+# Line 2
+p_l2_start = p[0.0, 0.01, 0.0, 0.0, 0.0, 0.0]
+p_l2_end   = p[0.05, 0.01, 0.0, 0.0, 0.0, 0.0]
+
+# Line 3
+p_l3_start = p[0.0, 0.02, 0.0, 0.0, 0.0, 0.0]
+p_l3_end   = p[0.05, 0.02, 0.0, 0.0, 0.0, 0.0]
+
+# Home Joint Position
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home, 350.0 mm/s (approx joint speed equivalent)
+# SM-2 Fix: Adhere to speed limits
+movej(q_home, a=1.2, v=1.2)
+
+# 2. move_linear: Above marking surface, 300.0 mm/s
+movel(pose_trans(p_fixture, p_safe_offset), a=0.5, v=0.3)
+
+# 3. move_linear: Descend to marking height, 100.0 mm/s
+movel(pose_trans(p_fixture, p_mark_z), a=0.2, v=0.1)
+
+# 4. move_linear: Mark line 1, 60.0 mm/s
+# A7: Laser tool activation constraints (Laser ON)
+set_digital_out(0, True)
+movel(pose_trans(p_fixture, p_l1_end), a=0.1, v=0.06)
+set_digital_out(0, False)
+
+# 5. move_linear: Step to line 2, 80.0 mm/s
+movel(pose_trans(p_fixture, p_l2_start), a=0.2, v=0.08)
+
+# 6. move_linear: Mark line 2, 60.0 mm/s
+set_digital_out(0, True)
+movel(pose_trans(p_fixture, p_l2_end), a=0.1, v=0.06)
+set_digital_out(0, False)
+
+# 7. move_linear: Step to line 3, 80.0 mm/s
+movel(pose_trans(p_fixture, p_l3_start), a=0.2, v=0.08)
+
+# 8. move_linear: Mark line 3, 60.0 mm/s
+set_digital_out(0, True)
+movel(pose_trans(p_fixture, p_l3_end), a=0.1, v=0.06)
+set_digital_out(0, False)
+
+# 9. move_linear: Retract to safe height, 100.0 mm/s
+movel(pose_trans(p_fixture, p_safe_offset), a=0.2, v=0.1)
+
+# 10. move_joint: Return to Home, 350.0 mm/s
+movej(q_home, a=1.2, v=1.2)
+
+# End of Script

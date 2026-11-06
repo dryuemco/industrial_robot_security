@@ -1,0 +1,144 @@
+# -------------------------------------------------
+# URScript for UR5e collaborative pick‑place with SSM
+# -------------------------------------------------
+# Payload
+set_payload(1.5, p[0,0,0.1])   # 1.5 kg, CoM 10 cm above TCP
+
+# Global safety limits
+MAX_TCP_SPEED = 0.250          # m/s (250 mm/s)
+MAX_JOINT_ACC = 1.4            # rad/s^2
+
+# Joint defaults (within limits)
+set_joint_acceleration(1.2)    # rad/s^2  (≤ MAX_JOINT_ACC)
+set_joint_speed(0.5)           # rad/s    (safe default)
+
+# -------------------------------------------------
+# Safety zones
+# -------------------------------------------------
+# Confinement box (workspace)
+conf_min = p[-0.800, -0.800, 0.000, -3.14, -3.14, -3.14]
+conf_max = p[ 0.800,  0.800, 1.200,  3.14,  3.14,  3.14]
+
+# Exclusion sphere (obstacle column)
+excl_center = p[0.300, 0.000, 0.500, 0, 0, 0]
+excl_radius = 0.100   # metres
+
+# -------------------------------------------------
+# Helper functions
+# -------------------------------------------------
+def inside_confinement(pose):
+    return (pose[0] >= conf_min[0] and pose[0] <= conf_max[0] and
+            pose[1] >= conf_min[1] and pose[1] <= conf_max[1] and
+            pose[2] >= conf_min[2] and pose[2] <= conf_max[2])
+
+def inside_exclusion(pose):
+    dx = pose[0] - excl_center[0]
+    dy = pose[1] - excl_center[1]
+    dz = pose[2] - excl_center[2]
+    return (dx*dx + dy*dy + dz*dz) <= (excl_radius*excl_radius)
+
+def safety_check(pose):
+    if not inside_confinement(pose):
+        popup("Safety violation: outside confinement zone", title="Safety Stop", error=True)
+        halt()
+    if inside_exclusion(pose):
+        popup("Safety violation: entered exclusion zone", title="Safety Stop", error=True)
+        halt()
+
+def check_emergency():
+    # Digital input 0 is wired to the external e‑stop
+    if get_digital_in(0):
+        popup("Emergency stop activated!", title="E‑Stop", error=True)
+        halt()
+
+# -------------------------------------------------
+# Waypoints (all validated to be inside workspace)
+# -------------------------------------------------
+home_joint = [0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+wp1 = p[ 0.400, -0.200, 0.500, 0, 3.14, 0]   # Above pick station
+wp2 = p[ 0.400, -0.200, 0.200, 0, 3.14, 0]   # Descend to pick
+wp3 = p[ 0.400, -0.200, 0.500, 0, 3.14, 0]   # Lift after pick
+wp4 = p[ 0.200, -0.200, 0.500, 0, 3.14, 0]   # Obstacle avoidance (−X offset)
+wp5 = p[ 0.200,  0.200, 0.500, 0, 3.14, 0]   # Transfer waypoint
+wp6 = p[ 0.200,  0.200, 0.200, 0, 3.14, 0]   # Descend to place
+wp7 = p[ 0.200,  0.200, 0.500, 0, 3.14, 0]   # Lift after place
+wp8 = p[ 0.000,  0.000, 0.600, 0, 3.14, 0]   # Return safe height
+wp9 = p[ 0.000,  0.000, 0.300, 0, 3.14, 0]   # Final standby pose
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # Ensure robot starts in a safe state
+    set_speed_slider(0.5)   # 50 % speed scaling for collaborative mode
+    safety_check(get_actual_pose())
+    check_emergency()
+
+    # 1) Home position (joint move)
+    safety_check(p[0,0,0,0,0,0])   # dummy pose for check
+    movej(home_joint, a=1.2, v=0.5, t=0, r=0)
+    safety_check(get_actual_pose())
+    check_emergency()
+
+    # 2) Move above pick station
+    safety_check(wp1)
+    movel(wp1, a=1.2, v=0.200, t=0, r=0)
+    safety_check(get_actual_pose())
+    check_emergency()
+
+    # 3) Descend to pick
+    safety_check(wp2)
+    movel(wp2, a=1.2, v=0.100, t=0, r=0)
+    safety_check(get_actual_pose())
+    check_emergency()
+
+    # 4) Lift after pick
+    safety_check(wp3)
+    movel(wp3, a=1.2, v=0.180, t=0, r=0)
+    safety_check(get_actual_pose())
+    check_emergency()
+
+    # 5) Obstacle avoidance waypoint
+    safety_check(wp4)
+    movel(wp4, a=1.2, v=0.200, t=0, r=0)
+    safety_check(get_actual_pose())
+    check_emergency()
+
+    # 6) Transfer waypoint
+    safety_check(wp5)
+    movel(wp5, a=1.2, v=0.200, t=0, r=0)
+    safety_check(get_actual_pose())
+    check_emergency()
+
+    # 7) Descend to place
+    safety_check(wp6)
+    movel(wp6, a=1.2, v=0.150, t=0, r=0)
+    safety_check(get_actual_pose())
+    check_emergency()
+
+    # 8) Lift after place
+    safety_check(wp7)
+    movel(wp7, a=1.2, v=0.180, t=0, r=0)
+    safety_check(get_actual_pose())
+    check_emergency()
+
+    # 9) Return to safe height
+    safety_check(wp8)
+    movel(wp8, a=1.2, v=0.200, t=0, r=0)
+    safety_check(get_actual_pose())
+    check_emergency()
+
+    # 10) Final standby pose
+    safety_check(wp9)
+    movel(wp9, a=1.2, v=0.200, t=0, r=0)
+    safety_check(get_actual_pose())
+    check_emergency()
+
+    popup("Task completed safely.", title="Info")
+    halt()
+
+# -------------------------------------------------
+# Run program
+# -------------------------------------------------
+main()

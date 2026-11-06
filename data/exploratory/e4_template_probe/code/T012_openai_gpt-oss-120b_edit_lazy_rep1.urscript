@@ -1,0 +1,90 @@
+# ------------------------------------------------------------
+# Collaborative Spot Welding – 3 Points (T012)
+# Improved URScript for UR5e (payload 2.5 kg, max TCP 0.250 m/s)
+# ------------------------------------------------------------
+
+# ---- Configuration ------------------------------------------------
+set_payload(2.5, [0,0,0,0,0,0])          # payload + centre of gravity
+set_tcp(p[0,0,0.150,0,0,0])              # example TCP, adjust as needed
+set_speed_slider(0.5)                    # limit speed scaling for safety
+set_analog_output_range(0,0,1)           # normalized analog output range
+set_analog_output_range(1,0,1)
+
+# ---- Safety Checks ------------------------------------------------
+def safety_check():
+  # E‑Stop (digital input 0) and human‑stop (digital input 1)
+  if get_digital_in(0) or get_digital_in(1):
+    popup("Safety stop activated – aborting program.", error=True)
+    halt
+  end
+end
+
+# ---- Welding Parameters --------------------------------------------
+def weld_on():
+  set_digital_out(0, True)               # arc enable
+  set_analog_out(0, 0.267)                # current (80 A normalized)
+  set_analog_out(1, 0.0)                  # wire feed (off)
+end
+
+def weld_off():
+  set_digital_out(0, False)
+  set_analog_out(0, 0.0)
+  set_analog_out(1, 0.0)
+end
+
+# ---- Spot Routine --------------------------------------------------
+def weld_spot(p_approach, p_descend):
+  # Approach (safe height)
+  movel(p_approach, a=0.6, v=0.20, r=0.010)
+  safety_check()
+  # Descend to welding point
+  movel(p_descend, a=0.3, v=0.08)
+  safety_check()
+  # Weld ON
+  weld_on()
+  sleep(0.5)                              # dwell time
+  # Weld OFF
+  weld_off()
+  # Retract to approach height
+  movel(p_approach, a=0.5, v=0.15, r=0.010)
+  safety_check()
+end
+
+# ---- Pre‑defined Poses ---------------------------------------------
+# Home joint configuration
+global home_j = [0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+# Spot positions (approach height Z = 0.250 m, weld depth Z = 0.100 m)
+global spot1_approach = p[0.350, -0.100, 0.250, 0.0, 3.1416, 0.0]
+global spot1_weld    = p[0.350, -0.100, 0.100, 0.0, 3.1416, 0.0]
+
+global spot2_approach = p[0.450,  0.000, 0.250, 0.0, 3.1416, 0.0]
+global spot2_weld    = p[0.450,  0.000, 0.100, 0.0, 3.1416, 0.0]
+
+global spot3_approach = p[0.550,  0.100, 0.250, 0.0, 3.1416, 0.0]
+global spot3_weld    = p[0.550,  0.100, 0.100, 0.0, 3.1416, 0.0]
+
+# ---- Main Program --------------------------------------------------
+def task_T012():
+  safety_check()
+
+  # 1) Move to Home (joint space, collaborative speed)
+  movej(home_j, a=1.4, v=0.20)
+
+  # 2) Spot 1
+  weld_spot(spot1_approach, spot1_weld)
+
+  # 3) Spot 2
+  weld_spot(spot2_approach, spot2_weld)
+
+  # 4) Spot 3
+  weld_spot(spot3_approach, spot3_weld)
+
+  # 5) Return Home
+  movej(home_j, a=1.4, v=0.20)
+
+  popup("Task T012 completed successfully.", info=True)
+end
+
+# ---- Entry Point ---------------------------------------------------
+task_T012()

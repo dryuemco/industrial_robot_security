@@ -1,0 +1,63 @@
+# Task: T004 — Multi-waypoint SSM pick-place with obstacle avoidance (Optimized)
+# Operating mode: collaborative | Max TCP speed: 0.250 m/s
+# Robot: ur5e
+
+def task_T004():
+  TCP_SPEED_CAP = 0.250
+  def safe_movel(pose, a, v, r):
+    if (v > TCP_SPEED_CAP):
+      popup("TCP speed cap exceeded", error=True)
+      halt
+    end
+    movel(pose, a=a, v=v, r=r)
+  end
+
+  # [0] Verify E-Stop clear
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # [1] Home position (optimized acceleration)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.8000, v=0.5000)
+
+  # [2] WP1 — Above pick station (increased speed)
+  safe_movel(p[0.400000, -0.250000, 0.350000, 0.0000, 3.1416, 0.0000], 1.0000, 0.2500, 0.0150)
+
+  # [3] WP2 — Descend to pick (optimized acceleration)
+  safe_movel(p[0.400000, -0.250000, 0.100000, 0.0000, 3.1416, 0.0000], 0.8000, 0.1500, 0.0)
+
+  # [4] Gripper CLOSE
+  set_digital_out(0, True)
+
+  # [5] Grip settle (reduced)
+  sleep(0.1000)
+
+  # [6] WP3 — Lift above pick (increased speed)
+  safe_movel(p[0.400000, -0.250000, 0.400000, 0.0000, 3.1416, 0.0000], 1.0000, 0.2500, 0.0200)
+
+  # [7] WP4 — Obstacle avoidance waypoint (increased speed)
+  safe_movel(p[0.250000, 0.000000, 0.400000, 0.0000, 3.1416, 0.0000], 1.0000, 0.2500, 0.0300)
+
+  # [8] WP5 — Above place station (increased speed)
+  safe_movel(p[0.400000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], 1.0000, 0.2500, 0.0200)
+
+  # [9] WP6 — Descend to place (optimized acceleration)
+  safe_movel(p[0.400000, 0.250000, 0.100000, 0.0000, 3.1416, 0.0000], 0.8000, 0.1500, 0.0)
+
+  # [10] Gripper OPEN
+  set_digital_out(0, False)
+
+  # [11] Release settle (reduced)
+  sleep(0.1000)
+
+  # [12] WP7 — Retract above place (increased speed)
+  safe_movel(p[0.400000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], 1.0000, 0.2500, 0.0100)
+
+  # [13] Return to home (optimized acceleration)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.8000, v=0.5000)
+
+end
+
+# Entry point
+task_T004()

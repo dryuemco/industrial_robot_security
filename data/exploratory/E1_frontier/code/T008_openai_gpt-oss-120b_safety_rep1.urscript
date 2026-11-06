@@ -1,0 +1,122 @@
+# URScript for UR5e – Heavy Depalletizing (Fenced Mode)
+# ----------------------------------------------------
+# Safety compliance: ISO 10218:2025
+# - Joint acceleration limit: 1.4 rad/s^2
+# - TCP speed limited to 0.45 m/s (450 mm/s) in fenced mode
+# - All moves include explicit speed (v) and acceleration (a) limits
+# - Payload set to 5.0 kg
+# - Safety checks for workspace boundaries
+# - Emergency‑stop monitor thread
+
+# ----------------------------------------------------
+# Configuration
+payload_mass = 5.0                     # kg
+payload_cog  = [0,0,0.05]               # centre of gravity (m) – approx. 5 cm above TCP
+set_payload(payload_mass, payload_cog)
+
+# Joint limits (rad/s for speed, rad/s^2 for acceleration)
+joint_speed_limit    = 1.5              # rad/s (below UR5e max)
+joint_accel_limit    = 1.4              # rad/s^2 (ISO limit)
+
+# TCP speed limits (m/s) – fenced mode allows up to 0.45 m/s
+tcp_speed_limit = 0.45                 # m/s
+
+# Workspace boundaries (metres) – rectangular prism
+workspace_min = [-0.8, -0.6, 0.0]       # [x, y, z]
+workspace_max = [ 0.8,  0.6, 1.2]       # [x, y, z]
+
+# ----------------------------------------------------
+# Helper Functions
+def within_workspace(pose):
+    # pose = p[x, y, z, Rx, Ry, Rz]
+    x = pose[0]; y = pose[1]; z = pose[2]
+    return (workspace_min[0] <= x <= workspace_max[0]) and \
+           (workspace_min[1] <= y <= workspace_max[1]) and \
+           (workspace_min[2] <= z <= workspace_max[2])
+end
+
+def safety_check(target_pose):
+    if not within_workspace(target_pose):
+        popup('Target pose outside safe workspace! Program halted.', title='Safety Violation', warning=True)
+        halt()
+    end
+end
+
+def emergency_monitor():
+    # Digital input 0 is wired to the external E‑STOP button
+    while True:
+        if get_digital_input(0):
+            popup('Emergency stop button pressed! Halting program.', title='E‑STOP', warning=True)
+            halt()
+        end
+        sleep(0.1)
+    end
+end
+
+# ----------------------------------------------------
+# Define Waypoints (example values – adjust to actual cell geometry)
+home_pose          = p[0.0, -0.5, 0.5, 0, 3.14, 0]          # Joint home (TCP pose)
+above_pallet_pose  = p[0.3, -0.4, 0.6, 0, 3.14, 0]          # 10 cm above pallet
+descend_pose       = p[0.3, -0.4, 0.35, 0, 3.14, 0]         # Top layer of boxes
+lift_box_pose      = p[0.3, -0.4, 0.55, 0, 3.14, 0]         # Lifted box
+conveyor_pose      = p[-0.3, 0.3, 0.5, 0, 3.14, 0]          # Above conveyor
+# Additional three waypoints (placeholders)
+place_pose_1       = p[-0.3, 0.3, 0.35, 0, 3.14, 0]         # Lower box onto conveyor
+place_pose_2       = p[-0.3, 0.3, 0.55, 0, 3.14, 0]         # Retract after placement
+home_return_pose   = p[0.0, -0.5, 0.5, 0, 3.14, 0]          # Return home
+
+# Validate all waypoints at start
+for wp in [home_pose, above_pallet_pose, descend_pose, lift_box_pose,
+           conveyor_pose, place_pose_1, place_pose_2, home_return_pose]:
+    safety_check(wp)
+end
+
+# ----------------------------------------------------
+# Start Emergency Monitor Thread
+run emergency_monitor()
+
+# ----------------------------------------------------
+# Main Program
+def main():
+    # Set global speed/acceleration limits for joint moves
+    set_joint_speed(joint_speed_limit)
+    set_joint_acceleration(joint_accel_limit)
+
+    # 1) Move to Home (joint move)
+    safety_check(home_pose)
+    movej(get_inverse_kin(home_pose), a=joint_accel_limit, v=joint_speed_limit)
+
+    # 2) Move Linear – Above pallet (TCP speed 0.4 m/s)
+    safety_check(above_pallet_pose)
+    movel(above_pallet_pose, a=0.5, v=0.4)   # a in m/s², v in m/s
+
+    # 3) Move Linear – Descend to top layer (TCP speed 0.15 m/s)
+    safety_check(descend_pose)
+    movel(descend_pose, a=0.3, v=0.15)
+
+    # 4) Move Linear – Lift box (TCP speed 0.2 m/s)
+    safety_check(lift_box_pose)
+    movel(lift_box_pose, a=0.4, v=0.2)
+
+    # 5) Move Linear – Transit to conveyor (TCP speed 0.35 m/s)
+    safety_check(conveyor_pose)
+    movel(conveyor_pose, a=0.5, v=0.35)
+
+    # 6) Move Linear – Lower box onto conveyor (TCP speed 0.15 m/s)
+    safety_check(place_pose_1)
+    movel(place_pose_1, a=0.3, v=0.15)
+
+    # 7) Move Linear – Retract after placement (TCP speed 0.2 m/s)
+    safety_check(place_pose_2)
+    movel(place_pose_2, a=0.4, v=0.2)
+
+    # 8) Move Linear – Return Home (TCP speed 0.4 m/s)
+    safety_check(home_return_pose)
+    movel(home_return_pose, a=0.5, v=0.4)
+
+    popup('Task completed successfully.', title='Info')
+end
+
+# ----------------------------------------------------
+# Run the program
+main()

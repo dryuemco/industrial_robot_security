@@ -1,0 +1,83 @@
+def screw_fastening_assembly():
+    # Set payload
+    set_payload(1.0)
+
+    # Safety configuration
+    set_standard_analog_input_domain(0, 1)
+    set_standard_analog_input_domain(1, 1)
+    set_tool_analog_input_domain(0, 1)
+    set_tool_analog_input_domain(1, 1)
+    set_analog_outputdomain(0, 0)
+    set_analog_outputdomain(1, 0)
+    set_input_actions_to_default()
+    set_tool_voltage(0)
+    set_runstate_outputs([])
+    set_tool_output_mode(0)
+
+    # Watchdog for safety signals
+    watchdog_input = 0
+    watchdog_min_frequency = 10
+    watchdog_timeout = 0.2
+
+    # Home position (joint move)
+    movej([-1.57, -1.57, -1.57, -1.57, 1.57, 0.0], a=1.2, v=2.0, r=0.0)
+
+    # Enable watchdog
+    watchdog_input = 1
+    modbus_set_output_register(0, watchdog_input)
+
+    # Above screw feeder (linear move)
+    movel(p[0.1, 0.2, 0.3, 0, 3.14, 0], a=1.2, v=0.2, r=0.0)
+
+    # Pick screw (linear move)
+    movel(p[0.1, 0.2, 0.25, 0, 3.14, 0], a=0.5, v=0.08, r=0.0)
+
+    # Activate screwdriver (tool I/O)
+    set_tool_digital_out(0, True)
+
+    # Lift from feeder (linear move)
+    movel(p[0.1, 0.2, 0.3, 0, 3.14, 0], a=1.2, v=0.18, r=0.0)
+
+    # Switch to fenced mode (safety)
+    safety_mode_transition("reduced")
+    sleep(0.5)
+
+    # Fastening point 1 (linear move)
+    movel(p[0.15, 0.2, 0.25, 0, 3.14, 0], a=1.2, v=0.2, r=0.0)
+    movel(p[0.15, 0.2, 0.2, 0, 3.14, 0], a=0.5, v=0.05, r=0.0)
+    set_tool_digital_out(0, False)
+    sleep(1.0)
+    movel(p[0.15, 0.2, 0.25, 0, 3.14, 0], a=1.2, v=0.18, r=0.0)
+
+    # Fastening point 2
+    movel(p[0.15, 0.25, 0.25, 0, 3.14, 0], a=1.2, v=0.2, r=0.0)
+    movel(p[0.15, 0.25, 0.2, 0, 3.14, 0], a=0.5, v=0.05, r=0.0)
+    set_tool_digital_out(0, False)
+    sleep(1.0)
+    movel(p[0.15, 0.25, 0.25, 0, 3.14, 0], a=1.2, v=0.18, r=0.0)
+
+    # Fastening point 3
+    movel(p[0.2, 0.2, 0.25, 0, 3.14, 0], a=1.2, v=0.2, r=0.0)
+    movel(p[0.2, 0.2, 0.2, 0, 3.14, 0], a=0.5, v=0.05, r=0.0)
+    set_tool_digital_out(0, False)
+    sleep(1.0)
+    movel(p[0.2, 0.2, 0.25, 0, 3.14, 0], a=1.2, v=0.18, r=0.0)
+
+    # Fastening point 4
+    movel(p[0.2, 0.25, 0.25, 0, 3.14, 0], a=1.2, v=0.2, r=0.0)
+    movel(p[0.2, 0.25, 0.2, 0, 3.14, 0], a=0.5, v=0.05, r=0.0)
+    set_tool_digital_out(0, False)
+    sleep(1.0)
+    movel(p[0.2, 0.25, 0.25, 0, 3.14, 0], a=1.2, v=0.18, r=0.0)
+
+    # Switch back to collaborative mode
+    safety_mode_transition("normal")
+    sleep(0.5)
+
+    # Return to home
+    movej([-1.57, -1.57, -1.57, -1.57, 1.57, 0.0], a=1.2, v=2.0, r=0.0)
+
+    # Disable watchdog
+    watchdog_input = 0
+    modbus_set_output_register(0, watchdog_input)
+end

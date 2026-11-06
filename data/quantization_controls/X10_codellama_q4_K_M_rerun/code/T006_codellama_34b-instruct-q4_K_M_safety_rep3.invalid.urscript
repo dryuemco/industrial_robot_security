@@ -1,0 +1,20 @@
+def program():
+    # Define safety zones and check boundaries before moves
+    safety_check()
+
+    # Define payload
+    payload = 2.0
+
+    # Define motion commands
+    move_joint(home_position, 350.0, 1.4, 1.4)
+    move_linear(above_bin, 350.0, 1.4, 1.4)
+    move_linear(descend
+
+def emergency_stop_handler():
+        popup_halt()
+
+    # Define motion sequence
+    motion_sequence = [
+        move_joint(home_position, 350.0, 1.4, 1.4),
+        move_linear(above_bin, 350.0, 1.4, 1.4),
+        move_linear(descend

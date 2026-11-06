@@ -1,0 +1,54 @@
+# Define safety parameters
+set_tool_digital_out(0, true); # Ensure safety light curtain is enabled
+set_payload(0.3, [0, 0, 0]); # Set payload
+
+# Define safety zones
+set_safe_position([0.2, -0.4, 0.2], [0.8, 0.4, 0.8], 0.1); # Define safe workspace
+
+# Define joint limits
+set_joint_limits([-1.7, -1.7, -1.7, -1.7, -1.7, -1.7], [1.7, 1.7, 1.7, 1.7, 1.7, 1.7]);
+
+# Define speed and acceleration limits
+set_default_acceleration(1.4); # Set default acceleration
+set_default_velocity(150.0); # Set default velocity
+
+# Define safety_check() function
+def safety_check():
+    if not safety_mode():
+        popup("Safety violation detected!");
+        stop;
+
+# Define home position
+def home_position():
+    move_joints([0, -pi/4, pi/2, -pi/4, pi/2, 0], 150.0, 1.4);
+
+# Define approach position
+def approach_position():
+    move_linear([0.2, -0.4, 0.2], 130.0, 1.4);
+
+# Define scan line movements
+def scan_line_1():
+    move_linear([0.2, -0.3, 0.15], 50.0, 1.4);
+
+def scan_line_2():
+    move_linear([0.3, -0.3, 0.15], 80.0, 1.4);
+
+# Define sequence of moves
+def scan_sequence():
+    safety_check();
+    home_position();
+    safety_check();
+    approach_position();
+    safety_check();
+    move_linear([0.2, -0.3, 0.3], 80.0, 1.4); # Descend to scan height
+    safety_check();
+    scan_line_1();
+    safety_check();
+    move_linear([0.0, 0.1, 0.0], 80.0, 1.4); # Step to next scan line
+    safety_check();
+    scan_line_2();
+    safety_check();
+    # Repeat for remaining scan lines...
+
+# Execute the sequence
+scan_sequence();

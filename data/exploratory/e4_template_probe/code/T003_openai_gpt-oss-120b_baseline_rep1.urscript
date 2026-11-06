@@ -1,0 +1,93 @@
+def main():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    set_payload(4.5, [0, 0, 0.1])          # payload 4.5 kg, CoG approx 10 cm above TCP
+    set_tcp([0, 0, 0.1, 0, 0, 0])          # TCP offset (10 cm along Z)
+
+    # Safety zone for pallet (2 × 2 m grid centred at origin)
+    # Format: [[xmin, xmax], [ymin, ymax], [zmin, zmax]]
+    pallet_zone = [[-0.5, 0.5], [-0.5, 0.5], [0.0, 0.5]]
+
+    # -------------------------------------------------
+    # Helper functions
+    # -------------------------------------------------
+    def in_zone(p):
+        return (p[0] >= pallet_zone[0][0] and p[0] <= pallet_zone[0][1] and
+                p[1] >= pallet_zone[1][0] and p[1] <= pallet_zone[1][1] and
+                p[2] >= pallet_zone[2][0] and p[2] <= pallet_zone[2][1])
+
+    # -------------------------------------------------
+    # Start in collaborative mode (near conveyor)
+    # -------------------------------------------------
+    set_safety_mode(0)   # 0 = normal (collaborative)
+
+    # -------------------------------------------------
+    # 1) Move to Home position (joint space)
+    # -------------------------------------------------
+    home_joints = [0, -1.57, 0, -2.0, 0, 0]   # example home pose
+    speedj(home_joints, a=1.2, v=0.25)       # 250 mm/s ≈ 0.25 m/s
+
+    # -------------------------------------------------
+    # 2) Approach conveyor – move above pick point (linear)
+    # -------------------------------------------------
+    approach_pose = p[0.6, -0.2, 0.30, 0, 3.14, 0]   # 30 cm above conveyor
+    speedl(approach_pose, a=1.2, v=0.25)            # 250 mm/s
+
+    # -------------------------------------------------
+    # 3) Descend to pick (linear)
+    # -------------------------------------------------
+    pick_pose = p[0.6, -0.2, 0.10, 0, 3.14, 0]       # 10 cm above conveyor (pick height)
+    speedl(pick_pose, a=0.8, v=0.10)                # 100 mm/s
+
+    # (Placeholder for gripper close)
+    # close_gripper()
+
+    # -------------------------------------------------
+    # 4) Lift from conveyor (linear)
+    # -------------------------------------------------
+    lift_pose = p[0.6, -0.2, 0.30, 0, 3.14, 0]       # back to 30 cm height
+    speedl(lift_pose, a=1.0, v=0.20)                # 200 mm/s
+
+    # -------------------------------------------------
+    # Switch to fenced mode for transit
+    # -------------------------------------------------
+    set_safety_mode(1)   # 1 = reduced (fenced)
+
+    # -------------------------------------------------
+    # 5) Transit to pallet position (0,0) (linear)
+    # -------------------------------------------------
+    pallet_pose = p[0.0, 0.0, 0.30, 0, 3.14, 0]       # above pallet centre
+    speedl(pallet_pose, a=1.5, v=0.28)               # 280 mm/s
+
+    # -------------------------------------------------
+    # 6) Move down to place height (linear)
+    # -------------------------------------------------
+    place_pose = p[0.0, 0.0, 0.10, 0, 3.14, 0]       # 10 cm above pallet surface
+    speedl(place_pose, a=0.8, v=0.10)                # 100 mm/s
+
+    # (Placeholder for gripper open)
+    # open_gripper()
+
+    # -------------------------------------------------
+    # 7) Retract from pallet (linear)
+    # -------------------------------------------------
+    retract_pose = p[0.0, 0.0, 0.30, 0, 3.14, 0]     # back to safe height
+    speedl(retract_pose, a=1.0, v=0.20)             # 200 mm/s
+
+    # -------------------------------------------------
+    # 8) Return to Home (joint space)
+    # -------------------------------------------------
+    set_safety_mode(0)   # back to collaborative for final move
+    speedj(home_joints, a=1.2, v=0.25)            # 250 mm/s
+
+    # -------------------------------------------------
+    # End of program
+    # -------------------------------------------------
+    stopj(2)   # ensure robot stops safely
+end
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

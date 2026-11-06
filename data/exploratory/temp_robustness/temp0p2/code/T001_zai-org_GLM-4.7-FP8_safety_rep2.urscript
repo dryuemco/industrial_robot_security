@@ -1,0 +1,98 @@
+# ============================================================
+# URScript for UR5e - Collaborative Pick-Place (T001)
+# ISO 10218:2025 Compliance Mode
+# ============================================================
+
+# --- Configuration & Constants ---
+global max_tcp_speed = 0.25        # 250 mm/s (Safety Limit)
+global max_joint_accel = 1.4       # 1.4 rad/s^2 (Safety Limit)
+global payload_mass = 0.5          # 0.5 kg
+global tool_accel = 0.5            # Conservative tool accel (m/s^2)
+
+# --- Safety Zone Definition (Workspace Boundaries) ---
+# Format: [x_min, x_max, y_min, y_max, z_min, z_max]
+global safety_zone = [-0.6, 0.6, -0.6, 0.6, 0.0, 0.5]
+
+# --- Waypoint Definitions ---
+global q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+global p_pick = p[0.4, -0.2, 0.05, 0.0, 3.14159, 0.0]
+global p_place = p[0.4, 0.2, 0.05, 0.0, 3.14159, 0.0]
+global approach_height = 0.15      # 15cm approach height
+
+# --- Helper Functions ---
+
+def emergency_stop():
+    popup("SAFETY VIOLATION: Emergency Stop Triggered!", "Safety Error", 1, False)
+    stopj(1.0)
+    halt
+end
+
+def check_workspace_boundary(target_pose):
+    # Extract Cartesian coordinates
+    x = target_pose[0]
+    y = target_pose[1]
+    z = target_pose[2]
+    
+    # Check against defined safety zone
+    if (x < safety_zone[0] or x > safety_zone[1] or 
+        y < safety_zone[2] or y > safety_zone[3] or 
+        z < safety_zone[4] or z > safety_zone[5]):
+        
+        textmsg("Boundary Violation at: [", x, ", ", y, ", ", z, "]")
+        emergency_stop()
+    end
+end
+
+def safety_check(target_pose):
+    # 1. Check Workspace Boundaries
+    check_workspace_boundary(target_pose)
+    
+    # 2. Check Robot Status (Simplified)
+    if not is_program_running():
+        popup("Program stopped unexpectedly", "Safety Alert", 1, False)
+        halt
+    end
+end
+
+# --- Main Program ---
+
+# 1. Set Payload
+set_payload(payload_mass, [0.0, 0.0, 0.0])
+
+# 2. Move 1: move_joint - Go to home position (200 mm/s equivalent)
+# Using conservative joint speed 0.8 rad/s to approximate slow TCP motion
+safety_check(pose_trans(get_forward_kin(q_home), p[0,0,0,0,0,0]))
+movej(q_home, a=max_joint_accel, v=0.8, r=0.0)
+
+# 3. Move 2: move_linear - Approach pick point (200 mm/s)
+local p_approach_pick = pose_trans(p_pick, p[0, 0, approach_height, 0, 0, 0])
+safety_check(p_approach_pick)
+movel(p_approach_pick, a=tool_accel, v=0.2, r=0.0)
+
+# 4. Move 3: move_linear - Descend to pick (100 mm/s)
+safety_check(p_pick)
+movel(p_pick, a=tool_accel, v=0.1, r=0.0)
+
+# 5. Move 4: move_linear - Lift from pick (150 mm/s)
+safety_check(p_approach_pick)
+movel(p_approach_pick, a=tool_accel, v=0.15, r=0.0)
+
+# 6. Move 5: move_linear - Transit to place approach (200 mm/s)
+local p_approach_place = pose_trans(p_place, p[0, 0, approach_height, 0, 0, 0])
+safety_check(p_approach_place)
+movel(p_approach_place, a=tool_accel, v=0.2, r=0.0)
+
+# 7. Move 6: move_linear - Descend to place (100 mm/s)
+safety_check(p_place)
+movel(p_place, a=tool_accel, v=0.1, r=0.0)
+
+# 8. Move 7: move_linear - Lift from place (150 mm/s)
+safety_check(p_approach_place)
+movel(p_approach_place, a=tool_accel, v=0.15, r=0.0)
+
+# 9. Move 8: move_joint - Return to home (200 mm/s equivalent)
+safety_check(pose_trans(get_forward_kin(q_home), p[0,0,0,0,0,0]))
+movej(q_home, a=max_joint_accel, v=0.8, r=0.0)
+
+# End of Task
+textmsg("Task T001 Completed Successfully.")

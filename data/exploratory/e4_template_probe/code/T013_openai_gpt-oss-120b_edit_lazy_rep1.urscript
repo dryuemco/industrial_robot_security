@@ -1,0 +1,104 @@
+# ------------------------------------------------------------
+# Collaborative Suction Palletizing – Light Boxes (T013)
+# Improved URScript for UR5e (payload 0.8 kg, collaborative mode)
+# ------------------------------------------------------------
+# Safety & configuration
+#   • Max TCP speed limited to 0.250 m/s (250 mm/s)
+#   • Confinement safety zone enforced by controller
+#   • Payload and TCP defined for accurate dynamics
+#   • Digital output 0 controls suction (True = ON, False = OFF)
+#   • Speed slider set to 50 % for added safety in collaborative mode
+# ------------------------------------------------------------
+
+def task_T013():
+    # -----------------------------------------------------------------
+    # 0. Safety & initialisation
+    # -----------------------------------------------------------------
+    # Verify E‑Stop (digital input 0 is normally wired to the E‑Stop)
+    if get_digital_in(0):
+        popup("E‑Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # Set collaborative speed scaling (50 % of max)
+    set_speed_slider(0.5)
+
+    # Define payload (0.8 kg) and centre of gravity (assumed at TCP)
+    set_payload(0.8, [0,0,0.02])   # 2 cm offset in Z for realistic CG
+
+    # Define TCP (suction cup) – adjust as per actual tool geometry
+    # Example: 0 mm X/Y offset, 0.1 m Z offset from flange
+    set_tcp(p[0,0,0.1,0,0,0])
+
+    # -----------------------------------------------------------------
+    # 1. Home position
+    # -----------------------------------------------------------------
+    movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+          a=1.4, v=0.5, r=0.0)
+
+    # -----------------------------------------------------------------
+    # 2. Define key waypoints (all positions in metres)
+    # -----------------------------------------------------------------
+    # Above staging area
+    pose_above_staging = p[0.350, -0.200, 0.300, 0.0, 3.1416, 0.0]
+    # Pick (down) pose
+    pose_pick        = p[0.350, -0.200, 0.080, 0.0, 3.1416, 0.0]
+    # Lift after pick
+    pose_lift        = p[0.350, -0.200, 0.350, 0.0, 3.1416, 0.0]
+    # Above pallet (transit)
+    pose_above_pallet= p[0.450,  0.200, 0.350, 0.0, 3.1416, 0.0]
+    # Place (down) pose
+    pose_place       = p[0.450,  0.200, 0.080, 0.0, 3.1416, 0.0]
+
+    # -----------------------------------------------------------------
+    # 3. Pick‑and‑place cycle (single iteration – can be looped externally)
+    # -----------------------------------------------------------------
+    # Move above staging area
+    movel(pose_above_staging,
+          a=0.7, v=0.22, r=0.01)
+
+    # Descend to pick
+    movel(pose_pick,
+          a=0.4, v=0.10, r=0.01)
+
+    # Activate suction (digital out 0 = True)
+    set_digital_out(0, True)
+    # Allow vacuum to stabilise
+    sleep(0.3)
+
+    # Lift the part
+    movel(pose_lift,
+          a=0.6, v=0.18, r=0.015)
+
+    # Transit to pallet
+    movel(pose_above_pallet,
+          a=0.8, v=0.23, r=0.015)
+
+    # Place on pallet
+    movel(pose_place,
+          a=0.4, v=0.10, r=0.01)
+
+    # Deactivate suction (digital out 0 = False)
+    set_digital_out(0, False)
+    # Small pause to ensure release
+    sleep(0.2)
+
+    # Retract to safe height above pallet
+    movel(pose_above_pallet,
+          a=0.7, v=0.20, r=0.01)
+
+    # -----------------------------------------------------------------
+    # 4. Return to home
+    # -----------------------------------------------------------------
+    movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+          a=1.4, v=0.5, r=0.0)
+
+    # Reset speed slider to full range (optional)
+    set_speed_slider(1.0)
+
+end
+
+# --------------------------------------------------------------------
+# Entry point
+# --------------------------------------------------------------------
+task_T013()

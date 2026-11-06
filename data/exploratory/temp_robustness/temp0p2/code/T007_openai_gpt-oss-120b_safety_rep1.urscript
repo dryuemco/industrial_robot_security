@@ -1,0 +1,97 @@
+# URScript for UR5e – Curved contour weld (Hybrid mode)
+# Safety compliance: ISO 10218:2025
+# --------------------------------------------------------------
+
+# ---- Configuration -------------------------------------------------
+set_payload(3.5, [0,0,0.1])          # payload mass (kg) and centre of gravity (m)
+set_joint_acceleration(1.4)        # max joint acceleration (rad/s^2) per joint
+set_tcp_speed(250)                 # collaborative max TCP speed (mm/s)
+
+# ---- Safety zone definition (workspace boundaries in mm) ----------
+# Define a rectangular confinement zone for the task
+global safety_zone_min = p[0, -600, 0, 0, 0, 0]
+global safety_zone_max = p[800, 600, 1200, 0, 0, 0]
+
+# ---- Helper functions -----------------------------------------------
+def in_bounds(pose):
+    # Check if a pose is inside the defined safety zone
+    return (pose[0] >= safety_zone_min[0] and pose[0] <= safety_zone_max[0] and
+            pose[1] >= safety_zone_min[1] and pose[1] <= safety_zone_max[1] and
+            pose[2] >= safety_zone_min[2] and pose[2] <= safety_zone_max[2])
+end
+
+def safety_check():
+    # Emergency stop input (digital input 0) – can be wired to e‑stop button
+    if get_digital_in(0):
+        popup("EMERGENCY STOP ACTIVATED! Halting program.", title="Safety Stop", blocking=True)
+        halt()
+    end
+    # Additional safety checks can be added here (e.g., force/torque limits)
+end
+
+def move_joint_safe(joint_target, speed):
+    safety_check()
+    # Joint speed limit (deg/s) – convert mm/s to rad/s approx if needed
+    speed = min(speed, 300)  # enforce max 300 mm/s equivalent
+    movej(joint_target, a=1.4, v=speed, t=0, r=0)
+end
+
+def move_linear_safe(pose_target, speed):
+    safety_check()
+    if not in_bounds(pose_target):
+        popup("Target pose out of safety zone! Halting.", title="Safety Violation", blocking=True)
+        halt()
+    end
+    # Enforce collaborative TCP speed limit
+    speed = min(speed, 250)   # max 250 mm/s in collaborative mode
+    movel(pose_target, a=1.4, v=speed, t=0, r=0)
+end
+
+# ---- Waypoints -------------------------------------------------------
+# Home position (joint values in radians)
+global home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Approach above weld fixture (TCP pose in mm)
+global approach_pose = p[400, 0, 800, 0, 3.14, 0]
+
+# Start of weld (descend)
+global start_weld_pose = p[400, 0, 750, 0, 3.14, 0]
+
+# Weld midpoint
+global mid_weld_pose = p[500, 0, 750, 0, 3.14, 0]
+
+# Weld end
+global end_weld_pose = p[600, 0, 750, 0, 3.14, 0]
+
+# Additional placeholder waypoints (to be defined as needed)
+global extra_pose1 = p[600, 100, 750, 0, 3.14, 0]
+global extra_pose2 = p[600, -100, 750, 0, 3.14, 0]
+
+# ---- Main program ----------------------------------------------------
+def main():
+    # 1) Move to Home position (joint move, speed 300 mm/s equivalent)
+    move_joint_safe(home_joint, 300)
+
+    # 2) Linear approach above weld fixture (collaborative speed limit)
+    move_linear_safe(approach_pose, 250)
+
+    # 3) Descend to weld start (reduced speed for safety)
+    move_linear_safe(start_weld_pose, 100)
+
+    # 4) Weld midpoint (slow arc motion)
+    move_linear_safe(mid_weld_pose, 60)
+
+    # 5) Weld end
+    move_linear_safe(end_weld_pose, 60)
+
+    # 6) Move to extra waypoint 1 (post‑weld retreat)
+    move_linear_safe(extra_pose1, 80)
+
+    # 7) Return to Home position
+    move_joint_safe(home_joint, 300)
+
+    popup("Program completed safely.", title="Status", blocking=False)
+end
+
+# ---- Run -------------------------------------------------------------
+main()

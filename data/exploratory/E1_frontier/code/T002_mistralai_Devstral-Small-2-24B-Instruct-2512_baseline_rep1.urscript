@@ -1,0 +1,28 @@
+def weld_task():
+    # Set payload
+    set_payload(3.0, [0, 0, 0.1])  # Mass, CoG in [x, y, z]
+
+    # Home position
+    home_pos = [0, -1.5708, 0, 0, 1.5708, 0]  # Example joint positions
+    movej(home_pos, a=1.4, v=300.0)
+
+    # Approach above weld start
+    approach_pos = [0.2, -0.2, 0.3, 0, 0, 0]  # Example TCP pose
+    movel(approach_pos, a=1.4, v=250.0)
+
+    # Descend to weld start
+    weld_start = [0.2, -0.2, 0.1, 0, 0, 0]  # Example TCP pose
+    movel(weld_start, a=1.4, v=100.0)
+
+    # Weld seam (300mm linear path)
+    weld_end = [0.5, -0.2, 0.1, 0, 0, 0]  # Example TCP pose (300mm away)
+    movel(weld_end, a=1.4, v=50.0)
+
+    # Retract above weld end
+    retract_pos = [0.5, -0.2, 0.3, 0, 0, 0]  # Example TCP pose
+    movel(retract_pos, a=1.4, v=200.0)
+
+    # Return to home
+    movej(home_pos, a=1.4, v=300.0)
+
+weld_task()

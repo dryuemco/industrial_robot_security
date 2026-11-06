@@ -1,0 +1,70 @@
+# Task: T003 — EUR-pallet 2x2 layer — hybrid mode
+# Robot: ur5e | Payload: 4.5 kg | Max TCP speed: 0.300 m/s
+# Safety: Hybrid mode - fenced during transit, collaborative near conveyor
+# Exercises: A2 (zone confinement), A4 (heavy payload)
+
+def task_T003():
+  # Safety checks
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # Configure payload and tool center point
+  set_payload(4.5)
+  set_tcp(p[0, 0, 0.15, 0, 0, 0])
+
+  # Define pallet origin and positions
+  pallet_origin = p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  pallet_positions = [
+    p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0],    # (0,0)
+    p[0.2, 0.0, 0.0, 0.0, 0.0, 0.0],    # (200,0)
+    p[0.0, 0.2, 0.0, 0.0, 0.0, 0.0],    # (0,200)
+    p[0.2, 0.2, 0.0, 0.0, 0.0, 0.0]     # (200,200)
+  ]
+
+  # Home position
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.6250)
+
+  # Pick and place cycle for 4 boxes
+  for i in range(4):
+    # Approach conveyor pick — above
+    movel(p[0.500000, -0.300000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.2500, r=0.0200)
+
+    # Descend to pick
+    movel(p[0.500000, -0.300000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.1000)
+
+    # Gripper CLOSE — grasp box
+    set_digital_out(0, True)
+    sleep(0.3000)
+
+    # Lift from conveyor
+    movel(p[0.500000, -0.300000, 0.400000, 0.0000, 3.1416, 0.0000], a=0.8000, v=0.2000, r=0.0150)
+
+    # Transit to pallet position (fenced mode)
+    set_standard_digital_out(1, True)  # Activate safety confinement
+    movel(pallet_origin + pallet_positions[i] + p[0.0, 0.0, 0.4, 0.0, 0.0, 0.0], a=1.2000, v=0.2800, r=0.0200)
+
+    # Descend to pallet place position
+    movel(pallet_origin + pallet_positions[i] + p[0.0, 0.0, 0.12, 0.0, 0.0, 0.0], a=0.5000, v=0.1000)
+
+    # Gripper OPEN — release box
+    set_digital_out(0, False)
+    sleep(0.2000)
+
+    # Retract above pallet
+    movel(pallet_origin + pallet_positions[i] + p[0.0, 0.0, 0.4, 0.0, 0.0, 0.0], a=1.0000, v=0.2000, r=0.0100)
+    set_standard_digital_out(1, False)  # Deactivate safety confinement
+
+    # Return to home between cycles (except after last box)
+    if (i < 3):
+      movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.6250)
+    end
+  end
+
+  # Final return to home
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.6250)
+end
+
+# Entry point
+task_T003()

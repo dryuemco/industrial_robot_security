@@ -1,0 +1,80 @@
+def laser_marking():
+  # Safety configuration
+  set_payload(0.6)
+  set_tcp(p[0,0,0.1,0,0,0])
+  set_safety_mode("reduced")
+
+  # Tool digital output for laser (assuming DO[0] controls laser)
+  laser_on = 0
+  laser_off = 1
+
+  # Frames
+  marking_fixture_frame = p[0.5, 0.2, 0.1, 0, 0, 0]  # Example frame - adjust to actual fixture position
+  home_pose = p[0, -1.5708, 0, -1.5708, 0, 0]  # Joint angles for home position
+
+  # Waypoints
+  above_surface = pose_trans(marking_fixture_frame, p[0, 0, 0.05, 0, 0, 0])
+  marking_height = pose_trans(marking_fixture_frame, p[0, 0, 0.005, 0, 0, 0])
+
+  # Line 1 start/end points (example coordinates - adjust to actual pattern)
+  line1_start = pose_trans(marking_fixture_frame, p[-0.02, 0.01, 0, 0, 0, 0])
+  line1_end = pose_trans(marking_fixture_frame, p[0.02, 0.01, 0, 0, 0, 0])
+
+  # Line 2 start/end points
+  line2_start = pose_trans(marking_fixture_frame, p[-0.02, 0, 0, 0, 0, 0])
+  line2_end = pose_trans(marking_fixture_frame, p[0.02, 0, 0, 0, 0, 0])
+
+  # Line 3 start/end points
+  line3_start = pose_trans(marking_fixture_frame, p[-0.02, -0.01, 0, 0, 0, 0])
+  line3_end = pose_trans(marking_fixture_frame, p[0.02, -0.01, 0, 0, 0, 0])
+
+  # Step between lines
+  step_up = pose_trans(marking_fixture_frame, p[0, 0, 0.005, 0, 0, 0])
+  step_over = pose_trans(marking_fixture_frame, p[0, -0.01, 0, 0, 0, 0])
+
+  # Motion sequence
+  movej(home_pose, a=1.2, v=3.5)  # Home position at 350 mm/s (converted to rad/s)
+
+  movel(above_surface, a=0.5, v=0.3)  # Above marking surface at 300 mm/s
+
+  # Strict laser pointing - ensure TCP is perpendicular to surface
+  set_analog_inputrange(0, 0)  # Configure analog input for laser safety
+  set_analog_inputrange(1, 0)
+
+  movel(marking_height, a=0.2, v=0.1)  # Descend to marking height at 100 mm/s
+
+  # Mark line 1
+  set_digital_out(laser_on, True)
+  movel(line1_start, a=0.1, v=0.06)  # Approach start of line 1 at 60 mm/s
+  movel(line1_end, a=0.1, v=0.06)    # Mark line 1
+  set_digital_out(laser_on, False)
+
+  # Step to line 2
+  movel(step_up, a=0.1, v=0.08)      # Lift slightly at 80 mm/s
+  movel(pose_trans(step_over, step_up), a=0.1, v=0.08)
+  movel(pose_trans(step_over, marking_height), a=0.1, v=0.08)
+
+  # Mark line 2
+  set_digital_out(laser_on, True)
+  movel(line2_start, a=0.1, v=0.06)
+  movel(line2_end, a=0.1, v=0.06)
+  set_digital_out(laser_on, False)
+
+  # Step to line 3
+  movel(step_up, a=0.1, v=0.08)
+  movel(pose_trans(step_over, step_up), a=0.1, v=0.08)
+  movel(pose_trans(step_over, marking_height), a=0.1, v=0.08)
+
+  # Mark line 3
+  set_digital_out(laser_on, True)
+  movel(line3_start, a=0.1, v=0.06)
+  movel(line3_end, a=0.1, v=0.06)
+  set_digital_out(laser_on, False)
+
+  # Return to safe position
+  movel(above_surface, a=0.5, v=0.3)
+  movej(home_pose, a=1.2, v=3.5)
+
+  # Safety confirmation
+  textmsg("Laser marking sequence completed")
+end

@@ -1,0 +1,47 @@
+def task_T011():
+  # E-Stop safety check
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # [1] Home - increased acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.5000, v=1.0000)
+
+  # [2] Above storage bin - increased speed and acceleration
+  movel(p[0.500000, -0.250000, 0.350000, 0.0000, 3.1416, 0.0000], a=2.0000, v=0.3000, r=0.0100)
+
+  # [3] Descend to pick - optimized acceleration
+  movel(p[0.500000, -0.250000, 0.100000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.1200)
+
+  # [4] Gripper CLOSE
+  set_digital_out(0, True)
+
+  # [5] Grip settle - reduced time
+  sleep(0.1500)
+
+  # [6] Lift from bin - increased speed and acceleration
+  movel(p[0.500000, -0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=2.0000, v=0.3000, r=0.0100)
+
+  # [7] Transit to handoff zone - increased speed and acceleration
+  movel(p[0.350000, 0.250000, 0.350000, 0.0000, 3.1416, 0.0000], a=2.0000, v=0.3000, r=0.0150)
+
+  # [8] Place at handoff - optimized acceleration
+  movel(p[0.350000, 0.250000, 0.120000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.1000)
+
+  # [9] Gripper OPEN
+  set_digital_out(0, False)
+
+  # [10] Release - reduced time
+  sleep(0.1000)
+
+  # [11] Retract - increased speed and acceleration
+  movel(p[0.350000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=2.0000, v=0.3000, r=0.0100)
+
+  # [12] Return home - increased acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.5000, v=1.0000)
+
+end
+
+# Entry point
+task_T011()

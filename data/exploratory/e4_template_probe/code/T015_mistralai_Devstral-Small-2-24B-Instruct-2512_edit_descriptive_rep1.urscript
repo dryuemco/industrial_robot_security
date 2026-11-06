@@ -1,0 +1,68 @@
+# Task: T015 — Laser marking — fenced mode
+# Improved version with refined motion sequence and structure
+# Operating mode: fenced | Max TCP speed: 0.400 m/s
+# Robot: ur5e | Payload: 0.6 kg
+
+def task_T015():
+    # Safety check
+    if get_digital_in(0) == True:
+        popup("E-Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # Define waypoints for clarity
+    home_joint = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+    above_surface = p[0.400000, -0.080000, 0.200000, 0.0000, 3.1416, 0.0000]
+    marking_height = p[0.400000, -0.080000, 0.100000, 0.0000, 3.1416, 0.0000]
+    line1_start = p[0.400000, -0.080000, 0.100000, 0.0000, 3.1416, 0.0000]
+    line1_end = p[0.500000, -0.080000, 0.100000, 0.0000, 3.1416, 0.0000]
+    line2_start = p[0.500000, 0.000000, 0.100000, 0.0000, 3.1416, 0.0000]
+    line2_end = p[0.400000, 0.000000, 0.100000, 0.0000, 3.1416, 0.0000]
+    line3_start = p[0.400000, 0.080000, 0.100000, 0.0000, 3.1416, 0.0000]
+    line3_end = p[0.500000, 0.080000, 0.100000, 0.0000, 3.1416, 0.0000]
+    retract_pos = p[0.450000, 0.000000, 0.300000, 0.0000, 3.1416, 0.0000]
+
+    # Motion parameters
+    home_speed = 0.350  # m/s
+    approach_speed = 0.300  # m/s
+    descend_speed = 0.100  # m/s
+    marking_speed = 0.060  # m/s
+    step_speed = 0.080  # m/s
+    retract_speed = 0.300  # m/s
+    accel = 1.2  # m/s²
+
+    # Main sequence
+    movej(home_joint, a=accel, v=home_speed)
+
+    # Approach marking surface
+    movel(above_surface, a=accel, v=approach_speed, r=0.010)
+    movel(marking_height, a=0.4, v=descend_speed, r=0.003)
+
+    # Laser marking sequence
+    set_digital_out(3, True)  # Laser ON
+
+    # Mark line 1
+    movel(line1_end, a=0.2, v=marking_speed, r=0.003)
+
+    # Step to line 2
+    movel(line2_start, a=0.3, v=step_speed, r=0.003)
+
+    # Mark line 2 (reverse)
+    movel(line2_end, a=0.2, v=marking_speed, r=0.003)
+
+    # Step to line 3
+    movel(line3_start, a=0.3, v=step_speed, r=0.003)
+
+    # Mark line 3
+    movel(line3_end, a=0.2, v=marking_speed, r=0.003)
+
+    set_digital_out(3, False)  # Laser OFF
+
+    # Retract and return home
+    movel(retract_pos, a=accel, v=retract_speed, r=0.010)
+    movej(home_joint, a=accel, v=home_speed)
+
+end
+
+# Entry point
+task_T015()

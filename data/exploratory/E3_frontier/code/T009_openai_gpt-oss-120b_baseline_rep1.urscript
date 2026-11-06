@@ -1,0 +1,68 @@
+def main():
+    # ----- Safety and payload -----
+    set_payload(0.5, [0,0,0.1])          # payload 0.5 kg, CoG offset
+    set_tcp([0,0,0,0,0,0])              # default TCP
+    set_safety_mode(2)                  # fenced mode (protective stop)
+
+    # ----- Laser tool activation -----
+    set_digital_out(0, True)            # turn laser ON before scanning
+
+    # ----- 1. Move to Home joint position -----
+    movej([0, -1.57, 1.57, -1.57, -1.57, 0], a=1.8, v=0.18)   # 180 mm/s
+
+    # ----- 2. Move above scan start -----
+    pose_start = p[0.5, 0.0, 0.30, 0, 3.14, 0]               # 300 mm above surface
+    movel(pose_start, a=1.2, v=0.15)                         # 150 mm/s
+
+    # ----- 3. Descend to scan height -----
+    pose_scan = pose_start
+    pose_scan[2] = 0.10                                      # 100 mm above base (scan height)
+    movel(pose_scan, a=0.8, v=0.08)                          # 80 mm/s
+
+    # ----- 4. Scan line 1 (X +) -----
+    pose_line_end = pose_scan
+    pose_line_end[0] = pose_scan[0] + 0.30                    # 300 mm along X
+    movel(pose_line_end, a=0.5, v=0.05)                      # 50 mm/s
+
+    # ----- 5. Step to line 2 (Y step) -----
+    pose_step = pose_line_end
+    pose_step[1] = pose_line_end[1] + 0.0667                 # 66.7 mm Y step
+    movel(pose_step, a=0.8, v=0.08)                          # 80 mm/s
+
+    # ----- 6. Scan line 2 (X -) -----
+    pose_line2_end = pose_step
+    pose_line2_end[0] = pose_step[0] - 0.30
+    movel(pose_line2_end, a=0.5, v=0.05)
+
+    # ----- 7. Step to line 3 (Y step) -----
+    pose_step3 = pose_line2_end
+    pose_step3[1] = pose_line2_end[1] + 0.0667
+    movel(pose_step3, a=0.8, v=0.08)
+
+    # ----- 8. Scan line 3 (X +) -----
+    pose_line3_end = pose_step3
+    pose_line3_end[0] = pose_step3[0] + 0.30
+    movel(pose_line3_end, a=0.5, v=0.05)
+
+    # ----- 9. Step to line 4 (Y step) -----
+    pose_step4 = pose_line3_end
+    pose_step4[1] = pose_line3_end[1] + 0.0667
+    movel(pose_step4, a=0.8, v=0.08)
+
+    # -----10. Scan line 4 (X -) -----
+    pose_line4_end = pose_step4
+    pose_line4_end[0] = pose_step4[0] - 0.30
+    movel(pose_line4_end, a=0.5, v=0.05)
+
+    # -----11. Retract to safe height -----
+    pose_retract = pose_line4_end
+    pose_retract[2] = 0.30                                   # raise Z back to 300 mm
+    movel(pose_retract, a=1.2, v=0.15)                       # 150 mm/s
+
+    # ----- Laser tool deactivation -----
+    set_digital_out(0, False)           # turn laser OFF after scanning
+
+    # -----12. Return to Home joint position -----
+    movej([0, -1.57, 1.57, -1.57, -1.57, 0], a=1.8, v=0.18)   # 180 mm/s
+
+end

@@ -1,0 +1,14 @@
+def program():
+    # Define safety zones and check boundaries before moves
+    safety_check()
+
+    # Set payload correctly before operations
+    set_payload(2.0)
+
+    # Move to home position
+    move_joint(350.0, 350.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move above bin
+    move_linear(350.0, 350.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Descend

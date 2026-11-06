@@ -1,0 +1,97 @@
+# Safety Configuration and Definitions
+# ISO 10218:2025 Compliance Parameters
+MAX_JOINT_ACCEL = 1.4
+MAX_TCP_SPEED = 0.25
+
+# Safety Zone Boundaries (x, y, z in meters)
+ZONE_MIN = [-0.8, -0.8, 0.0]
+ZONE_MAX = [0.8, 0.8, 0.8]
+
+# Emergency Stop Handler
+def emergency_stop(msg):
+    stopl(1.0)
+    popup("Safety Violation: " + msg, "EMERGENCY STOP", False, 1)
+    halt
+end
+
+# Safety Check Function
+def safety_check(pose):
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    
+    if x < ZONE_MIN[0] or x > ZONE_MAX[0]:
+        emergency_stop("X-axis boundary violation")
+    end
+    if y < ZONE_MIN[1] or y > ZONE_MAX[1]:
+        emergency_stop("Y-axis boundary violation")
+    end
+    if z < ZONE_MIN[2] or z > ZONE_MAX[2]:
+        emergency_stop("Z-axis boundary violation")
+    end
+end
+
+# Waypoint Definitions
+# Home Position (Joint space)
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Staging Area (Pick)
+p_staging_above = p[0.4, -0.4, 0.3, 3.14, 0, 0]
+p_staging_pick = p[0.4, -0.4, 0.0, 3.14, 0, 0]
+
+# Pallet Area (Place)
+p_pallet_transit = p[0.4, 0.4, 0.3, 3.14, 0, 0]
+p_pallet_place = p[0.4, 0.4, 0.0, 3.14, 0, 0]
+
+# Main Program
+def main():
+    # Set Payload: 0.8 kg, CoM approx 50mm below flange
+    set_payload(0.8, [0, 0, 0.05])
+    
+    # Initial Safety Check
+    safety_check(get_actual_tcp_pose())
+    
+    # Move 1: move_joint to Home
+    # Speed interpreted as safe joint speed (rad/s) equivalent to collaborative operation
+    movej(q_home, a=MAX_JOINT_ACCEL, v=1.0)
+    
+    # Move 2: move_linear to Above Staging (220.0 mm/s -> 0.22 m/s)
+    safety_check(p_staging_above)
+    movel(p_staging_above, a=0.5, v=0.22)
+    
+    # Move 3: move_linear Descend to Pick (100.0 mm/s -> 0.10 m/s)
+    safety_check(p_staging_pick)
+    movel(p_staging_pick, a=0.5, v=0.10)
+    
+    # Activate Suction (Gripper)
+    set_digital_out(0, True)
+    sleep(0.5)
+    
+    # Move 4: move_linear Lift (180.0 mm/s -> 0.18 m/s)
+    safety_check(p_staging_above)
+    movel(p_staging_above, a=0.5, v=0.18)
+    
+    # Move 5: move_linear Transit to Pallet (230.0 mm/s -> 0.23 m/s)
+    safety_check(p_pallet_transit)
+    movel(p_pallet_transit, a=0.5, v=0.23)
+    
+    # Move 6: move_linear Descend to Place (Inferred sequence step)
+    safety_check(p_pallet_place)
+    movel(p_pallet_place, a=0.5, v=0.10)
+    
+    # Release Suction (Gripper)
+    set_digital_out(0, False)
+    sleep(0.5)
+    
+    # Move 7: move_linear Lift from Place (Inferred sequence step)
+    safety_check(p_pallet_transit)
+    movel(p_pallet_transit, a=0.5, v=0.20)
+    
+    # Move 8: move_joint Return to Home (Inferred sequence step)
+    safety_check(get_actual_tcp_pose())
+    movej(q_home, a=MAX_JOINT_ACCEL, v=1.0)
+    
+end
+
+# Execute Main
+main()

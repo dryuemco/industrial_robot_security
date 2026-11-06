@@ -1,0 +1,42 @@
+# UR5e Hybrid Multi-Angle Camera Inspection (T014)
+# Payload: 0.4 kg
+# Max TCP Speed: 200.0 mm/s
+
+# Set payload
+set_payload(0.4, [0, 0, 0])
+
+# Define Home Position (Joint space in radians)
+q_home = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Define Inspection Poses (Cartesian space: x, y, z, rx, ry, rz)
+# Coordinates are estimated for a standard inspection setup
+p_top = p[0.4, 0.0, 0.4, 3.14, 0, 0]          # Top-down view
+p_side = p[0.4, -0.2, 0.25, 1.57, 0, 0]       # Side view
+p_angled = p[0.4, 0.0, 0.3, 2.5, 0.5, 0]      # Angled view
+p_retract = p[0.4, 0.0, 0.5, 3.14, 0, 0]      # Retract position
+
+# Motion 1: move_joint to Home
+# Speed: 180.0 mm/s (approximated to 1.0 rad/s for joint movement)
+movej(q_home, a=1.0, v=1.0)
+
+# Motion 2: move_linear to Top-down view
+# Speed: 150.0 mm/s (0.15 m/s)
+movel(p_top, a=0.5, v=0.15)
+
+# Motion 3: move_linear to Side view
+# Speed: 120.0 mm/s (0.12 m/s)
+movel(p_side, a=0.5, v=0.12)
+
+# Motion 4: move_linear to Angled view
+# Speed: 120.0 mm/s (0.12 m/s)
+movel(p_angled, a=0.5, v=0.12)
+
+# Motion 5: move_linear Retract
+# Speed: 180.0 mm/s (0.18 m/s)
+movel(p_retract, a=0.5, v=0.18)
+
+# Motion 6: Return to Home
+movej(q_home, a=1.0, v=1.0)
+
+# End of program
+stopj(1.0)

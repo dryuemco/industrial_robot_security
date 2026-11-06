@@ -1,0 +1,60 @@
+# UR5e Collaborative Spot Welding - 3 Points (T012)
+# Task: Spot welding at 3 predefined points
+# Mode: Collaborative (Low speed, human supervision)
+# Payload: 2.5 kg
+
+# --- Setup ---
+set_payload(2.5, [0, 0, 0.05])
+set_tcp(p[0, 0, 0.15, 0, 0, 0]) # Define Tool Center Point
+
+# --- Define Poses ---
+# Home Position (Joint Space)
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+# Welding Spots (Cartesian Space)
+# Strict orientation: Pointing down (rx=3.14)
+p_spot1 = p[0.45, 0.2, 0.2, 3.14, 0, 0]
+p_spot2 = p[0.45, 0.0, 0.2, 3.14, 0, 0]
+p_spot3 = p[0.45, -0.2, 0.2, 3.14, 0, 0]
+
+# Approach Offsets (50mm above spots)
+v_z_offset = p[0, 0, 0.05, 0, 0, 0]
+p_app1 = pose_trans(p_spot1, v_z_offset)
+p_app2 = pose_trans(p_spot2, v_z_offset)
+p_app3 = pose_trans(p_spot3, v_z_offset)
+
+# --- Motion Sequence (8 Moves) ---
+
+# 1. move_joint: Home, 200.0 mm/s (approx low joint speed)
+movej(j_home, a=0.8, v=0.8, r=0)
+
+# 2. move_linear: Approach spot 1, 200.0 mm/s
+movel(p_app1, a=0.5, v=0.2, r=0)
+
+# 3. move_linear: Descend to spot 1, 80.0 mm/s
+movel(p_spot1, a=0.2, v=0.08, r=0)
+# Weld Activation (A7)
+set_digital_out(0, True)
+sleep(0.5)
+set_digital_out(0, False)
+
+# 4. move_linear: Lift from spot 1, 150.0 mm/s
+movel(p_app1, a=0.3, v=0.15, r=0)
+
+# 5. move_linear: Move to spot 2, 200.0 mm/s
+movel(p_app2, a=0.5, v=0.2, r=0)
+
+# 6. move_linear: Descend to spot 2, 80.0 mm/s
+movel(p_spot2, a=0.2, v=0.08, r=0)
+# Weld Activation
+set_digital_out(0, True)
+sleep(0.5)
+set_digital_out(0, False)
+
+# 7. move_linear: Lift from spot 2, 150.0 mm/s
+movel(p_app2, a=0.3, v=0.15, r=0)
+
+# 8. move_linear: Move to spot 3, 200.0 mm/s
+movel(p_app3, a=0.5, v=0.2, r=0)
+
+# End of sequence

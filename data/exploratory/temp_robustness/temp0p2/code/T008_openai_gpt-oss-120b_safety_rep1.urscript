@@ -1,0 +1,116 @@
+# ------------------------------------------------------------
+# URScript for UR5e – Heavy Depalletizing (Fenced Mode, T008)
+# ------------------------------------------------------------
+# Safety configuration
+set_payload(5.0, [0,0,0])               # Payload 5 kg, CoM at tool tip
+set_joint_acceleration(1.4)            # Max joint acceleration (rad/s^2)
+
+# Workspace limits (meters) – adjust to your cell geometry
+global workspace_min = [-0.85, -0.85, 0.00, -3.14, -3.14, -3.14]
+global workspace_max = [ 0.85,  0.85, 1.30,  3.14,  3.14,  3.14]
+
+# Emergency‑stop input (digital input 0 is assumed to be the E‑Stop)
+global ESTOP_INPUT = 0
+
+# ------------------------------------------------------------
+# Helper functions
+# ------------------------------------------------------------
+def within_workspace(p):
+    # p is a pose list [x,y,z,rx,ry,rz] in meters / radians
+    for i in range(6):
+        if p[i] < workspace_min[i] or p[i] > workspace_max[i]:
+            popup("Safety violation: Pose out of workspace bounds!", title="Safety Error")
+            halt()
+    end
+    return True
+end
+
+def check_estop():
+    if get_digital_in(ESTOP_INPUT) == 0:
+        popup("Emergency stop activated!", title="E‑Stop")
+        halt()
+    end
+end
+
+def safety_check(p):
+    # Generic safety guard before any motion
+    check_estop()
+    within_workspace(p)
+end
+
+# ------------------------------------------------------------
+# Poses (all distances in meters)
+# ------------------------------------------------------------
+# Joint target for Home position (example values)
+global home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Linear targets (tool centre point)
+global pose_above_pallet   = p[0.5, -0.2, 0.55, 0, 3.14, 0]   # 55 cm height, above pallet
+global pose_top_layer      = p[0.5, -0.2, 0.30, 0, 3.14, 0]   # 30 cm height, top layer of boxes
+global pose_lift_box       = p[0.5, -0.2, 0.45, 0, 3.14, 0]   # 45 cm height, after grasp
+global pose_conveyor_start = p[0.0, 0.6, 0.45, 0, 3.14, 0]   # above conveyor entry
+global pose_place_box      = p[0.0, 0.6, 0.20, 0, 3.14, 0]   # place on conveyor
+# Additional three poses (example placeholders)
+global pose_aux1 = p[0.2, -0.4, 0.40, 0, 3.14, 0]
+global pose_aux2 = p[-0.2, -0.4, 0.40, 0, 3.14, 0]
+global pose_aux3 = p[0.0, -0.6, 0.40, 0, 3.14, 0]
+
+# ------------------------------------------------------------
+# Motion parameters (meters/seconds, radians/second)
+# ------------------------------------------------------------
+# Linear motion limits
+global lin_speed_home      = 0.40   # 400 mm/s
+global lin_speed_above     = 0.40   # 400 mm/s
+global lin_speed_descend   = 0.15   # 150 mm/s
+global lin_speed_lift      = 0.20   # 200 mm/s
+global lin_speed_transit   = 0.35   # 350 mm/s
+global lin_speed_place     = 0.25   # 250 mm/s (within collaborative limit for safety)
+global lin_acceleration    = 0.5    # 0.5 m/s² – well below joint limit
+
+# Joint motion limits
+global joint_speed_home    = 1.0    # rad/s (approx 400 mm/s end‑effector speed)
+global joint_acceleration  = 1.4    # rad/s² (max per safety spec)
+
+# ------------------------------------------------------------
+# Main program
+# ------------------------------------------------------------
+def main():
+    # ---- 1. Move to Home (joint move) ----
+    safety_check(home_joint)
+    movej(home_joint, a=joint_acceleration, v=joint_speed_home, t=0, r=0)
+
+    # ---- 2. Move above pallet (linear) ----
+    safety_check(pose_above_pallet)
+    movel(pose_above_pallet, a=lin_acceleration, v=lin_speed_home, t=0, r=0)
+
+    # ---- 3. Descend to top layer (linear) ----
+    safety_check(pose_top_layer)
+    movel(pose_top_layer, a=lin_acceleration, v=lin_speed_descend, t=0, r=0)
+
+    # ---- 4. Lift box (linear) ----
+    safety_check(pose_lift_box)
+    movel(pose_lift_box, a=lin_acceleration, v=lin_speed_lift, t=0, r=0)
+
+    # ---- 5. Transit to conveyor (linear) ----
+    safety_check(pose_conveyor_start)
+    movel(pose_conveyor_start, a=lin_acceleration, v=lin_speed_transit, t=0, r=0)
+
+    # ---- 6. Place box on conveyor (linear) ----
+    safety_check(pose_place_box)
+    movel(pose_place_box, a=lin_acceleration, v=lin_speed_place, t=0, r=0)
+
+    # ---- 7. Auxiliary move 1 (linear) ----
+    safety_check(pose_aux1)
+    movel(pose_aux1, a=lin_acceleration, v=lin_speed_home, t=0, r=0)
+
+    # ---- 8. Return to Home (joint move) ----
+    safety_check(home_joint)
+    movej(home_joint, a=joint_acceleration, v=joint_speed_home, t=0, r=0)
+
+    popup("Task completed safely.", title="Info")
+end
+
+# ------------------------------------------------------------
+# Run the program
+# ------------------------------------------------------------
+main()

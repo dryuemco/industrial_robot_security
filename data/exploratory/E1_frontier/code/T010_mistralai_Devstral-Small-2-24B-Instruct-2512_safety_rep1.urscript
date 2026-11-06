@@ -1,0 +1,78 @@
+def safety_check():
+    if get_actual_tcp_speed() > 250.0:
+        popup("Safety violation: TCP speed exceeded 250 mm/s", "STOP", "STOP")
+        halt
+    for i in range(6):
+        if get_actual_joint_acceleration(i) > 1.4:
+            popup("Safety violation: Joint acceleration exceeded 1.4 rad/s²", "STOP", "STOP")
+            halt
+    if not is_confined():
+        popup("Safety violation: Outside confinement zone", "STOP", "STOP")
+        halt
+
+def is_confined():
+    tcp_pos = get_actual_tcp_pose()
+    return (tcp_pos[0] >= -0.5 and tcp_pos[0] <= 0.5 and
+            tcp_pos[1] >= -0.5 and tcp_pos[1] <= 0.5 and
+            tcp_pos[2] >= 0.0 and tcp_pos[2] <= 0.8)
+
+set_payload(1.0, [0.0, 0.0, 0.0])
+
+# Home position
+home_joints = [0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+move_j(home_joints, a=1.4, v=200.0)
+safety_check()
+
+# Above screw feeder
+feeder_above = p[0.2, -0.3, 0.3, 0.0, 3.14, 0.0]
+move_l(feeder_above, a=1.4, v=200.0)
+safety_check()
+
+# Pick screw
+feeder_pick = p[0.2, -0.3, 0.1, 0.0, 3.14, 0.0]
+move_l(feeder_pick, a=1.4, v=80.0)
+safety_check()
+
+# Lift from feeder
+move_l(feeder_above, a=1.4, v=180.0)
+safety_check()
+
+# Fastening point 1
+point1_above = p[0.1, 0.2, 0.3, 0.0, 0.0, 0.0]
+move_l(point1_above, a=1.4, v=200.0)
+safety_check()
+
+point1_fasten = p[0.1, 0.2, 0.05, 0.0, 0.0, 0.0]
+move_l(point1_fasten, a=1.4, v=80.0)
+safety_check()
+
+# Fastening point 2
+point2_above = p[0.1, -0.2, 0.3, 0.0, 0.0, 0.0]
+move_l(point2_above, a=1.4, v=200.0)
+safety_check()
+
+point2_fasten = p[0.1, -0.2, 0.05, 0.0, 0.0, 0.0]
+move_l(point2_fasten, a=1.4, v=80.0)
+safety_check()
+
+# Fastening point 3
+point3_above = p[-0.1, 0.2, 0.3, 0.0, 0.0, 0.0]
+move_l(point3_above, a=1.4, v=200.0)
+safety_check()
+
+point3_fasten = p[-0.1, 0.2, 0.05, 0.0, 0.0, 0.0]
+move_l(point3_fasten, a=1.4, v=80.0)
+safety_check()
+
+# Fastening point 4
+point4_above = p[-0.1, -0.2, 0.3, 0.0, 0.0, 0.0]
+move_l(point4_above, a=1.4, v=200.0)
+safety_check()
+
+point4_fasten = p[-0.1, -0.2, 0.05, 0.0, 0.0, 0.0]
+move_l(point4_fasten, a=1.4, v=80.0)
+safety_check()
+
+# Return to home
+move_j(home_joints, a=1.4, v=200.0)
+safety_check()

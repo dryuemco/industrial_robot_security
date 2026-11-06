@@ -1,0 +1,83 @@
+# Task: T005 — Visual inspection scan — collaborative mode
+# Robot: UR5e | Mode: Collaborative | Max TCP speed: 150 mm/s
+# Payload: 0.3 kg | Safety: Confined workspace, E-Stop monitored
+# Description: Raster scan pattern (3 lines) over 200x200 mm part surface
+#              Camera strictly downward (A3), speed limited (A1) for image quality
+
+def task_T005():
+    # --- Safety & Initialization ---
+    # E-Stop check (hardware-enforced, monitored via digital input)
+    if get_digital_in(0):
+        popup("E-Stop active — program aborted.", title="Safety Error", error=True)
+        halt
+    end
+
+    # --- Constants ---
+    HOME_POS = [0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+    CAMERA_ORIENTATION = [0.0, 3.1416, 0.0]  # TCP pointing downward (Z-)
+    SCAN_HEIGHT = 0.150  # 150 mm above part
+    RETRACT_HEIGHT = 0.300  # Safe clearance above part
+    APPROACH_SPEED = 0.130  # 130 mm/s
+    SCAN_SPEED = 0.050  # 50 mm/s (critical for image quality)
+    STEP_SPEED = 0.080  # 80 mm/s (X-axis steps between scan lines)
+    BLEND_RADIUS = 0.005  # Smooth transitions between moves
+
+    # --- Waypoints ---
+    # Approach position (above start of scan area)
+    APPROACH_POS = p[0.250, -0.100, 0.250] + CAMERA_ORIENTATION
+
+    # Scan line endpoints (Y-axis sweeps)
+    SCAN_LINE_1_START = p[0.250, -0.100, SCAN_HEIGHT] + CAMERA_ORIENTATION
+    SCAN_LINE_1_END = p[0.250, 0.100, SCAN_HEIGHT] + CAMERA_ORIENTATION
+
+    SCAN_LINE_2_START = p[0.350, 0.100, SCAN_HEIGHT] + CAMERA_ORIENTATION
+    SCAN_LINE_2_END = p[0.350, -0.100, SCAN_HEIGHT] + CAMERA_ORIENTATION
+
+    SCAN_LINE_3_START = p[0.450, -0.100, SCAN_HEIGHT] + CAMERA_ORIENTATION
+    SCAN_LINE_3_END = p[0.450, 0.100, SCAN_HEIGHT] + CAMERA_ORIENTATION
+
+    # Retract position (above center of scan area)
+    RETRACT_POS = p[0.350, 0.0, RETRACT_HEIGHT] + CAMERA_ORIENTATION
+
+    # --- Motion Sequence ---
+    # [1] Move to home position (joint move)
+    movej(HOME_POS, a=1.4, v=0.375)
+
+    # [2] Approach inspection start (linear move)
+    movel(APPROACH_POS, a=0.4, v=APPROACH_SPEED, r=0.01)
+
+    # [3] Descend to scan height (linear move)
+    movel(SCAN_LINE_1_START, a=0.3, v=0.08, r=BLEND_RADIUS)
+
+    # [4] Activate camera trigger
+    set_digital_out(2, True)
+
+    # [5-7] Raster scan pattern (3 lines)
+    # Line 1: Forward Y sweep
+    movel(SCAN_LINE_1_END, a=0.2, v=SCAN_SPEED, r=BLEND_RADIUS)
+
+    # Step to Line 2: +X move
+    movel(SCAN_LINE_2_START, a=0.3, v=STEP_SPEED, r=BLEND_RADIUS)
+
+    # Line 2: Reverse Y sweep
+    movel(SCAN_LINE_2_END, a=0.2, v=SCAN_SPEED, r=BLEND_RADIUS)
+
+    # Step to Line 3: +X move
+    movel(SCAN_LINE_3_START, a=0.3, v=STEP_SPEED, r=BLEND_RADIUS)
+
+    # Line 3: Forward Y sweep
+    movel(SCAN_LINE_3_END, a=0.2, v=SCAN_SPEED)
+
+    # [8] Deactivate camera trigger
+    set_digital_out(2, False)
+
+    # [9] Retract to safe height (linear move)
+    movel(RETRACT_POS, a=0.4, v=0.12, r=0.01)
+
+    # [10] Return to home (joint move)
+    movej(HOME_POS, a=1.4, v=0.375)
+
+end
+
+# Program entry point
+task_T005()

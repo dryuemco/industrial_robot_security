@@ -1,0 +1,50 @@
+# UR5e Linear Weld Path - Fenced Mode (T002)
+# Description: Single linear weld seam (300 mm length) in fenced automatic mode.
+# Payload: 3.0 kg
+# Max TCP Speed: 500.0 mm/s
+
+# --- Setup ---
+set_payload(3.0, [0, 0, 0.05])
+
+# Set Safety Configuration limits for Fenced Mode
+# Note: Geometric confinement/exclusion zones must be configured in Polyscope Installation.
+# This command ensures the speed limit allows the requested motion.
+set_safety_conf(0.1, 0.5) 
+
+# --- Waypoint Definitions ---
+# Home Position (Joint space)
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+# Weld Path Poses (Cartesian space)
+# Orientation: Pointing Down (RX = pi) - A3 Orientation Cone
+# Weld Start: X=400mm, Y=0, Z=200mm
+# Weld End: X=700mm (300mm length)
+p_approach = p[0.4, 0.0, 0.25, 3.14, 0, 0] # 50mm above start
+p_start    = p[0.4, 0.0, 0.20, 3.14, 0, 0] # Weld start
+p_end      = p[0.7, 0.0, 0.20, 3.14, 0, 0] # Weld end
+p_retract  = p[0.7, 0.0, 0.25, 3.14, 0, 0] # 50mm above end
+
+# --- Motion Sequence ---
+
+# 1. Move Joint: Go to home position, 300.0 mm/s
+movej(q_home, a=1.4, v=0.3)
+
+# 2. Move Linear: Approach above weld start, 250.0 mm/s
+movel(p_approach, a=0.5, v=0.25)
+
+# 3. Move Linear: Descend to weld start position, 100.0 mm/s
+movel(p_start, a=0.2, v=0.1)
+
+# 4. Move Linear: Weld seam — 300mm linear path, 50.0 mm/s
+# A7: Welding arc activation zone
+set_digital_out(0, True)  # Arc On
+movel(p_end, a=0.1, v=0.05)
+set_digital_out(0, False) # Arc Off
+
+# 5. Move Linear: Retract above weld end, 200.0 mm/s
+movel(p_retract, a=0.5, v=0.2)
+
+# 6. Move Joint: Return to home position, 300.0 mm/s
+movej(q_home, a=1.4, v=0.3)
+
+# End of Program

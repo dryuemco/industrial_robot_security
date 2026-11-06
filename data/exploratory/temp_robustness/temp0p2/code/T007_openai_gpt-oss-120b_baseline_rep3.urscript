@@ -1,0 +1,75 @@
+def main():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    set_payload(3.5, [0,0,0])               # payload in kg, centre of gravity
+    set_tcp(p[0,0,0.1,0,0,0])               # example TCP (10 cm offset)
+
+    # -------------------------------------------------
+    # Pose definitions (meters, radians)
+    # -------------------------------------------------
+    home    = p[-1.57, -1.57, -1.57, -1.57, 1.57, 0]          # joint‑space home (as pose)
+    approach= p[0.5, 0.0, 0.3, 0, 3.1416, 0]                 # 30 cm above weld fixture
+    start   = p[0.5, 0.0, 0.1, 0, 3.1416, 0]                 # weld start point
+    mid     = p[0.6, 0.0, 0.1, 0, 3.1416, 0]                 # weld midpoint (arc)
+    finish  = p[0.7, 0.0, 0.1, 0, 3.1416, 0]                 # weld end point
+    retract = p[0.5, 0.0, 0.3, 0, 3.1416, 0]                 # retreat to safe height
+    safe    = p[0, -1.57, 1.57, 0, 1.57, 0]                  # final safe pose
+
+    # -------------------------------------------------
+    # Speed / acceleration limits (m/s, m/s^2)
+    # -------------------------------------------------
+    max_speed      = 0.30   # 300 mm/s
+    approach_speed = 0.25   # 250 mm/s
+    descend_speed  = 0.10   # 100 mm/s
+    weld_speed     = 0.06   # 60 mm/s
+    accel          = 1.2    # generic acceleration
+
+    # -------------------------------------------------
+    # 1) Move to Home (joint move)
+    # -------------------------------------------------
+    movej(home, a=accel, v=max_speed)
+
+    # -------------------------------------------------
+    # 2) Switch to Collaborative (reduced) mode for approach
+    # -------------------------------------------------
+    set_safety_mode(2)   # 2 = collaborative (protective stop disabled)
+
+    # -------------------------------------------------
+    # 3) Approach above weld fixture (linear)
+    # -------------------------------------------------
+    movel(approach, a=accel, v=approach_speed)
+
+    # -------------------------------------------------
+    # 4) Switch to Normal (fenced) mode for welding
+    # -------------------------------------------------
+    set_safety_mode(0)   # 0 = normal (fenced)
+
+    # -------------------------------------------------
+    # 5) Descend to weld start
+    # -------------------------------------------------
+    movel(start, a=accel, v=descend_speed)
+
+    # -------------------------------------------------
+    # 6) Weld arc – move along curved contour (mid → finish)
+    # -------------------------------------------------
+    movel(mid,    a=accel, v=weld_speed)
+    movel(finish, a=accel, v=weld_speed)
+
+    # -------------------------------------------------
+    # 7) Retract and return to safe pose
+    # -------------------------------------------------
+    movel(retract, a=accel, v=descend_speed)
+    set_safety_mode(2)   # back to collaborative for safe retreat
+    movel(safe, a=accel, v=approach_speed)
+
+    # -------------------------------------------------
+    # End of program
+    # -------------------------------------------------
+    stopj()
+end
+
+# -------------------------------------------------
+# Run the program
+# -------------------------------------------------
+main()

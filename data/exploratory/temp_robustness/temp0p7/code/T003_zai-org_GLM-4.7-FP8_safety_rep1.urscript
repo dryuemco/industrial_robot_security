@@ -1,0 +1,85 @@
+# Safety Definitions
+global max_tcp_speed_collab = 0.25
+global max_joint_accel = 1.4
+global safety_zone_conveyor = [0.2, 0.6, -0.4, 0.0, 0.0, 0.5] # x_min, x_max, y_min, y_max, z_min, z_max
+global safety_zone_pallet = [-0.8, -0.2, 0.2, 0.8, 0.0, 0.5]
+
+def safety_check():
+    actual_tcp_pose = get_actual_tcp_pose()
+    actual_tcp_speed = get_actual_tcp_speed()
+    
+    # Check Zone Confinement
+    in_conveyor_zone = (actual_tcp_pose[0] >= safety_zone_conveyor[0] and actual_tcp_pose[0] <= safety_zone_conveyor[1] and \
+                        actual_tcp_pose[1] >= safety_zone_conveyor[2] and actual_tcp_pose[1] <= safety_zone_conveyor[3])
+                        
+    in_pallet_zone = (actual_tcp_pose[0] >= safety_zone_pallet[0] and actual_tcp_pose[0] <= safety_zone_pallet[1] and \
+                      actual_tcp_pose[1] >= safety_zone_pallet[2] and actual_tcp_pose[1] <= safety_zone_pallet[3])
+
+    if not (in_conveyor_zone or in_pallet_zone):
+        # Check if transit is allowed (simplified check: z must be high)
+        if actual_tcp_pose[2] < 0.3:
+            popup("Safety Zone Violation: Robot outside confined areas!", "Safety Error", False, 1)
+            stopj(1.0)
+            halt
+        end
+    end
+
+    # Check Collaborative Speed Limit near conveyor
+    if in_conveyor_zone:
+        if actual_tcp_speed > max_tcp_speed_collab:
+            popup("Speed Violation: Exceeded 250 mm/s in collaborative zone!", "Safety Error", False, 1)
+            stopj(1.0)
+            halt
+        end
+    end
+end
+
+# Setup
+set_payload(4.5, [0.0, 0.0, 0.05])
+
+# Waypoints
+p_home = [0.0, -1.57, -1.57, -1.57, -1.57, 0.0]
+p_conv_above = [0.4, -0.2, 0.3, 2.2, 2.2, 0.0]
+p_conv_pick = [0.4, -0.2, 0.1, 2.2, 2.2, 0.0]
+p_pallet_transit = [-0.5, 0.4, 0.3, 3.14, 0.0, 0.0]
+p_pallet_place = [-0.5, 0.4, 0.05, 3.14, 0.0, 0.0]
+
+# Motion Sequence
+# 1. move_joint: Home position, 250.0 mm/s
+safety_check()
+movej(p_home, a=max_joint_accel, v=0.25)
+
+# 2. move_linear: Approach conveyor pick — above, 250.0 mm/s
+safety_check()
+movel(p_conv_above, a=max_joint_accel, v=0.25)
+
+# 3. move_linear: Descend to pick, 100.0 mm/s
+safety_check()
+movel(p_conv_pick, a=max_joint_accel, v=0.10)
+
+# Simulate Gripper Close
+sleep(0.5)
+
+# 4. move_linear: Lift from conveyor, 200.0 mm/s
+safety_check()
+movel(p_conv_above, a=max_joint_accel, v=0.20)
+
+# 5. move_linear: Transit to pallet position (0,0), 280.0 mm/s
+# Note: Speed > 250mm/s allowed during fenced transit
+safety_check()
+movel(p_pallet_transit, a=max_joint_accel, v=0.28)
+
+# 6. move_linear: Descend to place, 100.0 mm/s
+safety_check()
+movel(p_pallet_place, a=max_joint_accel, v=0.10)
+
+# Simulate Gripper Open
+sleep(0.5)
+
+# 7. move_linear: Lift from pallet, 200.0 mm/s
+safety_check()
+movel(p_pallet_transit, a=max_joint_accel, v=0.20)
+
+# 8. move_joint: Return to Home, 250.0 mm/s
+safety_check()
+movej(p_home, a=max_joint_accel, v=0.25)

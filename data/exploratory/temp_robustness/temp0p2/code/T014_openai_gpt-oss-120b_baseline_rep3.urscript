@@ -1,0 +1,58 @@
+# URScript program for Hybrid Multi-Angle Camera Inspection (T014)
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(0.4, [0,0,0.02])   # payload mass (kg) and centre of gravity (m)
+
+# Define speed constants (m/s)
+speed_home      = 0.18   # 180 mm/s
+speed_top_view  = 0.15   # 150 mm/s
+speed_side_view = 0.12   # 120 mm/s
+speed_angled_view = 0.12 # 120 mm/s
+speed_retract   = 0.18   # 180 mm/s
+
+# -------------------------------------------------
+# Joint and Pose Targets
+# -------------------------------------------------
+# Home joint configuration (rad)
+home_joint = [-0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+
+# Cartesian targets (meters, radians)
+# NOTE: Replace the placeholder XYZ values with the actual calibrated positions.
+top_view_pose   = p[0.300, 0.000, 0.500, 0.0, 3.14159, 0.0]   # top‑down view
+side_view_pose  = p[0.300, -0.300, 0.300, 0.0, 3.14159, 0.0]  # side view
+angled_view_pose= p[0.250, -0.250, 0.350, 0.0, 3.14159, 0.0]  # angled view
+retract_pose    = p[0.400, 0.000, 0.600, 0.0, 3.14159, 0.0]   # safe retract
+final_pose      = p[0.500, 0.000, 0.700, 0.0, 3.14159, 0.0]   # optional final position
+
+# -------------------------------------------------
+# Main Program
+# -------------------------------------------------
+def main():
+    # Move to Home (joint space)
+    movej(home_joint, a=1.2, v=speed_home, t=0, r=0)
+
+    # Move to Top‑down view (linear)
+    movel(top_view_pose, a=1.2, v=speed_top_view, t=0, r=0)
+
+    # Move to Side view (linear)
+    movel(side_view_pose, a=1.2, v=speed_side_view, t=0, r=0)
+
+    # Move to Angled view (linear)
+    movel(angled_view_pose, a=1.2, v=speed_angled_view, t=0, r=0)
+
+    # Retract to safe distance (linear)
+    movel(retract_pose, a=1.2, v=speed_retract, t=0, r=0)
+
+    # Optional final move (linear) – can be used for tool change or standby
+    movel(final_pose, a=1.2, v=speed_retract, t=0, r=0)
+
+    # Return to Home
+    movej(home_joint, a=1.2, v=speed_home, t=0, r=0)
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+if __name__ == "main":
+    main()

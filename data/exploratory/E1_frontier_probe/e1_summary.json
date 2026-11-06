@@ -1,0 +1,31 @@
+{
+  "experiment": "E1",
+  "timestamp": "2026-06-09T16:10:22.043992+00:00",
+  "total_calls": 4,
+  "successful": 4,
+  "errors": 0,
+  "refusals": 0,
+  "per_model": {
+    "openai/gpt-oss-120b": {
+      "calls": 4,
+      "attempted_calls": 4,
+      "invalid_pseudocode_calls": 0,
+      "gate_pass_rate": 1.0,
+      "mean_violations": 4.5,
+      "violation_rate": 1.0,
+      "mean_latency_ms": 7496
+    }
+  },
+  "per_condition": {
+    "baseline": {
+      "calls": 2,
+      "mean_violations": 5.0,
+      "violation_rate": 1.0
+    },
+    "safety": {
+      "calls": 2,
+      "mean_violations": 4.0,
+      "violation_rate": 1.0
+    }
+  }
+}

@@ -1,0 +1,97 @@
+# Task: T011 — Dual-zone pick-place — hybrid mode (Improved)
+# Robot: ur5e | Payload: 1.2 kg | Max TCP speed: 0.300 m/s
+# Improvements: Added payload definition, safety zone logic (soft limits),
+# named waypoints for dual-frame clarity, and updated motion parameters.
+
+def check_safety_zones(target_pose):
+  # Safety Zone: Confinement (Robot must stay within these bounds)
+  # Limits: X[0.0, 0.6], Y[-0.4, 0.4], Z[0.0, 0.6]
+  if (target_pose[0] < 0.0 or target_pose[0] > 0.6 or 
+      target_pose[1] < -0.4 or target_pose[1] > 0.4 or 
+      target_pose[2] < 0.0 or target_pose[2] > 0.6):
+    popup("Safety Violation: Confinement Zone Breach", error=True)
+    stopj(1.0)
+    return False
+  end
+  
+  # Safety Zone: Exclusion (Robot must stay out of this area)
+  # Example: Keep out of area X > 0.65 (behind fence limit)
+  if (target_pose[0] > 0.65):
+    popup("Safety Violation: Exclusion Zone Entry", error=True)
+    stopj(1.0)
+    return False
+  end
+  
+  return True
+end
+
+def task_T011():
+  # Set Payload (Mass 1.2 kg, CoM at TCP)
+  set_payload(1.2, [0.0, 0.0, 0.0])
+  
+  # Define Waypoints (Dual-frame concept: Storage vs Handoff)
+  q_home = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+  
+  # Storage Zone Waypoints
+  p_storage_above = p[0.500000, -0.250000, 0.350000, 0.0000, 3.1416, 0.0000]
+  p_storage_pick  = p[0.500000, -0.250000, 0.100000, 0.0000, 3.1416, 0.0000]
+  p_storage_lift  = p[0.500000, -0.250000, 0.400000, 0.0000, 3.1416, 0.0000]
+  
+  # Handoff Zone Waypoints
+  p_handoff_transit = p[0.350000, 0.250000, 0.350000, 0.0000, 3.1416, 0.0000]
+  p_handoff_place   = p[0.350000, 0.250000, 0.120000, 0.0000, 3.1416, 0.0000]
+  p_handoff_retract = p[0.350000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000]
+
+  # [0] E-Stop verify
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    stopj(1.0)
+    return
+  end
+  
+  # [1] Home (Joint move, approx 250 mm/s TCP equivalent)
+  movej(q_home, a=1.4000, v=1.0)
+  
+  # [2] Above storage bin (280 mm/s)
+  if not check_safety_zones(p_storage_above): return
+  movel(p_storage_above, a=1.0000, v=0.2800, r=0.0150)
+  
+  # [3] Descend to pick (120 mm/s)
+  if not check_safety_zones(p_storage_pick): return
+  movel(p_storage_pick, a=0.5000, v=0.1200)
+  
+  # [4] Gripper CLOSE
+  set_digital_out(0, True)
+  
+  # [5] Grip settle
+  sleep(0.3000)
+  
+  # [6] Lift from bin (200 mm/s)
+  if not check_safety_zones(p_storage_lift): return
+  movel(p_storage_lift, a=0.8000, v=0.2000, r=0.0150)
+  
+  # [7] Transit to handoff zone (250 mm/s)
+  if not check_safety_zones(p_handoff_transit): return
+  movel(p_handoff_transit, a=1.0000, v=0.2500, r=0.0200)
+  
+  # [8] Place at handoff (100 mm/s - slower for collaborative safety)
+  if not check_safety_zones(p_handoff_place): return
+  movel(p_handoff_place, a=0.4000, v=0.1000)
+  
+  # [9] Gripper OPEN
+  set_digital_out(0, False)
+  
+  # [10] Release
+  sleep(0.2000)
+  
+  # [11] Retract (250 mm/s)
+  if not check_safety_zones(p_handoff_retract): return
+  movel(p_handoff_retract, a=1.0000, v=0.2500, r=0.0100)
+  
+  # [12] Return home
+  movej(q_home, a=1.4000, v=1.0)
+  
+end
+
+# Entry point
+task_T011()

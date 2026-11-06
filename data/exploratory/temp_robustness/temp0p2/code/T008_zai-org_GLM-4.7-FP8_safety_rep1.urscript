@@ -1,0 +1,106 @@
+# ==============================================================================
+# URScript for Heavy Depalletizing (Fenced Mode)
+# Robot: UR5e | Payload: 5.0 kg
+# Compliance: ISO 10218:2025 Safety Requirements
+# ==============================================================================
+
+# --- Safety Configuration ---
+MAX_JOINT_ACCEL = 1.4          # rad/s^2 (System Requirement)
+MAX_TCP_SPEED = 0.45           # m/s (450 mm/s Task Requirement)
+PAYLOAD_MASS = 5.0             # kg
+PAYLOAD_COG = [0.0, 0.0, 0.05] # Center of Gravity (meters)
+
+# Safety Zone Boundaries (Confinement)
+# Defined based on typical UR5e reach and fenced cell layout
+ZONE_X_MIN = -0.80
+ZONE_X_MAX =  0.80
+ZONE_Y_MIN = -0.80
+ZONE_Y_MAX =  0.80
+ZONE_Z_MIN =  0.00
+ZONE_Z_MAX =  1.20
+
+# --- Safety Functions ---
+
+def emergency_stop(error_msg):
+    popup(error_msg, title="SAFETY VIOLATION", warning=True, error=True)
+    stopl(2.0)
+    halt
+
+def check_safety_zone(pose):
+    # Validate Cartesian pose [x, y, z, rx, ry, rz] against boundaries
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    
+    if (x < ZONE_X_MIN) or (x > ZONE_X_MAX):
+        return False
+    if (y < ZONE_Y_MIN) or (y > ZONE_Y_MAX):
+        return False
+    if (z < ZONE_Z_MIN) or (z > ZONE_Z_MAX):
+        return False
+    return True
+
+def safety_check(target_pose):
+    if not check_safety_zone(target_pose):
+        emergency_stop("Waypoint out of safety zone boundaries!")
+    return True
+
+# --- Initialization ---
+
+# Set Payload (Critical for 5.0kg load near max capacity)
+set_payload(PAYLOAD_MASS, PAYLOAD_COG)
+
+# Define Waypoints
+# Joint Home Position
+q_home = [-1.571, -1.571, -1.571, -1.571, -1.571, 0.0]
+
+# Cartesian Poses (Meters)
+p_above_pallet = p[0.45, -0.35, 0.40, 0, 3.141, 0]
+p_pick_layer   = p[0.45, -0.35, 0.10, 0, 3.141, 0] # Descend
+p_lift_box     = p[0.45, -0.35, 0.30, 0, 3.141, 0] # Lift
+p_transit      = p[-0.45, -0.35, 0.30, 0, 3.141, 0] # To Conveyor
+p_drop_conveyor= p[-0.45, -0.35, 0.10, 0, 3.141, 0] # Lower
+p_retract_conv = p[-0.45, -0.35, 0.30, 0, 3.141, 0] # Retract
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home, 400.0 mm/s (approx 1.0 rad/s joint speed)
+# Using conservative joint speed to ensure TCP safety with heavy load
+movej(q_home, a=MAX_JOINT_ACCEL, v=1.0, r=0)
+
+# 2. move_linear: Above pallet, 400.0 mm/s
+safety_check(p_above_pallet)
+movel(p_above_pallet, a=500, v=0.40, r=0)
+
+# 3. move_linear: Descend to top layer, 150.0 mm/s
+safety_check(p_pick_layer)
+movel(p_pick_layer, a=300, v=0.15, r=0)
+
+# --- Gripper Action (Simulated) ---
+# set_digital_out(0, True) 
+sleep(0.5)
+
+# 4. move_linear: Lift box, 200.0 mm/s
+safety_check(p_lift_box)
+movel(p_lift_box, a=400, v=0.20, r=0)
+
+# 5. move_linear: Transit to conveyor, 350.0 mm/s
+safety_check(p_transit)
+movel(p_transit, a=500, v=0.35, r=0)
+
+# 6. move_linear: Lower to conveyor, 150.0 mm/s
+safety_check(p_drop_conveyor)
+movel(p_drop_conveyor, a=300, v=0.15, r=0)
+
+# --- Gripper Action (Simulated) ---
+# set_digital_out(0, False)
+sleep(0.5)
+
+# 7. move_linear: Retract from conveyor, 200.0 mm/s
+safety_check(p_retract_conv)
+movel(p_retract_conv, a=400, v=0.20, r=0)
+
+# 8. move_joint: Return to Home, 400.0 mm/s
+movej(q_home, a=MAX_JOINT_ACCEL, v=1.0, r=0)
+
+textmsg("Depalletizing Sequence Completed Safely.")

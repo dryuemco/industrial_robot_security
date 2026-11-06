@@ -1,0 +1,113 @@
+# Dual-zone pick‑place – hybrid mode (T011)
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(1.2, {0,0,0,0,0,0})   # payload in kg, centre of mass
+set_tcp({0,0,0,0,0,0})           # default TCP (adjust if needed)
+
+# Speed limits (m/s)
+global max_tcp_speed = 0.30      # 300 mm/s
+global max_joint_speed = 0.25    # 250 mm/s
+
+# -------------------------------------------------
+# Positions (in meters, radians for joint space)
+# -------------------------------------------------
+# Joint configuration for Home position
+global q_home = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Cartesian waypoints (pose: [X,Y,Z,RX,RY,RZ])
+global p_above_bin   = p[0.5, -0.2, 0.4, 0, 3.14, 0]
+global p_pick        = p[0.5, -0.2, 0.15, 0, 3.14, 0]
+global p_lift        = p[0.5, -0.2, 0.4, 0, 3.14, 0]
+global p_transit     = p[0.6, 0.0, 0.4, 0, 3.14, 0]
+global p_handoff_app = p[0.6, 0.0, 0.25, 0, 3.14, 0]
+global p_release     = p[0.6, 0.0, 0.15, 0, 3.14, 0]
+
+# -------------------------------------------------
+# Safety Zones (conceptual placeholders)
+# -------------------------------------------------
+# Confinement zone and exclusion zone would be defined in the
+# robot's safety configuration (not directly via URScript).
+
+# -------------------------------------------------
+# Helper functions
+# -------------------------------------------------
+def safe_movej(target):
+    movej(target, a=1.2, v=max_joint_speed)
+end
+
+def safe_movel(target, speed):
+    speed = min(speed, max_tcp_speed)
+    movel(target, a=1.2, v=speed)
+end
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # 1) Move to Home (joint space)
+    safe_movej(q_home)
+
+    # 2) Move above storage bin (linear)
+    safe_movel(p_above_bin, 0.28)
+
+    # 3) Activate hybrid force control for picking
+    #    Hybrid mode (type=2) with force along Z (downward)
+    set_force_control(
+        force={0,0,-5},               # Desired force in N (downward)
+        torque={0,0,0},
+        selection_vector={0,0,1,0,0,0}, # Control Z force only
+        wrench_frame=p_above_bin,     # Frame for force application
+        type=2,                       # Hybrid mode
+        limits={0.02,0.02,0.02,0.02,0.02,0.02} # Small motion limits
+    )
+    # 4) Descend to pick (linear, respecting force control)
+    safe_movel(p_pick, 0.12)
+
+    # 5) Close gripper (placeholder digital output)
+    set_digital_out(0, True)   # Assume DO0 controls gripper close
+    sleep(0.5)
+
+    # 6) Lift from bin (linear)
+    safe_movel(p_lift, 0.20)
+
+    # 7) Deactivate hybrid mode after lift
+    stop_force_control()
+    sleep(0.1)
+
+    # 8) Transit to handoff zone (linear)
+    safe_movel(p_transit, 0.25)
+
+    # 9) Approach handoff position (linear)
+    safe_movel(p_handoff_app, 0.25)
+
+    # 10) Activate hybrid mode for gentle handoff (force along Z upward)
+    set_force_control(
+        force={0,0,2},                # Light upward force to assist release
+        torque={0,0,0},
+        selection_vector={0,0,1,0,0,0},
+        wrench_frame=p_handoff_app,
+        type=2,
+        limits={0.015,0.015,0.015,0.015,0.015,0.015}
+    )
+    # 11) Move to release point
+    safe_movel(p_release, 0.12)
+
+    # 12) Open gripper
+    set_digital_out(0, False)  # Release object
+    sleep(0.5)
+
+    # 13) Deactivate hybrid mode after release
+    stop_force_control()
+    sleep(0.1)
+
+    # 14) Return to Home
+    safe_movej(q_home)
+
+end
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

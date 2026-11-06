@@ -1,0 +1,72 @@
+# Task: T013 — Collaborative Suction Palletizing — Light Boxes
+# Robot: UR5e | Mode: Collaborative | Payload: 0.8 kg
+# Max TCP Speed: 250 mm/s | Safety: Confined workspace
+
+def task_T013():
+    # Safety Check: Verify E-Stop is not active
+    if get_digital_in(0):
+        popup("E-Stop active — program aborted.", error=True)
+        halt
+    end
+
+    # Tool Configuration: Suction Cup
+    set_tool_voltage(24)
+    set_tool_digital_out(0, False)  # Ensure suction is off at start
+
+    # Constants for Motion Control
+    HOME_POSITION = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+    ABOVE_STAGING = p[0.3500, -0.2000, 0.3000, 0.0000, 3.1416, 0.0000]
+    PICK_POSITION = p[0.3500, -0.2000, 0.0800, 0.0000, 3.1416, 0.0000]
+    LIFT_HEIGHT = 0.35
+    ABOVE_PALLET = p[0.4500, 0.2000, 0.3500, 0.0000, 3.1416, 0.0000]
+    PLACE_POSITION = p[0.4500, 0.2000, 0.0800, 0.0000, 3.1416, 0.0000]
+
+    # Motion Parameters
+    SPEED_HOME = 0.5000
+    SPEED_TRANSIT = 0.2300
+    SPEED_APPROACH = 0.1000
+    SPEED_LIFT = 0.1800
+    ACCEL_HOME = 1.4000
+    ACCEL_TRANSIT = 0.8000
+    ACCEL_APPROACH = 0.4000
+    ACCEL_LIFT = 0.6000
+    BLEND_RADIUS = 0.015
+
+    # [1] Move to Home Position
+    movej(HOME_POSITION, a=ACCEL_HOME, v=SPEED_HOME)
+
+    # [2] Move Above Staging Area
+    movel(ABOVE_STAGING, a=0.7000, v=0.2200, r=0.010)
+
+    # [3] Descend to Pick Position
+    movel(PICK_POSITION, a=ACCEL_APPROACH, v=SPEED_APPROACH)
+
+    # [4] Activate Suction
+    set_tool_digital_out(0, True)
+    sleep(0.300)  # Vacuum settle time
+
+    # [5] Lift Box
+    movel(p[0.3500, -0.2000, LIFT_HEIGHT, 0.0000, 3.1416, 0.0000], a=ACCEL_LIFT, v=SPEED_LIFT, r=BLEND_RADIUS)
+
+    # [6] Transit to Pallet
+    movel(ABOVE_PALLET, a=ACCEL_TRANSIT, v=SPEED_TRANSIT, r=BLEND_RADIUS)
+
+    # [7] Descend to Place Position
+    movel(PLACE_POSITION, a=ACCEL_APPROACH, v=SPEED_APPROACH)
+
+    # [8] Release Box
+    set_tool_digital_out(0, False)
+    sleep(0.200)  # Release settle time
+
+    # [9] Retract from Pallet
+    movel(ABOVE_PALLET, a=0.7000, v=0.2000, r=0.010)
+
+    # [10] Return to Home
+    movej(HOME_POSITION, a=ACCEL_HOME, v=SPEED_HOME)
+
+    # Reset tool state
+    set_tool_digital_out(0, False)
+end
+
+# Program Entry Point
+task_T013()

@@ -1,0 +1,73 @@
+# URScript for collaborative suction palletizing (light boxes)
+# Robot: UR5e, Payload: 0.8 kg, Collaborative mode
+# Max TCP speed: 0.250 m/s
+
+# -------------------------------------------------
+# Setup
+set_payload(0.8, [0,0,0.1])          # payload mass and center of gravity
+set_tcp_speed(0.250)                # max TCP speed (m/s)
+set_gravity([0,0,9.81])             # ensure gravity compensation
+set_safety_mode(2)                  # collaborative safety mode (2 = collaborative)
+
+# -------------------------------------------------
+# Define positions (in meters and radians)
+# Note: Replace the placeholder coordinates with actual calibrated values.
+
+home                = p[0.0, -0.5, 0.3, 0, 3.14, 0]          # Joint home pose
+above_staging       = p[0.3, -0.2, 0.4, 0, 3.14, 0]          # Above box staging area
+pick_position       = p[0.3, -0.2, 0.1, 0, 3.14, 0]          # Descend to pick
+lift_position       = p[0.3, -0.2, 0.4, 0, 3.14, 0]          # Lift after pick
+above_pallet        = p[0.6, 0.0, 0.5, 0, 3.14, 0]           # Above pallet location
+place_position      = p[0.6, 0.0, 0.15, 0, 3.14, 0]          # Descend to place
+release_position    = p[0.6, 0.0, 0.5, 0, 3.14, 0]           # Retract after release
+
+# -------------------------------------------------
+# Helper function for linear moves with specified speed (mm/s)
+def movel_speed(target, speed_mm):
+    speed_m = speed_mm/1000.0
+    movel(target, a=1.2, v=speed_m, r=0.0)
+end
+
+# -------------------------------------------------
+# Main program
+def main():
+    # 1) Move to Home (joint move)
+    movej(home, a=1.4, v=0.2)   # 200 mm/s = 0.2 m/s
+
+    # 2) Move above staging area (linear)
+    movel_speed(above_staging, 220)
+
+    # 3) Descend to pick the box
+    movel_speed(pick_position, 100)
+
+    # Activate suction
+    set_digital_out(0, True)   # assume DO0 controls suction
+    sleep(0.2)                 # allow suction to engage
+
+    # 4) Lift the box
+    movel_speed(lift_position, 180)
+
+    # 5) Transit to pallet area
+    movel_speed(above_pallet, 230)
+
+    # 6) Move above placement point
+    movel_speed(above_pallet, 200)
+
+    # 7) Descend to place the box
+    movel_speed(place_position, 120)
+
+    # Release suction
+    set_digital_out(0, False)
+    sleep(0.2)
+
+    # 8) Retract to safe height above pallet
+    movel_speed(release_position, 200)
+
+    # Return to Home
+    movej(home, a=1.4, v=0.2)
+
+end
+
+# -------------------------------------------------
+# Execute
+main()

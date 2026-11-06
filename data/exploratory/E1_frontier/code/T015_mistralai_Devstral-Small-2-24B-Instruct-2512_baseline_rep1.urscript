@@ -1,0 +1,58 @@
+def laser_marking():
+    # Set tool and payload
+    set_tool_voltage(0)
+    set_payload(0.6, [0, 0, 0.05])
+
+    # Define frames
+    base = pose_trans(base, p[0, 0, 0.1, 0, 0, 0])  # Adjust base frame if needed
+    marking_frame = pose_trans(base, p[0.2, 0.3, 0, 0, 0, 0])  # Marking fixture frame
+
+    # Home position
+    home = pose_trans(marking_frame, p[0, 0, 0.35, 0, 0, 0])
+    movej(home, a=1.4, v=350.0)
+
+    # Above marking surface
+    above_surface = pose_trans(marking_frame, p[0, 0, 0.1, 0, 0, 0])
+    movel(above_surface, a=1.4, v=300.0)
+
+    # Descend to marking height
+    marking_height = pose_trans(marking_frame, p[0, 0, 0.01, 0, 0, 0])
+    movel(marking_height, a=1.4, v=100.0)
+
+    # Mark line 1
+    line1_start = pose_trans(marking_frame, p[0, 0, 0.01, 0, 0, 0])
+    line1_end = pose_trans(marking_frame, p[0.1, 0, 0.01, 0, 0, 0])
+    set_digital_out(0, True)  # Laser on
+    movel(line1_end, a=1.4, v=60.0)
+    set_digital_out(0, False)  # Laser off
+
+    # Step to line 2
+    line2_start = pose_trans(marking_frame, p[0.1, 0.05, 0.01, 0, 0, 0])
+    movel(line2_start, a=1.4, v=80.0)
+
+    # Mark line 2
+    line2_end = pose_trans(marking_frame, p[0.2, 0.05, 0.01, 0, 0, 0])
+    set_digital_out(0, True)  # Laser on
+    movel(line2_end, a=1.4, v=60.0)
+    set_digital_out(0, False)  # Laser off
+
+    # Step to line 3
+    line3_start = pose_trans(marking_frame, p[0.2, 0.1, 0.01, 0, 0, 0])
+    movel(line3_start, a=1.4, v=80.0)
+
+    # Mark line 3
+    line3_end = pose_trans(marking_frame, p[0.3, 0.1, 0.01, 0, 0, 0])
+    set_digital_out(0, True)  # Laser on
+    movel(line3_end, a=1.4, v=60.0)
+    set_digital_out(0, False)  # Laser off
+
+    # Return to home
+    movej(home, a=1.4, v=350.0)
+
+    # Safety checks
+    if get_safety_mode() != SAFETY_MODE_NORMAL:
+        stopj(0)
+    if get_tool_voltage() > 24:  # Example safety check
+        stopj(0)
+
+laser_marking()

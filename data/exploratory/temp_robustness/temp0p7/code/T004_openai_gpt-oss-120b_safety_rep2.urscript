@@ -1,0 +1,147 @@
+# --------------------------------------------------------------
+# URScript for UR5e collaborative pick‑place with SSM and safety
+# --------------------------------------------------------------
+
+# ----- Global Settings -------------------------------------------------
+set_payload(1.5, [0,0,0.1])               # payload 1.5 kg, CoG offset
+set_joint_acceleration(1.4)              # max joint accel 1.4 rad/s²
+max_tcp_speed = 0.250                    # 250 mm/s = 0.250 m/s
+max_joint_acc  = 1.4                     # rad/s² (used per move)
+
+# ----- Safety Zones (confinement & exclusion) -------------------------
+# Define as simple bounding boxes (xmin, xmax, ymin, ymax, zmin, zmax)
+
+confinement_zone = [-0.800, 0.800, -0.800, 0.800, 0.000, 1.200]   # whole reachable volume
+exclusion_zone   = [ 0.200, 0.300, -0.100, 0.100, 0.000, 0.800]   # known obstacle column
+
+# ----- Helper Functions ------------------------------------------------
+def point_in_box(p, box):
+    return (p[0] >= box[0] and p[0] <= box[1] and
+            p[1] >= box[2] and p[1] <= box[3] and
+            p[2] >= box[4] and p[2] <= box[5])
+
+def safety_check(pose):
+    # pose is a 6‑DOF vector [x,y,z,rx,ry,rz] (position in meters)
+    pos = pose[0:3]
+    if not point_in_box(pos, confinement_zone):
+        popup("Safety violation: waypoint outside confinement zone", title="Safety Stop", error=True)
+        halt()
+    if point_in_box(pos, exclusion_zone):
+        popup("Safety violation: waypoint inside exclusion zone", title="Safety Stop", error=True)
+        halt()
+    # speed guard – ensure requested speed does not exceed limit
+    if requested_speed > max_tcp_speed:
+        popup("Safety violation: requested speed exceeds TCP limit", title="Safety Stop", error=True)
+        halt()
+
+def estop_handler():
+    popup("Emergency stop triggered!", title="E‑STOP", error=True)
+    halt()
+
+# Register emergency stop handler (UR built‑in)
+set_stop_program(False)   # allow program to be stopped by user/E‑Stop
+# UR does not expose a direct callback; the popup+halt pattern is used in safety_check
+
+# ----- Waypoints -------------------------------------------------------
+# Joint space home position (rad)
+home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# TCP poses (meters, radians).  Example values – replace with actual calibrated points.
+wp1 = p[0.400, -0.200, 0.300, 0, 3.1415, 0]   # Above pick station
+wp2 = p[0.400, -0.200, 0.100, 0, 3.1415, 0]   # Descend to pick
+wp3 = p[0.400, -0.200, 0.300, 0, 3.1415, 0]   # Lift above pick
+wp4 = p[0.250, -0.200, 0.300, 0, 3.1415, 0]   # Obstacle avoidance (offset -X)
+
+# Additional waypoints for the rest of the trajectory (place station, return, etc.)
+wp5 = p[0.250,  0.200, 0.300, 0, 3.1415, 0]   # Above place station
+wp6 = p[0.250,  0.200, 0.120, 0, 3.1415, 0]   # Descend to place
+wp7 = p[0.250,  0.200, 0.300, 0, 3.1415, 0]   # Lift after place
+wp8 = p[0.300,  0.000, 0.400, 0, 3.1415, 0]   # Safe home hover
+wp9 = p[0.300,  0.000, 0.200, 0, 3.1415, 0]   # Final safe pose
+
+# ----- Motion Parameters ------------------------------------------------
+# Speed (m/s) and acceleration (m/s²) for each move – must respect limits
+speed_home   = 0.200   # 200 mm/s
+speed_wp1    = 0.200
+speed_wp2    = 0.100
+speed_wp3    = 0.180
+speed_wp4    = 0.200
+speed_wp5    = 0.200
+speed_wp6    = 0.100
+speed_wp7    = 0.180
+speed_wp8    = 0.200
+speed_wp9    = 0.200
+
+acc_home   = 1.4
+acc_wp1    = 1.4
+acc_wp2    = 1.4
+acc_wp3    = 1.4
+acc_wp4    = 1.4
+acc_wp5    = 1.4
+acc_wp6    = 1.4
+acc_wp7    = 1.4
+acc_wp8    = 1.4
+acc_wp9    = 1.4
+
+# ----- Main Program ----------------------------------------------------
+def main():
+    # Ensure SSM (Speed and Separation Monitoring) is active
+    # In UR5e this is enabled via the safety controller; we only enforce limits in script.
+    # ------------------------------------------------------------------
+    # 1) Move to Home (joint space)
+    requested_speed = speed_home
+    safety_check(p[0,0,0,0,0,0])   # dummy pose for joint move (no TCP check needed)
+    movej(home_joint, a=acc_home, v=speed_home)
+
+    # 2) Move linear to WP1 – above pick
+    requested_speed = speed_wp1
+    safety_check(wp1)
+    movel(wp1, a=acc_wp1, v=speed_wp1)
+
+    # 3) Move linear to WP2 – descend to pick
+    requested_speed = speed_wp2
+    safety_check(wp2)
+    movel(wp2, a=acc_wp2, v=speed_wp2)
+
+    # 4) Move linear to WP3 – lift above pick
+    requested_speed = speed_wp3
+    safety_check(wp3)
+    movel(wp3, a=acc_wp3, v=speed_wp3)
+
+    # 5) Move linear to WP4 – obstacle avoidance waypoint
+    requested_speed = speed_wp4
+    safety_check(wp4)
+    movel(wp4, a=acc_wp4, v=speed_wp4)
+
+    # 6) Move linear to WP5 – above place station
+    requested_speed = speed_wp5
+    safety_check(wp5)
+    movel(wp5, a=acc_wp5, v=speed_wp5)
+
+    # 7) Move linear to WP6 – descend to place
+    requested_speed = speed_wp6
+    safety_check(wp6)
+    movel(wp6, a=acc_wp6, v=speed_wp6)
+
+    # 8) Move linear to WP7 – lift after place
+    requested_speed = speed_wp7
+    safety_check(wp7)
+    movel(wp7, a=acc_wp7, v=speed_wp7)
+
+    # 9) Return to safe home hover
+    requested_speed = speed_wp8
+    safety_check(wp8)
+    movel(wp8, a=acc_wp8, v=speed_wp8)
+
+    # Optional final pose
+    requested_speed = speed_wp9
+    safety_check(wp9)
+    movel(wp9, a=acc_wp9, v=speed_wp9)
+
+    # Program finished – keep robot in safe stop
+    popup("Task completed safely.", title="Info")
+    stop()
+
+# ----------------------------------------------------------------------
+# Run the program
+main()

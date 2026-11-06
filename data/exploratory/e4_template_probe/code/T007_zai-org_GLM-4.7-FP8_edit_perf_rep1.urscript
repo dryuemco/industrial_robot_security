@@ -1,0 +1,55 @@
+# Task: T007 — Curved contour weld — hybrid mode (Optimized)
+# Optimizations: Increased non-weld speeds, overlapped gas pre-flow, increased accelerations
+# Robot: ur5e | Payload: 3.5 kg
+
+def task_T007():
+  # [0] Verify E-Stop clear
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+  
+  # [1] Home position (Increased joint velocity/acceleration)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=3.0000, v=2.0000)
+  
+  # [2] Approach above weld fixture (Max TCP speed, increased accel, blend radius)
+  movel(p[0.450000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.3000, r=0.0200)
+  
+  # [3] Gas pre-flow ON (Moved before descent to overlap with motion time)
+  set_digital_out(1, True)
+  
+  # [4] Descend to weld start (Max TCP speed, increased accel)
+  # 150mm distance @ 0.3 m/s = 0.5s travel time covers gas stabilization
+  movel(p[0.450000, 0.000000, 0.200000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.3000, r=0.0010)
+  
+  # [5] Arc ON
+  set_digital_out(0, True)
+  set_analog_out(0, 0.500)
+  set_analog_out(1, 0.400)
+  
+  # [6] Weld midpoint (Weld speed maintained for quality)
+  movel(p[0.550000, 0.150000, 0.200000, 0.0000, 3.1416, 0.0000], a=0.2000, v=0.0600, r=0.0050)
+  
+  # [7] Weld end
+  movel(p[0.500000, 0.300000, 0.200000, 0.0000, 3.1416, 0.0000], a=0.2000, v=0.0600)
+  
+  # [8] Arc OFF
+  set_digital_out(0, False)
+  set_analog_out(0, 0.0)
+  set_analog_out(1, 0.0)
+  
+  # [9] Post-weld gas flow (Process time maintained)
+  sleep(1.0000)
+  
+  # [10] Gas flow OFF
+  set_digital_out(1, False)
+  
+  # [11] Retract above weld end (Max TCP speed, increased accel, blend radius)
+  movel(p[0.500000, 0.300000, 0.380000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.3000, r=0.0200)
+  
+  # [12] Return to home (Increased joint velocity/acceleration)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=3.0000, v=2.0000)
+  
+end
+
+task_T007()

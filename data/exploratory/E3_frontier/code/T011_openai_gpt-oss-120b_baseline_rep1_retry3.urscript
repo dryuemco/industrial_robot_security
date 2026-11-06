@@ -1,0 +1,54 @@
+def main():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    set_payload(1.2, [0,0,0])               # Payload in kg, CoG at TCP
+    set_tcp_speed(0.30)                    # Max TCP speed = 300 mm/s (0.30 m/s)
+    set_speed_slider(1.0)                  # Full speed scaling
+
+    # -------------------------------------------------
+    # Safety Zones (confinement and exclusion)
+    # -------------------------------------------------
+    # Confinement zone: spherical region, radius 1.0 m, centered at origin
+    set_safety_zone("confinement", p[0,0,0,0,0,0], 1.0)
+    # Exclusion zone: spherical region, radius 0.20 m, centered at (0.30, 0, 0)
+    set_safety_zone("exclusion", p[0.30,0,0,0,0,0], 0.20)
+
+    # -------------------------------------------------
+    # Hybrid (collaborative) mode activation
+    # -------------------------------------------------
+    # Remote mode is used for hybrid collaborative operation
+    set_robot_mode(2)      # 2 = Remote (Hybrid) mode
+
+    # -------------------------------------------------
+    # Motion Sequence (8 moves)
+    # -------------------------------------------------
+    # 1) Move to Home position (joint move)
+    movej(p[0, -1.57, 1.57, 0, 1.57, 0], a=1.4, v=0.25)
+
+    # 2) Move above storage bin (linear move)
+    movel(p[0.5, -0.5, 0.30, 0, 3.14, 0], a=1.2, v=0.28)
+
+    # 3) Descend to pick (linear move)
+    movel(p[0.5, -0.5, 0.10, 0, 3.14, 0], a=1.0, v=0.12)
+
+    # 4) Lift from bin (linear move)
+    movel(p[0.5, -0.5, 0.30, 0, 3.14, 0], a=1.2, v=0.20)
+
+    # 5) Transit to handoff zone (linear move)
+    movel(p[0.2, 0.5, 0.40, 0, 3.14, 0], a=1.3, v=0.25)
+
+    # 6) Place object in handoff zone (linear move – lower)
+    movel(p[0.2, 0.5, 0.15, 0, 3.14, 0], a=1.0, v=0.12)
+
+    # 7) Retract after handoff (linear move – lift)
+    movel(p[0.2, 0.5, 0.40, 0, 3.14, 0], a=1.2, v=0.20)
+
+    # 8) Return to Home (joint move)
+    movej(p[0, -1.57, 1.57, 0, 1.57, 0], a=1.4, v=0.25)
+
+    # -------------------------------------------------
+    # End of program – safe stop
+    # -------------------------------------------------
+    stopj()
+end

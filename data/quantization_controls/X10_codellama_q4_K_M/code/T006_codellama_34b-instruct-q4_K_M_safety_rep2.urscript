@@ -1,0 +1,32 @@
+def program():
+    # Define safety zones and check boundaries before moves
+    safety_check()
+
+    # Set payload correctly before operations
+    set_payload(2.0)
+
+    # Move to home position
+    move_joint(350.0, 1.4, 250.0)
+
+    # Move above bin
+    move_linear(350.0, 1.4, 250.0)
+
+    # Descend into bin
+    move_linear(150.0, 1.4, 250.0)
+
+    # Lift from bin
+    move_linear(300.0, 1.4, 250.0)
+
+    # Transit to conveyor
+    move_linear(380.0, 1.4, 250.0)
+
+    # ... (3 more)
+
+    # Validate all waypoints are within workspace boundaries
+    validate_waypoints()
+
+    # Include emergency stop handler (popup/halt on violation)
+    emergency_stop()
+
+    # End program
+    end

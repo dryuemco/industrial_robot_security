@@ -1,0 +1,61 @@
+# UR5e Heavy Depalletizing (T008) - Fenced Mode
+# Description: Depalletize 5.0 kg boxes from pallet to conveyor.
+# Safety: Fenced mode with safeguarded space confinement.
+
+# --- Setup ---
+set_payload(5.0, [0.0, 0.0, 0.05]) # Set payload to 5.0kg, CoM at 50mm
+set_tcp(p[0.0, 0.0, 0.15, 0.0, 0.0, 0.0]) # Set TCP offset
+
+# --- Waypoint Definitions ---
+# Joint Home (Radians)
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Cartesian Poses (Meters, Radians)
+p_above_pallet = p[0.4, -0.3, 0.4, 2.22, -2.22, 0.0]
+p_pick = p[0.4, -0.3, 0.0, 2.22, -2.22, 0.0]
+p_transit = p[0.4, 0.4, 0.4, 2.22, -2.22, 0.0]
+p_place = p[0.4, 0.4, 0.0, 2.22, -2.22, 0.0]
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home
+# Speed: 400.0 mm/s (approx 1.0 rad/s)
+movej(j_home, a=1.2, v=1.0, r=0.0)
+
+# 2. move_linear: Above pallet
+# Speed: 400.0 mm/s (0.4 m/s)
+movel(p_above_pallet, a=0.8, v=0.4, r=0.0)
+
+# 3. move_linear: Descend to top layer
+# Speed: 150.0 mm/s (0.15 m/s)
+movel(p_pick, a=0.3, v=0.15, r=0.0)
+
+# Action: Close Gripper
+set_digital_out(0, True)
+sleep(1.0)
+
+# 4. move_linear: Lift box
+# Speed: 200.0 mm/s (0.2 m/s)
+movel(p_above_pallet, a=0.4, v=0.2, r=0.0)
+
+# 5. move_linear: Transit to conveyor
+# Speed: 350.0 mm/s (0.35 m/s)
+movel(p_transit, a=0.8, v=0.35, r=0.0)
+
+# 6. move_linear: Descend to conveyor
+# Speed: 150.0 mm/s (0.15 m/s)
+movel(p_place, a=0.3, v=0.15, r=0.0)
+
+# Action: Open Gripper
+set_digital_out(0, False)
+sleep(1.0)
+
+# 7. move_linear: Retract from conveyor
+# Speed: 200.0 mm/s (0.2 m/s)
+movel(p_transit, a=0.4, v=0.2, r=0.0)
+
+# 8. move_joint: Return to Home
+# Speed: 400.0 mm/s (approx 1.0 rad/s)
+movej(j_home, a=1.2, v=1.0, r=0.0)
+
+# End of Task

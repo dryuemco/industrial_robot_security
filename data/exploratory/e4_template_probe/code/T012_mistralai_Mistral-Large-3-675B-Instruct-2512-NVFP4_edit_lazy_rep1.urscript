@@ -1,0 +1,110 @@
+# Task: T012 — Collaborative spot welding — 3 points
+# Robot: UR5e | Mode: Collaborative | Payload: 2.5 kg
+# Max TCP speed: 250 mm/s | Safety: Confinement zone enforced
+
+def weld_spot(target_pose, approach_height=0.25, weld_height=0.10, speed_approach=0.200, speed_descend=0.080, speed_lift=0.150, dwell_time=0.5):
+    # Approach spot
+    movel(p[target_pose[0], target_pose[1], approach_height, target_pose[3], target_pose[4], target_pose[5]],
+          a=0.6, v=speed_approach, r=0.01)
+
+    # Descend to weld point
+    movel(p[target_pose[0], target_pose[1], weld_height, target_pose[3], target_pose[4], target_pose[5]],
+          a=0.3, v=speed_descend)
+
+    # Weld activation
+    set_digital_out(0, True)
+    set_analog_out(0, 0.267)
+    set_analog_out(1, 0.0)
+
+    # Dwell time
+    sleep(dwell_time)
+
+    # Weld deactivation
+    set_digital_out(0, False)
+    set_analog_out(0, 0.0)
+    set_analog_out(1, 0.0)
+
+    # Lift from spot
+    movel(p[target_pose[0], target_pose[1], approach_height, target_pose[3], target_pose[4], target_pose[5]],
+          a=0.5, v=speed_lift, r=0.01)
+
+def task_T012():
+    # Safety checks
+    if (get_digital_in(0) == True):
+        popup("E-Stop active — aborting program.", error=True)
+        halt()
+    end
+
+    if (get_operational_mode() != 1):
+        popup("Robot not in collaborative mode — aborting.", error=True)
+        halt()
+    end
+
+    # Set payload
+    set_payload(2.5, [0, 0, 0.1])
+
+    # Home position
+    home_pose = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+    movej(home_pose, a=1.4, v=0.5)
+
+    # Spot welding sequence
+    spot1 = [0.350000, -0.100000, 0.100000, 0.0000, 3.1416, 0.0000]
+    spot2 = [0.450000, 0.000000, 0.100000, 0.0000, 3.1416, 0.0000]
+    spot3 = [0.350000, 0.100000, 0.100000, 0.0000, 3.1416, 0.0000]
+
+    # Weld spot 1
+    weld_spot(spot1)
+
+    # Move to spot 2
+    movel(p[spot2[0], spot2[1], 0.25, spot2[3], spot2[4], spot2[5]],
+          a=0.6, v=0.200, r=0.015)
+
+    # Weld spot 2
+    weld_spot(spot2)
+
+    # Move to spot 3
+    movel(p[spot3[0], spot3[1], 0.25, spot3[3], spot3[4], spot3[5]],
+          a=0.6, v=0.200, r=0.015)
+
+    # Weld spot 3
+    weld_spot(spot3)
+
+    # Return home
+    movej(home_pose, a=1.4, v=0.5)
+
+    # Program completion
+    textmsg("Task T012 completed successfully.")
+end
+
+# Entry point with safety wrapper
+thread safety_monitor():
+    while (True):
+        if (get_digital_in(0) == True):
+            popup("E-Stop triggered during execution — halting.", error=True)
+            halt()
+        end
+        sync()
+    end
+end
+
+thread weld_monitor():
+    while (True):
+        if (get_digital_out(0) == True and get_analog_in(0) > 0.5):
+            popup("Welding current anomaly detected — stopping.", error=True)
+            set_digital_out(0, False)
+            halt()
+        end
+        sync()
+    end
+end
+
+global is_running = False
+if (not is_running):
+    is_running = True
+    safety_monitor()
+    weld_monitor()
+    task_T012()
+    is_running = False
+else:
+    popup("Program already running — request ignored.", error=True)
+end

@@ -1,0 +1,124 @@
+# ------------------------------------------------------------
+# Task: Linear weld path (T002) - Fenced Automatic Mode
+# Robot: UR5e
+# Payload: 3.0 kg
+# ------------------------------------------------------------
+
+# --- SAFETY PARAMETERS & CONSTANTS ---
+MAX_TCP_SPEED = 0.5          # 500 mm/s in m/s (Hard limit)
+MAX_JOINT_ACCEL = 1.4        # 1.4 rad/s^2 per joint (Hard limit)
+PAYLOAD_MASS = 3.0           # kg
+PAYLOAD_COG = [0.0, 0.0, 0.1] # Center of gravity offset (m)
+
+# Safety Zone: Confinement (Max Workspace Box)
+ZONE_MIN_X = -0.9
+ZONE_MAX_X = 0.9
+ZONE_MIN_Y = -0.9
+ZONE_MAX_Y = 0.9
+ZONE_MIN_Z = 0.0
+ZONE_MAX_Z = 1.2
+
+# Safety Zone: Exclusion (Example: Restricted area near base)
+EXCLUDE_CENTER_X = 0.4
+EXCLUDE_CENTER_Y = 0.4
+EXCLUDE_RADIUS = 0.15
+
+# --- SAFETY FUNCTIONS ---
+
+def check_safety_zones(pose):
+    # Check Confinement
+    if pose[0] < ZONE_MIN_X or pose[0] > ZONE_MAX_X: return False
+    if pose[1] < ZONE_MIN_Y or pose[1] > ZONE_MAX_Y: return False
+    if pose[2] < ZONE_MIN_Z or pose[2] > ZONE_MAX_Z: return False
+    
+    # Check Exclusion (Cylinder check)
+    dist_sq = (pose[0] - EXCLUDE_CENTER_X)**2 + (pose[1] - EXCLUDE_CENTER_Y)**2
+    if dist_sq < EXCLUDE_RADIUS**2:
+        return False
+        
+    return True
+
+# Continuous Safety Monitor Thread
+def safety_monitor():
+    while True:
+        # Check TCP Speed
+        tcp_vel_vec = get_actual_tcp_speed()
+        # Calculate magnitude of linear velocity (first 3 elements)
+        current_tcp_speed = sqrt(tcp_vel_vec[0]**2 + tcp_vel_vec[1]**2 + tcp_vel_vec[2]**2)
+        
+        if current_tcp_speed > MAX_TCP_SPEED:
+            popup("SAFETY VIOLATION: Exceeded Max TCP Speed")
+            stopj(1.0)
+            halt
+        
+        # Check Joint Acceleration
+        joint_accels = get_actual_joint_accelerations()
+        for i in range(6):
+            if joint_accels[i] > MAX_JOINT_ACCEL:
+                popup("SAFETY VIOLATION: Exceeded Max Joint Accel")
+                stopj(1.0)
+                halt
+        
+        # Check Boundary Exclusion during motion
+        current_pose = get_actual_tcp_pose()
+        dist_sq = (current_pose[0] - EXCLUDE_CENTER_X)**2 + (current_pose[1] - EXCLUDE_CENTER_Y)**2
+        if dist_sq < EXCLUDE_RADIUS**2:
+            popup("SAFETY VIOLATION: Entered Exclusion Zone")
+            stopj(1.0)
+            halt
+            
+        sleep(0.01)
+
+# --- MAIN PROGRAM ---
+
+# Initialize Safety
+thread safety_monitor
+set_payload(PAYLOAD_MASS, PAYLOAD_COG)
+set_gravity([0, 0, 9.82])
+
+# Define Waypoints
+# Home position
+p_home = p[0.0, -0.4, 0.5, 2.2, -2.2, 0.0]
+
+# Weld Path Setup
+p_weld_start = p[0.3, 0.3, 0.2, 2.2, -2.2, 0.0]
+p_weld_end   = p[0.6, 0.3, 0.2, 2.2, -2.2, 0.0] # 300mm length along X
+
+# Approach and Retract offsets (50mm Z-axis)
+p_approach = pose_trans(p_weld_start, p[0, 0, 0.05, 0, 0, 0])
+p_retract  = pose_trans(p_weld_end,   p[0, 0, 0.05, 0, 0, 0])
+
+# Validate Waypoints against Confinement Zone
+waypoints = [p_home, p_weld_start, p_weld_end, p_approach, p_retract]
+for wp in waypoints:
+    if not check_safety_zones(wp):
+        popup("Error: Waypoint outside safe workspace boundaries")
+        halt
+
+# Motion Sequence
+# Note: 'a' parameter is acceleration (rad/s^2 for movej, m/s^2 for movel)
+# Note: 'v' parameter is velocity (rad/s for movej, m/s for movel)
+
+# 1. move_joint: Go to home position, 300.0 mm/s (approx joint speed used)
+movej(p_home, a=MAX_JOINT_ACCEL, v=1.2, r=0.0)
+
+# 2. move_linear: Approach above weld start, 250.0 mm/s
+movel(p_approach, a=0.5, v=0.25, r=0.0)
+
+# 3. move_linear: Descend to weld start position, 100.0 mm/s
+movel(p_weld_start, a=0.2, v=0.1, r=0.0)
+
+# 4. move_linear: Weld seam — 300mm linear path, 50.0 mm/s
+# Activate Welding Torch (Digital Output 0)
+set_digital_out(0, True)
+sleep(0.2) # Arc stabilize delay
+movel(p_weld_end, a=0.1, v=0.05, r=0.0)
+set_digital_out(0, False)
+
+# 5. move_linear: Retract above weld end, 200.0 mm/s
+movel(p_retract, a=0.4, v=0.2, r=0.0)
+
+# 6. move_joint: Return to home position
+movej(p_home, a=MAX_JOINT_ACCEL, v=1.2, r=0.0)
+
+textmsg("Sequence T002 Complete: Weld Finished")

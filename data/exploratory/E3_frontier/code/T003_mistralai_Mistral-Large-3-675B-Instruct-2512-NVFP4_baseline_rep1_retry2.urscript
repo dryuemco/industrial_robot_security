@@ -1,0 +1,78 @@
+def eur_pallet_2x2_hybrid():
+  # Safety configuration
+  set_analog_inputrange(0, 0)
+  set_analog_inputrange(1, 0)
+  set_analog_outputdomain(0, 0)
+  set_analog_outputdomain(1, 0)
+  set_tool_voltage(0)
+  set_runstate_outputs([])
+  set_payload(4.5)
+  set_gravity([0.0, 0.0, 9.82])
+
+  # Zone confinement setup
+  confinement_zone = p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  pallet_boundary = [[-600.0, -400.0, 0.0], [600.0, 400.0, 1200.0]]
+
+  # Home position
+  home_pose = p[0.0, -0.6, 0.5, 0.0, 3.14159, 0.0]
+  movej(home_pose, a=1.2, v=1.05, t=0, r=0)
+
+  # Conveyor pick sequence
+  conveyor_approach = p[0.5, -0.3, 0.2, 0.0, 3.14159, 0.0]
+  conveyor_pick = p[0.5, -0.3, 0.1, 0.0, 3.14159, 0.0]
+  conveyor_lift = p[0.5, -0.3, 0.2, 0.0, 3.14159, 0.0]
+
+  # Enable fenced mode for transit
+  set_zone_confinement(pallet_boundary)
+  set_safety_mode("reduced")
+
+  movel(conveyor_approach, a=1.2, v=0.25, t=0, r=0)
+  movel(conveyor_pick, a=0.5, v=0.1, t=0, r=0)
+
+  # Gripper activation (simulated)
+  set_digital_out(0, True)
+  sleep(0.5)
+
+  movel(conveyor_lift, a=1.2, v=0.2, t=0, r=0)
+
+  # Transit to pallet
+  pallet_center = p[0.0, 0.0, 0.3, 0.0, 3.14159, 0.0]
+  movel(pallet_center, a=1.2, v=0.28, t=0, r=0)
+
+  # Switch to collaborative mode for placement
+  set_safety_mode("normal")
+
+  # 2x2 placement pattern
+  pallet_positions = [
+    p[0.2, 0.15, 0.15, 0.0, 3.14159, 0.0],
+    p[0.2, -0.15, 0.15, 0.0, 3.14159, 0.0],
+    p[-0.2, 0.15, 0.15, 0.0, 3.14159, 0.0],
+    p[-0.2, -0.15, 0.15, 0.0, 3.14159, 0.0]
+  ]
+
+  for i in range(4):
+    # Approach position
+    approach_pos = pallet_positions[i]
+    approach_pos[2] = 0.2
+    movel(approach_pos, a=0.5, v=0.1, t=0, r=0)
+
+    # Place position
+    place_pos = pallet_positions[i]
+    movel(place_pos, a=0.3, v=0.05, t=0, r=0)
+
+    # Release gripper
+    set_digital_out(0, False)
+    sleep(0.5)
+
+    # Retreat
+    retreat_pos = approach_pos
+    movel(retreat_pos, a=0.5, v=0.1, t=0, r=0)
+
+  # Return to home
+  set_safety_mode("reduced")
+  movej(home_pose, a=1.2, v=1.05, t=0, r=0)
+  set_safety_mode("normal")
+
+  # Reset safety configuration
+  set_zone_confinement([])
+end

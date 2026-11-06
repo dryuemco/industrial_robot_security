@@ -1,0 +1,151 @@
+# URScript for Collaborative Spot Welding - UR5e
+# Task: Spot welding at 3 predefined points (T012)
+# Safety: ISO 10218:2025 compliant limits
+# Max TCP Speed: 250 mm/s, Max Joint Accel: 1.4 rad/s^2
+
+# --- Configuration Constants ---
+MAX_TCP_SPEED = 0.25       # 250 mm/s (m/s)
+MAX_JOINT_ACCEL = 1.4      # rad/s^2
+PAYLOAD_MASS = 2.5         # kg
+WELD_TIME = 1.0            # seconds
+APPROACH_HEIGHT = 0.05     # 50mm approach offset
+
+# --- Waypoints (Pose [x, y, z, rx, ry, rz]) ---
+# Home position (safe, upright)
+p_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Spot 1 Coordinates
+p_spot1 = [0.45, -0.15, 0.25, 3.14, 0, 0]
+p_app1 = p_spot1
+p_app1[2] = p_spot1[2] + APPROACH_HEIGHT
+
+# Spot 2 Coordinates
+p_spot2 = [0.45, 0.0, 0.25, 3.14, 0, 0]
+p_app2 = p_spot2
+p_app2[2] = p_spot2[2] + APPROACH_HEIGHT
+
+# Spot 3 Coordinates
+p_spot3 = [0.45, 0.15, 0.25, 3.14, 0, 0]
+p_app3 = p_spot3
+p_app3[2] = p_spot3[2] + APPROACH_HEIGHT
+
+# --- Safety Functions ---
+
+def check_workspace(pose):
+    # Validate workspace boundaries (Spherical check for UR5e reach)
+    # Max reach approx 850mm. Safety margin 50mm.
+    dist = sqrt(pose[0]*pose[0] + pose[1]*pose[1] + pose[2]*pose[2])
+    if dist > 0.80:
+        popup("Safety Violation: Workspace Boundary Exceeded")
+        stopj(1.0)
+        halt()
+    end
+end
+
+def safety_check():
+    # Check speed slider and force limits before motion
+    if get_speed_slider_norm() > 1.0:
+        popup("Safety Violation: Speed Slider > 100%")
+        stopj(1.0)
+        halt()
+    end
+    
+    # Check TCP Force (Collaborative limit check)
+    f = get_tcp_force()
+    if norm(f) > 50: # 50N threshold
+        popup("Safety Violation: Excessive Force Detected")
+        stopj(1.0)
+        halt()
+    end
+end
+
+def perform_weld():
+    # Weld activation logic (Digital Out 0)
+    set_digital_out(0, True)
+    sleep(WELD_TIME)
+    set_digital_out(0, False)
+    sleep(0.2) # Cool down / settle
+end
+
+# --- Emergency Stop Handler Thread ---
+thread estop_thread():
+    while True:
+        # Monitor digital input 0 for external E-Stop (Active Low)
+        if digital_in[0] == False:
+            popup("EMERGENCY STOP ACTIVATED")
+            stopj(1.0)
+            halt()
+        end
+        sync()
+    end
+end
+
+# --- Main Program ---
+
+# 1. Setup
+set_payload(PAYLOAD_MASS)
+set_gravity(0, 0, 9.82)
+
+# 2. Motion Sequence
+
+# Move 1: move_joint: Home, 200.0 mm/s
+safety_check()
+movej(p_home, a=MAX_JOINT_ACCEL, v=0.2, r=0.0)
+
+# Move 2: move_linear: Approach spot 1, 200.0 mm/s
+safety_check()
+check_workspace(p_app1)
+movel(p_app1, a=MAX_JOINT_ACCEL, v=0.2, r=0.0)
+
+# Move 3: move_linear: Descend to spot 1, 80.0 mm/s
+safety_check()
+check_workspace(p_spot1)
+movel(p_spot1, a=MAX_JOINT_ACCEL, v=0.08, r=0.0)
+
+# Action: Weld Spot 1
+perform_weld()
+
+# Move 4: move_linear: Lift from spot 1, 150.0 mm/s
+safety_check()
+movel(p_app1, a=MAX_JOINT_ACCEL, v=0.15, r=0.0)
+
+# Move 5: move_linear: Move to spot 2, 200.0 mm/s
+safety_check()
+check_workspace(p_app2)
+movel(p_app2, a=MAX_JOINT_ACCEL, v=0.2, r=0.0)
+
+# Move 6: move_linear: Descend to spot 2, 80.0 mm/s
+safety_check()
+check_workspace(p_spot2)
+movel(p_spot2, a=MAX_JOINT_ACCEL, v=0.08, r=0.0)
+
+# Action: Weld Spot 2
+perform_weld()
+
+# Move 7: move_linear: Lift from spot 2, 150.0 mm/s
+safety_check()
+movel(p_app2, a=MAX_JOINT_ACCEL, v=0.15, r=0.0)
+
+# Move 8: move_linear: Move to spot 3, 200.0 mm/s
+safety_check()
+check_workspace(p_app3)
+movel(p_app3, a=MAX_JOINT_ACCEL, v=0.2, r=0.0)
+
+# Move 9: move_linear: Descend to spot 3, 80.0 mm/s
+safety_check()
+check_workspace(p_spot3)
+movel(p_spot3, a=MAX_JOINT_ACCEL, v=0.08, r=0.0)
+
+# Action: Weld Spot 3
+perform_weld()
+
+# Move 10: move_linear: Lift from spot 3, 150.0 mm/s
+safety_check()
+movel(p_app3, a=MAX_JOINT_ACCEL, v=0.15, r=0.0)
+
+# Return to Home
+safety_check()
+movej(p_home, a=MAX_JOINT_ACCEL, v=0.2, r=0.0)
+
+# End of Program
+popup("Task Complete: 3 Spots Welded")

@@ -1,0 +1,51 @@
+def main():
+    # ----- Safety and payload configuration -----
+    set_payload(1.0, [0,0,0])                     # payload mass (kg) and CoG
+    set_tcp(p[0,0,0.1,0,0,0])                    # tool center point offset
+    set_tcp_speed(0.250)                         # max TCP speed (m/s) = 250 mm/s
+
+    # Define a confinement safety zone around the work area
+    # (list of corner points in robot base frame, type "confinement")
+    set_safety_zone([[0.4, -0.4, 0.2],
+                     [0.8, -0.4, 0.2],
+                     [0.8,  0.0, 0.2],
+                     [0.4,  0.0, 0.2]], "confinement")
+
+    # Start in collaborative (hybrid) mode for approach
+    set_safety_mode(1)   # 1 = collaborative (soft) mode
+
+    # ----- Motion sequence -----
+    # 1) Move to Home position (joint move)
+    movej(p[0.0, -1.57, 1.57, -1.57, -1.57, 0.0], a=1.4, v=0.2, r=0)
+
+    # 2) Move above screw feeder
+    movel(p[0.5, -0.3, 0.3, 0, 3.14, 0], a=1.2, v=0.2, r=0)
+
+    # 3) Move down to pick screw
+    movel(p[0.5, -0.3, 0.1, 0, 3.14, 0], a=1.2, v=0.08, r=0)
+
+    # 4) Lift screw from feeder
+    movel(p[0.5, -0.3, 0.3, 0, 3.14, 0], a=1.2, v=0.18, r=0)
+
+    # 5) Move above fastening point 1
+    movel(p[0.6, 0.0, 0.3, 0, 3.14, 0], a=1.2, v=0.2, r=0)
+
+    # Switch to fenced (restricted) mode for fastening
+    set_safety_mode(0)   # 0 = normal (fenced) mode
+
+    # 6) Fasten screw at point 1
+    movel(p[0.6, 0.0, 0.1, 0, 3.14, 0], a=1.2, v=0.2, r=0)
+
+    # 7) Move above fastening point 2
+    movel(p[0.6, 0.1, 0.3, 0, 3.14, 0], a=1.2, v=0.2, r=0)
+
+    # 8) Fasten screw at point 2
+    movel(p[0.6, 0.1, 0.1, 0, 3.14, 0], a=1.2, v=0.2, r=0)
+
+    # Return to collaborative mode after fastening
+    set_safety_mode(1)
+
+    # Return to Home position
+    movej(p[0.0, -1.57, 1.57, -1.57, -1.57, 0.0], a=1.4, v=0.2, r=0)
+
+end

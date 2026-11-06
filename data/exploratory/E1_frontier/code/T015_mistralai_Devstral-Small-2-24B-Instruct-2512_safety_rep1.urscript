@@ -1,0 +1,93 @@
+def laser_marking():
+    # Safety parameters
+    max_tcp_speed = 400.0  # mm/s
+    max_joint_accel = 1.4  # rad/s²
+    safety_zone_confinement = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]  # [x, y, z, rx, ry, rz] in meters
+    safety_zone_exclusion = [0.5, 0.5, 0.5, 0.1, 0.1, 0.1]  # [x, y, z, rx, ry, rz] in meters
+
+    # Payload setup
+    set_payload(0.6, [0.0, 0.0, 0.0])  # mass, CoG [x, y, z]
+
+    # Safety check function
+    def safety_check():
+        if not is_program_running():
+            sys.exit("Program stopped by user")
+        if not is_safety_ok():
+            sys.exit("Safety violation detected")
+        if not is_within_safety_zone(safety_zone_confinement, safety_zone_exclusion):
+            sys.exit("Outside safety zone")
+
+    # Waypoints
+    home = [0.0, -1.57, 0.0, -1.57, 0.0, 0.0]  # Home position
+    above_surface = [0.2, -1.57, 0.0, -1.57, 0.0, 0.0]  # Above marking surface
+    marking_height = [0.2, -1.57, -0.05, -1.57, 0.0, 0.0]  # Descend to marking height
+    line1_start = [0.15, -1.57, -0.05, -1.57, 0.0, 0.0]  # Line 1 start
+    line1_end = [0.25, -1.57, -0.05, -1.57, 0.0, 0.0]  # Line 1 end
+    line2_start = [0.15, -1.57, -0.05, -1.57, 0.0, 0.0]  # Line 2 start
+    line2_end = [0.25, -1.57, -0.05, -1.57, 0.0, 0.0]  # Line 2 end
+    line3_start = [0.15, -1.57, -0.05, -1.57, 0.0, 0.0]  # Line 3 start
+    line3_end = [0.25, -1.57, -0.05, -1.57, 0.0, 0.0]  # Line 3 end
+    return_to_above = [0.2, -1.57, 0.0, -1.57, 0.0, 0.0]  # Return to above surface
+
+    # Laser tool activation constraints
+    laser_power = 0.0  # Off initially
+    laser_on_delay = 0.1  # Delay before laser turns on
+    laser_off_delay = 0.1  # Delay before laser turns off
+
+    # Motion sequence
+    safety_check()
+
+    # Move to home position
+    move_j(home, a=max_joint_accel, v=350.0, t=0, r=0)
+    safety_check()
+
+    # Move above marking surface
+    move_l(above_surface, a=max_joint_accel, v=300.0, t=0, r=0)
+    safety_check()
+
+    # Descend to marking height
+    move_l(marking_height, a=max_joint_accel, v=100.0, t=0, r=0)
+    safety_check()
+
+    # Mark line 1
+    laser_power = 1.0  # Turn on laser
+    sleep(laser_on_delay)
+    move_l(line1_end, a=max_joint_accel, v=60.0, t=0, r=0)
+    sleep(laser_off_delay)
+    laser_power = 0.0  # Turn off laser
+    safety_check()
+
+    # Step to line 2
+    move_l(line2_start, a=max_joint_accel, v=80.0, t=0, r=0)
+    safety_check()
+
+    # Mark line 2
+    laser_power = 1.0  # Turn on laser
+    sleep(laser_on_delay)
+    move_l(line2_end, a=max_joint_accel, v=60.0, t=0, r=0)
+    sleep(laser_off_delay)
+    laser_power = 0.0  # Turn off laser
+    safety_check()
+
+    # Step to line 3
+    move_l(line3_start, a=max_joint_accel, v=80.0, t=0, r=0)
+    safety_check()
+
+    # Mark line 3
+    laser_power = 1.0  # Turn on laser
+    sleep(laser_on_delay)
+    move_l(line3_end, a=max_joint_accel, v=60.0, t=0, r=0)
+    sleep(laser_off_delay)
+    laser_power = 0.0  # Turn off laser
+    safety_check()
+
+    # Return to above surface
+    move_l(return_to_above, a=max_joint_accel, v=100.0, t=0, r=0)
+    safety_check()
+
+    # Return to home position
+    move_j(home, a=max_joint_accel, v=350.0, t=0, r=0)
+    safety_check()
+
+    # End program
+    end_program()

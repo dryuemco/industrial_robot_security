@@ -1,0 +1,87 @@
+# URScript for UR5e – Laser surface scan (fenced mode)
+# Safety: FENCED mode, payload 0.5 kg, max TCP speed 200 mm/s
+
+def laser_scan():
+    # ---- Safety and payload configuration ----
+    set_payload(0.5, [0,0,0])          # payload in kg, CoG offset (m)
+    set_tcp(p[0,0,0.1,0,0,0])          # example TCP offset (m)
+    set_safety_mode(2)                # 2 = FENCED mode
+    set_speed_slider(1.0)             # ensure full speed scaling
+
+    # ---- Laser tool activation functions ----
+    def laser_on():
+        set_digital_output(0, True)   # assume DO0 controls laser ON
+    end
+
+    def laser_off():
+        set_digital_output(0, False)  # turn laser OFF
+    end
+
+    # ---- Helper: safety stop check ----
+    def check_safety():
+        if safety_stop():
+            laser_off()
+            halt()
+        end
+    end
+
+    # ---- Positions (in meters) ----
+    # Home joint configuration (radians)
+    home_joints = p[0, -1.57, 1.57, -1.57, -1.57, 0]
+
+    # Scan area definition (origin at lower‑left corner)
+    start_above = p[0.3, -0.2, 0.5, 0, 3.14, 0]   # 0.5 m above start point
+    start_scan  = p[0.3, -0.2, 0.1, 0, 3.14, 0]   # scan height (0.1 m)
+
+    # Scan dimensions
+    width  = 0.300   # 300 mm
+    height = 0.200   # 200 mm
+    line_spacing = height / 3   # 4 lines → 3 steps
+
+    # ---- Motion sequence ----
+    # 1) Move to Home (joint move)
+    speedj(home_joints, a=1.2, v=1.8)   # 180 mm/s ≈ 1.8 rad/s for UR5e
+    check_safety()
+
+    # 2) Move above scan start (linear)
+    speedl(start_above, a=1.5, v=1.5)  # 150 mm/s
+    check_safety()
+
+    # 3) Descend to scan height
+    speedl(start_scan, a=1.0, v=0.8)   # 80 mm/s
+    check_safety()
+
+    # Activate laser before scanning
+    laser_on()
+
+    # 4‑11) Raster scan (4 lines, 7 steps)
+    for i = 0, 3, 1 do
+        # Compute end point of current line
+        line_end = p[0.3 + width, -0.2 + i*line_spacing, 0.1, 0, 3.14, 0]
+
+        # Scan line i (forward)
+        speedl(line_end, a=1.0, v=0.5)   # 50 mm/s
+        check_safety()
+
+        # If not the last line, step to next line start (backward)
+        if i < 3 then
+            next_start = p[0.3 + width, -0.2 + (i+1)*line_spacing, 0.1, 0, 3.14, 0]
+            speedl(next_start, a=1.0, v=0.8)   # 80 mm/s
+            check_safety()
+        end
+    end
+
+    # Deactivate laser after scan
+    laser_off()
+
+    # 12) Retract to safe height
+    retract_pos = p[0.3, -0.2, 0.5, 0, 3.14, 0]
+    speedl(retract_pos, a=1.5, v=1.0)   # 100 mm/s
+    check_safety()
+
+    # Return to Home
+    speedj(home_joints, a=1.2, v=1.8)
+    check_safety()
+end
+
+laser_scan()

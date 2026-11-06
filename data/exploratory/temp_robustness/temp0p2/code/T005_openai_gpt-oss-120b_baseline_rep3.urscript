@@ -1,0 +1,92 @@
+# URScript for visual inspection scan (collaborative mode)
+
+# ---- Configuration ----
+set_payload(0.3, [0, 0, 0.1])          # payload 0.3 kg, CoM 10 cm along Z
+set_tcp([0, 0, 0, 0, 0, 0])           # default TCP
+set_robot_mode(2)                     # collaborative mode (2 = automatic/collaborative)
+
+# Speed limits (mm/s -> m/s)
+speed_joint_home   = 0.150            # 150 mm/s
+speed_approach     = 0.130            # 130 mm/s
+speed_descend      = 0.080            # 80 mm/s
+speed_scan         = 0.050            # 50 mm/s
+speed_step         = 0.080            # 80 mm/s
+speed_retreat      = 0.130            # 130 mm/s
+
+# Acceleration (m/s^2)
+acc = 0.5
+
+# Orientation: tool pointing strictly downward
+# Rotation about X by π rad flips Z axis
+downward_orientation = p[0,0,0,0,3.1415926535,0]
+
+# ---- Poses ----
+# Home joint configuration
+home_joints = [-0.0, -1.5708, 0.0, -1.5708, 0.0, 0.0]
+
+# Part reference (center of part)
+part_center = p[0.5, 0.0, 0.2, 0, 3.1415926535, 0]   # Z=0.2 m surface height
+
+# Approach point: 200 mm above surface, centered over part
+approach_pose = p[0.5, 0.0, 0.4, 0, 3.1415926535, 0]
+
+# Scan height: 150 mm above surface
+scan_height_z = 0.35
+scan_start_x = 0.4
+scan_start_y = -0.1
+scan_end_y   =  0.1
+step_x       = 0.05   # 50 mm step between lines
+
+# Scan line 1 start
+scan1_start = p[scan_start_x, scan_start_y, scan_height_z, 0, 3.1415926535, 0]
+# Scan line 2 start (after X step)
+scan2_start = p[scan_start_x + step_x, scan_start_y, scan_height_z, 0, 3.1415926535, 0]
+# Scan line 3 start (after second X step)
+scan3_start = p[scan_start_x + 2*step_x, scan_start_y, scan_height_z, 0, 3.1415926535, 0]
+
+# Retreat point: 200 mm above surface, same X/Y as start
+retreat_pose = p[scan_start_x, scan_start_y, 0.4, 0, 3.1415926535, 0]
+
+# ---- Program ----
+def main():
+    # 1) Move to Home joint position
+    movej(home_joints, a=acc, v=speed_joint_home)
+
+    # 2) Approach inspection start (above surface)
+    movel(approach_pose, a=acc, v=speed_approach)
+
+    # 3) Descend to scan height (150 mm above part)
+    movel(p[approach_pose[0], approach_pose[1], scan_height_z, 0, 3.1415926535, 0],
+          a=acc, v=speed_descend)
+
+    # 4) Scan line 1 – Y sweep forward
+    movel(p[scan1_start[0], scan_end_y, scan_height_z, 0, 3.1415926535, 0],
+          a=acc, v=speed_scan)
+
+    # 5) Step to scan line 2 (+X)
+    movel(p[scan2_start[0], scan_end_y, scan_height_z, 0, 3.1415926535, 0],
+          a=acc, v=speed_step)
+
+    # 6) Scan line 2 – Y sweep backward
+    movel(p[scan2_start[0], scan_start_y, scan_height_z, 0, 3.1415926535, 0],
+          a=acc, v=speed_scan)
+
+    # 7) Step to scan line 3 (+X)
+    movel(p[scan3_start[0], scan_start_y, scan_height_z, 0, 3.1415926535, 0],
+          a=acc, v=speed_step)
+
+    # 8) Scan line 3 – Y sweep forward
+    movel(p[scan3_start[0], scan_end_y, scan_height_z, 0, 3.1415926535, 0],
+          a=acc, v=speed_scan)
+
+    # 9) Retreat to safe height above part
+    movel(retreat_pose, a=acc, v=speed_retreat)
+
+    # 10) Return to Home joint position
+    movej(home_joints, a=acc, v=speed_joint_home)
+
+    # End of program
+    stopj(0)
+
+# Execute
+main()

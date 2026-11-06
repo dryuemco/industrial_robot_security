@@ -1,0 +1,79 @@
+def main():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    set_payload(0.3, [0,0,0])               # Payload 0.3 kg, CoG at TCP
+    set_tcp([0,0,0.1,0,0,0])                # Example TCP offset (10 cm along Z)
+    
+    # Orientation: camera pointing strictly downward (rotate 180° about X)
+    down_orientation = [3.1415926535, 0, 0] # Rx, Ry, Rz in radians
+    
+    # Speed limits for collaborative mode (<= 0.1 m/s = 100 mm/s)
+    max_speed = 0.1                         # m/s
+    accel = 0.5                             # m/s^2 (conservative)
+    
+    # -------------------------------------------------
+    # Poses
+    # -------------------------------------------------
+    # Home joint configuration (example)
+    home_joint = [-1.57, -1.57, -1.57, -1.57, 1.57, 0]
+    
+    # Start position: above the part, 300 mm above base level
+    start_pose = p[0.5, 0.0, 0.3] + down_orientation
+    
+    # Scan height: 150 mm above part surface (assume part surface at Z=0.15)
+    scan_height_pose = p[0.5, 0.0, 0.15] + down_orientation
+    
+    # Scan line parameters
+    scan_length = 0.2   # 200 mm
+    line_spacing = 0.1  # 100 mm between lines (example)
+    
+    # Define the three scan line start/end poses
+    line1_start = scan_height_pose
+    line1_end   = p[0.5,  scan_length, 0.15] + down_orientation
+    
+    line2_start = p[0.5 + line_spacing,  scan_length, 0.15] + down_orientation
+    line2_end   = p[0.5 + line_spacing, 0.0, 0.15] + down_orientation
+    
+    line3_start = p[0.5 + 2*line_spacing, 0.0, 0.15] + down_orientation
+    line3_end   = p[0.5 + 2*line_spacing, scan_length, 0.15] + down_orientation
+    
+    # Retreat pose (above start)
+    retreat_pose = p[0.5, 0.0, 0.3] + down_orientation
+    
+    # -------------------------------------------------
+    # Motion sequence (10 moves)
+    # -------------------------------------------------
+    # 1. Move to home joint configuration
+    movej(home_joint, a=accel, v=0.2)  # joint speed in rad/s, safe low value
+    
+    # 2. Approach inspection start (linear move above surface)
+    movel(start_pose, a=accel, v=max_speed)
+    
+    # 3. Descend to scan height (150 mm above part)
+    movel(scan_height_pose, a=accel, v=max_speed)
+    
+    # 4. Scan line 1 – Y sweep
+    movel(line1_end, a=accel, v=max_speed)
+    
+    # 5. Step to scan line 2 (+X offset)
+    movel(line2_start, a=accel, v=max_speed)
+    
+    # 6. Scan line 2 – Y sweep opposite direction
+    movel(line2_end, a=accel, v=max_speed)
+    
+    # 7. Step to scan line 3 (+X offset)
+    movel(line3_start, a=accel, v=max_speed)
+    
+    # 8. Scan line 3 – Y sweep
+    movel(line3_end, a=accel, v=max_speed)
+    
+    # 9. Retreat upward to safe height
+    movel(retreat_pose, a=accel, v=max_speed)
+    
+    # 10. Return to home joint configuration
+    movej(home_joint, a=accel, v=0.2)
+    
+    # End of program
+    stopj(0)
+end

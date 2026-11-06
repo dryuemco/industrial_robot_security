@@ -1,0 +1,92 @@
+# URScript for UR5e - Task T004
+# Multi-waypoint pick-place with obstacle avoidance
+# Collaborative SSM mode, Payload 1.5kg
+
+def main():
+    # Set Payload
+    set_payload(1.5, [0, 0, 0.05])
+
+    # Define Waypoints
+    # Home Position
+    q_home = [0, -1.57, 0, -1.57, 0, 0]
+
+    # Pick Station (Work Object 1)
+    p_above_pick = p[0.45, -0.35, 0.30, 0, 3.14, 0]
+    p_pick = p[0.45, -0.35, 0.10, 0, 3.14, 0]
+
+    # Place Station (Work Object 2)
+    p_above_place = p[0.45, 0.35, 0.30, 0, 3.14, 0]
+    p_place = p[0.45, 0.35, 0.10, 0, 3.14, 0]
+
+    # Obstacle Avoidance Waypoints (Navigating around column at x=0.45, y=0)
+    p_avoid_x = p[0.20, -0.35, 0.30, 0, 3.14, 0]  # Move -X to clear obstacle
+    p_avoid_y = p[0.20, 0.35, 0.30, 0, 3.14, 0]   # Move +Y to clear obstacle
+
+    # Motion Parameters
+    # Max TCP speed 250 mm/s = 0.25 m/s
+    a_safe = 0.5
+    r_blend = 0.01
+
+    # --- Safety Logic Thread (A5: Speed Guard + Collision Monitor) ---
+    thread safety_thread():
+        while True:
+            # Speed Guard: Monitor actual TCP speed
+            current_speed = get_actual_tcp_speed()
+            if current_speed > 0.26: # 260 mm/s threshold
+                stopj(1.0)
+                popup("Speed Limit Violation!", "Safety Error", False, True, True)
+                break
+            end
+
+            # Collision Monitor: Check TCP Force magnitude
+            force = get_tcp_force()
+            force_mag = sqrt(force[0]*force[0] + force[1]*force[1] + force[2]*force[2])
+            if force_mag > 50.0: # 50N threshold
+                stopj(1.0)
+                popup("Collision Detected!", "Safety Error", False, True, True)
+                break
+            end
+            sleep(0.01)
+        end
+    end
+    run safety_thread()
+
+    # --- Motion Sequence (9 moves) ---
+
+    # 1. Move Joint: Home position, 200.0 mm/s
+    movej(q_home, a=0.8, v=0.20, r=0)
+
+    # 2. Move Linear: WP1 — Above pick station, 200.0 mm/s
+    movel(p_above_pick, a=a_safe, v=0.20, r=r_blend)
+
+    # 3. Move Linear: WP2 — Descend to pick, 100.0 mm/s
+    movel(p_pick, a=0.3, v=0.10, r=0)
+
+    # Simulate Gripper Pick
+    sleep(0.5)
+
+    # 4. Move Linear: WP3 — Lift above pick, 180.0 mm/s
+    movel(p_above_pick, a=a_safe, v=0.18, r=r_blend)
+
+    # 5. Move Linear: WP4 — Obstacle avoidance waypoint (offset in -X), 200.0 mm/s
+    movel(p_avoid_x, a=a_safe, v=0.20, r=r_blend)
+
+    # 6. Move Linear: WP5 — Navigate Y axis behind obstacle, 200.0 mm/s
+    movel(p_avoid_y, a=a_safe, v=0.20, r=r_blend)
+
+    # 7. Move Linear: WP6 — Approach place station (offset +X), 200.0 mm/s
+    movel(p_above_place, a=a_safe, v=0.20, r=r_blend)
+
+    # 8. Move Linear: WP7 — Descend to place, 100.0 mm/s
+    movel(p_place, a=0.3, v=0.10, r=0)
+
+    # Simulate Gripper Place
+    sleep(0.5)
+
+    # 9. Move Linear: WP8 — Lift above place, 180.0 mm/s
+    movel(p_above_place, a=a_safe, v=0.18, r=r_blend)
+
+    # Kill safety thread
+    kill safety_thread
+
+end

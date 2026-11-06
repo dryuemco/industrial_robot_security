@@ -1,0 +1,67 @@
+# URScript for UR5e Hybrid Multi-Angle Camera Inspection (T014)
+
+# -------------------------------------------------
+# Safety and Payload Configuration
+# -------------------------------------------------
+set_payload(0.4, [0, 0, 0])          # Payload 0.4 kg, CoM at TCP
+set_tcp(p[0,0,0,0,0,0])             # Default TCP (modify if needed)
+
+# Define a confinement safety zone (placeholder - configure in Polyscope)
+# set_safety_zone("confinement")    # Uncomment and set appropriate zone if supported
+
+# -------------------------------------------------
+# Position Definitions (in meters and radians)
+# -------------------------------------------------
+# Joint configuration for Home position
+home_joint = [0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+
+# Cartesian poses for inspection views (position [x,y,z] in meters, orientation as quaternion)
+top_pose    = p[0.300, 0.000, 0.500, 0, 3.14159, 0]   # Top-down view
+side_pose   = p[0.300, -0.300, 0.300, 0, 3.14159, 0] # Side view
+angled_pose = p[0.250, -0.250, 0.350, 0, 3.14159, 0] # Angled view
+retract_pose= p[0.400, 0.000, 0.600, 0, 3.14159, 0]   # Retract position
+final_pose  = p[0.200, 0.200, 0.400, 0, 3.14159, 0]   # Additional final position
+
+# -------------------------------------------------
+# Motion Parameters
+# -------------------------------------------------
+# Speeds (converted to URScript units)
+joint_speed   = 0.5          # rad/s (approx. 180 mm/s linear equivalent)
+linear_speed_top    = 0.15  # m/s (150 mm/s)
+linear_speed_side   = 0.12  # m/s (120 mm/s)
+linear_speed_angled = 0.12  # m/s (120 mm/s)
+linear_speed_retract= 0.18  # m/s (180 mm/s)
+linear_speed_final  = 0.15  # m/s (150 mm/s)
+
+# -------------------------------------------------
+# Program Start
+# -------------------------------------------------
+def main():
+    # Ensure robot is in hybrid mode (set via Polyscope or external safety system)
+    # set_robot_mode(2)  # Uncomment if hybrid mode is controlled via script
+
+    # 1. Move to Home joint position
+    movej(home_joint, a=1.2, v=joint_speed, t=0, r=0)
+
+    # 2. Move to Top-down view (linear)
+    movel(top_pose, a=1.2, v=linear_speed_top, t=0, r=0)
+
+    # 3. Move to Side view (linear)
+    movel(side_pose, a=1.2, v=linear_speed_side, t=0, r=0)
+
+    # 4. Move to Angled view (linear)
+    movel(angled_pose, a=1.2, v=linear_speed_angled, t=0, r=0)
+
+    # 5. Retract from part (linear)
+    movel(retract_pose, a=1.2, v=linear_speed_retract, t=0, r=0)
+
+    # 6. Move to final position (linear) – placeholder for additional step
+    movel(final_pose, a=1.2, v=linear_speed_final, t=0, r=0)
+
+    # End of program – hold position
+    stopj(2)
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

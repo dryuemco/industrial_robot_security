@@ -1,0 +1,54 @@
+# Task: T013 — Collaborative suction palletizing — light boxes
+# Improved version with enhanced safety, efficiency, and readability
+# Operating mode: collaborative | Max TCP speed: 0.250 m/s
+# Robot: ur5e
+
+def task_T013():
+    # [0] Safety checks
+    if (get_digital_in(0) == True):
+        popup("E-Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # [1] Home with optimized acceleration
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.5, t=0, r=0)
+
+    # [2] Above staging with safety margin
+    movel(p[0.35, -0.2, 0.3, 0, 3.1416, 0], a=0.7, v=0.22, t=0, r=0.01)
+
+    # [3] Descend to pick with reduced speed
+    movel(p[0.35, -0.2, 0.08, 0, 3.1416, 0], a=0.4, v=0.1, t=0, r=0.01)
+
+    # [4] Activate suction with confirmation
+    set_digital_out(0, True)
+    sleep(0.3)  # Vacuum settle time
+
+    # [5] Verify suction before lift
+    if (get_digital_in(1) == False):  # Assuming digital input 1 is suction sensor
+        popup("Suction failed — box not picked up.", error=True)
+        halt
+    end
+
+    # [6] Lift with optimized acceleration
+    movel(p[0.35, -0.2, 0.35, 0, 3.1416, 0], a=0.6, v=0.18, t=0, r=0.015)
+
+    # [7] Transit to pallet with maximum allowed speed
+    movel(p[0.45, 0.2, 0.35, 0, 3.1416, 0], a=0.8, v=0.23, t=0, r=0.015)
+
+    # [8] Place on pallet with controlled descent
+    movel(p[0.45, 0.2, 0.08, 0, 3.1416, 0], a=0.4, v=0.1, t=0, r=0.01)
+
+    # [9] Deactivate suction
+    set_digital_out(0, False)
+    sleep(0.2)  # Release time
+
+    # [10] Retract with safety margin
+    movel(p[0.45, 0.2, 0.35, 0, 3.1416, 0], a=0.7, v=0.2, t=0, r=0.01)
+
+    # [11] Return home with optimized acceleration
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.5, t=0, r=0)
+
+end
+
+# Entry point
+task_T013()

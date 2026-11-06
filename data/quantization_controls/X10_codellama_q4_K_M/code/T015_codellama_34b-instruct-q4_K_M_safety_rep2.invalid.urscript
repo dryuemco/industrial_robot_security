@@ -1,0 +1,52 @@
+def program():
+    # Define safety zones
+    safety_zones = [
+        # Confinement zone
+        {
+            "name": "confinement",
+            "type": "confinement",
+            "points": [
+                [0, 0, 0],
+                [0, 0, 0.1],
+                [0, 0.1, 0],
+                [0, 0.1, 0.1],
+                [0.1, 0, 0],
+                [0.1, 0, 0.1],
+                [0.1, 0.1, 0],
+                [0.1, 0.1, 0.1],
+            ],
+        },
+        # Exclusion zone
+        {
+            "name": "exclusion",
+            "type": "exclusion",
+            "points": [
+                [0, 0, 0],
+                [0, 0, 0.1],
+                [0, 0.1, 0],
+                [0, 0.1, 0.1],
+                [0.1, 0, 0],
+                [0.1, 0, 0.1],
+                [0.1, 0.1, 0],
+                [0.1, 0.1, 0.1],
+            ],
+        },
+    ]
+
+    # Define motion commands
+    motion_commands = [
+        # Home
+        {
+            "type": "move_joint",
+            "speed": 350.0,
+            "acceleration": 1.4,
+            "joints": [0, 0, 0, 0, 0, 0],
+        },
+        # Above marking surface
+        {
+            "type": "move_linear",
+            "speed": 300.0,
+            "acceleration": 1.4,
+            "pose": [0, 0, 0.1],
+        },
+        # Descend

@@ -1,0 +1,75 @@
+# Task: T012 — Collaborative spot welding — 3 points
+# Improved version with refined motion sequence and structure
+# Operating mode: collaborative | Max TCP speed: 0.250 m/s
+# Robot: ur5e | Payload: 2.5 kg
+
+def task_T012():
+    # Safety check
+    if get_digital_in(0) == True:
+        popup("E-Stop active — aborting program.", error=True)
+        halt
+
+    # Home position
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.5)
+
+    # Welding parameters
+    weld_current = 0.267  # Normalized (80A)
+    weld_dwell = 0.5      # Seconds
+
+    # Spot 1
+    movel(p[0.35, -0.10, 0.25, 0.0, 3.1416, 0.0], a=0.6, v=0.2, r=0.01)
+    movel(p[0.35, -0.10, 0.10, 0.0, 3.1416, 0.0], a=0.3, v=0.08)
+
+    # Activate weld
+    set_digital_out(0, True)
+    set_analog_out(0, weld_current)
+    set_analog_out(1, 0.0)
+    sleep(weld_dwell)
+
+    # Deactivate weld
+    set_digital_out(0, False)
+    set_analog_out(0, 0.0)
+    set_analog_out(1, 0.0)
+
+    movel(p[0.35, -0.10, 0.25, 0.0, 3.1416, 0.0], a=0.5, v=0.15, r=0.01)
+
+    # Spot 2
+    movel(p[0.45, 0.00, 0.25, 0.0, 3.1416, 0.0], a=0.6, v=0.2, r=0.015)
+    movel(p[0.45, 0.00, 0.10, 0.0, 3.1416, 0.0], a=0.3, v=0.08)
+
+    # Activate weld
+    set_digital_out(0, True)
+    set_analog_out(0, weld_current)
+    set_analog_out(1, 0.0)
+    sleep(weld_dwell)
+
+    # Deactivate weld
+    set_digital_out(0, False)
+    set_analog_out(0, 0.0)
+    set_analog_out(1, 0.0)
+
+    movel(p[0.45, 0.00, 0.30, 0.0, 3.1416, 0.0], a=0.6, v=0.2, r=0.01)
+
+    # Spot 3
+    movel(p[0.55, 0.10, 0.25, 0.0, 3.1416, 0.0], a=0.6, v=0.2, r=0.015)
+    movel(p[0.55, 0.10, 0.10, 0.0, 3.1416, 0.0], a=0.3, v=0.08)
+
+    # Activate weld
+    set_digital_out(0, True)
+    set_analog_out(0, weld_current)
+    set_analog_out(1, 0.0)
+    sleep(weld_dwell)
+
+    # Deactivate weld
+    set_digital_out(0, False)
+    set_analog_out(0, 0.0)
+    set_analog_out(1, 0.0)
+
+    movel(p[0.55, 0.10, 0.25, 0.0, 3.1416, 0.0], a=0.5, v=0.15, r=0.01)
+
+    # Return home
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.5)
+
+end
+
+task_T012()

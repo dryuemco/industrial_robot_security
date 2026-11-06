@@ -1,0 +1,84 @@
+# UR5e Laser Surface Scan - Fenced Mode (T009)
+# Task: 300x200mm surface scan, 4 lines, Raster pattern
+# Payload: 0.5 kg
+# Max TCP Speed: 200 mm/s
+
+# Setup
+set_payload(0.5)
+set_tcp([0, 0, 0, 0, 0, 0])
+
+# Safety Zone Definition (Confinement)
+# Defines a spherical safety zone around the work area
+set_safety_zone([p[0.55, 0.4, 0.175, 0, 0, 0]], [0.35])
+
+# Define Joint Home
+q_home = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Define Scan Area Parameters (Meters)
+x_start = 0.4
+y_start = 0.3
+z_safe = 0.25
+z_scan = 0.1
+scan_len = 0.3
+scan_width = 0.2
+step_y = scan_width / 3
+
+# Define Poses (Orientation: Pointing Down)
+p_above_start = p[x_start, y_start, z_safe, 0, 3.14159, 0]
+p_scan_start = p[x_start, y_start, z_scan, 0, 3.14159, 0]
+p_line1_end = p[x_start + scan_len, y_start, z_scan, 0, 3.14159, 0]
+p_line2_start = p[x_start + scan_len, y_start + step_y, z_scan, 0, 3.14159, 0]
+p_line2_end = p[x_start, y_start + step_y, z_scan, 0, 3.14159, 0]
+p_line3_start = p[x_start, y_start + 2*step_y, z_scan, 0, 3.14159, 0]
+p_line3_end = p[x_start + scan_len, y_start + 2*step_y, z_scan, 0, 3.14159, 0]
+p_line4_start = p[x_start + scan_len, y_start + 3*step_y, z_scan, 0, 3.14159, 0]
+p_line4_end = p[x_start, y_start + 3*step_y, z_scan, 0, 3.14159, 0]
+
+# Cartesian Home Pose for Linear Return
+p_home_cart = p[0, -0.4, 0.4, 0, 3.14159, 0]
+
+# Motion Sequence
+
+# 1. move_joint: Home, 180.0 mm/s
+movej(q_home, a=1.4, v=0.18)
+
+# 2. move_linear: Above scan start, 150.0 mm/s
+movel(p_above_start, a=0.5, v=0.15)
+
+# 3. move_linear: Descend to scan height, 80.0 mm/s
+movel(p_scan_start, a=0.5, v=0.08)
+
+# Activate Laser (A7)
+set_digital_out(0, True)
+
+# 4. move_linear: Scan line 1, 50.0 mm/s
+movel(p_line1_end, a=0.1, v=0.05)
+
+# 5. move_linear: Step to line 2, 80.0 mm/s
+movel(p_line2_start, a=0.5, v=0.08)
+
+# 6. move_linear: Scan line 2, 50.0 mm/s
+movel(p_line2_end, a=0.1, v=0.05)
+
+# 7. move_linear: Step to line 3, 80.0 mm/s
+movel(p_line3_start, a=0.5, v=0.08)
+
+# 8. move_linear: Scan line 3, 50.0 mm/s
+movel(p_line3_end, a=0.1, v=0.05)
+
+# 9. move_linear: Step to line 4, 80.0 mm/s
+movel(p_line4_start, a=0.5, v=0.08)
+
+# 10. move_linear: Scan line 4, 50.0 mm/s
+movel(p_line4_end, a=0.1, v=0.05)
+
+# Deactivate Laser
+set_digital_out(0, False)
+
+# 11. move_linear: Retract to safe height, 80.0 mm/s
+movel(p_above_start, a=0.5, v=0.08)
+
+# 12. move_linear: Return to Home, 150.0 mm/s
+movel(p_home_cart, a=0.5, v=0.15)
+
+end

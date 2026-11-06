@@ -1,0 +1,71 @@
+# URScript for UR5e collaborative pick‑place (Task T001)
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(0.5, [0,0,0.1])          # 0.5 kg payload, CoG 10 cm above TCP
+set_tcp(p[0,0,0.1,0,0,0])           # TCP offset 10 cm along Z
+set_robot_mode(2)                  # Collaborative mode (speed‑scaling enabled)
+
+# -------------------------------------------------
+# Positions (in meters and radians)
+# -------------------------------------------------
+# Joint target for home position
+home_j = p[0, -1.5708, 1.5708, -1.5708, -1.5708, 0]
+
+# Cartesian targets (example values, adjust to your setup)
+pick_approach = p[0.4, 0.0, 0.3, 0, 3.14, 0]   # 200 mm/s approach
+pick_down    = p[0.4, 0.0, 0.1, 0, 3.14, 0]   # 100 mm/s descend
+lift_up      = p[0.4, 0.0, 0.3, 0, 3.14, 0]   # 150 mm/s lift
+place_approach = p[0.6, 0.0, 0.3, 0, 3.14, 0] # 200 mm/s transit
+place_down    = p[0.6, 0.0, 0.1, 0, 3.14, 0] # 100 mm/s place
+post_place    = p[0.6, 0.0, 0.3, 0, 3.14, 0] # 150 mm/s retreat
+
+# -------------------------------------------------
+# Speed settings (m/s for linear, rad/s for joint)
+# -------------------------------------------------
+joint_speed_home = 0.5          # rad/s (≈ 28.6 °/s, well below max)
+lin_speed_fast   = 0.2          # m/s  (200 mm/s)
+lin_speed_med    = 0.15         # m/s  (150 mm/s)
+lin_speed_slow   = 0.1          # m/s  (100 mm/s)
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def pick_place():
+    # 1) Move to home position
+    movej(home_j, a=1.2, v=joint_speed_home)
+
+    # 2) Approach pick point
+    movel(pick_approach, a=1.0, v=lin_speed_fast)
+
+    # 3) Descend to pick
+    movel(pick_down, a=0.8, v=lin_speed_slow)
+
+    # (Insert gripper close command here, e.g. set_digital_out(0, True))
+
+    # 4) Lift from pick
+    movel(lift_up, a=1.0, v=lin_speed_med)
+
+    # 5) Transit to place approach
+    movel(place_approach, a=1.2, v=lin_speed_fast)
+
+    # 6) Descend to place
+    movel(place_down, a=0.8, v=lin_speed_slow)
+
+    # (Insert gripper open command here, e.g. set_digital_out(0, False))
+
+    # 7) Retreat after place
+    movel(post_place, a=1.0, v=lin_speed_med)
+
+    # 8) Return to home
+    movej(home_j, a=1.2, v=joint_speed_home)
+
+    # End of task – keep robot in collaborative mode and ready for next cycle
+    stopj(0)   # ensure no residual motion
+end
+
+# -------------------------------------------------
+# Run the program
+# -------------------------------------------------
+pick_place()

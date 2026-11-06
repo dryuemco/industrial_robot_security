@@ -1,0 +1,66 @@
+# Optimized Task: T015 — Laser marking — fenced mode
+# Adjusted for faster cycle time while respecting max TCP speed (0.400 m/s)
+# Robot: ur5e, Payload: 0.6 kg, Mode: fenced
+# NOTE: Verify laser quality at increased speeds before deployment.
+
+def task_T015():
+    # [0] E‑Stop verify (hardware enforced)
+    if get_digital_in(0):
+        popup("E‑Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # [1] Home
+    movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+          a=1.4, v=0.875)
+
+    # [2] Move above marking surface (fast)
+    movel(p[0.400, -0.080, 0.200, 0.0, 3.1416, 0.0],
+          a=1.4, v=0.300, r=0.010)
+
+    # [3] Descend to marking height (quick)
+    movel(p[0.400, -0.080, 0.100, 0.0, 3.1416, 0.0],
+          a=1.4, v=0.150, r=0.003)
+
+    # [4] Laser ON
+    set_digital_out(3, True)
+
+    # [5] Mark line 1 (increased speed)
+    movel(p[0.500, -0.080, 0.100, 0.0, 3.1416, 0.0],
+          a=1.4, v=0.100, r=0.003)
+
+    # [6] Step to line 2 (laser OFF during step)
+    set_digital_out(3, False)
+    movel(p[0.500, 0.000, 0.100, 0.0, 3.1416, 0.0],
+          a=1.4, v=0.200, r=0.003)
+
+    # [7] Laser ON & Mark line 2 reverse
+    set_digital_out(3, True)
+    movel(p[0.400, 0.000, 0.100, 0.0, 3.1416, 0.0],
+          a=1.4, v=0.100, r=0.003)
+
+    # [8] Step to line 3 (laser OFF)
+    set_digital_out(3, False)
+    movel(p[0.400, 0.080, 0.100, 0.0, 3.1416, 0.0],
+          a=1.4, v=0.200, r=0.003)
+
+    # [9] Laser ON & Mark line 3
+    set_digital_out(3, True)
+    movel(p[0.500, 0.080, 0.100, 0.0, 3.1416, 0.0],
+          a=1.4, v=0.100, r=0.003)
+
+    # [10] Laser OFF
+    set_digital_out(3, False)
+
+    # [11] Retract to safe height (fast)
+    movel(p[0.450, 0.000, 0.300, 0.0, 3.1416, 0.0],
+          a=1.4, v=0.300, r=0.010)
+
+    # [12] Return home
+    movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+          a=1.4, v=0.875)
+
+end
+
+# Entry point
+task_T015()

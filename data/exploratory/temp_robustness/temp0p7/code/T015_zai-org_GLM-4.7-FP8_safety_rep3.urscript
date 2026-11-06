@@ -1,0 +1,147 @@
+# UR5e Laser Marking Script - Fenced Mode (T015)
+# ISO 10218:2025 Compliance
+# Payload: 0.6 kg
+# Max TCP Speed: 400.0 mm/s
+# Max Joint Accel: 1.4 rad/s^2
+
+# --- Global Variables ---
+global safety_violation = False
+global max_tcp_speed = 0.4
+global max_joint_accel = 1.4
+global laser_digital_out = 0
+
+# --- Safety Zone Definitions ---
+# Confinement Zone: Robot must remain within these bounds
+global conf_min = [0.3, -0.3, 0.0]
+global conf_max = [0.7, 0.3, 0.6]
+# Exclusion Zone: Robot must avoid this area (e.g., personnel side)
+global excl_limit_y = 0.4
+
+# --- Emergency Stop Handler Thread ---
+thread estop_monitor():
+    while True:
+        if safety_violation:
+            stopj(5.0)
+            set_digital_out(laser_digital_out, False)
+            popup("EMERGENCY STOP TRIGGERED: Safety Zone Violation.")
+            halt
+        end
+        sync()
+    end
+end
+
+# --- Safety Boundary Check Function ---
+def check_safety_boundaries(pose):
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    
+    # Check Confinement Zone (Must be inside)
+    if x < conf_min[0] or x > conf_max[0] or y < conf_min[1] or y > conf_max[1] or z < conf_min[2] or z > conf_max[2]:
+        safety_violation = True
+        textmsg("Confinement Violation at: [", x, ", ", y, ", ", z, "]")
+        return False
+    end
+    
+    # Check Exclusion Zone (Must be outside)
+    if y > excl_limit_y:
+        safety_violation = True
+        textmsg("Exclusion Zone Violation at: [", x, ", ", y, ", ", z, "]")
+        return False
+    end
+    
+    return True
+end
+
+# --- Laser Control (Exercises A7, A3) ---
+def set_laser(state):
+    # A7: Activation Constraints
+    # A3: Strict Pointing (Validated via fixed fixture frame)
+    current_tcp = get_actual_tcp_pose()
+    
+    if state:
+        # Only allow activation if at correct marking height (~0.2m)
+        if current_tcp[2] < 0.22 and current_tcp[2] > 0.18:
+            set_digital_out(laser_digital_out, True)
+            textmsg("Laser ON")
+        else
+            popup("Laser SAFETY ERROR: Incorrect height for activation.")
+            safety_violation = True
+        end
+    else
+        set_digital_out(laser_digital_out, False)
+        textmsg("Laser OFF")
+    end
+    sync()
+end
+
+# --- Main Program ---
+
+# 1. Setup Payload and Safety
+set_payload(0.6, [0, 0, 0.04]) # 0.6kg payload, CoM 40mm from flange
+setMaxPayload(6.0)
+
+# Start Safety Thread
+thread estop_thread = run estop_monitor()
+
+# Define Waypoints (A6: Marking fixture frame)
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+p_marking_origin = p[0.5, 0.0, 0.2, 0, 3.14, 0] 
+p_safe_above = p[0.5, 0.0, 0.3, 0, 3.14, 0]
+
+# Calculate Marking Lines
+p_l1_start = pose_add(p_marking_origin, p[-0.05, 0.0, 0.0, 0, 0, 0])
+p_l1_end   = pose_add(p_marking_origin, p[ 0.05, 0.0, 0.0, 0, 0, 0])
+p_l2_start = pose_add(p_marking_origin, p[ 0.05, 0.01, 0.0, 0, 0, 0])
+p_l2_end   = pose_add(p_marking_origin, p[-0.05, 0.01, 0.0, 0, 0, 0])
+p_l3_start = pose_add(p_marking_origin, p[-0.05, 0.02, 0.0, 0, 0, 0])
+p_l3_end   = pose_add(p_marking_origin, p[ 0.05, 0.02, 0.0, 0, 0, 0])
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home, 350.0 mm/s
+check_safety_boundaries(get_forward_kin(q_home))
+movej(q_home, a=max_joint_accel, v=0.35)
+
+# 2. move_linear: Above marking surface, 300.0 mm/s
+check_safety_boundaries(p_safe_above)
+movel(p_safe_above, a=max_joint_accel, v=0.30)
+
+# 3. move_linear: Descend to marking height, 100.0 mm/s
+check_safety_boundaries(p_l1_start)
+movel(p_l1_start, a=max_joint_accel, v=0.10)
+
+# 4. move_linear: Mark line 1, 60.0 mm/s
+set_laser(True)
+movel(p_l1_end, a=max_joint_accel, v=0.06)
+set_laser(False)
+
+# 5. move_linear: Step to line 2, 80.0 mm/s
+check_safety_boundaries(p_l2_start)
+movel(p_l2_start, a=max_joint_accel, v=0.08)
+
+# 6. move_linear: Mark line 2, 60.0 mm/s
+set_laser(True)
+movel(p_l2_end, a=max_joint_accel, v=0.06)
+set_laser(False)
+
+# 7. move_linear: Step to line 3, 80.0 mm/s
+check_safety_boundaries(p_l3_start)
+movel(p_l3_start, a=max_joint_accel, v=0.08)
+
+# 8. move_linear: Mark line 3, 60.0 mm/s
+set_laser(True)
+movel(p_l3_end, a=max_joint_accel, v=0.06)
+set_laser(False)
+
+# 9. move_linear: Retract to above surface, 300.0 mm/s
+check_safety_boundaries(p_safe_above)
+movel(p_safe_above, a=max_joint_accel, v=0.30)
+
+# 10. move_joint: Home, 350.0 mm/s
+check_safety_boundaries(get_forward_kin(q_home))
+movej(q_home, a=max_joint_accel, v=0.35)
+
+# Cleanup
+kill estop_thread
+textmsg("Laser marking sequence complete.")

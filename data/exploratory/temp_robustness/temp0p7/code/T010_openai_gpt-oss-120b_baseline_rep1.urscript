@@ -1,0 +1,85 @@
+# URScript for UR5e – Hybrid mode screw fastening assembly (Task T010)
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+payload(1.0, [0,0,0,0,0,0])          # Payload 1.0 kg, CoG at TCP
+set_tcp([0,0,0,0,0,0])               # Default TCP (replace with actual if needed)
+set_speed(0.250)                     # Max TCP speed = 250 mm/s
+set_joint_acceleration(1.2)          # Joint acceleration (rad/s^2)
+set_cartesian_acceleration(1.2)      # Cartesian acceleration (m/s^2)
+
+# -------------------------------------------------
+# Safety mode: Hybrid (collaborative approach, fenced during fastening)
+# -------------------------------------------------
+# Note: The actual function to set hybrid mode may depend on the controller version.
+# The following is a generic call; replace with the correct API if necessary.
+set_safety_mode(SafetyMode.HYBRID)   # Switch to hybrid safety mode
+
+# -------------------------------------------------
+# Pose definitions (replace the placeholder values with real calibrated poses)
+# -------------------------------------------------
+# Home position (joint configuration)
+home_joint = [-1.57, -1.57, -1.57, -1.57, 1.57, 0]   # radians
+
+# Above screw feeder (Cartesian pose)
+above_feeder = p[0.5, -0.2, 0.4, 0, 3.14, 0]        # meters & radians
+
+# Pick screw (approach pose)
+pick_screw = p[0.5, -0.2, 0.1, 0, 3.14, 0]          # meters & radians
+
+# Lift from feeder (post‑pick pose)
+lift_feeder = p[0.5, -0.2, 0.3, 0, 3.14, 0]          # meters & radians
+
+# Above fastening point 1
+above_fp1 = p[0.3, 0.0, 0.5, 0, 3.14, 0]            # meters & radians
+
+# Fastening point 1 (drive screw)
+fasten_fp1 = p[0.3, 0.0, 0.45, 0, 3.14, 0]          # meters & radians
+
+# Above fastening point 2
+above_fp2 = p[0.3, 0.1, 0.5, 0, 3.14, 0]            # meters & radians
+
+# Fastening point 2 (drive screw)
+fasten_fp2 = p[0.3, 0.1, 0.45, 0, 3.14, 0]          # meters & radians
+
+# -------------------------------------------------
+# Motion sequence (8 moves)
+# -------------------------------------------------
+# 1. Move to Home (joint space)
+movej(home_joint, a=1.2, v=0.200, t=0, r=0)
+
+# 2. Move above screw feeder (linear)
+movel(above_feeder, a=1.2, v=0.200, t=0, r=0)
+
+# 3. Move to pick screw (linear, slower)
+movel(pick_screw, a=1.2, v=0.080, t=0, r=0)
+
+# 4. Close gripper / activate tool to grasp screw (placeholder)
+#   replace with actual I/O command, e.g., set_digital_out(0, True)
+#   (Assuming a pneumatic gripper)
+set_digital_out(0, True)
+sleep(0.5)   # wait for grasp
+
+# 5. Lift from feeder (linear)
+movel(lift_feeder, a=1.2, v=0.180, t=0, r=0)
+
+# 6. Move above fastening point 1 (linear)
+movel(above_fp1, a=1.2, v=0.200, t=0, r=0)
+
+# 7. Drive screw at fastening point 1 (linear, low speed)
+movel(fasten_fp1, a=0.5, v=0.050, t=0, r=0)
+#   Activate screwdriver torque (placeholder)
+set_analog_output(0, 5.0)   # example: set voltage/current for tool
+sleep(1.0)                  # dwell while fastening
+set_analog_output(0, 0.0)   # stop tool
+
+# 8. Retract to above point 1
+movel(above_fp1, a=1.2, v=0.200, t=0, r=0)
+
+# -------------------------------------------------
+# Return to Home after task
+# -------------------------------------------------
+movej(home_joint, a=1.2, v=0.200, t=0, r=0)
+
+# End of program

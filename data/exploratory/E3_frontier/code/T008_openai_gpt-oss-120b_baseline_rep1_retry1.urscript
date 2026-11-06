@@ -1,0 +1,86 @@
+# URScript for heavy depalletizing in fenced mode (T008)
+
+# -------------------------------------------------
+# Safety configuration
+# -------------------------------------------------
+set_payload(5.0, [0,0,0])          # Set payload to 5 kg (max for UR5e)
+set_tcp([0,0,0,0,0,0])            # Default TCP
+set_fence_enabled(True)          # Enable fenced safety mode
+# Note: Safety zone (confinement) is configured in the safety controller
+
+# -------------------------------------------------
+# Speed limits (max TCP speed 450 mm/s)
+# -------------------------------------------------
+global max_tcp_speed = 0.45       # meters per second
+
+# -------------------------------------------------
+# Poses (in meters and radians)
+# -------------------------------------------------
+# Home position (joint configuration)
+home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Above pallet (Cartesian pose)
+above_pallet = p[0.5, -0.3, 0.4, 0, 3.14, 0]
+
+# Top layer of pallet (descend)
+top_layer = p[0.5, -0.3, 0.1, 0, 3.14, 0]
+
+# Lift box (after grasp)
+lift_box = p[0.5, -0.3, 0.3, 0, 3.14, 0]
+
+# Conveyor position (transit)
+conveyor_pos = p[0.8, 0.0, 0.3, 0, 3.14, 0]
+
+# Place box on conveyor
+place_box = p[0.8, 0.0, 0.1, 0, 3.14, 0]
+
+# Return above pallet
+return_above = above_pallet
+
+# Safe standby position
+standby_joint = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+# -------------------------------------------------
+# Motion functions with speed checks
+# -------------------------------------------------
+def safe_movej(target, speed_mm_s):
+    speed = min(speed_mm_s/1000.0, max_tcp_speed)
+    movej(target, a=1.2, v=speed, t=0, r=0)
+
+def safe_movel(target, speed_mm_s):
+    speed = min(speed_mm_s/1000.0, max_tcp_speed)
+    movel(target, a=1.2, v=speed, t=0, r=0)
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # 1. Move to Home
+    safe_movej(home_joint, 400.0)
+
+    # 2. Move above pallet
+    safe_movel(above_pallet, 400.0)
+
+    # 3. Descend to top layer
+    safe_movel(top_layer, 150.0)
+
+    # 4. Lift box
+    safe_movel(lift_box, 200.0)
+
+    # 5. Transit to conveyor
+    safe_movel(conveyor_pos, 350.0)
+
+    # 6. Place box on conveyor
+    safe_movel(place_box, 150.0)
+
+    # 7. Return to above pallet
+    safe_movel(return_above, 300.0)
+
+    # 8. Move to standby (home) position
+    safe_movej(standby_joint, 400.0)
+
+    # End of program
+    stopj(0)
+
+# Execute
+main()

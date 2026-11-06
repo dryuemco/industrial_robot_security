@@ -1,0 +1,109 @@
+# URScript for UR5e Screw Fastening Assembly (Hybrid Mode T010)
+# Safety: ISO 10218:2025 Compliant
+# Limits: Max TCP 250mm/s, Max Joint Accel 1.4 rad/s^2
+
+# --- Safety Configuration ---
+MAX_TCP_SPEED = 0.25       # 250 mm/s in m/s
+MAX_JOINT_ACCEL = 1.4      # 1.4 rad/s^2
+PAYLOAD_MASS = 1.0         # kg
+PAYLOAD_COG = [0.0, 0.0, 0.05] # Center of gravity offset (m)
+
+# Safety Zone Boundaries (Confinement Volume)
+ZONE_MIN = [-0.8, -0.8, 0.0]   # x, y, z (meters)
+ZONE_MAX = [0.8, 0.8, 0.8]
+
+# --- Safety Logic Functions ---
+
+def emergency_stop(violation_msg):
+    popup("EMERGENCY STOP: " + violation_msg, "Safety Violation", False, True, True)
+    stopj(5.0)
+    halt
+end
+
+def safety_check(pose):
+    # Validate waypoint is within safety zone
+    if (pose[0] < ZONE_MIN[0] or pose[0] > ZONE_MAX[0] or
+        pose[1] < ZONE_MIN[1] or pose[1] > ZONE_MAX[1] or
+        pose[2] < ZONE_MIN[2] or pose[2] > ZONE_MAX[2]):
+        emergency_stop("Target waypoint out of safety zone.")
+    end
+end
+
+# --- Safety Monitor Thread ---
+thread zone_monitor():
+    while True:
+        actual_pose = get_actual_tcp_pose()
+        # Check boundary confinement
+        if (actual_pose[0] < ZONE_MIN[0] or actual_pose[0] > ZONE_MAX[0] or
+            actual_pose[1] < ZONE_MIN[1] or actual_pose[1] > ZONE_MAX[1] or
+            actual_pose[2] < ZONE_MIN[2] or actual_pose[2] > ZONE_MAX[2]):
+            emergency_stop("Robot exited safety zone.")
+        end
+        sleep(0.01)
+    end
+end
+
+# --- Main Program ---
+
+# Initialize
+set_payload(PAYLOAD_MASS, PAYLOAD_COG)
+set_tcp([0, 0, 0, 0, 0, 0]) # Tool Center Point reset
+
+# Start Safety Monitor
+thread zone_monitor()
+
+# Define Waypoints (Placeholders)
+# Home: Joint positions
+q_home = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Cartesian Poses [x, y, z, rx, ry, rz]
+p_above_feeder = [0.4, -0.4, 0.3, 3.14, 0, 0]
+p_pick_screw   = [0.4, -0.4, 0.1, 3.14, 0, 0]
+p_lift_feeder  = [0.4, -0.4, 0.3, 3.14, 0, 0]
+
+# Fastening Points (Workpiece Area)
+p_fasten_1 = [0.3, 0.3, 0.25, 3.14, 0, 0]
+p_fasten_2 = [0.4, 0.3, 0.25, 3.14, 0, 0]
+p_fasten_3 = [0.5, 0.3, 0.25, 3.14, 0, 0]
+p_fasten_4 = [0.6, 0.3, 0.25, 3.14, 0, 0]
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home (Collaborative Mode)
+# Check FK of home pose against zone
+safety_check(get_forward_kin(q_home)) 
+movej(q_home, a=MAX_JOINT_ACCEL, v=1.0) # Joint speed rad/s (safe approx)
+
+# 2. move_linear: Above screw feeder
+safety_check(p_above_feeder)
+movel(p_above_feeder, a=MAX_JOINT_ACCEL, v=0.2)
+
+# 3. move_linear: Pick screw (Slower approach)
+safety_check(p_pick_screw)
+movel(p_pick_screw, a=MAX_JOINT_ACCEL, v=0.08)
+# Simulate Gripper Close
+sleep(0.5)
+
+# 4. move_linear: Lift from feeder
+safety_check(p_lift_feeder)
+movel(p_lift_feeder, a=MAX_JOINT_ACCEL, v=0.18)
+
+# 5. move_linear: Above fastening point 1 (Transition to Fenced Area Logic)
+safety_check(p_fasten_1)
+movel(p_fasten_1, a=MAX_JOINT_ACCEL, v=0.2)
+
+# 6. move_linear: Above fastening point 2
+safety_check(p_fasten_2)
+movel(p_fasten_2, a=MAX_JOINT_ACCEL, v=0.2)
+
+# 7. move_linear: Above fastening point 3
+safety_check(p_fasten_3)
+movel(p_fasten_3, a=MAX_JOINT_ACCEL, v=0.2)
+
+# 8. move_linear: Above fastening point 4
+safety_check(p_fasten_4)
+movel(p_fasten_4, a=MAX_JOINT_ACCEL, v=0.2)
+
+# Task Complete
+kill zone_monitor
+popup("Screw Fastening Sequence Completed", "Success", True, True, False)

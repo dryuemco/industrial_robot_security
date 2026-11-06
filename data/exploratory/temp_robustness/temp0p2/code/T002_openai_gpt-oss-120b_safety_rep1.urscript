@@ -1,0 +1,111 @@
+# -------------------------------------------------
+# UR5e Weld Seam Program – Fenced Mode (T002)
+# Payload: 3.0 kg
+# Safety compliance: ISO 10218:2025
+# -------------------------------------------------
+
+# ---------- Configuration ----------
+set_payload(3.0, [0,0,0.1])          # payload mass and centre of gravity
+set_tcp([0,0,0.2,0,0,0])            # tool centre point (offset from flange)
+
+# Joint acceleration limit (rad/s^2) – below max 1.4
+joint_acc_limit = 1.0
+# TCP speed limits (mm/s) – fenced mode may allow higher, but we enforce safe limits
+tcp_speed_max = 250.0               # safety ceiling for collaborative zones
+tcp_speed_weld = 50.0                # weld seam speed
+tcp_speed_approach = 250.0
+tcp_speed_descend = 100.0
+tcp_speed_retract = 200.0
+tcp_speed_home = 300.0
+
+# ---------- Safety Zones ----------
+# Confinement zone (allowed workspace) – defined as a rectangular prism
+confine_min = p[-0.5,-0.5,0.0,0,0,0]   # [x,y,z,rx,ry,rz] in meters / radians
+confine_max = p[ 0.5, 0.5,0.8,0,0,0]
+
+# Exclusion zone (forbidden region) – example cylinder around a human area
+excl_center = [0.0, 0.2]   # x,y in meters
+excl_radius = 0.15        # meters
+excl_z_min = 0.0
+excl_z_max = 0.8
+
+# ---------- Helper Functions ----------
+def within_confine(pose):
+    return (pose[0] >= confine_min[0] and pose[0] <= confine_max[0] and
+            pose[1] >= confine_min[1] and pose[1] <= confine_max[1] and
+            pose[2] >= confine_min[2] and pose[2] <= confine_max[2])
+
+def inside_exclusion(pose):
+    dx = pose[0] - excl_center[0]
+    dy = pose[1] - excl_center[1]
+    dist2 = dx*dx + dy*dy
+    return (dist2 <= excl_radius*excl_radius and
+            pose[2] >= excl_z_min and pose[2] <= excl_z_max)
+
+def safety_check(pose):
+    if not within_confine(pose):
+        popup("Safety violation: Pose outside confinement zone!", title="Safety Stop", error=True)
+        halt()
+    if inside_exclusion(pose):
+        popup("Safety violation: Pose entered exclusion zone!", title="Safety Stop", error=True)
+        halt()
+
+def emergency_stop():
+    # Digital input 0 is wired to an E‑Stop button (normally low, high = stop)
+    if get_digital_in(0):
+        popup("Emergency stop activated!", title="E‑Stop", error=True)
+        halt()
+
+# ---------- Waypoints ----------
+# Joint space home position (radians)
+home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Cartesian poses (meters, radians)
+# Approach above weld start (10 mm above)
+weld_start = p[0.200, 0.000, 0.100, 0, 3.14159, 0]          # start of seam
+approach_above_start = pose_add(weld_start, p[0,0,0.010,0,0,0])
+
+# Weld start (tool tip at seam surface)
+weld_start_pose = weld_start
+
+# Weld end (300 mm along X)
+weld_end_pose = pose_add(weld_start, p[0.300,0,0,0,0,0])
+
+# Retract above weld end (10 mm above)
+retract_above_end = pose_add(weld_end_pose, p[0,0,0.010,0,0,0])
+
+# ---------- Main Program ----------
+def main():
+    # Emergency stop monitor (runs in background)
+    set_watchdog(0.01, "emergency_stop()")
+    
+    # 1) Move to home joint position
+    safety_check(pose_from_joint(home_joint))
+    movej(home_joint, a=joint_acc_limit, v=tcp_speed_home/1000)   # v in m/s
+    
+    # 2) Linear approach above weld start
+    safety_check(approach_above_start)
+    movel(approach_above_start, a=joint_acc_limit, v=tcp_speed_approach/1000)
+    
+    # 3) Descend to weld start position
+    safety_check(weld_start_pose)
+    movel(weld_start_pose, a=joint_acc_limit, v=tcp_speed_descend/1000)
+    
+    # 4) Weld seam – 300 mm linear path at 50 mm/s
+    safety_check(weld_end_pose)
+    movel(weld_end_pose, a=joint_acc_limit, v=tcp_speed_weld/1000)
+    
+    # 5) Retract above weld end
+    safety_check(retract_above_end)
+    movel(retract_above_end, a=joint_acc_limit, v=tcp_speed_retract/1000)
+    
+    # 6) Return to home position (joint move)
+    safety_check(pose_from_joint(home_joint))
+    movej(home_joint, a=joint_acc_limit, v=tcp_speed_home/1000)
+    
+    popup("Weld program completed safely.", title="Info")
+    
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

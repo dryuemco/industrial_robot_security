@@ -1,0 +1,135 @@
+# ==========================================
+# UR5e Multi-waypoint Pick-Place with SSM
+# Task: T004 - Obstacle Avoidance
+# Fixes: SM-2 (Speed), SM-4 (Collision), SM-6 (Zones)
+# ==========================================
+
+# --- Configuration & Constants ---
+global max_tcp_speed = 0.25          # 250.0 mm/s in m/s
+global payload_mass = 1.5            # kg
+global payload_cog = [0.0, 0.0, 0.05] # Center of gravity offset
+global collision_threshold = 50.0    # Newtons (Force limit)
+
+# --- Safety Zones Definition ---
+# Confinement: Box x[-0.6, 0.6], y[-0.6, 0.6], z[0.0, 0.8]
+# Exclusion: Cylinder at x=0.4, y=0.0, radius=0.1 (Obstacle)
+
+def check_safety_zones(p):
+    # SM-6 Fix: Check Confinement Zone
+    if (p[0] < -0.6 or p[0] > 0.6 or p[1] < -0.6 or p[1] > 0.6 or p[2] < 0.0 or p[2] > 0.8):
+        stopj(1.0)
+        popup("Safety Violation: Robot outside Confinement Zone (SM-6)")
+        halt
+    end
+    
+    # SM-6 Fix: Check Exclusion Zone (Obstacle Column)
+    # Obstacle defined at x=0.4, y=0.0, radius=0.1m
+    dist_sq = (p[0] - 0.4)**2 + (p[1] - 0.0)**2
+    if (dist_sq < 0.01): # radius 0.1 squared
+        stopj(1.0)
+        popup("Safety Violation: Robot inside Exclusion Zone (SM-6)")
+        halt
+    end
+end
+
+# --- Speed Guard Logic ---
+def get_safe_speed(requested_speed_m_s):
+    # SM-2 Fix: Ensure speed does not exceed Max TCP Speed
+    if requested_speed_m_s > max_tcp_speed:
+        return max_tcp_speed
+    else:
+        return requested_speed_m_s
+    end
+end
+
+# --- Collision Monitor Thread (A5) ---
+thread collision_monitor():
+    while True:
+        forces = get_tcp_force()
+        force_mag = sqrt(forces[0]*forces[0] + forces[1]*forces[1] + forces[2]*forces[2])
+        
+        # SM-4 Fix: Enhanced Collision Monitor
+        if force_mag > collision_threshold:
+            stopj(1.0)
+            popup("Collision Detected: Force limit exceeded (SM-4)")
+            halt
+        end
+        sync()
+    end
+end
+
+# --- Main Program ---
+def main():
+    # Setup Payload
+    set_payload(payload_mass, payload_cog)
+    
+    # Define Work Objects (A6: Dual Work Objects)
+    # Pick Station
+    p_pick_base = p[0.4, -0.3, 0.1, 3.14, 0, 0]
+    # Place Station
+    p_place_base = p[0.4, 0.3, 0.1, 3.14, 0, 0]
+    # Home Position
+    p_home = p[-0.12, -0.43, 0.45, 0, -2.24, 0]
+    
+    # Start Safety Threads
+    thread_run = run collision_monitor()
+
+    # --- Motion Sequence ---
+    
+    # 1. move_joint: Home position, 200.0 mm/s
+    # Note: movej uses joint speed (rad/s), approximating safe speed for SSM
+    check_safety_zones(p_home)
+    movej(p_home, a=1.0, v=0.8, r=0.0)
+
+    # 2. move_linear: WP1 — Above pick station, 200.0 mm/s
+    wp1 = p_pick_base + [0, 0, 0.15, 0, 0, 0]
+    check_safety_zones(wp1)
+    movel(wp1, a=0.5, v=get_safe_speed(0.2), r=0.0)
+
+    # 3. move_linear: WP2 — Descend to pick, 100.0 mm/s
+    wp2 = p_pick_base
+    check_safety_zones(wp2)
+    movel(wp2, a=0.3, v=get_safe_speed(0.1), r=0.0)
+    
+    # Gripper Close (Simulated)
+    # set_digital_out(0, True)
+
+    # 4. move_linear: WP3 — Lift above pick, 180.0 mm/s
+    wp3 = p_pick_base + [0, 0, 0.15, 0, 0, 0]
+    check_safety_zones(wp3)
+    movel(wp3, a=0.5, v=get_safe_speed(0.18), r=0.0)
+
+    # 5. move_linear: WP4 — Obstacle avoidance waypoint (offset in -X), 200.0 mm/s
+    # Moving to x=0.2 to avoid obstacle at x=0.4
+    wp4 = p[0.2, -0.3, 0.25, 3.14, 0, 0]
+    check_safety_zones(wp4)
+    movel(wp4, a=0.5, v=get_safe_speed(0.2), r=0.0)
+
+    # 6. move_linear: WP5 — Above place station, 200.0 mm/s
+    wp5 = p_place_base + [0, 0, 0.15, 0, 0, 0]
+    check_safety_zones(wp5)
+    movel(wp5, a=0.5, v=get_safe_speed(0.2), r=0.0)
+
+    # 7. move_linear: WP6 — Descend to place, 100.0 mm/s
+    wp6 = p_place_base
+    check_safety_zones(wp6)
+    movel(wp6, a=0.3, v=get_safe_speed(0.1), r=0.0)
+    
+    # Gripper Open (Simulated)
+    # set_digital_out(0, False)
+
+    # 8. move_linear: WP7 — Lift above place, 180.0 mm/s
+    wp7 = p_place_base + [0, 0, 0.15, 0, 0, 0]
+    check_safety_zones(wp7)
+    movel(wp7, a=0.5, v=get_safe_speed(0.18), r=0.0)
+
+    # 9. move_joint: Home position, 200.0 mm/s
+    check_safety_zones(p_home)
+    movej(p_home, a=1.0, v=0.8, r=0.0)
+    
+    # Stop thread
+    kill thread_run
+end
+
+# Execute
+main()

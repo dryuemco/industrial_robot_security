@@ -1,0 +1,56 @@
+# Bin Picking Task - Fenced Mode
+# Robot: UR5e
+# Payload: 2.0 kg
+# Tool: Suction (Gripper) on digital_out[0]
+
+# Set Payload
+set_payload(2.0, [0.0, 0.0, 0.0])
+
+# Define Waypoints
+# Home Position (Joint angles in radians)
+q_home = [0.0, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Bin Locations (Pose vectors in meters and radians)
+p_bin_above = p[0.4, -0.4, 0.35, 0.0, 3.14, 0.0]
+p_bin_pick  = p[0.4, -0.4, 0.02, 0.0, 3.14, 0.0]
+
+# Conveyor Locations (Pose vectors in meters and radians)
+p_conv_above = p[0.6, 0.4, 0.35, 0.0, 3.14, 0.0]
+p_conv_place = p[0.6, 0.4, 0.02, 0.0, 3.14, 0.0]
+
+# --- Motion Sequence ---
+
+# 1. Move Joint: Home position, 350.0 mm/s
+movej(q_home, a=1.2, v=0.35)
+
+# 2. Move Linear: Above bin, 350.0 mm/s
+movel(p_bin_above, a=0.5, v=0.35)
+
+# 3. Move Linear: Descend into bin, 150.0 mm/s
+movel(p_bin_pick, a=0.2, v=0.15)
+
+# Action: Activate Suction
+set_digital_out(0, True)
+sleep(0.5)
+
+# 4. Move Linear: Lift from bin, 300.0 mm/s
+movel(p_bin_above, a=0.5, v=0.30)
+
+# 5. Move Linear: Transit to conveyor, 380.0 mm/s
+movel(p_conv_above, a=1.2, v=0.38)
+
+# 6. Move Linear: Descend to conveyor, 200.0 mm/s
+movel(p_conv_place, a=0.3, v=0.20)
+
+# Action: Deactivate Suction (Release)
+set_digital_out(0, False)
+sleep(0.5)
+
+# 7. Move Linear: Lift from conveyor, 300.0 mm/s
+movel(p_conv_above, a=0.5, v=0.30)
+
+# 8. Move Joint: Return to Home, 350.0 mm/s
+movej(q_home, a=1.2, v=0.35)
+
+# End of Program
+halt

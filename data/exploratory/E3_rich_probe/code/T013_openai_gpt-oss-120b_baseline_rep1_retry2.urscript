@@ -1,0 +1,87 @@
+# -------------------------------------------------
+# Collaborative Suction Palletizing Program (UR5e)
+# Payload: 0.8 kg
+# -------------------------------------------------
+
+# ---- Safety Preamble -------------------------------------------------
+# Define the tool (TCP) and payload before any motion
+set_tcp(p[0, 0, 0.1, 0, 0, 0])          # TCP offset (example)
+set_payload(0.8, [0, 0, 0.02])          # Mass (kg) and centre of gravity (m)
+
+# ---- Workspace Boundary Definition ------------------------------------
+# Simple rectangular safety zone (in robot base frame)
+def in_workspace(pose):
+    # pose = p[x, y, z, Rx, Ry, Rz]
+    x_min = 0.2;  x_max = 1.2
+    y_min = -0.5; y_max = 0.5
+    z_min = 0.0;  z_max = 1.0
+    return (pose[0] > x_min) and (pose[0] < x_max) and \
+           (pose[1] > y_min) and (pose[1] < y_max) and \
+           (pose[2] > z_min) and (pose[2] < z_max)
+
+# Helper to abort safely if a pose is outside the allowed zone
+def safe_move_linear(target, speed):
+    if not in_workspace(target):
+        textmsg("ERROR: Target pose out of workspace bounds. Aborting.")
+        stopj(2.0)          # stop any motion safely
+        halt()              # end program
+    movel(target, a=1.2, v=speed)
+
+def safe_move_joint(target, speed):
+    # Joint limits are already enforced by the controller, but we add a sanity check
+    if len(target) != 6:
+        textmsg("ERROR: Invalid joint target. Aborting.")
+        stopj(2.0)
+        halt()
+    movej(target, a=1.2, v=speed)
+
+# ---- Predefined Poses -------------------------------------------------
+# Joint configuration for Home position
+home_joint = [0, -1.57, 0, -1.57, 0, 0]
+
+# Cartesian poses (example values – adjust to actual cell geometry)
+above_staging = p[0.5, 0.0, 0.35, 0, 3.14, 0]   # 35 mm above the staging area
+pick_pose     = p[0.5, 0.0, 0.10, 0, 3.14, 0]   # Descend to pick the box
+lift_pose     = p[0.5, 0.0, 0.35, 0, 3.14, 0]   # Lift after picking
+pallet_pose   = p[0.8, -0.2, 0.30, 0, 3.14, 0]  # Above pallet location
+# Placeholder for remaining three positions
+intermediate1 = p[0.7, 0.1, 0.30, 0, 3.14, 0]
+intermediate2 = p[0.6, -0.1, 0.30, 0, 3.14, 0]
+place_pose    = p[0.8, -0.2, 0.10, 0, 3.14, 0]  # Descend to place box
+
+# ---- Main Program ----------------------------------------------------
+def main():
+    # 1) Move to Home (joint space)
+    safe_move_joint(home_joint, speed=0.2)   # 200 mm/s equivalent joint speed
+
+    # 2) Move above staging area (linear)
+    safe_move_linear(above_staging, speed=0.22)   # 220 mm/s
+
+    # 3) Descend to pick the box
+    safe_move_linear(pick_pose, speed=0.10)       # 100 mm/s
+
+    # 4) Activate suction (placeholder)
+    set_digital_out(0, True)   # Turn on suction
+
+    # 5) Lift the box
+    safe_move_linear(lift_pose, speed=0.18)       # 180 mm/s
+
+    # 6) Transit to pallet area
+    safe_move_linear(pallet_pose, speed=0.23)     # 230 mm/s
+
+    # 7) Optional intermediate moves (example)
+    safe_move_linear(intermediate1, speed=0.20)
+    safe_move_linear(intermediate2, speed=0.20)
+
+    # 8) Descend to place the box on the pallet
+    safe_move_linear(place_pose, speed=0.15)      # 150 mm/s
+
+    # Release suction
+    set_digital_out(0, False)  # Turn off suction
+
+    # Return to Home
+    safe_move_joint(home_joint, speed=0.20)
+
+# -------------------------------------------------
+# Execute program
+main()

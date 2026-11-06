@@ -1,0 +1,99 @@
+# -------------------------------------------------
+# URScript for UR5e – Bin picking with suction (fenced mode)
+# Safety‑compliant (ISO 10218:2025)
+# -------------------------------------------------
+
+# ---------- Safety Parameters ----------
+MAX_TCP_SPEED   = 0.250          # [m/s]  (250 mm/s limit for collaborative mode)
+MAX_JOINT_ACC   = 1.4            # [rad/s^2] per joint
+SAFETY_ZONE_MIN = p[0.200, -0.500, 0.000, 0,0,0]   # Lower corner of confinement box
+SAFETY_ZONE_MAX = p[0.800,  0.500, 0.600, 0,0,0]   # Upper corner of confinement box
+
+# ---------- Payload ----------
+set_payload(2.0, [0,0,0.1])   # 2 kg payload, centre of gravity 10 cm along Z
+
+# ---------- Emergency Stop Handler ----------
+def emergency_stop():
+    popup("Safety violation detected – emergency stop engaged", True, "Ok")
+    stopj(1.0)               # smooth stop
+    halt()                   # halt program execution
+end
+
+# ---------- Safety Checks ----------
+def within_zone(pose):
+    # Checks if the given pose (p[x,y,z,rx,ry,rz]) lies inside SAFETY_ZONE
+    return (pose[0] >= SAFETY_ZONE_MIN[0] and pose[0] <= SAFETY_ZONE_MAX[0] and
+            pose[1] >= SAFETY_ZONE_MIN[1] and pose[1] <= SAFETY_ZONE_MAX[1] and
+            pose[2] >= SAFETY_ZONE_MIN[2] and pose[2] <= SAFETY_ZONE_MAX[2])
+end
+
+def safety_check(target_pose):
+    if not within_zone(target_pose) then
+        emergency_stop()
+    end
+end
+
+# ---------- Waypoints ----------
+home_pose        = p[0.300, -0.300, 0.500, 0, 3.14, 0]   # Joint‑space home (converted to pose)
+above_bin_pose   = p[0.400, -0.200, 0.300, 0, 3.14, 0]   # 10 cm above bin
+bin_pick_pose    = p[0.400, -0.200, 0.100, 0, 3.14, 0]   # Descend into bin
+lift_pose        = p[0.400, -0.200, 0.300, 0, 3.14, 0]   # Lift from bin
+conveyor_pose    = p[0.600,  0.200, 0.250, 0, 3.14, 0]   # Above conveyor
+place_pose       = p[0.600,  0.200, 0.120, 0, 3.14, 0]   # Release height
+post_place_pose  = p[0.600,  0.200, 0.250, 0, 3.14, 0]   # Retract after release
+home_return_pose = p[0.300, -0.300, 0.500, 0, 3.14, 0]   # Return to home
+
+# ---------- Motion Helper ----------
+def safe_move_linear(target_pose, speed):
+    # Clamp speed to safety limit
+    speed = min(speed, MAX_TCP_SPEED)
+    safety_check(target_pose)
+    movel(target_pose, a=MAX_JOINT_ACC, v=speed, t=0, r=0.0)
+end
+
+def safe_move_joint(target_pose, speed):
+    # Clamp speed to safety limit (joint space speed in rad/s)
+    # 350 mm/s translates roughly to 1.0 rad/s for UR5e; we cap at 1.0 rad/s
+    max_joint_speed = 1.0
+    speed = min(speed, max_joint_speed)
+    safety_check(target_pose)
+    movej(target_pose, a=MAX_JOINT_ACC, v=speed, t=0, r=0.0)
+end
+
+# ---------- Main Program ----------
+def main():
+    # 1) Move to Home (joint move)
+    safe_move_joint(home_pose, 1.0)          # 350 mm/s ≈ 1.0 rad/s joint speed
+
+    # 2) Move above bin (linear)
+    safe_move_linear(above_bin_pose, 0.250)   # 250 mm/s (capped)
+
+    # 3) Descend into bin
+    safe_move_linear(bin_pick_pose, 0.150)    # 150 mm/s
+
+    # Activate suction (placeholder)
+    set_digital_out(0, True)                 # Suction ON
+
+    # 4) Lift from bin
+    safe_move_linear(lift_pose, 0.250)       # 300 mm/s capped to 250 mm/s
+
+    # 5) Transit to conveyor
+    safe_move_linear(conveyor_pose, 0.250)   # 380 mm/s capped
+
+    # 6) Move to place height
+    safe_move_linear(place_pose, 0.150)      # slower for release
+
+    # Deactivate suction (placeholder)
+    set_digital_out(0, False)                # Suction OFF
+
+    # 7) Retract after release
+    safe_move_linear(post_place_pose, 0.200)
+
+    # 8) Return to Home
+    safe_move_joint(home_return_pose, 1.0)
+
+    popup("Pick‑place cycle completed safely.", False, "Ok")
+end
+
+# Execute
+main()

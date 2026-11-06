@@ -1,0 +1,5 @@
+run,gate_passing_outputs,set_tcp,outputs,literal_pose,z_equals_ir,pose_equals_ir
+local E1 baseline,83,anywhere,7,6,0,0
+local E1 baseline,83,before the first motion call,3,3,0,0
+frontier E1,120,anywhere,48,30,3,3
+frontier E1,120,before the first motion call,45,28,3,3

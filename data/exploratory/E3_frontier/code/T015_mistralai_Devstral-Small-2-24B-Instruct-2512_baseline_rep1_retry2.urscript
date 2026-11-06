@@ -1,0 +1,59 @@
+def laser_marking():
+    # Define tool and work object frames
+    tool0 = p[0, 0, 0, 0, 0, 0]
+    base = p[0, 0, 0, 0, 0, 0]
+
+    # Define marking positions
+    home_pos = p[0, 0, 350, 0, 0, 0]
+    above_surface = p[0, 0, 100, 0, 0, 0]
+    mark_height = p[0, 0, 5, 0, 0, 0]
+    line1_start = p[0, 0, 5, 0, 0, 0]
+    line1_end = p[50, 0, 5, 0, 0, 0]
+    line2_start = p[0, 10, 5, 0, 0, 0]
+    line2_end = p[50, 10, 5, 0, 0, 0]
+    line3_start = p[0, 20, 5, 0, 0, 0]
+    line3_end = p[50, 20, 5, 0, 0, 0]
+    return_pos = p[0, 0, 100, 0, 0, 0]
+
+    # Set tool and work object
+    set_tool_voltage(0)
+    set_tcp(tool0)
+    set_work_object(base)
+
+    # Move to home position
+    movej(home_pos, a=1.4, v=350.0, t=0, r=0)
+
+    # Move above marking surface
+    movel(above_surface, a=1.4, v=300.0, t=0, r=0)
+
+    # Descend to marking height
+    movel(mark_height, a=1.4, v=100.0, t=0, r=0)
+
+    # Mark line 1
+    set_tool_voltage(24)
+    movel(line1_end, a=1.4, v=60.0, t=0, r=0)
+    set_tool_voltage(0)
+
+    # Step to line 2
+    movel(line2_start, a=1.4, v=80.0, t=0, r=0)
+
+    # Mark line 2
+    set_tool_voltage(24)
+    movel(line2_end, a=1.4, v=60.0, t=0, r=0)
+    set_tool_voltage(0)
+
+    # Step to line 3
+    movel(line3_start, a=1.4, v=80.0, t=0, r=0)
+
+    # Mark line 3
+    set_tool_voltage(24)
+    movel(line3_end, a=1.4, v=60.0, t=0, r=0)
+    set_tool_voltage(0)
+
+    # Return to above surface
+    movel(return_pos, a=1.4, v=300.0, t=0, r=0)
+
+    # Return to home position
+    movej(home_pos, a=1.4, v=350.0, t=0, r=0)
+
+laser_marking()

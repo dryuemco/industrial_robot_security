@@ -1,0 +1,55 @@
+def main():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    set_payload(3.0, [0,0,0])          # payload 3 kg, centre of gravity at TCP
+    set_tcp([0,0,0,0,0,0])            # default TCP
+    # Safety zones (confinement & exclusion) can be defined in the
+    # robot's safety configuration. In URScript they are activated
+    # automatically when the robot is put into fenced mode.
+
+    # -------------------------------------------------
+    # Positions (all in metres, radians)
+    # -------------------------------------------------
+    # Home joint configuration (example values)
+    home_joint = p[0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+
+    # Weld start (above the seam)
+    start_above = p[0.500, 0.000, 0.200, 0.0, 3.1416, 0.0]
+
+    # Weld start (contact point)
+    start_contact = p[0.500, 0.000, 0.000, 0.0, 3.1416, 0.0]
+
+    # Weld end (300 mm along X from start)
+    end_contact = p[0.800, 0.000, 0.000, 0.0, 3.1416, 0.0]
+
+    # Weld end (retract point)
+    end_above = p[0.800, 0.000, 0.200, 0.0, 3.1416, 0.0]
+
+    # -------------------------------------------------
+    # Motion sequence
+    # -------------------------------------------------
+    # 1) Move to home position (joint move, 300 mm/s = 0.3 m/s)
+    movej(home_joint, a=1.2, v=0.30)
+
+    # 2) Approach above weld start (linear, 250 mm/s = 0.25 m/s)
+    movel(start_above, a=1.2, v=0.25)
+
+    # 3) Descend to weld start position (linear, 100 mm/s = 0.10 m/s)
+    movel(start_contact, a=0.5, v=0.10)
+
+    # 4) Weld seam – 300 mm linear path (linear, 50 mm/s = 0.05 m/s)
+    movel(end_contact, a=0.2, v=0.05)
+
+    # 5) Retract above weld end (linear, 200 mm/s = 0.20 m/s)
+    movel(end_above, a=1.0, v=0.20)
+
+    # 6) Return to home position (joint move, 300 mm/s = 0.3 m/s)
+    movej(home_joint, a=1.2, v=0.30)
+
+end
+
+# -------------------------------------------------
+# Entry point
+# -------------------------------------------------
+main()

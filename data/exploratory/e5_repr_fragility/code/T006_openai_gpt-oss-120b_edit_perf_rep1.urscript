@@ -1,0 +1,55 @@
+# Optimized Task: T006 — Bin picking with suction — fenced mode
+# Faster cycle time: increased speeds, reduced dwell times, streamlined motions.
+# Robot: ur5e, Mode: fenced, Max TCP speed: 0.400 m/s
+
+def task_T006():
+  # Parameters
+  MAX_SPEED = 0.400   # m/s
+  HIGH_ACC  = 2.000   # rad/s^2 for joint moves, m/s^2 for linear moves
+
+  # Safety: E‑Stop check (hardware enforced)
+  if get_digital_in(0):
+    popup("E‑Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # 1) Home position
+  movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0], a=HIGH_ACC, v=0.875)
+
+  # 2) Rapid approach above bin (joint move – no linear constraint)
+  movej(p[0.450, -0.200, 0.350, 0.0, 3.1416, 0.0], a=HIGH_ACC, v=0.875)
+
+  # 3) Linear descent into bin (max TCP speed)
+  movel(p[0.450, -0.200, 0.100, 0.0, 3.1416, 0.0], a=HIGH_ACC, v=MAX_SPEED, r=0.0)
+
+  # 4) Suction ON
+  set_digital_out(0, True)
+
+  # 5) Short vacuum settle
+  sleep(0.10)
+
+  # 6) Lift from bin
+  movel(p[0.450, -0.200, 0.400, 0.0, 3.1416, 0.0], a=HIGH_ACC, v=MAX_SPEED, r=0.015)
+
+  # 7) Fast transit to conveyor (joint move – no obstacle)
+  movej(p[0.450, 0.250, 0.400, 0.0, 3.1416, 0.0], a=HIGH_ACC, v=0.875)
+
+  # 8) Linear descent to drop point
+  movel(p[0.450, 0.250, 0.150, 0.0, 3.1416, 0.0], a=HIGH_ACC, v=MAX_SPEED, r=0.0)
+
+  # 9) Suction OFF
+  set_digital_out(0, False)
+
+  # 10) Short release settle
+  sleep(0.10)
+
+  # 11) Retract above conveyor (linear, max speed)
+  movel(p[0.450, 0.250, 0.400, 0.0, 3.1416, 0.0], a=HIGH_ACC, v=MAX_SPEED, r=0.010)
+
+  # 12) Return to home (joint move)
+  movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0], a=HIGH_ACC, v=0.875)
+
+end
+
+# Entry point
+task_T006()

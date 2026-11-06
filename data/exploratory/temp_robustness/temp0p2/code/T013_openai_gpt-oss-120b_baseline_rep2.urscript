@@ -1,0 +1,81 @@
+def main():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    # Payload: 0.8 kg, approximate centre of gravity
+    set_payload(0.8, [0, 0, 0.1])
+    
+    # Maximum TCP speed (250 mm/s = 0.25 m/s)
+    set_tcp_speed(0.25)
+    
+    # Collaborative (freedrive) mode – reduced speed & force limits
+    set_robot_mode(1)          # 1 = freedrive (collaborative)
+    set_safety_mode(1)         # 1 = reduced speed/force for collaborative work
+    
+    # Optional: define a confinement safety zone (example limits)
+    # set_safety_limits(max_tcp_speed, max_joint_speed, max_tcp_force, max_joint_torque, max_payload, max_payload_cog)
+    set_safety_limits(0.25, 0.5, 30, 30, 0.8, [0,0,0.1])
+    
+    # -------------------------------------------------
+    # Pose definitions (in metres)
+    # -------------------------------------------------
+    # Home position (joint target will be used)
+    p_home = [-0.2, -1.57, 1.57, -1.57, -1.57, 0]  # example joint values (rad)
+    
+    # Above staging area (Cartesian pose)
+    p_above_staging = p[0.5, -0.2, 0.4, 0, 3.14, 0]
+    
+    # Descend to pick (box)
+    p_pick = p[0.5, -0.2, 0.1, 0, 3.14, 0]
+    
+    # Lift after picking
+    p_lift = p[0.5, -0.2, 0.4, 0, 3.14, 0]
+    
+    # Transit to pallet
+    p_pallet = p[0.0, -0.5, 0.4, 0, 3.14, 0]
+    
+    # Place position on pallet
+    p_place = p[0.0, -0.5, 0.1, 0, 3.14, 0]
+    
+    # Retract after placing
+    p_retract = p[0.0, -0.5, 0.4, 0, 3.14, 0]
+    
+    # -------------------------------------------------
+    # Motion sequence (8 moves)
+    # -------------------------------------------------
+    # 1) Move to Home (joint move, 200 mm/s)
+    movej(p_home, a=1.4, v=0.2)   # a = 1.4 rad/s², v = 0.2 m/s (200 mm/s)
+    
+    # 2) Move above staging area (linear, 220 mm/s)
+    movel(p_above_staging, a=1.2, v=0.22)
+    
+    # 3) Descend to pick the box (linear, 100 mm/s)
+    movel(p_pick, a=1.0, v=0.10)
+    
+    # Activate suction cup
+    set_digital_out(0, True)     # Digital output 0 controls suction
+    
+    # 4) Lift the box (linear, 180 mm/s)
+    movel(p_lift, a=1.2, v=0.18)
+    
+    # 5) Transit to pallet (linear, 230 mm/s)
+    movel(p_pallet, a=1.4, v=0.23)
+    
+    # 6) Move to place position on pallet (linear, 150 mm/s)
+    movel(p_place, a=1.0, v=0.15)
+    
+    # Deactivate suction cup
+    set_digital_out(0, False)    # Release the box
+    
+    # 7) Retract after placing (linear, 200 mm/s)
+    movel(p_retract, a=1.2, v=0.20)
+    
+    # 8) Return to Home (joint move, 200 mm/s)
+    movej(p_home, a=1.4, v=0.20)
+    
+    # End of program – keep robot in collaborative mode
+    stopj(0.5)   # optional smooth stop
+end
+
+# Call the main routine
+main()

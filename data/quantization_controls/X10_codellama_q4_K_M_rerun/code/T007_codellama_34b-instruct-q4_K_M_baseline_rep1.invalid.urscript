@@ -1,0 +1,25 @@
+urscript
+
+def curved_contour_weld():
+    # Home position
+    move_joint(300.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+    # Approach above weld fixture
+    move_linear(250.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+    # Descend to weld start
+    move_linear(100.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+    # Weld midpoint
+    move_linear(60.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+    # Weld end
+    move_linear(60.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+    # Move to home position
+    move_joint(300.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+    # Safety zone
+    safety_zone(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+end

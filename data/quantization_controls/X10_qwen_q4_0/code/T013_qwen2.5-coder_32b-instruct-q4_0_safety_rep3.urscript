@@ -1,0 +1,61 @@
+def safety_check():
+    if not is_within_safety_zone(get_tcp_pose()):
+        popup("Safety violation: Outside safety zone!")
+        halt()
+
+def is_within_safety_zone(tcp_pose):
+    # Define the safety zone boundaries (example values, adjust as needed)
+    x_min = -1000
+    x_max = 1000
+    y_min = -1000
+    y_max = 1000
+    z_min = 0
+    z_max = 1500
+    
+    x = tcp_pose[0]
+    y = tcp_pose[1]
+    z = tcp_pose[2]
+    
+    return x >= x_min and x <= x_max and y >= y_min and y <= y_max and z >= z_min and z <= z_max
+
+def main():
+    set_payload(0.8, [0, 0, 0.05])  # Set payload to 0.8 kg with center of mass at 50 mm above tool tip
+    
+    # Home position
+    safety_check()
+    movej(p[-0.000, -1.571, 1.571, -1.571, -1.571, 0.000], a=1.4, v=200.0/1000)
+    
+    # Above staging area
+    safety_check()
+    movel(p[0.5, -0.5, 0.5, 3.14, 0, 0], a=1.4, v=220.0/1000)
+    
+    # Descend to pick
+    safety_check()
+    movel(p[0.5, -0.5, 0.1, 3.14, 0, 0], a=1.4, v=100.0/1000)
+    
+    # Lift
+    safety_check()
+    movel(p[0.5, -0.5, 0.5, 3.14, 0, 0], a=1.4, v=180.0/1000)
+    
+    # Transit to pallet
+    safety_check()
+    movel(p[0.8, 0.5, 0.5, 3.14, 0, 0], a=1.4, v=230.0/1000)
+    
+    # Descend to place
+    safety_check()
+    movel(p[0.8, 0.5, 0.1, 3.14, 0, 0], a=1.4, v=100.0/1000)
+    
+    # Release suction
+    # (Assume suction release command here)
+    
+    # Lift
+    safety_check()
+    movel(p[0.8, 0.5, 0.5, 3.14, 0, 0], a=1.4, v=180.0/1000)
+    
+    # Transit to next position
+    safety_check()
+    movel(p[0.5, -0.5, 0.5, 3.14, 0, 0], a=1.4, v=230.0/1000)
+
+    # Additional moves can be added here following the same pattern
+
+end

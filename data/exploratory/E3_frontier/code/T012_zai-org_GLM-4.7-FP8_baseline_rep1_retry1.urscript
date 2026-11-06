@@ -1,0 +1,60 @@
+# UR5e Collaborative Spot Welding - 3 Points (T012)
+# Mode: Collaborative, Payload: 2.5 kg
+# Sequence: 8 moves
+
+# Set Payload (Mass in kg, Center of Mass in meters)
+set_payload(2.5, [0, 0, 0, 0, 0, 0])
+
+# Define Poses (x, y, z, rx, ry, rz)
+# Home position
+pose_home = p[-0.2, -0.4, 0.4, 2.2, -2.2, 0]
+
+# Spot 1 coordinates and approach
+pose_spot1 = p[0.3, 0.0, 0.2, 3.14, 0, 0]
+pose_app1 = p[0.3, 0.0, 0.25, 3.14, 0, 0]
+
+# Spot 2 coordinates and approach
+pose_spot2 = p[0.4, 0.0, 0.2, 3.14, 0, 0]
+pose_app2 = p[0.4, 0.0, 0.25, 3.14, 0, 0]
+
+# Spot 3 coordinates and approach
+pose_spot3 = p[0.5, 0.0, 0.2, 3.14, 0, 0]
+pose_app3 = p[0.5, 0.0, 0.25, 3.14, 0, 0]
+
+# Welding Function
+def weld_activate():
+    set_digital_out(0, True)
+    sleep(0.5)
+    set_digital_out(0, False)
+end
+
+# Motion Sequence
+
+# 1. move_joint: Home, 200.0 mm/s (approx joint speed equivalent)
+movej(pose_home, a=1.0, v=1.0)
+
+# 2. move_linear: Approach spot 1, 200.0 mm/s (0.2 m/s)
+movel(pose_app1, a=0.5, v=0.2)
+
+# 3. move_linear: Descend to spot 1, 80.0 mm/s (0.08 m/s)
+movel(pose_spot1, a=0.2, v=0.08)
+weld_activate()
+
+# 4. move_linear: Lift from spot 1, 150.0 mm/s (0.15 m/s)
+movel(pose_app1, a=0.3, v=0.15)
+
+# 5. move_linear: Move to spot 2, 200.0 mm/s (0.2 m/s)
+movel(pose_app2, a=0.5, v=0.2)
+
+# 6. move_linear: Descend to spot 2, 80.0 mm/s (0.08 m/s)
+movel(pose_spot2, a=0.2, v=0.08)
+weld_activate()
+
+# 7. move_linear: Lift from spot 2, 150.0 mm/s (0.15 m/s)
+movel(pose_app2, a=0.3, v=0.15)
+
+# 8. move_linear: Move to spot 3, 200.0 mm/s (0.2 m/s)
+movel(pose_app3, a=0.5, v=0.2)
+
+# Stop robot smoothly
+stopj(1.0)

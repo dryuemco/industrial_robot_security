@@ -1,0 +1,59 @@
+# URScript Program: Bin Picking with Suction (Fenced Mode)
+# Robot: UR5e
+# Payload: 2.0 kg
+# Task: High-speed bin picking to conveyor
+
+def bin_picking_cycle():
+  # Configuration
+  set_payload(2.0, [0.0, 0.0, 0.1])
+  
+  # Acceleration settings (m/s^2 and rad/s^2)
+  a_lin = 1.2
+  a_jnt = 1.4
+  
+  # Define Waypoints (Poses)
+  # Note: Replace these placeholder coordinates with actual taught points
+  p_home = p[0.0, -0.4, 0.4, 0.0, 3.14, 0.0]          # Home position
+  p_bin_above = p[0.5, -0.3, 0.35, 0.0, 3.14, 0.0]   # Above bin
+  p_bin_pick = p[0.5, -0.3, 0.1, 0.0, 3.14, 0.0]     # Inside bin (Pick)
+  p_conv_above = p[0.7, 0.4, 0.35, 0.0, 3.14, 0.0]   # Above conveyor
+  p_conv_place = p[0.7, 0.4, 0.1, 0.0, 3.14, 0.0]    # On conveyor (Place)
+
+  # --- Motion Sequence (8 Moves) ---
+
+  # 1. move_joint: Home position, 350.0 mm/s
+  movej(p_home, a_jnt, 0.35, 0.0, 0.0)
+
+  # 2. move_linear: Above bin, 350.0 mm/s
+  movel(p_bin_above, a_lin, 0.35, 0.0, 0.0)
+
+  # 3. move_linear: Descend into bin, 150.0 mm/s
+  movel(p_bin_pick, a_lin, 0.15, 0.0, 0.0)
+
+  # Activate Suction Gripper
+  set_tool_digital_out(0, True)
+  sleep(0.2) # Wait for vacuum to build
+
+  # 4. move_linear: Lift from bin, 300.0 mm/s
+  movel(p_bin_above, a_lin, 0.30, 0.0, 0.0)
+
+  # 5. move_linear: Transit to conveyor, 380.0 mm/s
+  movel(p_conv_above, a_lin, 0.38, 0.0, 0.0)
+
+  # 6. move_linear: Descend to conveyor (Place), 150.0 mm/s
+  movel(p_conv_place, a_lin, 0.15, 0.0, 0.0)
+
+  # Release Suction Gripper
+  set_tool_digital_out(0, False)
+  sleep(0.2) # Wait for release
+
+  # 7. move_linear: Lift/Retract from conveyor, 300.0 mm/s
+  movel(p_conv_above, a_lin, 0.30, 0.0, 0.0)
+
+  # 8. move_joint: Return to Home, 350.0 mm/s
+  movej(p_home, a_jnt, 0.35, 0.0, 0.0)
+
+end
+
+# Execute the task
+bin_picking_cycle()

@@ -1,0 +1,130 @@
+# URScript for Screw Fastening Assembly - Hybrid Mode (T010)
+# Robot: UR5e
+# Payload: 1.0 kg
+# Safety: ISO 10218:2025 compliant
+
+# Global Safety Parameters
+global max_tcp_speed = 0.25       # 250 mm/s
+global max_joint_accel = 1.4      # 1.4 rad/s^2
+global max_linear_accel = 1.2     # m/s^2 (Conservative linear limit)
+global safety_zone_min = [-0.8, -0.8, 0.0]
+global safety_zone_max = [0.8, 0.8, 0.8]
+
+# Setup Payload
+set_payload(1.0, [0.0, 0.0, 0.05])
+
+# Emergency Stop Handler
+def emergency_stop(msg):
+    stopj(1.0)
+    popup("EMERGENCY STOP: " + msg, warning=False, error=True)
+    halt
+end
+
+# Safety Zone Check
+def check_safety_zone(pose):
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    
+    if x < safety_zone_min[0] or x > safety_zone_max[0]:
+        return False
+    end
+    if y < safety_zone_min[1] or y > safety_zone_max[1]:
+        return False
+    end
+    if z < safety_zone_min[2] or z > safety_zone_max[2]:
+        return False
+    end
+    return True
+end
+
+# Pre-Move Safety Validation
+def safety_check(target_pose, mode):
+    if not check_safety_zone(target_pose):
+        emergency_stop("Workspace Boundary Violation")
+    end
+    
+    # Hybrid Mode Check: Fenced area required for fastening
+    if mode == "fastening":
+        # Assuming digital_in[0] is the fence safety switch
+        if not digital_in[0]:
+            emergency_stop("Fence Open - Fastening Prohibited")
+        end
+    end
+end
+
+# Waypoints
+# Home Position
+wp_home = [0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Screw Feeder Waypoints
+p_feeder_above = p[0.3, -0.4, 0.3, 0, 3.14, 0]
+p_feeder_pick = p[0.3, -0.4, 0.1, 0, 3.14, 0]
+
+# Fastening Waypoints (4 points)
+# Point 1
+p_fasten1_above = p[0.5, 0.0, 0.3, 0, 3.14, 0]
+p_fasten1_down = p[0.5, 0.0, 0.1, 0, 3.14, 0]
+# Point 2
+p_fasten2_above = p[0.5, 0.1, 0.3, 0, 3.14, 0]
+p_fasten2_down = p[0.5, 0.1, 0.1, 0, 3.14, 0]
+# Point 3
+p_fasten3_above = p[0.5, 0.2, 0.3, 0, 3.14, 0]
+p_fasten3_down = p[0.5, 0.2, 0.1, 0, 3.14, 0]
+# Point 4
+p_fasten4_above = p[0.5, 0.3, 0.3, 0, 3.14, 0]
+p_fasten4_down = p[0.5, 0.3, 0.1, 0, 3.14, 0]
+
+# Main Sequence
+def main():
+    # 1. Move to Home (Collaborative Mode)
+    safety_check(get_forward_kinematics(wp_home), "collaborative")
+    movej(wp_home, a=max_joint_accel, v=max_tcp_speed)
+
+    # 2. Move Linear Above Screw Feeder (Collaborative Mode)
+    safety_check(p_feeder_above, "collaborative")
+    movel(p_feeder_above, a=max_linear_accel, v=0.2)
+
+    # 3. Move Linear Pick Screw (Collaborative Mode - Slow)
+    safety_check(p_feeder_pick, "collaborative")
+    movel(p_feeder_pick, a=max_linear_accel, v=0.08)
+    # Activate Gripper (Simulated)
+    set_digital_out(0, True)
+    sleep(0.5)
+
+    # 4. Move Linear Lift from Feeder (Collaborative Mode)
+    safety_check(p_feeder_above, "collaborative")
+    movel(p_feeder_above, a=max_linear_accel, v=0.18)
+
+    # 5. Move Linear Above Fastening Point 1 (Collaborative Mode)
+    safety_check(p_fasten1_above, "collaborative")
+    movel(p_fasten1_above, a=max_linear_accel, v=0.2)
+
+    # Fastening Sequence (Hybrid Mode: Fenced)
+    # Loop through 4 points
+    points_above = [p_fasten1_above, p_fasten2_above, p_fasten3_above, p_fasten4_above]
+    points_down = [p_fasten1_down, p_fasten2_down, p_fasten3_down, p_fasten4_down]
+
+    for i = 0 to 3:
+        # Move to Fastening Point (Fenced Mode)
+        safety_check(points_down[i], "fastening")
+        movel(points_down[i], a=max_linear_accel, v=0.05) # Slow for driving
+        
+        # Drive Screw Action
+        set_digital_out(1, True) # Activate Screwdriver
+        sleep(1.0)
+        set_digital_out(1, False)
+        
+        # Retract
+        safety_check(points_above[i], "fastening")
+        movel(points_above[i], a=max_linear_accel, v=0.2)
+    end
+
+    # Return to Home
+    safety_check(get_forward_kinematics(wp_home), "collaborative")
+    movej(wp_home, a=max_joint_accel, v=max_tcp_speed)
+    
+end
+
+# Execute
+main()

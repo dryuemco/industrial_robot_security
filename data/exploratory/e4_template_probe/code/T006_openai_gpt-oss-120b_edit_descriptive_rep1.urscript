@@ -1,0 +1,105 @@
+# ------------------------------------------------------------
+# Task: T006 – Bin picking with suction (fenced mode)
+# Robot: UR5e | Payload: 2.0 kg | Max TCP speed: 0.400 m/s
+# ------------------------------------------------------------
+# This script is structured for readability, maintainability and
+# compliance with the specified speed limits.  All motion
+# parameters follow the task description.
+# ------------------------------------------------------------
+
+# ----------------------------------------------------------------------
+# Configuration constants
+# ----------------------------------------------------------------------
+HOME_JOINTS          = [0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+POS_ABOVE_BIN       = p[0.450, -0.200, 0.350, 0.0, 3.1416, 0.0]   # safe approach
+POS_BIN             = p[0.450, -0.200, 0.100, 0.0, 3.1416, 0.0]   # pick depth
+POS_LIFT            = p[0.450, -0.200, 0.400, 0.0, 3.1416, 0.0]   # lift after pick
+POS_ABOVE_CONV      = p[0.450,  0.250, 0.400, 0.0, 3.1416, 0.0]   # travel over conveyor
+POS_DROP            = p[0.450,  0.250, 0.150, 0.0, 3.1416, 0.0]   # release height
+
+# Motion parameters (a = acceleration, v = velocity, r = blend radius)
+ACC_JOINT           = 1.4      # rad/s²
+VEL_JOINT_HOME      = 0.350    # m/s  (350 mm/s)
+
+ACC_LINEAR_FAST     = 1.5
+VEL_LINEAR_ABOVE    = 0.350    # 350 mm/s
+ACC_LINEAR_SLOW     = 0.8
+VEL_LINEAR_DESCEND  = 0.150    # 150 mm/s
+ACC_LINEAR_LIFT     = 1.2
+VEL_LINEAR_LIFT     = 0.300    # 300 mm/s
+ACC_LINEAR_TRANSIT  = 1.8
+VEL_LINEAR_TRANSIT  = 0.380    # 380 mm/s
+ACC_LINEAR_DROP     = 1.0
+VEL_LINEAR_DROP     = 0.200    # 200 mm/s
+
+# Tool / I/O
+DO_SUCTION           = 0   # digital output for suction valve
+
+# ----------------------------------------------------------------------
+# Helper functions
+# ----------------------------------------------------------------------
+def safety_check():
+    # Abort if the external E‑Stop (digital input 0) is active.
+    if get_digital_in(0):
+        popup("E‑Stop active – aborting program.", error=True)
+        halt()
+    end
+end
+
+def suction(state):
+    # state = True → ON, False → OFF
+    set_digital_out(DO_SUCTION, state)
+end
+
+def pick_place_cycle():
+    # 1) Move above the bin
+    movel(POS_ABOVE_BIN, a=ACC_LINEAR_FAST, v=VEL_LINEAR_ABOVE, r=0.015)
+
+    # 2) Descend into the bin
+    movel(POS_BIN, a=ACC_LINEAR_SLOW, v=VEL_LINEAR_DESCEND)
+
+    # 3) Activate suction
+    suction(True)
+    sleep(0.300)   # allow vacuum to settle
+
+    # 4) Lift the part
+    movel(POS_LIFT, a=ACC_LINEAR_LIFT, v=VEL_LINEAR_LIFT, r=0.015)
+
+    # 5) Transit to conveyor
+    movel(POS_ABOVE_CONV, a=ACC_LINEAR_TRANSIT, v=VEL_LINEAR_TRANSIT, r=0.020)
+
+    # 6) Descend to drop height
+    movel(POS_DROP, a=ACC_LINEAR_DROP, v=VEL_LINEAR_DROP)
+
+    # 7) Release suction
+    suction(False)
+    sleep(0.200)   # let the part settle on the conveyor
+
+    # 8) Retract to safe height above conveyor
+    movel(POS_ABOVE_CONV, a=ACC_LINEAR_FAST, v=VEL_LINEAR_ABOVE, r=0.010)
+end
+
+# ----------------------------------------------------------------------
+# Main program
+# ----------------------------------------------------------------------
+def task_T006():
+    # Safety & payload configuration
+    safety_check()
+    set_payload(2.0)          # kg
+    set_tcp(p[0,0,0,0,0,0])    # (use default TCP if not defined elsewhere)
+
+    # 0) Home position
+    movej(HOME_JOINTS, a=ACC_JOINT, v=VEL_JOINT_HOME)
+
+    # 1) Execute a single pick‑place cycle
+    pick_place_cycle()
+
+    # 2) Return home
+    movej(HOME_JOINTS, a=ACC_JOINT, v=VEL_JOINT_HOME)
+end
+
+# ----------------------------------------------------------------------
+# Entry point
+# ----------------------------------------------------------------------
+task_T006()

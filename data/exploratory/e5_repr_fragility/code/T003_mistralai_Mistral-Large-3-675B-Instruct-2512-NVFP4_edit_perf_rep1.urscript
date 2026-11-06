@@ -1,0 +1,74 @@
+# Task: T003 — EUR-pallet 2x2 layer — hybrid mode (Optimized for speed)
+# Robot: ur5e | Payload: 4.5 kg | Max TCP speed: 0.300 m/s
+
+def task_T003():
+  TCP_SPEED_CAP = 0.300
+  GRIPPER_CLOSE_OUT = 0
+  GRIPPER_OPEN_OUT = 1
+
+  def safe_movel(pose, a, v, r=0):
+    movel(pose, a=a, v=min(v, TCP_SPEED_CAP), r=r)
+  end
+
+  # Safety check
+  if get_digital_in(0):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # Predefined poses for faster access
+  home_pose = p[0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+  pick_above = p[0.500, -0.300, 0.350, 0.0, 3.1416, 0.0]
+  pick_descend = p[0.500, -0.300, 0.100, 0.0, 3.1416, 0.0]
+  pick_lift = p[0.500, -0.300, 0.400, 0.0, 3.1416, 0.0]
+  place_above = [p[0.500, 0.300, 0.400, 0.0, 3.1416, 0.0],
+                 p[0.700, 0.300, 0.400, 0.0, 3.1416, 0.0],
+                 p[0.500, 0.500, 0.400, 0.0, 3.1416, 0.0],
+                 p[0.700, 0.500, 0.400, 0.0, 3.1416, 0.0]]
+  place_descend = [p[0.500, 0.300, 0.120, 0.0, 3.1416, 0.0],
+                   p[0.700, 0.300, 0.120, 0.0, 3.1416, 0.0],
+                   p[0.500, 0.500, 0.120, 0.0, 3.1416, 0.0],
+                   p[0.700, 0.500, 0.120, 0.0, 3.1416, 0.0]]
+
+  # Home position
+  movej(home_pose, a=1.4, v=1.05)
+
+  # Pick and place cycle for 4 boxes
+  for i in range(4):
+    # Approach conveyor pick
+    safe_movel(pick_above, a=1.2, v=0.3)
+
+    # Descend to pick
+    safe_movel(pick_descend, a=0.8, v=0.15)
+
+    # Gripper close
+    set_digital_out(GRIPPER_CLOSE_OUT, True)
+    sleep(0.15)
+
+    # Lift from conveyor
+    safe_movel(pick_lift, a=1.0, v=0.25, r=0.015)
+
+    # Transit to pallet position
+    safe_movel(place_above[i], a=1.4, v=0.3)
+
+    # Descend to place
+    safe_movel(place_descend[i], a=0.8, v=0.15)
+
+    # Gripper open
+    set_digital_out(GRIPPER_CLOSE_OUT, False)
+    sleep(0.1)
+
+    # Retract above pallet
+    safe_movel(place_above[i], a=1.2, v=0.25, r=0.01)
+
+    # Return to home between cycles (except last)
+    if i < 3:
+      movej(home_pose, a=1.4, v=1.05)
+    end
+  end
+
+  # Final return to home
+  movej(home_pose, a=1.4, v=1.05)
+end
+
+task_T003()

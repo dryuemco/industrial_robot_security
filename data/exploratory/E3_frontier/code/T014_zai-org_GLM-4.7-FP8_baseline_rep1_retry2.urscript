@@ -1,0 +1,44 @@
+# UR5e Hybrid Multi-Angle Camera Inspection (T014)
+# Payload: 0.4 kg
+# Max TCP Speed: 200.0 mm/s
+
+# Set Payload (Fix for SM-5)
+set_payload(0.4, [0.0, 0.0, 0.05])
+
+# Set TCP (Camera Tip)
+set_tcp(p[0.0, 0.0, 0.1, 0.0, 0.0, 0.0])
+
+# Define Joint Home Position (Radians)
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Define Inspection Poses (Meters, Radians)
+# Top-down view
+p_top = p[0.4, 0.0, 0.4, 0.0, 3.14159, 0.0]
+# Side view (Orientation change)
+p_side = p[0.4, 0.2, 0.2, 0.0, 1.57079, 0.0]
+# Angled view (Orientation change)
+p_angled = p[0.35, -0.1, 0.3, 0.5, 2.0, 0.5]
+# Retract position
+p_retract = p[0.4, 0.0, 0.5, 0.0, 3.14159, 0.0]
+
+# Motion 1: move_joint to Home
+# Speed 180 mm/s interpreted as safe joint velocity
+movej(j_home, a=1.2, v=1.0, r=0.0)
+
+# Motion 2: move_linear to Top-down view, 150.0 mm/s (0.15 m/s)
+movel(p_top, a=0.5, v=0.15, r=0.0)
+
+# Motion 3: move_linear to Side view, 120.0 mm/s (0.12 m/s)
+movel(p_side, a=0.5, v=0.12, r=0.0)
+
+# Motion 4: move_linear to Angled view, 120.0 mm/s (0.12 m/s)
+movel(p_angled, a=0.5, v=0.12, r=0.0)
+
+# Motion 5: move_linear to Retract, 180.0 mm/s (0.18 m/s)
+movel(p_retract, a=0.5, v=0.18, r=0.0)
+
+# Motion 6: move_joint to Home (Closing sequence)
+movej(j_home, a=1.2, v=1.0, r=0.0)
+
+# End of Program
+halt

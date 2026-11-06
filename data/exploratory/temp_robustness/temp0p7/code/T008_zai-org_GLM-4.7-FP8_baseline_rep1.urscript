@@ -1,0 +1,51 @@
+# URScript for Task T008: Heavy Depalletizing (Fenced Mode)
+# Robot: UR5e
+# Payload: 5.0 kg
+# Max Speed: 450 mm/s
+
+def depalletize_t008():
+    # Set payload to 5.0 kg (near max boundary)
+    # Center of gravity (CoG) assumed at [0, 0, 50] mm relative to tool flange
+    set_payload(5.0, [0.0, 0.0, 0.05])
+
+    # Move 1: move_joint to Home position
+    # Speed interpreted as moderate joint speed for initial move
+    movej([-1.57, -1.57, -1.57, -1.57, -1.57, -1.57], a=1.2, v=1.0)
+
+    # Move 2: move_linear to Above Pallet
+    # Speed: 400.0 mm/s (0.4 m/s)
+    movel(p[0.35, -0.45, 0.40, 3.14, 0.0, 0.0], a=0.8, v=0.4)
+
+    # Move 3: move_linear Descend to top layer
+    # Speed: 150.0 mm/s (0.15 m/s)
+    movel(p[0.35, -0.45, 0.10, 3.14, 0.0, 0.0], a=0.3, v=0.15)
+    
+    # Simulate Gripper Close
+    set_digital_out(0, True)
+    sleep(0.5)
+
+    # Move 4: move_linear Lift box
+    # Speed: 200.0 mm/s (0.2 m/s)
+    movel(p[0.35, -0.45, 0.40, 3.14, 0.0, 0.0], a=0.5, v=0.2)
+
+    # Move 5: move_linear Transit to conveyor
+    # Speed: 350.0 mm/s (0.35 m/s)
+    movel(p[0.70, 0.45, 0.40, 3.14, 0.0, 0.0], a=0.8, v=0.35)
+
+    # Move 6: move_linear Descend to conveyor (Implicit)
+    # Speed: 200.0 mm/s (0.2 m/s)
+    movel(p[0.70, 0.45, 0.10, 3.14, 0.0, 0.0], a=0.5, v=0.2)
+
+    # Simulate Gripper Open
+    set_digital_out(0, False)
+    sleep(0.5)
+
+    # Move 7: move_linear Retract from conveyor (Implicit)
+    # Speed: 200.0 mm/s (0.2 m/s)
+    movel(p[0.70, 0.45, 0.40, 3.14, 0.0, 0.0], a=0.5, v=0.2)
+
+    # Move 8: move_joint Return to Home (Implicit)
+    # Speed: 400.0 mm/s equivalent
+    movej([-1.57, -1.57, -1.57, -1.57, -1.57, -1.57], a=1.2, v=1.0)
+
+end

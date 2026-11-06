@@ -1,0 +1,60 @@
+# Program: Curved contour weld (T007)
+# Robot: UR5e
+# Payload: 3.5 kg
+# Mode: Hybrid (Fenced during weld, Collaborative during approach)
+
+# Set Payload (Mass 3.5 kg, Center of Gravity [0,0,0])
+set_payload(3.5, [0, 0, 0])
+
+# Define Welding IO (Assuming digital output 0)
+weld_io = 0
+
+# Define Positions (Poses in meters and radians)
+# Home Position (Joint space)
+home_j = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Approach Position (Above fixture)
+approach_p = p[0.45, -0.2, 0.4, 3.14, 0.0, 0.0]
+
+# Weld Start Position
+start_p = p[0.45, -0.2, 0.15, 3.14, 0.0, 0.0]
+
+# Weld Midpoint (Arc approximation)
+mid_p = p[0.55, -0.15, 0.15, 3.14, 0.0, 0.0]
+
+# Weld End Position
+end_p = p[0.6, -0.05, 0.15, 3.14, 0.0, 0.0]
+
+# Retract Position
+retract_p = p[0.6, -0.05, 0.4, 3.14, 0.0, 0.0]
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home position, 300.0 mm/s (0.3 m/s)
+movej(home_j, a=1.2, v=0.3)
+
+# 2. move_linear: Approach above weld fixture, 250.0 mm/s (0.25 m/s)
+movel(approach_p, a=0.5, v=0.25)
+
+# 3. move_linear: Descend to weld start, 100.0 mm/s (0.1 m/s)
+movel(start_p, a=0.2, v=0.1)
+
+# --- Welding Sequence Start ---
+set_standard_digital_out(weld_io, True)
+
+# 4. move_linear: Weld midpoint, 60.0 mm/s (0.06 m/s)
+movel(mid_p, a=0.1, v=0.06)
+
+# 5. move_linear: Weld end, 60.0 mm/s (0.06 m/s)
+movel(end_p, a=0.1, v=0.06)
+
+# --- Welding Sequence End ---
+set_standard_digital_out(weld_io, False)
+
+# 6. move_linear: Retract from weld, 250.0 mm/s (0.25 m/s)
+movel(retract_p, a=0.5, v=0.25)
+
+# 7. move_joint: Return to Home, 300.0 mm/s (0.3 m/s)
+movej(home_j, a=1.2, v=0.3)
+
+# End of Program

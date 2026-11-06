@@ -1,0 +1,107 @@
+# Laser marking program for UR5e in fenced mode
+# Payload: 0.6 kg
+# Safety constraints: SM-2 (speed limits), SM-4 (tool orientation), SM-5 (confinement)
+
+# Safety configuration
+set_payload(0.6)
+set_tcp(p[0,0,0.1,0,0,0])
+set_safety_mode_transition_hardness(2)
+
+# Define safety planes (confinement and exclusion)
+CONFINEMENT_PLANE = p[0,0,0.3,0,0,0]
+EXCLUSION_PLANE = p[0,0,0.15,0,0,0]
+
+# Define waypoints
+HOME_POS = p[0,-1.5708,0,-1.5708,0,0]
+ABOVE_MARKING = p[0.2,0.1,0.2,0,3.14159,0]
+MARKING_HEIGHT = p[0.2,0.1,0.05,0,3.14159,0]
+LINE1_START = p[0.2,0.1,0.05,0,3.14159,0]
+LINE1_END = p[0.25,0.1,0.05,0,3.14159,0]
+LINE2_START = p[0.2,0.12,0.05,0,3.14159,0]
+LINE2_END = p[0.25,0.12,0.05,0,3.14159,0]
+LINE3_START = p[0.2,0.14,0.05,0,3.14159,0]
+LINE3_END = p[0.25,0.14,0.05,0,3.14159,0]
+
+# Safety check function
+def check_safety():
+    current_pos = get_actual_tcp_pose()
+    if current_pos[2] < CONFINEMENT_PLANE[2]:
+        popup("Violation: Below confinement plane", error=True)
+        halt
+    if current_pos[2] < EXCLUSION_PLANE[2] and not is_in_approximate_pose(MARKING_HEIGHT, 0.01):
+        popup("Violation: Entered exclusion zone without proper pose", error=True)
+        halt
+    if get_actual_tcp_speed() > 0.4:
+        popup("Violation: TCP speed exceeded", error=True)
+        halt
+end
+
+# Main program
+thread watchdog_thread():
+    while True:
+        check_safety()
+        sleep(0.1)
+    end
+end
+
+def main():
+    # Start watchdog thread
+    threadId = run watchdog_thread()
+
+    # Enable laser constraints
+    set_analog_inputrange(0, 0)
+    set_analog_inputrange(1, 0)
+    set_tool_voltage(0)
+    set_runstate_outputs([False, False, False])
+
+    # Home position
+    movej(HOME_POS, a=1.39626, v=3.5, r=0)
+
+    # Approach marking area
+    movel(ABOVE_MARKING, a=1.2, v=3.0, r=0)
+
+    # Safety check before descending
+    if not is_pose_within_safety_limits(MARKING_HEIGHT):
+        popup("Marking position violates safety limits", error=True)
+        halt
+    end
+
+    # Descend to marking height
+    movel(MARKING_HEIGHT, a=0.5, v=1.0, r=0)
+
+    # Enable laser
+    set_analog_out(0, 1)
+    set_tool_voltage(24)
+    sleep(0.5)
+
+    # Mark line 1
+    movel(LINE1_END, a=0.3, v=0.6)
+    movel(LINE1_START, a=0.3, v=0.6)
+
+    # Step to line 2
+    movel(LINE2_START, a=0.5, v=0.8)
+
+    # Mark line 2
+    movel(LINE2_END, a=0.3, v=0.6)
+    movel(LINE2_START, a=0.3, v=0.6)
+
+    # Step to line 3
+    movel(LINE3_START, a=0.5, v=0.8)
+
+    # Mark line 3
+    movel(LINE3_END, a=0.3, v=0.6)
+
+    # Disable laser
+    set_analog_out(0, 0)
+    set_tool_voltage(0)
+    sleep(0.5)
+
+    # Retreat
+    movel(ABOVE_MARKING, a=1.2, v=3.0)
+    movej(HOME_POS, a=1.39626, v=3.5)
+
+    # Stop watchdog thread
+    kill threadId
+end
+
+main()

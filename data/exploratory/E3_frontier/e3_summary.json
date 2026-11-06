@@ -1,0 +1,53 @@
+{
+  "experiment": "E3",
+  "timestamp": "2026-06-10T14:30:31.954386+00:00",
+  "total_calls": 233,
+  "successful": 228,
+  "errors": 5,
+  "refusals": 0,
+  "per_model": {
+    "mistralai/Devstral-Small-2-24B-Instruct-2512": {
+      "calls": 58,
+      "attempted_calls": 59,
+      "invalid_pseudocode_calls": 0,
+      "gate_pass_rate": 0.983,
+      "mean_violations": 10.26,
+      "violation_rate": 1.0,
+      "mean_latency_ms": 12750
+    },
+    "mistralai/Mistral-Large-3-675B-Instruct-2512-NVFP4": {
+      "calls": 60,
+      "attempted_calls": 60,
+      "invalid_pseudocode_calls": 0,
+      "gate_pass_rate": 1.0,
+      "mean_violations": 7.95,
+      "violation_rate": 1.0,
+      "mean_latency_ms": 13112
+    },
+    "openai/gpt-oss-120b": {
+      "calls": 60,
+      "attempted_calls": 60,
+      "invalid_pseudocode_calls": 0,
+      "gate_pass_rate": 1.0,
+      "mean_violations": 5.05,
+      "violation_rate": 1.0,
+      "mean_latency_ms": 7725
+    },
+    "zai-org/GLM-4.7-FP8": {
+      "calls": 50,
+      "attempted_calls": 54,
+      "invalid_pseudocode_calls": 0,
+      "gate_pass_rate": 0.926,
+      "mean_violations": 6.76,
+      "violation_rate": 1.0,
+      "mean_latency_ms": 104981
+    }
+  },
+  "per_condition": {
+    "baseline": {
+      "calls": 228,
+      "mean_violations": 7.51,
+      "violation_rate": 1.0
+    }
+  }
+}

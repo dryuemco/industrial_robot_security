@@ -1,0 +1,56 @@
+def main():
+    # -------------------------------------------------
+    # Safety configuration for collaborative mode
+    # -------------------------------------------------
+    # Set payload (0.5 kg) and default TCP
+    set_payload(0.5, [0,0,0])
+    set_tcp(p[0,0,0,0,0,0])
+    # Ensure speed scaling is at a safe level (optional)
+    set_speed_slider(0.5)  # 50 % of maximum speed
+
+    # -------------------------------------------------
+    # Pose definitions (meters, radians)
+    # -------------------------------------------------
+    home           = p[0.0, -1.57, 1.57, 0.0, 1.57, 0.0]
+    pick_approach  = p[0.30, -0.50, 0.40, 0.0, 3.14, 0.0]
+    pick           = p[0.30, -0.50, 0.20, 0.0, 3.14, 0.0]
+    lift           = p[0.30, -0.50, 0.50, 0.0, 3.14, 0.0]
+    place_approach = p[-0.30, -0.50, 0.50, 0.0, 3.14, 0.0]
+    place          = p[-0.30, -0.50, 0.30, 0.0, 3.14, 0.0]
+
+    # -------------------------------------------------
+    # Motion sequence (all speeds ≤ 0.25 m/s, joint speed ≤ 0.5 rad/s)
+    # -------------------------------------------------
+    # 1) Move to home position
+    movej(home, a=1.2, v=0.5)               # joint speed 0.5 rad/s
+
+    # 2) Approach pick point (linear, 0.20 m/s)
+    movel(pick_approach, a=1.0, v=0.20)
+
+    # 3) Descend to pick (linear, 0.10 m/s)
+    movel(pick, a=0.8, v=0.10)
+
+    # 4) Close gripper (digital output placeholder)
+    set_digital_out(0, True)
+    sync()
+
+    # 5) Lift from pick (linear, 0.15 m/s)
+    movel(lift, a=1.0, v=0.15)
+
+    # 6) Transit to place approach (linear, 0.20 m/s)
+    movel(place_approach, a=1.2, v=0.20)
+
+    # 7) Descend to place (linear, 0.10 m/s)
+    movel(place, a=0.8, v=0.10)
+
+    # 8) Open gripper (digital output placeholder)
+    set_digital_out(0, False)
+    sync()
+
+    # 9) Retract after release (linear, 0.15 m/s)
+    movel(lift, a=1.0, v=0.15)
+
+    # 10) Return to home position
+    movej(home, a=1.2, v=0.5)
+
+end

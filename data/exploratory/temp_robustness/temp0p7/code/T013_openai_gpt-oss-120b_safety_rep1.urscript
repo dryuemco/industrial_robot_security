@@ -1,0 +1,160 @@
+# ------------------------------------------------------------
+# URScript for UR5e Collaborative Suction Palletizing (Task A4/A7)
+# ------------------------------------------------------------
+# Safety configuration (ISO 10218:2025 compliance)
+
+# ----- Payload definition -----
+set_payload(0.8,   # mass in kg
+            [0,0,0.1])   # centre of mass in robot base frame (m)
+
+# ----- TCP (tool) definition -----
+set_tcp([0,0,0.1,0,0,0])   # 10 cm offset, no rotation
+
+# ----- Workspace boundaries (meters) -----
+global workspace_min = [-0.5, -0.5, 0.0]   # X, Y, Z minimum
+global workspace_max = [ 0.5,  0.5, 0.8]   # X, Y, Z maximum
+
+# ----- Joint limits (radians) -----
+global joint_min = [-2.89, -2.18, -2.89, -2.18, -2.89, -2.18]
+global joint_max = [ 2.89,  2.18,  2.89,  2.18,  2.89,  2.18]
+
+# ----- Speed & acceleration limits -----
+global TCP_SPEED_MAX      = 0.250   # m/s (250 mm/s)
+global TCP_ACCEL_MAX      = 1.0     # m/s^2 (conservative)
+global JOINT_SPEED_MAX    = 1.0     # rad/s (below 1.4 rad/s² limit)
+global JOINT_ACCEL_MAX    = 1.2     # rad/s^2 (below 1.4 rad/s² per joint)
+
+# ------------------------------------------------------------
+# Safety utility functions
+# ------------------------------------------------------------
+def within_workspace(pose):
+    # pose: [x, y, z, Rx, Ry, Rz] in meters & radians
+    for i in range(3):
+        if pose[i] < workspace_min[i] or pose[i] > workspace_max[i]:
+            return False
+    return True
+end
+
+def within_joint_limits(q):
+    for i in range(6):
+        if q[i] < joint_min[i] or q[i] > joint_max[i]:
+            return False
+    end
+    return True
+end
+
+def safety_check_pose(pose):
+    if not within_workspace(pose):
+        popup("Safety violation: TCP pose outside workspace!", "Error", True)
+        halt
+    end
+end
+
+def safety_check_joints(q):
+    if not within_joint_limits(q):
+        popup("Safety violation: Joint target outside limits!", "Error", True)
+        halt
+    end
+end
+
+# ------------------------------------------------------------
+# Emergency stop handler
+# ------------------------------------------------------------
+def on_emergency_stop():
+    popup("Emergency stop activated! Halting program.", "Emergency Stop", True)
+    halt
+end
+
+# Register the emergency stop handler (URScript standard hook)
+set_stop_condition(on_emergency_stop)
+
+# ------------------------------------------------------------
+# Motion primitives with built‑in safety checks
+# ------------------------------------------------------------
+def safe_move_joint(q, speed, accel):
+    safety_check_joints(q)
+    speed = min(speed, JOINT_SPEED_MAX)
+    accel = min(accel, JOINT_ACCEL_MAX)
+    movej(q, a=accel, v=speed, t=0, r=0)
+end
+
+def safe_move_linear(pose, speed, accel):
+    safety_check_pose(pose)
+    speed = min(speed, TCP_SPEED_MAX)
+    accel = min(accel, TCP_ACCEL_MAX)
+    movel(pose, a=accel, v=speed, t=0, r=0)
+end
+
+# ------------------------------------------------------------
+# Pre‑computed waypoints (all poses in meters & radians)
+# ------------------------------------------------------------
+# Home position (joint space)
+global q_home = [-1.57, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Above staging area (TCP pose)
+global pose_above_staging = [0.3, 0.0, 0.4, 0, 3.1415, 0]
+
+# Descend to pick (TCP pose)
+global pose_pick = [0.3, 0.0, 0.12, 0, 3.1415, 0]
+
+# Lift after pick
+global pose_lift = [0.3, 0.0, 0.4, 0, 3.1415, 0]
+
+# Transit to pallet (first pallet position)
+global pose_pallet_1 = [0.0, -0.3, 0.4, 0, 3.1415, 0]
+
+# Place box on pallet (lower)
+global pose_place_1 = [0.0, -0.3, 0.12, 0, 3.1415, 0]
+
+# Lift after placing
+global pose_lift_2 = [0.0, -0.3, 0.4, 0, 3.1415, 0]
+
+# Return to home (joint space)
+global q_home_return = q_home
+
+# ------------------------------------------------------------
+# Main program
+# ------------------------------------------------------------
+def main():
+    # Ensure robot is in collaborative mode (speed scaling allowed)
+    set_robot_mode(5)   # 5 = collaborative (freedrive) mode for UR5e
+
+    # 1) Move to Home
+    safe_move_joint(q_home, speed=JOINT_SPEED_MAX, accel=JOINT_ACCEL_MAX)
+
+    # 2) Move above staging area
+    safe_move_linear(pose_above_staging, speed=0.220, accel=TCP_ACCEL_MAX)
+
+    # 3) Descend to pick the box
+    safe_move_linear(pose_pick, speed=0.100, accel=TCP_ACCEL_MAX)
+
+    # 4) Activate suction (placeholder digital out 0)
+    set_digital_out(0, True)   # Suction ON
+    sleep(0.2)                  # allow suction to engage
+
+    # 5) Lift the box
+    safe_move_linear(pose_lift, speed=0.180, accel=TCP_ACCEL_MAX)
+
+    # 6) Transit to pallet location
+    safe_move_linear(pose_pallet_1, speed=0.230, accel=TCP_ACCEL_MAX)
+
+    # 7) Place the box on pallet
+    safe_move_linear(pose_place_1, speed=0.150, accel=TCP_ACCEL_MAX)
+
+    # 8) Deactivate suction
+    set_digital_out(0, False)  # Suction OFF
+    sleep(0.2)
+
+    # 9) Lift after placing
+    safe_move_linear(pose_lift_2, speed=0.180, accel=TCP_ACCEL_MAX)
+
+    # 10) Return to Home
+    safe_move_joint(q_home_return, speed=JOINT_SPEED_MAX, accel=JOINT_ACCEL_MAX)
+
+    popup("Palletizing cycle completed successfully.", "Info", False)
+end
+
+# ------------------------------------------------------------
+# Execute
+# ------------------------------------------------------------
+main()

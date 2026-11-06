@@ -1,0 +1,127 @@
+# ------------------------------------------------------------
+# Task: T015 – Laser marking (fenced mode)
+# Robot: UR5e | Payload: 0.6 kg
+# Max TCP speed: 0.400 m/s
+# ------------------------------------------------------------
+# NOTE: This script has been refactored for readability,
+#       maintainability and compliance with the fenced mode.
+# ------------------------------------------------------------
+
+# ----------------------------------------------------------------------
+# Configuration
+# ----------------------------------------------------------------------
+payload = 0.6          # kg
+payload_cog = [0,0,0]  # centre of gravity (default)
+set_payload(payload, payload_cog)
+
+# TCP (laser tool) – adjust if needed
+# set_tcp(p[0,0,0.1,0,0,0])   # example, keep default if already set
+
+# Speed / acceleration limits (all values ≤ max TCP speed 0.400 m/s)
+CONST_ACC_J   = 1.4    # joint acceleration (rad/s²)
+CONST_VEL_J   = 0.875  # joint speed (rad/s)
+CONST_ACC_L   = 1.2    # linear acceleration (m/s²)
+CONST_VEL_L   = 0.300  # linear speed (m/s) – used for non‑marking moves
+CONST_ACC_MARK = 0.2   # linear acceleration for marking (m/s²)
+CONST_VEL_MARK = 0.060 # linear speed for marking (m/s)
+CONST_ACC_STEP = 0.3   # linear acceleration for stepping between lines
+CONST_VEL_STEP = 0.080 # linear speed for stepping (m/s)
+CONST_R      = 0.003   # blend radius (m) for precise moves
+CONST_R_FAST = 0.010   # blend radius for fast moves
+
+# Digital I/O
+DO_LASER = 3   # laser control output
+
+# ----------------------------------------------------------------------
+# Helper functions
+# ----------------------------------------------------------------------
+def laser_on():
+    set_digital_out(DO_LASER, True)
+
+def laser_off():
+    set_digital_out(DO_LASER, False)
+
+def check_estop():
+    # Digital input 0 is wired to the E‑Stop (True = pressed)
+    if get_digital_in(0):
+        popup("E‑Stop active – aborting program.", error=True)
+        halt
+
+# ----------------------------------------------------------------------
+# Pose definitions (all in metres, radians)
+# ----------------------------------------------------------------------
+home_pose          = p[0.0000, -0.0800, 0.2000, 0.0000, 3.1416, 0.0000]   # joint 0 pose (home)
+above_surface_pose = p[0.4000, -0.0800, 0.2000, 0.0000, 3.1416, 0.0000]
+mark_height_pose   = p[0.4000, -0.0800, 0.1000, 0.0000, 3.1416, 0.0000]
+
+# Marking line start/end positions (X‑axis sweep, Y steps of 0.08 m)
+line1_start = p[0.5000, -0.0800, 0.1000, 0.0000, 3.1416, 0.0000]
+line1_end   = p[0.4000, -0.0800, 0.1000, 0.0000, 3.1416, 0.0000]
+
+line2_start = p[0.5000,  0.0000, 0.1000, 0.0000, 3.1416, 0.0000]
+line2_end   = p[0.4000,  0.0000, 0.1000, 0.0000, 3.1416, 0.0000]
+
+line3_start = p[0.5000,  0.0800, 0.1000, 0.0000, 3.1416, 0.0000]
+line3_end   = p[0.4000,  0.0800, 0.1000, 0.0000, 3.1416, 0.0000]
+
+retract_pose = p[0.4500, 0.0000, 0.3000, 0.0000, 3.1416, 0.0000]
+
+# ----------------------------------------------------------------------
+# Main program
+# ----------------------------------------------------------------------
+def task_T015():
+    # ---- Safety ----
+    check_estop()
+
+    # ---- Move to Home (joint space) ----
+    movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+          a=CONST_ACC_J, v=CONST_VEL_J)
+
+    # ---- Approach above the workpiece ----
+    movel(above_surface_pose,
+          a=CONST_ACC_L, v=CONST_VEL_L, r=CONST_R_FAST)
+
+    # ---- Descend to marking height ----
+    movel(mark_height_pose,
+          a=CONST_ACC_L, v=CONST_VEL_L, r=CONST_R)
+
+    # ---- Activate laser ----
+    laser_on()
+
+    # ---- Line 1 (forward) ----
+    movel(line1_start,
+          a=CONST_ACC_MARK, v=CONST_VEL_MARK, r=CONST_R)
+    movel(line1_end,
+          a=CONST_ACC_MARK, v=CONST_VEL_MARK, r=CONST_R)
+
+    # ---- Step to Line 2 (Y + 0.08 m) ----
+    movel(line2_start,
+          a=CONST_ACC_STEP, v=CONST_VEL_STEP, r=CONST_R)
+
+    # ---- Line 2 (reverse) ----
+    movel(line2_end,
+          a=CONST_ACC_MARK, v=CONST_VEL_MARK, r=CONST_R)
+
+    # ---- Step to Line 3 (Y + 0.08 m) ----
+    movel(line3_start,
+          a=CONST_ACC_STEP, v=CONST_VEL_STEP, r=CONST_R)
+
+    # ---- Line 3 (forward) ----
+    movel(line3_end,
+          a=CONST_ACC_MARK, v=CONST_VEL_MARK, r=CONST_R)
+
+    # ---- Deactivate laser ----
+    laser_off()
+
+    # ---- Retract safely ----
+    movel(retract_pose,
+          a=CONST_ACC_L, v=CONST_VEL_L, r=CONST_R_FAST)
+
+    # ---- Return to Home ----
+    movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+          a=CONST_ACC_J, v=CONST_VEL_J)
+
+# ----------------------------------------------------------------------
+# Entry point
+# ----------------------------------------------------------------------
+task_T015()

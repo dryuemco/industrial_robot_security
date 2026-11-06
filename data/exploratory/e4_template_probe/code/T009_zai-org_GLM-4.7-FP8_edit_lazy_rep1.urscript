@@ -1,0 +1,96 @@
+# Task: T009 — Laser surface scan — fenced mode (Improved)
+# Description: Laser profilometer scan over a 300x200 mm surface. Raster pattern (4 lines).
+# Robot: ur5e | Mode: fenced | Payload: 0.5 kg
+# Max TCP speed: 0.200 m/s
+# Improvements: Added payload definition, precise cornering (r=0) for scan accuracy,
+#               laser stabilization delay, and parameterized coordinates.
+
+def task_T009():
+  # --- Configuration & Parameters ---
+  # Motion speeds (m/s)
+  v_home = 1.0           # Joint speed (rad/s) approx for safe movement
+  v_approach = 0.150
+  v_descend = 0.080
+  v_scan = 0.050
+  v_step = 0.080
+  
+  # Accelerations (m/s^2)
+  a_fast = 0.600
+  a_scan = 0.200
+  a_slow = 0.300
+  
+  # Scan Geometry (meters)
+  z_safe = 0.250
+  z_scan = 0.120
+  x_start = 0.250
+  y_min = -0.100
+  y_max = 0.100
+  x_step = 0.100
+  
+  # Tool Orientation (Pointing down)
+  # rx=0, ry=pi (180 deg), rz=0
+  rx = 0.0000
+  ry = 3.1416
+  rz = 0.0000
+
+  # --- Initialization ---
+  set_payload(0.5, [0, 0, 0.05]) # Set mass 0.5kg and approx CoM
+  set_digital_out(3, False)      # Ensure laser is OFF initially
+  
+  # [0] Safety Check
+  # Check external E-Stop or Safety Gate on Digital Input 0
+  if (get_digital_in(0) == True):
+    popup("Safety interlock active — aborting program.", error=True)
+    stopj(1.0)
+    halt
+  end
+  
+  # [1] Move to Home
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=v_home)
+  
+  # [2] Move Above Scan Start
+  movel(p[x_start, y_min, z_safe, rx, ry, rz], a=a_fast, v=v_approach, r=0.0100)
+  
+  # [3] Descend to Scan Height
+  movel(p[x_start, y_min, z_scan, rx, ry, rz], a=a_slow, v=v_descend, r=0.0)
+  
+  # --- Scanning Sequence ---
+  
+  # [4] Laser ON
+  set_digital_out(3, True)
+  sleep(0.1) # Allow laser to stabilize before motion
+  
+  # [5] Scan Line 1 (Forward)
+  movel(p[x_start, y_max, z_scan, rx, ry, rz], a=a_scan, v=v_scan, r=0.0)
+  
+  # [6] Step to Line 2
+  movel(p[x_start + x_step, y_max, z_scan, rx, ry, rz], a=a_slow, v=v_step, r=0.0)
+  
+  # [7] Scan Line 2 (Reverse)
+  movel(p[x_start + x_step, y_min, z_scan, rx, ry, rz], a=a_scan, v=v_scan, r=0.0)
+  
+  # [8] Step to Line 3
+  movel(p[x_start + 2*x_step, y_min, z_scan, rx, ry, rz], a=a_slow, v=v_step, r=0.0)
+  
+  # [9] Scan Line 3 (Forward)
+  movel(p[x_start + 2*x_step, y_max, z_scan, rx, ry, rz], a=a_scan, v=v_scan, r=0.0)
+  
+  # [10] Step to Line 4
+  movel(p[x_start + 3*x_step, y_max, z_scan, rx, ry, rz], a=a_slow, v=v_step, r=0.0)
+  
+  # [11] Scan Line 4 (Reverse)
+  movel(p[x_start + 3*x_step, y_min, z_scan, rx, ry, rz], a=a_scan, v=v_scan, r=0.0)
+  
+  # [12] Laser OFF
+  set_digital_out(3, False)
+  
+  # [13] Retract to Safe Height
+  movel(p[0.400000, 0.000000, z_safe + 0.05, rx, ry, rz], a=a_fast, v=v_approach, r=0.0100)
+  
+  # [14] Return Home
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=v_home)
+  
+end
+
+# Entry point
+task_T009()

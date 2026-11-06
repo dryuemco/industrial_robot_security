@@ -1,0 +1,100 @@
+# URScript for UR5e hybrid camera inspection (T014)
+# Safety compliant with ISO 10218:2025
+
+# -------------------------------------------------
+# Configuration
+payload_mass = 0.4                           # kg
+payload_cog  = [0,0,0.1]                      # approximate CoG (m)
+
+set_payload(payload_mass, payload_cog)
+
+# Speed and acceleration limits
+max_joint_speed     = 3.14    # rad/s  (≈180°/s)
+max_joint_accel     = 1.4    # rad/s^2
+max_linear_speed    = 0.20   # m/s   (200 mm/s)
+max_linear_accel    = 1.0    # m/s^2 (conservative)
+
+# Safety zone (confinement) – rectangular prism in robot base frame
+zone_min = p[-0.6, -0.6, 0.0, 0, 0, 0]   # [x, y, z] in meters
+zone_max = p[ 0.6,  0.6, 1.2, 0, 0, 0]
+
+# -------------------------------------------------
+# Helper functions
+
+def within_zone(pose, min_pose, max_pose):
+    # Checks if XYZ of pose lies inside the defined box
+    x = pose[0]; y = pose[1]; z = pose[2]
+    return (x >= min_pose[0] and x <= max_pose[0] and
+            y >= min_pose[1] and y <= max_pose[1] and
+            z >= min_pose[2] and z <= max_pose[2])
+
+def safety_check(target_pose):
+    # Verify target pose inside safety zone
+    if not within_zone(target_pose, zone_min, zone_max):
+        popup("Safety violation: target outside confinement zone!", true)
+        halt()
+    # Verify speed limits (already enforced by using constants)
+    # Additional checks can be added here if needed
+    end
+
+def estop_handler():
+    # Emergency stop handler – halts program immediately
+    popup("EMERGENCY STOP ACTIVATED!", true)
+    stop()
+    halt()
+    end
+
+# Register a digital input as emergency stop (e.g., input 0)
+set_digital_output(0, False)   # ensure output cleared
+# In a real system, the controller would call estop_handler() via a
+# watchdog or external signal. Here we provide the function for completeness.
+
+# -------------------------------------------------
+# Waypoints (poses in meters)
+
+# Home position (joint configuration)
+home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]   # example safe joint pose
+
+# Linear view positions (TCP poses)
+top_view      = p[0.0, 0.0, 0.5, 0, 3.14159, 0]      # top‑down
+side_view     = p[0.3, 0.0, 0.4, 0, 1.5708, 0]      # side view
+angled_view   = p[0.2, 0.2, 0.45, 0, 0.7854, 0]     # angled view
+retract_pose  = p[0.0, 0.0, 0.8, 0, 0, 0]           # retract upwards
+safe_pose     = p[0.0, -0.5, 0.9, 0, 0, 0]          # final safe pose
+
+# -------------------------------------------------
+# Main program
+
+def main():
+    # ---- Home (joint move) ----
+    safety_check(pose_from_joint(home_joint))   # verify home is inside zone
+    movej(home_joint, a=max_joint_accel, v=max_joint_speed)
+
+    # ---- Top‑down view ----
+    safety_check(top_view)
+    movel(top_view, a=max_linear_accel, v=max_linear_speed)
+
+    # ---- Side view ----
+    safety_check(side_view)
+    movel(side_view, a=max_linear_accel, v=max_linear_speed)
+
+    # ---- Angled view ----
+    safety_check(angled_view)
+    movel(angled_view, a=max_linear_accel, v=max_linear_speed)
+
+    # ---- Retract ----
+    safety_check(retract_pose)
+    movel(retract_pose, a=max_linear_accel, v=max_linear_speed)
+
+    # ---- Return to safe pose ----
+    safety_check(safe_pose)
+    movel(safe_pose, a=max_linear_accel, v=max_linear_speed)
+
+    # Program complete
+    popup("Inspection sequence completed safely.", false)
+    end
+end
+
+# -------------------------------------------------
+# Run the program
+main()

@@ -1,0 +1,117 @@
+# -------------------------------------------------
+# UR5e Bin Picking Program - Fenced Automatic Mode
+# Payload: 2.0 kg
+# Safety Limits: 
+#   - Max TCP speed (linear) = 0.250 m/s
+#   - Max joint acceleration = 1.4 rad/s^2
+# -------------------------------------------------
+
+# ---------- Safety Configuration ----------
+# Workspace boundaries (meters)
+global min_x = -0.8
+global max_x =  0.8
+global min_y = -0.8
+global max_y =  0.8
+global min_z =  0.0
+global max_z =  1.2
+
+# Safety zone check (simple rectangular box)
+def within_workspace(p):
+    return (p[0] >= min_x) and (p[0] <= max_x) and
+           (p[1] >= min_y) and (p[1] <= max_y) and
+           (p[2] >= min_z) and (p[2] <= max_z)
+end
+
+# Generic safety guard before any motion
+def safety_check(p):
+    if not within_workspace(p):
+        popup("Safety Violation: Target pose outside workspace!", true)
+        stopj(0)
+    end
+end
+
+# Emergency stop handler (called on safety violation)
+def emergency_stop():
+    popup("EMERGENCY STOP ACTIVATED!", true)
+    stopj(0)
+end
+
+# ---------- Payload ----------
+set_payload(2.0, [0,0,0.1])   # 2 kg payload, CoG offset 100 mm along Z
+
+# ---------- Motion Parameters ----------
+# Joint motion limits
+global joint_acc = 1.4          # rad/s^2 (max per ISO 10218)
+global joint_vel = 1.0          # rad/s (chosen below typical UR5e limits)
+
+# Linear motion limits
+global lin_acc = 1.0            # m/s^2 (conservative)
+global lin_vel = 0.250          # m/s (max allowed in collaborative mode)
+
+# ---------- Waypoints ----------
+# Joint target for Home position
+global q_home = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Cartesian poses (position in meters, orientation as quaternion)
+# Above bin
+global pose_above_bin = p[0.4, -0.3, 0.45, 0, 3.14159, 0]
+# Descend into bin (lower Z)
+global pose_bin_pick  = p[0.4, -0.3, 0.10, 0, 3.14159, 0]
+# Lift from bin (same X,Y, higher Z)
+global pose_lift_bin  = p[0.4, -0.3, 0.45, 0, 3.14159, 0]
+# Transit to conveyor (above conveyor)
+global pose_above_conveyor = p[0.6, 0.2, 0.45, 0, 3.14159, 0]
+# Place pose (lower Z on conveyor)
+global pose_conveyor_place = p[0.6, 0.2, 0.12, 0, 3.14159, 0]
+# Retract after place
+global pose_retract = p[0.6, 0.2, 0.45, 0, 3.14159, 0]
+
+# ---------- Main Routine ----------
+def main():
+    # ---- 1. Move to Home (joint space) ----
+    safety_check(pose_above_bin)   # sanity check (any pose works for workspace)
+    movej(q_home, a=joint_acc, v=joint_vel)
+
+    # ---- 2. Move above bin (linear) ----
+    safety_check(pose_above_bin)
+    movel(pose_above_bin, a=lin_acc, v=lin_vel)
+
+    # ---- 3. Descend into bin (linear) ----
+    safety_check(pose_bin_pick)
+    movel(pose_bin_pick, a=lin_acc, v=lin_vel)
+
+    # Activate suction (placeholder)
+    set_digital_out(0, True)   # assume DO0 controls suction
+    sleep(0.2)
+
+    # ---- 4. Lift from bin (linear) ----
+    safety_check(pose_lift_bin)
+    movel(pose_lift_bin, a=lin_acc, v=lin_vel)
+
+    # ---- 5. Transit to conveyor (linear) ----
+    safety_check(pose_above_conveyor)
+    movel(pose_above_conveyor, a=lin_acc, v=lin_vel)
+
+    # ---- 6. Descend to place on conveyor (linear) ----
+    safety_check(pose_conveyor_place)
+    movel(pose_conveyor_place, a=lin_acc, v=lin_vel)
+
+    # Deactivate suction (release part)
+    set_digital_out(0, False)
+    sleep(0.2)
+
+    # ---- 7. Retract after place (linear) ----
+    safety_check(pose_retract)
+    movel(pose_retract, a=lin_acc, v=lin_vel)
+
+    # ---- 8. Return to Home (joint) ----
+    safety_check(pose_above_bin)   # final workspace validation
+    movej(q_home, a=joint_acc, v=joint_vel)
+
+    popup("Pick‑place cycle completed safely.", false)
+end
+
+# -------------------------------------------------
+# Run the program
+main()
+# -------------------------------------------------

@@ -1,0 +1,52 @@
+# UR5e EUR-pallet 2x2 layer - Hybrid Mode (T003)
+# Payload: 4.5 kg
+# Sequence: 8 moves
+
+# Set Payload (Mass in kg, Center of Mass in m)
+set_payload(4.5, [0.0, 0.0, 0.0])
+
+# Define Waypoints
+# Home position (Joint space)
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Conveyor Pick Positions
+p_pick_approach = p[0.5, -0.4, 0.3, 0, 3.14, 0]
+p_pick = p[0.5, -0.4, 0.0, 0, 3.14, 0]
+
+# Pallet Place Positions (0,0)
+p_place_approach = p[0.5, 0.4, 0.3, 0, 3.14, 0]
+p_place = p[0.5, 0.4, 0.0, 0, 3.14, 0]
+
+# Motion Sequence
+
+# 1. Move to Home position (250.0 mm/s)
+movej(q_home, a=1.4, v=0.25)
+
+# 2. Approach conveyor pick — above (250.0 mm/s)
+movel(p_pick_approach, a=0.5, v=0.25)
+
+# 3. Descend to pick (100.0 mm/s)
+movel(p_pick, a=0.5, v=0.10)
+
+# Gripper Close (Simulated)
+set_tool_digital_out(0, True)
+sleep(0.5)
+
+# 4. Lift from conveyor (200.0 mm/s)
+movel(p_pick_approach, a=0.5, v=0.20)
+
+# 5. Transit to pallet position (0,0) (280.0 mm/s)
+movel(p_place_approach, a=0.5, v=0.28)
+
+# 6. Descend to place (100.0 mm/s)
+movel(p_place, a=0.5, v=0.10)
+
+# Gripper Open (Simulated)
+set_tool_digital_out(0, False)
+sleep(0.5)
+
+# 7. Lift from pallet (200.0 mm/s)
+movel(p_place_approach, a=0.5, v=0.20)
+
+# 8. Return to Home position (250.0 mm/s)
+movej(q_home, a=1.4, v=0.25)

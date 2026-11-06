@@ -1,0 +1,109 @@
+# URScript for UR5e hybrid screw fastening task
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(1.0, [0,0,0.1])          # payload 1.0 kg, CoG offset
+set_tcp([0,0,0.1,0,0,0])            # example TCP offset
+set_max_tcp_speed(0.250)            # max TCP speed 250 mm/s
+
+# -------------------------------------------------
+# Safety mode helpers
+# -------------------------------------------------
+def set_collaborative():
+    # Collaborative mode (no fencing)
+    set_safety_mode("collaborative")
+end
+
+def set_fenced():
+    # Fenced mode for fastening
+    set_safety_mode("fenced")
+end
+
+# -------------------------------------------------
+# Positions (placeholders – replace with real poses)
+# -------------------------------------------------
+# Joint space home position
+home_joint = [-1.57, -1.57, -1.57, -1.57, 1.57, 0]
+
+# Cartesian poses (pose vectors: [X,Y,Z,RX,RY,RZ])
+above_feeder   = p[0.5, -0.2, 0.3, 0, 3.14, 0]
+pick_screw      = p[0.5, -0.2, 0.1, 0, 3.14, 0]
+lift_from_feeder= p[0.5, -0.2, 0.25,0, 3.14, 0]
+
+above_fp1      = p[0.6, 0.0, 0.3, 0, 3.14, 0]
+fasten_fp1     = p[0.6, 0.0, 0.15,0, 3.14, 0]
+
+above_fp2      = p[0.6, 0.1, 0.3, 0, 3.14, 0]
+fasten_fp2     = p[0.6, 0.1, 0.15,0, 3.14, 0]
+
+above_fp3      = p[0.6, -0.1,0.3, 0, 3.14, 0]
+fasten_fp3     = p[0.6, -0.1,0.15,0, 3.14, 0]
+
+above_fp4      = p[0.6, 0.2, 0.3, 0, 3.14, 0]
+fasten_fp4     = p[0.6, 0.2, 0.15,0, 3.14, 0]
+
+# -------------------------------------------------
+# Fastening routine (simple down‑up motion)
+# -------------------------------------------------
+def fasten_screw(target_pose):
+    # Move down to screw head
+    movel(target_pose, a=1.2, v=0.05)
+    # Dwell to simulate driving torque
+    sleep(0.5)
+    # Retract
+    movel(p[ target_pose[0], target_pose[1], target_pose[2]+0.15, target_pose[3], target_pose[4], target_pose[5] ],
+          a=1.2, v=0.05)
+end
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # --- Collaborative approach phase ---
+    set_collaborative()
+    
+    # 1) Move to home (joint space)
+    movej(home_joint, a=1.4, v=0.2)          # 200 mm/s ≈ 0.2 m/s
+    
+    # 2) Move above screw feeder
+    movel(above_feeder, a=1.4, v=0.2)
+    
+    # 3) Move to pick screw
+    movel(pick_screw, a=1.2, v=0.08)        # 80 mm/s
+    
+    # 4) Lift from feeder
+    movel(lift_from_feeder, a=1.4, v=0.18)  # 180 mm/s
+    
+    # --- Switch to fenced mode for fastening ---
+    set_fenced()
+    
+    # 5) Above fastening point 1
+    movel(above_fp1, a=1.4, v=0.2)
+    # 6) Fasten at point 1
+    fasten_screw(fasten_fp1)
+    
+    # 7) Above fastening point 2
+    movel(above_fp2, a=1.4, v=0.2)
+    # 8) Fasten at point 2
+    fasten_screw(fasten_fp2)
+    
+    # Additional points (3 & 4) – continue in same pattern
+    movel(above_fp3, a=1.4, v=0.2)
+    fasten_screw(fasten_fp3)
+    
+    movel(above_fp4, a=1.4, v=0.2)
+    fasten_screw(fasten_fp4)
+    
+    # Return to home
+    set_collaborative()
+    movej(home_joint, a=1.4, v=0.2)
+    
+    # End of program
+    stopj(2.0)
+end
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

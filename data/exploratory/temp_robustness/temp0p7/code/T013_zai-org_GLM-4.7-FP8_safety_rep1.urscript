@@ -1,0 +1,88 @@
+# ==========================================
+# Collaborative Suction Palletizing - Task T013
+# Robot: UR5e | Payload: 0.8kg
+# Safety: ISO 10218:2025 Compliance
+# ==========================================
+
+# Safety Configuration
+def safety_check(target_pose, label):
+    # Define Workspace Boundaries (Safety Zone)
+    x_min = 0.20
+    x_max = 0.80
+    y_min = -0.60
+    y_max = 0.60
+    z_min = 0.00
+    z_max = 0.50
+    
+    # Validate target coordinates
+    if (target_pose[0] < x_min or target_pose[0] > x_max or
+        target_pose[1] < y_min or target_pose[1] > y_max or
+        target_pose[2] < z_min or target_pose[2] > z_max):
+        
+        emergency_stop_handler("Boundary Violation at: " + label)
+        return False
+    return True
+
+def emergency_stop_handler(error_msg):
+    stopj(1.4)
+    popup(error_msg, title="SAFETY STOP", warning=False, error=True)
+    halt
+
+# Initialization
+set_payload(0.8, [0, 0, 0.05])  # 0.8kg payload, CoM offset 50mm
+set_tcp(p[0, 0, 0.12, 0, 0, 0]) # Suction cup TCP offset
+set_gravity([0, 0, 9.82])
+
+# Waypoints Definition
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+p_staging_above = p[0.45, 0.40, 0.30, 0, 3.14, 0]
+p_staging_pick  = p[0.45, 0.40, 0.02, 0, 3.14, 0]
+
+p_pallet_transit = p[0.45, -0.40, 0.30, 0, 3.14, 0]
+p_pallet_place   = p[0.45, -0.40, 0.02, 0, 3.14, 0]
+
+# Motion Sequence
+# Safety check before starting sequence
+safety_check(get_forward_kin(q_home), "Home")
+
+# Move 1: move_joint: Home, 200.0 mm/s
+movej(q_home, a=1.4, v=0.2)
+
+# Move 2: move_linear: Above staging, 220.0 mm/s
+safety_check(p_staging_above, "Above Staging")
+movel(p_staging_above, a=1.0, v=0.22)
+
+# Move 3: move_linear: Descend to pick, 100.0 mm/s
+safety_check(p_staging_pick, "Pick Location")
+movel(p_staging_pick, a=0.5, v=0.10)
+
+# Activate Suction
+set_digital_out(0, True)
+sleep(1.0) # Wait for vacuum
+
+# Move 4: move_linear: Lift, 180.0 mm/s
+safety_check(p_staging_above, "Lift Staging")
+movel(p_staging_above, a=0.8, v=0.18)
+
+# Move 5: move_linear: Transit to pallet, 230.0 mm/s
+safety_check(p_pallet_transit, "Transit Pallet")
+movel(p_pallet_transit, a=1.0, v=0.23)
+
+# Move 6: move_linear: Descend to place (Implicit 3rd move)
+safety_check(p_pallet_place, "Place Location")
+movel(p_pallet_place, a=0.5, v=0.10)
+
+# Release Suction
+set_digital_out(0, False)
+sleep(0.5) # Wait for release
+
+# Move 7: move_linear: Lift from place (Implicit 4th move)
+safety_check(p_pallet_transit, "Lift Pallet")
+movel(p_pallet_transit, a=0.8, v=0.18)
+
+# Move 8: move_joint: Return to Home (Implicit 5th move)
+safety_check(get_forward_kin(q_home), "Return Home")
+movej(q_home, a=1.4, v=0.2)
+
+end

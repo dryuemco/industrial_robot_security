@@ -25,7 +25,10 @@ OSF refresh.
 | `s08_paper_numbers.py` | per-rule decomposition of the Table 14 count contrasts, SM-2 per program | `out/r3/` |
 | `s09_tables.py` | the round-3 paper tables | `paper/tables/` or `--out-dir` |
 | `s10_osf_mirror.py` | verbatim Amendment 1 excerpts for `docs/OSF_PREREGISTRATION.md` | `out/r3/osf_amendment1_excerpt.md` |
-| `s12_frontier.py` | SM-6 split and prompt check for the frontier run of Table 7 (needs `results/E1_frontier/`, outside version control) | `out/f2/` |
+| `s12_frontier.py` | SM-6 split and prompt check for the frontier run of Table 7 | `out/f2/` |
+| `s13_import_runs.py` | copies the reported runs from `results/` into `data/` with masking; `--check` recomputes and compares | `data/exploratory/`, `data/quantization_controls/`, `out/r3/import_*.csv` |
+| `s14_exploratory_check.py` | recomputes the frontier sensitivity table, the representation figures and the frontier summaries from `data/` | `out/r3/exploratory_check.csv` |
+| `s15_tcp_values.py` | set_tcp declarations and their values against the task's TCP offset, local and frontier | `out/r3/tcp_values_*.csv` |
 | `s11_numeric_tokens.py` | numeric tokens of the paper source, r2 (`797aeb3`) against the working tree | `docs/review/round3/numeric_tokens.csv` or `--out` |
 | `test_round3.py` | checks of the statistics helpers | pytest |
 
@@ -69,6 +72,7 @@ and Appendix E are new). Every path is under `analysis/round3/`.
 | Abstract; I-C; VI-A paragraph on the lower bound | the prompt gives the payload and never the TCP offset; the task representation holds both | `s01_a1.py` | `out/a1/prompt_fields.csv`, `out/a1/prompt_log_evidence.json`, `out/a1/ir_tcp_payload.csv` |
 | VI-A paragraph on the lower bound | 74 flagged, all without set_tcp, 68 also without set_payload; 68/83 to 14/108; Qwen 39/45 to 0/45 and 45/45 without set_tcp; CodeLlama 18/18 and 10/10 | `s07_followup1.py` | `out/f1/f1_sm6_groups.csv`, `out/f1/f2_safety_vs_baseline.csv` |
 | VI-A paragraph on the lower bound | SM-6 clauses 5.1.14 and 5.1.15 | `s01_a1.py` | `out/a1/sm6_clause_map.md` |
+| VI-A paragraph on the lower bound | 3 of 83 local and 45 of 120 frontier outputs declare a TCP before the first motion call; 0 of 3 and 3 of 28 literal poses match the task's offset | `s15_tcp_values.py` | `out/r3/tcp_values_summary.csv` |
 | VI-A; Table 10 | rater B and adjudicated precision, Wilson and Clopper-Pearson intervals, agreement, kappa, adjudicated = rater A on 100 of 100 | `s04_a4.py` | `out/a4/precision.csv` |
 | VI-A, SM-2 unit | 111 firings on 82 programs, 1.34 and 0.99 per program | `s08_paper_numbers.py` | `out/r3/sm2_per_program.csv` |
 | VI-A, SM-2 unit | 11 program-level items (10 and 10 genuine), 9 call-site items (8 and 0) | `s04_a4.py` | `out/a4/sm2_by_location.csv` |
@@ -83,14 +87,15 @@ and Appendix E are new). Every path is under `analysis/round3/`.
 | VI-D | 44 of 45 baseline cells equal on the naive and gate-pass bases | `s07_followup1.py` | `out/f1/f4_naive_vs_gatepass_cells.csv` |
 | Appendix A; Appendix E; Table 21 | every registered cross-model test on three bases, run 1 = run 2 | `s07_followup1.py` | `out/f1/f4_cochran_four_conditions.csv`, `out/f1/f4_cochran_adversarial_subtypes.csv` |
 | Appendix E | 192 of 192 and 57 of 57 gate-passing outputs violate | `s08_paper_numbers.py` | `out/r3/gate_passing_violating.csv` |
+| Appendix A, generation files of every run (masking) | 2 files masked, 1577 copied | `s13_import_runs.py` | `out/r3/import_masking.csv`, `out/r3/import_manifest.csv` |
+| Table 7 and the representation figures, recomputed from `data/` | equal to the committed table, figures and summaries | `s14_exploratory_check.py` | `out/r3/exploratory_check.csv` |
 | Tables 10, 12, 13, 16, 21 (LaTeX) | the table files in `paper/tables/` | `s09_tables.py` | `out/tables/` (checked against `paper/tables/` by `run_all.sh`) |
 | `docs/OSF_PREREGISTRATION.md` | Amendment 1 excerpts, verbatim | `s10_osf_mirror.py` | `out/r3/osf_amendment1_excerpt.md` |
 
 ## Running from a fresh clone
 
-A few inputs are outside version control: the `results/` copies of the confirmatory runs
-(compared with `data/confirmatory/` by `s00`), the frontier run (`results/E1_frontier/`,
-read by `s12`), and the earlier submission packages (searched by `s07` for item F4). When
-they are absent, those three steps print `SKIP` and leave their committed outputs as they
-are; every other output is recomputed from tracked files and equals the committed version
-byte for byte.
+A few inputs are outside version control: the `results/` copies of the runs (compared with
+`data/` by `s00` and by `s13 --check`) and the earlier submission packages (searched by `s07`
+for item F4). When they are absent, those steps print `SKIP` and leave their committed
+outputs as they are; every other output is recomputed from tracked files and equals the
+committed version byte for byte.

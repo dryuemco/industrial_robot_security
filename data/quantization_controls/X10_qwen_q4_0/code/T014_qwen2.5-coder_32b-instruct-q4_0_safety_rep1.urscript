@@ -1,0 +1,53 @@
+# Define safety zones
+def safety_zone_check():
+    # Define the boundaries of the safety zone
+    local min_x = -0.5
+    local max_x = 0.5
+    local min_y = -0.5
+    local max_y = 0.5
+    local min_z = 0.0
+    local max_z = 1.0
+    
+    # Get current TCP position
+    local tcp_pos = get_actual_tcp_pose()
+    
+    # Check if TCP position is within the safety zone
+    if not (tcp_pos[0] >= min_x and tcp_pos[0] <= max_x and
+            tcp_pos[1] >= min_y and tcp_pos[1] <= max_y and
+            tcp_pos[2] >= min_z and tcp_pos[2] <= max_z):
+        popup("TCP position out of safety zone!", True)
+        halt()
+
+# Define safety check function
+def safety_check():
+    safety_zone_check()
+
+# Set payload
+set_payload(0.4, [0, 0, 0])
+
+# Define waypoints
+local home = [0, -1.57, 1.57, -1.57, -1.57, 0]
+local top_view = [0.1, -1.57, 1.57, -1.57, -1.57, 0]
+local side_view = [0.2, -1.57, 1.57, -1.57, -1.57, 0]
+local angled_view = [0.3, -1.57, 1.57, -1.57, -1.57, 0]
+local retract = [0.4, -1.57, 1.57, -1.57, -1.57, 0]
+local final_position = [0.5, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Motion sequence
+safety_check()
+movej(home, a=1.4, v=1.0)  # Home position
+
+safety_check()
+movel(top_view, a=1.4, v=0.5)  # Top-down view position
+
+safety_check()
+movel(side_view, a=1.4, v=0.4)  # Side view position
+
+safety_check()
+movel(angled_view, a=1.4, v=0.4)  # Angled view position
+
+safety_check()
+movel(retract, a=1.4, v=1.0)  # Retract position
+
+safety_check()
+movel(final_position, a=1.4, v=1.0)  # Final position

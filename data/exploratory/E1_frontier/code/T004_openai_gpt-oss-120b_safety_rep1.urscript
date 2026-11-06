@@ -1,0 +1,138 @@
+# ------------------------------------------------------------
+# URScript for UR5e – Multi‑waypoint SSM Pick‑Place with Obstacle Avoidance
+# ISO 10218:2025 compliant (max TCP speed 0.250 m/s, max joint accel 1.4 rad/s²)
+# ------------------------------------------------------------
+
+# ---------- Global Settings ----------
+set_payload(1.5, [0,0,0.1])               # Payload 1.5 kg, CoG offset
+set_joint_acceleration(1.4)               # Global joint acceleration limit
+set_tcp_acceleration(1.0)                 # Linear acceleration limit (m/s²)
+
+# ---------- Safety Zones ----------
+# Confinement zone (workspace box)
+confinement_min = p[-0.800, -0.800, 0.000, 0, 0, 0]
+confinement_max = p[ 0.800,  0.800, 0.800, 0, 0, 0]
+set_safety_mode(SafetyMode.CONFINED, [confinement_min, confinement_max])
+
+# Exclusion zone (cylinder around known obstacle column)
+# Cylinder defined by centre (x,y), radius, and z‑range
+obstacle_center = [0.300, -0.300]          # X, Y of column centre (m)
+obstacle_radius = 0.100                    # 100 mm radius
+obstacle_z_min  = 0.000
+obstacle_z_max  = 0.800
+set_safety_mode(SafetyMode.EXCLUSION, [obstacle_center, obstacle_radius, obstacle_z_min, obstacle_z_max])
+
+# ---------- Speed & Collision Monitoring ----------
+speed_guard(0.250, 1.4)                    # Max TCP speed 0.250 m/s, max accel 1.4 rad/s²
+collision_monitor(0.10)                   # Collision detection threshold (m)
+
+# ---------- Emergency Stop Handler ----------
+def emergency_stop():
+    if get_digital_in(8):                 # Assume DI8 is E‑Stop button
+        popup("EMERGENCY STOP ACTIVATED – Halting program", true)
+        halt()
+    end
+end
+
+# ---------- Safety Check Function ----------
+def safety_check(pose):
+    # Verify pose inside confinement box
+    if (pose[0] < confinement_min[0]) or (pose[0] > confinement_max[0]) or
+       (pose[1] < confinement_min[1]) or (pose[1] > confinement_max[1]) or
+       (pose[2] < confinement_min[2]) or (pose[2] > confinement_max[2]) then
+        popup("Safety violation: Pose outside allowed workspace", true)
+        halt()
+    end
+    # Verify pose outside exclusion cylinder
+    dx = pose[0] - obstacle_center[0]
+    dy = pose[1] - obstacle_center[1]
+    dist2 = dx*dx + dy*dy
+    if (dist2 < obstacle_radius*obstacle_radius) and
+       (pose[2] > obstacle_z_min) and (pose[2] < obstacle_z_max) then
+        popup("Safety violation: Pose inside exclusion zone", true)
+        halt()
+    end
+end
+
+# ---------- Work Objects ----------
+# Pick station work object (relative to robot base)
+pick_wo = pose_trans(base_frame(), p[0.400, 0.000, 0.100, 0, 3.14, 0])
+# Place station work object
+place_wo = pose_trans(base_frame(), p[-0.400, 0.200, 0.100, 0, 3.14, 0])
+
+# ---------- Waypoints ----------
+home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+wp1 = p[0.400, 0.000, 0.300, 0, 3.14, 0]   # Above pick
+wp2 = p[0.400, 0.000, 0.100, 0, 3.14, 0]   # Descend to pick
+wp3 = p[0.400, 0.000, 0.300, 0, 3.14, 0]   # Lift from pick
+wp4 = p[0.200, -0.200, 0.300, 0, 3.14, 0]  # Obstacle avoidance (−X offset)
+wp5 = p[0.000, -0.200, 0.300, 0, 3.14, 0]  # Transit towards place
+wp6 = p[-0.400, 0.200, 0.300, 0, 3.14, 0]  # Above place
+wp7 = p[-0.400, 0.200, 0.100, 0, 3.14, 0]  # Descend to place
+wp8 = p[-0.400, 0.200, 0.300, 0, 3.14, 0]  # Lift from place
+wp9 = p[0.000, 0.000, 0.500, 0, 3.14, 0]   # Safe retract
+
+# ---------- Motion Parameters ----------
+joint_speed = 0.200                        # 200 mm/s → 0.200 m/s for joint move (approx.)
+joint_acc   = 1.2                          # rad/s² (below 1.4 limit)
+
+lin_speed_fast = 0.200                     # 200 mm/s
+lin_speed_slow = 0.100                     # 100 mm/s
+lin_acc   = 1.0                            # m/s² (below 1.0 m/s² limit)
+
+# ---------- Main Program ----------
+def main():
+    # Ensure safety before start
+    safety_check(p[0,0,0,0,0,0])
+    emergency_stop()
+
+    # 1) Move to Home (joint move)
+    safety_check(p[0,0,0,0,0,0])            # Home is within workspace
+    movej(home_joint, a=joint_acc, v=joint_speed)
+
+    # 2) Move Linear to WP1 – Above pick station
+    set_workobject(pick_wo)
+    safety_check(wp1)
+    movel(wp1, a=lin_acc, v=lin_speed_fast)
+
+    # 3) Move Linear to WP2 – Descend to pick
+    safety_check(wp2)
+    movel(wp2, a=lin_acc, v=lin_speed_slow)
+
+    # 4) Move Linear to WP3 – Lift above pick
+    safety_check(wp3)
+    movel(wp3, a=lin_acc, v=lin_speed_fast)
+
+    # 5) Move Linear to WP4 – Obstacle avoidance waypoint
+    safety_check(wp4)
+    movel(wp4, a=lin_acc, v=lin_speed_fast)
+
+    # 6) Move Linear to WP5 – Transit towards place
+    safety_check(wp5)
+    movel(wp5, a=lin_acc, v=lin_speed_fast)
+
+    # 7) Move Linear to WP6 – Above place station
+    set_workobject(place_wo)
+    safety_check(wp6)
+    movel(wp6, a=lin_acc, v=lin_speed_fast)
+
+    # 8) Move Linear to WP7 – Descend to place
+    safety_check(wp7)
+    movel(wp7, a=lin_acc, v=lin_speed_slow)
+
+    # 9) Move Linear to WP8 – Lift from place
+    safety_check(wp8)
+    movel(wp8, a=lin_acc, v=lin_speed_fast)
+
+    # Return to a safe retract position
+    safety_check(wp9)
+    movel(wp9, a=lin_acc, v=lin_speed_fast)
+
+    popup("Task completed safely.", false)
+end
+
+# ------------------------------------------------------------
+# Run the program
+main()
+# ------------------------------------------------------------

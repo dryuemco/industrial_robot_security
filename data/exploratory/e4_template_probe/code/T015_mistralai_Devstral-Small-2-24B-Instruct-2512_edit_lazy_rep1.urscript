@@ -1,0 +1,68 @@
+# Task: T015 — Laser marking — fenced mode
+# Improved version with enhanced safety and precision controls
+# Operating mode: fenced | Max TCP speed: 0.400 m/s
+# Robot: ur5e | Payload: 0.6 kg
+
+def task_T015():
+    # [0] Safety checks
+    if (get_digital_in(0) == True):
+        popup("E-Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # [1] Home with reduced acceleration
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.3500, t0=0, t1=0)
+
+    # [2] Above marking surface with tool orientation check
+    movel(p[0.400000, -0.080000, 0.200000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.3000, r=0.0100)
+    sync()
+
+    # [3] Descend to marking height with fine control
+    movel(p[0.400000, -0.080000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.4000, v=0.1000, r=0.0030)
+    sync()
+
+    # [4] Laser ON with verification
+    set_digital_out(3, True)
+    sleep(0.1)  # Allow laser to stabilize
+
+    # [5] Mark line 1 with precise speed control
+    movel(p[0.500000, -0.080000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.2000, v=0.0600, r=0.0030)
+    sync()
+
+    # [6] Step to line 2 with intermediate check
+    movel(p[0.500000, 0.000000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.3000, v=0.0800, r=0.0030)
+    sync()
+
+    # [7] Mark line 2 reverse with speed verification
+    movel(p[0.400000, 0.000000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.2000, v=0.0600, r=0.0030)
+    sync()
+
+    # [8] Step to line 3 with position check
+    movel(p[0.400000, 0.080000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.3000, v=0.0800, r=0.0030)
+    sync()
+
+    # [9] Mark line 3 with final verification
+    movel(p[0.500000, 0.080000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.2000, v=0.0600, r=0.0030)
+    sync()
+
+    # [10] Laser OFF with delay
+    set_digital_out(3, False)
+    sleep(0.1)  # Allow laser to fully deactivate
+
+    # [11] Retract with safety margin
+    movel(p[0.450000, 0.000000, 0.300000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.3000, r=0.0100)
+    sync()
+
+    # [12] Return home with controlled motion
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.3500, t0=0, t1=0)
+    sync()
+
+end
+
+# Entry point with error handling
+try:
+    task_T015()
+except error as e:
+    popup("Program error: " + str(e), error=True)
+    halt
+end

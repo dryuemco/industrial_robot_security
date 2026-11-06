@@ -1,0 +1,21 @@
+# Define the sequence of movements
+def weld_sequence():
+    # Move to home position
+    movej([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], 300.0, 0.0, tool0);
+
+    # Approach above weld fixture
+    movej([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], 250.0, 0.0, tool0);
+
+    # Descend to weld start
+    movej([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], 100.0, 0.0, tool0);
+
+    # Weld midpoint
+    movej([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], 60.0, 0.0, tool0);
+
+    # Weld end
+    movej([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], 60.0, 0.0, tool0);
+
+    # Additional moves as needed...
+
+# Call the weld sequence function
+weld_sequence();

@@ -1,0 +1,162 @@
+# ==============================================================================
+# URScript Program: Dual-Zone Pick-Place (Hybrid Mode T011)
+# Robot: UR5e
+# Payload: 1.2 kg
+# Compliance: ISO 10218:2025
+# ==============================================================================
+
+# -----------------------------------------------------------------------------
+# Configuration & Constants
+# -----------------------------------------------------------------------------
+global max_joint_accel = 1.4          # rad/s^2 (Safety Limit)
+global max_tcp_speed_ind = 0.3        # m/s (Industrial Zone Limit)
+global max_tcp_speed_col = 0.25       # m/s (Collaborative Zone Limit)
+global payload_mass = 1.2             # kg
+global payload_cog = [0.0, 0.0, 0.05] # m (Center of Gravity offset)
+
+# Safety Zone Definitions (Simplified for logic)
+# Confinement Zone: Box where robot must operate
+global conf_x_min = 0.3
+global conf_x_max = 0.8
+global conf_y_min = -0.6
+global conf_y_max = 0.6
+global conf_z_min = 0.0
+global conf_z_max = 0.6
+
+# Exclusion Zone: Sphere where robot is forbidden (e.g., behind robot)
+global excl_center = p[-0.2, 0.0, 0.4, 0, 0, 0]
+global excl_radius = 0.2
+
+# -----------------------------------------------------------------------------
+# Helper Functions
+# -----------------------------------------------------------------------------
+
+# Function to validate if a waypoint is within the confinement zone
+def validate_workspace_boundary(pose):
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    
+    if (x < conf_x_min) or (x > conf_x_max) or (y < conf_y_min) or (y > conf_y_max) or (z < conf_z_min) or (z > conf_z_max):
+        popup("Error: Waypoint outside confinement zone!")
+        return False
+    end
+    
+    # Check Exclusion Zone (Distance check)
+    dist = norm(pose - excl_center)
+    if dist < excl_radius:
+        popup("Error: Waypoint inside exclusion zone!")
+        return False
+    end
+    
+    return True
+end
+
+# Safety Check Guard
+def safety_check():
+    if not get_safety_mode() == 1: # Assuming 1 is normal operation
+        popup("Safety System Not Ready")
+        halt
+    end
+    return True
+end
+
+# Emergency Stop Handler Thread
+thread safety_monitor():
+    while True:
+        current_pose = get_actual_tcp_pose()
+        
+        # Check Exclusion Zone dynamically
+        dist = norm(current_pose - excl_center)
+        if dist < excl_radius:
+            popup("EMERGENCY STOP: Exclusion Zone Violation!")
+            stopj(2.0)
+            halt
+        end
+        
+        # Check Confinement Zone dynamically
+        x = current_pose[0]
+        y = current_pose[1]
+        z = current_pose[2]
+        if (x < conf_x_min) or (x > conf_x_max) or (y < conf_y_min) or (y > conf_y_max) or (z < conf_z_min) or (z > conf_z_max):
+            popup("EMERGENCY STOP: Confinement Zone Breach!")
+            stopj(2.0)
+            halt
+        end
+        
+        sleep(0.01)
+    end
+end
+
+# -----------------------------------------------------------------------------
+# Main Program
+# -----------------------------------------------------------------------------
+
+# 1. Setup
+set_payload(payload_mass, payload_cog)
+set_tcp(p[0.0, 0.0, 0.15, 0.0, 0.0, 0.0]) # Tool offset
+safety_check()
+
+# Start Safety Monitor
+thread safety_monitor()
+
+# Define Waypoints
+# Home Position
+wp_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Storage Zone (Fenced/Industrial)
+wp_above_storage = p[0.5, -0.4, 0.4, 0, 3.14, 0]
+wp_pick = p[0.5, -0.4, 0.1, 0, 3.14, 0]
+
+# Handoff Zone (Collaborative)
+wp_transit = p[0.5, 0.3, 0.4, 0, 3.14, 0]
+wp_handoff = p[0.5, 0.4, 0.2, 0, 3.14, 0]
+wp_retract = p[0.5, 0.4, 0.4, 0, 3.14, 0]
+
+# Validate all waypoints before execution
+if not (validate_workspace_boundary(wp_above_storage) and validate_workspace_boundary(wp_pick) and validate_workspace_boundary(wp_transit) and validate_workspace_boundary(wp_handoff) and validate_workspace_boundary(wp_retract)):
+    popup("Program Halted: Invalid Waypoints defined.")
+    halt
+end
+
+# 2. Motion Sequence
+
+# Move 1: move_joint: Home, 250.0 mm/s
+# Using max_joint_accel as per safety requirement
+movej(wp_home, a=max_joint_accel, v=0.25)
+
+# Move 2: move_linear: Above storage bin, 280.0 mm/s
+# Industrial mode allows > 250 mm/s (up to 300 limit)
+movel(wp_above_storage, a=0.5, v=0.28)
+
+# Move 3: move_linear: Descend to pick, 120.0 mm/s
+movel(wp_pick, a=0.2, v=0.12)
+
+# Simulate Gripper Action (Pick)
+set_digital_out(0, True)
+sleep(0.5)
+
+# Move 4: move_linear: Lift from bin, 200.0 mm/s
+movel(wp_above_storage, a=0.3, v=0.20)
+
+# Move 5: move_linear: Transit to handoff zone, 250.0 mm/s
+# Transitioning to collaborative zone, speed capped at 250 mm/s
+movel(wp_transit, a=0.5, v=0.25)
+
+# Move 6: move_linear: Descend to handoff, 120.0 mm/s
+# Collaborative zone operation
+movel(wp_handoff, a=0.2, v=0.12)
+
+# Simulate Gripper Action (Place)
+set_digital_out(0, False)
+sleep(0.5)
+
+# Move 7: move_linear: Release/Retract, 200.0 mm/s
+movel(wp_retract, a=0.3, v=0.20)
+
+# Move 8: move_joint: Return to Home, 250.0 mm/s
+movej(wp_home, a=max_joint_accel, v=0.25)
+
+# End of Program
+popup("Task T011 Completed Successfully.")
+halt

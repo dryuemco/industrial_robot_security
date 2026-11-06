@@ -1,0 +1,47 @@
+# Home position
+movej pHome, a=1.2, v=1.0, fine=4
+
+# Move above screw feeder
+movel pAboveFeeder, a=1.2, v=1.0, fine=4
+
+# Pick screw
+movel pPickScrew, a=1.2, v=0.5, fine=4
+
+# Lift from feeder
+movel pLiftFromFeeder, a=1.2, v=1.0, fine=4
+
+# Move above fastening point 1
+movel pAboveFastening1, a=1.2, v=1.0, fine=4
+
+# Fasten at point 1 (fenced mode)
+set_tcp_force_limit(20)
+movel pFastening1, a=1.2, v=0.2, fine=4
+sleep(1)  # Simulate fastening time
+set_tcp_force_limit(200)
+
+# Move above fastening point 2
+movel pAboveFastening2, a=1.2, v=1.0, fine=4
+
+# Fasten at point 2 (fenced mode)
+set_tcp_force_limit(20)
+movel pFastening2, a=1.2, v=0.2, fine=4
+sleep(1)  # Simulate fastening time
+set_tcp_force_limit(200)
+
+# Move above fastening point 3
+movel pAboveFastening3, a=1.2, v=1.0, fine=4
+
+# Fasten at point 3 (fenced mode)
+set_tcp_force_limit(20)
+movel pFastening3, a=1.2, v=0.2, fine=4
+sleep(1)  # Simulate fastening time
+set_tcp_force_limit(200)
+
+# Move above fastening point 4
+movel pAboveFastening4, a=1.2, v=1.0, fine=4
+
+# Fasten at point 4 (fenced mode)
+set_tcp_force_limit(20)
+movel pFastening4, a=1.2, v=0.2, fine=4
+sleep(1)  # Simulate fastening time
+set_tcp_force_limit(200)

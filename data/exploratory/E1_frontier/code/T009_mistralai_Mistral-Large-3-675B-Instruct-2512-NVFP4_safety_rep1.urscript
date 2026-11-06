@@ -1,0 +1,103 @@
+# URScript for Laser Surface Scan - Fenced Mode (T009)
+# Compliance: ISO 10218:2025, UR5e, Payload 0.5 kg
+
+# --- SAFETY CONFIGURATION ---
+def safety_check():
+    # Check safety boundaries and conditions before motion
+    if not (is_within_safety_zone(get_forward_kin()) and
+            get_tcp_speed() <= 200.0 and
+            get_joint_acceleration() <= 1.4):
+        popup("SAFETY VIOLATION: Emergency Halt", title="SAFETY ERROR", error=True)
+        halt()
+    end
+    return True
+end
+
+def is_within_safety_zone(pose):
+    # Define safety zone boundaries (confinement)
+    # X: [0.2, 0.5], Y: [-0.3, 0.3], Z: [0.1, 0.5] (meters)
+    return (pose[0] >= 0.2 and pose[0] <= 0.5 and
+            pose[1] >= -0.3 and pose[1] <= 0.3 and
+            pose[2] >= 0.1 and pose[2] <= 0.5)
+end
+
+# --- INITIALIZATION ---
+set_payload(0.5)
+set_tcp(p[0, 0, 0.1, 0, 0, 0])  # Laser profilometer TCP
+set_safety_mode("reduced")
+
+# --- WAYPOINTS ---
+global HOME = p[0, -1.5708, 0, -1.5708, 0, 0]  # Joint angles for home
+global ABOVE_SCAN_START = p[0.3, 0.1, 0.2, 0, 3.1416, 0]  # Above scan start
+global SCAN_HEIGHT = 0.15  # Z-height for scanning
+global SCAN_START = p[0.3, 0.1, SCAN_HEIGHT, 0, 3.1416, 0]
+global SCAN_END = p[0.3, -0.1, SCAN_HEIGHT, 0, 3.1416, 0]
+global STEP_OVER = 0.0667  # Step-over distance (300mm / 4 lines = 75mm, but 4 lines = 3 steps)
+
+# --- MAIN PROGRAM ---
+def main():
+    # Validate all waypoints before starting
+    if not (is_within_safety_zone(ABOVE_SCAN_START) and
+            is_within_safety_zone(SCAN_START) and
+            is_within_safety_zone(SCAN_END)):
+        popup("Waypoint outside safety zone!", title="SAFETY ERROR", error=True)
+        halt()
+    end
+
+    # Move to home position
+    safety_check()
+    movej(HOME, a=1.4, v=1.8)  # 180 mm/s ≈ 1.8 rad/s for UR5e
+
+    # Move above scan start
+    safety_check()
+    movel(ABOVE_SCAN_START, a=1.2, v=1.5)  # 150 mm/s
+
+    # Descend to scan height
+    safety_check()
+    movel(SCAN_START, a=0.8, v=0.8)  # 80 mm/s
+
+    # Activate laser (A7)
+    set_digital_out(0, True)  # Laser ON
+
+    # Scan line 1 (A3: laser pointing constraints)
+    safety_check()
+    movel(SCAN_END, a=0.5, v=0.5)  # 50 mm/s
+
+    # Step to line 2
+    safety_check()
+    movel(p[SCAN_END[0], SCAN_END[1] + STEP_OVER, SCAN_HEIGHT, 0, 3.1416, 0], a=0.8, v=0.8)
+
+    # Scan line 2
+    safety_check()
+    movel(p[SCAN_START[0], SCAN_START[1] + STEP_OVER, SCAN_HEIGHT, 0, 3.1416, 0], a=0.5, v=0.5)
+
+    # Step to line 3
+    safety_check()
+    movel(p[SCAN_START[0], SCAN_START[1] + 2*STEP_OVER, SCAN_HEIGHT, 0, 3.1416, 0], a=0.8, v=0.8)
+
+    # Scan line 3
+    safety_check()
+    movel(p[SCAN_END[0], SCAN_END[1] + 2*STEP_OVER, SCAN_HEIGHT, 0, 3.1416, 0], a=0.5, v=0.5)
+
+    # Step to line 4
+    safety_check()
+    movel(p[SCAN_END[0], SCAN_END[1] + 3*STEP_OVER, SCAN_HEIGHT, 0, 3.1416, 0], a=0.8, v=0.8)
+
+    # Scan line 4
+    safety_check()
+    movel(p[SCAN_START[0], SCAN_START[1] + 3*STEP_OVER, SCAN_HEIGHT, 0, 3.1416, 0], a=0.5, v=0.5)
+
+    # Deactivate laser
+    set_digital_out(0, False)  # Laser OFF
+
+    # Retract to above scan start
+    safety_check()
+    movel(ABOVE_SCAN_START, a=1.2, v=1.5)
+
+    # Return to home
+    safety_check()
+    movej(HOME, a=1.4, v=1.8)
+end
+
+# Start program
+main()

@@ -1,0 +1,123 @@
+# -------------------------------------------------
+# URScript for UR5e – Linear Weld Path (Fenced Mode)
+# -------------------------------------------------
+# Safety compliance: ISO 10218:2025
+# -------------------------------------------------
+
+# ---------- Configuration ----------
+payload_mass = 3.0                     # kg
+payload_cog = [0,0,0.1]                # centre of gravity (m)
+set_payload(payload_mass, payload_cog)
+
+# Joint acceleration limit (rad/s^2) – must not exceed 1.4
+joint_acc_limit = 1.0                 # rad/s^2
+# TCP linear acceleration limit (m/s^2)
+tcp_acc_limit = 1.0                    # m/s^2
+
+# Workspace boundaries (meters) – confinement box
+workspace_min = [-0.8, -0.8, 0.0]      # X, Y, Z
+workspace_max = [ 0.8,  0.8, 1.2]
+
+# Exclusion zone (example: a safety cylinder around a human)
+excl_center = [0.0, 0.0, 0.6]          # m
+excl_radius = 0.2                     # m
+excl_height = 1.0                     # m
+
+# -------------------------------------------------
+# Helper Functions
+# -------------------------------------------------
+def safety_check(p):
+    # p is a pose [x,y,z,rx,ry,rz]
+    # 1) Check confinement box
+    within = (p[0] >= workspace_min[0]) and (p[0] <= workspace_max[0]) and
+             (p[1] >= workspace_min[1]) and (p[1] <= workspace_max[1]) and
+             (p[2] >= workspace_min[2]) and (p[2] <= workspace_max[2])
+    # 2) Check exclusion cylinder
+    dx = p[0] - excl_center[0]
+    dy = p[1] - excl_center[1]
+    dz = p[2] - excl_center[2]
+    radial_dist = sqrt(dx*dx + dy*dy)
+    inside_excl = (radial_dist < excl_radius) and (dz >= 0) and (dz <= excl_height)
+    return within and (not inside_excl)
+end
+
+def abort_if_unsafe(p):
+    if not safety_check(p) then
+        popup("Safety violation detected – motion aborted", title="EMERGENCY STOP", error=True)
+        stopj(2)          # immediate joint stop
+        halt()
+    end
+end
+
+def e_stop_handler():
+    popup("Emergency stop activated!", title="EMERGENCY STOP", error=True)
+    stopj(2)
+    halt()
+end
+
+# -------------------------------------------------
+# Define Waypoints (meters)
+# -------------------------------------------------
+# Home joint configuration (rad)
+home_joint = [0, -1.57, 0, -1.57, 0, 0]
+
+# Weld seam start (relative to robot base)
+weld_start = p[0.3, 0.0, 0.2, 0, 3.1415, 0]   # 300 mm along X, 200 mm height
+# Approach point above start (Z + 100 mm)
+approach_start = pose_add(weld_start, p[0,0,0.1,0,0,0])
+
+# Weld start point (descend 100 mm)
+start_point = pose_add(weld_start, p[0,0,0,0,0,0])
+
+# Weld end point (300 mm linear along X)
+end_point = pose_add(start_point, p[0.3,0,0,0,0,0])
+
+# Retract point above end (Z + 100 mm)
+retract_end = pose_add(end_point, p[0,0,0.1,0,0,0])
+
+# Additional waypoint – return to home (above)
+home_pose = p[0.0, -0.5, 0.5, 0, 3.1415, 0]
+
+# -------------------------------------------------
+# Motion Sequence
+# -------------------------------------------------
+def main():
+    # ----- Emergency stop monitoring -----
+    set_watchdog(e_stop_handler)
+
+    # 1) Move to Home (joint move)
+    speed_joint = 1.5          # rad/s (≈300 mm/s TCP)
+    movej(home_joint, a=joint_acc_limit, v=speed_joint, t=0, r=0)
+
+    # 2) Approach above weld start (linear)
+    speed_lin = 0.25           # m/s (250 mm/s)
+    abort_if_unsafe(approach_start)
+    movel(approach_start, a=tcp_acc_limit, v=speed_lin, t=0, r=0)
+
+    # 3) Descend to weld start position
+    speed_descend = 0.10       # m/s (100 mm/s)
+    abort_if_unsafe(start_point)
+    movel(start_point, a=tcp_acc_limit, v=speed_descend, t=0, r=0)
+
+    # 4) Weld seam – 300 mm linear path
+    speed_weld = 0.05          # m/s (50 mm/s)
+    abort_if_unsafe(end_point)
+    movel(end_point, a=tcp_acc_limit, v=speed_weld, t=0, r=0)
+
+    # 5) Retract above weld end
+    speed_retract = 0.20       # m/s (200 mm/s)
+    abort_if_unsafe(retract_end)
+    movel(retract_end, a=tcp_acc_limit, v=speed_retract, t=0, r=0)
+
+    # 6) Return to Home (linear)
+    abort_if_unsafe(home_pose)
+    movel(home_pose, a=tcp_acc_limit, v=speed_retract, t=0, r=0)
+
+    # End of program
+    popup("Weld sequence completed safely.", title="INFO")
+end
+
+# -------------------------------------------------
+# Run the program
+# -------------------------------------------------
+main()

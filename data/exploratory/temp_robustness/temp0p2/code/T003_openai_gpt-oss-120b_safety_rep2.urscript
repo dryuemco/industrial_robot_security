@@ -1,0 +1,139 @@
+# ------------------------------------------------------------
+# URScript for UR5e – Hybrid Mode (Conveyor Pick & Pallet Place)
+# Safety‑compliant (ISO 10218:2025)
+# ------------------------------------------------------------
+
+# ---------- Safety Parameters ----------
+MAX_TCP_SPEED      = 0.250   # m/s (250 mm/s)
+MAX_JOINT_ACCEL    = 1.4     # rad/s^2 per joint
+WORKSPACE_X_MIN    = -0.800  # m
+WORKSPACE_X_MAX    =  0.800
+WORKSPACE_Y_MIN    = -0.800
+WORKSPACE_Y_MAX    =  0.800
+WORKSPACE_Z_MIN    =  0.000
+WORKSPACE_Z_MAX    =  1.300
+
+# ---------- Payload ----------
+set_payload(4.5, [0,0,0.05])   # 4.5 kg, CoM 5 cm behind TCP
+
+# ---------- Safety Helper Functions ----------
+def safety_check():
+    # Placeholder for external safety system integration
+    # Returns true if safety is OK, false otherwise
+    return True
+end
+
+def within_workspace(p):
+    # p – pose (list of 6 values)
+    x = p[0]; y = p[1]; z = p[2];
+    return (x >= WORKSPACE_X_MIN and x <= WORKSPACE_X_MAX and
+            y >= WORKSPACE_Y_MIN and y <= WORKSPACE_Y_MAX and
+            z >= WORKSPACE_Z_MIN and z <= WORKSPACE_Z_MAX)
+end
+
+def e_stop():
+    # Immediate stop and user notification
+    halt()
+    popup("Emergency stop triggered – operation halted.", title="Safety", error=True)
+end
+
+# ---------- Motion Wrapper (enforces limits) ----------
+def safe_movej(q, speed=0.25, accel=MAX_JOINT_ACCEL):
+    if not safety_check() then e_stop() end
+    movej(q, a=accel, v=speed, t=0, r=0)
+end
+
+def safe_movel(p, speed=MAX_TCP_SPEED, accel=1.2):
+    if not safety_check() then e_stop() end
+    if not within_workspace(p) then
+        popup("Target pose outside workspace!", title="Safety", error=True)
+        e_stop()
+    end
+    movel(p, a=accel, v=speed, t=0, r=0)
+end
+
+# ---------- Define Waypoints ----------
+# Joint target for Home position (example values)
+home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Poses (meters, radians) – adjust to actual cell geometry
+# 1. Above conveyor pick
+pose_above_conveyor = p[0.300, -0.400, 0.250, 0, 3.14, 0]
+
+# 2. Pick (descend 100 mm)
+pose_pick = p[0.300, -0.400, 0.150, 0, 3.14, 0]
+
+# 3. Lift after pick (raise 150 mm)
+pose_lift = p[0.300, -0.400, 0.300, 0, 3.14, 0]
+
+# 4. Pallet grid positions (2×2) – example coordinates
+pallet_grid = [
+    p[0.0,  0.0, 0.200, 0, 3.14, 0],   # cell (0,0)
+    p[0.0,  0.200, 0.200, 0, 3.14, 0],# cell (0,1)
+    p[0.200, 0.0, 0.200, 0, 3.14, 0],# cell (1,0)
+    p[0.200, 0.200, 0.200, 0, 3.14, 0]# cell (1,1)
+]
+
+# ---------- Main Program ----------
+def main():
+    # 0. Safety zone definition (fenced during transit, collaborative near conveyor)
+    # In URScript the zone is handled by external safety controller; we just document.
+    # --------------------------------------------------------
+    # Move 1 – Home
+    safe_movej(home_joint, speed=0.25, accel=MAX_JOINT_ACCEL)
+
+    # Move 2 – Approach conveyor (above)
+    safe_movel(pose_above_conveyor, speed=0.25, accel=1.2)
+
+    # Move 3 – Descend to pick
+    safe_movel(pose_pick, speed=0.10, accel=1.0)
+
+    # Simulate gripper close (placeholder)
+    set_digital_out(0, True)   # gripper close
+    sleep(0.5)
+
+    # Move 4 – Lift from conveyor
+    safe_movel(pose_lift, speed=0.20, accel=1.2)
+
+    # Move 5 – Transit to first pallet cell (fenced zone, higher speed allowed up to limit)
+    safe_movel(pallet_grid[0], speed=MAX_TCP_SPEED, accel=1.2)
+
+    # Place 1
+    safe_movel(pallet_grid[0], speed=0.10, accel=1.0)   # lower for release
+    set_digital_out(0, False)  # gripper open
+    sleep(0.5)
+
+    # Move 6 – Transit to second pallet cell
+    safe_movel(pallet_grid[1], speed=MAX_TCP_SPEED, accel=1.2)
+
+    # Place 2
+    safe_movel(pallet_grid[1], speed=0.10, accel=1.0)
+    set_digital_out(0, False)
+    sleep(0.5)
+
+    # Move 7 – Transit to third pallet cell
+    safe_movel(pallet_grid[2], speed=MAX_TCP_SPEED, accel=1.2)
+
+    # Place 3
+    safe_movel(pallet_grid[2], speed=0.10, accel=1.0)
+    set_digital_out(0, False)
+    sleep(0.5)
+
+    # Move 8 – Transit to fourth pallet cell
+    safe_movel(pallet_grid[3], speed=MAX_TCP_SPEED, accel=1.2)
+
+    # Place 4
+    safe_movel(pallet_grid[3], speed=0.10, accel=1.0)
+    set_digital_out(0, False)
+    sleep(0.5)
+
+    # Return to Home
+    safe_movej(home_joint, speed=0.25, accel=MAX_JOINT_ACCEL)
+
+    popup("Task completed safely.", title="Info")
+end
+
+# ------------------------------------------------------------
+# Execute
+main()
+# ------------------------------------------------------------

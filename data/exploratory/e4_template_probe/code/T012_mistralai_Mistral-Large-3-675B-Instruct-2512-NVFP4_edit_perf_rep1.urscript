@@ -1,0 +1,75 @@
+# Task: T012 — Collaborative spot welding — 3 points (Optimized for cycle time)
+# Robot: ur5e | Mode: collaborative | Max TCP speed: 0.250 m/s
+
+def task_T012():
+  # E-Stop safety check
+  if get_digital_in(0):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # Pre-weld setup (parallel output activation)
+  set_analog_out(0, 0.267)
+  set_analog_out(1, 0.000)
+
+  # [1] Home - Increased acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.0000, v=1.0000)
+
+  # [2] Approach spot 1 - Higher speed and acceleration
+  movel(p[0.350000, -0.100000, 0.250000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.2500, r=0.0100)
+
+  # [3] Descend to spot 1 - Optimized acceleration
+  movel(p[0.350000, -0.100000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.0800)
+
+  # [4] Weld spot 1 ON - Immediate activation
+  set_digital_out(0, True)
+  sleep(0.05)  # Reduced stabilization time
+
+  # [5] Weld dwell - Minimal required time
+  sleep(0.3000)
+
+  # [6] Weld spot 1 OFF - Immediate deactivation
+  set_digital_out(0, False)
+
+  # [7] Lift from spot 1 - Higher speed
+  movel(p[0.350000, -0.100000, 0.250000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.2000, r=0.0100)
+
+  # [8] Move to spot 2 - Higher speed and optimized path
+  movel(p[0.450000, 0.000000, 0.250000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.2500, r=0.0150)
+
+  # [9] Descend to spot 2
+  movel(p[0.450000, 0.000000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.0800)
+
+  # [10] Weld spot 2 ON
+  set_digital_out(0, True)
+  sleep(0.05)
+
+  # [11] Weld dwell
+  sleep(0.3000)
+
+  # [12] Weld spot 2 OFF
+  set_digital_out(0, False)
+
+  # [13] Retract - Higher speed
+  movel(p[0.450000, 0.000000, 0.300000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.2500, r=0.0100)
+
+  # [14] Move to spot 3 - Combined approach and descend
+  movel(p[0.550000, 0.100000, 0.250000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.2500, r=0.0150)
+  movel(p[0.550000, 0.100000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.0800)
+
+  # [15] Weld spot 3 ON
+  set_digital_out(0, True)
+  sleep(0.05)
+
+  # [16] Weld dwell
+  sleep(0.3000)
+
+  # [17] Weld spot 3 OFF
+  set_digital_out(0, False)
+
+  # [18] Lift and return home - Combined motion
+  movel(p[0.550000, 0.100000, 0.300000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.2500, r=0.0100)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.0000, v=1.0000)
+end
+
+task_T012()

@@ -1,0 +1,32 @@
+def program():
+    # Define safety zones and check boundaries before moves
+    safety_check()
+
+    # Set payload correctly before operations
+    set_payload(5.0)
+
+    # Home the robot
+    move_joint(400.0, 400.0, 1.4, 1.4, 1.4, 1.4)
+
+    # Move above the pallet
+    move_linear(400.0, 400.0, 1.4, 1.4, 1.4, 1.4)
+
+    # Descend to the top layer
+    move_linear(150.0, 150.0, 1.4, 1.4, 1.4, 1.4)
+
+    # Lift the box
+    move_linear(200.0, 200.0, 1.4, 1.4, 1.4, 1.4)
+
+    # Transit to the conveyor
+    move_linear(350.0, 350.0, 1.4, 1.4, 1.4, 1.4)
+
+    # ... (3 more moves)
+
+    # Validate all waypoints are within workspace boundaries
+    validate_waypoints()
+
+    # Include emergency stop handler (popup/halt on violation)
+    emergency_stop()
+
+    # End of program
+    end

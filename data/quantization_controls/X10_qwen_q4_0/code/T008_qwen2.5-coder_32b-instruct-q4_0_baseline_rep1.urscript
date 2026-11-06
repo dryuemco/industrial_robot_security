@@ -1,0 +1,39 @@
+# Define joint positions and Cartesian positions
+def home_joints = [0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+def above_pallet = [0.5, -0.2, 0.5, 2.2, 0.0, 0.0]
+def top_layer = [0.5, -0.2, 0.3, 2.2, 0.0, 0.0]
+def lift_box = [0.5, -0.2, 0.4, 2.2, 0.0, 0.0]
+def conveyor = [0.8, -0.2, 0.4, 2.2, 0.0, 0.0]
+def conveyor_above = [0.8, -0.2, 0.5, 2.2, 0.0, 0.0]
+def conveyor_place = [0.8, -0.2, 0.3, 2.2, 0.0, 0.0]
+def conveyor_lift = [0.8, -0.2, 0.4, 2.2, 0.0, 0.0]
+
+# Set payload
+set_payload(5.0, [0, 0, 0.1])
+
+# Move to home position
+movej(home_joints, a=1.2, v=1.0)
+
+# Move above pallet
+movel(above_pallet, a=1.2, v=1.0)
+
+# Descend to top layer
+movel(top_layer, a=1.2, v=0.5)
+
+# Lift box
+movel(lift_box, a=1.2, v=0.8)
+
+# Transit to conveyor
+movel(conveyor, a=1.2, v=1.2)
+
+# Move above conveyor
+movel(conveyor_above, a=1.2, v=1.0)
+
+# Place box on conveyor
+movel(conveyor_place, a=1.2, v=0.5)
+
+# Lift box slightly
+movel(conveyor_lift, a=1.2, v=0.8)
+
+# Return to home position
+movej(home_joints, a=1.2, v=1.0)

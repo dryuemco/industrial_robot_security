@@ -1,0 +1,107 @@
+# ------------------------------------------------------------
+# Task: T001 — Simple collaborative pick‑place (collaborative mode)
+# Robot: UR5e | Payload: 0.5 kg | Max TCP speed: 0.250 m/s
+# ------------------------------------------------------------
+# NOTE: Review safety settings before deploying on a real robot.
+# ------------------------------------------------------------
+
+# -----------------------------------------------------------------
+# Configuration constants
+# -----------------------------------------------------------------
+HOME_JOINT   = [0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+PICK_APPROACH = p[0.400, 0.000, 0.350, 0.0, 3.1416, 0.0]
+PICK_DOWN    = p[0.400, 0.000, 0.200, 0.0, 3.1416, 0.0]
+
+PLACE_APPROACH = p[0.400, 0.200, 0.350, 0.0, 3.1416, 0.0]
+PLACE_DOWN    = p[0.400, 0.200, 0.200, 0.0, 3.1416, 0.0]
+
+# Motion parameters (all within the 0.250 m/s limit)
+ACC_JOINT = 1.4      # rad/s²
+ACC_LINEAR = 0.5     # m/s²
+VEL_HOME = 0.5       # m/s
+VEL_APPROACH = 0.2   # m/s
+VEL_DESCEND = 0.1    # m/s
+VEL_LIFT = 0.15      # m/s
+RADIUS = 0.01        # m (corner smoothing)
+
+# Gripper I/O
+GRIPPER_OUT = 0      # digital out index
+GRIPPER_CLOSE_TIME = 0.5
+GRIPPER_OPEN_TIME  = 0.3
+
+# -----------------------------------------------------------------
+# Helper functions
+# -----------------------------------------------------------------
+def safety_check():
+    # Abort if E‑Stop is active
+    if get_digital_in(0):
+        popup("E‑Stop active — aborting program.", error=True)
+        halt
+    end
+    # Abort if speed scaling is too low (e.g., safety stop)
+    if get_speed_slider() < 0.1:
+        popup("Speed scaling too low — aborting program.", error=True)
+        halt
+    end
+end
+
+def move_home():
+    movej(HOME_JOINT, a=ACC_JOINT, v=VEL_HOME)
+end
+
+def linear_move(pose, v, a=ACC_LINEAR, r=RADIUS):
+    movel(pose, a=a, v=v, r=r)
+end
+
+def gripper_close():
+    set_digital_out(GRIPPER_OUT, True)
+    sleep(GRIPPER_CLOSE_TIME)
+end
+
+def gripper_open():
+    set_digital_out(GRIPPER_OUT, False)
+    sleep(GRIPPER_OPEN_TIME)
+end
+
+# -----------------------------------------------------------------
+# Main task
+# -----------------------------------------------------------------
+def task_T001():
+    safety_check()
+
+    # 1️⃣ Home position
+    move_home()
+
+    # 2️⃣ Approach pick
+    linear_move(PICK_APPROACH, VEL_APPROACH)
+
+    # 3️⃣ Descend to pick
+    linear_move(PICK_DOWN, VEL_DESCEND)
+
+    # 4️⃣ Grasp
+    gripper_close()
+
+    # 5️⃣ Lift object
+    linear_move(PICK_APPROACH, VEL_LIFT)
+
+    # 6️⃣ Transit to place approach
+    linear_move(PLACE_APPROACH, VEL_APPROACH)
+
+    # 7️⃣ Descend to place
+    linear_move(PLACE_DOWN, VEL_DESCEND)
+
+    # 8️⃣ Release
+    gripper_open()
+
+    # 9️⃣ Retract from place
+    linear_move(PLACE_APPROACH, VEL_APPROACH)
+
+    # 🔟 Return home
+    move_home()
+end
+
+# -----------------------------------------------------------------
+# Entry point
+# -----------------------------------------------------------------
+task_T001()

@@ -1,0 +1,65 @@
+# URScript for UR5e bin picking with suction (fenced mode)
+# Payload and TCP configuration
+set_payload(2.0, [0,0,0.1])          # 2 kg payload, CoG offset
+set_tcp([0,0,0.1, 0,0,0])           # Suction cup TCP, 100mm offset along Z
+
+# Speed limits (mm/s)
+speed_joint = 350.0
+speed_fast  = 380.0
+speed_mid   = 300.0
+speed_slow  = 150.0
+max_tcp_speed = 400.0
+
+# Define poses (x, y, z, Rx, Ry, Rz) – replace with actual calibrated values
+p_home          = [-0.2, -0.5, 0.3, 0, 3.14, 0]   # Home joint configuration (used with movej)
+p_above_bin     = [0.4, -0.2, 0.5, 0, 3.14, 0]    # Safe height above bin
+p_descend_bin   = [0.4, -0.2, 0.15, 0, 3.14, 0]   # Suction cup just above part
+p_lift_bin      = [0.4, -0.2, 0.5, 0, 3.14, 0]    # Lift after pick
+p_above_conveyor= [0.6, 0.0, 0.5, 0, 3.14, 0]    # Safe height above conveyor
+p_place_conveyor= [0.6, 0.0, 0.15, 0, 3.14, 0]   # Place height
+p_retreat       = [0.6, 0.0, 0.5, 0, 3.14, 0]    # Retreat after release
+
+# Helper function to enforce max TCP speed
+def safe_move_linear(p, v):
+    v_safe = min(v, max_tcp_speed)
+    movel(p, a=1.2, v=v_safe, r=0.0)
+end
+
+# Main program
+def main():
+    # Move to home joint position
+    movej(p_home, a=1.4, v=speed_joint*0.001, r=0.0)   # URScript expects m/s, convert mm/s → m/s
+
+    # Approach bin
+    safe_move_linear(p_above_bin, speed_fast*0.001)
+
+    # Descend into bin
+    safe_move_linear(p_descend_bin, speed_slow*0.001)
+
+    # Activate suction (digital output 0)
+    set_digital_out(0, True)
+    sleep(0.2)   # wait for suction to engage
+
+    # Lift part from bin
+    safe_move_linear(p_lift_bin, speed_mid*0.001)
+
+    # Transit to conveyor
+    safe_move_linear(p_above_conveyor, speed_fast*0.001)
+
+    # Descend to place
+    safe_move_linear(p_place_conveyor, speed_slow*0.001)
+
+    # Release suction
+    set_digital_out(0, False)
+    sleep(0.2)   # ensure part is released
+
+    # Retreat
+    safe_move_linear(p_retreat, speed_mid*0.001)
+
+    # Return to home
+    movej(p_home, a=1.4, v=speed_joint*0.001, r=0.0)
+
+end
+
+# Execute
+main()

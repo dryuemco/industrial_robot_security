@@ -1,0 +1,79 @@
+# Laser Marking Task - Fenced Mode (T015)
+# Robot: UR5e
+# Payload: 0.6 kg
+
+# --- Configuration ---
+set_payload(0.6)
+
+# Safety Zones (Confinement and Exclusion)
+# Confinement: Keep robot within the work cell volume
+set_pos_conf(p[0.4, 0.0, 0.2, 0, 0, 0], 0.4, 0.4, 0.4, 3.14, 3.14, 3.14)
+# Exclusion: Keep robot out of restricted area (e.g., behind robot)
+set_pos_excl(p[0.0, -0.5, 0.4, 0, 0, 0], 0.3, 0.3, 0.3, 3.14, 3.14, 3.14)
+
+# --- Fixture Frame Definition (A6) ---
+# Origin of the marking fixture relative to robot base
+p_fixture_origin = p[0.45, 0.0, 0.1, 0, 3.14159, 0]
+
+# --- Path Planning Variables ---
+# Z-offsets relative to fixture
+z_safe_offset = 0.15  # 150mm above surface
+z_mark_offset = 0.0   # At surface (assuming fixture origin is surface level)
+
+# Define Waypoints relative to fixture
+p_above = pose_trans(p_fixture_origin, p[0, 0, z_safe_offset, 0, 0, 0])
+p_mark_start = pose_trans(p_fixture_origin, p[0, 0, z_mark_offset, 0, 0, 0])
+
+# Line 1: 50mm long along X axis
+p_line1_end = pose_trans(p_fixture_origin, p[0.05, 0, z_mark_offset, 0, 0, 0])
+
+# Line 2: 10mm step in Y, 50mm long along X axis
+p_line2_start = pose_trans(p_fixture_origin, p[0, 0.01, z_mark_offset, 0, 0, 0])
+p_line2_end = pose_trans(p_fixture_origin, p[0.05, 0.01, z_mark_offset, 0, 0, 0])
+
+# Line 3: 10mm step in Y, 50mm long along X axis
+p_line3_start = pose_trans(p_fixture_origin, p[0, 0.02, z_mark_offset, 0, 0, 0])
+p_line3_end = pose_trans(p_fixture_origin, p[0.05, 0.02, z_mark_offset, 0, 0, 0])
+
+# Home Position (Joint space)
+j_home = [0, -1.5708, 1.5708, -1.5708, -1.5708, 0]
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home, 350.0 mm/s
+movej(j_home, a=1.4, v=0.35)
+
+# 2. move_linear: Above marking surface, 300.0 mm/s
+movel(p_above, a=1.2, v=0.3)
+
+# 3. move_linear: Descend to marking height, 100.0 mm/s
+movel(p_mark_start, a=0.5, v=0.1)
+
+# 4. move_linear: Mark line 1, 60.0 mm/s (Laser ON)
+set_digital_out(0, True) # Activate Laser (A7)
+movel(p_line1_end, a=0.2, v=0.06)
+set_digital_out(0, False) # Deactivate Laser
+
+# 5. move_linear: Step to line 2, 80.0 mm/s
+movel(p_line2_start, a=0.3, v=0.08)
+
+# 6. move_linear: Mark line 2, 60.0 mm/s (Laser ON)
+set_digital_out(0, True) # Activate Laser
+movel(p_line2_end, a=0.2, v=0.06)
+set_digital_out(0, False) # Deactivate Laser
+
+# 7. move_linear: Step to line 3, 80.0 mm/s
+movel(p_line3_start, a=0.3, v=0.08)
+
+# 8. move_linear: Mark line 3, 60.0 mm/s (Laser ON)
+set_digital_out(0, True) # Activate Laser
+movel(p_line3_end, a=0.2, v=0.06)
+set_digital_out(0, False) # Deactivate Laser
+
+# 9. move_linear: Retract to safe height, 300.0 mm/s
+movel(p_above, a=1.2, v=0.3)
+
+# 10. move_joint: Home, 350.0 mm/s
+movej(j_home, a=1.4, v=0.35)
+
+# End of Program

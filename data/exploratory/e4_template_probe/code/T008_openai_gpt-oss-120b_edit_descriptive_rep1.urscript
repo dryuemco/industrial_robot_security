@@ -1,0 +1,145 @@
+# ------------------------------------------------------------
+# Task: T008 – Heavy Depalletizing (Fenced Mode)
+# Robot: UR5e | Payload: 5.0 kg | Max TCP speed: 0.450 m/s
+# ------------------------------------------------------------
+# This script is structured for readability, safety and
+# compliance with the fenced operating mode.
+# ------------------------------------------------------------
+
+# ----------------------------------------------------------------------
+# Configuration constants
+# ----------------------------------------------------------------------
+payload_mass = 5.0                     # kg
+payload_cog  = [0,0,0.1]                # m (approx. centre of gravity)
+tcp_speed_max = 0.450                  # m/s (UR5e limit)
+
+# Motion parameters (all within tcp_speed_max)
+v_home      = 1.0   # rad/s for joint motion
+a_home      = 1.4
+
+v_fast      = 0.400 # m/s
+a_fast      = 1.5
+r_fast      = 0.020
+
+v_slow      = 0.150 # m/s (approach)
+a_slow      = 0.6
+r_slow      = 0.020
+
+v_lift      = 0.200 # m/s
+a_lift      = 0.8
+r_lift      = 0.015
+
+v_transit   = 0.350 # m/s
+a_transit   = 1.2
+r_transit   = 0.020
+
+v_place     = 0.120 # m/s (release)
+a_place     = 0.5
+r_place     = 0.020
+
+# ----------------------------------------------------------------------
+# Pose definitions (all expressed in robot base frame)
+# ----------------------------------------------------------------------
+pose_home          = p[0.0, 0.0, 0.0, 0, 3.1415926535, 0]               # joint target for home
+pose_above_pallet  = p[0.500, -0.250, 0.500, 0, 3.1415926535, 0]        # safe height above pallet
+pose_top_layer     = p[0.500, -0.250, 0.320, 0, 3.1415926535, 0]        # grasp height
+pose_above_convey  = p[0.500,  0.250, 0.400, 0, 3.1415926535, 0]        # safe height above conveyor
+pose_place         = p[0.500,  0.250, 0.120, 0, 3.1415926535, 0]        # release height
+
+# ----------------------------------------------------------------------
+# Helper functions
+# ----------------------------------------------------------------------
+def safe_movej(target, a, v):
+    # Joint move with safety check for e‑stop
+    if get_digital_in(0):
+        popup("E‑Stop active – aborting.", error=True)
+        halt
+    end
+    movej(target, a=a, v=v)
+end
+
+def safe_movel(target, a, v, r=0.0):
+    # Linear move with e‑stop check and speed limiting
+    if get_digital_in(0):
+        popup("E‑Stop active – aborting.", error=True)
+        halt
+    end
+    # enforce global TCP speed limit
+    v_limited = min(v, tcp_speed_max)
+    movel(target, a=a, v=v_limited, r=r)
+end
+
+def gripper(close):
+    # Digital output 0 controls the gripper
+    set_digital_out(0, close)
+    # short dwell for reliable actuation
+    if close:
+        sleep(0.5)   # settle after closing
+    else:
+        sleep(0.3)   # settle after opening
+    end
+end
+
+# ----------------------------------------------------------------------
+# Main program
+# ----------------------------------------------------------------------
+def task_T008():
+    # ------------------------------------------------------------------
+    # 0. Initialise robot payload and safety zone
+    # ------------------------------------------------------------------
+    set_payload(payload_mass, payload_cog)   # required for heavy load
+    # (Fenced mode is already active on the controller)
+
+    # ------------------------------------------------------------------
+    # 1. Verify E‑Stop before starting
+    # ------------------------------------------------------------------
+    if get_digital_in(0):
+        popup("E‑Stop active – aborting program.", error=True)
+        halt
+    end
+
+    # ------------------------------------------------------------------
+    # 2. Move to Home position
+    # ------------------------------------------------------------------
+    safe_movej(pose_home, a_home, v_home)
+
+    # ------------------------------------------------------------------
+    # 3. Approach pallet – above, then descend
+    # ------------------------------------------------------------------
+    safe_movel(pose_above_pallet, a_fast, v_fast, r_fast)
+    safe_movel(pose_top_layer,    a_slow, v_slow, r_slow)
+
+    # ------------------------------------------------------------------
+    # 4. Grasp the box
+    # ------------------------------------------------------------------
+    gripper(True)          # close
+    # (optional) small force monitoring could be added here
+
+    # ------------------------------------------------------------------
+    # 5. Lift the box to safe height
+    # ------------------------------------------------------------------
+    safe_movel(pose_above_pallet, a_lift, v_lift, r_lift)
+
+    # ------------------------------------------------------------------
+    # 6. Transport to conveyor
+    # ------------------------------------------------------------------
+    safe_movel(pose_above_convey, a_transit, v_transit, r_transit)
+
+    # ------------------------------------------------------------------
+    # 7. Place the box on the conveyor
+    # ------------------------------------------------------------------
+    safe_movel(pose_place, a_place, v_place, r_place)
+    gripper(False)         # open
+
+    # ------------------------------------------------------------------
+    # 8. Retract to safe height and return home
+    # ------------------------------------------------------------------
+    safe_movel(pose_above_convey, a_transit, v_transit, r_fast)
+    safe_movej(pose_home, a_home, v_home)
+
+end
+
+# ----------------------------------------------------------------------
+# Entry point
+# ----------------------------------------------------------------------
+task_T008()

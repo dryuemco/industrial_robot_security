@@ -1,0 +1,122 @@
+# -------------------------------------------------
+# URScript for UR5e collaborative pick‑place (T001)
+# ISO 10218:2025 compliant safety implementation
+# -------------------------------------------------
+
+# ---------- Configuration ----------
+payload_mass = 0.5                     # kg
+payload_cog = [0,0,0.02]               # centre of gravity (m) relative to TCP
+set_payload(payload_mass, payload_cog)
+
+# Speed & acceleration limits (within ISO limits)
+max_tcp_speed = 0.25                   # m/s (250 mm/s)
+max_joint_acc  = 1.4                   # rad/s^2 per joint
+joint_speed    = 0.5                   # rad/s (example, below joint speed limit)
+tcp_acc        = 0.5                   # m/s^2 (safe for collaborative mode)
+
+# Workspace boundaries (meters)
+workspace_min = [-0.8, -0.8, 0.0]
+workspace_max = [ 0.8,  0.8, 1.2]
+
+# Exclusion zone (example box) - robot must not enter
+excl_min = [0.20, -0.20, 0.00]
+excl_max = [0.40,  0.00, 0.50]
+
+# ---------- Safety Functions ----------
+def in_workspace(p):
+    # p is a pose [x,y,z,rx,ry,rz]
+    for i in range(3):
+        if p[i] < workspace_min[i] or p[i] > workspace_max[i]:
+            return False
+    return True
+
+def in_exclusion(p):
+    for i in range(3):
+        if p[i] >= excl_min[i] and p[i] <= excl_max[i]:
+            return True
+    return False
+
+def safety_check(p):
+    if not in_workspace(p):
+        popup("Safety violation: Target outside workspace!", title="Safety Stop", error=True)
+        stopj(2)
+        return False
+    if in_exclusion(p):
+        popup("Safety violation: Target inside exclusion zone!", title="Safety Stop", error=True)
+        stopj(2)
+        return False
+    return True
+
+def emergency_stop():
+    popup("Emergency stop triggered!", title="E‑Stop", error=True)
+    stopj(2)
+
+# ---------- Motion Wrappers ----------
+def move_safe_joint(q, v=joint_speed, a=max_joint_acc):
+    # Convert joint target to pose for safety check (approximate)
+    # Use forward kinematics if available; here we assume safe joint target
+    movej(q, a, v, 0, 0)
+
+def move_safe_linear(p, v, a=tcp_acc):
+    if safety_check(p):
+        movel(p, a, v, 0, 0)
+    else:
+        emergency_stop()
+
+# ---------- Waypoints ----------
+home_joint = [0, -1.57, 0, -1.57, 0, 0]
+
+pick_approach = p[0.5, -0.2, 0.35, 0, 3.14, 0]   # 350 mm height
+pick_down    = p[0.5, -0.2, 0.10, 0, 3.14, 0]   # 100 mm height (pick)
+pick_up      = p[0.5, -0.2, 0.35, 0, 3.14, 0]   # lift back to approach
+
+place_approach = p[0.0, 0.3, 0.35, 0, 3.14, 0]  # place approach
+place_down    = p[0.0, 0.3, 0.10, 0, 3.14, 0]  # place down
+place_up      = p[0.0, 0.3, 0.35, 0, 3.14, 0]  # lift after place
+
+# Additional waypoints (placeholders for the remaining 3 moves)
+# wp_extra1 = ...
+# wp_extra2 = ...
+# wp_extra3 = ...
+
+# ---------- Main Program ----------
+def main():
+    # Ensure robot is in collaborative mode (set elsewhere in UI)
+    # 1) Home position
+    move_safe_joint(home_joint, v=joint_speed, a=max_joint_acc)
+
+    # 2) Approach pick point
+    move_safe_linear(pick_approach, v=0.20, a=tcp_acc)   # 200 mm/s
+
+    # 3) Descend to pick
+    move_safe_linear(pick_down, v=0.10, a=tcp_acc)      # 100 mm/s
+
+    # 4) Lift from pick
+    move_safe_linear(pick_up, v=0.15, a=tcp_acc)        # 150 mm/s
+
+    # 5) Transit to place approach
+    move_safe_linear(place_approach, v=0.20, a=tcp_acc) # 200 mm/s
+
+    # 6) Descend to place
+    move_safe_linear(place_down, v=0.10, a=tcp_acc)    # 100 mm/s
+
+    # 7) Release (simulated pause)
+    sleep(0.5)
+
+    # 8) Lift from place
+    move_safe_linear(place_up, v=0.15, a=tcp_acc)      # 150 mm/s
+
+    # --- Placeholder for remaining three moves ---
+    # Example: move_safe_linear(wp_extra1, v=0.20, a=tcp_acc)
+    # Example: move_safe_linear(wp_extra2, v=0.20, a=tcp_acc)
+    # Example: move_safe_linear(wp_extra3, v=0.20, a=tcp_acc)
+
+    # Return to home
+    move_safe_joint(home_joint, v=joint_speed, a=max_joint_acc)
+
+# Run the program with safety wrapper
+try:
+    main()
+except Exception as e:
+    popup("Program stopped due to error: " + str(e), title="Error", error=True)
+    emergency_stop()

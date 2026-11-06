@@ -1,0 +1,123 @@
+# ==========================================
+# URScript: Visual Inspection Scan (T005)
+# Robot: UR5e | Mode: Collaborative
+# Payload: 0.3 kg
+# ==========================================
+
+# --- Safety Configuration ---
+global max_tcp_speed = 0.150      # 150 mm/s (Task limit)
+global max_joint_accel = 1.4      # 1.4 rad/s^2 (ISO 10218 limit)
+global tool_accel = 0.5           # Conservative tool acceleration (m/s^2)
+
+# Safety Zone Definition (Confinement Box)
+# X: [0.1, 0.5], Y: [-0.2, 0.2], Z: [0.0, 0.5]
+global sz_min_x = 0.1
+global sz_max_x = 0.5
+global sz_min_y = -0.2
+global sz_max_y = 0.2
+global sz_min_z = 0.0
+global sz_max_z = 0.5
+
+# --- Setup ---
+set_payload(0.3, [0.0, 0.0, 0.05]) # 0.3kg payload, CoM slightly below flange
+set_gravity([0.0, 0.0, 9.82])
+
+# --- Safety Functions ---
+
+def safety_check(pose):
+    # Validate workspace boundaries
+    if pose[0] < sz_min_x or pose[0] > sz_max_x:
+        popup("Safety Violation: X-Axis Limit Exceeded")
+        stopj(1.0)
+        halt
+    end
+    if pose[1] < sz_min_y or pose[1] > sz_max_y:
+        popup("Safety Violation: Y-Axis Limit Exceeded")
+        stopj(1.0)
+        halt
+    end
+    if pose[2] < sz_min_z or pose[2] > sz_max_z:
+        popup("Safety Violation: Z-Axis Limit Exceeded")
+        stopj(1.0)
+        halt
+    end
+end
+
+# Emergency Stop Monitor Thread
+thread emergency_monitor():
+    while True:
+        # Monitor force/torque for collision
+        ft = get_tcp_force()
+        if norm(ft) > 50: # 50N threshold
+            popup("Emergency Stop: High Force Detected")
+            stopj(1.0)
+            halt
+        end
+        sync()
+    end
+end
+
+# Start Safety Thread
+thread_id = run emergency_monitor()
+
+# --- Waypoint Definitions ---
+# Orientation: Camera pointing strictly downward (rx=0, ry=pi, rz=0)
+rot_down = [0.0, 3.14159, 0.0]
+
+# Home Position (Joint Space)
+home_j = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Inspection Area: 200x200mm, Centered at (0.3, 0.0)
+# Scan Height: 150mm (z=0.15), Approach Height: 300mm (z=0.3)
+p_approach = p[0.3, 0.0, 0.3, rot_down[0], rot_down[1], rot_down[2]]
+p_start_1  = p[0.2, -0.1, 0.15, rot_down[0], rot_down[1], rot_down[2]] # Line 1 Start
+p_end_1    = p[0.2, 0.1, 0.15, rot_down[0], rot_down[1], rot_down[2]]   # Line 1 End
+p_start_2  = p[0.3, 0.1, 0.15, rot_down[0], rot_down[1], rot_down[2]]   # Line 2 Start
+p_end_2    = p[0.3, -0.1, 0.15, rot_down[0], rot_down[1], rot_down[2]]  # Line 2 End
+p_start_3  = p[0.4, -0.1, 0.15, rot_down[0], rot_down[1], rot_down[2]]  # Line 3 Start
+p_end_3    = p[0.4, 0.1, 0.15, rot_down[0], rot_down[1], rot_down[2]]   # Line 3 End
+p_retract  = p[0.4, 0.1, 0.3, rot_down[0], rot_down[1], rot_down[2]]
+
+# --- Motion Sequence ---
+
+# 1. Move Joint: Home position (150 mm/s equivalent approx 1.0 rad/s)
+movej(home_j, a=max_joint_accel, v=1.0)
+
+# 2. Move Linear: Approach inspection start (130 mm/s)
+safety_check(p_approach)
+movel(p_approach, a=tool_accel, v=0.13)
+
+# 3. Move Linear: Descend to scan height (80 mm/s)
+safety_check(p_start_1)
+movel(p_start_1, a=tool_accel, v=0.08)
+
+# 4. Move Linear: Scan line 1 — Y sweep (50 mm/s)
+safety_check(p_end_1)
+movel(p_end_1, a=tool_accel, v=0.05)
+
+# 5. Move Linear: Step to scan line 2 (+X) (80 mm/s)
+safety_check(p_start_2)
+movel(p_start_2, a=tool_accel, v=0.08)
+
+# 6. Move Linear: Scan line 2 — Y sweep (50 mm/s)
+safety_check(p_end_2)
+movel(p_end_2, a=tool_accel, v=0.05)
+
+# 7. Move Linear: Step to scan line 3 (+X) (80 mm/s)
+safety_check(p_start_3)
+movel(p_start_3, a=tool_accel, v=0.08)
+
+# 8. Move Linear: Scan line 3 — Y sweep (50 mm/s)
+safety_check(p_end_3)
+movel(p_end_3, a=tool_accel, v=0.05)
+
+# 9. Move Linear: Ascend to safe height (80 mm/s)
+safety_check(p_retract)
+movel(p_retract, a=tool_accel, v=0.08)
+
+# 10. Move Joint: Return to Home (150 mm/s equivalent)
+movej(home_j, a=max_joint_accel, v=1.0)
+
+# --- Cleanup ---
+kill thread_id
+popup("Inspection Scan Complete")

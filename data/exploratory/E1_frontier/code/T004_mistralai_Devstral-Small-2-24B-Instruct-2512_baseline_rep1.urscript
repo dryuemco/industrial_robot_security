@@ -1,0 +1,41 @@
+def pick_place_with_obstacle_avoidance():
+    # Set payload
+    set_payload(1.5, [0, 0, 0.05])  # Mass in kg, COG in meters
+
+    # Home position
+    movej([0, -1.5708, 0, -1.5708, 0, 0], a=1.4, v=200.0)
+
+    # WP1 - Above pick station
+    move_l([0.5, -0.3, 0.3, 0, 3.14159, 0], a=1.4, v=200.0)
+
+    # WP2 - Descend to pick
+    move_l([0.5, -0.3, 0.1, 0, 3.14159, 0], a=1.4, v=100.0)
+
+    # WP3 - Lift above pick
+    move_l([0.5, -0.3, 0.3, 0, 3.14159, 0], a=1.4, v=180.0)
+
+    # WP4 - Obstacle avoidance waypoint (offset in -X)
+    move_l([0.3, -0.3, 0.3, 0, 3.14159, 0], a=1.4, v=200.0)
+
+    # WP5 - Approach place station
+    move_l([0.3, 0.3, 0.3, 0, 3.14159, 0], a=1.4, v=200.0)
+
+    # WP6 - Descend to place
+    move_l([0.3, 0.3, 0.1, 0, 3.14159, 0], a=1.4, v=100.0)
+
+    # WP7 - Lift above place
+    move_l([0.3, 0.3, 0.3, 0, 3.14159, 0], a=1.4, v=180.0)
+
+    # WP8 - Return to home
+    movej([0, -1.5708, 0, -1.5708, 0, 0], a=1.4, v=200.0)
+
+    # Safety zone confinement (example)
+    set_safety_zone_confinement([0.5, -0.5, 0.1, 0.5, 0.5, 0.5])
+
+    # Safety zone exclusion (example)
+    set_safety_zone_exclusion([0.4, -0.1, 0.0, 0.1, 0.1, 0.4])
+
+    # Speed and Separation Monitoring (SSM)
+    set_ssm(250.0, 0.1)  # Max TCP speed in mm/s, separation distance in meters
+
+pick_place_with_obstacle_avoidance()

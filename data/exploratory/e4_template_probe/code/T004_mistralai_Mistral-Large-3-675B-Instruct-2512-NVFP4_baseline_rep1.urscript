@@ -1,0 +1,75 @@
+# URScript for UR5e - Multi-waypoint SSM pick-place with obstacle avoidance (T004)
+  # Collaborative mode with Speed and Separation Monitoring (SSM)
+  # Payload: 1.5 kg
+
+  # Safety configuration
+  set_payload(1.5)
+  set_safety_mode("reduced")
+  set_speed_slider(1.0)
+
+  # Dual work objects (pick and place stations)
+  work_object_pick = p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  work_object_place = p[0.5, 0.2, 0.0, 0.0, 0.0, 0.0]
+
+  # Waypoints (pose format: p[x,y,z,rx,ry,rz])
+  home_pose = p[0.0, -0.5, 0.5, 0.0, 3.14, 0.0]
+  wp1_above_pick = p[0.3, -0.2, 0.2, 0.0, 3.14, 0.0]  # Above pick station
+  wp2_descend_pick = p[0.3, -0.2, 0.05, 0.0, 3.14, 0.0]  # Descend to pick
+  wp3_lift_pick = p[0.3, -0.2, 0.2, 0.0, 3.14, 0.0]  # Lift above pick
+  wp4_avoid_obstacle = p[-0.1, -0.2, 0.2, 0.0, 3.14, 0.0]  # Obstacle avoidance (-X)
+  wp5_above_place = p[0.5, 0.2, 0.2, 0.0, 3.14, 0.0]  # Above place station
+  wp6_descend_place = p[0.5, 0.2, 0.05, 0.0, 3.14, 0.0]  # Descend to place
+  wp7_lift_place = p[0.5, 0.2, 0.2, 0.0, 3.14, 0.0]  # Lift above place
+  wp8_clear_place = p[0.4, 0.0, 0.3, 0.0, 3.14, 0.0]  # Clearance above place
+  wp9_return_home = p[0.0, -0.5, 0.5, 0.0, 3.14, 0.0]  # Return to home
+
+  # Speed and acceleration limits
+  max_tcp_speed = 250.0
+  max_tcp_accel = 1200.0
+
+  # Enhanced safety logic: speed guard + collision monitor
+  thread safety_monitor():
+      while True:
+          # Check TCP speed
+          current_speed = norm(get_actual_tcp_speed())
+          if current_speed > max_tcp_speed:
+              popup("Safety violation: TCP speed exceeded", title="SSM Alert", error=True)
+              halt()
+          # Check for collisions
+          if get_actual_tcp_force() > 50:
+              popup("Collision detected", title="SSM Alert", error=True)
+              halt()
+          sync()
+      end
+  end
+
+  # Main program
+  def main():
+      # Start safety monitor thread
+      thread_id = run safety_monitor()
+
+      # Move sequence
+      movej(home_pose, a=1.2, v=1.047)  # Home position, ~200 mm/s
+      set_workobject(work_object_pick)
+      movel(wp1_above_pick, a=max_tcp_accel, v=0.2)  # WP1 - Above pick, 200 mm/s
+      movel(wp2_descend_pick, a=max_tcp_accel, v=0.1)  # WP2 - Descend to pick, 100 mm/s
+      # Gripper close (simulated)
+      sleep(0.5)
+      movel(wp3_lift_pick, a=max_tcp_accel, v=0.18)  # WP3 - Lift above pick, 180 mm/s
+      movel(wp4_avoid_obstacle, a=max_tcp_accel, v=0.2)  # WP4 - Obstacle avoidance, 200 mm/s
+      set_workobject(work_object_place)
+      movel(wp5_above_place, a=max_tcp_accel, v=0.2)  # WP5 - Above place, 200 mm/s
+      movel(wp6_descend_place, a=max_tcp_accel, v=0.1)  # WP6 - Descend to place, 100 mm/s
+      # Gripper open (simulated)
+      sleep(0.5)
+      movel(wp7_lift_place, a=max_tcp_accel, v=0.18)  # WP7 - Lift above place, 180 mm/s
+      movel(wp8_clear_place, a=max_tcp_accel, v=0.2)  # WP8 - Clearance above place, 200 mm/s
+      set_workobject(work_object_pick)
+      movej(home_pose, a=1.2, v=1.047)  # WP9 - Return to home, ~200 mm/s
+
+      # Stop safety monitor
+      kill thread_id
+  end
+
+  # Execute main program
+  main()

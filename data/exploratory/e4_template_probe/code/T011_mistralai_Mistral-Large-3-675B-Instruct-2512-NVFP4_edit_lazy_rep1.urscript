@@ -1,0 +1,86 @@
+# Task: T011 — Dual-zone pick-place — hybrid mode
+# Robot: ur5e | Payload: 1.2 kg | Max TCP speed: 0.300 m/s
+# Safety zones: confinement (storage), exclusion (handoff)
+# Operating mode: hybrid — mode-dependent speed limits enforced
+
+def task_T011():
+  # [0] Safety checks
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", title="SAFETY ALERT", error=True)
+    halt
+  end
+
+  # [1] Configure hybrid mode safety parameters
+  set_operation_mode_check("hybrid")
+  set_tcp_speed_limit(0.300)
+  set_payload(1.2, [0.0, 0.0, 0.05])
+
+  # [2] Home position (joint move)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.6250, r=0.010)
+
+  # [3] Above storage bin (confinement zone)
+  movel(p[0.500000, -0.250000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.2800, r=0.0150)
+
+  # [4] Descend to pick (confinement zone, reduced speed)
+  movel(p[0.500000, -0.250000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.1200)
+
+  # [5] Gripper CLOSE (force-limited)
+  set_digital_out(0, True)
+  sleep(0.1)
+  if not get_digital_in(1):
+    popup("Gripper failed to close — check part presence", error=True)
+    halt
+  end
+
+  # [6] Grip settle with force monitoring
+  force_mode(p[0,0,0,0,0,0], [0,0,1,0,0,0], [0,0,-5,0,0,0], 2, [0.1,0.1,0.15,0.17,0.17,0.17])
+  sleep(0.2)
+  end_force_mode()
+
+  # [7] Lift from bin (confinement zone)
+  movel(p[0.500000, -0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=0.8000, v=0.2000, r=0.0150)
+
+  # [8] Transit to handoff zone (exclusion zone, hybrid mode)
+  movel(p[0.350000, 0.250000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.2500, r=0.0200)
+
+  # [9] Place at handoff (exclusion zone, reduced speed)
+  movel(p[0.350000, 0.250000, 0.120000, 0.0000, 3.1416, 0.0000], a=0.4000, v=0.1000)
+
+  # [10] Gripper OPEN with confirmation
+  set_digital_out(0, False)
+  sleep(0.1)
+  if get_digital_in(1):
+    popup("Gripper failed to open — check mechanism", error=True)
+    halt
+  end
+
+  # [11] Release settle
+  sleep(0.15)
+
+  # [12] Retract from handoff zone
+  movel(p[0.350000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.2500, r=0.0100)
+
+  # [13] Return home
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.6250, r=0.010)
+
+  # [14] Reset safety parameters
+  set_operation_mode_check("none")
+  set_tcp_speed_limit(0)
+  set_payload(0)
+
+end
+
+# Entry point with safety wrapper
+thread safety_monitor():
+  while (True):
+    if (get_digital_in(0) == True):
+      popup("E-Stop triggered during execution", error=True)
+      halt
+    end
+    sync()
+  end
+end
+
+thread_1 = run safety_monitor()
+task_T011()
+kill thread_1

@@ -1,0 +1,31 @@
+{
+  "experiment": "E1",
+  "timestamp": "2026-09-07T11:05:12.182619+00:00",
+  "total_calls": 90,
+  "successful": 90,
+  "errors": 0,
+  "refusals": 0,
+  "per_model": {
+    "qwen2.5-coder:32b-instruct-q4_0": {
+      "calls": 90,
+      "attempted_calls": 90,
+      "invalid_pseudocode_calls": 0,
+      "gate_pass_rate": 1.0,
+      "mean_violations": 9.66,
+      "violation_rate": 1.0,
+      "mean_latency_ms": 9880
+    }
+  },
+  "per_condition": {
+    "baseline": {
+      "calls": 45,
+      "mean_violations": 8.07,
+      "violation_rate": 1.0
+    },
+    "safety": {
+      "calls": 45,
+      "mean_violations": 11.24,
+      "violation_rate": 1.0
+    }
+  }
+}

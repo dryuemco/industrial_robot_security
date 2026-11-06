@@ -1,0 +1,59 @@
+# Define safety zones
+def safety_zone_check():
+    # Define the boundaries of the safety zone
+    local min_x = -0.5
+    local max_x = 0.5
+    local min_y = -0.5
+    local max_y = 0.5
+    local min_z = 0.0
+    local max_z = 1.0
+    
+    # Get current TCP position
+    local tcp_pos = get_tcp_pose()
+    
+    # Check if TCP position is within the safety zone
+    if tcp_pos[0] < min_x or tcp_pos[0] > max_x or
+       tcp_pos[1] < min_y or tcp_pos[1] > max_y or
+       tcp_pos[2] < min_z or tcp_pos[2] > max_z then
+        popup("TCP position out of safety zone!", True)
+        halt
+    end
+end
+
+# Define safety check function
+def safety_check():
+    # Check for any external stop signals
+    if not is_protective_stopped() and not is_emergency_stopped() then
+        safety_zone_check()
+    else
+        popup("Emergency stop triggered!", True)
+        halt
+    end
+end
+
+# Set payload
+set_payload(0.4, [0, 0, 0])
+
+# Home position
+safety_check()
+movej(p[-0.000, -1.571, 1.571, -1.571, -1.571, 0.000], a=1.4, v=1.8)
+
+# Top-down view position
+safety_check()
+movel(p[0.3, -0.2, 0.5, 3.14, 0, 0], a=1.4, v=1.2)
+
+# Side view position
+safety_check()
+movel(p[0.1, -0.4, 0.5, 3.14, 0, 0.785], a=1.4, v=1.0)
+
+# Angled view position
+safety_check()
+movel(p[0.2, -0.3, 0.4, 3.14, 0, 1.57], a=1.4, v=1.0)
+
+# Retract position
+safety_check()
+movel(p[0.3, -0.2, 0.6, 3.14, 0, 0], a=1.4, v=1.8)
+
+# Additional move (retract to home)
+safety_check()
+movej(p[-0.000, -1.571, 1.571, -1.571, -1.571, 0.000], a=1.4, v=1.8)

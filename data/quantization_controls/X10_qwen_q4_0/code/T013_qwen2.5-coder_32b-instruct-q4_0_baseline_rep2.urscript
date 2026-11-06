@@ -1,0 +1,28 @@
+def task013()
+    # Home position
+    movej(p[0.0, -1.5708, 0.0, -1.5708, 0.0, 0.0], a=1.2, v=1.2, fine=TRUE)
+
+    # Above staging area
+    movel(p[0.5, -1.5708, 0.3, -1.5708, 0.0, 0.0], a=1.2, v=0.22, fine=TRUE)
+
+    # Descend to pick
+    movel(p[0.5, -1.5708, 0.1, -1.5708, 0.0, 0.0], a=1.2, v=0.1, fine=TRUE)
+
+    # Lift
+    movel(p[0.5, -1.5708, 0.3, -1.5708, 0.0, 0.0], a=1.2, v=0.18, fine=TRUE)
+
+    # Transit to pallet
+    movel(p[0.7, -1.5708, 0.3, -1.5708, 0.0, 0.0], a=1.2, v=0.23, fine=TRUE)
+
+    # Above pallet
+    movel(p[0.7, -1.5708, 0.2, -1.5708, 0.0, 0.0], a=1.2, v=0.1, fine=TRUE)
+
+    # Place
+    movel(p[0.7, -1.5708, 0.1, -1.5708, 0.0, 0.0], a=1.2, v=0.1, fine=TRUE)
+
+    # Lift from pallet
+    movel(p[0.7, -1.5708, 0.2, -1.5708, 0.0, 0.0], a=1.2, v=0.18, fine=TRUE)
+
+    # Return to home
+    movej(p[0.0, -1.5708, 0.0, -1.5708, 0.0, 0.0], a=1.2, v=1.2, fine=TRUE)
+end

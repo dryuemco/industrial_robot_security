@@ -1,0 +1,50 @@
+def task_T002():
+  # [0] Verify E-Stop clear before weld sequence
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # [1] Go to home position with optimized acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.0000, v=1.2000)
+
+  # [2] Approach above weld start with higher speed and acceleration
+  movel(p[0.450000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000], a=2.0000, v=0.5000, r=0.0100)
+
+  # [3] Descend to weld start position with optimized parameters
+  movel(p[0.450000, 0.000000, 0.200000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.2000, r=0.0010)
+
+  # [4] Gas pre-flow ON (started earlier during descent)
+  set_digital_out(1, True)
+
+  # [5] Reduced gas stabilization delay (combined with descent)
+  sleep(0.2000)
+
+  # [6] Arc ON — welding start
+  set_digital_out(0, True)
+  set_analog_out(0, 0.400)
+  set_analog_out(1, 0.333)
+
+  # [7] Weld seam — 300mm linear path with optimized acceleration
+  movel(p[0.450000, 0.300000, 0.200000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.0500)
+
+  # [8] Arc OFF — welding end
+  set_digital_out(0, False)
+  set_analog_out(0, 0.0)
+  set_analog_out(1, 0.0)
+
+  # [9] Reduced post-weld gas flow
+  sleep(0.5000)
+
+  # [10] Gas flow OFF
+  set_digital_out(1, False)
+
+  # [11] Retract above weld end with higher speed and acceleration
+  movel(p[0.450000, 0.300000, 0.350000, 0.0000, 3.1416, 0.0000], a=2.0000, v=0.5000, r=0.0100)
+
+  # [12] Return to home with optimized acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.0000, v=1.2000)
+
+end
+
+task_T002()

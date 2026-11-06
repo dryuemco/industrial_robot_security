@@ -1,0 +1,64 @@
+# Task: T010 — Screw fastening assembly — hybrid mode
+# Improved version with refined motion sequence, structure, and clarity
+# Operating mode: hybrid | Max TCP speed: 0.250 m/s
+# Robot: ur5e | Payload: 1.0 kg
+
+def task_T010():
+    # [0] Safety check
+    if get_digital_in(0) == True:
+        popup("E-Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # [1] Home position
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.5)
+
+    # [2] Approach screw feeder
+    movel(p[0.3000, -0.2000, 0.2500, 0.0, 3.1416, 0.0], a=0.8, v=0.2, r=0.01)
+
+    # [3] Pick screw
+    movel(p[0.3000, -0.2000, 0.1100, 0.0, 3.1416, 0.0], a=0.4, v=0.08)
+
+    # [4] Activate pickup magnet
+    set_digital_out(4, True)
+
+    # [5] Magnet settle time
+    sleep(0.2)
+
+    # [6] Lift from feeder
+    movel(p[0.3000, -0.2000, 0.3000, 0.0, 3.1416, 0.0], a=0.7, v=0.18, r=0.015)
+
+    # [7-12] Fastening sequence (4 points)
+    fastening_points = [
+        p[0.4200, 0.1200, 0.2000, 0.0, 3.1416, 0.0],
+        p[0.4200, 0.1200, 0.0800, 0.0, 3.1416, 0.0],
+        p[0.4200, 0.1200, 0.2000, 0.0, 3.1416, 0.0]
+    ]
+
+    for i in range(4):
+        # Approach fastening point
+        movel(fastening_points[0], a=0.8, v=0.2, r=0.01)
+
+        # Descend to workpiece
+        movel(fastening_points[1], a=0.2, v=0.05)
+
+        # Activate screwdriver
+        set_digital_out(0, True)
+
+        # Fastening time
+        sleep(2.0)
+
+        # Deactivate screwdriver
+        set_digital_out(0, False)
+
+        # Retract from workpiece
+        movel(fastening_points[2], a=0.6, v=0.15, r=0.01)
+    end
+
+    # [13] Return home
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.5)
+
+end
+
+# Entry point
+task_T010()

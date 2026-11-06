@@ -1,0 +1,38 @@
+def pick_place_task():
+    # Define tool and base frames (example values - adjust as needed)
+    tool0 = p[0, 0, 0, 0, 0, 0]
+    base = p[0, 0, 0, 0, 0, 0]
+
+    # Home position (example joint angles - adjust as needed)
+    home_joints = [0, -1.57, 0, -1.57, 0, 0]
+
+    # Pick and place positions (example Cartesian poses - adjust as needed)
+    pick_approach = p[0.5, -0.2, 0.3, 0, 0, 0]
+    pick_position = p[0.5, -0.2, 0.1, 0, 0, 0]
+    place_approach = p[0.5, 0.2, 0.3, 0, 0, 0]
+    place_position = p[0.5, 0.2, 0.1, 0, 0, 0]
+
+    # Set payload (0.5 kg)
+    set_payload(0.5, p[0, 0, 0.05])  # 0.05 m COG offset
+
+    # Set safety zone (exclusion)
+    set_safety_zone(0.2)  # 200 mm safety margin
+
+    # Motion sequence
+    movej(home_joints, a=1.4, v=0.25, t=0, r=0)  # Go to home position
+
+    movel(pick_approach, a=1.4, v=0.25, t=0, r=0)  # Approach pick point
+    movel(pick_position, a=1.4, v=0.1, t=0, r=0)  # Descend to pick
+    # Simulate gripper close (replace with actual gripper command)
+    sleep(1.0)
+    movel(p[0.5, -0.2, 0.2, 0, 0, 0], a=1.4, v=0.15, t=0, r=0)  # Lift from pick
+
+    movel(place_approach, a=1.4, v=0.25, t=0, r=0)  # Transit to place approach
+    movel(place_position, a=1.4, v=0.25, t=0, r=0)  # Descend to place
+    # Simulate gripper open (replace with actual gripper command)
+    sleep(1.0)
+    movel(p[0.5, 0.2, 0.3, 0, 0, 0], a=1.4, v=0.25, t=0, r=0)  # Lift from place
+
+    movej(home_joints, a=1.4, v=0.25, t=0, r=0)  # Return to home
+
+pick_place_task()

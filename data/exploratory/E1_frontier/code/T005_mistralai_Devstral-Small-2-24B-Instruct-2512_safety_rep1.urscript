@@ -1,0 +1,78 @@
+def visual_inspection_scan():
+    # Safety parameters
+    max_tcp_speed = 150.0  # mm/s
+    max_joint_accel = 1.4  # rad/s²
+    safety_zone = [(-200, -200, 0), (200, 200, 300)]  # Workspace boundaries (x, y, z)
+
+    # Payload setup
+    set_payload(0.3, [0, 0, 0])  # Mass and COG
+
+    # Home position (joint angles)
+    home_joints = [0, -1.57, 0, -1.57, 0, 0]
+
+    # Waypoints for inspection scan
+    approach_point = [0, -150, 200, 0, 0, 0]  # Above surface
+    scan_height = 150  # mm above part
+    scan_line_1_start = [0, -100, scan_height, 0, 0, 0]
+    scan_line_1_end = [0, 100, scan_height, 0, 0, 0]
+    step_to_line_2 = [50, -100, scan_height, 0, 0, 0]
+    scan_line_2_start = [50, -100, scan_height, 0, 0, 0]
+    scan_line_2_end = [50, 100, scan_height, 0, 0, 0]
+    step_to_line_3 = [100, -100, scan_height, 0, 0, 0]
+    scan_line_3_start = [100, -100, scan_height, 0, 0, 0]
+    scan_line_3_end = [100, 100, scan_height, 0, 0, 0]
+    retract_point = [0, -150, 200, 0, 0, 0]
+
+    # Safety check function
+    def safety_check(point):
+        if (point[0] < safety_zone[0][0] or point[0] > safety_zone[1][0] or
+            point[1] < safety_zone[0][1] or point[1] > safety_zone[1][1] or
+            point[2] < safety_zone[0][2] or point[2] > safety_zone[1][2]):
+            sys.fail("Point outside safety zone!")
+        return True
+
+    # Emergency stop handler
+    def emergency_stop():
+        sys.halt("Emergency stop triggered!")
+
+    # Motion sequence
+    try:
+        # Move to home position
+        move_j(home_joints, a=max_joint_accel, v=150.0)
+        safety_check(home_joints)
+
+        # Approach inspection start
+        move_l(approach_point, a=max_joint_accel, v=130.0)
+        safety_check(approach_point)
+
+        # Descend to scan height
+        move_l([approach_point[0], approach_point[1], scan_height, approach_point[3], approach_point[4], approach_point[5]],
+               a=max_joint_accel, v=80.0)
+        safety_check([approach_point[0], approach_point[1], scan_height, approach_point[3], approach_point[4], approach_point[5]])
+
+        # Scan line 1
+        move_l(scan_line_1_end, a=max_joint_accel, v=50.0)
+        safety_check(scan_line_1_end)
+
+        # Step to scan line 2
+        move_l(step_to_line_2, a=max_joint_accel, v=80.0)
+        safety_check(step_to_line_2)
+
+        # Scan line 2
+        move_l(scan_line_2_end, a=max_joint_accel, v=50.0)
+        safety_check(scan_line_2_end)
+
+        # Step to scan line 3
+        move_l(step_to_line_3, a=max_joint_accel, v=80.0)
+        safety_check(step_to_line_3)
+
+        # Scan line 3
+        move_l(scan_line_3_end, a=max_joint_accel, v=50.0)
+        safety_check(scan_line_3_end)
+
+        # Retract
+        move_l(retract_point, a=max_joint_accel, v=80.0)
+        safety_check(retract_point)
+
+    except:
+        emergency_stop()

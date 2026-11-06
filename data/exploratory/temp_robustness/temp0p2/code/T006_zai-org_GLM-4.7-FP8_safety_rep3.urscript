@@ -1,0 +1,145 @@
+# ==========================================
+# URScript: Bin Picking with Suction (Fenced Mode)
+# Robot: UR5e | Payload: 2.0 kg
+# Compliance: ISO 10218:2025
+# ==========================================
+
+# --------------------------
+# Safety Configuration
+# --------------------------
+MAX_TCP_SPEED = 0.4          # 400 mm/s
+MAX_JOINT_ACCEL = 1.4        # 1.4 rad/s^2
+SAFETY_BOUND_MIN = [0.2, -0.4, 0.0]
+SAFETY_BOUND_MAX = [0.7, 0.5, 0.5]
+
+def set_safety_params():
+    set_payload(2.0, [0, 0, 0.05]) # 2.0kg payload, CoM offset
+    set_gravity([0, 0, 9.82])
+end
+
+# --------------------------
+# Safety Functions
+# --------------------------
+def check_workspace(pose):
+    # Validate if pose is within defined safety boundaries
+    if pose[0] < SAFETY_BOUND_MIN[0] or pose[0] > SAFETY_BOUND_MAX[0]:
+        return False
+    end
+    if pose[1] < SAFETY_BOUND_MIN[1] or pose[1] > SAFETY_BOUND_MAX[1]:
+        return False
+    end
+    if pose[2] < SAFETY_BOUND_MIN[2] or pose[2] > SAFETY_BOUND_MAX[2]:
+        return False
+    end
+    return True
+end
+
+def safety_check():
+    # Check TCP speed limit
+    current_tcp_speed = norm(get_actual_tcp_speed())
+    if current_tcp_speed > MAX_TCP_SPEED:
+        popup("Safety Violation: TCP Speed Exceeded", "Safety Alert", False, True)
+        halt
+    end
+    
+    # Check workspace boundaries
+    current_pose = get_actual_tcp_pose()
+    if not check_workspace(current_pose):
+        popup("Safety Violation: Workspace Boundary Breach", "Safety Alert", False, True)
+        halt
+    end
+end
+
+# --------------------------
+# Emergency Stop Handler
+# --------------------------
+thread emergency_monitor():
+    while True:
+        # Monitor global safety state
+        if not check_workspace(get_actual_tcp_pose()):
+            stopj(1.5)
+            popup("Emergency Stop: Boundary Violation Detected", "E-STOP", False, True)
+            halt
+        end
+        
+        # Monitor speed limits dynamically
+        if norm(get_actual_tcp_speed()) > (MAX_TCP_SPEED + 0.05):
+            stopj(1.5)
+            popup("Emergency Stop: Overspeed Detected", "E-STOP", False, True)
+            halt
+        end
+        
+        sync()
+    end
+end
+
+# --------------------------
+# Main Program
+# --------------------------
+def main():
+    set_safety_params()
+    
+    # Start Safety Thread
+    mon_thread = run emergency_monitor()
+    
+    # Define Waypoints
+    home_j = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+    
+    # Bin Area
+    above_bin = p[0.3, -0.2, 0.3, 0, 3.14, 0]
+    pick_pose = p[0.3, -0.2, 0.05, 0, 3.14, 0]
+    
+    # Transit & Conveyor Area
+    transit_pose = p[0.5, 0.2, 0.3, 0, 3.14, 0]
+    above_conv = p[0.5, 0.4, 0.3, 0, 3.14, 0]
+    place_pose = p[0.5, 0.4, 0.05, 0, 3.14, 0]
+    retreat_pose = p[0.5, 0.4, 0.3, 0, 3.14, 0]
+
+    # --- Motion Sequence ---
+    
+    # 1. move_joint: Home position, 350.0 mm/s (approx joint speed)
+    # Note: movej uses joint speed (rad/s). 1.2 rad/s approx equates to 350mm/s at tool.
+    safety_check()
+    movej(home_j, a=MAX_JOINT_ACCEL, v=1.2, r=0)
+
+    # 2. move_linear: Above bin, 350.0 mm/s
+    safety_check()
+    movel(above_bin, a=0.5, v=0.35, r=0)
+
+    # 3. move_linear: Descend into bin, 150.0 mm/s
+    safety_check()
+    movel(pick_pose, a=0.2, v=0.15, r=0)
+
+    # Activate Suction (Gripper Type A7)
+    set_digital_out(0, True)
+    sleep(0.5) # Wait for vacuum build-up
+
+    # 4. move_linear: Lift from bin, 300.0 mm/s
+    safety_check()
+    movel(above_bin, a=0.4, v=0.30, r=0)
+
+    # 5. move_linear: Transit to conveyor, 380.0 mm/s
+    safety_check()
+    movel(transit_pose, a=0.5, v=0.38, r=0)
+
+    # 6. move_linear: Above conveyor, 350.0 mm/s
+    safety_check()
+    movel(above_conv, a=0.5, v=0.35, r=0)
+
+    # 7. move_linear: Descend to conveyor (Place), 150.0 mm/s
+    safety_check()
+    movel(place_pose, a=0.2, v=0.15, r=0)
+
+    # Release Suction
+    set_digital_out(0, False)
+    sleep(0.3) # Wait for release
+
+    # 8. move_linear: Retreat from conveyor, 350.0 mm/s
+    safety_check()
+    movel(retreat_pose, a=0.5, v=0.35, r=0)
+    
+    # Cleanup
+    kill mon_thread
+end
+
+main()

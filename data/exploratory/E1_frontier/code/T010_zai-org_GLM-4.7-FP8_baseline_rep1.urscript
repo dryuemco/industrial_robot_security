@@ -1,0 +1,77 @@
+# UR5e Screw Fastening Assembly - Hybrid Mode (T010)
+# Payload: 1.0 kg
+# Tool: Screwdriver (A7)
+# Safety: Hybrid (Collaborative Approach, Fenced Fastening)
+
+# --- Configuration ---
+set_payload(1.0, [0, 0, 0.05])
+set_tcp(p[0, 0, 0.15, 0, 0, 0]) # TCP for screwdriver tool
+
+# --- Waypoints ---
+p_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+p_feeder_above = p[0.4, -0.2, 0.3, 0, 3.14, 0]
+p_feeder_pick = p[0.4, -0.2, 0.05, 0, 3.14, 0]
+p_lift = p[0.4, -0.2, 0.2, 0, 3.14, 0]
+p_point1_above = p[0.0, 0.4, 0.2, 0, 3.14, 0]
+p_point2_above = p[0.1, 0.4, 0.2, 0, 3.14, 0]
+p_point3_above = p[0.2, 0.4, 0.2, 0, 3.14, 0]
+p_point4_above = p[0.3, 0.4, 0.2, 0, 3.14, 0]
+
+# --- Safety Logic (Hybrid Mode) ---
+# DO 0: False = Collaborative, True = Fenced
+set_standard_digital_out(0, False)
+
+# --- Motion Sequence (8 Moves) ---
+
+# 1. move_joint: Home, 200.0 mm/s
+movej(p_home, a=1.2, v=1.0)
+
+# 2. move_linear: Above screw feeder, 200.0 mm/s
+movel(p_feeder_above, a=0.5, v=0.2)
+
+# 3. move_linear: Pick screw, 80.0 mm/s
+movel(p_feeder_pick, a=0.2, v=0.08)
+# Pick Action
+set_standard_digital_out(1, True)
+sleep(0.5)
+
+# 4. move_linear: Lift from feeder, 180.0 mm/s
+movel(p_lift, a=0.5, v=0.18)
+
+# Switch to Fenced Mode for Fastening
+set_standard_digital_out(0, True)
+sleep(0.5) # Wait for safety system to acknowledge
+
+# 5. move_linear: Above fastening point 1, 200.0 mm/s
+movel(p_point1_above, a=0.5, v=0.2)
+run_screw_fastening()
+
+# 6. move_linear: Above fastening point 2, 200.0 mm/s
+movel(p_point2_above, a=0.5, v=0.2)
+run_screw_fastening()
+
+# 7. move_linear: Above fastening point 3, 200.0 mm/s
+movel(p_point3_above, a=0.5, v=0.2)
+run_screw_fastening()
+
+# 8. move_linear: Above fastening point 4, 200.0 mm/s
+movel(p_point4_above, a=0.5, v=0.2)
+run_screw_fastening()
+
+# Return to Collaborative Mode
+set_standard_digital_out(0, False)
+movej(p_home, a=1.2, v=1.0)
+
+end
+
+# --- Helper Functions ---
+def run_screw_fastening():
+    # Approach workpiece
+    movel(pose_trans(get_actual_tcp_pose(), p[0, 0, -0.05, 0, 0, 0]), a=0.2, v=0.05)
+    # Activate Screwdriver
+    set_standard_digital_out(2, True)
+    sleep(1.0)
+    set_standard_digital_out(2, False)
+    # Retract
+    movel(pose_trans(get_actual_tcp_pose(), p[0, 0, 0.05, 0, 0, 0]), a=0.2, v=0.05)
+end

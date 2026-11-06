@@ -1,0 +1,138 @@
+# ============================================================
+# URScript: Multi-waypoint SSM Pick-Place with Obstacle Avoidance
+# Robot: UR5e | Mode: Collaborative | Payload: 1.5 kg
+# Compliance: ISO 10218:2025 (Safety Logic A5, Work Objects A6)
+# ============================================================
+
+# --- Safety Constants ---
+def max_tcp_speed = 0.250       # 250 mm/s
+def max_joint_accel = 1.4       # 1.4 rad/s^2
+def payload_mass = 1.5          # kg
+def payload_cog = [0.0, 0.0, 0.05] # Center of gravity offset (m)
+
+# --- Safety Zones Definition ---
+# Confinement Zone (Keep robot inside box)
+# Format: [x_min, x_max, y_min, y_max, z_min, z_max]
+def zone_confinement = [-0.8, 0.8, -0.8, 0.8, 0.0, 0.9]
+
+# Exclusion Zone (Obstacle Column)
+# Format: [x, y, z, radius] (Sphere approximation for column)
+def zone_exclusion = [0.4, 0.0, 0.3, 0.15]
+
+# --- Work Objects (A6: Dual Stations) ---
+def pose_pick_station = p[0.4, -0.2, 0.1, 0, 3.14159, 0]
+def pose_place_station = p[0.4, 0.2, 0.1, 0, 3.14159, 0]
+
+# --- Safety Functions ---
+
+# Function: Emergency Stop Handler
+def emergency_stop(msg):
+    popup("EMERGENCY STOP: " + msg, "Safety Error", False, 1)
+    stopj(max_joint_accel)
+    halt
+end
+
+# Function: Safety Check (A5: Speed Guard + Boundary Check)
+def safety_check(target_pose, req_speed):
+    # 1. Speed Guard
+    if req_speed > max_tcp_speed:
+        emergency_stop("Requested speed " + req_speed*1000 + " mm/s exceeds limit 250 mm/s")
+    end
+
+    # 2. Confinement Zone Check
+    if target_pose[0] < zone_confinement[0] or target_pose[0] > zone_confinement[1] or \
+       target_pose[1] < zone_confinement[2] or target_pose[1] > zone_confinement[3] or \
+       target_pose[2] < zone_confinement[4] or target_pose[2] > zone_confinement[5]:
+        emergency_stop("Target pose outside confinement zone")
+    end
+
+    # 3. Exclusion Zone Check (Obstacle)
+    dist_sq = (target_pose[0] - zone_exclusion[0])**2 + \
+              (target_pose[1] - zone_exclusion[1])**2 + \
+              (target_pose[2] - zone_exclusion[2])**2
+    if dist_sq < zone_exclusion[3]**2:
+        emergency_stop("Target pose inside exclusion zone (Obstacle)")
+    end
+end
+
+# Thread: Collision Monitor (A5: Enhanced Safety Logic)
+# Monitors for unexpected joint speed spikes indicative of collisions
+thread collision_monitor():
+    while True:
+        actual_speeds = get_actual_joint_speeds()
+        for i = 0 to 5:
+            # Dynamic check: If joint speed spikes unexpectedly high while in collaborative mode
+            if actual_speeds[i] > 2.5: 
+                popup("Collision Detected: Joint " + i + " speed spike", "Safety Alert", False, 1)
+                stopj(max_joint_accel)
+                halt
+            end
+        end
+        sync()
+    end
+end
+
+# --- Main Program ---
+
+# Setup
+set_payload(payload_mass, payload_cog)
+set_gravity([0, 0, 9.82])
+
+# Start Collision Monitor
+thrm mon = run collision_monitor()
+
+# Define Waypoints
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Pick Waypoints (Relative to Pick Station)
+wp_above_pick = pose_trans(pose_pick_station, p[0, 0, 0.15, 0, 0, 0])
+wp_pick = pose_trans(pose_pick_station, p[0, 0, 0.0, 0, 0, 0])
+
+# Place Waypoints (Relative to Place Station)
+wp_above_place = pose_trans(pose_place_station, p[0, 0, 0.15, 0, 0, 0])
+wp_place = pose_trans(pose_place_station, p[0, 0, 0.0, 0, 0, 0])
+
+# Obstacle Avoidance Waypoint (Offset -X to navigate around column)
+wp_avoid = p[0.25, 0.0, 0.35, 0, 3.14159, 0]
+
+# --- Motion Sequence (9 Moves) ---
+
+# Move 1: move_joint to Home (200.0 mm/s)
+safety_check(get_forward_kinematics(q_home), 0.2)
+movej(q_home, a=max_joint_accel, v=0.2)
+
+# Move 2: move_linear to WP1 — Above pick station (200.0 mm/s)
+safety_check(wp_above_pick, 0.2)
+movel(wp_above_pick, a=max_joint_accel, v=0.2)
+
+# Move 3: move_linear to WP2 — Descend to pick (100.0 mm/s)
+safety_check(wp_pick, 0.1)
+movel(wp_pick, a=max_joint_accel, v=0.1)
+
+# Move 4: move_linear to WP3 — Lift above pick (180.0 mm/s)
+safety_check(wp_above_pick, 0.18)
+movel(wp_above_pick, a=max_joint_accel, v=0.18)
+
+# Move 5: move_linear to WP4 — Obstacle avoidance waypoint (200.0 mm/s)
+safety_check(wp_avoid, 0.2)
+movel(wp_avoid, a=max_joint_accel, v=0.2)
+
+# Move 6: move_linear to WP5 — Above place station (200.0 mm/s)
+safety_check(wp_above_place, 0.2)
+movel(wp_above_place, a=max_joint_accel, v=0.2)
+
+# Move 7: move_linear to WP6 — Descend to place (100.0 mm/s)
+safety_check(wp_place, 0.1)
+movel(wp_place, a=max_joint_accel, v=0.1)
+
+# Move 8: move_linear to WP7 — Lift above place (180.0 mm/s)
+safety_check(wp_above_place, 0.18)
+movel(wp_above_place, a=max_joint_accel, v=0.18)
+
+# Move 9: move_joint to Home (200.0 mm/s)
+safety_check(get_forward_kinematics(q_home), 0.2)
+movej(q_home, a=max_joint_accel, v=0.2)
+
+# Cleanup
+kill mon
+popup("Task Completed Successfully", "Status", False, 1)

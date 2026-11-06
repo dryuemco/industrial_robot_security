@@ -1,0 +1,100 @@
+# URScript for UR5e – Laser surface scan (fenced mode)
+# ---------------------------------------------------
+# Payload: 0.5 kg
+# Max TCP speed: 0.2 m/s (200 mm/s)
+# Scan area: 300 mm x 200 mm
+# Raster pattern: 4 lines
+# Total moves: 12
+
+# ---- Configuration -------------------------------------------------
+set_payload(0.5, [0,0,0])          # payload in kg, centre of mass at TCP
+set_tcp([0,0,0,0,0,0])            # default TCP (no offset)
+
+# Speed definitions (m/s)
+speed_joint   = 0.18   # 180 mm/s for joint move
+speed_above   = 0.15   # 150 mm/s for rapid approach
+speed_descend = 0.08   # 80 mm/s for descending to scan height
+speed_scan    = 0.05   # 50 mm/s for scanning line
+speed_step    = 0.08   # 80 mm/s for stepping between lines
+
+# ---- Positions (in meters) -----------------------------------------
+# Home position (joint configuration)
+home_joint = [-1.57, -1.57, -1.57, -1.57, 1.57, 0]
+
+# Above scan start (10 mm above surface, left‑front corner)
+above_start = p[0.5, -0.15, 0.21, 0, 3.14159, 0]
+
+# Scan start (surface contact height)
+scan_start = p[0.5, -0.15, 0.20, 0, 3.14159, 0]
+
+# Line end positions (300 mm length in X direction)
+line1_end = p[0.8, -0.15, 0.20, 0, 3.14159, 0]
+line2_start = p[0.8, -0.15+0.05, 0.20, 0, 3.14159, 0]   # step 50 mm in Y
+line2_end = p[0.5, -0.15+0.05, 0.20, 0, 3.14159, 0]
+line3_start = p[0.5, -0.15+0.10, 0.20, 0, 3.14159, 0]
+line3_end = p[0.8, -0.15+0.10, 0.20, 0, 3.14159, 0]
+line4_start = p[0.8, -0.15+0.15, 0.20, 0, 3.14159, 0]
+line4_end = p[0.5, -0.15+0.15, 0.20, 0, 3.14159, 0]
+
+# Safe position after scan (re‑tract)
+safe_pos = p[0.5, -0.15, 0.30, 0, 3.14159, 0]
+
+# ---- Helper functions ------------------------------------------------
+def laser_on():
+    # Digital output 0 controls the laser (adjust as needed)
+    set_digital_out(0, True)
+
+def laser_off():
+    set_digital_out(0, False)
+
+# ---- Main program ----------------------------------------------------
+def main():
+    # 1) Move to Home (joint move)
+    movej(home_joint, a=1.2, v=speed_joint)
+
+    # 2) Move above scan start (linear)
+    movel(above_start, a=1.2, v=speed_above)
+
+    # 3) Descend to scan height
+    movel(scan_start, a=1.2, v=speed_descend)
+
+    # Activate laser before scanning
+    laser_on()
+    sync()   # ensure laser is on before motion
+
+    # 4) Scan line 1
+    movel(line1_end, a=1.2, v=speed_scan)
+
+    # 5) Step to line 2 start (retract Y)
+    movel(line2_start, a=1.2, v=speed_step)
+
+    # 6) Scan line 2
+    movel(line2_end, a=1.2, v=speed_scan)
+
+    # 7) Step to line 3 start
+    movel(line3_start, a=1.2, v=speed_step)
+
+    # 8) Scan line 3
+    movel(line3_end, a=1.2, v=speed_scan)
+
+    # 9) Step to line 4 start
+    movel(line4_start, a=1.2, v=speed_step)
+
+    # 10) Scan line 4
+    movel(line4_end, a=1.2, v=speed_scan)
+
+    # Deactivate laser after scanning
+    laser_off()
+    sync()
+
+    # 11) Retract to safe position
+    movel(safe_pos, a=1.2, v=speed_above)
+
+    # 12) Return to Home
+    movej(home_joint, a=1.2, v=speed_joint)
+
+    # End of program
+    stopj(2)   # ensure robot stops safely
+
+# Run the program
+main()

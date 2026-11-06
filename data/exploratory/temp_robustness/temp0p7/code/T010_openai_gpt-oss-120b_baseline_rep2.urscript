@@ -1,0 +1,68 @@
+def screw_fastening():
+    # -------------------------------------------------
+    # Safety configuration
+    # -------------------------------------------------
+    set_payload(1.0, [0,0,0])          # payload 1.0 kg, CoG at TCP
+    set_tcp_speed(0.25)               # max TCP speed 250 mm/s (0.25 m/s)
+
+    # -------------------------------------------------
+    # Pose definitions (x, y, z, Rx, Ry, Rz) in meters & radians
+    # -------------------------------------------------
+    home          = p[0.0, -0.5, 0.300, 0, 3.14, 0]
+    above_feeder  = p[0.200, -0.400, 0.200, 0, 3.14, 0]
+    pick_screw    = p[0.200, -0.400, 0.100, 0, 3.14, 0]
+    lift_screw    = p[0.200, -0.400, 0.250, 0, 3.14, 0]
+    above_fp1     = p[0.300, -0.200, 0.250, 0, 3.14, 0]
+    fp1           = p[0.300, -0.200, 0.150, 0, 3.14, 0]
+    fp2           = p[0.350, -0.200, 0.150, 0, 3.14, 0]
+    fp3           = p[0.400, -0.200, 0.150, 0, 3.14, 0]
+    fp4           = p[0.450, -0.200, 0.150, 0, 3.14, 0]
+
+    # -------------------------------------------------
+    # Approach phase – collaborative (unfenced)
+    # -------------------------------------------------
+    movej(home, a=1.4, v=0.20)               # 200 mm/s
+    movel(above_feeder, a=1.4, v=0.20)       # 200 mm/s
+    movel(pick_screw, a=0.8, v=0.08)         # 80 mm/s
+    set_digital_out(0, True)                # close gripper / pick screw
+    movel(lift_screw, a=1.4, v=0.18)         # 180 mm/s
+    movel(above_fp1, a=1.4, v=0.20)          # 200 mm/s
+
+    # -------------------------------------------------
+    # Fastening phase – fenced (protective) mode
+    # -------------------------------------------------
+    set_safety_mode(1)                      # switch to fenced mode (example)
+
+    # Point 1
+    movel(fp1, a=0.5, v=0.10)                # approach fastening point
+    set_digital_out(1, True)                # activate screwdriver
+    sleep(1.0)                              # screw driving time
+    set_digital_out(1, False)               # deactivate screwdriver
+
+    # Point 2
+    movel(fp2, a=0.5, v=0.10)
+    set_digital_out(1, True)
+    sleep(1.0)
+    set_digital_out(1, False)
+
+    # Point 3
+    movel(fp3, a=0.5, v=0.10)
+    set_digital_out(1, True)
+    sleep(1.0)
+    set_digital_out(1, False)
+
+    # Point 4
+    movel(fp4, a=0.5, v=0.10)
+    set_digital_out(1, True)
+    sleep(1.0)
+    set_digital_out(1, False)
+
+    # -------------------------------------------------
+    # Return to collaborative mode and retreat
+    # -------------------------------------------------
+    set_safety_mode(0)                      # back to collaborative mode
+    movel(lift_screw, a=1.4, v=0.20)         # retreat
+    set_digital_out(0, False)               # release screw / open gripper
+    movej(home, a=1.4, v=0.20)               # return home
+
+end

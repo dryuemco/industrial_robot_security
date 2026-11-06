@@ -1,0 +1,63 @@
+# URScript for UR5e - Dual-zone pick-place (Hybrid mode)
+# Payload and safety configuration
+set_payload(1.2, {0,0,0})               # 1.2 kg payload, CoG at TCP
+set_tcp_speed(0.3)                     # Max TCP speed 300 mm/s (0.3 m/s)
+
+# Define safety zones (confinement and exclusion)
+# Confinement zone: robot must stay within this volume
+set_safety_zone("confinement_zone", "confinement", 
+                pose({0.5, 0.0, 0.2, 0, 3.14, 0}),   # example pose
+                {0.8, 0.8, 0.6})                     # size (X,Y,Z) in meters
+
+# Exclusion zone: robot must avoid this volume
+set_safety_zone("exclusion_zone", "exclusion", 
+                pose({0.2, -0.3, 0.1, 0, 3.14, 0}),  # example pose
+                {0.4, 0.4, 0.5})                     # size (X,Y,Z) in meters
+
+# Ensure robot operates in hybrid (collaborative) mode
+set_robot_mode("automatic")            # Automatic mode enables hybrid operation
+set_safety_mode("collaborative")       # Collaborative (hybrid) safety mode
+
+# Predefined joint and pose targets
+# Joint target for Home position (example values)
+q_home = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Pose targets (example positions, units in meters and radians)
+p_above_bin   = pose({0.6, 0.0, 0.4, 0, 3.14, 0})
+p_pick        = pose({0.6, 0.0, 0.15, 0, 3.14, 0})
+p_lift        = pose({0.6, 0.0, 0.4, 0, 3.14, 0})
+p_handoff     = pose({0.3, -0.5, 0.3, 0, 3.14, 0})
+p_place_above = pose({0.3, -0.5, 0.5, 0, 3.14, 0})
+p_place       = pose({0.3, -0.5, 0.2, 0, 3.14, 0})
+p_retreat     = pose({0.5, -0.2, 0.5, 0, 3.14, 0})
+p_home_pose   = pose({0.0, 0.0, 0.5, 0, 3.14, 0})
+
+# Motion sequence (speed values converted to m/s)
+# 1. Move to Home joint position
+movej(q_home, a=1.4, v=0.25)            # 250 mm/s -> 0.25 m/s
+
+# 2. Move linear above storage bin
+movel(p_above_bin, a=1.2, v=0.28)      # 280 mm/s -> 0.28 m/s
+
+# 3. Descend to pick
+movel(p_pick, a=1.0, v=0.12)           # 120 mm/s -> 0.12 m/s
+
+# 4. Lift from bin
+movel(p_lift, a=1.0, v=0.20)           # 200 mm/s -> 0.20 m/s
+
+# 5. Transit to handoff zone
+movel(p_handoff, a=1.2, v=0.25)        # 250 mm/s -> 0.25 m/s
+
+# 6. Move above handoff placement point
+movel(p_place_above, a=1.2, v=0.25)    # 250 mm/s -> 0.25 m/s
+
+# 7. Place down in handoff zone
+movel(p_place, a=1.0, v=0.12)          # 120 mm/s -> 0.12 m/s
+
+# 8. Retreat to safe pose
+movel(p_retreat, a=1.2, v=0.25)        # 250 mm/s -> 0.25 m/s
+
+# Return to Home pose
+movel(p_home_pose, a=1.4, v=0.25)
+
+# End of program

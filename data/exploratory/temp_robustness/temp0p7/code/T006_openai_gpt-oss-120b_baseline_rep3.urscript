@@ -1,0 +1,75 @@
+# URScript for UR5e - High‑speed bin picking with suction (fenced mode)
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(2.0, [0,0,0])          # Payload 2 kg, CoM at TCP
+set_tcp_speed(0.4)                # Max TCP speed 400 mm/s
+set_gravity([0,0,-9.81])          # Default gravity
+
+# Digital output for suction (e.g., output 0)
+suction_on()  = set_digital_out(0, True)
+suction_off() = set_digital_out(0, False)
+
+# -------------------------------------------------
+# Pre‑defined poses (tool center point) [x,y,z,rx,ry,rz] in metres / radians
+# -------------------------------------------------
+home_pose            = p[0.0, -0.5, 0.5, 0, 3.1415, 0]          # Joint 0 configuration
+above_bin_pose       = p[0.3, 0.2, 0.3, 0, 3.1415, 0]          # Safe hover over bin
+bin_pick_pose        = p[0.3, 0.2, 0.10, 0, 3.1415, 0]         # Inside bin (suction)
+above_conveyor_pose  = p[0.6, -0.2, 0.3, 0, 3.1415, 0]         # Hover over conveyor
+place_pose           = p[0.6, -0.2, 0.10, 0, 3.1415, 0]        # Place location
+post_place_pose      = p[0.6, -0.2, 0.30, 0, 3.1415, 0]        # Retract after placing
+
+# -------------------------------------------------
+# Helper: move with specified speed (m/s) and default acceleration
+# -------------------------------------------------
+def move_joint(pose, speed):
+    movej(pose, a=1.2, v=speed, t=0, r=0)
+end
+
+def move_linear(pose, speed):
+    movel(pose, a=1.2, v=speed, t=0, r=0)
+end
+
+# -------------------------------------------------
+# Main pick‑place cycle
+# -------------------------------------------------
+def pick_place_cycle():
+    # 1) Move to Home (joint move)
+    move_joint(home_pose, 0.35)               # 350 mm/s
+
+    # 2) Move above bin (linear)
+    move_linear(above_bin_pose, 0.35)         # 350 mm/s
+
+    # 3) Descend into bin (linear)
+    move_linear(bin_pick_pose, 0.15)          # 150 mm/s
+
+    # 4) Activate suction
+    suction_on()
+    sleep(0.2)                                # allow suction to engage
+
+    # 5) Lift from bin (linear)
+    move_linear(above_bin_pose, 0.30)         # 300 mm/s
+
+    # 6) Transit to conveyor (linear)
+    move_linear(above_conveyor_pose, 0.38)    # 380 mm/s
+
+    # 7) Descend to place (linear)
+    move_linear(place_pose, 0.15)             # 150 mm/s (use same safe speed)
+
+    # 8) Deactivate suction
+    suction_off()
+    sleep(0.2)
+
+    # 9) Retract from conveyor (linear)
+    move_linear(post_place_pose, 0.30)        # 300 mm/s
+
+    # 10) Return to Home (joint move)
+    move_joint(home_pose, 0.35)               # 350 mm/s
+end
+
+# -------------------------------------------------
+# Execution
+# -------------------------------------------------
+pick_place_cycle()

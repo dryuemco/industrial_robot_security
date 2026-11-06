@@ -1,0 +1,137 @@
+# -------------------------------------------------
+# URScript for UR5e – Laser Marking (Fenced Mode)
+# -------------------------------------------------
+# Safety compliance (ISO 10218:2025)
+# - Max TCP speed limited to 0.25 m/s (250 mm/s)
+# - Max joint acceleration 1.4 rad/s^2 per joint
+# - All motions include explicit speed (v) and acceleration (a) limits
+# - Safety checks and emergency stop handling included
+# -------------------------------------------------
+
+# -------------------------
+# Payload configuration
+# -------------------------
+set_payload(0.6, [0, 0, 0.02])   # 0.6 kg payload, CoM 20 mm behind TCP
+
+# -------------------------
+# Safety zone definitions
+# -------------------------
+# Confinement zone (workspace where robot is allowed to move)
+confinement_zone = {
+    "min": p[-0.8, -0.8, 0.0, 0, 0, 0],
+    "max": p[ 0.8,  0.8, 1.2, 0, 0, 0]
+}
+
+# Exclusion zone (area that must never be entered)
+exclusion_zone = {
+    "min": p[-0.2, -0.2, 0.0, 0, 0, 0],
+    "max": p[ 0.2,  0.2, 1.0, 0, 0, 0]
+}
+
+# -------------------------
+# Helper functions
+# -------------------------
+def in_zone(pose, zone):
+    # Checks if a pose is inside a rectangular zone (ignores orientation)
+    return (pose[0] >= zone["min"][0] and pose[0] <= zone["max"][0] and
+            pose[1] >= zone["min"][1] and pose[1] <= zone["max"][1] and
+            pose[2] >= zone["min"][2] and pose[2] <= zone["max"][2])
+
+def safety_check(pose):
+    # Abort if pose is outside confinement or inside exclusion
+    if not in_zone(pose, confinement_zone):
+        popup("Safety violation: Pose outside confinement zone!", title="EMERGENCY STOP", warning=True)
+        halt()
+    if in_zone(pose, exclusion_zone):
+        popup("Safety violation: Pose entered exclusion zone!", title="EMERGENCY STOP", warning=True)
+        halt()
+
+def emergency_stop_handler():
+    # Monitors digital input 0 (normally wired to an E‑stop button)
+    if get_digital_in(0):
+        popup("Emergency stop activated!", title="EMERGENCY STOP", warning=True)
+        halt()
+
+# -------------------------
+# Waypoint definitions (all positions in meters)
+# -------------------------
+# Joint configuration for Home position
+home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Cartesian waypoints (TCP)
+above_surface   = p[0.4, 0.0, 0.3, 0, 3.14, 0]   # 300 mm above marking surface
+marking_height  = p[0.4, 0.0, 0.1, 0, 3.14, 0]   # 100 mm above surface (marking height)
+line1_start     = p[0.4, -0.05, 0.1, 0, 3.14, 0] # start of line 1
+line1_end       = p[0.4,  0.05, 0.1, 0, 3.14, 0] # end of line 1
+line2_start     = p[0.4, -0.05, 0.1, 0, 3.14, 0] # start of line 2 (example offset)
+line2_end       = p[0.4,  0.05, 0.1, 0, 3.14, 0] # end of line 2
+# Additional placeholder waypoints for remaining 5 moves
+line3_start     = p[0.4, -0.05, 0.1, 0, 3.14, 0]
+line3_end       = p[0.4,  0.05, 0.1, 0, 3.14, 0]
+retract_pose    = p[0.4, 0.0, 0.3, 0, 3.14, 0]
+
+# -------------------------
+# Motion parameters
+# -------------------------
+max_joint_acc   = 1.4   # rad/s^2 (per joint)
+max_joint_vel   = 0.5   # rad/s (approx. 350 mm/s end‑effector speed)
+max_lin_acc     = 1.4   # m/s^2
+max_lin_vel     = 0.25  # m/s (250 mm/s – safety limit)
+
+# -------------------------
+# Main program
+# -------------------------
+def main():
+    # Emergency stop monitoring thread
+    while True:
+        emergency_stop_handler()
+        sleep(0.01)
+    end
+
+    # 1) Move to Home (joint move)
+    safety_check(p[0,0,0,0,0,0])  # Home is always inside workspace
+    movej(home_joint, a=max_joint_acc, v=max_joint_vel)
+
+    # 2) Move above marking surface (linear)
+    safety_check(above_surface)
+    movel(above_surface, a=max_lin_acc, v=0.25)   # 250 mm/s limit
+
+    # 3) Descend to marking height
+    safety_check(marking_height)
+    movel(marking_height, a=max_lin_acc, v=0.10)  # 100 mm/s
+
+    # 4) Mark line 1 (slow linear move)
+    safety_check(line1_end)
+    movel(line1_end, a=max_lin_acc, v=0.06)       # 60 mm/s
+
+    # 5) Step to line 2 start (fast reposition)
+    safety_check(line2_start)
+    movel(line2_start, a=max_lin_acc, v=0.08)     # 80 mm/s
+
+    # 6) Mark line 2
+    safety_check(line2_end)
+    movel(line2_end, a=max_lin_acc, v=0.06)       # 60 mm/s
+
+    # 7) Step to line 3 start
+    safety_check(line3_start)
+    movel(line3_start, a=max_lin_acc, v=0.08)     # 80 mm/s
+
+    # 8) Mark line 3
+    safety_check(line3_end)
+    movel(line3_end, a=max_lin_acc, v=0.06)       # 60 mm/s
+
+    # 9) Retract to safe height
+    safety_check(retract_pose)
+    movel(retract_pose, a=max_lin_acc, v=0.25)    # 250 mm/s
+
+    # 10) Return to Home
+    safety_check(p[0,0,0,0,0,0])
+    movej(home_joint, a=max_joint_acc, v=max_joint_vel)
+
+    popup("Program completed successfully.", title="Info")
+end
+
+# -------------------------------------------------
+# Execute main program
+# -------------------------------------------------
+main()

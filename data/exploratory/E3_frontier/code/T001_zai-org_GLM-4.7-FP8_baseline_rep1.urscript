@@ -1,0 +1,47 @@
+# T001 Simple collaborative pick-place
+# Robot: UR5e
+# Payload: 0.5 kg
+# Max Speed: 250 mm/s
+
+# Set payload for 0.5 kg object
+set_payload(0.5)
+
+# Define Position Variables
+# Home position (Joint space)
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Pick location (Cartesian space)
+p_pick = p[0.4, -0.2, 0.05, 3.14, 0.0, 0.0]
+p_pick_approach = p[0.4, -0.2, 0.15, 3.14, 0.0, 0.0]
+
+# Place location (Cartesian space)
+p_place = p[0.4, 0.2, 0.05, 3.14, 0.0, 0.0]
+p_place_approach = p[0.4, 0.2, 0.15, 3.14, 0.0, 0.0]
+
+# Motion Sequence
+# 1. move_joint: Go to home position, 200.0 mm/s
+movej(q_home, a=0.5, v=0.2)
+
+# 2. move_linear: Approach pick point, 200.0 mm/s
+movel(p_pick_approach, a=0.5, v=0.2)
+
+# 3. move_linear: Descend to pick, 100.0 mm/s
+movel(p_pick, a=0.2, v=0.1)
+
+# 4. move_linear: Lift from pick, 150.0 mm/s
+movel(p_pick_approach, a=0.3, v=0.15)
+
+# 5. move_linear: Transit to place approach, 200.0 mm/s
+movel(p_place_approach, a=0.5, v=0.2)
+
+# 6. move_linear: Descend to place, 100.0 mm/s
+movel(p_place, a=0.2, v=0.1)
+
+# 7. move_linear: Lift from place, 150.0 mm/s
+movel(p_place_approach, a=0.3, v=0.15)
+
+# 8. move_joint: Return to home, 200.0 mm/s
+movej(q_home, a=0.5, v=0.2)
+
+# End of program
+halt

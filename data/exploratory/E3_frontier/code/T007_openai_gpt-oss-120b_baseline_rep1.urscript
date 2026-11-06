@@ -1,0 +1,74 @@
+# URScript for curved contour weld in hybrid mode (T007)
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(3.5, [0,0,0,0,0,0])   # payload in kg, center of mass at TCP
+set_tcp(p[0,0,0.1,0,0,0])        # example TCP offset (10 cm along Z)
+
+# Safety mode: hybrid (protective stop with fencing)
+# Note: actual hybrid mode activation depends on external safety controller.
+# Here we assume the robot is already in the required safety configuration.
+
+# -------------------------------------------------
+# Speed settings (mm/s)
+# -------------------------------------------------
+speed_joint_home = 0.300   # 300 mm/s
+speed_approach   = 0.250   # 250 mm/s
+speed_descend    = 0.100   # 100 mm/s
+speed_weld       = 0.060   # 60 mm/s
+speed_retract    = 0.150   # 150 mm/s
+
+# -------------------------------------------------
+# Pose definitions (in robot base frame, meters)
+# -------------------------------------------------
+# Home position (joint configuration)
+home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Approach point: 10 cm above weld fixture
+pose_approach = p[0.400, 0.200, 0.300, 0, 3.14, 0]
+
+# Weld start point (directly above start, then descend)
+pose_start = p[0.400, 0.200, 0.150, 0, 3.14, 0]
+
+# Weld midpoint (arc)
+pose_mid = p[0.450, 0.250, 0.150, 0, 3.14, 0]
+
+# Weld end point
+pose_end = p[0.500, 0.300, 0.150, 0, 3.14, 0]
+
+# Retract point: 10 cm above end
+pose_retract = p[0.500, 0.300, 0.300, 0, 3.14, 0]
+
+# -------------------------------------------------
+# Motion sequence
+# -------------------------------------------------
+def main():
+    # 1) Move to home joint position
+    movej(home_joint, a=1.2, v=speed_joint_home, t=0, r=0)
+
+    # 2) Linear approach above weld fixture
+    movel(pose_approach, a=1.0, v=speed_approach, t=0, r=0)
+
+    # 3) Descend to weld start
+    movel(pose_start, a=0.8, v=speed_descend, t=0, r=0)
+
+    # 4) Weld arc: move to midpoint
+    movel(pose_mid, a=0.5, v=speed_weld, t=0, r=0)
+
+    # 5) Continue weld to end point
+    movel(pose_end, a=0.5, v=speed_weld, t=0, r=0)
+
+    # 6) Retract upward after weld
+    movel(pose_retract, a=0.8, v=speed_retract, t=0, r=0)
+
+    # 7) Return to home position
+    movej(home_joint, a=1.2, v=speed_joint_home, t=0, r=0)
+
+    # End of program
+    stopj(0)
+
+# -------------------------------------------------
+# Run program
+# -------------------------------------------------
+main()

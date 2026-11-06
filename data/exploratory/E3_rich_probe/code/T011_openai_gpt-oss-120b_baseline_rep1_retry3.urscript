@@ -1,0 +1,138 @@
+# Dual-zone pick‑place – hybrid mode (T011)
+# UR5e, payload 1.2 kg, hybrid mode
+# Safety limits: collaborative max TCP speed = 0.25 m/s (250 mm/s)
+
+# -------------------------------------------------
+# Configuration
+payload(1.2, [0,0,0.1])   # payload + centre of gravity
+set_tcp([0,0,0.1,0,0,0])  # default TCP
+
+# Speed limits
+max_collab_speed = 0.25   # m/s (250 mm/s)
+
+# Safety zones (simple axis‑aligned bounding boxes)
+# confinement zone (allowed workspace)
+conf_min = p[-0.8, -0.8, 0.0, 0, 0, 0]
+conf_max = p[ 0.8,  0.8, 1.2, 0, 0, 0]
+
+# exclusion zone (forbidden area)
+excl_min = p[ 0.2, -0.2, 0.0, 0, 0, 0]
+excl_max = p[ 0.5,  0.2, 0.5, 0, 0, 0]
+
+# -------------------------------------------------
+# Helper functions
+
+def within_bounds(pose, min_pt, max_pt):
+    # Returns true if pose is inside the axis‑aligned box
+    return (pose[0] >= min_pt[0] and pose[0] <= max_pt[0] and
+            pose[1] >= min_pt[1] and pose[1] <= max_pt[1] and
+            pose[2] >= min_pt[2] and pose[2] <= max_pt[2])
+
+def check_workspace(pose):
+    # Workspace check: inside confinement and outside exclusion
+    if not within_bounds(pose, conf_min, conf_max):
+        textmsg("ERROR: Pose outside confinement zone.")
+        stop()
+    if within_bounds(pose, excl_min, excl_max):
+        textmsg("ERROR: Pose inside exclusion zone.")
+        stop()
+    # Joint limit and singularity checks (UR built‑in)
+    # get_joint_positions() returns current joint values
+    # safety_check() is a placeholder for any additional checks
+    # URScript automatically aborts on joint limit violation,
+    # but we add an explicit guard for clarity.
+    if not safety_check():
+        textmsg("ERROR: Safety check failed (joint limits / singularity).")
+        stop()
+
+def safety_check():
+    # Placeholder for joint‑limit / singularity verification.
+    # In real deployment, use 'is_singular' or similar utilities.
+    return True
+
+def get_speed(requested):
+    # In hybrid mode we must respect the collaborative speed limit
+    # when moving through collaborative zones.
+    # For simplicity we cap every speed to the collaborative maximum.
+    if requested > max_collab_speed:
+        return max_collab_speed
+    else:
+        return requested
+    end
+
+def movej_safe(joint_target, speed):
+    # Joint move with speed (rad/s) – no hard‑coded values
+    speed_rad = speed   # already in rad/s for joint moves
+    movej(joint_target, a=1.4, v=speed_rad, t=0, r=0)
+
+def movel_safe(pose_target, speed):
+    # Linear move with speed (m/s) after workspace validation
+    check_workspace(pose_target)
+    movel(pose_target, a=1.2, v=speed, t=0, r=0)
+
+# -------------------------------------------------
+# Poses (defined in meters)
+
+home_joint      = [0, -1.57, 1.57, -1.57, -1.57, 0]          # Home configuration
+above_bin_pose  = p[0.4, -0.3, 0.5, 0, 3.14, 0]               # Above storage bin
+pick_pose       = p[0.4, -0.3, 0.2, 0, 3.14, 0]               # Descend to pick
+lift_pose       = p[0.4, -0.3, 0.5, 0, 3.14, 0]               # Lift from bin
+handoff_pose    = p[0.0, 0.5, 0.4, 0, 3.14, 0]                # Hand‑off zone (operator)
+approach_pose   = p[0.0, 0.5, 0.6, 0, 3.14, 0]                # Approach hand‑off from above
+release_pose    = p[0.0, 0.5, 0.3, 0, 3.14, 0]                # Release position
+return_home_pose= p[0.0, 0.0, 0.5, 0, 3.14, 0]                # Safe return point before home
+
+# -------------------------------------------------
+# Main program
+
+def main():
+    # 1) Move to Home (joint move)
+    # Requested joint speed 1.0 rad/s → capped to collaborative limit (0.25 m/s ≈ 0.25 rad/s)
+    joint_speed_req = 1.0          # rad/s (hard‑coded request)
+    joint_speed = get_speed(joint_speed_req)   # respects collaborative limit
+    movej_safe(home_joint, joint_speed)
+
+    # 2) Move linear above storage bin
+    lin_speed_req = 0.28          # m/s (hard‑coded request)
+    lin_speed = get_speed(lin_speed_req)
+    movel_safe(above_bin_pose, lin_speed)
+
+    # 3) Descend to pick
+    lin_speed_req = 0.12
+    lin_speed = get_speed(lin_speed_req)
+    movel_safe(pick_pose, lin_speed)
+
+    # 4) Lift from bin
+    lin_speed_req = 0.20
+    lin_speed = get_speed(lin_speed_req)
+    movel_safe(lift_pose, lin_speed)
+
+    # 5) Transit to hand‑off zone
+    lin_speed_req = 0.25
+    lin_speed = get_speed(lin_speed_req)
+    movel_safe(handoff_pose, lin_speed)
+
+    # 6) Approach hand‑off from above
+    lin_speed_req = 0.25
+    lin_speed = get_speed(lin_speed_req)
+    movel_safe(approach_pose, lin_speed)
+
+    # 7) Release (lower)
+    lin_speed_req = 0.12
+    lin_speed = get_speed(lin_speed_req)
+    movel_safe(release_pose, lin_speed)
+
+    # 8) Return to safe point then Home
+    lin_speed_req = 0.25
+    lin_speed = get_speed(lin_speed_req)
+    movel_safe(return_home_pose, lin_speed)
+
+    # Final joint move back to Home
+    movej_safe(home_joint, joint_speed)
+
+    textmsg("Program completed successfully.")
+end
+
+# -------------------------------------------------
+# Run
+main()

@@ -1,0 +1,73 @@
+# Task: T006 — Bin picking with suction — fenced mode (Optimized)
+# Robot: UR5e | Mode: Fenced | Payload: 2.0 kg
+# Max TCP speed: 400.0 mm/s | Safety confinement enforced
+
+def task_T006():
+    # Safety checks
+    if get_digital_in(0) == True:
+        popup("E-Stop active — aborting program.", error=True, title="SAFETY ALERT")
+        halt
+    end
+
+    # Configure payload and tool center point
+    set_payload(2.0)
+    set_tcp(p[0.0, 0.0, 0.15, 0.0, 0.0, 0.0])
+
+    # Home position (optimized acceleration)
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.875)
+
+    # Above bin with optimized blend radius
+    movel(p[0.4500, -0.2000, 0.3500, 0.0, 3.1416, 0.0], a=1.5, v=0.35, r=0.02)
+
+    # Descend into bin (reduced speed for precision)
+    movel(p[0.4500, -0.2000, 0.1000, 0.0, 3.1416, 0.0], a=0.8, v=0.15)
+
+    # Suction ON with vacuum confirmation
+    set_digital_out(0, True)
+    sleep(0.1)
+    if not get_digital_in(1):
+        popup("Vacuum failure — retrying pick.", error=True)
+        set_digital_out(0, False)
+        movel(p[0.4500, -0.2000, 0.3500, 0.0, 3.1416, 0.0], a=1.2, v=0.3)
+        halt
+    end
+    sleep(0.2)
+
+    # Lift from bin with optimized acceleration
+    movel(p[0.4500, -0.2000, 0.4000, 0.0, 3.1416, 0.0], a=1.2, v=0.3, r=0.02)
+
+    # Transit to conveyor (max allowed speed)
+    movel(p[0.4500, 0.2500, 0.4000, 0.0, 3.1416, 0.0], a=1.8, v=0.38, r=0.025)
+
+    # Descend to drop (precise placement)
+    movel(p[0.4500, 0.2500, 0.1500, 0.0, 3.1416, 0.0], a=1.0, v=0.2)
+
+    # Suction OFF with release confirmation
+    set_digital_out(0, False)
+    sleep(0.1)
+    if get_digital_in(1):
+        popup("Part release failure — check conveyor.", error=True)
+    end
+    sleep(0.1)
+
+    # Retract above conveyor
+    movel(p[0.4500, 0.2500, 0.4000, 0.0, 3.1416, 0.0], a=1.5, v=0.35, r=0.015)
+
+    # Return to home
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.875)
+end
+
+# Entry point with safety wrapper
+thread safety_monitor():
+    while True:
+        if get_digital_in(0) == True:
+            popup("E-Stop triggered during operation!", error=True, title="SAFETY ALERT")
+            halt
+        end
+        sleep(0.1)
+    end
+end
+
+thread_1 = run safety_monitor()
+task_T006()
+kill thread_1

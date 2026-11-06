@@ -1,0 +1,61 @@
+# URScript for UR5e – Linear weld path (fenced mode, T002)
+
+def main():
+    # -------------------------------------------------
+    # Safety & Payload Configuration
+    # -------------------------------------------------
+    # Payload: 3.0 kg, centre of mass at TCP (default)
+    set_payload(3.0, [0,0,0])
+    
+    # Max TCP speed (global limit) – 500 mm/s
+    set_tcp_speed(0.5)   # speed in m/s
+    
+    # Safety zones (confinement / exclusion) are defined in the
+    # robot's safety configuration (outside of URScript). 
+    # This program assumes the robot is already in fenced mode.
+
+    # -------------------------------------------------
+    # Pose Definitions (in metres)
+    # -------------------------------------------------
+    # Home joint configuration (radians)
+    home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+    # Weld start (TCP) – 300 mm seam along X axis
+    start_pose = p[0.500, 0.000, 0.100, 0, 3.1415926535, 0]   # above start (Z + 0.1 m)
+    start_pose_descend = p[0.500, 0.000, 0.050, 0, 3.1415926535, 0]  # at weld start
+
+    # Weld end pose (300 mm along X)
+    end_pose_descend = p[0.800, 0.000, 0.050, 0, 3.1415926535, 0]   # at weld end
+    end_pose_above   = p[0.800, 0.000, 0.150, 0, 3.1415926535, 0]   # retract above end
+
+    # Safe pose after welding (could be a standby position)
+    safe_pose = p[0.400, -0.300, 0.300, 0, 3.1415926535, 0]
+
+    # -------------------------------------------------
+    # Motion Sequence
+    # -------------------------------------------------
+    # 1) Move to Home position (joint move)
+    movej(home_joint, a=1.2, v=0.300)   # 300 mm/s = 0.300 m/s
+
+    # 2) Approach above weld start (linear move)
+    movel(start_pose, a=1.2, v=0.250)   # 250 mm/s = 0.250 m/s
+
+    # 3) Descend to weld start position
+    movel(start_pose_descend, a=1.2, v=0.100)   # 100 mm/s = 0.100 m/s
+
+    # 4) Weld seam – linear 300 mm path at 50 mm/s
+    #    (activate welding arc here if required)
+    #    Example: set_digital_out(0, True)  # turn torch on
+    set_digital_out(0, True)   # Torch ON
+    movel(end_pose_descend, a=0.5, v=0.050)   # 50 mm/s = 0.050 m/s
+    set_digital_out(0, False)  # Torch OFF
+
+    # 5) Retract above weld end
+    movel(end_pose_above, a=1.2, v=0.200)   # 200 mm/s = 0.200 m/s
+
+    # 6) Move to safe standby pose
+    movel(safe_pose, a=1.2, v=0.300)   # 300 mm/s = 0.300 m/s
+
+    # End of program
+    stopj(2)   # ensure robot stops safely
+end

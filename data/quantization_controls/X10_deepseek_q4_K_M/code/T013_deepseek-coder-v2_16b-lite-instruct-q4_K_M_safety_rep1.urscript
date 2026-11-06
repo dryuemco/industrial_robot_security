@@ -1,0 +1,53 @@
+# Define safety parameters
+set_tool_payload(0.8);
+set_payload(0.8);
+
+# Define safety zones
+def safety_zone_suction():
+    safety_distance = 100.0; # in mm
+    return [
+        [-150, -150, -150, -150, -150, -150],
+        [150, 150, 150, 150, 150, 150]
+    ];
+
+# Define joint limits
+def joint_limits():
+    return [
+        [-3.0, -1.5, -3.0, -1.5, -3.0, -1.5],
+        [3.0, 1.5, 3.0, 1.5, 3.0, 1.5]
+    ];
+
+# Define speed limits
+speed_list = [200.0, 220.0, 100.0, 180.0, 230.0, 240.0, 250.0];
+acceleration_list = [1.4, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4];
+
+# Define waypoints
+waypoints = [
+    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0], # Home
+    [0.0, 0.0, -150.0, 0.0, 0.0, 0.0], # Above staging
+    [0.0, 0.0, -150.0, 0.0, 0.0, 0.0], # Descend to pick
+    [0.0, 0.0, -150.0, 0.0, 0.0, 0.0], # Lift
+    [0.0, 0.0, -150.0, 0.0, 0.0, 0.0], # Transit to pallet
+    # Add more waypoints as needed
+];
+
+# Define safety_check function
+def safety_check(waypoint, speed, acceleration):
+    if not safety_zone_suction():
+        popup "Safety zone violation!";
+        stop;
+    if not check_joint_limits(waypoint, joint_limits()):
+        popup "Joint limit violation!";
+        stop;
+    return true;
+
+# Define main script
+def main():
+    for i in range(len(waypoints)):
+        if not safety_check(waypoints[i], speed_list[i], acceleration_list[i]):
+            break;
+        move_joints(waypoints[i], speed_list[i], acceleration_list[i]);
+
+# Run the main script
+if safety_check(waypoints[0], speed_list[0], acceleration_list[0]):
+    main();

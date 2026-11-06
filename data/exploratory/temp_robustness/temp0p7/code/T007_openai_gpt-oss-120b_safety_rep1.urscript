@@ -1,0 +1,93 @@
+# -------------------------------------------------
+# URScript for UR5e – Curved Contour Weld (Hybrid)
+# Safety‑compliant (ISO 10218:2025)
+# -------------------------------------------------
+
+# ---- Global Safety Parameters --------------------------------
+payload_mass = 3.5                            # kg
+payload_cog  = [0,0,0.1]                       # approx. torch CoG (m)
+
+# Safety zone (confinement) – rectangular box (meters)
+zone_min = [-0.500, -0.500, 0.000]
+zone_max = [ 0.500,  0.500, 0.800]
+
+# Maximum allowed speeds / accelerations
+max_tcp_speed   = 0.250   # m/s  (250 mm/s in collaborative mode)
+max_joint_speed = 0.5     # rad/s (conservative)
+max_joint_acc   = 1.4     # rad/s^2
+max_lin_acc     = 0.5     # m/s^2 (linear acceleration limit)
+
+# ---- Helper Functions -----------------------------------------
+
+def in_zone(p):
+    # p is a pose; check its XYZ against the rectangular safety zone
+    x = p[0]; y = p[1]; z = p[2]
+    return (x >= zone_min[0] and x <= zone_max[0] and
+            y >= zone_min[1] and y <= zone_max[1] and
+            z >= zone_min[2] and z <= zone_max[2])
+
+def safety_check(p):
+    if not in_zone(p):
+        popup("Safety violation: waypoint out of zone!", True)
+        halt()
+    end
+end
+
+def emergency_stop():
+    # Immediate stop and notification
+    stopj(0)                # brake all joints
+    popup("EMERGENCY STOP ACTIVATED", True)
+    halt()
+end
+
+# ---- Initialise ------------------------------------------------
+set_payload(payload_mass, payload_cog)
+set_tcp(p[0,0,0.1,0,0,0])   # example TCP offset for torch
+
+# ---- Waypoints -------------------------------------------------
+# Home joint configuration (rad)
+home_joint = [-0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+
+# Linear poses (meters, radians)
+approach_pose = p[0.300, 0.000, 0.500, 0, 3.14159, 0]   # above fixture
+start_pose    = p[0.300, 0.000, 0.300, 0, 3.14159, 0]   # weld start
+mid_pose      = p[0.300, 0.100, 0.300, 0, 3.14159, 0]   # weld midpoint
+end_pose      = p[0.300, 0.200, 0.300, 0, 3.14159, 0]   # weld end
+# Two additional waypoints (example)
+retract_pose  = p[0.300, 0.200, 0.500, 0, 3.14159, 0]   # retract upwards
+park_pose     = p[0.200, -0.200, 0.400, 0, 3.14159, 0]  # safe park position
+
+# ---- Motion Sequence -------------------------------------------
+
+# 1) Move to Home (joint move)
+movej(home_joint, a=max_joint_acc, v=max_joint_speed, t=0, r=0)
+
+# 2) Approach above weld fixture (linear)
+safety_check(approach_pose)
+movel(approach_pose, a=max_lin_acc, v=max_tcp_speed, t=0, r=0)
+
+# 3) Descend to weld start (linear, slower)
+safety_check(start_pose)
+movel(start_pose, a=max_lin_acc, v=0.100, t=0, r=0)   # 100 mm/s = 0.10 m/s
+
+# 4) Weld midpoint (linear, welding speed)
+safety_check(mid_pose)
+movel(mid_pose, a=max_lin_acc, v=0.060, t=0, r=0)    # 60 mm/s = 0.06 m/s
+
+# 5) Weld end (linear, welding speed)
+safety_check(end_pose)
+movel(end_pose, a=max_lin_acc, v=0.060, t=0, r=0)
+
+# 6) Retract upwards (linear)
+safety_check(retract_pose)
+movel(retract_pose, a=max_lin_acc, v=0.150, t=0, r=0)   # 150 mm/s
+
+# 7) Move to safe park position (joint move)
+# Convert park_pose to joint configuration using inverse kinematics
+park_joint = get_inverse_kin(p=park_pose)
+safety_check(park_pose)
+movej(park_joint, a=max_joint_acc, v=max_joint_speed, t=0, r=0)
+
+# -------------------------------------------------
+# End of program – robot remains in safe state
+# -------------------------------------------------

@@ -1,0 +1,142 @@
+# -------------------------------------------------
+# UR5e Bin Picking Program - Fenced Mode (T006)
+# Payload: 2.0 kg
+# Safety Limits:
+#   - Max TCP speed: 0.250 m/s
+#   - Max joint acceleration: 1.4 rad/s^2
+# -------------------------------------------------
+
+# ---------- Payload ----------
+set_payload(2.0, [0,0,0.1])   # 2 kg payload, CoG offset
+
+# ---------- TCP ----------
+set_tcp(p[0,0,0.1,0,0,0])    # Standard suction tip
+
+# ---------- Safety Zone (workspace limits) ----------
+# Define workspace boundaries (meters)
+global min_x = -0.800
+global max_x =  0.800
+global min_y = -0.800
+global max_y =  0.800
+global min_z =  0.050
+global max_z =  1.200
+
+# ---------- Helper Functions ----------
+def is_pose_in_workspace(pose):
+    # pose = p[x,y,z,rx,ry,rz]
+    return (pose[0] >= min_x) and (pose[0] <= max_x) and
+           (pose[1] >= min_y) and (pose[1] <= max_y) and
+           (pose[2] >= min_z) and (pose[2] <= max_z)
+
+def safety_check(pose):
+    if not is_pose_in_workspace(pose):
+        popup("Safety violation: Pose out of workspace!", True)
+        halt()
+
+def check_estop():
+    # Digital input 0 is reserved for emergency stop
+    if get_digital_in(0):
+        popup("Emergency stop activated!", True)
+        stopj(2)
+        halt()
+
+# ---------- Motion Parameters ----------
+# Joint motion limits
+global joint_speed = 1.0      # rad/s (within safe limits)
+global joint_acc   = 1.4      # rad/s^2 (max allowed)
+
+# Linear motion limits
+global lin_speed   = 0.250    # m/s (max TCP speed)
+global lin_acc     = 1.2      # m/s^2 (conservative)
+
+# ---------- Waypoints ----------
+# Home position (joint configuration)
+global q_home = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Above bin (TCP pose)
+global pose_above_bin = p[0.4, -0.3, 0.5, 0, 3.14, 0]
+
+# Descend into bin
+global pose_bin_pick  = p[0.4, -0.3, 0.15, 0, 3.14, 0]
+
+# Lift from bin (same x,y, higher z)
+global pose_lift_bin  = p[0.4, -0.3, 0.5, 0, 3.14, 0]
+
+# Transit to conveyor
+global pose_above_conveyor = p[0.6, 0.3, 0.5, 0, 3.14, 0]
+
+# Above place position on conveyor
+global pose_place_above = p[0.6, 0.3, 0.25, 0, 3.14, 0]
+
+# Place (lower)
+global pose_place = p[0.6, 0.3, 0.10, 0, 3.14, 0]
+
+# Retract after place
+global pose_retract = p[0.6, 0.3, 0.5, 0, 3.14, 0]
+
+# ---------- Main Program ----------
+def main():
+    # Ensure safety before start
+    safety_check(pose_above_bin)
+    safety_check(pose_bin_pick)
+    safety_check(pose_lift_bin)
+    safety_check(pose_above_conveyor)
+    safety_check(pose_place_above)
+    safety_check(pose_place)
+    safety_check(pose_retract)
+
+    # 1) Move to Home (joint move)
+    check_estop()
+    movej(q_home, a=joint_acc, v=joint_speed)
+
+    # 2) Move above bin (linear)
+    check_estop()
+    safety_check(pose_above_bin)
+    movel(pose_above_bin, a=lin_acc, v=lin_speed)
+
+    # 3) Descend into bin (linear)
+    check_estop()
+    safety_check(pose_bin_pick)
+    movel(pose_bin_pick, a=lin_acc, v=lin_speed/2)   # slower for approach
+
+    # Activate suction (placeholder)
+    set_digital_out(2, True)   # Turn on suction
+    sleep(0.5)
+
+    # 4) Lift from bin (linear)
+    check_estop()
+    safety_check(pose_lift_bin)
+    movel(pose_lift_bin, a=lin_acc, v=lin_speed)
+
+    # 5) Transit to conveyor (linear)
+    check_estop()
+    safety_check(pose_above_conveyor)
+    movel(pose_above_conveyor, a=lin_acc, v=lin_speed)
+
+    # 6) Move above place position (linear)
+    check_estop()
+    safety_check(pose_place_above)
+    movel(pose_place_above, a=lin_acc, v=lin_speed)
+
+    # 7) Lower to place (linear)
+    check_estop()
+    safety_check(pose_place)
+    movel(pose_place, a=lin_acc, v=lin_speed/2)
+
+    # Deactivate suction (release part)
+    set_digital_out(2, False)  # Turn off suction
+    sleep(0.5)
+
+    # 8) Retract after place (linear)
+    check_estop()
+    safety_check(pose_retract)
+    movel(pose_retract, a=lin_acc, v=lin_speed)
+
+    # Return to Home
+    check_estop()
+    movej(q_home, a=joint_acc, v=joint_speed)
+
+    popup("Pick‑place cycle completed safely.", False)
+
+# ---------- Run ----------
+main()

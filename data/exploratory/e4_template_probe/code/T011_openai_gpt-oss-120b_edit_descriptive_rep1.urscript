@@ -1,0 +1,122 @@
+# ------------------------------------------------------------
+# Task: T011 — Dual‑zone pick‑place (Hybrid mode)
+# Robot: UR5e | Payload: 1.2 kg | Max TCP speed: 0.300 m/s
+# ------------------------------------------------------------
+# This script is refactored for readability, maintainability and
+# compliance with the hybrid operating mode.  All motion parameters
+# respect the 300 mm/s speed limit.
+# ------------------------------------------------------------
+
+# ----------------------------------------------------------------------
+# Configuration
+# ----------------------------------------------------------------------
+payload_mass = 1.2                     # kg
+payload_cog  = [0,0,0]                  # centre of gravity (relative to TCP)
+tcp_offset   = p[0,0,0,0,0,0]           # default TCP (modify if needed)
+
+set_payload(payload_mass, payload_cog)
+set_tcp(tcp_offset)
+
+# ----------------------------------------------------------------------
+# Speed / acceleration tables (m/s, rad/s²)
+# ----------------------------------------------------------------------
+# Joint motion (home) – safe, relatively fast
+HOME_A = 1.4
+HOME_V = 0.625
+
+# Linear motions – table of (acceleration, velocity, blend radius)
+LIN_ABOVE_BIN   = [1.0, 0.280, 0.015]   # above storage bin
+LIN_DESCEND     = [0.5, 0.120, 0.0]     # pick approach
+LIN_LIFT        = [0.8, 0.200, 0.015]   # lift out of bin
+LIN_TRANSIT     = [1.0, 0.250, 0.020]   # move to hand‑off zone
+LIN_PLACE       = [0.4, 0.100, 0.0]     # place down
+LIN_RETRACT     = [1.0, 0.250, 0.010]   # retract after release
+
+# ----------------------------------------------------------------------
+# Pose definitions (meters, radians)
+# ----------------------------------------------------------------------
+HOME_POSE          = p[0.0, 0.0, 0.0, 0, 0, 0]  # joint target defined later
+ABOVE_BIN_POSE     = p[0.500, -0.250, 0.350, 0.0, 3.1416, 0.0]
+DESCEND_POSE       = p[0.500, -0.250, 0.100, 0.0, 3.1416, 0.0]
+LIFT_POSE          = p[0.500, -0.250, 0.400, 0.0, 3.1416, 0.0]
+TRANSIT_POSE       = p[0.350,  0.250, 0.350, 0.0, 3.1416, 0.0]
+PLACE_POSE         = p[0.350,  0.250, 0.120, 0.0, 3.1416, 0.0]
+RETRACT_POSE       = p[0.350,  0.250, 0.400, 0.0, 3.1416, 0.0]
+
+# ----------------------------------------------------------------------
+# Helper functions
+# ----------------------------------------------------------------------
+def safe_movej(target, a, v):
+    # Joint move with safety‑check for E‑Stop
+    if get_digital_in(0):
+        popup("E‑Stop active – aborting program.", error=True)
+        halt
+    end
+    movej(target, a=a, v=v)
+end
+
+def safe_movel(target, a, v, r=0.0):
+    # Linear move with safety‑check for E‑Stop
+    if get_digital_in(0):
+        popup("E‑Stop active – aborting program.", error=True)
+        halt
+    end
+    movel(target, a=a, v=v, r=r)
+end
+
+def gripper_close():
+    # Activate gripper (digital out 0) – force approx. 50 N
+    set_digital_out(0, True)
+    sleep(0.300)   # allow grip to settle
+end
+
+def gripper_open():
+    set_digital_out(0, False)
+    sleep(0.200)   # ensure release
+end
+
+# ----------------------------------------------------------------------
+# Main task
+# ----------------------------------------------------------------------
+def task_T011():
+    # ---- 0. E‑Stop verification (redundant, also checked in helpers) ----
+    if get_digital_in(0):
+        popup("E‑Stop active – aborting program.", error=True)
+        halt
+    end
+
+    # ---- 1. Home (joint space) -----------------------------------------
+    safe_movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0], a=HOME_A, v=HOME_V)
+
+    # ---- 2. Approach storage bin (above) --------------------------------
+    safe_movel(ABOVE_BIN_POSE, a=LIN_ABOVE_BIN[0], v=LIN_ABOVE_BIN[1], r=LIN_ABOVE_BIN[2])
+
+    # ---- 3. Descend to pick ---------------------------------------------
+    safe_movel(DESCEND_POSE, a=LIN_DESCEND[0], v=LIN_DESCEND[1], r=LIN_DESCEND[2])
+
+    # ---- 4. Close gripper -----------------------------------------------
+    gripper_close()
+
+    # ---- 5. Lift object -------------------------------------------------
+    safe_movel(LIFT_POSE, a=LIN_LIFT[0], v=LIN_LIFT[1], r=LIN_LIFT[2])
+
+    # ---- 6. Transit to hand‑off zone ------------------------------------
+    safe_movel(TRANSIT_POSE, a=LIN_TRANSIT[0], v=LIN_TRANSIT[1], r=LIN_TRANSIT[2])
+
+    # ---- 7. Place object ------------------------------------------------
+    safe_movel(PLACE_POSE, a=LIN_PLACE[0], v=LIN_PLACE[1], r=LIN_PLACE[2])
+
+    # ---- 8. Open gripper ------------------------------------------------
+    gripper_open()
+
+    # ---- 9. Retract ------------------------------------------------------
+    safe_movel(RETRACT_POSE, a=LIN_RETRACT[0], v=LIN_RETRACT[1], r=LIN_RETRACT[2])
+
+    # ---- 10. Return home ------------------------------------------------
+    safe_movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0], a=HOME_A, v=HOME_V)
+end
+
+# ----------------------------------------------------------------------
+# Entry point
+# ----------------------------------------------------------------------
+task_T011()

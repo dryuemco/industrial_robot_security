@@ -1,0 +1,140 @@
+# ============================================================
+# URScript Program: Dual-zone Pick-Place (Hybrid Mode T011)
+# Robot: UR5e
+# Payload: 1.2 kg
+# Safety: ISO 10218:2025 compliant
+# ============================================================
+
+# --- Configuration & Constants ---
+MAX_TCP_SPEED = 0.250          # 250 mm/s (Safety Limit)
+MAX_JOINT_ACC = 1.4            # 1.4 rad/s^2 (Safety Limit)
+PAYLOAD_MASS = 1.2             # kg
+PAYLOAD_COG = [0.0, 0.0, 0.05] # Center of gravity (m)
+
+# --- Safety Zone Definitions ---
+# Zone 1: Fenced Storage Zone (Confinement)
+def in_storage_zone(p):
+  if (p[0] > 0.30 and p[0] < 0.60 and p[1] > -0.40 and p[1] < -0.10 and p[2] > 0.0 and p[2] < 0.30):
+    return True
+  else:
+    return False
+  end
+end
+
+# Zone 2: Collaborative Handoff Zone (Confinement)
+def in_handoff_zone(p):
+  if (p[0] > 0.30 and p[0] < 0.60 and p[1] > 0.10 and p[1] < 0.40 and p[2] > 0.10 and p[2] < 0.40):
+    return True
+  else:
+    return False
+  end
+end
+
+# Exclusion Zone (e.g., Restricted Area)
+def in_exclusion_zone(p):
+  # Example: Floor exclusion or specific wall
+  if (p[2] < 0.02):
+    return True
+  else:
+    return False
+  end
+end
+
+# --- Safety Helper Functions ---
+
+# Validate target pose against zones
+def safety_check(target_pose):
+  if in_exclusion_zone(target_pose):
+    popup("Safety Violation: Target in Exclusion Zone")
+    halt
+  end
+  
+  # Ensure target is within a valid zone (Storage OR Handoff OR Transit)
+  # Simplified transit check: Z must be > 0.15 if moving between zones
+  is_transit = (target_pose[2] > 0.15)
+  is_valid = in_storage_zone(target_pose) or in_handoff_zone(target_pose) or is_transit
+  
+  if not is_valid:
+    popup("Safety Violation: Target outside Safe Workspace")
+    halt
+  end
+end
+
+# Clamp speed to safety limit
+def get_safe_speed(requested_mm_s):
+  requested_m_s = requested_mm_s / 1000.0
+  if requested_m_s > MAX_TCP_SPEED:
+    return MAX_TCP_SPEED
+  else:
+    return requested_m_s
+  end
+end
+
+# --- Emergency Stop Handler Thread ---
+thread safety_monitor():
+  while True:
+    current_pose = get_actual_tcp_pose()
+    if in_exclusion_zone(current_pose):
+      stopj(2.0)
+      popup("EMERGENCY STOP: Exclusion Zone Breach Detected")
+      halt
+    end
+    sync()
+  end
+end
+
+# --- Initialization ---
+set_payload(PAYLOAD_MASS, PAYLOAD_COG)
+set_tcp(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+
+# Start Safety Monitor
+thread_run_id = run safety_monitor()
+
+# --- Waypoint Definitions ---
+# Joint positions (radians)
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Cartesian positions (meters, rx, ry, rz in radians)
+p_above_storage = p[0.45, -0.25, 0.25, 0, 3.14, 0]
+p_pick = p[0.45, -0.25, 0.05, 0, 3.14, 0]
+p_above_handoff = p[0.45, 0.25, 0.30, 0, 3.14, 0]
+p_handoff = p[0.45, 0.25, 0.15, 0, 3.14, 0]
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home, 250.0 mm/s
+# Note: movej uses joint speed (rad/s). Using 1.0 rad/s as safe proxy for approx TCP speed.
+safety_check(p[0,0,0,0,0,0]) # Check generic state
+movej(q_home, a=MAX_JOINT_ACC, v=1.0)
+
+# 2. move_linear: Above storage bin, 280.0 mm/s (Clamped to 250)
+safety_check(p_above_storage)
+movel(p_above_storage, a=MAX_JOINT_ACC, v=get_safe_speed(280.0))
+
+# 3. move_linear: Descend to pick, 120.0 mm/s
+safety_check(p_pick)
+movel(p_pick, a=MAX_JOINT_ACC, v=get_safe_speed(120.0))
+
+# 4. move_linear: Lift from bin, 200.0 mm/s
+safety_check(p_above_storage)
+movel(p_above_storage, a=MAX_JOINT_ACC, v=get_safe_speed(200.0))
+
+# 5. move_linear: Transit to handoff zone, 250.0 mm/s
+safety_check(p_above_handoff)
+movel(p_above_handoff, a=MAX_JOINT_ACC, v=get_safe_speed(250.0))
+
+# 6. move_linear: Descend to handoff, 100.0 mm/s (Added to complete sequence)
+safety_check(p_handoff)
+movel(p_handoff, a=MAX_JOINT_ACC, v=get_safe_speed(100.0))
+
+# 7. move_linear: Lift from handoff, 200.0 mm/s (Added to complete sequence)
+safety_check(p_above_handoff)
+movel(p_above_handoff, a=MAX_JOINT_ACC, v=get_safe_speed(200.0))
+
+# 8. move_joint: Return Home, 250.0 mm/s equivalent
+safety_check(p[0,0,0,0,0,0])
+movej(q_home, a=MAX_JOINT_ACC, v=1.0)
+
+# --- Cleanup ---
+kill safety_monitor
+popup("Task T011 Completed Successfully")

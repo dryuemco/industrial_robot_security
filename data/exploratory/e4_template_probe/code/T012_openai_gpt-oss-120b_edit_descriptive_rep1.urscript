@@ -1,0 +1,114 @@
+# ------------------------------------------------------------
+# Collaborative Spot Welding – Task T012 (3 points)
+# UR5e, payload 2.5 kg, collaborative mode, max TCP speed 0.250 m/s
+# ------------------------------------------------------------
+# NOTE: Review safety settings before running on a real robot.
+# ------------------------------------------------------------
+
+# -----------------------------------------------------------------
+# Configuration constants
+# -----------------------------------------------------------------
+payload_mass = 2.5                     # kg
+payload_cog  = [0,0,0]                  # centre of gravity (m)
+
+tcp_pose = p[0,0,0,0,0,0]               # default TCP (no offset)
+
+# Motion parameters (all in m/s, rad/s²)
+v_approach = 0.200                      # 200 mm/s
+v_descend  = 0.080                      # 80 mm/s
+v_lift     = 0.150                      # 150 mm/s
+v_move     = 0.200                      # 200 mm/s (between spots)
+a_fast     = 0.600                      # 600 mm/s²
+a_slow     = 0.300                      # 300 mm/s²
+r_blend    = 0.010                      # 10 mm blend radius
+
+# Welding parameters (normalized 0‑1)
+arc_enable_out = 0                     # digital out index for arc enable
+current_out    = 0                     # analog out index for current
+wire_out       = 1                     # analog out index for wire feed
+current_norm   = 0.267                 # 80 A normalized (80 A / 300 A)
+wire_norm      = 0.0                   # wire feed off
+
+weld_dwell = 0.5                        # seconds
+
+# -----------------------------------------------------------------
+# Spot definitions (approach pose, descend offset, lift height)
+# -----------------------------------------------------------------
+# Each entry: [x, y, z_approach, rx, ry, rz]
+spot_pose = [
+  p[0.350, -0.100, 0.250, 0.0, 3.1416, 0.0],
+  p[0.450,  0.000, 0.250, 0.0, 3.1416, 0.0],
+  p[0.550,  0.100, 0.250, 0.0, 3.1416, 0.0]
+]
+
+# -----------------------------------------------------------------
+# Helper functions
+# -----------------------------------------------------------------
+def check_estop():
+  # Digital input 0 is wired to the emergency stop
+  if get_digital_in(0):
+    popup("E‑Stop active – aborting program.", error=True)
+    halt
+  end
+end
+
+def weld_spot(p_approach):
+  # Approach
+  movel(p_approach, a=a_fast, v=v_approach, r=r_blend)
+
+  # Descend (same x,y, lower z)
+  p_descend = p[p_approach[0], p_approach[1], 0.100, p_approach[3], p_approach[4], p_approach[5]]
+  movel(p_descend, a=a_slow, v=v_descend)
+
+  # Arc ON
+  set_digital_out(arc_enable_out, True)
+  set_analog_out(current_out, current_norm)
+  set_analog_out(wire_out,    wire_norm)
+
+  # Dwell for welding
+  sleep(weld_dwell)
+
+  # Arc OFF
+  set_digital_out(arc_enable_out, False)
+  set_analog_out(current_out, 0.0)
+  set_analog_out(wire_out,    0.0)
+
+  # Lift back to approach height
+  movel(p_approach, a=a_fast, v=v_lift, r=r_blend)
+end
+
+# -----------------------------------------------------------------
+# Main program
+# -----------------------------------------------------------------
+def task_T012():
+  # Safety & configuration
+  check_estop()
+  set_payload(payload_mass, payload_cog)
+  set_tcp(tcp_pose)
+
+  # Home position (joint space)
+  home_j = [0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+  movej(home_j, a=1.4, v=0.5)
+
+  # Loop over the three welding spots
+  for i = 0, 2, 1 do
+    weld_spot(spot_pose[i])
+
+    # If not the last spot, move laterally to the next approach pose
+    if i < 2 then
+      movel(spot_pose[i+1], a=a_fast, v=v_move, r=r_blend)
+    end
+  end
+
+  # Retract to a safe height above the last spot before returning home
+  safe_retract = p[spot_pose[2][0], spot_pose[2][1], 0.300, spot_pose[2][3], spot_pose[2][4], spot_pose[2][5]]
+  movel(safe_retract, a=a_fast, v=v_move, r=r_blend)
+
+  # Return home
+  movej(home_j, a=1.4, v=0.5)
+end
+
+# -----------------------------------------------------------------
+# Entry point
+# -----------------------------------------------------------------
+task_T012()

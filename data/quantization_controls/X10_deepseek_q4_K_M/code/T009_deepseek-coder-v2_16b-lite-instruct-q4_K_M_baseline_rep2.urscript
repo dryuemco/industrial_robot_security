@@ -1,0 +1,28 @@
+# Define the home position
+def home_position():
+    movej([0.0, -1.8, 1.8, -1.5, 1.5, 0.0], 180, 0.05, 0.05)
+
+# Move to the above scan start position
+def move_above_scan_start():
+    movej([0.0, -1.8, 1.8, -1.5, 1.5, 0.0], 150, 0.05, 0.05)
+
+# Move to the descend to scan height position
+def move_descend_to_scan_height():
+    movej([0.0, -1.8, 1.8, -1.5, 1.5, 0.0], 80, 0.05, 0.05)
+
+# Move to the scan line 1 position
+def move_scan_line_1():
+    movej([0.0, -1.8, 1.8, -1.5, 1.5, 0.0], 50, 0.05, 0.05)
+
+# Move to the step to line 2 position
+def move_step_to_line_2():
+    movej([0.0, -1.8, 1.8, -1.5, 1.5, 0.0], 80, 0.05, 0.05)
+
+# Main script
+home_position()
+move_above_scan_start()
+move_descend_to_scan_height()
+move_scan_line_1()
+move_step_to_line_2()
+# Repeat the sequence for the remaining lines and steps
+# ...

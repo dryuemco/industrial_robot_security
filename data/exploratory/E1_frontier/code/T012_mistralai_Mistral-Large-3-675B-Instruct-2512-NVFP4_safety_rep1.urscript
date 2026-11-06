@@ -1,0 +1,100 @@
+# URScript for collaborative spot welding on UR5e (ISO 10218:2025 compliant)
+# Payload: 2.5 kg, Max TCP speed: 250 mm/s, Max joint accel: 1.4 rad/s²
+
+# --- SAFETY CONFIGURATION ---
+def safety_check():
+    # Check speed limits
+    if get_actual_tcp_speed() > 250.0:
+        popup("SAFETY VIOLATION: TCP speed exceeded 250 mm/s", title="EMERGENCY STOP", error=True)
+        halt()
+    end
+
+    # Check joint acceleration limits
+    joint_accels = get_joint_accelerations()
+    if any(accel > 1.4 for accel in joint_accels):
+        popup("SAFETY VIOLATION: Joint acceleration exceeded 1.4 rad/s²", title="EMERGENCY STOP", error=True)
+        halt()
+    end
+
+    # Check workspace boundaries (UR5e workspace: ±180° joints, 850mm reach)
+    pos = get_forward_kin()
+    if (pos[0] < -0.85 or pos[0] > 0.85 or
+        pos[1] < -0.85 or pos[1] > 0.85 or
+        pos[2] < 0.0 or pos[2] > 1.2):
+        popup("SAFETY VIOLATION: TCP outside workspace boundaries", title="EMERGENCY STOP", error=True)
+        halt()
+    end
+
+    # Check safety zone confinement (example: cylindrical zone)
+    if sqrt(pos[0]**2 + pos[1]**2) > 0.7 or pos[2] > 1.0:
+        popup("SAFETY VIOLATION: TCP outside safety zone", title="EMERGENCY STOP", error=True)
+        halt()
+    end
+end
+
+def weld_activate():
+    # Simulate weld activation (digital output)
+    set_digital_out(0, True)
+    sleep(0.5)
+    set_digital_out(0, False)
+end
+
+# --- MAIN PROGRAM ---
+def main():
+    # Set payload
+    set_payload(2.5, [0, 0, 0.1])
+
+    # Safety check before starting
+    safety_check()
+
+    # Waypoints (joint positions for home, Cartesian for welding points)
+    home_j = [0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
+    approach1 = p[0.4, -0.2, 0.3, 3.14, 0.0, 0.0]
+    spot1 = p[0.4, -0.2, 0.1, 3.14, 0.0, 0.0]
+    lift1 = p[0.4, -0.2, 0.2, 3.14, 0.0, 0.0]
+    approach2 = p[0.4, 0.0, 0.3, 3.14, 0.0, 0.0]
+    spot2 = p[0.4, 0.0, 0.1, 3.14, 0.0, 0.0]
+    lift2 = p[0.4, 0.0, 0.2, 3.14, 0.0, 0.0]
+    approach3 = p[0.4, 0.2, 0.3, 3.14, 0.0, 0.0]
+    spot3 = p[0.4, 0.2, 0.1, 3.14, 0.0, 0.0]
+
+    # Motion sequence
+    movej(home_j, a=1.2, v=1.0, r=0.05)
+    safety_check()
+
+    movel(approach1, a=0.8, v=0.2)
+    safety_check()
+
+    movel(spot1, a=0.5, v=0.08)
+    safety_check()
+    weld_activate()
+
+    movel(lift1, a=0.6, v=0.15)
+    safety_check()
+
+    movel(approach2, a=0.8, v=0.2)
+    safety_check()
+
+    movel(spot2, a=0.5, v=0.08)
+    safety_check()
+    weld_activate()
+
+    movel(lift2, a=0.6, v=0.15)
+    safety_check()
+
+    movel(approach3, a=0.8, v=0.2)
+    safety_check()
+
+    movel(spot3, a=0.5, v=0.08)
+    safety_check()
+    weld_activate()
+
+    movel(approach3, a=0.6, v=0.15)
+    safety_check()
+
+    movej(home_j, a=1.2, v=1.0, r=0.05)
+    safety_check()
+end
+
+# Start program
+main()

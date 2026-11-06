@@ -1,0 +1,101 @@
+def main():
+    # ---- Configuration ----
+    set_payload(1.0, [0,0,0.1])               # Payload 1.0 kg, CoG offset
+    set_tcp(p[0,0,0.1,0,0,0])                 # Tool center point
+    max_speed = 0.25                          # m/s (250 mm/s)
+    approach_speed = 0.20                     # m/s for collaborative approach
+    lift_speed = 0.18                         # m/s for lift
+    fasten_speed = 0.20                       # m/s for fastening (fenced)
+    
+    # ---- Safety Checks ----
+    if get_payload() > 1.0:
+        popup("Payload exceeds safe limit!", True)
+        halt()
+    end
+
+    # ---- Positions (in meters) ----
+    p_home               = p[0.0, -1.57, 1.57, 0.0, 1.57, 0.0]
+    p_above_feeder       = p[0.3, -0.5, 0.5, 0, 3.14, 0]
+    p_pick_screw         = p[0.3, -0.5, 0.2, 0, 3.14, 0]
+    p_lift_from_feeder   = p[0.3, -0.5, 0.5, 0, 3.14, 0]
+    p_above_fp1          = p[0.5, 0.0, 0.4, 0, 3.14, 0]
+    p_above_fp2          = p[0.5, 0.1, 0.4, 0, 3.14, 0]
+    p_above_fp3          = p[0.5, -0.1, 0.4, 0, 3.14, 0]
+    p_above_fp4          = p[0.5, 0.0, 0.4, 0, 3.14, 0]
+
+    # ---- Hybrid Mode Switching Functions ----
+    def set_collaborative():
+        # Collaborative (speed‑scaled) mode
+        set_robot_mode(1)          # Normal mode, speed scaling active
+        set_speed_slider(0.5)      # Allow up to 50 % of max speed
+    end
+
+    def set_fenced():
+        # Fenced (full speed, no scaling) mode
+        set_robot_mode(1)          # Normal mode, speed scaling disabled
+        set_speed_slider(1.0)      # Full speed, safety fence active
+    end
+
+    # ---- Task Sequence ----
+    # 1. Move to Home (joint move, collaborative)
+    set_collaborative()
+    movej(p_home, a=1.4, v=min(approach_speed, max_speed))
+    sync()
+
+    # 2. Move above screw feeder (linear, collaborative)
+    movel(p_above_feeder, a=1.2, v=min(approach_speed, max_speed))
+    sync()
+
+    # 3. Move to pick screw (linear, collaborative)
+    movel(p_pick_screw, a=1.0, v=min(approach_speed, max_speed))
+    sync()
+    # Simulate gripper close (placeholder)
+    set_digital_output(0, True)   # Activate gripper
+    sleep(0.5)
+
+    # 4. Lift from feeder (linear, collaborative)
+    movel(p_lift_from_feeder, a=1.2, v=min(lift_speed, max_speed))
+    sync()
+
+    # ---- Fastening Points (fenced mode) ----
+    set_fenced()
+
+    # 5. Above fastening point 1
+    movel(p_above_fp1, a=1.0, v=min(fasten_speed, max_speed))
+    sync()
+    # Fasten screw (placeholder for screwdriver tool)
+    set_digital_output(1, True)   # Activate screwdriver
+    sleep(1.0)
+    set_digital_output(1, False)
+
+    # 6. Above fastening point 2
+    movel(p_above_fp2, a=1.0, v=min(fasten_speed, max_speed))
+    sync()
+    set_digital_output(1, True)
+    sleep(1.0)
+    set_digital_output(1, False)
+
+    # 7. Above fastening point 3
+    movel(p_above_fp3, a=1.0, v=min(fasten_speed, max_speed))
+    sync()
+    set_digital_output(1, True)
+    sleep(1.0)
+    set_digital_output(1, False)
+
+    # 8. Above fastening point 4
+    movel(p_above_fp4, a=1.0, v=min(fasten_speed, max_speed))
+    sync()
+    set_digital_output(1, True)
+    sleep(1.0)
+    set_digital_output(1, False)
+
+    # Release screw (open gripper)
+    set_digital_output(0, False)
+    sleep(0.5)
+
+    # Return to Home (collaborative)
+    set_collaborative()
+    movej(p_home, a=1.4, v=min(approach_speed, max_speed))
+    sync()
+
+end

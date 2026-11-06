@@ -1,0 +1,42 @@
+def weld_task():
+    # Safety parameters
+    max_tcp_speed = 500.0
+    max_joint_accel = 1.4
+    safety_zone_conf = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]  # Confinement zone
+    safety_zone_excl = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2]  # Exclusion zone
+
+    # Payload setup
+    set_payload(3.0, [0.0, 0.0, 0.0])
+
+    # Home position
+    home_joint_pos = [0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+
+    # Weld path waypoints
+    approach_pos = [0.3, 0.0, 0.3, 0.0, 0.0, 0.0]  # Above weld start
+    start_pos = [0.3, 0.0, 0.1, 0.0, 0.0, 0.0]     # Weld start
+    end_pos = [0.6, 0.0, 0.1, 0.0, 0.0, 0.0]       # Weld end
+    retract_pos = [0.6, 0.0, 0.3, 0.0, 0.0, 0.0]  # Above weld end
+
+    # Safety check before motion
+    if not safety_check(safety_zone_conf, safety_zone_excl):
+        popup("Safety zone violation! Stopping task.")
+        halt()
+
+    # Motion sequence
+    move_j(home_joint_pos, a=max_joint_accel, v=300.0)
+
+    move_l(approach_pos, a=max_joint_accel, v=250.0)
+    move_l(start_pos, a=max_joint_accel, v=100.0)
+
+    # Weld seam (300mm linear path)
+    move_l(end_pos, a=max_joint_accel, v=50.0)
+
+    move_l(retract_pos, a=max_joint_accel, v=200.0)
+    move_j(home_joint_pos, a=max_joint_accel, v=300.0)
+
+    # Emergency stop handler
+    if is_emergency_stopped():
+        popup("Emergency stop activated!")
+        halt()
+
+weld_task()

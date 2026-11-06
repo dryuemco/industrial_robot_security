@@ -1,0 +1,116 @@
+# -------------------------------------------------
+# URScript for UR5e collaborative suction palletizing
+# Payload: 0.8 kg
+# Safety limits: TCP speed ≤ 250 mm/s, joint accel ≤ 1.4 rad/s^2
+# -------------------------------------------------
+
+# ---------- Safety Configuration ----------
+set_payload(0.8, [0,0,0.1])               # payload mass and centre of gravity
+set_joint_acceleration(1.4)               # max joint acceleration (rad/s^2)
+set_tcp_speed(250)                        # max TCP speed (mm/s)
+
+# Define workspace boundaries (meters)
+global min_x = -0.600
+global max_x =  0.600
+global min_y = -0.600
+global max_y =  0.600
+global min_z =  0.050
+global max_z =  0.800
+
+# Emergency stop digital input (e.g., DI0)
+global ESTOP_DI = 0
+
+# ---------- Helper Functions ----------
+def safety_check(p):
+    # p is a pose [x,y,z,rx,ry,rz] in meters/radians
+    if p[0] < min_x or p[0] > max_x or \
+       p[1] < min_y or p[1] > max_y or \
+       p[2] < min_z or p[2] > max_z:
+        popup("Safety violation: waypoint out of workspace!", true, "OK")
+        stopj(0)
+        halt
+    end
+    # check emergency stop
+    if get_digital_in(ESTOP_DI):
+        popup("Emergency stop activated!", true, "OK")
+        stopj(0)
+        halt
+    end
+end
+
+def move_joint_safe(q, v):
+    safety_check(q)
+    movej(q, a=1.4, v=v, r=0.0)
+end
+
+def move_linear_safe(p, v):
+    safety_check(p)
+    movel(p, a=1.2, v=v, r=0.0)
+end
+
+# ---------- Waypoints (poses) ----------
+# All positions are defined in meters (x,y,z) and radians (rx,ry,rz)
+
+# Home position (joint configuration)
+global q_home = [-1.57, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Above staging area (TCP pose)
+global p_above_staging = p[0.300, -0.200, 0.300, 0, 3.14, 0]
+
+# Pick position (descend)
+global p_pick = p[0.300, -0.200, 0.050, 0, 3.14, 0]
+
+# Lift after pick
+global p_lift = p[0.300, -0.200, 0.300, 0, 3.14, 0]
+
+# Transit to pallet (above pallet)
+global p_above_pallet = p[0.000, 0.400, 0.300, 0, 3.14, 0]
+
+# Place position (lower onto pallet)
+global p_place = p[0.000, 0.400, 0.050, 0, 3.14, 0]
+
+# Return to home (via safe joint move)
+# Additional three moves can be added here as needed
+# -------------------------------------------------
+
+# ---------- Main Program ----------
+def main():
+    # Ensure robot is in collaborative mode (already set in UI)
+    # 1) Move to Home
+    move_joint_safe(q_home, v=0.200)          # 200 mm/s → 0.200 m/s joint speed approx.
+
+    # 2) Move above staging area
+    move_linear_safe(p_above_staging, v=0.220) # 220 mm/s
+
+    # 3) Descend to pick
+    move_linear_safe(p_pick, v=0.100)         # 100 mm/s
+
+    # Activate suction (placeholder digital output)
+    set_digital_output(2, True)               # DO2 = suction ON
+    sleep(0.5)                                # wait for suction to engage
+
+    # 4) Lift box
+    move_linear_safe(p_lift, v=0.180)         # 180 mm/s
+
+    # 5) Transit to pallet
+    move_linear_safe(p_above_pallet, v=0.230) # 230 mm/s
+
+    # 6) Lower onto pallet
+    move_linear_safe(p_place, v=0.150)        # 150 mm/s (within limit)
+
+    # Release suction
+    set_digital_output(2, False)              # DO2 = suction OFF
+    sleep(0.3)
+
+    # 7) Retract to above pallet
+    move_linear_safe(p_above_pallet, v=0.180)
+
+    # 8) Return to Home
+    move_joint_safe(q_home, v=0.200)
+
+    # End of sequence
+    popup("Palletizing cycle completed.", false, "OK")
+end
+
+# Run the program
+main()

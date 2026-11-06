@@ -1,0 +1,106 @@
+# -------------------------------------------------
+# URScript for UR5e collaborative palletizing task
+# Payload: 0.8 kg
+# Safety: ISO 10218:2025 compliant
+# -------------------------------------------------
+
+# ---- Configuration -------------------------------------------------
+set_payload(0.8, [0,0,0.1])               # mass (kg) and centre of mass (m)
+set_tcp([0,0,0.1, 0,0,0])                # TCP offset (m) for suction cup
+
+# Safety zone definition (xmin, xmax, ymin, ymax, zmin, zmax) in meters
+safety_zone = {
+  "xmin": -0.6, "xmax": 0.6,
+  "ymin": -0.6, "ymax": 0.6,
+  "zmin": 0.0,  "zmax": 0.8
+}
+
+# Maximum allowed speeds/accelerations
+MAX_TCP_SPEED      = 0.250   # m/s (250 mm/s)
+MAX_JOINT_ACCEL    = 1.4     # rad/s^2
+DEFAULT_JOINT_ACC  = 1.2     # rad/s^2 (safe margin)
+DEFAULT_CART_ACC   = 0.8     # m/s^2 (safe margin)
+
+# ---- Helper Functions ------------------------------------------------
+def within_zone(p):
+    # p can be a pose (list of 6) or a joint position (list of 7)
+    if isinstance(p, list) and len(p) == 6:
+        x = p[0]; y = p[1]; z = p[2]
+        return (safety_zone["xmin"] <= x <= safety_zone["xmax"] and
+                safety_zone["ymin"] <= y <= safety_zone["ymax"] and
+                safety_zone["zmin"] <= z <= safety_zone["zmax"])
+    else:
+        # joint positions are assumed safe after validation elsewhere
+        return True
+
+def safety_check(pose):
+    if not within_zone(pose):
+        popup("Safety violation: target pose outside allowed zone!", True)
+        halt()
+    end
+
+def emergency_stop_handler():
+    # This function is called on any script error
+    popup("Emergency stop triggered!", True)
+    stopj(0)      # immediate stop
+    halt()
+end
+
+# Register error handler
+set_error_handler("default", "emergency_stop_handler")
+
+# ---- Waypoints -------------------------------------------------------
+home_joint          = [-1.5708, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]   # rad
+above_staging_pose  = p[0.0, -0.3, 0.4, 0, 3.14, 0]                        # m, rad
+pick_pose           = p[0.0, -0.3, 0.15, 0, 3.14, 0]                       # m, rad
+lift_pose           = p[0.0, -0.3, 0.4, 0, 3.14, 0]                        # m, rad
+pallet_pose         = p[0.4, 0.0, 0.4, 0, 3.14, 0]                         # m, rad
+place_pose          = p[0.4, 0.0, 0.15, 0, 3.14, 0]                        # m, rad
+retreat_pose        = p[0.4, 0.0, 0.5, 0, 3.14, 0]                         # m, rad
+
+# ---- Motion Sequence -------------------------------------------------
+def main():
+    # Move 1: Joint move to Home
+    safety_check(home_joint)
+    movej(home_joint, a=DEFAULT_JOINT_ACC, v=0.200)   # 200 mm/s = 0.200 m/s
+
+    # Move 2: Linear above staging area
+    safety_check(above_staging_pose)
+    movel(above_staging_pose, a=DEFAULT_CART_ACC, v=0.220)  # 220 mm/s
+
+    # Move 3: Descend to pick
+    safety_check(pick_pose)
+    movel(pick_pose, a=DEFAULT_CART_ACC, v=0.100)          # 100 mm/s
+
+    # Activate suction (placeholder)
+    set_digital_out(0, True)   # suction ON
+
+    # Move 4: Lift the box
+    safety_check(lift_pose)
+    movel(lift_pose, a=DEFAULT_CART_ACC, v=0.180)          # 180 mm/s
+
+    # Move 5: Transit to pallet
+    safety_check(pallet_pose)
+    movel(pallet_pose, a=DEFAULT_CART_ACC, v=0.230)        # 230 mm/s
+
+    # Move 6: Lower to place
+    safety_check(place_pose)
+    movel(place_pose, a=DEFAULT_CART_ACC, v=0.150)         # 150 mm/s
+
+    # Deactivate suction (release box)
+    set_digital_out(0, False)  # suction OFF
+
+    # Move 7: Retreat upwards
+    safety_check(retreat_pose)
+    movel(retreat_pose, a=DEFAULT_CART_ACC, v=0.200)       # 200 mm/s
+
+    # Move 8: Return to Home
+    safety_check(home_joint)
+    movej(home_joint, a=DEFAULT_JOINT_ACC, v=0.200)        # 200 mm/s
+
+    popup("Task completed successfully.", False)
+end
+
+# -------------------------------------------------
+# Start program
+main()

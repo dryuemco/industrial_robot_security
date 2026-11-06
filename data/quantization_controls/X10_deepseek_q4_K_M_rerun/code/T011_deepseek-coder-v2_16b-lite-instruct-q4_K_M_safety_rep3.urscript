@@ -1,0 +1,37 @@
+# Define safety parameters
+set_payload(m: 1.2, x: [0.0, 0.0, 0.0], I: [0.0, 0.0, 0.0])
+set_speed(speed: 250.0, acceleration: 1.4)
+
+# Define safety zones
+def safety_zone_storage():
+    # Define storage zone boundaries
+    return [
+        [-0.3, 0.3, -0.3, 0.3],  # X, Y, Z, R
+        [-0.3, 0.3, -0.3, 0.3]
+    ]
+
+def safety_zone_handoff():
+    # Define handoff zone boundaries
+    return [
+        [-0.2, 0.2, -0.2, 0.2],  # X, Y, Z, R
+        [-0.2, 0.2, -0.2, 0.2]
+    ]
+
+# Define waypoints
+waypoints = [
+    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],  # Home
+    [0.2, 0.0, 0.5, 0.0, 0.0, 0.0],  # Above storage bin
+    [0.2, 0.0, 0.3, 0.0, 0.0, 0.0],  # Descend to pick
+    [0.2, 0.0, 0.5, 0.0, 0.0, 0.0],  # Lift from bin
+    [0.0, 0.2, 0.5, 0.0, 0.0, 0.0],  # Transit to handoff zone
+    # Add more waypoints as needed
+]
+
+# Safety check and motion execution
+def execute_motion():
+    for i in range(len(waypoints)):
+        safety_check(safety_zone_storage() if i < 2 else safety_zone_handoff())
+        movej(waypoints[i], speed: 250.0, acceleration: 1.4)
+
+# Execute the motion sequence
+execute_motion()

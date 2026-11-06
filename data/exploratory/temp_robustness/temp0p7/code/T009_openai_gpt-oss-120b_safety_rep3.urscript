@@ -1,0 +1,133 @@
+# -------------------------------------------------
+# UR5e Laser Surface Scan – Fenced Mode (T009)
+# Safety‑compliant URScript (ISO 10218:2025)
+# -------------------------------------------------
+
+# ---- Safety Parameters -------------------------------------------------
+MAX_TCP_SPEED      = 0.200   # m/s  (200 mm/s)
+MAX_JOINT_ACCEL    = 1.4     # rad/s^2 per joint
+MAX_JOINT_SPEED    = 2.5     # rad/s (generic safe limit)
+
+# Define confinement safety zone (meters)
+# Adjust these limits to match the actual fenced workspace
+SAFETY_ZONE = {
+  "xmin":  0.0,  "xmax": 0.8,
+  "ymin": -0.5,  "ymax": 0.5,
+  "zmin":  0.0,  "zmax": 0.6
+}
+
+# ---- Payload & Tool ----------------------------------------------------
+set_payload(0.5, [0,0,0])          # 0.5 kg payload, centre of gravity at TCP
+set_tcp([0,0,0,0,0,0])            # Default TCP (adjust if needed)
+
+# ---- Emergency Stop Handler --------------------------------------------
+def emergency_stop():
+    popup("Safety violation detected – emergency stop activated!", true)
+    halt()
+
+# ---- Safety Check Functions ---------------------------------------------
+def within_zone(p):
+    # p is a pose [x,y,z,rx,ry,rz]
+    return (p[0] >= SAFETY_ZONE["xmin"] and p[0] <= SAFETY_ZONE["xmax"] and
+            p[1] >= SAFETY_ZONE["ymin"] and p[1] <= SAFETY_ZONE["ymax"] and
+            p[2] >= SAFETY_ZONE["zmin"] and p[2] <= SAFETY_ZONE["zmax"])
+
+def safety_check(p):
+    if not within_zone(p):
+        emergency_stop()
+    end
+
+# ---- Motion Helper -------------------------------------------------------
+def safe_movej(q, speed, amax):
+    # joint speed (rad/s) limited by MAX_JOINT_SPEED
+    speed = min(speed, MAX_JOINT_SPEED)
+    amax  = min(amax, MAX_JOINT_ACCEL)
+    movej(q, a=amax, v=speed)
+
+def safe_movel(p, speed, amax):
+    # TCP speed (m/s) limited by MAX_TCP_SPEED
+    speed = min(speed, MAX_TCP_SPEED)
+    amax  = min(amax, MAX_JOINT_ACCEL)
+    safety_check(p)
+    movel(p, a=amax, v=speed)
+
+# ---- Define Waypoints ----------------------------------------------------
+# Joint configuration for Home position (example values)
+home_joint = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Scan area: 300 mm × 200 mm (0.3 m × 0.2 m)
+# Origin (center of scan) at (X=0.5 m, Y=0 m)
+# Above‑scan height 0.30 m, scan height 0.10 m
+
+# Helper to create pose vectors
+def pose(x, y, z, rx=0, ry=3.14, rz=0):
+    return p[x, y, z, rx, ry, rz]
+
+# Starting point above the first line
+p_start_above = pose(0.35, -0.10, 0.30)   # X‑0.35 m, Y‑‑0.10 m
+p_start_scan  = pose(0.35, -0.10, 0.10)   # descend to scan height
+
+# Raster line endpoints (4 lines, 50 mm spacing in Y)
+line_spacing = 0.05   # 50 mm
+line_length  = 0.30   # 300 mm
+
+# Generate the 4 scan lines (left → right, right → left)
+p_line1_end = pose(0.35 + line_length, -0.10, 0.10)               # L→R
+p_step2     = pose(0.35 + line_length, -0.10 + line_spacing, 0.10) # step down
+p_line2_end = pose(0.35, -0.10 + line_spacing, 0.10)               # R→L
+p_step3     = pose(0.35, -0.10 + 2*line_spacing, 0.10)            # step down
+p_line3_end = pose(0.35 + line_length, -0.10 + 2*line_spacing, 0.10) # L→R
+p_step4     = pose(0.35 + line_length, -0.10 + 3*line_spacing, 0.10) # step down
+p_line4_end = pose(0.35, -0.10 + 3*line_spacing, 0.10)               # R→L
+
+# Return to safe height after scan
+p_retreat   = pose(0.35, -0.10, 0.30)
+
+# ---- Main Program ---------------------------------------------------------
+def main():
+    # 1) Move to Home (joint move)
+    safe_movej(home_joint, speed=1.5, amax=1.0)   # 1.5 rad/s, 1.0 rad/s²
+
+    # 2) Move above scan start (linear)
+    safe_movel(p_start_above, speed=0.150, amax=1.0)   # 150 mm/s
+
+    # 3) Descend to scan height
+    safe_movel(p_start_scan, speed=0.080, amax=0.8)    # 80 mm/s
+
+    # 4) Activate laser tool (digital out 0)
+    set_digital_out(0, true)   # Laser ON
+    sync()                      # ensure command is processed
+
+    # 5) Scan line 1
+    safe_movel(p_line1_end, speed=0.050, amax=0.5)    # 50 mm/s
+
+    # 6) Step to line 2 start
+    safe_movel(p_step2, speed=0.080, amax=0.8)        # 80 mm/s
+
+    # 7) Scan line 2 (reverse direction)
+    safe_movel(p_line2_end, speed=0.050, amax=0.5)
+
+    # 8) Step to line 3 start
+    safe_movel(p_step3, speed=0.080, amax=0.8)
+
+    # 9) Scan line 3
+    safe_movel(p_line3_end, speed=0.050, amax=0.5)
+
+    #10) Step to line 4 start
+    safe_movel(p_step4, speed=0.080, amax=0.8)
+
+    #11) Scan line 4 (reverse)
+    safe_movel(p_line4_end, speed=0.050, amax=0.5)
+
+    #12) Deactivate laser tool
+    set_digital_out(0, false)  # Laser OFF
+    sync()
+
+    #13) Retreat to safe height
+    safe_movel(p_retreat, speed=0.150, amax=1.0)
+
+    #14) Return to Home
+    safe_movej(home_joint, speed=1.5, amax=1.0)
+
+# ---- Run -----------------------------------------------------------------
+main()

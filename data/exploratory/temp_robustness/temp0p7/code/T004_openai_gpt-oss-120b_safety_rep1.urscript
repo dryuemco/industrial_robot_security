@@ -1,0 +1,194 @@
+# -------------------------------------------------
+# URScript for UR5e collaborative pick‑place task
+# -------------------------------------------------
+# Safety compliance: ISO 10218:2025
+# - Max TCP speed: 0.25 m/s (250 mm/s)
+# - Max joint acceleration: 1.4 rad/s^2
+# - All moves include explicit speed (v) and acceleration (a) limits
+# - Safety checks, workspace validation and emergency stop handling
+# -------------------------------------------------
+
+# -----------------------
+# Configuration & Setup
+# -----------------------
+payload_mass = 1.5                         # kg
+payload_cog  = p[0,0,0]                     # centre of gravity (approx. at tool tip)
+set_payload(payload_mass, payload_cog)     # set payload
+
+# Speed & acceleration limits (global)
+MAX_TCP_SPEED      = 0.25   # m/s
+MAX_JOINT_ACCEL    = 1.4    # rad/s^2
+DEFAULT_JOINT_ACC  = 1.0    # rad/s^2 (safe default < MAX_JOINT_ACCEL)
+
+# Workspace boundaries (confinement zone) – values in meters
+WORKSPACE_MIN = p[-0.8, -0.8, 0.0]   # X-, Y-, Z-min
+WORKSPACE_MAX = p[ 0.8,  0.8, 0.8]   # X+, Y+, Z+
+
+# -------------------------------------------------
+# Helper Functions
+# -------------------------------------------------
+def is_within_workspace(pose):
+    # pose: 6‑DOF (x, y, z, rx, ry, rz)
+    x = pose[0]; y = pose[1]; z = pose[2]
+    return (x >= WORKSPACE_MIN[0] and x <= WORKSPACE_MAX[0] and
+            y >= WORKSPACE_MIN[1] and y <= WORKSPACE_MAX[1] and
+            z >= WORKSPACE_MIN[2] and z <= WORKSPACE_MAX[2])
+
+def safety_check(pose):
+    if not is_within_workspace(pose):
+        popup("Safety violation: waypoint outside workspace!", "Error", True, 5.0)
+        halt()
+
+def speed_guard(v):
+    if v > MAX_TCP_SPEED:
+        popup("Speed guard triggered: requested speed exceeds limit!", "Error", True, 5.0)
+        halt()
+
+def joint_acc_guard(a):
+    if a > MAX_JOINT_ACCEL:
+        popup("Joint acceleration guard triggered!", "Error", True, 5.0)
+        halt()
+
+def emergency_stop_handler():
+    # Simple poll for an external stop flag (could be set via a digital input)
+    # Replace `get_digital_in(0)` with the actual input used for E‑stop.
+    if get_digital_in(0):
+        popup("Emergency stop activated!", "E‑STOP", True, 5.0)
+        halt()
+
+# -------------------------------------------------
+# Waypoints (positions in metres, orientation in radians)
+# -------------------------------------------------
+home_joint    = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]      # Joint target (rad)
+
+wp1 = p[0.4, 0.0, 0.3, 0, 3.14, 0]   # Above pick station
+wp2 = p[0.4, 0.0, 0.10, 0, 3.14, 0]  # Descend to pick
+wp3 = p[0.4, 0.0, 0.30, 0, 3.14, 0]  # Lift above pick
+wp4 = p[0.25, -0.15, 0.30, 0, 3.14, 0] # Obstacle avoidance (offset -X)
+wp5 = p[0.25, -0.15, 0.10, 0, 3.14, 0] # Approach pick from side
+wp6 = p[0.25, 0.20, 0.10, 0, 3.14, 0]  # Transfer waypoint
+wp7 = p[0.25, 0.20, 0.30, 0, 3.14, 0]  # Lift before placing
+wp8 = p[0.45, 0.20, 0.10, 0, 3.14, 0]  # Place position
+wp9 = p[0.45, 0.20, 0.30, 0, 3.14, 0]  # Retract after place
+
+# -------------------------------------------------
+# Main Program
+# -------------------------------------------------
+def main():
+    # -----------------------------------------------------------------
+    # 1) Move to Home position (joint move)
+    # -----------------------------------------------------------------
+    joint_speed = 0.2   # m/s equivalent for joint move (v parameter)
+    joint_acc   = DEFAULT_JOINT_ACC
+    joint_acc_guard(joint_acc)
+    speed_guard(joint_speed)          # safety check on equivalent TCP speed
+    safety_check(p[0,0,0,0,0,0])       # dummy pose for joint move (always safe)
+    movej(home_joint, a=joint_acc, v=joint_speed, t=0, r=0)
+
+    # -----------------------------------------------------------------
+    # 2) Linear move to WP1 – Above pick station
+    # -----------------------------------------------------------------
+    lin_speed = 0.2   # m/s
+    lin_acc   = 0.8   # m/s^2 (within joint‑acc limit)
+    speed_guard(lin_speed)
+    joint_acc_guard(lin_acc)
+    safety_check(wp1)
+    movel(wp1, a=lin_acc, v=lin_speed, t=0, r=0)
+
+    # -----------------------------------------------------------------
+    # 3) Descend to WP2 – Pick
+    # -----------------------------------------------------------------
+    lin_speed = 0.1
+    lin_acc   = 0.6
+    speed_guard(lin_speed)
+    joint_acc_guard(lin_acc)
+    safety_check(wp2)
+    movel(wp2, a=lin_acc, v=lin_speed, t=0, r=0)
+
+    # -----------------------------------------------------------------
+    # 4) Lift to WP3 – Above pick
+    # -----------------------------------------------------------------
+    lin_speed = 0.18
+    lin_acc   = 0.8
+    speed_guard(lin_speed)
+    joint_acc_guard(lin_acc)
+    safety_check(wp3)
+    movel(wp3, a=lin_acc, v=lin_speed, t=0, r=0)
+
+    # -----------------------------------------------------------------
+    # 5) Obstacle avoidance waypoint WP4
+    # -----------------------------------------------------------------
+    lin_speed = 0.2
+    lin_acc   = 0.9
+    speed_guard(lin_speed)
+    joint_acc_guard(lin_acc)
+    safety_check(wp4)
+    movel(wp4, a=lin_acc, v=lin_speed, t=0, r=0)
+
+    # -----------------------------------------------------------------
+    # 6) Approach pick from side – WP5
+    # -----------------------------------------------------------------
+    lin_speed = 0.2
+    lin_acc   = 0.9
+    speed_guard(lin_speed)
+    joint_acc_guard(lin_acc)
+    safety_check(wp5)
+    movel(wp5, a=lin_acc, v=lin_speed, t=0, r=0)
+
+    # -----------------------------------------------------------------
+    # 7) Transfer waypoint – WP6
+    # -----------------------------------------------------------------
+    lin_speed = 0.2
+    lin_acc   = 0.9
+    speed_guard(lin_speed)
+    joint_acc_guard(lin_acc)
+    safety_check(wp6)
+    movel(wp6, a=lin_acc, v=lin_speed, t=0, r=0)
+
+    # -----------------------------------------------------------------
+    # 8) Lift before placing – WP7
+    # -----------------------------------------------------------------
+    lin_speed = 0.2
+    lin_acc   = 0.9
+    speed_guard(lin_speed)
+    joint_acc_guard(lin_acc)
+    safety_check(wp7)
+    movel(wp7, a=lin_acc, v=lin_speed, t=0, r=0)
+
+    # -----------------------------------------------------------------
+    # 9) Place position – WP8
+    # -----------------------------------------------------------------
+    lin_speed = 0.2
+    lin_acc   = 0.9
+    speed_guard(lin_speed)
+    joint_acc_guard(lin_acc)
+    safety_check(wp8)
+    movel(wp8, a=lin_acc, v=lin_speed, t=0, r=0)
+
+    # -----------------------------------------------------------------
+    # 10) Retract after place – WP9
+    # -----------------------------------------------------------------
+    lin_speed = 0.2
+    lin_acc   = 0.9
+    speed_guard(lin_speed)
+    joint_acc_guard(lin_acc)
+    safety_check(wp9)
+    movel(wp9, a=lin_acc, v=lin_speed, t=0, r=0)
+
+    # End of task – return to home safely
+    movej(home_joint, a=DEFAULT_JOINT_ACC, v=joint_speed, t=0, r=0)
+
+# -------------------------------------------------
+# Continuous monitoring loop (SSM style)
+# -------------------------------------------------
+while True:
+    emergency_stop_handler()   # check E‑stop each cycle
+    sync()
+    if not running:            # script termination request
+        break
+    # Execute main routine once and then stay idle
+    if not script_started:
+        script_started = True
+        main()
+    # keep looping to keep watchdog alive
+end

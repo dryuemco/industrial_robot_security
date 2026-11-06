@@ -1,0 +1,141 @@
+# URScript for UR5e collaborative visual inspection scan
+# ----------------------------------------------------
+# Safety configuration (ISO 10218:2025 compliance)
+
+# Payload definition
+set_payload(0.3, {0,0,0})   # 0.3 kg payload, CoM at TCP
+
+# Joint acceleration limit (rad/s^2)
+set_joint_acceleration(1.4)
+
+# Maximum allowed TCP speed in collaborative mode (m/s)
+max_tcp_speed = 0.250
+
+# Safety zone (confinement) – rectangular workspace in robot base frame (meters)
+safety_zone = {
+  "xmin": -0.800, "xmax":  0.800,
+  "ymin": -0.800, "ymax":  0.800,
+  "zmin":  0.000, "zmax":  1.200
+}
+
+# Emergency stop digital input (DI0)
+estop_input = 0
+
+# -----------------------------------------------------------------
+# Helper functions
+# -----------------------------------------------------------------
+def within_workspace(p):
+    # p is a pose (list of 6 values)
+    x = p[0]; y = p[1]; z = p[2];
+    return (x > safety_zone["xmin"] and x < safety_zone["xmax"] and
+            y > safety_zone["ymin"] and y < safety_zone["ymax"] and
+            z > safety_zone["zmin"] and z < safety_zone["zmax"])
+
+def safety_check(p, v):
+    # Verify pose inside workspace
+    if not within_workspace(p):
+        popup("Safety violation: waypoint outside allowed zone.", "ERROR", true)
+        halt()
+    # Verify TCP speed limit
+    if v > max_tcp_speed:
+        popup("Safety violation: requested speed exceeds max TCP speed.", "ERROR", true)
+        halt()
+    # Verify emergency stop
+    if get_digital_in(estop_input):
+        popup("Emergency stop activated!", "E‑STOP", true)
+        halt()
+
+def monitor_estop():
+    # Continuous monitoring of the emergency stop input
+    if get_digital_in(estop_input):
+        popup("Emergency stop triggered! Halting program.", "E‑STOP", true)
+        halt()
+
+# -----------------------------------------------------------------
+# Main program
+# -----------------------------------------------------------------
+def main():
+    # -----------------------------------------------------------------
+    # 1. Home position (joint move)
+    # -----------------------------------------------------------------
+    home_joints = [0, -1.57, 1.57, 0, 1.57, 0]   # radians
+    # Joint speed 150 mm/s -> convert to rad/s (approx 0.5 rad/s for UR5e)
+    joint_speed = 0.5
+    movej(home_joints, a=1.4, v=joint_speed, t=0, r=0)
+
+    # -----------------------------------------------------------------
+    # 2. Approach inspection start – above surface
+    # -----------------------------------------------------------------
+    # Define pose: 200 mm above part centre, camera pointing downwards
+    # TCP orientation: downwards (rotation about X by pi)
+    approach_pose = pose_trans(p[0], p[1], p[2])   # placeholder, will be replaced below
+    # For clarity we construct the pose explicitly:
+    approach_pose = p[0:6]  # dummy init to avoid syntax error
+    approach_pose = pose_trans([0,0,0.200], rot_x(pi))   # 200 mm above origin, camera down
+
+    safety_check(approach_pose, 0.130)   # speed 130 mm/s = 0.130 m/s
+    movel(approach_pose, a=0.5, v=0.130, t=0, r=0)
+
+    # -----------------------------------------------------------------
+    # 3. Descend to scan height (150 mm above part)
+    # -----------------------------------------------------------------
+    scan_height_pose = pose_trans([0,0,0.150], rot_x(pi))
+    safety_check(scan_height_pose, 0.080)
+    movel(scan_height_pose, a=0.5, v=0.080, t=0, r=0)
+
+    # -----------------------------------------------------------------
+    # 4. Scan line 1 – Y sweep (200 mm length)
+    # -----------------------------------------------------------------
+    line1_end = pose_trans([0,0.200,0.150], rot_x(pi))
+    safety_check(line1_end, 0.050)
+    movel(line1_end, a=0.5, v=0.050, t=0, r=0)
+
+    # -----------------------------------------------------------------
+    # 5. Step to scan line 2 (+X offset 66 mm)
+    # -----------------------------------------------------------------
+    step_to_line2 = pose_trans([0.066,0.200,0.150], rot_x(pi))
+    safety_check(step_to_line2, 0.080)
+    movel(step_to_line2, a=0.5, v=0.080, t=0, r=0)
+
+    # -----------------------------------------------------------------
+    # 6. Scan line 2 – Y sweep back (reverse direction)
+    # -----------------------------------------------------------------
+    line2_end = pose_trans([0.066,0.000,0.150], rot_x(pi))
+    safety_check(line2_end, 0.050)
+    movel(line2_end, a=0.5, v=0.050, t=0, r=0)
+
+    # -----------------------------------------------------------------
+    # 7. Step to scan line 3 (+X offset 66 mm)
+    # -----------------------------------------------------------------
+    step_to_line3 = pose_trans([0.132,0.000,0.150], rot_x(pi))
+    safety_check(step_to_line3, 0.080)
+    movel(step_to_line3, a=0.5, v=0.080, t=0, r=0)
+
+    # -----------------------------------------------------------------
+    # 8. Scan line 3 – Y sweep forward
+    # -----------------------------------------------------------------
+    line3_end = pose_trans([0.132,0.200,0.150], rot_x(pi))
+    safety_check(line3_end, 0.050)
+    movel(line3_end, a=0.5, v=0.050, t=0, r=0)
+
+    # -----------------------------------------------------------------
+    # 9. Retract to safe height (300 mm above part)
+    # -----------------------------------------------------------------
+    retract_pose = pose_trans([0.132,0.200,0.300], rot_x(pi))
+    safety_check(retract_pose, 0.130)
+    movel(retract_pose, a=0.5, v=0.130, t=0, r=0)
+
+    # -----------------------------------------------------------------
+    # 10. Return to home position
+    # -----------------------------------------------------------------
+    movej(home_joints, a=1.4, v=joint_speed, t=0, r=0)
+
+    popup("Inspection scan completed safely.", "INFO", false)
+
+# -----------------------------------------------------------------
+# Run the program with continuous e‑stop monitoring
+# -----------------------------------------------------------------
+while True:
+    monitor_estop()
+    main()
+    break   # exit after one execution; remove if continuous looping is desired

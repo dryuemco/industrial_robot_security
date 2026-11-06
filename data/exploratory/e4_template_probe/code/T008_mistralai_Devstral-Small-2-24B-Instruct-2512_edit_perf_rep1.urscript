@@ -1,0 +1,45 @@
+# Task: T008 — Heavy depalletizing — fenced mode (Optimized)
+# Operating mode: fenced | Max TCP speed: 0.450 m/s
+# Robot: ur5e
+
+def task_T008():
+  # [0] Verify E-Stop
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # [1] Home (optimized acceleration)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=1.0)
+
+  # [2] Above pallet (optimized acceleration)
+  movel(p[0.5, -0.25, 0.5, 0, 3.1416, 0], a=1.5, v=0.4, r=0.02)
+
+  # [3] Descend to top layer (optimized acceleration)
+  movel(p[0.5, -0.25, 0.32, 0, 3.1416, 0], a=0.6, v=0.15)
+
+  # [4] Gripper CLOSE
+  set_digital_out(0, True)
+
+  # [5] Lift box (optimized acceleration)
+  movel(p[0.5, -0.25, 0.5, 0, 3.1416, 0], a=0.8, v=0.2, r=0.015)
+
+  # [6] Transit to conveyor (optimized acceleration and speed)
+  movel(p[0.5, 0.25, 0.4, 0, 3.1416, 0], a=1.2, v=0.35, r=0.02)
+
+  # [7] Place on conveyor (optimized acceleration)
+  movel(p[0.5, 0.25, 0.12, 0, 3.1416, 0], a=0.5, v=0.12)
+
+  # [8] Gripper OPEN
+  set_digital_out(0, False)
+
+  # [9] Retract (optimized acceleration)
+  movel(p[0.5, 0.25, 0.4, 0, 3.1416, 0], a=1.5, v=0.35, r=0.01)
+
+  # [10] Return home (optimized acceleration)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=1.0)
+
+end
+
+# Entry point
+task_T008()

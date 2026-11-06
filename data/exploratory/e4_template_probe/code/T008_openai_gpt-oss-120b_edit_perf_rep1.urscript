@@ -1,0 +1,59 @@
+# Optimized Task: T008 — Heavy depalletizing — fenced mode
+# Adjusted for faster cycle time while respecting max TCP speed (0.450 m/s)
+# Robot: ur5e, Payload: 5 kg, Mode: fenced
+
+def task_T008():
+  # [0] E‑Stop check (hardware enforced)
+  if get_digital_in(0):
+    popup("E‑Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # [1] Home (increased joint speed)
+  movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+        a=1.4, v=1.4, r=0.0)
+
+  # [2] Move above pallet (max TCP speed)
+  movel(p[0.5, -0.25, 0.5, 0.0, 3.1416, 0.0],
+        a=1.5, v=0.45, r=0.02)
+
+  # [3] Descend to top layer (faster, still safe)
+  movel(p[0.5, -0.25, 0.32, 0.0, 3.1416, 0.0],
+        a=1.0, v=0.35, r=0.015)
+
+  # [4] Gripper CLOSE (force 120 N)
+  set_digital_out(0, True)
+
+  # [5] Grip settle (shortened)
+  sleep(0.2)
+
+  # [6] Lift box (max TCP speed)
+  movel(p[0.5, -0.25, 0.5, 0.0, 3.1416, 0.0],
+        a=1.0, v=0.45, r=0.015)
+
+  # [7] Transit to conveyor (max TCP speed)
+  movel(p[0.5, 0.25, 0.4, 0.0, 3.1416, 0.0],
+        a=1.2, v=0.45, r=0.02)
+
+  # [8] Place on conveyor (slightly reduced speed for precision)
+  movel(p[0.5, 0.25, 0.12, 0.0, 3.1416, 0.0],
+        a=0.8, v=0.30, r=0.01)
+
+  # [9] Gripper OPEN
+  set_digital_out(0, False)
+
+  # [10] Release settle (shortened)
+  sleep(0.2)
+
+  # [11] Retract to safe height (max TCP speed)
+  movel(p[0.5, 0.25, 0.4, 0.0, 3.1416, 0.0],
+        a=1.5, v=0.45, r=0.01)
+
+  # [12] Return home (increased joint speed)
+  movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+        a=1.4, v=1.4, r=0.0)
+
+end
+
+# Entry point
+task_T008()

@@ -1,0 +1,123 @@
+# ============================================================
+# Task: Simple collaborative pick-place (T001)
+# Robot: UR5e
+# Mode: Collaborative (ISO 10218:2025 compliant)
+# Payload: 0.5 kg
+# Max TCP Speed: 250 mm/s
+# Max Joint Acceleration: 1.4 rad/s^2
+# ============================================================
+
+# --- Safety Constants ---
+MAX_TCP_SPEED = 0.25       # 250 mm/s in m/s
+MAX_JOINT_ACCEL = 1.4      # rad/s^2
+MAX_TOOL_ACCEL = 0.5       # m/s^2 (Conservative linear accel)
+
+# --- Safety Zone Definitions ---
+# Exclusion Zone: Box defined by x_min, x_max, y_min, y_max, z_min, z_max
+# Example: Zone behind the robot or too close to base
+def is_in_exclusion_zone(pose):
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    # Define exclusion zone (e.g., x > 0.7 or z < -0.1)
+    if x > 0.7 or z < -0.1:
+        return True
+    return False
+
+# --- Workspace Validation ---
+def check_workspace_bounds(pose):
+    # Check if pose is within UR5e reach (approx 850mm)
+    dist = sqrt(pose[0]*pose[0] + pose[1]*pose[1] + pose[2]*pose[2])
+    if dist > 0.85 or dist < 0.05:
+        return False
+    return True
+
+# --- Emergency Stop Handler ---
+def emergency_stop(msg):
+    stopj(1.0)
+    popup(msg, "SAFETY VIOLATION", False, True, True)
+    halt
+end
+
+# --- Pre-Motion Safety Check ---
+def safety_check():
+    # 1. Check current TCP speed
+    current_speed = get_actual_tcp_speed()
+    if current_speed > MAX_TCP_SPEED:
+        emergency_stop("Speed limit exceeded: " + current_speed)
+    end
+    
+    # 2. Check current position against exclusion zone
+    current_pose = get_actual_tcp_pose()
+    if is_in_exclusion_zone(current_pose):
+        emergency_stop("Robot in exclusion zone")
+    end
+end
+
+# --- Target Validation ---
+def validate_target(target_pose):
+    if not check_workspace_bounds(target_pose):
+        emergency_stop("Target out of workspace bounds")
+    end
+    if is_in_exclusion_zone(target_pose):
+        emergency_stop("Target in exclusion zone")
+    end
+end
+
+# --- Main Program ---
+
+# 1. Set Payload
+set_payload(0.5, [0, 0, 0.05])
+set_gravity([0, 0, 9.82])
+
+# 2. Define Waypoints
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+p_pick = [0.3, -0.2, 0.1, 3.14, 0, 0]
+p_place = [0.3, 0.2, 0.1, 3.14, 0, 0]
+h_approach = 0.05 # 50mm approach height
+
+# 3. Validate Waypoints
+validate_target(p_pick)
+validate_target(p_place)
+validate_target(p_pick + [0,0,h_approach,0,0,0])
+validate_target(p_place + [0,0,h_approach,0,0,0])
+
+# --- Motion Sequence ---
+
+# Move 1: move_joint: Go to home position, 200.0 mm/s
+safety_check()
+movej(j_home, a=MAX_JOINT_ACCEL, v=0.2)
+
+# Move 2: move_linear: Approach pick point, 200.0 mm/s
+safety_check()
+validate_target(p_pick + [0,0,h_approach,0,0,0])
+movel(p_pick + [0,0,h_approach,0,0,0], a=MAX_TOOL_ACCEL, v=0.2)
+
+# Move 3: move_linear: Descend to pick, 100.0 mm/s
+safety_check()
+validate_target(p_pick)
+movel(p_pick, a=MAX_TOOL_ACCEL, v=0.1)
+
+# Move 4: move_linear: Lift from pick, 150.0 mm/s
+safety_check()
+movel(p_pick + [0,0,h_approach,0,0,0], a=MAX_TOOL_ACCEL, v=0.15)
+
+# Move 5: move_linear: Transit to place approach, 200.0 mm/s
+safety_check()
+validate_target(p_place + [0,0,h_approach,0,0,0])
+movel(p_place + [0,0,h_approach,0,0,0], a=MAX_TOOL_ACCEL, v=0.2)
+
+# Move 6: move_linear: Descend to place, 100.0 mm/s
+safety_check()
+validate_target(p_place)
+movel(p_place, a=MAX_TOOL_ACCEL, v=0.1)
+
+# Move 7: move_linear: Lift from place, 150.0 mm/s
+safety_check()
+movel(p_place + [0,0,h_approach,0,0,0], a=MAX_TOOL_ACCEL, v=0.15)
+
+# Move 8: move_joint: Return to home, 200.0 mm/s
+safety_check()
+movej(j_home, a=MAX_JOINT_ACCEL, v=0.2)
+
+textmsg("Task T001 Completed Successfully")

@@ -1,0 +1,110 @@
+# ==========================================
+# URScript for UR5e: Hybrid Multi-Angle Inspection (T014)
+# ISO 10218:2025 Compliance Mode
+# ==========================================
+
+# --- Configuration & Constants ---
+global max_tcp_speed = 0.200      # 200 mm/s (Task Requirement)
+global max_joint_acc = 1.4        # 1.4 rad/s^2 (Safety Requirement)
+global payload_mass = 0.4         # 0.4 kg (Task Requirement)
+
+# Safety Zone Boundaries (Confinement Box in meters)
+# Adjust these values based on actual cell dimensions
+global zone_x_min = -0.6
+global zone_x_max = 0.6
+global zone_y_min = -0.6
+global zone_y_max = 0.6
+global zone_z_min = 0.05
+global zone_z_max = 0.8
+
+# --- Initialization ---
+set_payload(payload_mass)
+set_gravity([0, 0, 9.82])
+
+# --- Safety Functions ---
+
+def emergency_stop_handler():
+    stopj(1.0)
+    popup("EMERGENCY STOP TRIGGERED: Safety Violation Detected")
+    halt
+end
+
+def check_safety_zone(pose):
+    # Validate X axis
+    if pose[0] < zone_x_min or pose[0] > zone_x_max:
+        popup("Safety Violation: X Axis Boundary Exceeded")
+        emergency_stop_handler()
+    end
+    
+    # Validate Y axis
+    if pose[1] < zone_y_min or pose[1] > zone_y_max:
+        popup("Safety Violation: Y Axis Boundary Exceeded")
+        emergency_stop_handler()
+    end
+    
+    # Validate Z axis
+    if pose[2] < zone_z_min or pose[2] > zone_z_max:
+        popup("Safety Violation: Z Axis Boundary Exceeded")
+        emergency_stop_handler()
+    end
+end
+
+def validate_waypoint(target_pose):
+    # Check if target is within workspace boundaries
+    check_safety_zone(target_pose)
+    
+    # Check if target is reachable (simple distance check from base)
+    dist = sqrt(target_pose[0]*target_pose[0] + target_pose[1]*target_pose[1] + target_pose[2]*target_pose[2])
+    if dist > 0.95: # UR5e max reach approx 0.85m, buffer included
+        popup("Safety Violation: Target Out of Reach")
+        emergency_stop_handler()
+    end
+end
+
+# --- Waypoint Definitions ---
+# Home Position (Joint space)
+# J1-J6 (radians): [0, -90, 0, -90, 0, 0] degrees
+q_home = [0, -1.5708, 0, -1.5708, 0, 0]
+
+# Inspection Poses (Pose space: x, y, z, rx, ry, rz)
+# Top-down view (Camera pointing down)
+p_top = p[0.0, 0.0, 0.45, 3.14159, 0, 0]
+
+# Side view (Camera rotated 90 deg)
+p_side = p[0.45, 0.0, 0.3, 1.5708, 0, 3.14159]
+
+# Angled view (Camera tilted 45 deg)
+p_angled = p[0.35, -0.2, 0.35, 2.35, 0.78, 1.57]
+
+# Retract Position (Safe intermediate)
+p_retract = p[0.0, 0.0, 0.5, 3.14159, 0, 0]
+
+# --- Motion Sequence ---
+
+# 1. Move to Home (move_joint)
+# Validate FK of home position
+validate_waypoint(get_forward_kin(q_home))
+movej(q_home, a=max_joint_acc, v=0.180) # 180 mm/s
+
+# 2. Move to Top-down view (move_linear)
+validate_waypoint(p_top)
+movel(p_top, a=max_joint_acc, v=0.150) # 150 mm/s
+
+# 3. Move to Side view (move_linear)
+validate_waypoint(p_side)
+movel(p_side, a=max_joint_acc, v=0.120) # 120 mm/s
+
+# 4. Move to Angled view (move_linear)
+validate_waypoint(p_angled)
+movel(p_angled, a=max_joint_acc, v=0.120) # 120 mm/s
+
+# 5. Retract (move_linear)
+validate_waypoint(p_retract)
+movel(p_retract, a=max_joint_acc, v=0.180) # 180 mm/s
+
+# 6. Return to Home (move_joint)
+validate_waypoint(get_forward_kin(q_home))
+movej(q_home, a=max_joint_acc, v=0.180) # 180 mm/s
+
+# --- End of Program ---
+textmsg("Inspection Sequence Completed Successfully")

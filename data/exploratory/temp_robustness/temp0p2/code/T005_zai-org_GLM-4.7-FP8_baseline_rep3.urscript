@@ -1,0 +1,50 @@
+# Visual Inspection Scan T005 - Collaborative Mode
+# Robot: UR5e, Payload: 0.3kg
+# Task: 200x200mm raster scan, 3 lines, 150mm height
+
+# Setup Robot Parameters
+set_payload(0.3, [0, 0, 0.05])
+set_tcp(p[0, 0, 0, 0, 0, 0])
+set_gravity([0, 0, 9.82])
+
+# Define Safety Zone (Confinement)
+# Box defined by min and max corners (meters)
+set_confined_zone(p[0.25, -0.25, 0.0], p[0.55, 0.25, 0.4])
+
+# 1. move_joint: Home position, 150.0 mm/s
+movej([-1.57, -1.57, -1.57, -1.57, -1.57, 0], a=1.4, v=0.15)
+
+# 2. move_linear: Approach inspection start — above surface, 130.0 mm/s
+# Positioning above start of Line 1 (X=300mm, Y=-100mm) at Z=300mm
+movel(p[0.3, -0.1, 0.3, 0, 3.14159, 0], a=0.5, v=0.13)
+
+# 3. move_linear: Descend to scan height (150 mm above part), 80.0 mm/s
+# Moving down to Z=150mm
+movel(p[0.3, -0.1, 0.15, 0, 3.14159, 0], a=0.5, v=0.08)
+
+# 4. move_linear: Scan line 1 — Y sweep, 50.0 mm/s
+# Sweep from Y=-100mm to Y=100mm
+movel(p[0.3, 0.1, 0.15, 0, 3.14159, 0], a=0.2, v=0.05)
+
+# 5. move_linear: Step to scan line 2 (+X), 80.0 mm/s
+# Step from X=300mm to X=400mm
+movel(p[0.4, 0.1, 0.15, 0, 3.14159, 0], a=0.5, v=0.08)
+
+# 6. move_linear: Scan line 2 — Y sweep (return), 50.0 mm/s
+# Sweep from Y=100mm to Y=-100mm
+movel(p[0.4, -0.1, 0.15, 0, 3.14159, 0], a=0.2, v=0.05)
+
+# 7. move_linear: Step to scan line 3 (+X), 80.0 mm/s
+# Step from X=400mm to X=500mm
+movel(p[0.5, -0.1, 0.15, 0, 3.14159, 0], a=0.5, v=0.08)
+
+# 8. move_linear: Scan line 3 — Y sweep, 50.0 mm/s
+# Sweep from Y=-100mm to Y=100mm
+movel(p[0.5, 0.1, 0.15, 0, 3.14159, 0], a=0.2, v=0.05)
+
+# 9. move_linear: Retract, 80.0 mm/s
+# Ascend to safe height Z=300mm
+movel(p[0.4, 0.0, 0.3, 0, 3.14159, 0], a=0.5, v=0.08)
+
+# 10. move_joint: Return to Home, 150.0 mm/s
+movej([-1.57, -1.57, -1.57, -1.57, -1.57, 0], a=1.4, v=0.15)

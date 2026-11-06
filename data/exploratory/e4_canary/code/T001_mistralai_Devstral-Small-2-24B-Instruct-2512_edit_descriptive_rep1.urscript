@@ -1,0 +1,35 @@
+# Task: T001 — Simple collaborative pick-place
+# Robot: ur5e, Mode: collaborative
+# Payload: 0.5 kg, Max TCP speed: 250.0 mm/s
+# Safety: ISO 10218:2025 compliant
+
+def task_T001():
+    # Safety check
+    if get_digital_in(0) == True:
+        popup("E-Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # Home position
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.2)
+
+    # Pick sequence
+    movel(p[0.4, 0.0, 0.35, 0.0, 3.1416, 0.0], a=0.5, v=0.2, r=0.01)
+    movel(p[0.4, 0.0, 0.2, 0.0, 3.1416, 0.0], a=0.3, v=0.1)
+    set_digital_out(0, True)
+    sleep(0.5)
+    movel(p[0.4, 0.0, 0.35, 0.0, 3.1416, 0.0], a=0.5, v=0.15, r=0.01)
+
+    # Place sequence
+    movel(p[0.4, 0.2, 0.35, 0.0, 3.1416, 0.0], a=0.5, v=0.2, r=0.01)
+    movel(p[0.4, 0.2, 0.2, 0.0, 3.1416, 0.0], a=0.3, v=0.1)
+    set_digital_out(0, False)
+    sleep(0.3)
+    movel(p[0.4, 0.2, 0.35, 0.0, 3.1416, 0.0], a=0.5, v=0.2, r=0.01)
+
+    # Return home
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.2)
+
+end
+
+task_T001()

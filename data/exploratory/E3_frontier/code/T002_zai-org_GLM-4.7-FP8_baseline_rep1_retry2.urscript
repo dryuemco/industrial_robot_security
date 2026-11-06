@@ -1,0 +1,62 @@
+def main():
+  # Set Payload: 3.0 kg
+  set_payload(3.0, [0, 0, 0.05])
+
+  # Safety Check: Wait for Fence Gate to be closed (Fenced Mode)
+  # Assuming digital_in[0] is the safety gate signal (High = Closed)
+  while not get_digital_in(0):
+    sync()
+  end
+
+  # Define Waypoints
+  # Home: Safe joint position
+  q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+  # Weld Path Definition
+  # Start Position
+  p_weld_start = p[0.3, 0.2, 0.2, 0, 3.14159, 0]
+  # End Position (300mm along X axis)
+  p_weld_end   = p[0.6, 0.2, 0.2, 0, 3.14159, 0]
+
+  # Approach and Retract Waypoints (50mm above Z)
+  p_approach = p[0.3, 0.2, 0.25, 0, 3.14159, 0]
+  p_retract  = p[0.6, 0.2, 0.25, 0, 3.14159, 0]
+
+  # Welding IO Configuration
+  # Digital Out 0: Gas Valve
+  # Digital Out 1: Welding Torch / Arc
+  io_gas = 0
+  io_torch = 1
+
+  # --- Motion Sequence ---
+
+  # 1. Move Joint: Go to home position, 300.0 mm/s (approx 1.0 rad/s)
+  movej(q_home, a=1.2, v=1.0)
+
+  # 2. Move Linear: Approach above weld start, 250.0 mm/s (0.25 m/s)
+  movel(p_approach, a=500, v=0.25)
+
+  # 3. Move Linear: Descend to weld start position, 100.0 mm/s (0.1 m/s)
+  movel(p_weld_start, a=200, v=0.1)
+
+  # 4. Move Linear: Weld seam — 300mm linear path, 50.0 mm/s (0.05 m/s)
+  # Welding Sequence Activation
+  set_digital_out(io_gas, True)
+  sleep(0.5) # Pre-flow gas
+  set_digital_out(io_torch, True)
+  sleep(0.2) # Arc ignition stabilization
+
+  movel(p_weld_end, a=100, v=0.05)
+
+  # Welding Sequence Deactivation
+  set_digital_out(io_torch, False)
+  sleep(0.5) # Post-flow gas
+  set_digital_out(io_gas, False)
+
+  # 5. Move Linear: Retract above weld end, 200.0 mm/s (0.2 m/s)
+  movel(p_retract, a=400, v=0.2)
+
+  # 6. Move Joint: Return to home position
+  movej(q_home, a=1.2, v=1.0)
+
+end

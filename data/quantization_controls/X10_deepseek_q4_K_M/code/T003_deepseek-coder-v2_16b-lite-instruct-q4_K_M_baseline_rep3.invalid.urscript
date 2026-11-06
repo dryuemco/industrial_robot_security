@@ -1,0 +1,21 @@
+# Home position
+movej p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], v100, z10, fine=False
+
+# Approach conveyor pick above
+movej p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], v250, z10, fine=False
+movel p[0.0, 0.0, -50.0, 0.0, 0.0, 0.0], v250, z10, a=300.0, fine=False
+
+# Descend to pick
+movel p[0.0, 0.0, -100.0, 0.0, 0.0, 0.0], v100, z10, fine=False
+
+# Lift from conveyor
+movel p[0.0, 0.0, -200.0, 0.0, 0.0, 0.0], v200, z10, fine=False
+
+# Transit to pallet position (0,0)
+movej p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], v280, z10, fine=False
+movel p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], v280, z10, a=300.0, fine=False
+
+# Place at (0,0)
+movej p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], v100, z10, fine=False
+
+# Additional moves for the 2x2 grid pattern can be added here...

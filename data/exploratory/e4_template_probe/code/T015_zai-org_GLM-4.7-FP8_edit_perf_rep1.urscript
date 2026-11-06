@@ -1,0 +1,53 @@
+# Task: T015 — Laser marking — fenced mode (Optimized)
+# Robot: ur5e | Max TCP speed: 0.400 m/s
+# Optimization: Increased speeds/accelerations, laser toggling for fast transitions
+
+def task_T015():
+  # [0] E-Stop verify
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+  
+  # [1] Home - Increased joint velocity and acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=3.0, v=2.5)
+  
+  # [2] Above marking surface - Max TCP speed
+  movel(p[0.400000, -0.080000, 0.200000, 0.0000, 3.1416, 0.0000], a=2.0, v=0.4, r=0.01)
+  
+  # [3] Descend to marking height - Increased speed
+  movel(p[0.400000, -0.080000, 0.100000, 0.0000, 3.1416, 0.0000], a=1.0, v=0.4, r=0.0)
+  
+  # [4] Mark Line 1 - Max marking speed
+  set_digital_out(3, True)
+  movel(p[0.500000, -0.080000, 0.100000, 0.0000, 3.1416, 0.0000], a=1.0, v=0.4, r=0.002)
+  
+  # [5] Step to line 2 - Laser OFF for fast joint move
+  set_digital_out(3, False)
+  movej(p[0.500000, 0.000000, 0.100000, 0.0000, 3.1416, 0.0000], a=3.0, v=2.0, r=0.0)
+  
+  # [6] Mark line 2 reverse - Max marking speed
+  set_digital_out(3, True)
+  movel(p[0.400000, 0.000000, 0.100000, 0.0000, 3.1416, 0.0000], a=1.0, v=0.4, r=0.002)
+  
+  # [7] Step to line 3 - Laser OFF for fast joint move
+  set_digital_out(3, False)
+  movej(p[0.400000, 0.080000, 0.100000, 0.0000, 3.1416, 0.0000], a=3.0, v=2.0, r=0.0)
+  
+  # [8] Mark line 3 - Max marking speed
+  set_digital_out(3, True)
+  movel(p[0.500000, 0.080000, 0.100000, 0.0000, 3.1416, 0.0000], a=1.0, v=0.4, r=0.002)
+  
+  # [9] Laser OFF
+  set_digital_out(3, False)
+  
+  # [10] Retract - Max TCP speed
+  movel(p[0.450000, 0.000000, 0.300000, 0.0000, 3.1416, 0.0000], a=2.0, v=0.4, r=0.01)
+  
+  # [11] Return home - Increased joint velocity and acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=3.0, v=2.5)
+  
+end
+
+# Entry point
+task_T015()

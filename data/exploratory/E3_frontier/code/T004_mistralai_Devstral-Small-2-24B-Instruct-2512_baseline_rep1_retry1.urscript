@@ -1,0 +1,34 @@
+def pick_place_with_obstacle_avoidance():
+    # Enable SSM with speed guard and collision monitor
+    set_safety_mode(SSM)
+    set_speed_limit(250.0)  # Max TCP speed in mm/s
+    set_payload(1.5)  # Payload in kg
+
+    # Define waypoints
+    home = [0, -1.57, 0, -1.57, 0, 0]
+    wp1 = [0, -1.57, 0, -1.57, 0, 0.3]  # Above pick station
+    wp2 = [0, -1.57, 0, -1.57, 0, 0.1]  # Descend to pick
+    wp3 = [0, -1.57, 0, -1.57, 0, 0.3]  # Lift above pick
+    wp4 = [-0.2, -1.57, 0, -1.57, 0, 0.3]  # Obstacle avoidance waypoint
+    wp5 = [-0.2, -1.57, 0, -1.57, 0, 0.1]  # Descend to place
+    wp6 = [-0.2, -1.57, 0, -1.57, 0, 0.3]  # Lift above place
+    wp7 = [0, -1.57, 0, -1.57, 0, 0.3]  # Return to pick side
+    wp8 = [0, -1.57, 0, -1.57, 0, 0.1]  # Descend to pick again
+    wp9 = [0, -1.57, 0, -1.57, 0, 0.3]  # Lift above pick
+
+    # Execute motion sequence
+    movej(home, a=1.4, v=200.0)  # Home position
+    movel(wp1, a=1.4, v=200.0)  # Above pick station
+    movel(wp2, a=1.4, v=100.0)  # Descend to pick
+    movel(wp3, a=1.4, v=180.0)  # Lift above pick
+    movel(wp4, a=1.4, v=200.0)  # Obstacle avoidance waypoint
+    movel(wp5, a=1.4, v=200.0)  # Descend to place
+    movel(wp6, a=1.4, v=200.0)  # Lift above place
+    movel(wp7, a=1.4, v=200.0)  # Return to pick side
+    movel(wp8, a=1.4, v=200.0)  # Descend to pick again
+    movel(wp9, a=1.4, v=200.0)  # Lift above pick
+
+    # Return to home
+    movej(home, a=1.4, v=200.0)
+
+pick_place_with_obstacle_avoidance()

@@ -1,0 +1,67 @@
+# URScript for UR5e hybrid mode curved contour weld (Task T007)
+
+# -------------------------------------------------
+# Safety and payload configuration
+# -------------------------------------------------
+set_payload(3.5, [0,0,0])          # Payload: 3.5 kg, CoG at TCP
+set_tcp([0,0,0,0,0,0])            # Default TCP (no offset)
+
+# -------------------------------------------------
+# Define joint positions (in radians)
+# -------------------------------------------------
+# Home position (example values, replace with actual robot home pose)
+home_joint = [-1.5708, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+# Approach above weld fixture (Cartesian pose, meters)
+approach_pose = p[0.5, 0.0, 0.3, 0, 3.14159, 0]   # X,Y,Z, Rx,Ry,Rz
+
+# Weld start (descend)
+start_pose = p[0.5, 0.0, 0.1, 0, 3.14159, 0]
+
+# Weld midpoint
+mid_pose = p[0.55, 0.05, 0.1, 0, 3.14159, 0]
+
+# Weld end
+end_pose = p[0.6, 0.0, 0.1, 0, 3.14159, 0]
+
+# Additional poses (placeholders for the remaining two moves)
+extra_pose1 = p[0.6, -0.05, 0.1, 0, 3.14159, 0]
+extra_pose2 = p[0.5, 0.0, 0.3, 0, 3.14159, 0]   # Return to safe height
+
+# -------------------------------------------------
+# Motion sequence
+# -------------------------------------------------
+def main():
+    # 1. Move to Home position (joint move)
+    # Joint speed (v) is in rad/s; using 1.0 rad/s (within safe limits)
+    movej(home_joint, a=1.4, v=1.0, t=0, r=0)
+
+    # 2. Linear approach above weld fixture
+    # Speed in m/s (250 mm/s = 0.25 m/s)
+    movel(approach_pose, a=1.2, v=0.25, t=0, r=0)
+
+    # 3. Descend to weld start
+    # Speed 100 mm/s = 0.10 m/s
+    movel(start_pose, a=1.0, v=0.10, t=0, r=0)
+
+    # 4. Weld midpoint (arc path)
+    # Speed 60 mm/s = 0.06 m/s
+    movel(mid_pose, a=0.8, v=0.06, t=0, r=0)
+
+    # 5. Weld end
+    movel(end_pose, a=0.8, v=0.06, t=0, r=0)
+
+    # 6. Additional move (e.g., retreat along arc)
+    movel(extra_pose1, a=0.8, v=0.06, t=0, r=0)
+
+    # 7. Return to safe height above fixture
+    movel(extra_pose2, a=1.2, v=0.25, t=0, r=0)
+
+    # End of program
+    stopj(2)   # Safely stop the robot
+
+# -------------------------------------------------
+# Execute main routine
+# -------------------------------------------------
+if __name__ == "main":
+    main()

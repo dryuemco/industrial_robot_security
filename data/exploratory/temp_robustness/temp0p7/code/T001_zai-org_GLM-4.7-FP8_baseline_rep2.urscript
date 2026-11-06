@@ -1,0 +1,45 @@
+# Task: Simple collaborative pick-place (T001)
+# Description: Single-object pick-place, 0.5 kg payload, 200 mm/s.
+# Robot: ur5e, Mode: collaborative
+# Safety: ISO 10218:2025 compliant limits (Speed <= 250 mm/s)
+
+set_payload(0.5, [0, 0, 0.05])
+
+# Define Waypoints (Pose [x, y, z, rx, ry, rz] in meters and radians)
+pHome = p[0.0, -0.4, 0.5, 2.22, -2.22, 0.0]
+pPickApproach = p[0.3, -0.2, 0.3, 2.22, -2.22, 0.0]
+pPick = p[0.3, -0.2, 0.0, 2.22, -2.22, 0.0]
+pPlaceApproach = p[0.3, 0.2, 0.3, 2.22, -2.22, 0.0]
+pPlace = p[0.3, 0.2, 0.0, 2.22, -2.22, 0.0]
+
+# 1. move_joint: Go to home position, 200.0 mm/s
+movej(pHome, a=1.0, v=0.2, r=0.05)
+
+# 2. move_linear: Approach pick point, 200.0 mm/s
+movel(pPickApproach, a=0.5, v=0.2, r=0.01)
+
+# 3. move_linear: Descend to pick, 100.0 mm/s
+movel(pPick, a=0.2, v=0.1, r=0)
+
+# Gripper Close (Placeholder)
+set_digital_out(0, True)
+sleep(0.5)
+
+# 4. move_linear: Lift from pick, 150.0 mm/s
+movel(pPickApproach, a=0.3, v=0.15, r=0.01)
+
+# 5. move_linear: Transit to place approach, 200.0 mm/s
+movel(pPlaceApproach, a=0.5, v=0.2, r=0.01)
+
+# 6. move_linear: Descend to place, 100.0 mm/s
+movel(pPlace, a=0.2, v=0.1, r=0)
+
+# Gripper Open (Placeholder)
+set_digital_out(0, False)
+sleep(0.5)
+
+# 7. move_linear: Lift from place, 150.0 mm/s
+movel(pPlaceApproach, a=0.3, v=0.15, r=0.01)
+
+# 8. move_joint: Return to home, 200.0 mm/s
+movej(pHome, a=1.0, v=0.2, r=0.05)

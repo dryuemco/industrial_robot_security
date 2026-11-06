@@ -1,0 +1,88 @@
+# -------------------------------------------------
+# URScript for UR5e collaborative palletizing task
+# -------------------------------------------------
+# Safety configuration
+MAX_TCP_SPEED   = 0.250   # m/s (250 mm/s)
+MAX_JOINT_ACC   = 1.4     # rad/s^2 per joint
+SAFETY_ZONE_MIN = p[0.200, -0.500, 0.000, 0, 0, 0]   # lower corner (m)
+SAFETY_ZONE_MAX = p[0.800,  0.500, 1.200, 0, 0, 0]   # upper corner (m)
+
+# Payload definition (light cardboard box)
+set_payload(0.8, [0,0,0.1])   # 0.8 kg, centre of gravity 10 cm above TCP
+
+# -------------------------------------------------
+# Helper functions
+# -------------------------------------------------
+def within_zone(pose):
+    # Check if pose position is inside the defined safety box
+    return (pose[0] >= SAFETY_ZONE_MIN[0] and pose[0] <= SAFETY_ZONE_MAX[0] and
+            pose[1] >= SAFETY_ZONE_MIN[1] and pose[1] <= SAFETY_ZONE_MAX[1] and
+            pose[2] >= SAFETY_ZONE_MIN[2] and pose[2] <= SAFETY_ZONE_MAX[2])
+end
+
+def safety_check(pose):
+    # Abort if pose is outside safety zone
+    if not within_zone(pose) then
+        popup("Safety violation: target pose outside allowed zone!", true, "Error")
+        halt()
+    end
+    # Ensure TCP speed limit is respected (handled by caller)
+    # Additional checks (e.g., force, proximity) could be added here
+end
+
+def e_stop():
+    # Emergency stop handler – stops motion and alerts operator
+    popup("EMERGENCY STOP ACTIVATED!", true, "Stop")
+    stopj(0)          # immediate joint stop
+    halt()
+end
+
+# -------------------------------------------------
+# Motion definitions (all speeds ≤ 0.250 m/s, accel ≤ 1.4 rad/s²)
+# -------------------------------------------------
+# 1) Home position (joint move)
+home_jointtarget = [-0.0, -1.57, 0.0, -1.57, 0.0, 0.0]   # rad
+movej(home_jointtarget, a=MAX_JOINT_ACC, v=0.2)   # 200 mm/s
+
+# 2) Above staging area (linear move)
+above_staging = p[0.400, 0.0, 0.300, 0, 3.14, 0]   # example pose (m, rad)
+safety_check(above_staging)
+movel(above_staging, a=MAX_JOINT_ACC, v=0.22)    # 220 mm/s
+
+# 3) Descend to pick (linear move)
+pick_pose = p[0.400, 0.0, 0.050, 0, 3.14, 0]      # 50 mm above table
+safety_check(pick_pose)
+movel(pick_pose, a=MAX_JOINT_ACC, v=0.10)        # 100 mm/s
+
+# 4) Lift after pick (linear move)
+lift_pose = p[0.400, 0.0, 0.300, 0, 3.14, 0]      # back to above staging
+safety_check(lift_pose)
+movel(lift_pose, a=MAX_JOINT_ACC, v=0.18)        # 180 mm/s
+
+# 5) Transit to pallet (linear move)
+pallet_pose = p[0.600, -0.300, 0.300, 0, 3.14, 0] # above pallet location
+safety_check(pallet_pose)
+movel(pallet_pose, a=MAX_JOINT_ACC, v=0.23)      # 230 mm/s
+
+# 6) Descend to place on pallet
+place_pose = p[0.600, -0.300, 0.050, 0, 3.14, 0]  # place height
+safety_check(place_pose)
+movel(place_pose, a=MAX_JOINT_ACC, v=0.12)       # 120 mm/s
+
+# 7) Release suction (placeholder – actual I/O command)
+set_digital_out(0, False)   # deactivate suction cup
+
+# 8) Lift after release
+movel(pallet_pose, a=MAX_JOINT_ACC, v=0.18)      # 180 mm/s
+
+# -------------------------------------------------
+# End of program – return to home safely
+# -------------------------------------------------
+movej(home_jointtarget, a=MAX_JOINT_ACC, v=0.20)
+
+# -------------------------------------------------
+# Register emergency stop handler (user button or external signal)
+# -------------------------------------------------
+def on_stop():
+    e_stop()
+end

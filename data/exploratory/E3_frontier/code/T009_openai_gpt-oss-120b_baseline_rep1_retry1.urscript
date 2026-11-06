@@ -1,0 +1,91 @@
+# URScript for UR5e – Laser surface scan (fenced mode)
+# Payload and TCP definition
+set_payload(0.5, [0,0,0.1])               # 0.5 kg payload, CoG offset 100 mm in Z
+set_tcp(p[0,0,0.1,0,0,0])                # Tool centre point 100 mm along Z
+
+# Enable fenced (confinement) safety mode
+set_fence_mode()                         # Activate fenced mode (confinement)
+
+# Speed scaling (optional, keep at 100 % for this task)
+set_speed_slider(1.0)
+
+# ----------------------------------------------------------------------
+# Joint positions (radians) – adjust to your robot’s calibrated home pose
+home_joint   = p[0, -1.57, 1.57, -1.57, -1.57, 0]   # example home configuration
+above_start  = p[0.4, -0.2, 0.5, -1.2, 1.57, 0]      # 150 mm above scan start
+scan_start   = p[0.4, -0.2, 0.3, -1.2, 1.57, 0]      # at scan height (Z lowered)
+
+# Scan parameters (meters)
+line_length   = 0.300   # 300 mm
+line_spacing  = 0.0667  # 200 mm / 3 ≈ 66.7 mm between lines
+scan_speed    = 0.05    # 50 mm/s (max 0.2 m/s)
+approach_speed= 0.15    # 150 mm/s
+descend_speed = 0.08    # 80 mm/s
+step_speed    = 0.08    # 80 mm/s
+retract_speed = 0.15    # 150 mm/s
+
+# ----------------------------------------------------------------------
+# 1) Move to Home (joint move)
+speedj([0.5,0.5,0.5,0.5,0.5,0.5], a=0.5, t=0)   # joint speed 0.5 rad/s
+movej(home_joint, a=0.5, v=0.5)
+
+# 2) Move above scan start (linear)
+speedl(approach_speed, a=0.5, t=0)
+movel(above_start, a=0.5, v=approach_speed)
+
+# 3) Descend to scan height
+speedl(descend_speed, a=0.5, t=0)
+movel(scan_start, a=0.5, v=descend_speed)
+
+# Activate laser tool (digital output 0)
+set_digital_out(0, True)
+
+# ----------------------------------------------------------------------
+# 4) Scan line 1 (X positive)
+pose_line1_end = pose_trans(scan_start, p[line_length,0,0,0,0,0])
+speedl(scan_speed, a=0.2, t=0)
+movel(pose_line1_end, a=0.2, v=scan_speed)
+
+# 5) Step to line 2 (Y positive)
+pose_step2 = pose_trans(pose_line1_end, p[0,line_spacing,0,0,0,0])
+speedl(step_speed, a=0.2, t=0)
+movel(pose_step2, a=0.2, v=step_speed)
+
+# 6) Scan line 2 (X negative)
+pose_line2_end = pose_trans(pose_step2, p[-line_length,0,0,0,0,0])
+speedl(scan_speed, a=0.2, t=0)
+movel(pose_line2_end, a=0.2, v=scan_speed)
+
+# 7) Step to line 3 (Y positive)
+pose_step3 = pose_trans(pose_line2_end, p[0,line_spacing,0,0,0,0])
+speedl(step_speed, a=0.2, t=0)
+movel(pose_step3, a=0.2, v=step_speed)
+
+# 8) Scan line 3 (X positive)
+pose_line3_end = pose_trans(pose_step3, p[line_length,0,0,0,0,0])
+speedl(scan_speed, a=0.2, t=0)
+movel(pose_line3_end, a=0.2, v=scan_speed)
+
+# 9) Step to line 4 (Y positive)
+pose_step4 = pose_trans(pose_line3_end, p[0,line_spacing,0,0,0,0])
+speedl(step_speed, a=0.2, t=0)
+movel(pose_step4, a=0.2, v=step_speed)
+
+# 10) Scan line 4 (X negative)
+pose_line4_end = pose_trans(pose_step4, p[-line_length,0,0,0,0,0])
+speedl(scan_speed, a=0.2, t=0)
+movel(pose_line4_end, a=0.2, v=scan_speed)
+
+# Deactivate laser tool
+set_digital_out(0, False)
+
+# ----------------------------------------------------------------------
+# 11) Retract to above start point
+speedl(retract_speed, a=0.5, t=0)
+movel(above_start, a=0.5, v=retract_speed)
+
+# 12) Return to Home
+speedj([0.5,0.5,0.5,0.5,0.5,0.5], a=0.5, t=0)
+movej(home_joint, a=0.5, v=0.5)
+
+# End of program

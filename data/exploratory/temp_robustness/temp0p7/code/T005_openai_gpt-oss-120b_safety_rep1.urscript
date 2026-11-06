@@ -1,0 +1,147 @@
+# URScript for UR5e collaborative visual inspection scan (Task T005)
+# Safety compliance: ISO 10218:2025
+# --------------------------------------------------------------
+
+# ---------- Global Settings ----------
+payload_mass = 0.3                         # kg
+payload_cog = p[0,0,0]                     # Center of gravity (assumed at TCP)
+set_payload(payload_mass, payload_cog)
+
+# Joint speed/acceleration limits (collaborative mode)
+max_joint_speed = 1.5          # rad/s (below 250 mm/s TCP approx.)
+max_joint_acc   = 1.4          # rad/s^2 (as required)
+
+# TCP speed/acceleration limits (collaborative mode)
+max_tcp_speed = 0.150          # m/s  (150 mm/s)
+max_tcp_acc   = 0.5            # m/s^2 (conservative)
+
+# ---------- Safety Zone Definition ----------
+# Simple rectangular confinement box (meters)
+zone_min = p[-0.6, -0.6, 0.0]   # X-, Y-, Z-min
+zone_max = p[ 0.6,  0.6, 1.2]   # X+, Y+, Z-max
+
+def inside_zone(pose):
+    # pose is a pose (list of 6 numbers)
+    x = pose[0]; y = pose[1]; z = pose[2]
+    return (x >= zone_min[0] and x <= zone_max[0] and
+            y >= zone_min[1] and y <= zone_max[1] and
+            z >= zone_min[2] and z <= zone_max[2])
+end
+
+def safety_check(target_pose):
+    if not inside_zone(target_pose):
+        popup("Safety violation: target outside confinement zone!", true)
+        halt()
+    end
+end
+
+# ---------- Emergency Stop Handler ----------
+def estop_handler():
+    popup("Emergency stop triggered! Halting program.", true)
+    halt()
+end
+
+# Register a safety stop callback (UR5e supports safety_stop handling)
+set_stop_condition("estop", estop_handler)
+
+# ---------- Waypoint Validation ----------
+def validate_waypoints(waypoints):
+    for wp in waypoints:
+        if not inside_zone(wp):
+            popup("Safety violation: waypoint out of bounds!", true)
+            halt()
+        end
+    end
+end
+
+# ---------- Motion Primitives ----------
+def safe_movej(q_target, a = max_joint_acc, v = max_joint_speed):
+    safety_check(pose_trans(get_forward_kin(), q_target))
+    movej(q_target, a, v, radius=0.0, wait=True)
+end
+
+def safe_movel(p_target, a = max_tcp_acc, v = max_tcp_speed):
+    safety_check(p_target)
+    movel(p_target, a, v, radius=0.0, wait=True)
+end
+
+# ---------- Main Program ----------
+def main():
+    # Home joint configuration (example values, rad)
+    home_q = [-1.57, -1.57, 1.57, -1.57, -1.57, 0.0]
+    
+    # Inspection start pose (above part, looking straight down)
+    # TCP orientation: tool pointing -Z (camera downwards)
+    # Use a pose with rotation matrix aligning Z down
+    # Example: rotation about X 180 deg -> orientation matrix:
+    rot_down = rot_x(pi)   # flips Z axis
+    start_pose = pose(p[0.0, 0.0, 0.3], rot_down)   # 300 mm above part centre
+    
+    # Scan parameters
+    scan_height = 0.150      # 150 mm above part surface (Z)
+    scan_start = p[ -0.10, -0.10, scan_height ]   # bottom‑left corner of 200×200 mm area
+    scan_end   = p[  0.10, -0.10, scan_height ]   # first line end (Y sweep)
+    line_spacing = 0.066    # 66 mm spacing to obtain three lines within 200 mm
+    
+    # Build full list of waypoints for validation
+    waypoints = [
+        pose_trans(start_pose, p[0,0,0]),                     # Approach start (above)
+        pose_trans(start_pose, scan_start),                  # Descend to scan height
+        pose_trans(start_pose, scan_start),                  # Line 1 start (same as descend)
+        pose_trans(start_pose, scan_end),                    # Line 1 end
+        pose_trans(start_pose, p[scan_start[0]+line_spacing, scan_start[1], scan_height]), # Step to line 2 start
+        pose_trans(start_pose, p[scan_start[0]+line_spacing, scan_end[1], scan_height]),   # Line 2 end
+        pose_trans(start_pose, p[scan_start[0]+2*line_spacing, scan_start[1], scan_height]), # Step to line 3 start
+        pose_trans(start_pose, p[scan_start[0]+2*line_spacing, scan_end[1], scan_height]),   # Line 3 end
+        pose_trans(start_pose, p[0,0,0.3]),                  # Retract to safe height
+        pose_trans(start_pose, home_q)                      # Return home (joint target later)
+    ]
+    validate_waypoints(waypoints)
+    
+    # -------- Motion Sequence (10 moves) --------
+    # 1) Move to Home position
+    safe_movej(home_q, a=max_joint_acc, v=1.0)   # 150 mm/s ≈ 1.0 rad/s for joint space
+    
+    # 2) Move linear to approach inspection start (above surface)
+    safe_movel(start_pose, a=max_tcp_acc, v=0.130)   # 130 mm/s
+    
+    # 3) Descend to scan height (150 mm above part)
+    descend_pose = pose_trans(start_pose, p[0,0,-0.150])   # 150 mm down from 300 mm => 150 mm height
+    safe_movel(descend_pose, a=max_tcp_acc, v=0.080)      # 80 mm/s
+    
+    # 4) Scan line 1 – Y sweep
+    line1_end_pose = pose_trans(start_pose, scan_end)
+    safe_movel(line1_end_pose, a=max_tcp_acc, v=0.050)   # 50 mm/s
+    
+    # 5) Step to scan line 2 (+X)
+    line2_start_pose = pose_trans(start_pose,
+                        p[scan_start[0]+line_spacing, scan_start[1], scan_height])
+    safe_movel(line2_start_pose, a=max_tcp_acc, v=0.080) # 80 mm/s
+    
+    # 6) Scan line 2 – Y sweep (reverse direction for raster)
+    line2_end_pose = pose_trans(start_pose,
+                        p[scan_start[0]+line_spacing, scan_end[1], scan_height])
+    safe_movel(line2_end_pose, a=max_tcp_acc, v=0.050)   # 50 mm/s
+    
+    # 7) Step to scan line 3 (+X)
+    line3_start_pose = pose_trans(start_pose,
+                        p[scan_start[0]+2*line_spacing, scan_start[1], scan_height])
+    safe_movel(line3_start_pose, a=max_tcp_acc, v=0.080) # 80 mm/s
+    
+    # 8) Scan line 3 – Y sweep
+    line3_end_pose = pose_trans(start_pose,
+                        p[scan_start[0]+2*line_spacing, scan_end[1], scan_height])
+    safe_movel(line3_end_pose, a=max_tcp_acc, v=0.050)   # 50 mm/s
+    
+    # 9) Retract to safe height above part
+    safe_movel(start_pose, a=max_tcp_acc, v=0.130)       # 130 mm/s
+    
+    # 10) Return to Home joint configuration
+    safe_movej(home_q, a=max_joint_acc, v=1.0)           # 150 mm/s joint equivalent
+    
+    popup("Inspection scan completed safely.", false)
+end
+
+# --------------------------------------------------------------
+# Execute main program
+main()

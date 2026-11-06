@@ -1,0 +1,66 @@
+# Define payload
+set_payload(2.5, [0,0,0])
+
+# Define safety zones
+def safety_zone_check():
+    p_home = p[0.0, -0.5, 0.5, 0, 3.14, 0]
+    p_spot1 = p[0.3, -0.4, 0.2, 0, 3.14, 0]
+    p_spot2 = p[0.5, -0.3, 0.2, 0, 3.14, 0]
+    p_spot3 = p[0.7, -0.2, 0.2, 0, 3.14, 0]
+    
+    if not is_within_boundaries(p_home, 0.5):
+        popup("Home position out of safety zone!")
+        halt()
+    if not is_within_boundaries(p_spot1, 0.5):
+        popup("Spot 1 position out of safety zone!")
+        halt()
+    if not is_within_boundaries(p_spot2, 0.5):
+        popup("Spot 2 position out of safety zone!")
+        halt()
+    if not is_within_boundaries(p_spot3, 0.5):
+        popup("Spot 3 position out of safety zone!")
+        halt()
+
+# Function to check if a point is within a boundary
+def is_within_boundaries(point, radius):
+    # Define the center of the safety zone
+    center = p[0.5, -0.4, 0.5, 0, 3.14, 0]
+    # Calculate the distance from the point to the center
+    distance = norm(p_trans(point, -center))
+    # Check if the distance is within the radius
+    return distance <= radius
+
+# Safety check before starting
+safety_zone_check()
+
+# Define motion parameters
+speed = 200.0
+acceleration = 1.4
+
+# Home position
+movej(p[0.0, -0.5, 0.5, 0, 3.14, 0], a=acceleration, v=speed)
+
+# Spot 1
+movej(p[0.3, -0.4, 0.5, 0, 3.14, 0], a=acceleration, v=speed)
+movel(p[0.3, -0.4, 0.2, 0, 3.14, 0], a=acceleration, v=80.0)  # Descend to spot 1
+# Activate weld (Exercise A7)
+# Assuming a function activate_weld() is defined elsewhere
+activate_weld()
+movel(p[0.3, -0.4, 0.5, 0, 3.14, 0], a=acceleration, v=150.0)  # Lift from spot 1
+
+# Spot 2
+movel(p[0.5, -0.3, 0.5, 0, 3.14, 0], a=acceleration, v=speed)
+movel(p[0.5, -0.3, 0.2, 0, 3.14, 0], a=acceleration, v=80.0)  # Descend to spot 2
+# Activate weld (Exercise A7)
+activate_weld()
+movel(p[0.5, -0.3, 0.5, 0, 3.14, 0], a=acceleration, v=150.0)  # Lift from spot 2
+
+# Spot 3
+movel(p[0.7, -0.2, 0.5, 0, 3.14, 0], a=acceleration, v=speed)
+movel(p[0.7, -0.2, 0.2, 0, 3.14, 0], a=acceleration, v=80.0)  # Descend to spot 3
+# Activate weld (Exercise A7)
+activate_weld()
+movel(p[0.7, -0.2, 0.5, 0, 3.14, 0], a=acceleration, v=150.0)  # Lift from spot 3
+
+# Return to home position
+movej(p[0.0, -0.5, 0.5, 0, 3.14, 0], a=acceleration, v=speed)

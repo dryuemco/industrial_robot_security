@@ -1,0 +1,90 @@
+# URScript for collaborative spot welding (3 points) on UR5e
+# -------------------------------------------------------
+# Payload configuration
+set_payload(2.5, [0,0,0])   # 2.5 kg payload, CoG at TCP
+
+# Set robot to collaborative mode (mode 2 = collaborative)
+set_robot_mode(2)
+
+# Define speed limits (mm/s)
+global MAX_LINEAR_SPEED = 250.0
+global APPROACH_SPEED   = 200.0
+global DESCEND_SPEED    = 80.0
+global LIFT_SPEED       = 150.0
+
+# Define joint speed for joint move (rad/s)
+global JOINT_SPEED = 200.0/1000   # 200 mm/s approx -> convert to rad/s if needed
+
+# Define poses (position + orientation) for the task
+# Note: Replace the placeholder values with the actual calibrated poses.
+global HOME_POSE          = p[0.0, -0.5, 0.5, 0, 3.14, 0]   # Home position
+global APPROACH_SPOT1    = p[0.3, -0.2, 0.3, 0, 3.14, 0]   # Above spot 1
+global DESCEND_SPOT1     = p[0.3, -0.2, 0.1, 0, 3.14, 0]   # Welding point 1
+global LIFT_SPOT1        = p[0.3, -0.2, 0.3, 0, 3.14, 0]   # Lift after spot 1
+
+global APPROACH_SPOT2    = p[0.4,  0.0, 0.3, 0, 3.14, 0]   # Above spot 2
+global DESCEND_SPOT2     = p[0.4,  0.0, 0.1, 0, 3.14, 0]   # Welding point 2
+global LIFT_SPOT2        = p[0.4,  0.0, 0.3, 0, 3.14, 0]   # Lift after spot 2
+
+global APPROACH_SPOT3    = p[0.5,  0.2, 0.3, 0, 3.14, 0]   # Above spot 3
+global DESCEND_SPOT3     = p[0.5,  0.2, 0.1, 0, 3.14, 0]   # Welding point 3
+global LIFT_SPOT3        = p[0.5,  0.2, 0.3, 0, 3.14, 0]   # Lift after spot 3
+
+# Safety confinement (example: a rectangular box)
+# set_confinement([[-0.6, -0.6, 0.0], [0.6, 0.6, 0.8]])  # Uncomment if supported
+
+def weld_activate(state):
+    # Digital output 0 controls the welding torch
+    set_digital_out(0, state)
+
+def main():
+    # 1) Move to Home (joint move)
+    movej(HOME_POSE, a=1.2, v=JOINT_SPEED, t=0, r=0)
+
+    # 2) Approach spot 1
+    movel(APPROACH_SPOT1, a=1.2, v=APPROACH_SPEED, t=0, r=0)
+
+    # 3) Descend to spot 1 (welding position)
+    movel(DESCEND_SPOT1, a=0.8, v=DESCEND_SPEED, t=0, r=0)
+
+    # Activate welding
+    weld_activate(True)
+    sleep(0.5)   # dwell time for weld (adjust as needed)
+    weld_activate(False)
+
+    # 4) Lift from spot 1
+    movel(LIFT_SPOT1, a=1.0, v=LIFT_SPEED, t=0, r=0)
+
+    # 5) Move to spot 2 (approach)
+    movel(APPROACH_SPOT2, a=1.2, v=APPROACH_SPEED, t=0, r=0)
+
+    # 6) Descend to spot 2
+    movel(DESCEND_SPOT2, a=0.8, v=DESCEND_SPEED, t=0, r=0)
+
+    # Activate welding
+    weld_activate(True)
+    sleep(0.5)
+    weld_activate(False)
+
+    # 7) Lift from spot 2
+    movel(LIFT_SPOT2, a=1.0, v=LIFT_SPEED, t=0, r=0)
+
+    # 8) Move to spot 3 (approach)
+    movel(APPROACH_SPOT3, a=1.2, v=APPROACH_SPEED, t=0, r=0)
+
+    # 9) Descend to spot 3
+    movel(DESCEND_SPOT3, a=0.8, v=DESCEND_SPEED, t=0, r=0)
+
+    # Activate welding
+    weld_activate(True)
+    sleep(0.5)
+    weld_activate(False)
+
+    # 10) Lift from spot 3
+    movel(LIFT_SPOT3, a=1.0, v=LIFT_SPEED, t=0, r=0)
+
+    # 11) Return to Home
+    movej(HOME_POSE, a=1.2, v=JOINT_SPEED, t=0, r=0)
+
+# Execute the program
+main()

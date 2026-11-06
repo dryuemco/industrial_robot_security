@@ -1,0 +1,107 @@
+# URScript for T001 - Collaborative Pick-Place Task
+# ISO 10218:2025 compliant safety implementation
+
+# Safety Parameters
+MAX_TCP_SPEED = 250.0          # mm/s
+MAX_JOINT_ACCEL = 1.4          # rad/s²
+SAFE_TCP_SPEED = 200.0         # mm/s (default)
+SAFE_TCP_ACCEL = 500.0         # mm/s²
+PAYLOAD_MASS = 0.5             # kg
+PAYLOAD_CENTER_OF_GRAVITY = [0.0, 0.0, 0.05]  # meters
+
+# Workspace Boundaries (meters)
+WORKSPACE_MIN = [-0.8, -0.8, 0.0]
+WORKSPACE_MAX = [0.8, 0.8, 1.0]
+
+# Safety Zones (exclusion zones)
+EXCLUSION_ZONES = [
+    [[-0.5, -0.5, 0.0], [0.5, 0.5, 0.2]]  # Example exclusion zone
+]
+
+# Waypoints (joint positions for move_j, pose for move_l)
+HOME_POSITION = [0.0, -1.5708, 0.0, -1.5708, 0.0, 0.0]  # Joint angles in radians
+PICK_APPROACH = p[0.3, 0.2, 0.3, 0, 3.14, 0]
+PICK_POINT = p[0.3, 0.2, 0.15, 0, 3.14, 0]
+PLACE_APPROACH = p[0.4, -0.1, 0.3, 0, 3.14, 0]
+PLACE_POINT = p[0.4, -0.1, 0.15, 0, 3.14, 0]
+
+# Emergency stop handler
+def emergency_stop():
+    popup("SAFETY VIOLATION DETECTED - EMERGENCY STOP", title="SAFETY ALERT", error=True)
+    halt()
+end
+
+# Safety check function
+def safety_check(target_pose, is_linear=True):
+    # Check workspace boundaries
+    if (target_pose[0] < WORKSPACE_MIN[0] or target_pose[0] > WORKSPACE_MAX[0] or
+        target_pose[1] < WORKSPACE_MIN[1] or target_pose[1] > WORKSPACE_MAX[1] or
+        target_pose[2] < WORKSPACE_MIN[2] or target_pose[2] > WORKSPACE_MAX[2]):
+        emergency_stop()
+    end
+
+    # Check exclusion zones
+    for zone in EXCLUSION_ZONES:
+        if (target_pose[0] >= zone[0][0] and target_pose[0] <= zone[1][0] and
+            target_pose[1] >= zone[0][1] and target_pose[1] <= zone[1][1] and
+            target_pose[2] >= zone[0][2] and target_pose[2] <= zone[1][2]):
+            emergency_stop()
+        end
+    end
+
+    # Check inverse kinematics solution exists
+    if is_linear:
+        joint_pos = get_inverse_kin(target_pose)
+        if joint_pos is None:
+            emergency_stop()
+        end
+    end
+end
+
+# Main program
+def main():
+    # Set payload
+    set_payload(PAYLOAD_MASS, PAYLOAD_CENTER_OF_GRAVITY)
+
+    # Safety check before starting
+    safety_check(HOME_POSITION, is_linear=False)
+
+    # Move 1: Go to home position (move_j)
+    movej(HOME_POSITION, a=MAX_JOINT_ACCEL, v=1.05, r=0)
+
+    # Move 2: Approach pick point (move_l)
+    safety_check(PICK_APPROACH)
+    movel(PICK_APPROACH, a=SAFE_TCP_ACCEL, v=SAFE_TCP_SPEED, r=0.01)
+
+    # Move 3: Descend to pick (move_l)
+    safety_check(PICK_POINT)
+    movel(PICK_POINT, a=250.0, v=100.0, r=0)
+
+    # Gripper close (simulated)
+    set_digital_out(0, True)
+
+    # Move 4: Lift from pick (move_l)
+    safety_check(PICK_APPROACH)
+    movel(PICK_APPROACH, a=300.0, v=150.0, r=0)
+
+    # Move 5: Transit to place approach (move_l)
+    safety_check(PLACE_APPROACH)
+    movel(PLACE_APPROACH, a=SAFE_TCP_ACCEL, v=SAFE_TCP_SPEED, r=0.01)
+
+    # Move 6: Descend to place (move_l)
+    safety_check(PLACE_POINT)
+    movel(PLACE_POINT, a=250.0, v=100.0, r=0)
+
+    # Gripper open (simulated)
+    set_digital_out(0, False)
+
+    # Move 7: Lift from place (move_l)
+    safety_check(PLACE_APPROACH)
+    movel(PLACE_APPROACH, a=300.0, v=150.0, r=0)
+
+    # Move 8: Return to home (move_j)
+    movej(HOME_POSITION, a=MAX_JOINT_ACCEL, v=1.05, r=0)
+end
+
+# Run main program
+main()

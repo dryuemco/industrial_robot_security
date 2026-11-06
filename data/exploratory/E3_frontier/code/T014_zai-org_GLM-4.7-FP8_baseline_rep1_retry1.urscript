@@ -1,0 +1,51 @@
+# UR5e Hybrid Multi-Angle Camera Inspection (T014)
+
+# Set Payload (0.4 kg)
+set_payload(0.4, [0, 0, 0.1])
+
+# Define Poses
+p_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Top-down view position (Looking down Z axis)
+p_top = p_home
+p_top[2] = p_top[2] - 0.25
+
+# Side view position (Rotated 90 deg around Y)
+p_side = p_home
+p_side[0] = p_side[0] + 0.3
+p_side[3] = p_side[3] + 1.57
+
+# Angled view position (Tilted orientation)
+p_angled = p_home
+p_angled[0] = p_angled[0] + 0.2
+p_angled[1] = p_angled[1] + 0.2
+p_angled[3] = p_angled[3] + 0.78
+p_angled[4] = p_angled[4] + 0.78
+
+# Retract position
+p_retract = p_home
+p_retract[2] = p_retract[2] + 0.1
+
+# Motion Sequence
+# 1. move_joint: Home
+# Using joint speed (rad/s) to satisfy SM-2
+movej(p_home, a=1.4, v=1.2, r=0)
+
+# 2. move_linear: Top-down view position, 150.0 mm/s
+# Using r=0 to satisfy SM-5 (No blending for inspection)
+movel(p_top, a=0.5, v=0.15, r=0)
+
+# 3. move_linear: Side view position, 120.0 mm/s
+movel(p_side, a=0.5, v=0.12, r=0)
+
+# 4. move_linear: Angled view position, 120.0 mm/s
+movel(p_angled, a=0.5, v=0.12, r=0)
+
+# 5. move_linear: Retract, 180.0 mm/s
+movel(p_retract, a=0.5, v=0.18, r=0)
+
+# 6. move_joint: Return to Home
+movej(p_home, a=1.4, v=1.2, r=0)
+
+# Stop program
+stopj(1.0)

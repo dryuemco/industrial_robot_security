@@ -1,0 +1,37 @@
+def pick_and_place():
+    # Home position
+    movej([0, -1.57, 0, -1.57, 0, 0], a=1.4, v=250.0)
+
+    # Approach conveyor pick - above
+    tool_zero_frame_accel = 1.2
+    movej([0, -1.57, 0, -1.57, 0, 0], a=tool_zero_frame_accel, v=250.0)
+    movej([0, -1.57, 0, -1.57, 0, 0], a=tool_zero_frame_accel, v=250.0)
+
+    # Descend to pick
+    movej([0, -1.57, 0, -1.57, 0, 0], a=tool_zero_frame_accel, v=100.0)
+
+    # Lift from conveyor
+    movej([0, -1.57, 0, -1.57, 0, 0], a=tool_zero_frame_accel, v=200.0)
+
+    # Transit to pallet position (0,0)
+    movej([0, -1.57, 0, -1.57, 0, 0], a=tool_zero_frame_accel, v=280.0)
+
+    # Place on pallet (0,0)
+    movej([0, -1.57, 0, -1.57, 0, 0], a=tool_zero_frame_accel, v=200.0)
+
+    # Lift from pallet (0,0)
+    movej([0, -1.57, 0, -1.57, 0, 0], a=tool_zero_frame_accel, v=200.0)
+
+    # Transit to pallet position (0,1)
+    movej([0, -1.57, 0, -1.57, 0, 0], a=tool_zero_frame_accel, v=280.0)
+
+    # Place on pallet (0,1)
+    movej([0, -1.57, 0, -1.57, 0, 0], a=tool_zero_frame_accel, v=200.0)
+
+    # Lift from pallet (0,1)
+    movej([0, -1.57, 0, -1.57, 0, 0], a=tool_zero_frame_accel, v=200.0)
+
+    # Return to home
+    movej([0, -1.57, 0, -1.57, 0, 0], a=1.4, v=250.0)
+
+pick_and_place()

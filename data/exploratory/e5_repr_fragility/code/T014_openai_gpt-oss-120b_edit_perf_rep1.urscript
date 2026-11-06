@@ -1,0 +1,70 @@
+# Optimized Task: T014 — Hybrid multi-angle camera inspection
+# Robot: UR5e | Mode: hybrid | Max TCP speed: 0.200 m/s
+# Payload: 0.4 kg
+# Safety: confinement zone
+# NOTE: Verify camera exposure allows reduced dwell times.
+
+def task_T014():
+    TCP_SPEED_CAP = 0.200
+    # Fast linear move with speed cap check
+    def fast_movel(pose, a, v, r):
+        if (v > TCP_SPEED_CAP):
+            popup("TCP speed cap exceeded", error=True)
+            halt
+        end
+        movel(pose, a=a, v=v, r=r)
+    end
+
+    # -----------------------------------------------------------------
+    # Safety: E‑Stop check (hardware enforced on controller)
+    if (get_digital_in(0) == True):
+        popup("E‑Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # -----------------------------------------------------------------
+    # Pre‑defined poses
+    pose_home   = p[0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+    pose_top    = p[0.400000, 0.000000, 0.250000, 0.0000, 3.1416, 0.0000]
+    pose_side   = p[0.400000, -0.150000, 0.150000, 0.0000, 3.1416, 0.0000]
+    pose_angle  = p[0.350000, 0.100000, 0.200000, 0.0000, 3.1416, 0.0000]
+    pose_retract= p[0.350000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000]
+
+    # -----------------------------------------------------------------
+    # 1) Home
+    movej(pose_home, a=1.4000, v=0.4500)
+
+    # 2) Move to Top‑down view (full stop for capture)
+    fast_movel(pose_top, a=1.2000, v=0.2000, r=0.0)
+
+    # 3) Capture Top view
+    set_digital_out(2, True)
+    sleep(0.30)               # reduced dwell, adjust if needed
+    set_digital_out(2, False)
+
+    # 4) Transition to Side view (blended motion)
+    fast_movel(pose_side, a=1.2000, v=0.2000, r=0.020)
+
+    # 5) Capture Side view
+    set_digital_out(2, True)
+    sleep(0.30)
+    set_digital_out(2, False)
+
+    # 6) Transition to Angled view (blended motion)
+    fast_movel(pose_angle, a=1.2000, v=0.2000, r=0.020)
+
+    # 7) Capture Angled view
+    set_digital_out(2, True)
+    sleep(0.30)
+    set_digital_out(2, False)
+
+    # 8) Retract (blended motion to safe height)
+    fast_movel(pose_retract, a=1.2000, v=0.2000, r=0.020)
+
+    # 9) Return Home
+    movej(pose_home, a=1.4000, v=0.4500)
+
+end
+
+# -----------------------------------------------------------------
+task_T014()

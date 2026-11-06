@@ -1,0 +1,119 @@
+def bin_picking_suction():
+  # Safety setup
+  set_standard_digital_out(0, False)  # Ensure suction off at start
+  set_tool_voltage(0)                 # Disable tool voltage initially
+  set_payload(2.0)                    # Set payload to 2.0 kg
+  set_safety_mode_transition_hardness("normal")
+
+  # Waypoints definition
+  home_pose = p[0.0, -0.5, 0.5, 0.0, 3.14, 0.0]
+  above_bin = p[-0.3, -0.6, 0.3, 0.0, 3.14, 0.0]
+  pick_pose = p[-0.3, -0.6, 0.1, 0.0, 3.14, 0.0]
+  lift_pose = p[-0.3, -0.6, 0.25, 0.0, 3.14, 0.0]
+  above_conveyor = p[0.3, -0.5, 0.3, 0.0, 3.14, 0.0]
+  place_pose = p[0.3, -0.5, 0.12, 0.0, 3.14, 0.0]
+  clear_pose = p[0.3, -0.5, 0.25, 0.0, 3.14, 0.0]
+  return_home = p[0.0, -0.5, 0.4, 0.0, 3.14, 0.0]
+
+  # Motion sequence with safety checks
+  if not get_analog_in(0) > 2.0:  # Check safety circuit
+    popup("Safety circuit not ready", "Error", error=True)
+    halt
+  end
+
+  # Move 1: Home position
+  if is_within_safety_limits(home_pose):
+    movej(home_pose, a=1.2, v=0.6)
+  else:
+    popup("Home position violates safety limits", "Error", error=True)
+    halt
+  end
+
+  # Move 2: Above bin
+  if is_within_safety_limits(above_bin):
+    movel(above_bin, a=1.2, v=0.6)
+  else:
+    popup("Above bin position violates safety limits", "Error", error=True)
+    halt
+  end
+
+  # Move 3: Descend into bin
+  if is_within_safety_limits(pick_pose):
+    movel(pick_pose, a=0.5, v=0.25)
+  else:
+    popup("Pick position violates safety limits", "Error", error=True)
+    halt
+  end
+
+  # Activate suction
+  set_tool_voltage(24)
+  sleep(0.2)
+  set_standard_digital_out(0, True)
+  sleep(0.5)
+
+  # Move 4: Lift from bin
+  if is_within_safety_limits(lift_pose):
+    movel(lift_pose, a=1.0, v=0.5)
+  else:
+    popup("Lift position violates safety limits", "Error", error=True)
+    halt
+  end
+
+  # Move 5: Transit to conveyor
+  if is_within_safety_limits(above_conveyor):
+    movel(above_conveyor, a=1.2, v=0.65)
+  else:
+    popup("Above conveyor position violates safety limits", "Error", error=True)
+    halt
+  end
+
+  # Move 6: Descend to conveyor
+  if is_within_safety_limits(place_pose):
+    movel(place_pose, a=0.5, v=0.25)
+  else:
+    popup("Place position violates safety limits", "Error", error=True)
+    halt
+  end
+
+  # Release part
+  set_standard_digital_out(0, False)
+  sleep(0.2)
+  set_tool_voltage(0)
+
+  # Move 7: Clear conveyor
+  if is_within_safety_limits(clear_pose):
+    movel(clear_pose, a=1.0, v=0.5)
+  else:
+    popup("Clear position violates safety limits", "Error", error=True)
+    halt
+  end
+
+  # Move 8: Return home
+  if is_within_safety_limits(return_home):
+    movel(return_home, a=1.2, v=0.6)
+  else:
+    popup("Return home position violates safety limits", "Error", error=True)
+    halt
+  end
+
+  # Final move to home
+  movej(home_pose, a=1.2, v=0.6)
+end
+
+# Main program
+thread watchdog_thread():
+  while True:
+    if get_analog_in(0) < 2.0:
+      popup("Safety circuit lost", "Error", error=True)
+      halt
+    end
+    sync()
+  end
+end
+
+thread program_thread():
+  bin_picking_suction()
+end
+
+watchdog_thread()
+program_thread()

@@ -1,0 +1,69 @@
+set_payload(0.5, [0, 0, 0.05])
+set_tcp(p[0, 0, 0.1, 0, 0, 0])
+
+# Laser Tool Activation (A7)
+set_digital_out(0, True)
+
+# Define Poses (Base Frame)
+# Orientation: Pointing down (rx=0, ry=pi, rz=0)
+p_home = p[0.0, -0.4, 0.4, 0, 3.14159, 0]
+
+# Scan Area: 300mm (X) x 200mm (Y)
+# Start Position (Above)
+p_above_start = p[0.0, 0.0, 0.2, 0, 3.14159, 0]
+# Scan Start Height
+p_scan_start = p[0.0, 0.0, 0.05, 0, 3.14159, 0]
+
+# Line 1: (0,0) to (0.3, 0)
+p_line1_end = p[0.3, 0.0, 0.05, 0, 3.14159, 0]
+
+# Step 1: Move to start of Line 2 (Serpentine: 0.3, 0.0667)
+p_line2_start = p[0.3, 0.0667, 0.05, 0, 3.14159, 0]
+# Line 2: (0.3, 0.0667) to (0, 0.0667)
+p_line2_end = p[0.0, 0.0667, 0.05, 0, 3.14159, 0]
+
+# Step 2: Move to start of Line 3 (0, 0.1333)
+p_line3_start = p[0.0, 0.1333, 0.05, 0, 3.14159, 0]
+# Line 3: (0, 0.1333) to (0.3, 0.1333)
+p_line3_end = p[0.3, 0.1333, 0.05, 0, 3.14159, 0]
+
+# Step 3: Move to start of Line 4 (0.3, 0.2)
+p_line4_start = p[0.3, 0.2, 0.05, 0, 3.14159, 0]
+# Line 4: (0.3, 0.2) to (0, 0.2)
+p_line4_end = p[0.0, 0.2, 0.05, 0, 3.14159, 0]
+
+# Retract Position
+p_retract = p[0.0, 0.2, 0.2, 0, 3.14159, 0]
+
+# Motion Sequence (12 moves)
+
+# 1. move_joint: Home, 180.0 mm/s
+# Using v=1.0 rad/s (Safe joint speed for SM-4)
+movej(p_home, a=1.4, v=1.0)
+
+# 2. move_linear: Above scan start, 150.0 mm/s
+# Using v=0.15 m/s (Correct unit for SM-2)
+movel(p_above_start, a=0.5, v=0.15)
+
+# 3. move_linear: Descend to scan height, 80.0 mm/s
+movel(p_scan_start, a=0.5, v=0.08)
+
+# 4. move_linear: Scan line 1, 50.0 mm/s
+movel(p_line1_end, a=0.2, v=0.05)
+
+# 5. move_linear: Step to line 2, 80.0 mm/s
+movel(p_line2_start, a=0.5, v=0.08)
+
+# 6. move_linear: Scan line 2, 50.0 mm/s
+movel(p_line2_end, a=0.2, v=0.05)
+
+# 7. move_linear: Step to line 3, 80.0 mm/s
+movel(p_line3_start, a=0.5, v=0.08)
+
+# 8. move_linear: Scan line 3, 50.0 mm/s
+movel(p_line3_end, a=0.2, v=0.05)
+
+# 9. move_linear: Step to line 4, 80.0 mm/s
+movel(p_line4_start, a=0.5, v=0.08)
+
+# 10. move_linear

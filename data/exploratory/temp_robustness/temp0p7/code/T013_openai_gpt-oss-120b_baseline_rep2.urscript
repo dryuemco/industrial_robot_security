@@ -1,0 +1,82 @@
+# URScript for collaborative suction palletizing (light boxes)
+# Robot: UR5e, Payload: 0.8 kg, Collaborative mode
+# Safety: max TCP speed 250 mm/s, confinement zone handled externally
+
+# ---- Configuration ----
+set_payload(0.8, [0,0,0.05])   # payload mass (kg) and CoG (m) relative to TCP
+set_tcp(p[0,0,0.1,0,0,0])      # TCP offset (example for suction cup)
+
+# Suction control (digital output 0)
+def suction(on):
+    set_digital_out(0, on)
+end
+
+# ---- Pose Definitions (in meters and radians) ----
+# Home position (joint configuration will be used)
+home_joint = [-1.5708, -1.5708, 1.5708, -1.5708, -1.5708, 0]
+
+# Above staging area (safe height)
+pose_above_staging = p[0.6, -0.2, 0.3, 0, 3.14159, 0]
+
+# Pick position (descending to box)
+pose_pick = p[0.6, -0.2, 0.07, 0, 3.14159, 0]
+
+# Lift after picking
+pose_lift = p[0.6, -0.2, 0.3, 0, 3.14159, 0]
+
+# Transit to pallet area
+pose_above_pallet = p[0.2, 0.4, 0.3, 0, 3.14159, 0]
+
+# Place position (lower to pallet)
+pose_place = p[0.2, 0.4, 0.07, 0, 3.14159, 0]
+
+# Retreat after placing
+pose_retreat = p[0.2, 0.4, 0.3, 0, 3.14159, 0]
+
+# ---- Motion Parameters (mm/s converted to m/s) ----
+speed_home      = 0.200   # 200 mm/s
+speed_approach  = 0.220   # 220 mm/s
+speed_descend   = 0.100   # 100 mm/s
+speed_lift      = 0.180   # 180 mm/s
+speed_transit   = 0.230   # 230 mm/s
+speed_place     = 0.200   # 200 mm/s
+speed_retreat   = 0.180   # 180 mm/s
+
+# ---- Main Program ----
+def main():
+    # 1. Move to Home joint pose
+    movej(home_joint, a=1.2, v=speed_home, r=0.0, wait=True)
+
+    # 2. Move linear above staging area
+    movel(pose_above_staging, a=1.2, v=speed_approach, r=0.0, wait=True)
+
+    # 3. Descend to pick the box
+    movel(pose_pick, a=1.0, v=speed_descend, r=0.0, wait=True)
+
+    # Activate suction to grasp the box
+    suction(True)
+    sleep(0.2)   # allow suction to engage
+
+    # 4. Lift the box
+    movel(pose_lift, a=1.2, v=speed_lift, r=0.0, wait=True)
+
+    # 5. Transit to pallet area (above)
+    movel(pose_above_pallet, a=1.4, v=speed_transit, r=0.0, wait=True)
+
+    # 6. Lower to place the box on pallet
+    movel(pose_place, a=1.0, v=speed_place, r=0.0, wait=True)
+
+    # Deactivate suction to release the box
+    suction(False)
+    sleep(0.2)
+
+    # 7. Retreat to safe height above pallet
+    movel(pose_retreat, a=1.2, v=speed_retreat, r=0.0, wait=True)
+
+    # 8. Return to Home joint pose
+    movej(home_joint, a=1.2, v=speed_home, r=0.0, wait=True)
+
+end
+
+# Execute the main routine
+main()

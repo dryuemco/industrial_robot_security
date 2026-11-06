@@ -1,0 +1,38 @@
+# Define constants
+HOME_POSITION = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ABOVE_SURFACE_POSITION = [0.0, 0.0, 0.5, 0.0, 0.0, 0.0]
+MARKING_HEIGHT = [0.0, 0.0, 0.01, 0.0, 0.0, 0.0]
+LINE_1_POSITION = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+LINE_2_POSITION = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+LINE_3_POSITION = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+# Define speeds
+HOME_SPEED = 350.0
+ABOVE_SURFACE_SPEED = 300.0
+MARKING_SPEED = 100.0
+LINE_SPEED = 60.0
+STEP_SPEED = 80.0
+
+# Define tool configuration
+set_tool_digital_out(0, True)
+
+# Move to home position
+movej(HOME_POSITION, HOME_SPEED, 0.0, 0.0)
+
+# Move above marking surface
+movej(ABOVE_SURFACE_POSITION, ABOVE_SURFACE_SPEED, 0.0, 0.0)
+
+# Move to marking height
+movej(MARKING_HEIGHT, MARKING_SPEED, 0.0, 0.0)
+
+# Move to line 1
+movl(LINE_1_POSITION, LINE_SPEED, 0.0, 0.0)
+
+# Move to line 2
+movl(LINE_2_POSITION, STEP_SPEED, 0.0, 0.0)
+
+# Move to line 3
+movl(LINE_3_POSITION, LINE_SPEED, 0.0, 0.0)
+
+# Deactivate tool
+set_tool_digital_out(0, False)

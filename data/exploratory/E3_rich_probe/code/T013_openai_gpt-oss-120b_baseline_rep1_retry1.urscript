@@ -1,0 +1,144 @@
+# URScript for collaborative suction palletizing (light boxes)
+# UR5e, payload 0.8 kg, collaborative mode, max TCP speed 250 mm/s
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+payload_mass = 0.8          # kg
+payload_cog  = [0,0,0.05]   # m, approximate centre of gravity
+tcp_speed_max = 0.250      # m/s (250 mm/s)
+
+# Safety confinement zone (meters, relative to robot base)
+zone_min = [-0.6, -0.6, 0.0, -3.14, -3.14, -3.14]
+zone_max = [ 0.6,  0.6, 0.8,  3.14,  3.14,  3.14]
+
+# Motion parameters (accelerations in m/s^2, speeds in m/s)
+a_joint = 1.5      # 1500 mm/s^2
+a_linear = 1.5     # 1500 mm/s^2
+
+v_home   = 0.200    # 200 mm/s
+v_above  = 0.220    # 220 mm/s
+v_descend= 0.100    # 100 mm/s
+v_lift   = 0.180    # 180 mm/s
+v_transit= 0.230    # 230 mm/s
+# placeholders for remaining three moves
+v_move5  = 0.200
+v_move6  = 0.200
+v_move7  = 0.200
+v_move8  = 0.200
+
+# -------------------------------------------------
+# Helper functions
+# -------------------------------------------------
+def in_confined_zone(p):
+    # p is a pose [x,y,z,rx,ry,rz] in meters/radians
+    for i in range(6):
+        if p[i] < zone_min[i] or p[i] > zone_max[i]:
+            return False
+    return True
+
+def safe_movej(q, v, a):
+    try:
+        movej(q, a=a, v=v)
+    except:
+        textmsg("ERROR: movej failed, stopping program.")
+        stopj(2)
+        popup("Critical motion error. Please check robot.", title="Motion Error", error=True)
+        halt()
+
+def safe_movel(p, v, a):
+    if not in_confined_zone(p):
+        textmsg("ERROR: Target pose outside safety zone.")
+        stopj(2)
+        popup("Target pose out of bounds. Program halted.", title="Safety Violation", error=True)
+        halt()
+    try:
+        movel(p, a=a, v=v)
+    except:
+        textmsg("ERROR: movel failed, stopping program.")
+        stopj(2)
+        popup("Critical linear motion error. Please check robot.", title="Motion Error", error=True)
+        halt()
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # ----- Setup -----
+    # Set payload with error handling
+    try:
+        set_payload(payload_mass, payload_cog)
+    except:
+        textmsg("ERROR: set_payload failed.")
+        popup("Failed to set payload. Program halted.", title="Setup Error", error=True)
+        halt()
+
+    # Set TCP (default tool, no offset)
+    try:
+        set_tcp([0,0,0,0,0,0])
+    except:
+        textmsg("ERROR: set_tcp failed.")
+        popup("Failed to set TCP. Program halted.", title="Setup Error", error=True)
+        halt()
+
+    # Ensure collaborative mode (already set in UI, but confirm)
+    set_robot_mode("collaborative")
+
+    # ----- Motion sequence -----
+    # 1) Move to Home joint configuration
+    home_joint = [0, -1.57, 0, -1.57, 0, 0]
+    safe_movej(home_joint, v_home, a_joint)
+
+    # 2) Move linear above staging area
+    # Example pose: 0.4 m X, 0.0 Y, 0.3 Z, orientation neutral
+    pose_above = p[0.4, 0.0, 0.30, 0, 3.14, 0]
+    safe_movel(pose_above, v_above, a_linear)
+
+    # 3) Descend to pick the box
+    pose_pick = p[0.4, 0.0, 0.10, 0, 3.14, 0]
+    safe_movel(pose_pick, v_descend, a_linear)
+
+    # Activate suction (digital output 0)
+    try:
+        set_digital_out(0, True)
+    except:
+        textmsg("ERROR: set_digital_out (suction ON) failed.")
+        popup("Failed to activate suction. Program halted.", title="IO Error", error=True)
+        halt()
+
+    # 4) Lift the box
+    safe_movel(pose_above, v_lift, a_linear)
+
+    # 5) Transit to pallet location
+    pose_pallet = p[0.0, -0.4, 0.30, 0, 3.14, 0]
+    safe_movel(pose_pallet, v_transit, a_linear)
+
+    # 6) Lower to place the box
+    pose_place = p[0.0, -0.4, 0.10, 0, 3.14, 0]
+    safe_movel(pose_place, v_move5, a_linear)
+
+    # Deactivate suction
+    try:
+        set_digital_out(0, False)
+    except:
+        textmsg("ERROR: set_digital_out (suction OFF) failed.")
+        popup("Failed to deactivate suction. Program halted.", title="IO Error", error=True)
+        halt()
+
+    # 7) Retract to safe height
+    safe_movel(pose_pallet, v_move6, a_linear)
+
+    # 8) Return to Home
+    safe_movej(home_joint, v_home, a_joint)
+
+    # ----- End of cycle -----
+    textmsg("Cycle completed successfully.")
+    # Loop or finish as required
+    # For demonstration, we stop here.
+    stopj(2)
+
+# -------------------------------------------------
+# Run program
+# -------------------------------------------------
+if __name__ == "main":
+    main()

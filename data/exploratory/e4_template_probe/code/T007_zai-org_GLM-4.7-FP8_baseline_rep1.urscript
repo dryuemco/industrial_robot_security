@@ -1,0 +1,36 @@
+# Task: Curved contour weld — hybrid mode (T007)
+# Robot: ur5e
+# Payload: 3.5 kg
+# Description: Curved weld seam along an arc path in hybrid mode.
+
+# Set Payload (3.5 kg, CoM offset assumed)
+set_payload(3.5, [0, 0, 0.05])
+
+# 1. move_joint: Home position, 300.0 mm/s
+movej([-1.57, -1.57, -1.57, -1.57, -1.57, 0], a=1.4, v=0.3)
+
+# 2. move_linear: Approach above weld fixture, 250.0 mm/s
+movel(p[0.35, -0.2, 0.4, 3.14, 0, 0], a=0.5, v=0.25)
+
+# 3. move_linear: Descend to weld start, 100.0 mm/s
+movel(p[0.35, -0.2, 0.2, 3.14, 0, 0], a=0.2, v=0.1)
+
+# Weld Arc Sequence Start (A7)
+set_digital_out(0, True)
+sleep(0.2)
+
+# 4. move_linear: Weld midpoint, 60.0 mm/s
+movel(p[0.45, -0.15, 0.2, 3.14, 0, 0], a=0.1, v=0.06)
+
+# 5. move_linear: Weld end, 60.0 mm/s
+movel(p[0.55, -0.2, 0.2, 3.14, 0, 0], a=0.1, v=0.06)
+
+# Weld Arc Sequence End
+set_digital_out(0, False)
+sleep(0.2)
+
+# 6. move_linear: Retract from weld end, 250.0 mm/s
+movel(p[0.55, -0.2, 0.4, 3.14, 0, 0], a=0.5, v=0.25)
+
+# 7. move_joint: Return to Home, 300.0 mm/s
+movej([-1.57, -1.57, -1.57, -1.57, -1.57, 0], a=1.4, v=0.3)

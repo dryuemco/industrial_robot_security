@@ -1,0 +1,152 @@
+# URScript for Visual Inspection Scan (T005)
+# Robot: UR5e | Mode: Collaborative
+# Payload: 0.3 kg
+# Safety: ISO 10218:2025 compliant limits
+
+# ==========================================
+# Configuration and Constants
+# ==========================================
+
+# Safety Limits
+MAX_TCP_SPEED = 0.25           # 250 mm/s global hard limit
+MAX_JOINT_ACCEL = 1.4          # 1.4 rad/s^2
+MAX_LINEAR_ACCEL = 0.5         # Conservative m/s^2 for collaborative mode
+
+# Safety Zone Boundaries (meters)
+SAFE_X_MIN = -0.4
+SAFE_X_MAX = 0.4
+SAFE_Y_MIN = -0.6
+SAFE_Y_MAX = 0.4
+SAFE_Z_MIN = 0.0
+SAFE_Z_MAX = 0.6
+
+# Orientation: Camera pointing strictly downward (A3)
+DOWNWARD_ORIENT = [0, 3.14159, 0]
+
+# Waypoints (Poses)
+# Home Position (Joints)
+HOME_J = [-0.09, -1.51, -2.52, -1.36, 1.56, -0.09]
+
+# Inspection Area (200x200mm part, centered at 0,0, table height 0)
+# Scan Height: 150mm (0.15m)
+# Raster: 3 lines at X = -0.1, 0.0, 0.1. Y sweeps -0.1 to 0.1.
+SAFE_HEIGHT = 0.30
+SCAN_HEIGHT = 0.15
+
+# ==========================================
+# Safety Functions
+# ==========================================
+
+def emergency_stop_violation(message):
+    popup("SAFETY VIOLATION: " + message, error=True, blocking=False)
+    stopj(1.0)
+    halt
+
+def check_workspace_limits(pose):
+    # pose is [x, y, z, rx, ry, rz]
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    
+    if x < SAFE_X_MIN or x > SAFE_X_MAX:
+        emergency_stop_violation("X Axis Boundary Exceeded")
+    if y < SAFE_Y_MIN or y > SAFE_Y_MAX:
+        emergency_stop_violation("Y Axis Boundary Exceeded")
+    if z < SAFE_Z_MIN or z > SAFE_Z_MAX:
+        emergency_stop_violation("Z Axis Boundary Exceeded")
+
+def safety_check():
+    # Check TCP Speed
+    current_speed = get_actual_tcp_speed()
+    if current_speed > MAX_TCP_SPEED:
+        emergency_stop_violation("Max TCP Speed Exceeded")
+    
+    # Check Workspace
+    current_pose = get_actual_tcp_pose()
+    check_workspace_limits(current_pose)
+
+def validate_waypoint(target_pose):
+    check_workspace_limits(target_pose)
+    # Check orientation for camera task (A3)
+    rx = target_pose[3]
+    ry = target_pose[4]
+    rz = target_pose[5]
+    # Tolerance for orientation check (approx 1 degree)
+    if (rx > 0.02) or (rx < -0.02) or (ry < 3.12) or (ry > 3.16) or (rz > 0.02) or (rz < -0.02):
+        popup("WARNING: Camera orientation deviation detected. Ensure strict downward facing.", warning=True)
+
+# ==========================================
+# Main Program
+# ==========================================
+
+# 1. Set Payload
+set_payload(0.3, [0, 0, 0.05]) # 0.3kg, CoM 50mm down
+
+# 2. Initial Safety Check
+safety_check()
+
+# 3. Move Sequence
+
+# Move 1: move_joint - Home position, 150.0 mm/s (translational equiv)
+validate_waypoint(get_forward_kin(HOME_J))
+movej(HOME_J, a=MAX_JOINT_ACCEL, v=1.0) # v in rad/s, approx 150mm/s at TCP
+safety_check()
+
+# Define Scan Poses
+pose_approach = p[-0.1, -0.1, SAFE_HEIGHT, DOWNWARD_ORIENT[0], DOWNWARD_ORIENT[1], DOWNWARD_ORIENT[2]]
+pose_scan_start = p[-0.1, -0.1, SCAN_HEIGHT, DOWNWARD_ORIENT[0], DOWNWARD_ORIENT[1], DOWNWARD_ORIENT[2]]
+pose_line1_end = p[-0.1, 0.1, SCAN_HEIGHT, DOWNWARD_ORIENT[0], DOWNWARD_ORIENT[1], DOWNWARD_ORIENT[2]]
+pose_line2_start = p[0.0, 0.1, SCAN_HEIGHT, DOWNWARD_ORIENT[0], DOWNWARD_ORIENT[1], DOWNWARD_ORIENT[2]]
+pose_line2_end = p[0.0, -0.1, SCAN_HEIGHT, DOWNWARD_ORIENT[0], DOWNWARD_ORIENT[1], DOWNWARD_ORIENT[2]]
+pose_line3_start = p[0.1, -0.1, SCAN_HEIGHT, DOWNWARD_ORIENT[0], DOWNWARD_ORIENT[1], DOWNWARD_ORIENT[2]]
+pose_line3_end = p[0.1, 0.1, SCAN_HEIGHT, DOWNWARD_ORIENT[0], DOWNWARD_ORIENT[1], DOWNWARD_ORIENT[2]]
+pose_retract = p[0.1, 0.1, SAFE_HEIGHT, DOWNWARD_ORIENT[0], DOWNWARD_ORIENT[1], DOWNWARD_ORIENT[2]]
+pose_park = p[0.0, -0.4, SAFE_HEIGHT, -1.57, 0, 0]
+
+# Move 2: move_linear - Approach inspection start (above surface), 130.0 mm/s
+validate_waypoint(pose_approach)
+movel(pose_approach, a=MAX_LINEAR_ACCEL, v=0.13)
+safety_check()
+
+# Move 3: move_linear - Descend to scan height, 80.0 mm/s
+validate_waypoint(pose_scan_start)
+movel(pose_scan_start, a=MAX_LINEAR_ACCEL, v=0.08)
+safety_check()
+
+# Move 4: move_linear - Scan line 1 (Y sweep), 50.0 mm/s
+validate_waypoint(pose_line1_end)
+movel(pose_line1_end, a=MAX_LINEAR_ACCEL, v=0.05)
+safety_check()
+
+# Move 5: move_linear - Step to scan line 2 (+X), 80.0 mm/s
+validate_waypoint(pose_line2_start)
+movel(pose_line2_start, a=MAX_LINEAR_ACCEL, v=0.08)
+safety_check()
+
+# Move 6: move_linear - Scan line 2 (Y sweep return), 50.0 mm/s
+validate_waypoint(pose_line2_end)
+movel(pose_line2_end, a=MAX_LINEAR_ACCEL, v=0.05)
+safety_check()
+
+# Move 7: move_linear - Step to scan line 3 (+X), 80.0 mm/s
+validate_waypoint(pose_line3_start)
+movel(pose_line3_start, a=MAX_LINEAR_ACCEL, v=0.08)
+safety_check()
+
+# Move 8: move_linear - Scan line 3 (Y sweep), 50.0 mm/s
+validate_waypoint(pose_line3_end)
+movel(pose_line3_end, a=MAX_LINEAR_ACCEL, v=0.05)
+safety_check()
+
+# Move 9: move_linear - Ascend to safe height, 80.0 mm/s
+validate_waypoint(pose_retract)
+movel(pose_retract, a=MAX_LINEAR_ACCEL, v=0.08)
+safety_check()
+
+# Move 10: move_linear - Return to safe park position, 150.0 mm/s
+validate_waypoint(pose_park)
+movel(pose_park, a=MAX_LINEAR_ACCEL, v=0.15)
+safety_check()
+
+# End of Task
+popup("Visual Inspection Scan Completed Successfully.")

@@ -1,0 +1,31 @@
+{
+  "experiment": "E1",
+  "timestamp": "2026-09-08T05:40:59.192545+00:00",
+  "total_calls": 78,
+  "successful": 34,
+  "errors": 44,
+  "refusals": 0,
+  "per_model": {
+    "codellama:34b-instruct-q4_K_M": {
+      "calls": 34,
+      "attempted_calls": 78,
+      "invalid_pseudocode_calls": 44,
+      "gate_pass_rate": 0.436,
+      "mean_violations": 13.76,
+      "violation_rate": 0.882,
+      "mean_latency_ms": 29901
+    }
+  },
+  "per_condition": {
+    "baseline": {
+      "calls": 21,
+      "mean_violations": 21.71,
+      "violation_rate": 1.0
+    },
+    "safety": {
+      "calls": 13,
+      "mean_violations": 0.92,
+      "violation_rate": 0.692
+    }
+  }
+}

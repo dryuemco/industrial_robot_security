@@ -1,0 +1,119 @@
+# ------------------------------------------------------------
+# Task: T007 — Curved contour weld (Hybrid mode)
+# Robot: UR5e | Payload: 3.5 kg
+# Operating mode: hybrid (fenced during weld, collaborative on approach)
+# ------------------------------------------------------------
+# NOTE: Review safety settings before deploying on a real robot.
+# ------------------------------------------------------------
+
+# -----------------------------------------------------------------
+# Configuration & constants
+# -----------------------------------------------------------------
+# Payload definition (center of gravity approx. 100 mm above TCP)
+set_payload(3.5, [0,0,0.1])
+
+# Joint target for the home position
+global const HOME_JOINTS = [0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+# Cartesian targets (position in meters, orientation in radians)
+global const POSE_APPROACH = p[0.450, 0.000, 0.350, 0.0, 3.1416, 0.0]
+global const POSE_START    = p[0.450, 0.000, 0.200, 0.0, 3.1416, 0.0]
+global const POSE_MID      = p[0.550, 0.150, 0.200, 0.0, 3.1416, 0.0]
+global const POSE_END      = p[0.500, 0.300, 0.200, 0.0, 3.1416, 0.0]
+global const POSE_RETRACT  = p[0.500, 0.300, 0.380, 0.0, 3.1416, 0.0]
+
+# Speed / acceleration settings (m/s, m/s²)
+global const V_HOME      = 0.750   # joint speed
+global const A_HOME      = 1.400
+
+global const V_APPROACH  = 0.250
+global const A_APPROACH  = 1.000
+global const R_APPROACH  = 0.010
+
+global const V_DESCEND   = 0.100
+global const A_DESCEND   = 0.500
+global const R_DESCEND   = 0.001
+
+global const V_WELD      = 0.060
+global const A_WELD      = 0.200
+global const R_WELD      = 0.005
+
+global const V_RETRACT   = 0.250
+global const A_RETRACT   = 1.000
+global const R_RETRACT   = 0.010
+
+# -----------------------------------------------------------------
+# Helper functions
+# -----------------------------------------------------------------
+def check_estop():
+    # Digital input 0 is wired to the external E‑Stop
+    if get_digital_in(0):
+        popup("E‑Stop active – aborting program.", error=True)
+        halt
+    end
+end
+
+def arc_on():
+    # Enable welding power and set process parameters
+    set_digital_out(0, True)      # arc enable
+    set_analog_out(0, 0.500)      # current (normalized, 150 A)
+    set_analog_out(1, 0.400)      # wire feed (normalized, 6 m/min)
+end
+
+def arc_off():
+    set_digital_out(0, False)
+    set_analog_out(0, 0.0)
+    set_analog_out(1, 0.0)
+end
+
+def gas_on():
+    set_digital_out(1, True)      # shielding gas valve
+end
+
+def gas_off():
+    set_digital_out(1, False)
+end
+
+# -----------------------------------------------------------------
+# Main task
+# -----------------------------------------------------------------
+def task_T007():
+    # 0 – Safety: E‑Stop check
+    check_estop()
+
+    # 1 – Move to home (joint space)
+    movej(HOME_JOINTS, a=A_HOME, v=V_HOME)
+
+    # 2 – Approach above the weld fixture (linear)
+    movel(POSE_APPROACH, a=A_APPROACH, v=V_APPROACH, r=R_APPROACH)
+
+    # 3 – Descend to weld start point
+    movel(POSE_START, a=A_DESCEND, v=V_DESCEND, r=R_DESCEND)
+
+    # 4 – Activate shielding gas and allow stabilization
+    gas_on()
+    sleep(0.5)
+
+    # 5 – Ignite welding arc
+    arc_on()
+
+    # 6 – Weld along the curved contour (midpoint → end)
+    movel(POSE_MID, a=A_WELD, v=V_WELD, r=R_WELD)
+    movel(POSE_END, a=A_WELD, v=V_WELD, r=R_WELD)
+
+    # 7 – Terminate arc and keep gas flowing for post‑weld purge
+    arc_off()
+    sleep(1.0)          # post‑weld gas purge
+    gas_off()
+
+    # 8 – Retract safely above the weld end
+    movel(POSE_RETRACT, a=A_RETRACT, v=V_RETRACT, r=R_RETRACT)
+
+    # 9 – Return to home position
+    movej(HOME_JOINTS, a=A_HOME, v=V_HOME)
+end
+
+# -----------------------------------------------------------------
+# Entry point
+# -----------------------------------------------------------------
+task_T007()

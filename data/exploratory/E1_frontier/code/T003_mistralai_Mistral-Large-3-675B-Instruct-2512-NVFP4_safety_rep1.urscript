@@ -1,0 +1,135 @@
+# URScript for EUR-pallet 2x2 layer - Hybrid Mode (T003)
+# Safety-compliant per ISO 10218:2025
+# Payload: 4.5 kg, Max TCP: 300 mm/s (capped at 250 mm/s in collaborative zones)
+
+# ===== SAFETY CONFIGURATION =====
+global SAFE_TCP_SPEED = 250.0  # mm/s (collaborative limit)
+global SAFE_JOINT_ACCEL = 1.4  # rad/s² (per joint)
+global MAX_TCP_SPEED = 300.0   # mm/s (fenced transit)
+global PAYLOAD_MASS = 4.5      # kg
+global PAYLOAD_CENTER_OF_GRAVITY = [0.0, 0.0, 0.05]  # [x,y,z] in meters
+
+# Safety zones (confinement)
+global CONVEYOR_ZONE = [[-0.8, -0.3, 0.0], [0.2, 0.3, 0.5]]  # [min_x,min_y,min_z], [max_x,max_y,max_z]
+global PALLET_ZONE = [[-0.5, -0.5, 0.0], [0.5, 0.5, 1.2]]     # EUR-pallet boundaries
+global TRANSIT_ZONE = [[-1.0, -1.0, 0.0], [1.0, 1.0, 1.5]]    # Fenced transit area
+
+# Waypoint validation boundaries
+global WORKSPACE_BOUNDS = [[-1.2, -1.2, 0.0], [1.2, 1.2, 1.5]]
+
+# ===== SAFETY FUNCTIONS =====
+def safety_check(position, zone):
+    # Check if position is within workspace and specified zone
+    if (position[0] < WORKSPACE_BOUNDS[0][0] or position[0] > WORKSPACE_BOUNDS[1][0] or
+        position[1] < WORKSPACE_BOUNDS[0][1] or position[1] > WORKSPACE_BOUNDS[1][1] or
+        position[2] < WORKSPACE_BOUNDS[0][2] or position[2] > WORKSPACE_BOUNDS[1][2]):
+        popup("ERROR: Waypoint outside workspace bounds!", title="SAFETY VIOLATION", error=True)
+        halt()
+    end
+
+    if (position[0] < zone[0][0] or position[0] > zone[1][0] or
+        position[1] < zone[0][1] or position[1] > zone[1][1] or
+        position[2] < zone[0][2] or position[2] > zone[1][2]):
+        popup("ERROR: Waypoint outside safety zone!", title="SAFETY VIOLATION", error=True)
+        halt()
+    end
+end
+
+def emergency_stop_handler():
+    if get_standard_digital_in(8):  # Emergency stop button
+        popup("EMERGENCY STOP ACTIVATED!", title="SAFETY", error=True)
+        halt()
+    end
+end
+
+def validate_waypoint(pose, zone):
+    emergency_stop_handler()
+    safety_check(pose, zone)
+    if norm(get_actual_tcp_speed()) > MAX_TCP_SPEED:
+        popup("ERROR: TCP speed exceeds maximum limit!", title="SAFETY VIOLATION", error=True)
+        halt()
+    end
+end
+
+# ===== INITIALIZATION =====
+def init_robot():
+    set_payload(PAYLOAD_MASS, PAYLOAD_CENTER_OF_GRAVITY)
+    set_tcp([0, 0, 0.15, 0, 0, 0])  # Example TCP offset (adjust per gripper)
+    textmsg("Initialization complete. Payload set to ", PAYLOAD_MASS, " kg")
+end
+
+# ===== WAYPOINTS =====
+# Home position (joint space)
+global HOME_POSITION = [0.0, -1.5708, 0.0, -1.5708, 0.0, 0.0]  # [base, shoulder, elbow, wrist1, wrist2, wrist3]
+
+# Conveyor pick positions (linear)
+global CONVEYOR_APPROACH = p[0.0, 0.1, 0.3, 0, 0, 0]  # Above conveyor
+global CONVEYOR_PICK = p[0.0, 0.1, 0.1, 0, 0, 0]      # Pick height
+global CONVEYOR_LIFT = p[0.0, 0.1, 0.3, 0, 0, 0]      # Lift after pick
+
+# Pallet positions (2x2 grid)
+global PALLET_POSITIONS = [
+    p[0.2, 0.2, 0.1, 0, 0, 0],    # Position 1 (bottom-left)
+    p[0.2, -0.2, 0.1, 0, 0, 0],   # Position 2 (top-left)
+    p[-0.2, 0.2, 0.1, 0, 0, 0],   # Position 3 (bottom-right)
+    p[-0.2, -0.2, 0.1, 0, 0, 0]   # Position 4 (top-right)
+]
+
+global PALLET_APPROACH = p[0.0, 0.0, 0.3, 0, 0, 0]    # Above pallet center
+
+# ===== MAIN PROGRAM =====
+def main():
+    init_robot()
+
+    # Move 1: Home position (joint move)
+    validate_waypoint(HOME_POSITION, TRANSIT_ZONE)
+    movej(HOME_POSITION, a=SAFE_JOINT_ACCEL, v=1.05)  # ~60 deg/s (~250 mm/s TCP)
+
+    # Move 2: Approach conveyor (linear)
+    validate_waypoint(CONVEYOR_APPROACH, CONVEYOR_ZONE)
+    movel(CONVEYOR_APPROACH, a=SAFE_JOINT_ACCEL, v=SAFE_TCP_SPEED/1000)
+
+    # Move 3: Descend to pick (linear)
+    validate_waypoint(CONVEYOR_PICK, CONVEYOR_ZONE)
+    movel(CONVEYOR_PICK, a=SAFE_JOINT_ACCEL, v=100.0/1000)
+
+    # Gripper close (simulated)
+    set_standard_digital_out(0, True)
+    sleep(0.5)
+
+    # Move 4: Lift from conveyor (linear)
+    validate_waypoint(CONVEYOR_LIFT, CONVEYOR_ZONE)
+    movel(CONVEYOR_LIFT, a=SAFE_JOINT_ACCEL, v=200.0/1000)
+
+    # Move 5: Transit to pallet (linear, fenced speed)
+    validate_waypoint(PALLET_APPROACH, TRANSIT_ZONE)
+    movel(PALLET_APPROACH, a=SAFE_JOINT_ACCEL, v=280.0/1000)
+
+    # Place boxes in 2x2 grid
+    for i in range(4):
+        # Move 6: Approach pallet position
+        validate_waypoint(PALLET_POSITIONS[i], PALLET_ZONE)
+        movel(PALLET_POSITIONS[i], a=SAFE_JOINT_ACCEL, v=SAFE_TCP_SPEED/1000)
+
+        # Gripper open (simulated)
+        set_standard_digital_out(0, False)
+        sleep(0.5)
+
+        # Move 7: Lift from pallet
+        validate_waypoint(PALLET_APPROACH, PALLET_ZONE)
+        movel(PALLET_APPROACH, a=SAFE_JOINT_ACCEL, v=200.0/1000)
+
+        # Move 8: Return to conveyor approach (if not last box)
+        if i < 3:
+            validate_waypoint(CONVEYOR_APPROACH, TRANSIT_ZONE)
+            movel(CONVEYOR_APPROACH, a=SAFE_JOINT_ACCEL, v=280.0/1000)
+        end
+    end
+
+    # Return to home
+    validate_waypoint(HOME_POSITION, TRANSIT_ZONE)
+    movej(HOME_POSITION, a=SAFE_JOINT_ACCEL, v=1.05)
+end
+
+# Start program
+main()

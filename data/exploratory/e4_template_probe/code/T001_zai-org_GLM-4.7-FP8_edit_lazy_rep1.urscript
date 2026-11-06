@@ -1,0 +1,63 @@
+# Task: T001 — Simple collaborative pick-place (Improved)
+# Description: Single-object pick-place, 0.5 kg payload, 200 mm/s.
+# Compliance: ISO 10218:2025 collaborative mode limits.
+# Robot: ur5e
+
+def task_T001():
+  # Configuration
+  set_payload(0.5, [0, 0, 0]) # Set mass (kg) and Center of Gravity (m)
+
+  # Pose Definitions
+  p_home = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+  p_pick_approach = p[0.400000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000]
+  p_pick = p[0.400000, 0.000000, 0.200000, 0.0000, 3.1416, 0.0000]
+  p_place_approach = p[0.400000, 0.200000, 0.350000, 0.0000, 3.1416, 0.0000]
+  p_place = p[0.400000, 0.200000, 0.200000, 0.0000, 3.1416, 0.0000]
+
+  # Motion Parameters
+  # Acceleration values tuned for smooth collaborative motion
+  acc_fast = 0.5
+  acc_slow = 0.3
+  vel_fast = 0.200 # 200 mm/s
+  vel_med = 0.150  # 150 mm/s
+  vel_slow = 0.100 # 100 mm/s
+  blend_radius = 0.01 # 10 mm blend
+
+  # [1] Go to home position
+  movej(p_home, a=1.2, v=1.0)
+
+  # [2] Approach pick point (200 mm/s)
+  movel(p_pick_approach, a=acc_fast, v=vel_fast, r=blend_radius)
+
+  # [3] Descend to pick (100 mm/s)
+  movel(p_pick, a=acc_slow, v=vel_slow)
+
+  # [4] Close gripper
+  set_digital_out(0, True)
+  sleep(0.5)
+
+  # [5] Lift from pick (150 mm/s)
+  movel(p_pick_approach, a=acc_fast, v=vel_med, r=blend_radius)
+
+  # [6] Transit to place approach (200 mm/s)
+  movel(p_place_approach, a=acc_fast, v=vel_fast, r=blend_radius)
+
+  # [7] Descend to place (100 mm/s)
+  movel(p_place, a=acc_slow, v=vel_slow)
+
+  # [8] Open gripper
+  set_digital_out(0, False)
+  sleep(0.3)
+
+  # [9] Retract from place (200 mm/s)
+  movel(p_place_approach, a=acc_fast, v=vel_fast, r=blend_radius)
+
+  # [10] Return to home
+  movej(p_home, a=1.2, v=1.0)
+
+  # Stop smoothly
+  stopj(2.0)
+end
+
+# Entry point
+task_T001()

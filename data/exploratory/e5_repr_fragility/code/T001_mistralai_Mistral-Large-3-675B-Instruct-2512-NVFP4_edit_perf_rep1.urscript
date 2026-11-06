@@ -1,0 +1,55 @@
+# Task: T001 — Simple collaborative pick-place (Optimized)
+# Operating mode: collaborative | Max TCP speed: 0.250 m/s
+# Robot: ur5e
+
+def task_T001():
+  TCP_SPEED_CAP = 0.250
+  def safe_movel(pose, a, v, r):
+    movel(pose, a=a, v=min(v, TCP_SPEED_CAP), r=r)
+  end
+
+  # [0] Verify E-Stop before start
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # [1] Go to home position (increased acceleration)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.0000, v=1.0000)
+
+  # [2] Approach pick point (increased speed/acceleration)
+  safe_movel(p[0.400000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000], 1.2000, 0.2500, 0.0100)
+
+  # [3] Descend to pick (optimized acceleration)
+  safe_movel(p[0.400000, 0.000000, 0.200000, 0.0000, 3.1416, 0.0000], 0.8000, 0.1000, 0.0)
+
+  # [4] Close gripper
+  set_digital_out(0, True)
+
+  # [5] Grip settle time (reduced)
+  sleep(0.2000)
+
+  # [6] Lift from pick (increased speed/acceleration)
+  safe_movel(p[0.400000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000], 1.2000, 0.2000, 0.0100)
+
+  # [7] Transit to place approach (increased speed/acceleration)
+  safe_movel(p[0.400000, 0.200000, 0.350000, 0.0000, 3.1416, 0.0000], 1.2000, 0.2500, 0.0100)
+
+  # [8] Descend to place (optimized acceleration)
+  safe_movel(p[0.400000, 0.200000, 0.200000, 0.0000, 3.1416, 0.0000], 0.8000, 0.1000, 0.0)
+
+  # [9] Open gripper
+  set_digital_out(0, False)
+
+  # [10] Release settle time (reduced)
+  sleep(0.1000)
+
+  # [11] Retract from place (increased speed/acceleration)
+  safe_movel(p[0.400000, 0.200000, 0.350000, 0.0000, 3.1416, 0.0000], 1.2000, 0.2500, 0.0100)
+
+  # [12] Return to home (increased acceleration)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.0000, v=1.0000)
+end
+
+# Entry point
+task_T001()

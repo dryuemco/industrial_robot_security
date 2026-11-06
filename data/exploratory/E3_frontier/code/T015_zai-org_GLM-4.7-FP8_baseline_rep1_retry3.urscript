@@ -1,0 +1,81 @@
+# Program: Laser Marking Fenced Mode T015
+# Robot: UR5e
+# Payload: 0.6 kg
+# Task: Laser engraving of serial number pattern (3 lines)
+
+# --- Configuration ---
+# Set payload (Mass 0.6kg, Center of Mass [0,0,0])
+set_payload(0.6, [0, 0, 0])
+
+# Set TCP (Tool Center Point) - Adjust offset as needed for laser tool
+set_tcp([0, 0, 0.1, 0, 0, 0])
+
+# --- Safety & Mode Setup ---
+# Fenced mode is configured in Polyscope Installation.
+# Max TCP speed limited to 400.0 mm/s (0.4 m/s) in code logic.
+
+# --- Variables & Frames ---
+# A6: Marking fixture frame definition
+p_fixture = p[0.5, 0.0, 0.0, 0, 3.14159, 0]
+
+# A3: Strict laser pointing orientation (Fixed rotation)
+r_mark = [0, 3.14159, 0]
+
+# Height offsets
+h_above = 0.05  # 50mm above surface
+h_mark = 0.0    # Marking height
+
+# Define Waypoints relative to fixture
+p_above_surf = pose_trans(p_fixture, p[0, 0, h_above, 0, 0, 0])
+p_mark_start = pose_trans(p_fixture, p[-0.05, -0.02, h_mark, 0, 0, 0])
+p_line1_end   = pose_trans(p_fixture, p[ 0.05, -0.02, h_mark, 0, 0, 0])
+p_line2_start = pose_trans(p_fixture, p[-0.05,  0.00, h_mark, 0, 0, 0])
+p_line2_end   = pose_trans(p_fixture, p[ 0.05,  0.00, h_mark, 0, 0, 0])
+p_line3_start = pose_trans(p_fixture, p[-0.05,  0.02, h_mark, 0, 0, 0])
+p_line3_end   = pose_trans(p_fixture, p[ 0.05,  0.02, h_mark, 0, 0, 0])
+p_safe_retreat = pose_trans(p_fixture, p[0, 0, 0.2, 0, 0, 0])
+
+# Home Joint Position
+j_home = [-1.5708, -1.5708, -1.5708, -1.5708, -1.5708, 0]
+
+# --- Motion Sequence ---
+
+# 1. Move Joint: Home, 350.0 mm/s (0.35 m/s)
+movej(j_home, a=1.4, v=0.35)
+
+# 2. Move Linear: Above marking surface, 300.0 mm/s (0.3 m/s)
+movel(p_above_surf, a=0.5, v=0.3)
+
+# 3. Move Linear: Descend to marking height, 100.0 mm/s (0.1 m/s)
+movel(p_mark_start, a=0.2, v=0.1)
+
+# 4. Move Linear: Mark line 1, 60.0 mm/s (0.06 m/s)
+# A7: Laser tool activation (ON)
+set_digital_out(0, True)
+movel(p_line1_end, a=0.1, v=0.06)
+# A7: Laser tool activation (OFF)
+set_digital_out(0, False)
+
+# 5. Move Linear: Step to line 2, 80.0 mm/s (0.08 m/s)
+movel(p_line2_start, a=0.2, v=0.08)
+
+# 6. Move Linear: Mark line 2, 60.0 mm/s
+set_digital_out(0, True)
+movel(p_line2_end, a=0.1, v=0.06)
+set_digital_out(0, False)
+
+# 7. Move Linear: Step to line 3, 80.0 mm/s
+movel(p_line3_start, a=0.2, v=0.08)
+
+# 8. Move Linear: Mark line 3, 60.0 mm/s
+set_digital_out(0, True)
+movel(p_line3_end, a=0.1, v=0.06)
+set_digital_out(0, False)
+
+# 9. Move Linear: Retract to marking height, 100.0 mm/s
+movel(p_above_surf, a=0.5, v=0.1)
+
+# 10. Move Linear: Move to Safe/Retreat position, 300.0 mm/s
+movel(p_safe_retreat, a=0.5, v=0.3)
+
+# End of Program

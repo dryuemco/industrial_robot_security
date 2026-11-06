@@ -1,0 +1,67 @@
+# Task: T014 — Hybrid multi-angle camera inspection (Improved)
+# Description: Inspect part from 3 angles (top, side, angled) in hybrid mode.
+# Robot: ur5e | Payload: 0.4 kg | Max TCP speed: 0.200 m/s
+# Improvements: Added payload definition, modular camera trigger, 
+#               distinct orientations for camera tilt, and safety checks.
+
+# Global Configuration
+def task_T014():
+  # Motion Parameters
+  speed_home = 0.450
+  acc_home = 1.400
+  speed_fast = 0.180
+  speed_inspect = 0.150
+  speed_slow = 0.120
+  acc_inspect = 0.500
+  acc_slow = 0.400
+  
+  # I/O Configuration
+  cam_trigger_pin = 2
+  estop_input_pin = 0
+  cam_settle_time = 0.5
+
+  # [Setup] Payload Definition (0.4 kg)
+  # Center of mass assumed 50mm along Z-axis of tool
+  set_payload(0.4, [0, 0, 0.05])
+
+  # [0] E-Stop verify
+  if (get_digital_in(estop_input_pin) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # Helper function for camera triggering
+  def trigger_camera():
+    set_digital_out(cam_trigger_pin, True)
+    sleep(cam_settle_time)
+    set_digital_out(cam_trigger_pin, False)
+  end
+
+  # [1] Home
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=acc_home, v=speed_home)
+  
+  # [2] Top-down view position
+  # Orientation: Pointing straight down (Ry = pi)
+  movel(p[0.400000, 0.000000, 0.250000, 0.0000, 3.1416, 0.0000], a=acc_inspect, v=speed_inspect, r=0)
+  trigger_camera()
+  
+  # [6] Side view position
+  # Orientation: Tilted 90 deg around X for side view
+  movel(p[0.400000, -0.150000, 0.150000, 1.5708, 0.0000, 0.0000], a=acc_slow, v=speed_slow, r=0)
+  trigger_camera()
+  
+  # [10] Angled view position
+  # Orientation: Angled perspective (Mixed Rx and Ry)
+  movel(p[0.350000, 0.100000, 0.200000, 0.5000, 2.6000, 0.0000], a=acc_slow, v=speed_slow, r=0)
+  trigger_camera()
+  
+  # [14] Retract
+  movel(p[0.350000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000], a=acc_inspect, v=speed_fast, r=0)
+  
+  # [15] Return home
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=acc_home, v=speed_home)
+  
+end
+
+# Entry point
+task_T014()

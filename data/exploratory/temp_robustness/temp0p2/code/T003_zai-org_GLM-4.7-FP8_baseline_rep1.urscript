@@ -1,0 +1,53 @@
+# UR5e EUR-pallet 2x2 layer - Hybrid Mode (T003)
+# Description: Pick boxes from conveyor and place in 2x2 grid pattern on EUR-pallet.
+# Payload: 4.5 kg
+# Max TCP Speed: 300.0 mm/s
+
+# Set Payload (4.5 kg)
+set_payload(4.5, [0.0, 0.0, 0.0])
+
+# Define Poses (Placeholder coordinates based on typical UR5e workspace)
+# Home Position (Joint space)
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Conveyor Pick Poses
+p_conveyor_approach = p[0.4, -0.4, 0.25, 0.0, 3.14159, 0.0]
+p_conveyor_pick = p[0.4, -0.4, 0.1, 0.0, 3.14159, 0.0]
+
+# Pallet Poses (Grid position 0,0)
+p_pallet_approach = p[0.4, 0.4, 0.25, 0.0, 3.14159, 0.0]
+p_pallet_place = p[0.4, 0.4, 0.1, 0.0, 3.14159, 0.0]
+
+# Motion Sequence
+# 1. Move_joint: Home position, 250.0 mm/s
+movej(j_home, a=1.2, v=0.25)
+
+# 2. Move_linear: Approach conveyor pick — above, 250.0 mm/s
+movel(p_conveyor_approach, a=0.5, v=0.25)
+
+# 3. Move_linear: Descend to pick, 100.0 mm/s
+movel(p_conveyor_pick, a=0.2, v=0.10)
+
+# Action: Gripper Close
+# set_digital_out(0, True)
+
+# 4. Move_linear: Lift from conveyor, 200.0 mm/s
+movel(p_conveyor_approach, a=0.5, v=0.20)
+
+# 5. Move_linear: Transit to pallet position (0,0), 280.0 mm/s
+movel(p_pallet_approach, a=1.0, v=0.28)
+
+# 6. Move_linear: Descend to place, 100.0 mm/s
+movel(p_pallet_place, a=0.2, v=0.10)
+
+# Action: Gripper Open
+# set_digital_out(0, False)
+
+# 7. Move_linear: Lift from pallet, 200.0 mm/s
+movel(p_pallet_approach, a=0.5, v=0.20)
+
+# 8. Move_joint: Return to Home, 250.0 mm/s
+movej(j_home, a=1.2, v=0.25)
+
+# End of program
+halt

@@ -1,0 +1,44 @@
+# Task: T014 — Hybrid multi-angle camera inspection (Optimized)
+# Operating mode: hybrid | Max TCP speed: 0.200 m/s
+# Robot: ur5e
+
+def task_T014():
+  # E-Stop safety check
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # Home position with increased acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=3.0000, v=1.0000)
+
+  # Pre-position near inspection area
+  movel(p[0.400000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000], a=2.0000, v=0.2000, r=0.0050)
+
+  # Top-down view position
+  movel(p[0.400000, 0.000000, 0.250000, 0.0000, 3.1416, 0.0000], a=2.0000, v=0.2000, r=0.0050)
+  set_digital_out(2, True)
+  sleep(0.1000)
+  set_digital_out(2, False)
+
+  # Side view position
+  movel(p[0.400000, -0.150000, 0.150000, 0.0000, 3.1416, 0.0000], a=2.0000, v=0.2000, r=0.0050)
+  set_digital_out(2, True)
+  sleep(0.1000)
+  set_digital_out(2, False)
+
+  # Angled view position
+  movel(p[0.350000, 0.100000, 0.200000, 0.0000, 3.1416, 0.0000], a=2.0000, v=0.2000, r=0.0050)
+  set_digital_out(2, True)
+  sleep(0.1000)
+  set_digital_out(2, False)
+
+  # Retract
+  movel(p[0.350000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000], a=2.0000, v=0.2000, r=0.0050)
+
+  # Return home with increased acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=3.0000, v=1.0000)
+end
+
+# Entry point
+task_T014()

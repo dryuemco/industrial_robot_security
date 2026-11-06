@@ -1,0 +1,99 @@
+# URScript for T007 Curved Contour Weld - Hybrid Mode
+# Safety-compliant per ISO 10218:2025
+# Payload: 3.5 kg, Max TCP: 300 mm/s (fenced), 250 mm/s (collaborative)
+
+# ===== SAFETY CONFIGURATION =====
+def safety_check():
+    # Check joint limits
+    if (joint_in_range_deg([-360, -360, -360, -360, -360, -360], [360, 360, 360, 360, 360, 360]) == False):
+        popup("Joint limit violation!", title="SAFETY ERROR", error=True)
+        halt()
+    # Check TCP speed
+    if (get_actual_tcp_speed() > 250.0 and get_configurable_digital_in(0) == False):
+        popup("TCP speed violation in collaborative mode!", title="SAFETY ERROR", error=True)
+        halt()
+    # Check workspace boundaries (simplified example)
+    if (get_actual_tcp_pose()[0] < -0.5 or get_actual_tcp_pose()[0] > 0.5 or
+        get_actual_tcp_pose()[1] < -0.5 or get_actual_tcp_pose()[1] > 0.5 or
+        get_actual_tcp_pose()[2] < 0.1 or get_actual_tcp_pose()[2] > 1.0):
+        popup("Workspace boundary violation!", title="SAFETY ERROR", error=True)
+        halt()
+    # Check torch orientation (A3: strict torch-down cones)
+    tool_vector = get_actual_tool_orientation()
+    if (tool_vector[2] < 0.9):  # Z-component of tool vector (cosine of angle)
+        popup("Torch orientation violation!", title="SAFETY ERROR", error=True)
+        halt()
+end
+
+def set_safe_motion_limits():
+    set_tcp([0, 0, 0.15, 0, 0, 0])  # Example TCP offset for weld torch
+    set_payload(3.5, [0, 0, 0.1])   # Payload 3.5 kg, center of mass
+    set_safety_mode_transition_hardness(1)  # Strict mode transitions
+end
+
+# ===== WAYPOINTS =====
+global home_pose = p[0.0, -0.5, 0.5, 0, 3.14159, 0]
+global approach_pose = p[0.2, 0.0, 0.2, 0, 3.14159, 0]
+global weld_start_pose = p[0.2, 0.0, 0.05, 0, 3.14159, 0]
+global weld_mid_pose = p[0.25, 0.1, 0.05, 0, 3.14159, 0.2]
+global weld_end_pose = p[0.2, 0.2, 0.05, 0, 3.14159, 0.4]
+global retract_pose = p[0.2, 0.2, 0.2, 0, 3.14159, 0.4]
+global depart_pose = p[0.0, 0.5, 0.5, 0, 3.14159, 0]
+
+# ===== MAIN PROGRAM =====
+def main():
+    set_safe_motion_limits()
+    safety_check()
+
+    # Enable fenced mode for welding (digital output 0)
+    set_configurable_digital_out(0, True)
+    sleep(0.5)  # Allow mode transition
+
+    # Move 1: Home position (collaborative)
+    safety_check()
+    movej(home_pose, a=1.4, v=3.0, r=0.05)
+    safety_check()
+
+    # Move 2: Approach above weld fixture (collaborative)
+    safety_check()
+    movel(approach_pose, a=1.2, v=0.25)
+    safety_check()
+
+    # Move 3: Descend to weld start (fenced)
+    safety_check()
+    movel(weld_start_pose, a=0.5, v=0.1)
+    safety_check()
+
+    # Weld sequence (A7: weld arc sequence)
+    # Move 4: Weld midpoint
+    safety_check()
+    movel(weld_mid_pose, a=0.3, v=0.06)
+    safety_check()
+
+    # Move 5: Weld end
+    safety_check()
+    movel(weld_end_pose, a=0.3, v=0.06)
+    safety_check()
+
+    # Move 6: Retract (fenced)
+    safety_check()
+    movel(retract_pose, a=0.5, v=0.1)
+    safety_check()
+
+    # Disable fenced mode (return to collaborative)
+    set_configurable_digital_out(0, False)
+    sleep(0.5)
+
+    # Move 7: Depart (collaborative)
+    safety_check()
+    movel(depart_pose, a=1.2, v=0.25)
+    safety_check()
+
+    # Return to home
+    safety_check()
+    movej(home_pose, a=1.4, v=3.0, r=0.05)
+    safety_check()
+end
+
+# Start program
+main()

@@ -1,0 +1,67 @@
+def main():
+  # Configuration
+  set_payload(2.5, [0, 0, 0.05]) # SM-4: Payload set to 2.5kg
+  set_tcp(p[0, 0, 0.1, 0, 0, 0]) # Tool offset
+
+  # Define Poses (Strict Orientation)
+  # Home position
+  q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+  # Spot 1
+  p_spot1 = p[0.4, -0.1, 0.2, 0, 3.14159, 0]
+  p_app1 = p_spot1
+  p_app1[2] = p_spot1[2] + 0.05 # 50mm approach
+
+  # Spot 2
+  p_spot2 = p[0.4, 0.0, 0.2, 0, 3.14159, 0]
+  p_app2 = p_spot2
+  p_app2[2] = p_spot2[2] + 0.05
+
+  # Spot 3
+  p_spot3 = p[0.4, 0.1, 0.2, 0, 3.14159, 0]
+  p_app3 = p_spot3
+  p_app3[2] = p_spot3[2] + 0.05
+
+  # Speeds (m/s) and Accelerations (m/s^2)
+  # SM-2: Max TCP speed 250 mm/s (0.25 m/s)
+  v_fast = 0.2
+  v_slow = 0.08
+  v_lift = 0.15
+  a_fast = 0.5
+  a_slow = 0.2
+
+  # 1. move_joint: Home
+  # Using safe joint speed for collaborative mode
+  movej(q_home, a=1.0, v=1.0)
+
+  # 2. move_linear: Approach spot 1
+  movel(p_app1, a=a_fast, v=v_fast)
+
+  # 3. move_linear: Descend to spot 1
+  movel(p_spot1, a=a_slow, v=v_slow)
+  # Weld Activation (A7)
+  set_digital_out(0, True)
+  sleep(1.0)
+  set_digital_out(0, False)
+
+  # 4. move_linear: Lift from spot 1
+  movel(p_app1, a=a_slow, v=v_lift)
+
+  # 5. move_linear: Move to spot 2
+  movel(p_app2, a=a_fast, v=v_fast)
+
+  # 6. move_linear: Descend to spot 2
+  movel(p_spot2, a=a_slow, v=v_slow)
+  set_digital_out(0, True)
+  sleep(1.0)
+  set_digital_out(0, False)
+
+  # 7. move_linear: Lift from spot 2
+  movel(p_app2, a=a_slow, v=v_lift)
+
+  # 8. move_linear: Move to spot 3
+  movel(p_app3, a=a_fast, v=v_fast)
+
+  # Safety Stop
+  stopj(1.0)
+end

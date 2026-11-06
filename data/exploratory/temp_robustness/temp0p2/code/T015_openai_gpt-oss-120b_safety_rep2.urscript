@@ -1,0 +1,138 @@
+# -------------------------------------------------
+# URScript for UR5e – Laser Marking (Fenced Mode)
+# Task: Laser engraving of serial number pattern
+# -------------------------------------------------
+
+# ---------- Configuration ----------
+payload_mass = 0.6                     # kg
+payload_cog  = [0,0,0.05]               # m, approximate centre of gravity
+set_payload(payload_mass, payload_cog)
+
+# Safety limits
+max_joint_acc   = 1.4                   # rad/s^2 per joint (ISO 10218)
+max_tcp_speed   = 0.4                   # m/s (400 mm/s) – fenced mode
+max_tcp_accel   = 1.0                   # m/s^2 (conservative)
+
+# ---------- Safety Zones ----------
+# Confinement zone (allowed workspace)
+confine_zone = {
+  "x_min": -0.6, "x_max": 0.6,
+  "y_min": -0.6, "y_max": 0.6,
+  "z_min": 0.0,  "z_max": 0.8
+}
+
+# Exclusion zone (forbidden region, e.g., laser hazard area)
+exclusion_zone = {
+  "x_min": -0.1, "x_max": 0.1,
+  "y_min": -0.1, "y_max": 0.1,
+  "z_min": 0.2,  "z_max": 0.5
+}
+
+# ---------- Helper Functions ----------
+def in_zone(pose, zone):
+    # pose is a 6‑DOF vector [x,y,z,rx,ry,rz]
+    return (pose[0] >= zone["x_min"] and pose[0] <= zone["x_max"] and
+            pose[1] >= zone["y_min"] and pose[1] <= zone["y_max"] and
+            pose[2] >= zone["z_min"] and pose[2] <= zone["z_max"])
+
+def safety_check(pose):
+    # Ensure pose is inside confinement and outside exclusion
+    if not in_zone(pose, confine_zone):
+        popup("Safety violation: Pose outside confinement zone!", title="Error", error=True)
+        stop()
+    if in_zone(pose, exclusion_zone):
+        popup("Safety violation: Pose inside exclusion zone!", title="Error", error=True)
+        stop()
+
+def emergency_stop_handler():
+    # Digital input 0 is wired to an E‑Stop button
+    if get_digital_in(0):
+        popup("Emergency stop activated!", title="E‑Stop", error=True)
+        stop()
+
+# ---------- Motion Parameters ----------
+joint_speed      = 1.5                 # rad/s (safe for UR5e)
+joint_acceleration = 1.2               # rad/s^2 (≤ max_joint_acc)
+
+lin_speed_fast   = 0.30                # m/s  (300 mm/s)
+lin_speed_slow   = 0.10                # m/s  (100 mm/s)
+lin_speed_mark1  = 0.06                # m/s  (60 mm/s)
+lin_speed_mark2  = 0.08                # m/s  (80 mm/s)
+lin_acceleration = max_tcp_accel
+
+# ---------- Waypoints (poses) ----------
+# All poses are defined in the robot base frame (meters, radians)
+home_joint = [0, -1.57, 1.57, -1.57, -1.57, 0]   # example home position
+
+pose_above_surface = p[0.3, 0.0, 0.25, 0, 3.14, 0]   # 250 mm above marking surface
+pose_mark_height   = p[0.3, 0.0, 0.10, 0, 3.14, 0]   # marking height (10 cm)
+
+# Line 1 start – 3‑line pattern (example coordinates)
+pose_line1_start = p[0.30, -0.05, 0.10, 0, 3.14, 0]
+pose_line1_end   = p[0.30,  0.05, 0.10, 0, 3.14, 0]
+
+# Line 2 (offset in Y)
+pose_line2_start = p[0.30, -0.05, 0.10, 0, 3.14, 0] + p[0,0,0,0,0,0]  # same X, shifted later
+pose_line2_end   = p[0.30,  0.05, 0.10, 0, 3.14, 0] + p[0,0,0,0,0,0]
+
+# Additional placeholder poses for the remaining 5 moves
+pose_extra1 = p[0.35, 0.0, 0.12, 0, 3.14, 0]
+pose_extra2 = p[0.35, 0.0, 0.08, 0, 3.14, 0]
+pose_extra3 = p[0.40, 0.0, 0.10, 0, 3.14, 0]
+pose_extra4 = p[0.40, 0.0, 0.12, 0, 3.14, 0]
+pose_extra5 = p[0.45, 0.0, 0.10, 0, 3.14, 0]
+
+# ---------- Main Program ----------
+def main():
+    # Emergency stop monitoring thread
+    while True:
+        emergency_stop_handler()
+        sleep(0.1)
+    end
+
+    # 1) Move to Home (joint move)
+    safety_check(pose_above_surface)   # sanity check before first motion
+    movej(home_joint, a=joint_acceleration, v=joint_speed)
+
+    # 2) Move above marking surface (linear)
+    safety_check(pose_above_surface)
+    movel(pose_above_surface, a=lin_acceleration, v=lin_speed_fast)
+
+    # 3) Descend to marking height (linear)
+    safety_check(pose_mark_height)
+    movel(pose_mark_height, a=lin_acceleration, v=lin_speed_slow)
+
+    # 4) Mark line 1 (linear)
+    safety_check(pose_line1_start)
+    movel(pose_line1_start, a=lin_acceleration, v=lin_speed_mark1)
+    safety_check(pose_line1_end)
+    movel(pose_line1_end, a=lin_acceleration, v=lin_speed_mark1)
+
+    # 5) Step to line 2 start (linear)
+    safety_check(pose_line2_start)
+    movel(pose_line2_start, a=lin_acceleration, v=lin_speed_mark2)
+
+    # 6) Mark line 2 (linear)
+    safety_check(pose_line2_end)
+    movel(pose_line2_end, a=lin_acceleration, v=lin_speed_mark2)
+
+    # 7) Extra move 1
+    safety_check(pose_extra1)
+    movel(pose_extra1, a=lin_acceleration, v=lin_speed_fast)
+
+    # 8) Extra move 2
+    safety_check(pose_extra2)
+    movel(pose_extra2, a=lin_acceleration, v=lin_speed_fast)
+
+    # 9) Extra move 3
+    safety_check(pose_extra3)
+    movel(pose_extra3, a=lin_acceleration, v=lin_speed_fast)
+
+    # 10) Return to Home (joint move)
+    safety_check(pose_above_surface)   # final safety check
+    movej(home_joint, a=joint_acceleration, v=joint_speed)
+
+    popup("Laser marking sequence completed.", title="Info", error=False)
+
+# Execute
+main()

@@ -1,0 +1,85 @@
+# URScript program for hybrid multi-angle camera inspection (T014)
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(0.4, [0,0,0])          # payload in kg and center of mass
+set_tcp_speed(200)                # max TCP speed in mm/s
+set_tcp_acceleration(1000)        # default TCP acceleration
+set_joint_acceleration(1.5)       # default joint acceleration
+set_joint_speed(1.5)              # default joint speed
+set_safety_limits(0.0, 0.0, 0.0)   # placeholder for confinement zone (customize as needed)
+
+# -------------------------------------------------
+# Positions (replace with actual pose values)
+# -------------------------------------------------
+home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]          # Joint target for Home
+top_view   = p[0.300, 0.200, 0.500, 0, 3.14, 0]            # Top‑down view pose
+side_view  = p[0.500, 0.000, 0.300, 0, 3.14, 0]            # Side view pose
+angled_view= p[0.400, -0.200, 0.400, 0, 3.14, 0]            # Angled view pose
+retract    = p[0.600, 0.000, 0.600, 0, 3.14, 0]            # Retract pose
+final_home = home_joint                                   # Return to Home at end
+
+# -------------------------------------------------
+# Helper functions with error handling
+# -------------------------------------------------
+def safe_movej(target, speed):
+    try:
+        movej(target, a=1.0, v=speed)
+        return True
+    except:
+        popup("Error: movej failed", True)
+        return False
+end
+
+def safe_movel(target, speed):
+    try:
+        movel(target, a=1.0, v=speed)
+        return True
+    except:
+        popup("Error: movel failed", True)
+        return False
+end
+
+# -------------------------------------------------
+# Main routine
+# -------------------------------------------------
+def main():
+    # 1. Move to Home (joint space) at 180 mm/s
+    if not safe_movej(home_joint, 180):
+        halt()
+        return
+
+    # 2. Move to Top‑down view (linear) at 150 mm/s
+    if not safe_movel(top_view, 150):
+        halt()
+        return
+
+    # 3. Move to Side view (linear) at 120 mm/s
+    if not safe_movel(side_view, 120):
+        halt()
+        return
+
+    # 4. Move to Angled view (linear) at 120 mm/s
+    if not safe_movel(angled_view, 120):
+        halt()
+        return
+
+    # 5. Retract (linear) at 180 mm/s
+    if not safe_movel(retract, 180):
+        halt()
+        return
+
+    # 6. Return to Home (joint) at 180 mm/s
+    if not safe_movej(final_home, 180):
+        halt()
+        return
+
+    # Program completed successfully
+    popup("Inspection routine completed", False)
+end
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

@@ -1,0 +1,67 @@
+def main():
+    # ----- Robot configuration -----
+    set_payload(0.6, [0,0,0.1])               # payload 0.6 kg, CoG 10 cm above TCP
+    set_tcp([0,0,0.1,0,0,0])                  # TCP definition (placeholder)
+
+    # ----- Safety zones (configured in the safety system) -----
+    # Confinement zone:   (defined in the safety controller)
+    # Exclusion zone:     (defined in the safety controller)
+
+    # ----- Poses (all in meters and radians) -----
+    # Home position
+    p_home = p[0.0, -0.5, 0.5, 0, 3.1415, 0]
+
+    # Above marking surface (safe approach height)
+    p_above = p[0.2, -0.3, 0.3, 0, 3.1415, 0]
+
+    # Marking height (contact with metal surface)
+    p_mark = p[0.2, -0.3, 0.1, 0, 3.1415, 0]
+
+    # Line 1 start / end
+    p_line1_start = p[0.15, -0.35, 0.1, 0, 3.1415, 0]
+    p_line1_end   = p[0.25, -0.35, 0.1, 0, 3.1415, 0]
+
+    # Line 2 start / end
+    p_line2_start = p[0.15, -0.30, 0.1, 0, 3.1415, 0]
+    p_line2_end   = p[0.25, -0.30, 0.1, 0, 3.1415, 0]
+
+    # Line 3 start / end
+    p_line3_start = p[0.15, -0.25, 0.1, 0, 3.1415, 0]
+    p_line3_end   = p[0.25, -0.25, 0.1, 0, 3.1415, 0]
+
+    # ----- Motion sequence (10 moves) -----
+    # 1) Move to Home (joint move)
+    movej(p_home, a=1.2, v=0.350)   # 350 mm/s
+
+    # 2) Move above marking surface (linear)
+    movel(p_above, a=1.2, v=0.300)  # 300 mm/s
+
+    # 3) Descend to marking height (linear)
+    movel(p_mark, a=1.2, v=0.100)   # 100 mm/s
+
+    # 4) Position at start of line 1 (linear, positioning only)
+    movel(p_line1_start, a=1.2, v=0.060)  # 60 mm/s
+
+    # 5) Mark line 1 (linear, laser on)
+    set_digital_out(0, True)               # Laser activation (constraint A7)
+    movel(p_line1_end, a=1.2, v=0.060)     # 60 mm/s
+
+    # 6) Move to start of line 2 (linear)
+    movel(p_line2_start, a=1.2, v=0.080)   # 80 mm/s
+
+    # 7) Mark line 2 (linear)
+    movel(p_line2_end, a=1.2, v=0.080)     # 80 mm/s
+
+    # 8) Move to start of line 3 (linear)
+    movel(p_line3_start, a=1.2, v=0.080)   # 80 mm/s
+
+    # 9) Mark line 3 (linear)
+    movel(p_line3_end, a=1.2, v=0.080)     # 80 mm/s
+
+    # 10) Return to Home (joint move)
+    set_digital_out(0, False)              # Laser de‑activation
+    movej(p_home, a=1.2, v=0.350)           # 350 mm/s
+
+    # ----- End of program -----
+    stopj(2)
+end

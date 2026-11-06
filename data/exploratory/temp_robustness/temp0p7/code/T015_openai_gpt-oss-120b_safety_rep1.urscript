@@ -1,0 +1,127 @@
+# -------------------------------------------------
+# URScript for UR5e – Laser Marking (Fenced Mode)
+# -------------------------------------------------
+# Safety compliant with ISO 10218:2025
+# -------------------------------------------------
+
+# ---------- Configuration ----------
+payload_mass = 0.6                     # kg
+payload_cog = [0,0,0.03]                # meters (approx. tool center)
+
+set_payload(payload_mass, payload_cog)
+
+# Define safety zones (placeholders – replace with actual coordinates)
+# Confinement zone (allowed robot workspace)
+confine_min = p[-0.8, -0.8, 0.0, -3.14, -3.14, -3.14]
+confine_max = p[ 0.8,  0.8, 1.2,  3.14,  3.14,  3.14]
+
+# Exclusion zone (forbidden area – e.g., laser beam path)
+exclusion_center = p[0.0, 0.0, 0.6, 0,0,0]
+exclusion_radius = 0.15                # meters
+
+# ---------- Safety Helper Functions ----------
+def in_confine_zone(p_pose):
+    return (p_pose[0] >= confine_min[0] and p_pose[0] <= confine_max[0] and
+            p_pose[1] >= confine_min[1] and p_pose[1] <= confine_max[1] and
+            p_pose[2] >= confine_min[2] and p_pose[2] <= confine_max[2])
+
+def in_exclusion_zone(p_pose):
+    # simple spherical exclusion check
+    dx = p_pose[0] - exclusion_center[0]
+    dy = p_pose[1] - exclusion_center[1]
+    dz = p_pose[2] - exclusion_center[2]
+    return (dx*dx + dy*dy + dz*dz) < (exclusion_radius*exclusion_radius)
+
+def safety_check(p_pose):
+    if not in_confine_zone(p_pose):
+        popup("Safety violation: Pose outside confinement zone!", true)
+        halt()
+    if in_exclusion_zone(p_pose):
+        popup("Safety violation: Pose inside exclusion zone!", true)
+        halt()
+
+def e_stop():
+    # Emergency stop handler – called on any safety breach
+    popup("EMERGENCY STOP ACTIVATED!", true)
+    stopj(2)          # bring robot to a safe stop
+    halt()
+
+# ---------- Motion Parameters ----------
+# Joint motion limits (per joint)
+joint_acc = 1.4          # rad/s^2 (max per ISO)
+joint_vel_home = 350.0/1000   # convert mm/s to m/s for joint speed (approx.)
+# Linear motion limits
+lin_acc = 1.4            # m/s^2 (conservative for fenced mode)
+# Note: Linear acceleration is set per command; using same value for simplicity
+
+# ---------- Waypoints ----------
+# Joint positions (radians) – placeholders, must be calibrated for the cell
+home_joints       = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Cartesian poses – placeholders (replace with actual calibrated points)
+above_surface     = p[0.3, 0.0, 0.3, 0, 3.14, 0]   # 30 cm above the metal plate
+marking_height    = p[0.3, 0.0, 0.1, 0, 3.14, 0]   # 10 cm above plate (laser focal point)
+line1_start       = p[0.25, -0.05, 0.1, 0, 3.14, 0]
+line1_end         = p[0.35, -0.05, 0.1, 0, 3.14, 0]
+line2_start       = p[0.25, 0.0, 0.1, 0, 3.14, 0]
+line2_end         = p[0.35, 0.0, 0.1, 0, 3.14, 0]
+line3_start       = p[0.25, 0.05, 0.1, 0, 3.14, 0]
+line3_end         = p[0.35, 0.05, 0.1, 0, 3.14, 0]
+
+# Additional intermediate points (placeholders)
+intermediate1     = p[0.30, -0.02, 0.1, 0, 3.14, 0]
+intermediate2     = p[0.30, 0.02, 0.1, 0, 3.14, 0]
+
+# ---------- Main Program ----------
+def main():
+    # ---- 1. Move to Home (joint space) ----
+    safety_check(p[0,0,0,0,0,0])   # home is always inside workspace
+    movej(home_joints, a=joint_acc, v=joint_vel_home)
+
+    # ---- 2. Move above marking surface (linear) ----
+    safety_check(above_surface)
+    movel(above_surface, a=lin_acc, v=0.300)   # 300 mm/s = 0.300 m/s
+
+    # ---- 3. Descend to marking height ----
+    safety_check(marking_height)
+    movel(marking_height, a=lin_acc, v=0.100)  # 100 mm/s
+
+    # ---- 4. Mark Line 1 ----
+    safety_check(line1_start)
+    movel(line1_start, a=lin_acc, v=0.060)    # 60 mm/s
+    safety_check(line1_end)
+    movel(line1_end, a=lin_acc, v=0.060)
+
+    # ---- 5. Step to Line 2 ----
+    safety_check(intermediate1)
+    movel(intermediate1, a=lin_acc, v=0.080)  # 80 mm/s
+    safety_check(line2_start)
+    movel(line2_start, a=lin_acc, v=0.080)
+    safety_check(line2_end)
+    movel(line2_end, a=lin_acc, v=0.080)
+
+    # ---- 6. Step to Line 3 ----
+    safety_check(intermediate2)
+    movel(intermediate2, a=lin_acc, v=0.080)
+    safety_check(line3_start)
+    movel(line3_start, a=lin_acc, v=0.080)
+    safety_check(line3_end)
+    movel(line3_end, a=lin_acc, v=0.080)
+
+    # ---- 7. Retract to safe height ----
+    safety_check(above_surface)
+    movel(above_surface, a=lin_acc, v=0.200)   # 200 mm/s retract
+
+    # ---- 8. Return to Home ----
+    safety_check(p[0,0,0,0,0,0])
+    movej(home_joints, a=joint_acc, v=joint_vel_home)
+
+    # Program finished
+    popup("Laser marking sequence completed.", false)
+
+# Register emergency stop handler (called by external watchdog if needed)
+def on_program_stop():
+    e_stop()
+
+# Execute
+main()

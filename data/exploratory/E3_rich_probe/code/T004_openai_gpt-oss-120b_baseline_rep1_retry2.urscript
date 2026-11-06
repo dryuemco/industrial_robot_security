@@ -1,0 +1,139 @@
+# URScript program: Multi-waypoint SSM pick‑place with obstacle avoidance
+# Robot: UR5e, collaborative mode, payload 1.5 kg
+# Safety: Speed and Separation Monitoring (SSM), confinement and exclusion zones
+
+# -------------------------------------------------
+# Configuration
+payload(1.5, 0.0, 0.0, 0.0)   # payload in kg, CoG (x,y,z) in meters
+set_tcp(p[0,0,0.1,0,0,0])    # tool centre point offset
+set_payload(1.5)             # redundant safety payload setting
+
+# Joint limits (rad) for UR5e
+joint_limits = [
+  [-2.0, 2.0],   # Joint 1
+  [-2.0, 2.0],   # Joint 2
+  [-2.0, 2.0],   # Joint 3
+  [-2.0, 2.0],   # Joint 4
+  [-2.0, 2.0],   # Joint 5
+  [-2.0, 2.0]    # Joint 6
+]
+
+# Confinement zone (allowed workspace) – meters
+confine_min = p[-0.5, -0.5, 0.0, 0, 0, 0]
+confine_max = p[ 0.5,  0.5, 0.8, 0, 0, 0]
+
+# Exclusion zone (obstacle column) – meters
+excl_min = p[-0.2, -0.2, 0.0, 0, 0, 0]
+excl_max = p[-0.1,  0.2, 0.8, 0, 0, 0]
+
+# -------------------------------------------------
+# Helper functions
+
+def in_range(val, min_val, max_val):
+    return (val >= min_val) and (val <= max_val)
+
+def pose_in_box(pose, box_min, box_max):
+    # Checks only translational part (x,y,z)
+    return in_range(pose[0], box_min[0], box_max[0]) and \
+           in_range(pose[1], box_min[1], box_max[1]) and \
+           in_range(pose[2], box_min[2], box_max[2])
+
+def pose_allowed(pose):
+    # Must be inside confinement and outside exclusion
+    if not pose_in_box(pose, confine_min, confine_max):
+        textmsg("Target pose outside confinement zone.")
+        return false
+    if pose_in_box(pose, excl_min, excl_max):
+        textmsg("Target pose inside exclusion zone.")
+        return false
+    return true
+
+def joints_within_limits(joints):
+    for i in range(6):
+        if not in_range(joints[i], joint_limits[i][0], joint_limits[i][1]):
+            textmsg("Joint " .. (i+1) .. " out of limits.")
+            return false
+    return true
+
+def safe_movej(target_joint, a=1.4, v=0.2):
+    # Check joint limits before moving
+    if not joints_within_limits(target_joint):
+        textmsg("Aborting movej: joint limits violation.")
+        stop()
+    try:
+        movej(target_joint, a, v)
+    catch err:
+        textmsg("movej failed: " .. err)
+        stop()
+    end
+
+def safe_movel(target_pose, a=1.4, v=0.2):
+    # Check workspace constraints before moving
+    if not pose_allowed(target_pose):
+        textmsg("Aborting movel: pose violates safety zones.")
+        stop()
+    try:
+        movel(target_pose, a, v)
+    catch err:
+        textmsg("movel failed: " .. err)
+        stop()
+    end
+
+# -------------------------------------------------
+# Waypoints (poses in meters, orientation as quaternion)
+# Note: orientations are placeholders (identity quaternion)
+
+home_joint = [0, -1.57, 0, -1.57, 0, 0]               # Home joint configuration
+
+wp1 = p[0.3, 0.0, 0.5, 0, 3.14, 0]   # Above pick station
+wp2 = p[0.3, 0.0, 0.2, 0, 3.14, 0]   # Descend to pick
+wp3 = p[0.3, 0.0, 0.5, 0, 3.14, 0]   # Lift above pick
+wp4 = p[0.1, 0.0, 0.5, 0, 3.14, 0]   # Obstacle avoidance waypoint (offset -X)
+
+# Additional waypoints (place station and return)
+wp5 = p[0.3, 0.4, 0.5, 0, 3.14, 0]   # Above place station
+wp6 = p[0.3, 0.4, 0.2, 0, 3.14, 0]   # Descend to place
+wp7 = p[0.3, 0.4, 0.5, 0, 3.14, 0]   # Lift after place
+wp8 = p[0.0, 0.0, 0.6, 0, 3.14, 0]   # Safe standby pose
+wp9 = p[0.0, 0.0, 0.3, 0, 3.14, 0]   # Return to home height
+
+# -------------------------------------------------
+# Main program
+
+def main():
+    # 1) Move to Home (joint space) – 200 mm/s (0.2 m/s)
+    safe_movej(home_joint, a=1.4, v=0.2)
+
+    # 2) Move linear to WP1 – 200 mm/s
+    safe_movel(wp1, a=1.4, v=0.2)
+
+    # 3) Move linear to WP2 – 100 mm/s
+    safe_movel(wp2, a=1.4, v=0.1)
+
+    # 4) Move linear to WP3 – 180 mm/s
+    safe_movel(wp3, a=1.4, v=0.18)
+
+    # 5) Move linear to WP4 (avoid obstacle) – 200 mm/s
+    safe_movel(wp4, a=1.4, v=0.2)
+
+    # 6) Move linear to WP5 – 200 mm/s
+    safe_movel(wp5, a=1.4, v=0.2)
+
+    # 7) Move linear to WP6 – 100 mm/s
+    safe_movel(wp6, a=1.4, v=0.1)
+
+    # 8) Move linear to WP7 – 180 mm/s
+    safe_movel(wp7, a=1.4, v=0.18)
+
+    # 9) Move linear to WP8 – 200 mm/s (standby)
+    safe_movel(wp8, a=1.4, v=0.2)
+
+    # Return to Home joint pose
+    safe_movej(home_joint, a=1.4, v=0.2)
+
+    textmsg("Program completed safely.")
+end
+
+# -------------------------------------------------
+# Execute
+main()

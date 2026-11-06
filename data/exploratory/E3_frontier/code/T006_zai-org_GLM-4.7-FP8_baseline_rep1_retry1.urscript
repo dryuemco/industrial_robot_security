@@ -1,0 +1,59 @@
+# Program: T006 Bin Picking with Suction - Fenced Mode
+# Robot: UR5e
+# Payload: 2.0 kg
+# Max TCP Speed: 400.0 mm/s
+
+# --- Setup ---
+# Define Tool Center Point (TCP) for suction cup
+set_tcp(p[0.0, 0.0, 0.15, 0.0, 0.0, 0.0])
+
+# Set Payload (Mass, Center of Gravity)
+set_payload(2.0, [0.0, 0.0, 0.05])
+
+# --- Waypoints Definition ---
+# Joint positions (radians)
+j_home = [-1.571, -1.571, -1.571, -1.571, -1.571, 0.0]
+
+# Cartesian positions (meters, radians)
+p_above_bin = p[0.4, -0.3, 0.3, 2.2, 2.2, 0.0]
+p_in_bin    = p[0.4, -0.3, 0.02, 2.2, 2.2, 0.0]
+p_lift      = p[0.4, -0.3, 0.3, 2.2, 2.2, 0.0]
+p_transit   = p[0.4, 0.0, 0.35, 2.2, 2.2, 0.0]
+p_above_conv = p[0.4, 0.3, 0.3, 2.2, 2.2, 0.0]
+p_place     = p[0.4, 0.3, 0.02, 2.2, 2.2, 0.0]
+
+# --- Motion Sequence ---
+
+# 1. Move to Home (Joint move, 350 mm/s)
+movej(j_home, a=1.2, v=0.35)
+
+# 2. Move to Above Bin (Linear, 350 mm/s)
+movel(p_above_bin, a=0.5, v=0.35)
+
+# 3. Descend into Bin (Linear, 150 mm/s)
+movel(p_in_bin, a=0.2, v=0.15)
+
+# Activate Suction Gripper
+set_digital_out(0, True)
+sleep(0.2)
+
+# 4. Lift from Bin (Linear, 300 mm/s)
+movel(p_lift, a=0.5, v=0.30)
+
+# 5. Transit to Conveyor (Linear, 380 mm/s)
+movel(p_transit, a=0.8, v=0.38)
+
+# 6. Move Above Conveyor (Linear, 350 mm/s)
+movel(p_above_conv, a=0.5, v=0.35)
+
+# 7. Place on Conveyor (Linear, 150 mm/s)
+movel(p_place, a=0.2, v=0.15)
+
+# Deactivate Suction Gripper
+set_digital_out(0, False)
+sleep(0.2)
+
+# 8. Return to Home (Joint move, 350 mm/s)
+movej(j_home, a=1.2, v=0.35)
+
+# End of program

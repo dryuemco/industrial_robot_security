@@ -1,0 +1,60 @@
+# URScript for curved contour weld in hybrid mode (T007)
+
+# --- Configuration ---------------------------------------------------------
+set_payload(3.5, [0, 0, 0.1])      # payload 3.5 kg, centre of gravity offset
+set_tcp_speed(0.30)               # max TCP speed 300 mm/s
+
+# Hybrid (fenced) safety mode – placeholder (adjust to actual safety API)
+# set_safety_mode(1)               # 1 = reduced speed / fenced (example)
+
+# --- Positions -------------------------------------------------------------
+# Joint positions (radians)
+home_joint   = [0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Cartesian poses (meters, radians)
+# Approach point above the fixture
+approach_pose = p[0.500, 0.000, 0.300, 0.0, 3.1416, 0.0]
+
+# Weld start (directly above the seam)
+start_pose    = p[0.500, 0.000, 0.150, 0.0, 3.1416, 0.0]
+
+# Weld midpoint (arc centre)
+mid_pose      = p[0.550, 0.050, 0.150, 0.0, 3.1416, 0.0]
+
+# Weld end point
+end_pose      = p[0.600, 0.100, 0.150, 0.0, 3.1416, 0.0]
+
+# Retract point after welding
+retract_pose  = p[0.500, 0.000, 0.300, 0.0, 3.1416, 0.0]
+
+# --- Main program -----------------------------------------------------------
+def main():
+    # 1) Move to home position
+    movej(home_joint, a=1.2, v=0.30, t=0, r=0)
+
+    # 2) Linear approach above weld fixture
+    movel(approach_pose, a=1.2, v=0.25, t=0, r=0)
+
+    # 3) Descend to weld start
+    movel(start_pose, a=1.2, v=0.10, t=0, r=0)
+
+    # 4) Weld along curved arc – midpoint
+    movel(mid_pose, a=1.2, v=0.06, t=0, r=0)
+
+    # 5) Continue to weld end
+    movel(end_pose, a=1.2, v=0.06, t=0, r=0)
+
+    # 6) Retract to safe height
+    movel(retract_pose, a=1.2, v=0.25, t=0, r=0)
+
+    # 7) Return to home position
+    movej(home_joint, a=1.2, v=0.30, t=0, r=0)
+
+    # End of program
+    stopj(2.0)   # optional brake
+
+end
+
+# ---------------------------------------------------------------------------
+# Run the program
+main()

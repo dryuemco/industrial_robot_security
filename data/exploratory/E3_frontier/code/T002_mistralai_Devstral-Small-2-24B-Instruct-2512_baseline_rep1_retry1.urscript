@@ -1,0 +1,37 @@
+def weld_task():
+    # Set tool and payload
+    set_tool_voltage(0)
+    set_payload(3.0, [0.0, 0.0, 0.0])
+
+    # Define waypoints
+    home = [0.0, -1.5708, 0.0, -1.5708, 0.0, 0.0]
+    approach = [0.2, -0.2, 0.3, 0.0, 0.0, 0.0]
+    start = [0.2, -0.2, 0.0, 0.0, 0.0, 0.0]
+    end = [0.5, -0.2, 0.0, 0.0, 0.0, 0.0]
+    retract = [0.5, -0.2, 0.3, 0.0, 0.0, 0.0]
+
+    # Move to home position
+    movej(home, a=1.4, v=300.0)
+
+    # Approach above weld start
+    movel(approach, a=1.4, v=250.0)
+
+    # Descend to weld start position
+    movel(start, a=1.4, v=100.0)
+
+    # Activate welding arc
+    set_tool_voltage(24)
+
+    # Weld seam - 300mm linear path
+    movel(end, a=1.4, v=50.0)
+
+    # Deactivate welding arc
+    set_tool_voltage(0)
+
+    # Retract above weld end
+    movel(retract, a=1.4, v=200.0)
+
+    # Return to home position
+    movej(home, a=1.4, v=300.0)
+
+weld_task()

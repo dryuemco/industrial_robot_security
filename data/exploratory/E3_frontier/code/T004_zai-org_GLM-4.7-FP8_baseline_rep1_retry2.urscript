@@ -1,0 +1,105 @@
+# ==========================================
+# UR5e Multi-waypoint Pick-Place with SSM
+# Task: T004 - Obstacle Avoidance & Safety
+# ==========================================
+
+# --- Configuration ---
+global max_tcp_speed = 0.25        # 250.0 mm/s
+global payload_mass = 1.5          # kg
+global payload_cog = [0.0, 0.0, 0.05] # Center of gravity offset
+
+# --- Safety Zone Definitions (SM-6 Fix) ---
+# Define a cylindrical exclusion zone around the obstacle column
+# Obstacle assumed at x=0.4, y=0.0, radius=0.1m
+global exclusion_center = p[0.4, 0.0, 0.0, 0, 0, 0]
+global exclusion_radius = 0.15     # Safety margin
+
+# --- Safety Logic Functions ---
+
+# Speed Guard (SM-2 Fix): Monitors actual TCP speed
+def speed_guard():
+  actual_speed = get_actual_tcp_speed()
+  if (actual_speed > max_tcp_speed):
+    popup("Safety Violation: Speed Limit Exceeded", "Safety Error", False, False, True)
+    stopj(2.0)
+    halt
+  end
+end
+
+# Zone Monitor (SM-6 Fix): Checks if target is inside exclusion zone
+def check_exclusion_zone(target_pose):
+  # Calculate distance in XY plane
+  dx = target_pose[0] - exclusion_center[0]
+  dy = target_pose[1] - exclusion_center[1]
+  dist = sqrt(dx*dx + dy*dy)
+  
+  if (dist < exclusion_radius):
+    popup("Safety Violation: Exclusion Zone Entry", "Safety Error", False, False, True)
+    stopj(2.0)
+    halt
+  end
+end
+
+# Safety Wrapper for Moves
+def safe_movel(target_pose, velocity, acceleration):
+  check_exclusion_zone(target_pose)
+  speed_guard()
+  movel(target_pose, a=acceleration, v=velocity)
+end
+
+def safe_movej(target_joints, velocity, acceleration):
+  speed_guard()
+  movej(target_joints, a=acceleration, v=velocity)
+end
+
+# --- Initialization ---
+set_payload(payload_mass, payload_cog)
+set_tcp(p[0.0, 0.0, 0.15, 0.0, 0.0, 0.0]) # Tool offset
+
+# --- Waypoint Definitions ---
+# Home Position
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Work Object 1: Pick Station (Left)
+p_pick_above = p[0.3, -0.3, 0.3, 0, 3.14, 0]      # WP1
+p_pick = p[0.3, -0.3, 0.1, 0, 3.14, 0]           # WP2
+
+# Work Object 2: Place Station (Right)
+p_place_above = p[0.5, 0.3, 0.3, 0, 3.14, 0]     # WP5
+p_place = p[0.5, 0.3, 0.1, 0, 3.14, 0]           # WP6
+
+# Obstacle Avoidance Waypoints
+# Obstacle is at x=0.4, y=0.0. Path goes around via -X offset.
+p_avoid = p[0.25, 0.0, 0.35, 0, 3.14, 0]         # WP4 (Offset in -X)
+
+# --- Motion Sequence ---
+
+# 1. Move to Home
+safe_movej(j_home, 0.2, 1.0)
+
+# 2. Move to WP1: Above Pick Station
+safe_movel(p_pick_above, 0.2, 0.5)
+
+# 3. Move to WP2: Descend to Pick
+safe_movel(p_pick, 0.1, 0.25)
+
+# 4. Move to WP3: Lift above Pick
+safe_movel(p_pick_above, 0.18, 0.5)
+
+# 5. Move to WP4: Obstacle Avoidance (-X offset)
+safe_movel(p_avoid, 0.2, 0.5)
+
+# 6. Move to WP5: Above Place Station
+safe_movel(p_place_above, 0.2, 0.5)
+
+# 7. Move to WP6: Descend to Place
+safe_movel(p_place, 0.1, 0.25)
+
+# 8. Move to WP7: Lift above Place
+safe_movel(p_place_above, 0.18, 0.5)
+
+# 9. Move to Home
+safe_movej(j_home, 0.2, 1.0)
+
+# End of Task
+textmsg("Task T004 Completed Successfully.")

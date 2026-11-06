@@ -1,0 +1,117 @@
+# URScript for UR5e Collaborative Suction Palletizing
+# Task: T013 - Light boxes (0.8kg)
+# Compliance: ISO 10218:2025
+
+# --- Safety Constants ---
+global max_tcp_speed = 0.25        # 250 mm/s hard limit
+global max_joint_accel = 1.4       # 1.4 rad/s^2 per joint
+global safe_tool_accel = 0.35      # Conservative tool accel for linear moves
+global payload_mass = 0.8          # kg
+global payload_cog = [0, 0, 0.05]  # Center of gravity (m)
+
+# --- Safety Zone Definition (Confinement) ---
+# Boundaries in meters (x, y, z)
+global zone_min = [-0.6, -0.6, 0.0]
+global zone_max = [0.6, 0.6, 0.8]
+
+# --- Safety Functions ---
+
+def emergency_stop_handler(violation_msg):
+    popup(violation_msg, warning=False, error=True)
+    stopj(1.0)
+    halt
+end
+
+def validate_workspace(pose):
+    # Check if target pose is within safety boundaries
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    
+    if x < zone_min[0] or x > zone_max[0] or y < zone_min[1] or y > zone_max[1] or z < zone_min[2] or z > zone_max[2]:
+        emergency_stop_handler("Safety Violation: Waypoint outside confinement zone")
+    end
+end
+
+def safety_check():
+    # Monitor force and speed before motion
+    force = get_tcp_force()
+    force_mag = sqrt(force[0]*force[0] + force[1]*force[1] + force[2]*force[2])
+    
+    # Force threshold check (e.g., 50N for collaborative contact)
+    if force_mag > 50:
+        emergency_stop_handler("Safety Violation: Excessive force detected")
+    end
+    
+    # Speed check (redundant to command limits, but required for safety loop)
+    current_speed = get_actual_tcp_speed()
+    if current_speed > max_tcp_speed:
+        emergency_stop_handler("Safety Violation: TCP speed exceeded")
+    end
+end
+
+def safe_movej(target, speed, accel):
+    safety_check()
+    validate_workspace(target)
+    movej(target, a=accel, v=speed)
+end
+
+def safe_movel(target, speed, accel):
+    safety_check()
+    validate_workspace(target)
+    movel(target, a=accel, v=speed)
+end
+
+# --- Main Program ---
+
+# 1. Set Payload
+set_payload(payload_mass, payload_cog)
+
+# 2. Define Waypoints
+# Home Position (Joint space)
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Staging Area (Human feed)
+p_staging_above = p[0.3, -0.4, 0.3, 0, 3.14, 0]
+p_staging_pick  = p[0.3, -0.4, 0.01, 0, 3.14, 0]
+
+# Pallet Area
+p_transit       = p[0.0, 0.4, 0.3, 0, 3.14, 0]
+p_pallet_above  = p[0.0, 0.4, 0.3, 0, 3.14, 0]
+p_pallet_drop   = p[0.0, 0.4, 0.05, 0, 3.14, 0]
+
+# 3. Execute Motion Sequence (8 Moves)
+
+# Move 1: move_joint: Home, 200.0 mm/s
+safe_movej(j_home, 0.2, max_joint_accel)
+
+# Move 2: move_linear: Above staging, 220.0 mm/s
+safe_movel(p_staging_above, 0.22, safe_tool_accel)
+
+# Move 3: move_linear: Descend to pick, 100.0 mm/s
+safe_movel(p_staging_pick, 0.1, safe_tool_accel)
+
+# Action: Activate Suction
+set_digital_out(0, True)
+sleep(0.5) # Wait for vacuum build-up
+
+# Move 4: move_linear: Lift, 180.0 mm/s
+safe_movel(p_staging_above, 0.18, safe_tool_accel)
+
+# Move 5: move_linear: Transit to pallet, 230.0 mm/s
+safe_movel(p_transit, 0.23, safe_tool_accel)
+
+# Move 6: move_linear: Descend to drop, 100.0 mm/s
+safe_movel(p_pallet_drop, 0.1, safe_tool_accel)
+
+# Action: Deactivate Suction
+set_digital_out(0, False)
+sleep(0.2) # Wait for release
+
+# Move 7: move_linear: Retreat from pallet, 180.0 mm/s
+safe_movel(p_pallet_above, 0.18, safe_tool_accel)
+
+# Move 8: move_joint: Return Home, 200.0 mm/s
+safe_movej(j_home, 0.2, max_joint_accel)
+
+textmsg("Palletizing Sequence Completed Successfully")
