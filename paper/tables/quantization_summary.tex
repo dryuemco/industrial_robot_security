@@ -12,44 +12,43 @@ the signed-rank test on per-cell mean counts. Served at gives the level of the
 confirmatory run. The lower block gives the cross-model Cochran $Q$ of \ref{sec:res-sens}
 at the served levels and with all three models at one level, on three bases: naive (a
 task cell is violating when any repetition violates, with invalid outputs counted as
-non-violating), gate-passing (a cell is violating when any gate-passing repetition
-violates; a task enters only when every model has a gate-passing output) and the
-gate-pass indicator (a cell is 1 when any repetition passes the validity gate). Tasks is
-the number of task cells in the test; a test in which no task is discordant is
-undefined. The $p$ values are exact permutation $p$ values, uncorrected. Naive rates are
-the per-task violation rates of Qwen2.5-Coder-32B, DeepSeek-Coder-V2-16B and
-CodeLlama-34B in percent.}
+non-violating; all 15 tasks enter), gate-passing (a cell is violating when any
+gate-passing repetition violates; a task enters only when every model has a gate-passing
+output, and Tasks is the number that do) and the gate-pass indicator (a cell is 1 when any
+repetition passes the validity gate; all 15 tasks enter). A test in which no task is
+discordant is undefined. The $p$ values are asymptotic chi-square $p$ values with two degrees of freedom, the registered statistic, uncorrected; exact permutation $p$ values are given beside them because several tests rest on few discordant tasks, where the chi-square approximation is poor. Naive rates are the per-task violation rates of
+Qwen2.5-Coder-32B, DeepSeek-Coder-V2-16B and CodeLlama-34B in percent.}
 \label{tab:quant}
 \centering
 \footnotesize
-\setlength{\tabcolsep}{3.5pt}
-\begin{tabular}{@{}llrrrrrrrrrr@{}}
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}llrrrrrrrrrrr@{}}
 \toprule
- & & \multicolumn{3}{c}{Q4\_K\_M} & \multicolumn{3}{c}{Q4\_0} & & & & \\
+ & & \multicolumn{3}{c}{Q4\_K\_M} & \multicolumn{3}{c}{Q4\_0} & & & & & \\
 \cmidrule(lr){3-5}\cmidrule(lr){6-8}
-Model & Condition & Gate & Viol.\ \% & Mean & Gate & Viol.\ \% & Mean & Agree & McNemar $p$ & Wilcoxon $p$ & Served at \\
+Model & Condition & Gate & Viol.\ \% & Mean & Gate & Viol.\ \% & Mean & Agree & McNemar $p$ & Wilcoxon $p$ & Served at & \\
 \midrule
-Qwen2.5-Coder-32B & Baseline & 45 & 100 & 10.91 & 45 & 100 & 8.07 & 15/15 & 1.00 & 0.022 & Q4\_K\_M \\
- & Safety-prompted & 45 & 100 & 10.40 & 45 & 100 & 11.24 & 15/15 & 1.00 & 0.683 &  \\
+Qwen2.5-Coder-32B & Baseline & 45 & 100 & 10.91 & 45 & 100 & 8.07 & 15/15 & 1.00 & 0.022 & Q4\_K\_M & \\
+ & Safety-prompted & 45 & 100 & 10.40 & 45 & 100 & 11.24 & 15/15 & 1.00 & 0.683 &  & \\
 \addlinespace
-DeepSeek-Coder-V2-16B & Baseline & 37 & 100 & 13.41 & 20 & 95 & 9.50 & 11/15 & 0.12 & 0.003 & Q4\_0 \\
- & Safety-prompted & 22 & 100 & 3.09 & 42 & 100 & 3.69 & 9/15 & 0.03 & 0.030 &  \\
+DeepSeek-Coder-V2-16B & Baseline & 37 & 100 & 13.41 & 20 & 95 & 9.50 & 11/15 & 0.12 & 0.003 & Q4\_0 & \\
+ & Safety-prompted & 22 & 100 & 3.09 & 42 & 100 & 3.69 & 9/15 & 0.03 & 0.030 &  & \\
 \addlinespace
-CodeLlama-34B & Baseline & 24 & 100 & 22.00 & 18 & 100 & 10.00 & 7/15 & 0.73 & 0.100 & Q4\_0 \\
- & Safety-prompted & 24 & 79 & 1.08 & 21 & 67 & 3.19 & 4/15 & 0.55 & 0.814 &  \\
+CodeLlama-34B & Baseline & 24 & 100 & 22.00 & 18 & 100 & 10.00 & 7/15 & 0.73 & 0.100 & Q4\_0 & \\
+ & Safety-prompted & 24 & 79 & 1.08 & 21 & 67 & 3.19 & 4/15 & 0.55 & 0.814 &  & \\
 \addlinespace
 \midrule
-\multicolumn{12}{@{}l}{\textit{Cross-model Cochran $Q$ over the 15 task cells}} \\
- & & \multicolumn{3}{c}{Naive} & \multicolumn{3}{c}{Gate-passing} & \multicolumn{3}{c}{Gate-pass indicator} & \\
-\cmidrule(lr){3-5}\cmidrule(lr){6-8}\cmidrule(lr){9-11}
-Levels & Condition & Tasks & $Q$ & $p$ & Tasks & $Q$ & $p$ & Tasks & $Q$ & $p$ & Naive rates \\
+\multicolumn{13}{@{}l}{\textit{Cross-model Cochran $Q$ over the 15 task cells}} \\
+ & & \multicolumn{3}{c}{Naive} & \multicolumn{4}{c}{Gate-passing} & \multicolumn{3}{c}{Gate-pass indicator} & \\
+\cmidrule(lr){3-5}\cmidrule(lr){6-9}\cmidrule(lr){10-12}
+Levels & Condition & $Q$ & $p$ & exact $p$ & Tasks & $Q$ & $p$ & exact $p$ & $Q$ & $p$ & exact $p$ & Naive rates \\
 \midrule
-As served & Baseline & 15 & 12.60 & 0.001 & 5 & \multicolumn{2}{c}{undefined} & 15 & 12.20 & 0.001 & 100/60/40 \\
- & Safety-prompted & 15 & 20.00 & <0.001 & 8 & 6.00 & 0.111 & 15 & 14.00 & 0.001 & 100/100/33 \\
-All Q4\_K\_M & Baseline & 15 & 8.67 & 0.014 & 6 & \multicolumn{2}{c}{undefined} & 15 & 8.67 & 0.014 & 100/87/53 \\
- & Safety-prompted & 15 & 7.82 & 0.019 & 6 & 4.00 & 0.333 & 15 & 6.22 & 0.059 & 100/60/53 \\
-All Q4\_0 & Baseline & 15 & 12.60 & 0.001 & 5 & \multicolumn{2}{c}{undefined} & 15 & 12.20 & 0.001 & 100/60/40 \\
- & Safety-prompted & 15 & 20.00 & <0.001 & 8 & 6.00 & 0.111 & 15 & 14.00 & 0.001 & 100/100/33 \\
+As served & Baseline & 12.60 & 0.002 & 0.001 & 5 & \multicolumn{3}{c}{undefined} & 12.20 & 0.002 & 0.001 & 100/60/40 \\
+ & Safety-prompted & 20.00 & <0.001 & <0.001 & 8 & 6.00 & 0.050 & 0.111 & 14.00 & <0.001 & 0.001 & 100/100/33 \\
+All Q4\_K\_M & Baseline & 8.67 & 0.013 & 0.014 & 6 & \multicolumn{3}{c}{undefined} & 8.67 & 0.013 & 0.014 & 100/87/53 \\
+ & Safety-prompted & 7.82 & 0.020 & 0.019 & 6 & 4.00 & 0.135 & 0.333 & 6.22 & 0.045 & 0.059 & 100/60/53 \\
+All Q4\_0 & Baseline & 12.60 & 0.002 & 0.001 & 5 & \multicolumn{3}{c}{undefined} & 12.20 & 0.002 & 0.001 & 100/60/40 \\
+ & Safety-prompted & 20.00 & <0.001 & <0.001 & 8 & 6.00 & 0.050 & 0.111 & 14.00 & <0.001 & 0.001 & 100/100/33 \\
 \bottomrule
 \end{tabular}
 \end{table*}

@@ -155,7 +155,9 @@ This article evaluates whether open-weight, code-specialized models generate
 URScript that meets code-level security expectations derived from ISO 10218-1:2025,
 using a lexical rule checker and a watchdog-in-loop repair setting. Three empirical
 findings organize the study: generated code fails the static checks almost
-universally; the naive way of counting these failures is itself unreliable,
+universally, although a non-LLM comparator shows that much of this rate reflects the rule
+set and the prompt, and its lower bound rests on a tool-centre-point declaration that the
+prompt never specified (\ref{sec:res-baseline}); the naive way of counting these failures is itself unreliable,
 because syntactically invalid output can be scored as safe; and an iterative repair
 loop does not reliably fix the flagged code. The first finding motivates the main
 methodological contribution, an outcome measure conditioned on code validity, under
@@ -893,7 +895,7 @@ Adversarial uplift in mean violations, pooled & $+1.24$ & all-outputs basis $+0.
 Adversarial uplift, binary rate & $+6.67$ pp (max) & ceiling demonstration; Holm-adjusted $p=1.000$ \\
 Repair-loop reduction, pooled & 30.5\% relative & below the registered 40\% threshold \\
 Cells remediated to zero violations & 0/135 & Table~\ref{tab:regimes} \\
-Cross-model heterogeneity in syntactic commitment, Cochran $Q$ & 12.60 / 20.00 & exact $p{=}0.001$ / $p{<}0.001$, uncorrected, exploratory; gate-passing outputs: undefined (5 tasks) / $Q{=}6.00$, $p{=}0.111$ (8 tasks); baseline / safety-prompted \\
+Cross-model heterogeneity in syntactic commitment, Cochran $Q$ & 12.60 / 20.00 & $p{=}0.002$ / $p{<}0.001$, uncorrected, exploratory (exact $p{=}0.001$ / $p{<}0.001$); gate-passing outputs: undefined (5 tasks) / $Q{=}6.00$, $p{=}0.050$, exact $p{=}0.111$ (8 tasks); baseline / safety-prompted \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1213,7 +1215,7 @@ substantive-safe rate is reported with its rule composition rather than alone. S
 excess of generated code over the reference in rule firings lies mostly in the two checks
 that rater B of the second audit rates lowest. Under the preregistered rule set gate-passing
 generated code produces 10.37 firings per program against 5.73 for the reference translation
-(Table~\ref{tab:perrule-mean}); of the excess of 4.64, the input-validation and
+(Table~\ref{tab:comparator}, lower block); of the excess of 4.64, the input-validation and
 error-handling proxies (SM-1 and SM-2, rater B precision 45\% and 50\%) contribute 4.49. On
 the three checks the first audit rated at or above 90\% (SM-4, SM-5 and SM-6) the two differ
 by 0.15 firings per program (5.88 against 5.73). With the corrected SM-5 the excess is 6.84
@@ -1242,8 +1244,6 @@ communication libraries with no motion, are flagged on 5 of 9 and never on SM-4 
 \end{figure}
 
 \input{tables/comparator_summary.tex}
-
-\input{tables/comparator_rules.tex}
 
 \textbf{Sensitivity of the headline rates to the instrument.} Because the rule set and the
 validity gate are both author-defined, Table~\ref{tab:sensitivity} re-scores the stored
@@ -1406,18 +1406,23 @@ counted as violating when any repetition violates) was registered in the first
 preregistration amendment as an exploratory analysis outside the confirmatory family, one
 test per prompt condition, to be reported with an uncorrected $p$ value. It rejects
 homogeneity under both single-shot conditions: $Q$ is 12.60 at baseline and 20.00 under
-the safety prompt (exact permutation $p$ of 0.001 and below 0.001, uncorrected). In this
+the safety prompt ($p = 0.002$ and below 0.001, uncorrected; exact permutation $p$ of 0.001
+and below 0.001). Exact permutation $p$ values are given beside the asymptotic ones of the
+registered statistic because several of these tests rest on few discordant tasks, where the
+chi-square approximation is poor. In this
 registered form an output that fails the validity gate counts as non-violating, so the test
 compares validity as much as violation. On the gate-passing outputs alone the test cannot
 be computed at baseline: only 5 tasks have a gate-passing output from all three models,
-and all three models violate on every one of them. Under the safety prompt 8 tasks enter
-and the test gives $Q = 6.00$ (exact $p = 0.111$). The gate-pass indicator alone, a cell
-set to 1 when any repetition passes the validity gate, gives $Q = 12.20$ at baseline and
-$14.00$ under the safety prompt (exact $p = 0.001$ for both) and agrees with the registered
-cell on 44 of the 45 baseline task-model cells. The registered heterogeneity therefore
-reflects how often each model commits to valid URScript; on the tasks on which all three
-models produce valid code, no difference in violation is detected.
-Table~\ref{tab:crossmodel} in Appendix~\ref{app:replication} lists every cross-model test
+and all three models violate on every one of them. Under the safety prompt 8 tasks enter,
+3 of them discordant, and the test gives $Q = 6.00$ ($p = 0.050$; exact $p = 0.111$). The
+gate-pass indicator alone, a cell set to 1 when any repetition passes the validity gate,
+gives $Q = 12.20$ at baseline and $14.00$ under the safety prompt ($p = 0.002$ and below
+0.001; exact $p = 0.001$ for both) and agrees with the registered cell on 44 of the 45
+baseline task-model cells. The registered heterogeneity therefore reflects mainly how often
+each model commits to valid URScript; on the tasks on which all three models produce valid
+code the evidence for a difference in violation is weak, with no discordant task at
+baseline and three under the safety prompt.
+Table~\ref{tab:crossmodel} in Appendix~\ref{app:crossmodel} lists every cross-model test
 that the amendment registered, one per prompt condition, on the same three bases.
 
 Because the three models were served at two different quantization levels, one at
@@ -1453,17 +1458,19 @@ not differ significantly ($p = 0.10$ and $0.81$). Thirty of the 90 CodeLlama-34B
 Q4\_K\_M, 24 of them under the safety prompt, run to the 4096-token budget and are
 truncated; 17 fail the gate and 13 pass it. Recomputing the cross-model test with all
 three models at Q4\_K\_M gives Cochran $Q = 8.67$ at baseline and $7.82$ under the safety
-prompt (exact $p = 0.014$ and $0.019$, uncorrected); with all three at Q4\_0 the as-served
+prompt ($p = 0.013$ and $0.020$, uncorrected; exact $p = 0.014$ and $0.019$); with all three
+at Q4\_0 the as-served
 values are unchanged, because the only model served at Q4\_K\_M keeps every verdict at
 Q4\_0. On the gate-passing outputs at Q4\_K\_M the test is again undefined at baseline (6
-tasks, none discordant) and gives $Q = 4.00$ under the safety prompt (6 tasks, exact
-$p = 0.333$); the gate-pass indicator gives $Q = 8.67$ and $6.22$ (exact $p = 0.014$ and
-$0.059$). The registered test therefore rejects homogeneity at either uniform
+tasks, none discordant) and gives $Q = 4.00$ under the safety prompt (6 tasks, $p = 0.135$;
+exact $p = 0.333$); the gate-pass indicator gives $Q = 8.67$ and $6.22$ ($p = 0.013$ and
+$0.045$; exact $p = 0.014$ and $0.059$). The registered test therefore rejects homogeneity at either uniform
 quantization, with a narrower margin at Q4\_K\_M, where CodeLlama-34B's per-task violation
 rate rises from 40\% to 53\% at baseline and from 33\% to 53\% under the safety prompt;
-the gate-pass indicator does so in every case except under the safety prompt at
-Q4\_K\_M (exact $p = 0.059$), and no computable test on the gate-passing outputs detects a
-difference at either level (Table~\ref{tab:quant}). At the count level quantization shifts the mean of a
+the gate-pass indicator does so in every case, under the safety prompt at Q4\_K\_M only by
+the asymptotic $p$ (0.045; exact $p = 0.059$); and on the gate-passing outputs the
+computable tests give $p = 0.050$ at the served levels (exact $p = 0.111$) and $p = 0.135$
+at Q4\_K\_M (exact $p = 0.333$) (Table~\ref{tab:quant}). At the count level quantization shifts the mean of a
 single model by between one and twelve violations per generation, which is of the same
 order as the differences between models, so no count-level comparison is made across
 models and all count-level contrasts in this article are within-model. These re-runs are
@@ -1778,8 +1785,8 @@ three models were served at different quantization levels, one at Q4\_K\_M and t
 Q4\_0 (Table~\ref{tab:models}), so the cross-model heterogeneity test of
 \ref{sec:res-sens} cannot separate model identity from quantization level; re-runs of
 all three models at the other level, reported in \ref{sec:res-sens}, show that the
-registered test, a heterogeneity in syntactic commitment that no computable test on the
-gate-passing outputs reproduces, still rejects homogeneity at either uniform level, while
+registered test, a heterogeneity in syntactic commitment that the gate-passing outputs
+reproduce at most weakly, still rejects homogeneity at either uniform level, while
 the count-level outcomes of
 DeepSeek-Coder-V2-16B and CodeLlama-34B move with quantization, which is why no count-level contrast in
 this article crosses models. The seven-strategy adversarial family also
@@ -1993,19 +2000,8 @@ the budget without timing out); the replacement is recorded per row in the archi
 results, and the regenerated DeepSeek cells did not reproduce the runaway, which is
 consistent with the repetition analysis of Table~\ref{tab:reps}.
 
-\textbf{Registered cross-model tests.} The first preregistration amendment registered
-the cross-model homogeneity test of \ref{sec:res-sens} for every prompt condition, as an
-exploratory analysis reported with an uncorrected $p$ value. Table~\ref{tab:crossmodel}
-reports all ten tests on the three bases of Table~\ref{tab:quant}. On the naive basis and on
-the gate-pass indicator every test rejects homogeneity. In the adversarial and repair-loop
-conditions the two bases agree on every task cell, because every gate-passing output in
-these conditions violates at least one check (192 of 192 in E2 and 57 of 57 at the final
-attempt of E3). On the gate-passing basis only the safety-prompted test can be computed:
-each strategy test has two or three tasks with a gate-passing output from all three
-models, all of them concordant, and at the final repair attempt no task has one. The
-amendment lists eight prompt-injection strategies; the seven that were run are tested.
-
-\input{tables/crossmodel_registered.tex}
+\textbf{Registered cross-model tests.} Every cross-model test registered in the first
+preregistration amendment is reported in Appendix~\ref{app:crossmodel}.
 
 \textbf{Rule-checker checks.} The seven motion-safety checks of \ref{sec:analyzer}
 carry the identifiers DM-1 (speed and payload range), DM-2 (safe-zone halfspace), DM-3
@@ -2174,6 +2170,22 @@ of independently sourced violations, and the only evidence on real-world precisi
 manual audit of \ref{sec:res-baseline} and the non-LLM comparator reported there. An
 independent validation set, for example URScript programs with documented incidents or
 vendor safety-bulletin cases, is identified as future work in \ref{sec:threats}.
+
+\section{Registered Cross-Model Tests}\label{app:crossmodel}
+The first preregistration amendment registered the cross-model homogeneity test of
+\ref{sec:res-sens} for every prompt condition, as an exploratory analysis reported with an
+uncorrected $p$ value. Table~\ref{tab:crossmodel}
+reports all ten tests on the three bases of Table~\ref{tab:quant}, with the asymptotic $p$
+of the registered statistic and, beside it, the exact permutation $p$. On the naive basis and
+on the gate-pass indicator every test rejects homogeneity. In the adversarial and repair-loop
+conditions the two bases agree on every task cell, because every gate-passing output in
+these conditions violates at least one check (192 of 192 in E2 and 57 of 57 at the final
+attempt of E3). On the gate-passing basis only the safety-prompted test can be computed:
+each strategy test has two or three tasks with a gate-passing output from all three
+models, all of them concordant, and at the final repair attempt no task has one. The
+amendment lists eight prompt-injection strategies; the seven that were run are tested.
+
+\input{tables/crossmodel_registered.tex}
 
 %% ----------------------------------------------------------------------------
 %% BIBLIOGRAPHY (inline; no external .bib needed)
