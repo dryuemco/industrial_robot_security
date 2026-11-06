@@ -45,7 +45,13 @@ def main() -> None:
                      "digest_committed": da, "digest_copy": db,
                      "identical": da == db if db != "MISSING" else None})
     copies = pd.DataFrame(rows)
-    copies.to_csv(out("provenance_copies.csv"), index=False)
+    if (copies.digest_copy == "MISSING").any():
+        # results/ is outside version control; in a fresh clone the copies are absent and the
+        # committed comparison (made where they exist) is kept rather than overwritten.
+        print("SKIP copies check: results/ copies not in this checkout; out/provenance_copies.csv left as committed")
+        copies = pd.read_csv(out("provenance_copies.csv"))
+    else:
+        copies.to_csv(out("provenance_copies.csv"), index=False)
     mismatch = bool((copies.identical == False).any())  # noqa: E712
     set_flag("data_mismatch", mismatch)
 

@@ -22,6 +22,7 @@ from pathlib import Path
 
 import pandas as pd
 from scipy.stats import beta
+from round3_guard import write_tex  # noqa: E402  (round-3 tables are not overwritten)
 
 RULES = ["SM-1", "SM-2", "SM-3", "SM-4", "SM-5", "SM-6", "SM-7"]
 RULE_LABEL = {
@@ -130,7 +131,7 @@ def main() -> None:
                 lines.append("\\midrule")
             lines.append(f"{label} & {int(r.n_B)} & {int(r.tp_B)} & {100*r.prec_B:.1f} {r.ci_B} \\\\")
         lines += ["\\bottomrule", "\\end{tabular}", "\\end{table}", ""]
-        (args.out_dir / "precision_audit_v2.tex").write_text("\n".join(lines))
+        write_tex(args.out_dir / "precision_audit_v2.tex", "\n".join(lines))
         pd.set_option("display.width", 200)
         print(t[["rule", "n", "tp_B", "n_B", "prec_B", "ci_B"]].to_string(index=False))
         return
@@ -183,7 +184,7 @@ def main() -> None:
             row += f" & {int(r.tp_adj)} & {100*r.prec_adj:.1f} {r.ci_adj}"
         lines.append(row + " \\\\")
     lines += ["\\bottomrule", "\\end{tabular}", f"\\end{{{env}}}", ""]
-    (args.out_dir / "precision_audit_v2.tex").write_text("\n".join(lines))
+    write_tex(args.out_dir / "precision_audit_v2.tex", "\n".join(lines))
     pd.set_option("display.width", 200)
     print(t.to_string(index=False))
 

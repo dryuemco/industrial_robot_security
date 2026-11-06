@@ -28,7 +28,7 @@ RUN1_E1 = REPO / "data/confirmatory/run1_2026-04/e1_confirmatory_session14"
 RUN2_DIR = REPO / "data/confirmatory/run2_2026-05"
 TASKS_DIR = REPO / "paper/data/tasks_as_run"
 AUDIT_DIR = REPO / "docs/review/audit_v2"
-# The analyses quote the paper and the OSF mirror as the reviewer saw them: review/access-r2 at 797aeb3, the
+# The analyses quote the paper, the OSF mirror and two gate sources as the reviewer saw them: review/access-r2 at 797aeb3, the
 # source of the Access-2026-55984 submission. It is read from git into a temporary
 # directory, so later edits of paper/ do not change these outputs; rel() reports its files
 # under their paper/ paths.
@@ -45,7 +45,8 @@ def _r2_snapshot() -> Path:
     d = Path(tempfile.mkdtemp(prefix="round3_r2_paper_"))
     atexit.register(shutil.rmtree, d, True)
     data = subprocess.run(["git", "archive", R2_COMMIT, "paper/main_access.tex", "paper/tables",
-                           "docs/OSF_PREREGISTRATION.md"], cwd=REPO, capture_output=True, check=True).stdout
+                           "docs/OSF_PREREGISTRATION.md", "enfield_llm/enfield_llm/code_parser.py",
+                           "scripts/review/sensitivity_rescoring.py"], cwd=REPO, capture_output=True, check=True).stdout
     with tarfile.open(fileobj=io.BytesIO(data)) as tf:
         tf.extractall(d, filter="data")
     return d
