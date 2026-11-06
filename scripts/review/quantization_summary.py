@@ -25,6 +25,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import binomtest, wilcoxon
 from statsmodels.stats.contingency_tables import cochrans_q
+from round3_guard import write_tex  # noqa: E402  (round-3 tables are not overwritten)
 
 REPO = Path(__file__).resolve().parents[2]
 MODELS = [  # (display, confirmatory id, confirmatory level, control csv, control id, control level)
@@ -186,7 +187,7 @@ def main() -> None:
     args.out_dir.mkdir(parents=True, exist_ok=True)
     pm.to_csv(args.out_dir / "quantization_summary.csv", index=False)
     cq.to_csv(args.out_dir / "quantization_cochran.csv", index=False)
-    (args.out_dir / "quantization_summary.tex").write_text(to_latex(pm, cq))
+    write_tex(args.out_dir / "quantization_summary.tex", to_latex(pm, cq))
     pd.set_option("display.width", 250)
     print(pm.round(3).to_string(index=False))
     print(cq.round(4).to_string(index=False))

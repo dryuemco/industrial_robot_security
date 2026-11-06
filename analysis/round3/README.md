@@ -52,6 +52,45 @@ python3 analysis/round3/s09_tables.py --out-dir <directory>  # anywhere else
 ```
 
 `run_all.sh` writes them to `out/tables/` and checks that they equal the files in `paper/tables/`.
-The round-2 generators of the first three tables (`scripts/review/sensitivity_rescoring.py`,
-`precision_audit_analyze.py`, `quantization_summary.py`) are unchanged; rerunning them would
-restore the round-2 versions.
+The round-2 generators of the first four tables (`scripts/review/comparator_urscript.py`,
+`sensitivity_rescoring.py`, `precision_audit_analyze.py`, `quantization_summary.py`) write
+through `scripts/review/round3_guard.py`: when the target's first line names `s09_tables.py`,
+they write their round-2 version to `<name>.r2.tex` beside it and leave the round-3 table in
+place.
+
+## Where each round-3 number in the paper comes from
+
+Sections and tables are those of the round-3 manuscript (table numbers as in round 2; Table 21
+and Appendix E are new). Every path is under `analysis/round3/`.
+
+| Place in the paper | Numbers | Script | Output |
+|---|---|---|---|
+| Abstract; Table 13; VI-A sensitivity paragraph; VII-A; Conclusion | 89.2% to 98.8%; 1 to 9 of 135; 0 to 3 of 130 under the structural gate; reference translation flagged of 15 and mean, minimal and with preamble | `s01_a1.py` | `out/a1/table13_with_translator.csv` |
+| Abstract; I-C; VI-A paragraph on the lower bound | the prompt gives the payload and never the TCP offset; the task representation holds both | `s01_a1.py` | `out/a1/prompt_fields.csv`, `out/a1/prompt_log_evidence.json`, `out/a1/ir_tcp_payload.csv` |
+| VI-A paragraph on the lower bound | 74 flagged, all without set_tcp, 68 also without set_payload; 68/83 to 14/108; Qwen 39/45 to 0/45 and 45/45 without set_tcp; CodeLlama 18/18 and 10/10 | `s07_followup1.py` | `out/f1/f1_sm6_groups.csv`, `out/f1/f2_safety_vs_baseline.csv` |
+| VI-A paragraph on the lower bound | SM-6 clauses 5.1.14 and 5.1.15 | `s01_a1.py` | `out/a1/sm6_clause_map.md` |
+| VI-A; Table 10 | rater B and adjudicated precision, Wilson and Clopper-Pearson intervals, agreement, kappa, adjudicated = rater A on 100 of 100 | `s04_a4.py` | `out/a4/precision.csv` |
+| VI-A, SM-2 unit | 111 firings on 82 programs, 1.34 and 0.99 per program | `s08_paper_numbers.py` | `out/r3/sm2_per_program.csv` |
+| VI-A, SM-2 unit | 11 program-level items (10 and 10 genuine), 9 call-site items (8 and 0) | `s04_a4.py` | `out/a4/sm2_by_location.csv` |
+| VI-A, single safe output | commented `stopl()`, structural gate, substring motion flag | `s07_followup1.py`, `s04_a4.py` | `out/f1/f6_t009.md`, `out/a4/gate_calls.csv` |
+| VI-A, safety-prompt contrast by check | 3.98, 2.32, 0.94, 0.32, 0.24, 0.15; 3.56 and 0.11 corrected | `s08_paper_numbers.py` | `out/r3/count_differences.csv` |
+| VI-A, comparator; Table 12 lower block; Conclusion | per-rule means and differences: 10.37, 5.73, 4.64, 4.49, 5.88, 6.84, 9.84, 3.00, 2.35, 2.99, 0.35, 0.29 | `s03_a3.py`, `s08_paper_numbers.py` | `out/a3/per_rule_means.csv`, `out/a3/differences.csv`, `out/r3/first_audit_rules.csv` |
+| VI-A, comparator | preamble translation fires SM-2 on 15 of 15 | `s03_a3.py` | `out/a3/never_fires.md` |
+| VI-A, sensitivity paragraph | six of the nine SM6-only safe outputs are pseudo-code | `s07_followup1.py` | `out/f1/f7_sm6_only_safe.csv` |
+| VI-B, adversarial contrast by check | 8.11, 7.35, 2.01, 2.04, 1.89, 0.95, 5.45, 1.08 | `s08_paper_numbers.py` | `out/r3/count_differences.csv`, `out/r3/count_check.csv` |
+| Table 6 | every rate as k/N | `s08_paper_numbers.py` | `out/r3/table6_fractions.csv` |
+| Table 6; VI-D; VII-D; Table 16 | cross-model Q, asymptotic and exact p, tasks, on the naive, gate-passing and gate-pass bases, all three quantization variants, both runs | `s02_a2.py` | `out/a2/cochran_all.csv` |
+| VI-D | 44 of 45 baseline cells equal on the naive and gate-pass bases | `s07_followup1.py` | `out/f1/f4_naive_vs_gatepass_cells.csv` |
+| Appendix A; Appendix E; Table 21 | every registered cross-model test on three bases, run 1 = run 2 | `s07_followup1.py` | `out/f1/f4_cochran_four_conditions.csv`, `out/f1/f4_cochran_adversarial_subtypes.csv` |
+| Appendix E | 192 of 192 and 57 of 57 gate-passing outputs violate | `s08_paper_numbers.py` | `out/r3/gate_passing_violating.csv` |
+| Tables 10, 12, 13, 16, 21 (LaTeX) | the table files in `paper/tables/` | `s09_tables.py` | `out/tables/` (checked against `paper/tables/` by `run_all.sh`) |
+| `docs/OSF_PREREGISTRATION.md` | Amendment 1 excerpts, verbatim | `s10_osf_mirror.py` | `out/r3/osf_amendment1_excerpt.md` |
+
+## Running from a fresh clone
+
+A few inputs are outside version control: the `results/` copies of the confirmatory runs
+(compared with `data/confirmatory/` by `s00`), the frontier run (`results/E1_frontier/`,
+read by `s12`), and the earlier submission packages (searched by `s07` for item F4). When
+they are absent, those three steps print `SKIP` and leave their committed outputs as they
+are; every other output is recomputed from tracked files and equals the committed version
+byte for byte.

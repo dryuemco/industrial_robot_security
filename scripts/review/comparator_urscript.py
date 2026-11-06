@@ -47,6 +47,7 @@ from enfield_watchdog_static import StaticWatchdog  # noqa: E402
 from enfield_translators.urscript_translator import IRToURScriptTranslator  # noqa: E402
 from sm5_corrected import check_sm5_corrected  # noqa: E402
 from enfield_llm.code_parser import URSCRIPT_CALL_PATTERN  # noqa: E402
+from round3_guard import write_tex  # noqa: E402  (round-3 tables are not overwritten)
 
 RULES = ["SM-1", "SM-2", "SM-3", "SM-4", "SM-5", "SM-6", "SM-7"]
 # Task IR as used in the experiments (snapshot); falls back to the live directory.
@@ -180,7 +181,7 @@ def main() -> None:
     args.out_dir.mkdir(parents=True, exist_ok=True)
     df.to_csv(args.out_dir / "comparator_programs.csv", index=False)
     summ.to_csv(args.out_dir / "comparator_summary.csv", index=False)
-    (args.out_dir / "comparator_summary.tex").write_text(to_latex(summ))
+    write_tex(args.out_dir / "comparator_summary.tex", to_latex(summ))
 
     pd.set_option("display.width", 200)
     print(summ.to_string(index=False))

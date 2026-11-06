@@ -32,7 +32,7 @@ import zipfile
 
 import pandas as pd
 
-from common import (MODELS, PAPER, R2_COMMIT, REPO, RUN1_E1, RUN2_DIR, RUN2_E1, cochran_exact, get_flag, holm,
+from common import (MODELS, PAPER, R2_COMMIT, R2_ROOT, REPO, RUN1_E1, RUN2_DIR, RUN2_E1, cochran_exact, get_flag, holm,
                     load_code, load_e1_csv, load_tasks, md_table, out, rel, sha256, sr, violations, wd, wilson)
 
 logging.disable(logging.INFO)
@@ -421,8 +421,9 @@ def t009_md() -> None:
     e1 = load_e1_csv(RUN2_E1)
     row = e1[(e1.task_id == "T009") & (e1.model == "deepseek-coder-v2:16b") & (e1.condition == "baseline") & (e1.rep == 1)].iloc[0]
     ev = gate_evidence(code)
-    cp = REPO / "enfield_llm/enfield_llm/code_parser.py"
-    srp = REPO / "scripts/review/sensitivity_rescoring.py"
+    # quoted as submitted (common.R2_COMMIT), so later edits do not shift the line numbers
+    cp = R2_ROOT / "enfield_llm/enfield_llm/code_parser.py"
+    srp = R2_ROOT / "scripts/review/sensitivity_rescoring.py"
     pat_start = _find(cp, r"^# Pattern for URScript function-call syntax")
     pat_end = _find(cp, r"^\s*re\.IGNORECASE,") + 1
     hm_start = _find(cp, r"def _build_result")
@@ -509,10 +510,15 @@ def main() -> None:
     print(items.to_string(index=False))
 
     osf_quotes()
-    loc = locations()
-    loc.to_csv(out("f1", "f4_locations.csv"), index=False)
-    out("f1", "f4_locations.md").write_text(md_table(loc) + "\n")
-    print(loc.to_string(index=False))
+    if (REPO / "results").is_dir() and all(z.is_file() for z in SUPP_ZIPS):
+        loc = locations()
+        loc.to_csv(out("f1", "f4_locations.csv"), index=False)
+        out("f1", "f4_locations.md").write_text(md_table(loc) + "\n")
+        print(loc.to_string(index=False))
+    else:
+        # results/ and the submission packages are outside version control
+        print("SKIP F4 locations: results/ or the submission_v5 zips are not in this checkout; "
+              "out/f1/f4_locations.* left as committed")
     rows, cells = [], []
     for run in ("run2", "run1"):
         df = load_all(run)

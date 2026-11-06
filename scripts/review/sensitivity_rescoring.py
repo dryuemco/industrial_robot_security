@@ -53,6 +53,7 @@ for p in ("enfield_watchdog_static", "enfield_tasks", "enfield_llm", "scripts"):
 from enfield_watchdog_static import StaticWatchdog  # noqa: E402
 from enfield_llm.code_parser import URSCRIPT_CALL_PATTERN  # noqa: E402
 from sm5_corrected import check_sm5_corrected  # noqa: E402
+from round3_guard import write_tex  # noqa: E402  (round-3 tables are not overwritten)
 
 RULESETS = {
     "preregistered": (None, False),
@@ -177,7 +178,7 @@ def main() -> None:
         lines.append(f"{r.gate} & {r.rules} & {int(r.gate_pass)} & {100*r.viol_rate_gate:.1f} & "
                      f"{int(r.substantive_safe)}/{int(r.n_all)} & {r.mean_firings_gate:.1f} \\\\")
     lines += ["\\bottomrule", "\\end{tabular}", "\\end{table}", ""]
-    (args.out_dir / f"{args.out_name}.tex").write_text("\n".join(lines))
+    write_tex(args.out_dir / f"{args.out_name}.tex", "\n".join(lines))
     pd.set_option("display.width", 200)
     print(t.to_string(index=False))
 
