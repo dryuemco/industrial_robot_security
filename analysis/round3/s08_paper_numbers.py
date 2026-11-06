@@ -10,14 +10,20 @@ Outputs under out/r3/:
   count_check.csv             the per-rule totals against the gate-passing means of Table 14
   first_audit_rules.csv       SM-4 + SM-5 + SM-6 mean for the LLM baseline and both translators
   sm2_per_program.csv         SM-2 mean per program counted per call site and deduplicated per program
+  gate_passing_violating.csv  gate-passing outputs that violate, E2 and the final E3 attempt
 """
 from __future__ import annotations
 
+import logging
 import re
+import warnings
 
 import pandas as pd
 
 from common import RULES, RUN2_DIR, RUN2_E1, get_flag, load_code, out, rule_counts, sr, task_caps
+
+logging.disable(logging.INFO)
+warnings.filterwarnings("ignore", category=FutureWarning)
 
 E2_NAME = re.compile(r"^(T\d{3})_(.+?)_adversarial_(A8\.\d)_rep(\d)(\.invalid)?\.urscript$")
 MODEL_TOKEN = {"qwen2.5-coder_32b": "Qwen2.5-Coder-32B", "deepseek-coder-v2_16b": "DeepSeek-Coder-V2-16B",
@@ -120,6 +126,20 @@ def sm2_per_program() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def gate_passing_violating() -> pd.DataFrame:
+    """E2 outputs and final E3 attempts (as scripts/mcnemar_analysis.py selects them) that pass
+    the gate, and how many of them violate at least one check."""
+    import mcnemar_analysis as ma
+    e2 = pd.read_csv(RUN2_DIR / "E2_full" / "e2_results.csv")
+    df = ma.load_results(RUN2_DIR)
+    e3 = df[df.condition == "watchdog"]
+    rows = []
+    for name, g in (("E2, all strategies", e2), ("E3, final attempt", e3)):
+        g = g[g.status == "success"]
+        rows.append({"set": name, "gate_passing": len(g), "violating": int((g.total_violations > 0).sum())})
+    return pd.DataFrame(rows)
+
+
 def main() -> None:
     if get_flag("data_mismatch"):
         print("STOP: data_mismatch flag set by s00_provenance.py")
@@ -137,6 +157,9 @@ def main() -> None:
     fa.to_csv(out("r3", "first_audit_rules.csv"), index=False)
     s2 = sm2_per_program()
     s2.to_csv(out("r3", "sm2_per_program.csv"), index=False)
+    gv = gate_passing_violating()
+    gv.to_csv(out("r3", "gate_passing_violating.csv"), index=False)
+    print(gv.to_string(index=False))
     print(dec.round(3).to_string(index=False))
     print(dif.round(3).to_string(index=False))
     print(chk.round(3).to_string(index=False))
