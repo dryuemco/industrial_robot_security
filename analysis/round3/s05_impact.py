@@ -19,9 +19,9 @@ from pathlib import Path
 
 import pandas as pd
 
-from common import REPO, out, rel
+from common import PAPER, REPO, out, rel
 
-PAPER_DIR = REPO / "paper"
+PAPER_DIR = PAPER.parent  # review/access-r2 source (common.R2_COMMIT)
 ITEMS = {
     "A1": [r"89\.2", r"SM6-only", r"reference translation", r"[Tt]ranslator", r"preamble", r"set\\_tcp", r"set\\_payload",
            r"5\.1\.1[456]", r"comparator", r"lower (?:end|bound)", r"tool[- ]centre[- ]point", r"\bpayload\b"],

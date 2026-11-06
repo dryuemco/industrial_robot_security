@@ -19,7 +19,7 @@ import urllib.request
 
 import pandas as pd
 
-from common import OUT, REPO, md_table, out, rel
+from common import OSF_MIRROR, OUT, PAPER, REPO, md_table, out, rel
 
 API = "https://api.osf.io/v2"
 REG = "ve5m2"
@@ -103,7 +103,7 @@ def main() -> None:
 
     hits = []
     rows = texts(docs)
-    mirror = REPO / "docs/OSF_PREREGISTRATION.md"
+    mirror = OSF_MIRROR  # as submitted (common.R2_COMMIT)
     rows += [("local mirror " + rel(mirror), f"line {i}", l) for i, l in enumerate(mirror.read_text().splitlines(), 1)]
     for src, field, txt in rows:
         for pat in PATTERNS:
@@ -114,7 +114,7 @@ def main() -> None:
     hits = pd.DataFrame(hits, columns=["source", "field", "pattern", "context"]).drop_duplicates()
     hits.to_csv(out("a2", "osf_search.csv"), index=False)
 
-    tex = (REPO / "paper/main_access.tex").read_text().splitlines()
+    tex = PAPER.read_text().splitlines()
     joined = [(i + 1, l) for i, l in enumerate(tex)]
     stmts = []
     for pat in PAPER_STATEMENTS:

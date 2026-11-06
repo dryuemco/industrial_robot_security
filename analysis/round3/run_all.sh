@@ -20,6 +20,9 @@ python3 s07_followup1.py
 python3 s08_paper_numbers.py
 python3 s09_tables.py --out-dir out/tables
 python3 s10_osf_mirror.py
+python3 s11_numeric_tokens.py --out out/r3/numeric_tokens.csv
+cmp -s out/r3/numeric_tokens.csv ../../docs/review/round3/numeric_tokens.csv \
+  && echo "numeric_tokens.csv same as docs/review/round3/" || echo "numeric_tokens.csv DIFFERS from docs/review/round3/"
 for f in out/tables/*.tex; do
   cmp -s "$f" "../../paper/tables/$(basename "$f")" && echo "same as paper/tables: $(basename "$f")" \
     || echo "DIFFERS from paper/tables: $(basename "$f")"

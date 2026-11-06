@@ -25,6 +25,7 @@ OSF refresh.
 | `s08_paper_numbers.py` | per-rule decomposition of the Table 14 count contrasts, SM-2 per program | `out/r3/` |
 | `s09_tables.py` | the round-3 paper tables | `paper/tables/` or `--out-dir` |
 | `s10_osf_mirror.py` | verbatim Amendment 1 excerpts for `docs/OSF_PREREGISTRATION.md` | `out/r3/osf_amendment1_excerpt.md` |
+| `s11_numeric_tokens.py` | numeric tokens of the paper source, r2 (`797aeb3`) against the working tree | `docs/review/round3/numeric_tokens.csv` or `--out` |
 | `test_round3.py` | checks of the statistics helpers | pytest |
 
 `common.py` holds the paths and the shared statistics (Wilson, Clopper-Pearson, Cohen's kappa,
@@ -32,6 +33,11 @@ exact Cochran Q, Holm). Gates, rule sets, the translator and the per-program sco
 from `scripts/review/sensitivity_rescoring.py` and `scripts/review/comparator_urscript.py`, so the
 definitions are the paper's own. `out/flags.json` records the stop conditions checked on the way
 (data identity, translator counts, reproduced tables).
+
+The scripts `s00` to `s07` quote the paper and the OSF mirror as submitted for
+Access-2026-55984 (commit `797aeb3`, `common.R2_COMMIT`), read from git into a temporary
+directory, so the round-3 edits of `paper/` and `docs/OSF_PREREGISTRATION.md` do not change
+their outputs.
 
 ## Round-3 paper tables
 

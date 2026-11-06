@@ -28,7 +28,33 @@ RUN1_E1 = REPO / "data/confirmatory/run1_2026-04/e1_confirmatory_session14"
 RUN2_DIR = REPO / "data/confirmatory/run2_2026-05"
 TASKS_DIR = REPO / "paper/data/tasks_as_run"
 AUDIT_DIR = REPO / "docs/review/audit_v2"
-PAPER = REPO / "paper/main_access.tex"
+# The analyses quote the paper and the OSF mirror as the reviewer saw them: review/access-r2 at 797aeb3, the
+# source of the Access-2026-55984 submission. It is read from git into a temporary
+# directory, so later edits of paper/ do not change these outputs; rel() reports its files
+# under their paper/ paths.
+R2_COMMIT = "797aeb3"
+
+
+def _r2_snapshot() -> Path:
+    import atexit
+    import io
+    import shutil
+    import subprocess
+    import tarfile
+    import tempfile
+    d = Path(tempfile.mkdtemp(prefix="round3_r2_paper_"))
+    atexit.register(shutil.rmtree, d, True)
+    data = subprocess.run(["git", "archive", R2_COMMIT, "paper/main_access.tex", "paper/tables",
+                           "docs/OSF_PREREGISTRATION.md"], cwd=REPO, capture_output=True, check=True).stdout
+    with tarfile.open(fileobj=io.BytesIO(data)) as tf:
+        tf.extractall(d, filter="data")
+    return d
+
+
+R2_ROOT = _r2_snapshot()
+PAPER_DIR = R2_ROOT / "paper"
+PAPER = PAPER_DIR / "main_access.tex"
+OSF_MIRROR = R2_ROOT / "docs" / "OSF_PREREGISTRATION.md"
 TABLES = REPO / "paper/tables"
 X10 = {
     "Qwen2.5-Coder-32B": (REPO / "paper/data/X10_qwen_q4_0/e1_results.csv", "qwen2.5-coder:32b-instruct-q4_0", "Q4_0"),
@@ -82,7 +108,10 @@ def sha256_text(s: str) -> str:
 
 
 def rel(p: Path) -> str:
-    return str(Path(p).resolve().relative_to(REPO))
+    p = Path(p).resolve()
+    if p.is_relative_to(R2_ROOT.resolve()):
+        return str(p.relative_to(R2_ROOT.resolve()))
+    return str(p.relative_to(REPO))
 
 
 # --------------------------------------------------------------------------- flags

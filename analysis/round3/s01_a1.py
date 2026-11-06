@@ -21,7 +21,7 @@ import re
 
 import pandas as pd
 
-from common import (REPO, RUN2_E1, TABLES, TASKS_DIR, cu, get_flag, load_code, load_tasks, md_table,
+from common import (PAPER, REPO, RUN2_E1, TABLES, TASKS_DIR, cu, get_flag, load_code, load_tasks, md_table,
                     out, rel, ruleset_firings, set_flag, sha256_text, sr, task_caps, violations, wd)
 
 SETS = {"minimal": False, "preamble": True}
@@ -343,7 +343,7 @@ def clause_map() -> None:
         for i, l in enumerate(f.read_text().splitlines(), 1):
             if re.search(r'iso_clause=|"cwe":|"missing":', l):
                 md.append(f"| {f.name} | {i} | `{l.strip()}` |")
-    tex = (REPO / "paper/main_access.tex").read_text().splitlines()
+    tex = PAPER.read_text().splitlines()
     md.append("\n### Table 18 (paper/main_access.tex, tab:iso)")
     md.append("| line | text |\n|---|---|")
     s = next(i for i, l in enumerate(tex) if "label{tab:iso}" in l)

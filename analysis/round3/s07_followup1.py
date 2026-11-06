@@ -32,7 +32,7 @@ import zipfile
 
 import pandas as pd
 
-from common import (MODELS, PAPER, REPO, RUN1_E1, RUN2_DIR, RUN2_E1, cochran_exact, get_flag, holm,
+from common import (MODELS, PAPER, R2_COMMIT, REPO, RUN1_E1, RUN2_DIR, RUN2_E1, cochran_exact, get_flag, holm,
                     load_code, load_e1_csv, load_tasks, md_table, out, rel, sha256, sr, violations, wd, wilson)
 
 logging.disable(logging.INFO)
@@ -238,9 +238,11 @@ def osf_quotes() -> None:
 
 
 def _git_grep(pattern: str, *paths: str) -> list[str]:
-    r = subprocess.run(["git", "grep", "-n", "-I", "-E", pattern, "--", *paths], cwd=REPO,
+    # the repository as submitted for Access-2026-55984 (common.R2_COMMIT)
+    r = subprocess.run(["git", "grep", "-n", "-I", "-E", pattern, R2_COMMIT, "--", *paths], cwd=REPO,
                        capture_output=True, text=True)
-    return [l for l in r.stdout.splitlines() if not l.startswith("analysis/")]
+    lines = [l.split(":", 1)[1] for l in r.stdout.splitlines()]
+    return [l for l in lines if not l.startswith("analysis/")]
 
 
 def locations() -> pd.DataFrame:
