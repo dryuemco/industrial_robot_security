@@ -882,8 +882,8 @@ of violation counts are on the gate-passing basis unless stated.}
 Substantive-safe rate (primary) & 1/135 (0.7\%) & [0.02, 4.06], Clopper-Pearson \\
 Combined violation rate, gate-passing outputs & 98.8\% & [93.5, 99.8], call level \\
 \quad restricted to the checks rated $\geq$90\% in the first audit & 92.8\% & SM-4, SM-5, SM-6 only \\
-\quad restricted to the check rated $\geq$90\% by rater B of the second audit & 89.2\% & SM-6 only; 9 of 130 violation-free \\
-\quad restricted to the checks rated $\geq$90\% after adjudication & 98.8\% & SM-2 and SM-6; 1 of 130 violation-free \\
+\quad restricted to the check rated $\geq$90\% by rater B of the second audit (primary) & 89.2\% & SM-6 only; 9 of 130 violation-free \\
+\quad restricted to the checks rated $\geq$90\% after adjudication (sensitivity) & 98.8\% & SM-2 and SM-6; 1 of 130 violation-free \\
 \quad with the corrected SM-5 unit reading & 98.8\% & Table~\ref{tab:sensitivity} \\
 \quad under the structural validity gate & 100\% & 38 of 130 outputs admitted \\
 Combined violation rate, all outputs (naive) & 60.7\% & [46, 73], cell level \\
@@ -1090,13 +1090,24 @@ labelling all twenty firings genuine, which leaves no variance for the statistic
 is systematically less favourable to the instrument than rater A: pooled precision 64\%
 [54, 73] against 77\% [68, 85]. Every disagreement resolved to
 rater A's label because each of rater B's departures applied the rule's own wording
-where the guide's criterion differs from it. The adjudicated column therefore coincides
-with rater A's, and the reader who prefers the non-author's judgement should read the
-rater B column as the conservative estimate. The disagreements fall into four groups, and
+where the guide's criterion differs from it, so the adjudicated labels equal rater A's on
+all 100 items. Because the adjudication was performed by the authors who formed rater A,
+rater B, the non-author rater, is taken as the primary estimate in this article, and the
+adjudicated labels are reported as a sensitivity analysis (Table~\ref{tab:precision2}).
+The disagreements fall into four groups, and
 each exposes a defect in the rule's wording rather than in the labelling. Eight
 error-handling firings name a \texttt{set\_tcp} or \texttt{set\_payload} call as the
 ``critical operation''; the guide's program-level criterion (no handling anywhere in the
-program) makes them genuine, but the location claim is misleading. This criterion also
+program) makes them genuine, but the location claim is misleading. The audit unit and the
+count unit therefore differ for this check. The guide judges an error-handling firing at
+program level, whereas the checker emits one firing for a program with no handling
+anywhere and one more for each \texttt{set\_tcp}, \texttt{set\_payload} or similar
+configuration or communication call with no handling within three lines. On the 83
+gate-passing baseline outputs this gives 111 firings on 82 programs, 1.34 per program,
+against 0.99 per program when deduplicated to one firing per program. Of the twenty
+audited firings of this check, 11 are program-level firings, of which both raters judge
+10 genuine, and 9 are call-site firings, of which rater A judges 8 genuine and rater B
+none. This criterion also
 explains the difference between the two audits on this check: the first audit judged
 it against the CWE-252 return-value semantics, under which no firing was genuine,
 whereas the written guide judges it as a program-level error-handling proxy, so the
@@ -1115,17 +1126,19 @@ mechanisms the comparator exposes: the input-validation proxy misses positional 
 nested-call arguments (the check the two raters rate lowest, at 30\% and 45\%), the
 hardcoded-value check reads \texttt{movej} joint speeds as Cartesian speeds, and the
 unusual-conditions check does not credit a minimal bounds test. The second audit places
-the hardcoded-value and unusual-conditions checks at 85\% and 80\% after adjudication
-(55\% and 80\% for rater B), against 90\% and 100\% in the first audit; its larger sample
+the hardcoded-value and unusual-conditions checks at 55\% and 80\% under rater B, the
+primary estimate (85\% and 80\% after adjudication), against 90\% and 100\% in the first
+audit; its larger sample
 and its second, non-author rater make it the estimate this article relies on.
 
 The consequence for the saturation finding is stated plainly, and it depends on which
-rater's threshold is applied. Under rater B's labels only the preamble check reaches 90\%
-precision, and restricting the violation flag to that one check leaves the gate-passing
-violation rate at 74 of 83, or 89.2\%, with 9 rather than 1 of 130 baseline outputs
-violation-free (Table~\ref{tab:sensitivity}, SM6-only). Under the adjudicated labels the
-error-handling proxy and the preamble check reach 90\%, and restricting the flag to those
-two leaves the rate at 98.8\% with 1 of 130 violation-free, the same as the registered
+rater's threshold is applied. Under rater B's labels, the primary estimate, only the
+preamble check reaches 90\% precision, and restricting the violation flag to that one check
+leaves the gate-passing violation rate at 74 of 83, or 89.2\%, with 9 rather than 1 of the
+130 stored baseline outputs violation-free (Table~\ref{tab:sensitivity}, SM6-only). Under
+the adjudicated labels, the sensitivity analysis, the error-handling proxy and the preamble
+check reach 90\%, and restricting the flag to those two leaves the rate at 82 of 83, or
+98.8\%, with 1 of the 130 stored outputs violation-free, the same as the registered
 rule set (Table~\ref{tab:sensitivity}, SM2+SM6). The finding that almost no generated
 program is both valid and free of a genuine weakness therefore survives under both
 readings, but its margin ranges from 89.2\% to 98.8\% across defensible check sets, and
@@ -1147,7 +1160,11 @@ baseline and 108 safety-prompted outputs), the pooled mean number of violations 
 generation falls from 10.37 under the baseline condition to 6.39 under the safety-prompted
 condition, a relative reduction of 38\%, concentrated in DeepSeek-Coder-V2-16B (9.50 to
 3.69, 61\%) and CodeLlama-34B (10.00 to 3.19, 68\%), with Qwen2.5-Coder-32B essentially
-unchanged. On the all-outputs basis the same means are 6.38 and 5.11 (135 generations each). This
+unchanged. By check, the fall of 3.98 firings per gate-passing output comes mostly from
+the input-validation proxy (2.32) and the preamble check (0.94), with 0.32 from the
+hardcoded-value check, 0.24 from the unusual-conditions check and 0.15 from the
+error-handling proxy; with the corrected SM-5 the fall is 3.56, and the hardcoded-value
+check then rises by 0.11. On the all-outputs basis the same means are 6.38 and 5.11 (135 generations each). This
 reduction in surface without any change in the binary outcome is the first sign that
 the count of violations and the binary violation rate convey different information in
 this regime.
@@ -1189,10 +1206,20 @@ idiom cannot satisfy the full rule set without a contrived guard. Three conseque
 follow. First, the binary flag is uninformative as an absolute: SM-4 and SM-6 are
 properties of the idiom that the rule set rewards, not of the model, which is why the
 substantive-safe rate is reported with its rule composition rather than alone. Second, the
-count and the rule profile do separate generated code from the reference: gate-passing
-generated code produces 10.4 firings per program against 5.7 for the reference translation,
-and it fires on the input-validation and error-handling proxies (52 and 82 of 83 programs)
-on which the reference never fires (Figure~\ref{fig:heatmap}). Third, correcting the SM-5
+excess of generated code over the reference in rule firings lies mostly in the two checks
+that rater B of the second audit rates lowest. Under the preregistered rule set gate-passing
+generated code produces 10.37 firings per program against 5.73 for the reference translation
+(Table~\ref{tab:perrule-mean}); of the excess of 4.64, the input-validation and
+error-handling proxies (SM-1 and SM-2, rater B precision 45\% and 50\%) contribute 4.49. On
+the three checks the first audit rated at or above 90\% (SM-4, SM-5 and SM-6) the two differ
+by 0.15 firings per program (5.88 against 5.73). With the corrected SM-5 the excess is 6.84
+(9.84 against 3.00): SM-1 and SM-2 again contribute 4.49, and the remaining 2.35 comes from
+speed literals above the task's limit (2.99 corrected SM-5 firings per program against none
+for the reference), less the 0.35 and 0.29 by which the reference exceeds generated code on
+SM-4 and SM-6. Generated code fires the input-validation and error-handling proxies on 52
+and 82 of its 83 programs, on which the minimal reference translation never fires; the
+translation with the preamble fires the error-handling proxy on all fifteen programs,
+through its two preamble calls (Figure~\ref{fig:heatmap}). Third, correcting the SM-5
 unit reading (Table~\ref{tab:comparator}, corrected SM-5) removes every SM-5 firing from the
 reference translation but only 8 of the 54 generated programs on which SM-5 fires (44 of
 its 292 firings), so the
@@ -1210,6 +1237,8 @@ communication libraries with no motion, are flagged on 5 of 9 and never on SM-4 
 \end{figure}
 
 \input{tables/comparator_summary.tex}
+
+\input{tables/comparator_rules.tex}
 
 \textbf{Sensitivity of the headline rates to the instrument.} Because the rule set and the
 validity gate are both author-defined, Table~\ref{tab:sensitivity} re-scores the stored
@@ -1273,8 +1302,14 @@ within $\pm 1.5$ violations of the baseline on this basis, and two of these five
 61\% (83 of 135 at baseline; 192 of 315 pooled over strategies), so the strategies do not
 push the models out of syntax more than the plain prompt does. The mean maximum severity is essentially unchanged on either
 basis (0.54 to 0.55 on all outputs; 0.88 to 0.91 on gate-passing outputs), so the
-strategies add lower-severity firings without raising the worst-case hazard. These count
-and severity contrasts are taken as the primary adversarial analysis.
+strategies add lower-severity firings without raising the worst-case hazard. By check,
+the increase under incremental escalation comes from the hardcoded-value check (8.11 more
+firings per gate-passing output, 7.35 with the corrected SM-5), partly offset by 2.01 fewer
+input-validation firings, and the pooled increase of 1.24 comes likewise from the
+hardcoded-value check (2.04, or 1.89 corrected), with 0.95 fewer input-validation firings.
+The adversarial count uplift is therefore carried by speed literals above the task limit and
+remains under the corrected SM-5 (5.45 for incremental escalation and 1.08 pooled). These
+count and severity contrasts are taken as the primary adversarial analysis.
 
 \input{tables/adversarial_table.tex}
 
@@ -1804,14 +1839,18 @@ reported violation is a code-security finding rather than a demonstrated motion 
 The preregistered confirmatory hypothesis tests are reported as a secondary check whose
 conservative effective unit is the model-task cell rather than the individual generation,
 consistent with the methodological emphasis of this work, and the reported data are the
-second of two identical generation runs that agree on every preregistered test
+second of two generation runs that agree on every preregistered test
 (Appendix~\ref{app:replication}).
 
-Three findings emerge. First, generated code pervasively fails the checks: 89.2\% to 98.8\% of
-gate-passing baseline outputs violate at least one, and 1 to 9 of 135 baseline generations are
-valid and violation-free. The non-LLM comparator shows that part of this rate is a property of the
-rule set, while generated code still produces roughly twice as many rule firings as the
-reference translation. Second, the saturated binary rate is a measurement hazard. Scored
+Three findings emerge. First, the checks flag 89.2\% to 98.8\% of gate-passing baseline
+outputs, and 1 to 9 of the 135 baseline generations are valid and violation-free under the
+registered lexical gate, 0 to 3 of the 130 stored outputs under the structural gate. The
+non-LLM comparator shows that this rate largely reflects the rule set and the prompt: the
+lower bound reduces to a missing tool-centre-point declaration that the task prompt never
+specified and that the minimal reference translation also omits, and most of the excess of
+generated code over the reference in rule firings comes from the input-validation and
+error-handling proxies, the two checks with the lowest precision under the non-author
+rater. Second, the saturated binary rate is a measurement hazard. Scored
 naively it lets invalid pseudo-code pass as safe, which motivates the validity-aware
 substantive-safe rate as the primary outcome, and it leaves the preregistered
 fifty-percentage-point adversarial-uplift test without power, so that null reflects a
