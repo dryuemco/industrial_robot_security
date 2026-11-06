@@ -1,0 +1,4 @@
+set,programs,firings_call_site,programs_firing,mean_per_program_call_site,mean_per_program_deduplicated,firings_global,firings_per_line
+"LLM baseline (E1, run 2, gate-passing)",83,111,82,1.3373493975903614,0.9879518072289156,82,29
+Translator,15,0,0,0.0,0.0,0,0
+Translator + preamble,15,30,15,2.0,1.0,0,30

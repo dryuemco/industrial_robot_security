@@ -1,0 +1,7 @@
+{
+  "data_mismatch": false,
+  "prompt_builder_reproduces_logged_prompts": true,
+  "table13_llm_reproduced": true,
+  "table16_cochran_reproduced": true,
+  "translator_matches_paper_csv": true
+}

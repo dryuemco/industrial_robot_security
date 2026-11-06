@@ -1,0 +1,9 @@
+run,condition,cells,cells_equal,naive_1_gatepass_0,naive_0_gatepass_1
+run2,baseline,45,44,0,1
+run2,safety,45,42,0,3
+run2,adversarial_any,45,45,0,0
+run2,watchdog,45,45,0,0
+run1,baseline,45,44,0,1
+run1,safety,45,42,0,3
+run1,adversarial_any,45,45,0,0
+run1,watchdog,45,45,0,0

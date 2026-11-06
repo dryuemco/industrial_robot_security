@@ -1,0 +1,17 @@
+condition,gate,model,n,only_tcp_missing,both_missing,only_payload_missing,neither_missing,neither: no URScript motion call (SM-6 cannot fire),neither: both set before first motion call,payload_missing,payload_missing: set_payload absent,payload_missing: set_payload only after first motion,set_payload_before_motion,set_payload_before_motion_literal_equals_ir
+baseline,lexical,pooled,83,6,68,0,9,6,3,68,68,0,9,7
+baseline,lexical,Qwen2.5-Coder-32B,45,3,39,0,3,0,3,39,39,0,6,6
+baseline,lexical,DeepSeek-Coder-V2-16B,20,3,11,0,6,6,0,11,11,0,3,1
+baseline,lexical,CodeLlama-34B,18,0,18,0,0,0,0,18,18,0,0,0
+baseline,structural,pooled,38,3,32,0,3,0,3,32,32,0,6,6
+baseline,structural,Qwen2.5-Coder-32B,37,3,31,0,3,0,3,31,31,0,6,6
+baseline,structural,DeepSeek-Coder-V2-16B,0,0,0,0,0,0,0,0,0,0,0,0
+baseline,structural,CodeLlama-34B,1,0,1,0,0,0,0,1,1,0,0,0
+safety,lexical,pooled,108,55,14,0,39,38,1,14,12,2,56,45
+safety,lexical,Qwen2.5-Coder-32B,45,45,0,0,0,0,0,0,0,0,45,44
+safety,lexical,DeepSeek-Coder-V2-16B,42,10,4,0,28,27,1,4,3,1,11,1
+safety,lexical,CodeLlama-34B,21,0,10,0,11,11,0,10,9,1,0,0
+safety,structural,pooled,16,14,0,0,2,2,0,0,0,0,14,14
+safety,structural,Qwen2.5-Coder-32B,14,14,0,0,0,0,0,0,0,0,14,14
+safety,structural,DeepSeek-Coder-V2-16B,2,0,0,0,2,2,0,0,0,0,0,0
+safety,structural,CodeLlama-34B,0,0,0,0,0,0,0,0,0,0,0,0

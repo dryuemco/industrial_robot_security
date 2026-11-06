@@ -1,0 +1,5 @@
+run,condition,csv_rows,status_success,rows_with_program_file,rows_without_file,lexical_gate_pass,invalid_suffix,mismatches,rows_without_file_status
+run2,baseline,135,83,130,5,83,47,0,error=4;parse_failure=1
+run2,safety,135,108,130,5,108,22,0,error=5
+run1,baseline,135,83,130,5,83,47,0,error=4;parse_failure=1
+run1,safety,135,108,130,5,108,22,0,error=5

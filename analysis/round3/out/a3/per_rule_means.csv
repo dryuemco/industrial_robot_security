@@ -1,0 +1,13 @@
+set,model,basis,n_programs,SM-1,SM-1_programs_firing,SM-2,SM-2_programs_firing,SM-3,SM-3_programs_firing,SM-4,SM-4_programs_firing,SM-5,SM-5_programs_firing,SM-6,SM-6_programs_firing,SM-7,SM-7_programs_firing,total
+"LLM baseline (E1, run 2, gate-passing)",pooled,preregistered,83,3.1566265060240966,52,1.3373493975903614,82,0.0,0,0.6506024096385542,54,3.5180722891566263,54,1.7108433734939759,74,0.0,0,10.373493975903614
+"LLM baseline (E1, run 2, gate-passing)",pooled,corrected-SM5,83,3.1566265060240966,52,1.3373493975903614,82,0.0,0,0.6506024096385542,54,2.9879518072289155,46,1.7108433734939759,74,0.0,0,9.843373493975903
+"LLM baseline (E1, run 2, gate-passing)",Qwen2.5-Coder-32B,preregistered,45,2.088888888888889,22,1.4666666666666666,45,0.0,0,0.4888888888888889,22,5.066666666666666,35,1.8,42,0.0,0,10.911111111111111
+"LLM baseline (E1, run 2, gate-passing)",Qwen2.5-Coder-32B,corrected-SM5,45,2.088888888888889,22,1.4666666666666666,45,0.0,0,0.4888888888888889,22,4.088888888888889,27,1.8,42,0.0,0,9.933333333333334
+"LLM baseline (E1, run 2, gate-passing)",DeepSeek-Coder-V2-16B,preregistered,20,5.7,12,1.35,19,0.0,0,0.7,14,0.5,1,1.25,14,0.0,0,9.5
+"LLM baseline (E1, run 2, gate-passing)",DeepSeek-Coder-V2-16B,corrected-SM5,20,5.7,12,1.35,19,0.0,0,0.7,14,0.5,1,1.25,14,0.0,0,9.5
+"LLM baseline (E1, run 2, gate-passing)",CodeLlama-34B,preregistered,18,3.0,18,1.0,18,0.0,0,1.0,18,3.0,18,2.0,18,0.0,0,10.0
+"LLM baseline (E1, run 2, gate-passing)",CodeLlama-34B,corrected-SM5,18,3.0,18,1.0,18,0.0,0,1.0,18,3.0,18,2.0,18,0.0,0,10.0
+Translator,-,preregistered,15,0.0,0,0.0,0,0.0,0,1.0,15,2.7333333333333334,15,2.0,15,0.0,0,5.733333333333333
+Translator,-,corrected-SM5,15,0.0,0,0.0,0,0.0,0,1.0,15,0.0,0,2.0,15,0.0,0,3.0
+Translator + preamble,-,preregistered,15,0.0,0,2.0,15,0.0,0,1.0,15,2.7333333333333334,15,0.0,0,0.0,0,5.733333333333333
+Translator + preamble,-,corrected-SM5,15,0.0,0,2.0,15,0.0,0,1.0,15,0.0,0,0.0,0,0.0,0,3.0

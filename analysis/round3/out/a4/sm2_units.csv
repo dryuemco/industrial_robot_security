@@ -1,0 +1,5 @@
+set,programs,programs_firing_SM2,firings_call_site,firings_global,firings_per_line,mean_per_program_all,mean_per_firing_program_call_site,mean_per_firing_program_dedup,programs_with_global,programs_with_per_line
+"LLM baseline E1 run 2, gate-passing",83,82,111,82,29,1.3373493975903614,1.353658536585366,1.0,82,17
+Translator,15,0,0,0,0,0.0,,,0,0
+Translator + preamble,15,15,30,0,30,2.0,2.0,1.0,0,15
+"audit population (E1+E2 run 2, gate-passing)",375,365,524,292,232,,1.4356164383561645,1.0,292,168
