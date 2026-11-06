@@ -19,6 +19,7 @@ python3 s05_impact.py
 python3 s07_followup1.py
 python3 s08_paper_numbers.py
 python3 s09_tables.py --out-dir out/tables
+python3 s12_frontier.py
 python3 s10_osf_mirror.py
 python3 s11_numeric_tokens.py --out out/r3/numeric_tokens.csv
 cmp -s out/r3/numeric_tokens.csv ../../docs/review/round3/numeric_tokens.csv \

@@ -5,15 +5,17 @@
 Every value is read from a CSV under analysis/round3/out/ or paper/tables/; nothing is
 recomputed here. Written files (default --out-dir paper/tables):
 
+  comparator_summary.tex        Table 12, with mean firings per program by check (A3)
   sensitivity_e1_baseline.tex   Table 13 with the reference translation (A1)
   precision_audit_v2.tex        second audit with rater B as the primary estimate (A4)
-  comparator_rules.tex          mean firings per program by rule (A3, new)
   quantization_summary.tex      Table 16, lower block on three bases (A2)
-  crossmodel_registered.tex     every registered cross-model test on three bases (A2, new)
+  crossmodel_registered.tex     every registered cross-model test on three bases (A2, new
+                                Table 21, after the last table of round 2)
 
-The tables these replace were written by scripts/review/sensitivity_rescoring.py,
-precision_audit_analyze.py and quantization_summary.py, which are left unchanged; rerunning
-them would restore the round-2 tables.
+The round-2 versions of the first four were written by scripts/review/comparator_urscript.py,
+sensitivity_rescoring.py, precision_audit_analyze.py and quantization_summary.py. Those
+generators now write a file whose first line names this script to <name>.r2.tex instead of
+overwriting it.
 """
 from __future__ import annotations
 
@@ -131,64 +133,106 @@ def table10() -> str:
     return "\n".join(lines)
 
 
-# ----------------------------------------------------------------------------- per-rule means (A3)
+# ----------------------------------------------------------------------------- Table 12 (A3)
 
-def comparator_rules() -> str:
+RULE_COLS = ["SM-1", "SM-2", "SM-3", "SM-4", "SM-5", "SM-6", "SM-7"]
+
+
+def _signed(v: float) -> str:
+    s = f"{v:+.2f}"
+    if s in ("+0.00", "-0.00"):
+        return "0.00"
+    return s.replace("-", "$-$")
+
+
+def table12() -> str:
+    summ = pd.read_csv(TABLES / "comparator_summary.csv")
     m = pd.read_csv(OUT / "a3" / "per_rule_means.csv")
     m = m[m.model.isin(["pooled", "-"])]
-    sets = {"llm": "LLM baseline (E1, run 2, gate-passing)", "min": "Translator", "pre": "Translator + preamble"}
-
-    def row(basis):
-        return {k: m[(m["set"] == v) & (m.basis == basis)].iloc[0] for k, v in sets.items()}
-
     lines = [
         HEADER,
-        "\\begin{table}[t]",
-        "\\caption{Mean firings per program by check: the 83 gate-passing baseline generations",
-        "(LLM) against the 15 reference translations without (Ref.) and with (Ref.+pre) the",
-        "\\texttt{set\\_tcp}/\\texttt{set\\_payload} preamble, and the differences. SM-3 and SM-7",
-        "fire on none of these programs. The corrected rows replace only the hardcoded-value",
-        "check (SM-5) with its corrected reading.}",
-        "\\label{tab:perrule-mean}",
+        "\\begin{table*}[t]",
+        "\\caption{Non-LLM comparator. Programs that were not produced by a language model,",
+        "scored with the same rule checker as the generated code. Columns SM-1 to SM-7 give the",
+        "number of programs on which each check fires; gate is the number that pass the URScript",
+        "validity gate; flagged is the number with at least one",
+        "firing; mean is the mean number of firings per program. \\emph{Preregistered} is the rule",
+        "set used for every confirmatory result; \\emph{corrected SM-5} replaces only the",
+        "hardcoded-value check with a version that reads \\texttt{movej} velocities as joint",
+        "speeds and applies the task's own TCP cap. The translator is the deterministic",
+        "IR-to-URScript renderer of \\ref{sec:task-ir}; the LLM row is the gate-passing baseline",
+        "generations of E1 for reference. One of the nine vendor programs (\\texttt{joint\\_impedance\\_cartesian\\_circle\\_motion.script}) does not pass the validity gate and is scored anyway, because it is human-written example code from the vendor's own repository; generated outputs that fail the gate are never scored.",
+        "The lower block gives, in the same columns, the mean number of firings per program of each",
+        "check for the two translations and the generated code, with mean as the total, and the",
+        "differences between the generated code and each translation.}",
+        "\\label{tab:comparator}",
         "\\centering",
         "\\footnotesize",
         "\\setlength{\\tabcolsep}{4pt}",
-        "\\begin{tabular}{@{}lrrrrr@{}}",
+        "\\begin{tabular}{@{}llrrrrrrrrrrr@{}}",
         "\\toprule",
-        "Check & LLM & Ref. & Ref.+pre & LLM$-$Ref. & LLM$-$Ref.+pre \\\\",
+        "Program set & Rule set & $n$ & Gate & Flagged & Mean & SM-1 & SM-2 & SM-3 & SM-4 & SM-5 & SM-6 & SM-7 \\\\",
         "\\midrule",
-        "\\multicolumn{6}{@{}l}{\\textit{Preregistered rule set}} \\\\",
     ]
-    pre = row("preregistered")
-    for rule in ["SM-1", "SM-2", "SM-4", "SM-5", "SM-6"]:
-        a, b, c = pre["llm"][rule], pre["min"][rule], pre["pre"][rule]
-        lines.append(f"{rule} & {a:.2f} & {b:.2f} & {c:.2f} & {a - b:+.2f} & {a - c:+.2f} \\\\")
-    a, b, c = pre["llm"].total, pre["min"].total, pre["pre"].total
-    lines.append(f"Total & {a:.2f} & {b:.2f} & {c:.2f} & {a - b:+.2f} & {a - c:+.2f} \\\\")
-    cor = row("corrected-SM5")
-    lines += ["\\addlinespace", "\\multicolumn{6}{@{}l}{\\textit{With the corrected SM-5}} \\\\"]
-    a, b, c = cor["llm"]["SM-5"], cor["min"]["SM-5"], cor["pre"]["SM-5"]
-    lines.append(f"SM-5, corrected & {a:.2f} & {b:.2f} & {c:.2f} & {a - b:+.2f} & {a - c:+.2f} \\\\")
-    a, b, c = cor["llm"].total, cor["min"].total, cor["pre"].total
-    lines.append(f"Total & {a:.2f} & {b:.2f} & {c:.2f} & {a - b:+.2f} & {a - c:+.2f} \\\\")
-    lines += ["\\bottomrule", "\\end{tabular}", "\\end{table}", ""]
-    body = "\n".join(lines[1:]).replace("+0.00", "0.00").replace("-0.00", "0.00").replace(" -", " $-$")
-    return lines[0] + "\n" + body
+    prev = None
+    for _, r in summ.iterrows():
+        if prev is not None and r["set"] != prev:
+            lines.append("\\addlinespace")
+        prev = r["set"]
+        basis = "Preregistered" if r.basis == "pre" else "Corrected SM-5"
+        cells = " & ".join(str(int(r[k])) for k in RULE_COLS)
+        lines.append(f"{r['set']} & {basis} & {int(r.n)} & {int(r.gate)} & {int(r.flagged)} & {r.mean_total:.1f} & {cells} \\\\")
+    lines += ["\\midrule",
+              "\\multicolumn{13}{@{}l}{\\textit{Mean firings per program by check}} \\\\"]
+    sets = [("Translator", "Translator"), ("Translator + preamble", "Translator + preamble"),
+            ("LLM baseline (E1, run 2, gate-passing)", "LLM baseline (E1, gate-passing)")]
+    bases = [("preregistered", "Preregistered"), ("corrected-SM5", "Corrected SM-5")]
+    row = {(s, b): m[(m["set"] == s) & (m.basis == b)].iloc[0] for s, _ in sets for b, _ in bases}
+    for i, (s, label) in enumerate(sets):
+        if i:
+            lines.append("\\addlinespace")
+        for b, blabel in bases:
+            r = row[(s, b)]
+            cells = " & ".join(f"{r[k]:.2f}" for k in RULE_COLS)
+            lines.append(f"{label} & {blabel} & {int(r.n_programs)} & & & {r.total:.2f} & {cells} \\\\")
+    llm = sets[2][0]
+    for ref, label in (("Translator", "LLM $-$ Translator"), ("Translator + preamble", "LLM $-$ Translator + preamble")):
+        lines.append("\\addlinespace")
+        for b, blabel in bases:
+            a, c = row[(llm, b)], row[(ref, b)]
+            cells = " & ".join(_signed(a[k] - c[k]) for k in RULE_COLS)
+            lines.append(f"{label} & {blabel} & & & & {_signed(a.total - c.total)} & {cells} \\\\")
+    lines += ["\\bottomrule", "\\end{tabular}", "\\end{table*}", ""]
+    return "\n".join(lines)
+
+
+# ----------------------------------------------------------------------------- Cochran p (A2)
+
+P_NOTE = ("The $p$ values are asymptotic chi-square $p$ values with two degrees of freedom, the registered "
+          "statistic, uncorrected; exact permutation $p$ values are given beside them because several tests "
+          "rest on few discordant tasks, where the chi-square approximation is poor.")
+
+
+def _cells(r, tasks: bool) -> str:
+    """Q, asymptotic p and exact p (with the number of tasks first when tasks is True)."""
+    lead = f"{int(r.tasks_in_test)} & " if tasks else ""
+    if math.isnan(r.Q):
+        return lead + "\\multicolumn{3}{c}{undefined}"
+    return lead + f"{r.Q:.2f} & {fmt_p(r.p_asymptotic)} & {fmt_p(r.p_exact)}"
+
+
+def _naive_tasks_all(*frames) -> None:
+    for f in frames:
+        assert (f[f.basis.isin(["naive", "gate-pass"])].tasks_in_test == 15).all()
 
 
 # ----------------------------------------------------------------------------- Table 16
-
-def _cells(r) -> str:
-    if r is None or math.isnan(r.Q):
-        tasks = "" if r is None else f"{int(r.tasks_in_test)}"
-        return f"{tasks} & \\multicolumn{{2}}{{c}}{{undefined}}"
-    return f"{int(r.tasks_in_test)} & {r.Q:.2f} & {fmt_p(r.p_exact)}"
-
 
 def table16() -> str:
     pm = pd.read_csv(TABLES / "quantization_summary.csv")
     cq = pd.read_csv(OUT / "a2" / "cochran_all.csv")
     cq = cq[cq.run == "run2"]
+    _naive_tasks_all(cq)
     served = {"Qwen2.5-Coder-32B": "Q4\\_K\\_M", "DeepSeek-Coder-V2-16B": "Q4\\_0", "CodeLlama-34B": "Q4\\_0"}
     lines = [
         HEADER,
@@ -205,22 +249,21 @@ def table16() -> str:
         "confirmatory run. The lower block gives the cross-model Cochran $Q$ of \\ref{sec:res-sens}",
         "at the served levels and with all three models at one level, on three bases: naive (a",
         "task cell is violating when any repetition violates, with invalid outputs counted as",
-        "non-violating), gate-passing (a cell is violating when any gate-passing repetition",
-        "violates; a task enters only when every model has a gate-passing output) and the",
-        "gate-pass indicator (a cell is 1 when any repetition passes the validity gate). Tasks is",
-        "the number of task cells in the test; a test in which no task is discordant is",
-        "undefined. The $p$ values are exact permutation $p$ values, uncorrected. Naive rates are",
-        "the per-task violation rates of Qwen2.5-Coder-32B, DeepSeek-Coder-V2-16B and",
-        "CodeLlama-34B in percent.}",
+        "non-violating; all 15 tasks enter), gate-passing (a cell is violating when any",
+        "gate-passing repetition violates; a task enters only when every model has a gate-passing",
+        "output, and Tasks is the number that do) and the gate-pass indicator (a cell is 1 when any",
+        "repetition passes the validity gate; all 15 tasks enter). A test in which no task is",
+        "discordant is undefined. " + P_NOTE + " Naive rates are the per-task violation rates of",
+        "Qwen2.5-Coder-32B, DeepSeek-Coder-V2-16B and CodeLlama-34B in percent.}",
         "\\label{tab:quant}",
         "\\centering",
         "\\footnotesize",
-        "\\setlength{\\tabcolsep}{3.5pt}",
-        "\\begin{tabular}{@{}llrrrrrrrrrr@{}}",
+        "\\setlength{\\tabcolsep}{3pt}",
+        "\\begin{tabular}{@{}llrrrrrrrrrrr@{}}",
         "\\toprule",
-        " & & \\multicolumn{3}{c}{Q4\\_K\\_M} & \\multicolumn{3}{c}{Q4\\_0} & & & & \\\\",
+        " & & \\multicolumn{3}{c}{Q4\\_K\\_M} & \\multicolumn{3}{c}{Q4\\_0} & & & & & \\\\",
         "\\cmidrule(lr){3-5}\\cmidrule(lr){6-8}",
-        "Model & Condition & Gate & Viol.\\ \\% & Mean & Gate & Viol.\\ \\% & Mean & Agree & McNemar $p$ & Wilcoxon $p$ & Served at \\\\",
+        "Model & Condition & Gate & Viol.\\ \\% & Mean & Gate & Viol.\\ \\% & Mean & Agree & McNemar $p$ & Wilcoxon $p$ & Served at & \\\\",
         "\\midrule",
     ]
     for _, r in pm.iterrows():
@@ -229,15 +272,15 @@ def table16() -> str:
             f"{r['Q4_K_M_gate']:.0f} & {100 * r['Q4_K_M_viol']:.0f} & {r['Q4_K_M_mean']:.2f} & "
             f"{r['Q4_0_gate']:.0f} & {100 * r['Q4_0_viol']:.0f} & {r['Q4_0_mean']:.2f} & "
             f"{r.agree:.0f}/{r.cells:.0f} & {r.mcnemar_p:.2f} & {r.wilcoxon_p:.3f} & "
-            f"{served[r.model] if r.condition == 'baseline' else ''} \\\\")
+            f"{served[r.model] if r.condition == 'baseline' else ''} & \\\\")
         if r.condition == "safety":
             lines.append("\\addlinespace")
     lines += [
         "\\midrule",
-        "\\multicolumn{12}{@{}l}{\\textit{Cross-model Cochran $Q$ over the 15 task cells}} \\\\",
-        " & & \\multicolumn{3}{c}{Naive} & \\multicolumn{3}{c}{Gate-passing} & \\multicolumn{3}{c}{Gate-pass indicator} & \\\\",
-        "\\cmidrule(lr){3-5}\\cmidrule(lr){6-8}\\cmidrule(lr){9-11}",
-        "Levels & Condition & Tasks & $Q$ & $p$ & Tasks & $Q$ & $p$ & Tasks & $Q$ & $p$ & Naive rates \\\\",
+        "\\multicolumn{13}{@{}l}{\\textit{Cross-model Cochran $Q$ over the 15 task cells}} \\\\",
+        " & & \\multicolumn{3}{c}{Naive} & \\multicolumn{4}{c}{Gate-passing} & \\multicolumn{3}{c}{Gate-pass indicator} & \\\\",
+        "\\cmidrule(lr){3-5}\\cmidrule(lr){6-9}\\cmidrule(lr){10-12}",
+        "Levels & Condition & $Q$ & $p$ & exact $p$ & Tasks & $Q$ & $p$ & exact $p$ & $Q$ & $p$ & exact $p$ & Naive rates \\\\",
         "\\midrule",
     ]
     names = {"as served (Q4_K_M / Q4_0 / Q4_0)": "As served", "all Q4_K_M": "All Q4\\_K\\_M", "all Q4_0": "All Q4\\_0"}
@@ -246,8 +289,8 @@ def table16() -> str:
             g = cq[(cq.variant == variant) & (cq.condition == cond)].set_index("basis")
             nv = g.loc["naive"]
             rates = "/".join(f"{100 * nv[f'rate_{m}']:.0f}" for m in MODELS)
-            lines.append(f"{label if cond == 'baseline' else ''} & {COND_LABEL[cond]} & {_cells(nv)} & "
-                         f"{_cells(g.loc['gate-passing'])} & {_cells(g.loc['gate-pass'])} & {rates} \\\\")
+            lines.append(f"{label if cond == 'baseline' else ''} & {COND_LABEL[cond]} & {_cells(nv, False)} & "
+                         f"{_cells(g.loc['gate-passing'], True)} & {_cells(g.loc['gate-pass'], False)} & {rates} \\\\")
     lines += ["\\bottomrule", "\\end{tabular}", "\\end{table*}", ""]
     return "\n".join(lines)
 
@@ -262,6 +305,7 @@ def crossmodel_registered() -> str:
     four = pd.read_csv(OUT / "f1" / "f4_cochran_four_conditions.csv")
     subs = pd.read_csv(OUT / "f1" / "f4_cochran_adversarial_subtypes.csv")
     four, subs = four[four.run == "run2"], subs[subs.run == "run2"]
+    _naive_tasks_all(four, subs)
     rows = [("Baseline (neutral prompt)", four[four.condition == "baseline"]),
             ("Safety-prompted", four[four.condition == "safety"])]
     rows += [(f"{k} {v}", subs[subs.condition == f"adversarial_{k}"]) for k, v in STRATEGY.items()]
@@ -275,27 +319,28 @@ def crossmodel_registered() -> str:
         "analysis reported with an uncorrected $p$ value. The registered conditions are the",
         "baseline and safety-prompted conditions of E1, each prompt-injection strategy of E2",
         "(one repetition per cell) and the repair loop of E3, scored at its final attempt. The",
-        "three bases are those of Table~\\ref{tab:quant}: naive, gate-passing and the gate-pass",
-        "indicator. Tasks is the number of task cells in the test; a test in which no task is",
-        "discordant is undefined. The $p$ values are exact permutation $p$ values, uncorrected.",
-        "Naive rates are the per-task violation rates of Qwen2.5-Coder-32B, DeepSeek-Coder-V2-16B",
-        "and CodeLlama-34B in percent. Run 1 gives the same values on every line.}",
+        "three bases are those of Table~\\ref{tab:quant}: naive and the gate-pass indicator on all",
+        "15 tasks, gate-passing on the Tasks on which every model has a gate-passing output. A test",
+        "in which no task is discordant is undefined. " + P_NOTE + " Naive rates are the",
+        "per-task violation rates of Qwen2.5-Coder-32B, DeepSeek-Coder-V2-16B and CodeLlama-34B in",
+        "percent. Run 1 gives the same values on every line.}",
         "\\label{tab:crossmodel}",
         "\\centering",
         "\\footnotesize",
         "\\setlength{\\tabcolsep}{4pt}",
-        "\\begin{tabular}{@{}lrrrrrrrrrr@{}}",
+        "\\begin{tabular}{@{}lrrrrrrrrrrr@{}}",
         "\\toprule",
-        " & \\multicolumn{3}{c}{Naive} & \\multicolumn{3}{c}{Gate-passing} & \\multicolumn{3}{c}{Gate-pass indicator} & \\\\",
-        "\\cmidrule(lr){2-4}\\cmidrule(lr){5-7}\\cmidrule(lr){8-10}",
-        "Condition & Tasks & $Q$ & $p$ & Tasks & $Q$ & $p$ & Tasks & $Q$ & $p$ & Naive rates \\\\",
+        " & \\multicolumn{3}{c}{Naive} & \\multicolumn{4}{c}{Gate-passing} & \\multicolumn{3}{c}{Gate-pass indicator} & \\\\",
+        "\\cmidrule(lr){2-4}\\cmidrule(lr){5-8}\\cmidrule(lr){9-11}",
+        "Condition & $Q$ & $p$ & exact $p$ & Tasks & $Q$ & $p$ & exact $p$ & $Q$ & $p$ & exact $p$ & Naive rates \\\\",
         "\\midrule",
     ]
     for label, g in rows:
         g = g.set_index("basis")
         nv = g.loc["naive"]
         rates = "/".join(f"{100 * nv[c]:.0f}" for c in rate_cols)
-        lines.append(f"{label} & {_cells(nv)} & {_cells(g.loc['gate-passing'])} & {_cells(g.loc['gate-pass'])} & {rates} \\\\")
+        lines.append(f"{label} & {_cells(nv, False)} & {_cells(g.loc['gate-passing'], True)} & "
+                     f"{_cells(g.loc['gate-pass'], False)} & {rates} \\\\")
         if label.startswith("Safety") or label.startswith("A8.7"):
             lines.append("\\addlinespace")
     lines += ["\\bottomrule", "\\end{tabular}", "\\end{table*}", ""]
@@ -306,8 +351,8 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--out-dir", type=Path, default=TABLES)
     args = ap.parse_args()
-    files = {"sensitivity_e1_baseline.tex": table13(), "precision_audit_v2.tex": table10(),
-             "comparator_rules.tex": comparator_rules(), "quantization_summary.tex": table16(),
+    files = {"comparator_summary.tex": table12(), "sensitivity_e1_baseline.tex": table13(),
+             "precision_audit_v2.tex": table10(), "quantization_summary.tex": table16(),
              "crossmodel_registered.tex": crossmodel_registered()}
     for name, text in files.items():
         (args.out_dir / name).write_text(text)

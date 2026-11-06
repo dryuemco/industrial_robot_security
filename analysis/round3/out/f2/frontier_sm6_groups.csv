@@ -1,0 +1,8 @@
+condition,model,gate_passing,only_tcp_missing,both_missing,only_payload_missing,neither_missing,neither: no URScript motion call,neither: both set before first motion call,sm6_flagged,sm6_rate,programs_with_urscript_motion_call,tcp_missing_among_motion_call,payload_missing_among_motion_call,set_tcp_before_motion,set_tcp_literal_pose,set_tcp_literal_z_equals_ir
+all,pooled,120,52,7,0,61,16,45,59,0.49166666666666664,104,59,7,45,30,3
+baseline,pooled,60,25,6,0,29,1,28,31,0.5166666666666667,59,31,6,28,20,2
+safety,pooled,60,27,1,0,32,15,17,28,0.4666666666666667,45,28,1,17,10,1
+all,mistralai_Devstral-Small-2-24B-Instruct-2512,30,8,6,0,16,16,0,14,0.4666666666666667,14,14,6,0,2,0
+all,mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4,30,11,1,0,18,0,18,12,0.4,30,12,1,18,11,0
+all,openai_gpt-oss-120b,30,14,0,0,16,0,16,14,0.4666666666666667,30,14,0,16,8,1
+all,zai-org_GLM-4.7-FP8,30,19,0,0,11,0,11,19,0.6333333333333333,30,19,0,11,9,2

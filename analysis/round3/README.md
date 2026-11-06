@@ -25,6 +25,7 @@ OSF refresh.
 | `s08_paper_numbers.py` | per-rule decomposition of the Table 14 count contrasts, SM-2 per program | `out/r3/` |
 | `s09_tables.py` | the round-3 paper tables | `paper/tables/` or `--out-dir` |
 | `s10_osf_mirror.py` | verbatim Amendment 1 excerpts for `docs/OSF_PREREGISTRATION.md` | `out/r3/osf_amendment1_excerpt.md` |
+| `s12_frontier.py` | SM-6 split and prompt check for the frontier run of Table 7 (needs `results/E1_frontier/`, outside version control) | `out/f2/` |
 | `s11_numeric_tokens.py` | numeric tokens of the paper source, r2 (`797aeb3`) against the working tree | `docs/review/round3/numeric_tokens.csv` or `--out` |
 | `test_round3.py` | checks of the statistics helpers | pytest |
 
@@ -42,7 +43,7 @@ their outputs.
 ## Round-3 paper tables
 
 `s09_tables.py` writes the five paper tables changed or added in the round-3 revision
-(`sensitivity_e1_baseline.tex`, `precision_audit_v2.tex`, `comparator_rules.tex`,
+(`comparator_summary.tex`, `sensitivity_e1_baseline.tex`, `precision_audit_v2.tex`,
 `quantization_summary.tex`, `crossmodel_registered.tex`) from the CSVs under `out/`:
 
 ```bash
