@@ -30,6 +30,11 @@ SECTION = re.compile(r"\\(sub)?section\*?\{([^}]*)\}")
 
 # (file, regex searched in the new or the old text of the block, item code, reason)
 ANNOTATIONS = [
+    ("main_access.tex", r"checks only whether a tool-centre-point|45 of the 120 outputs of", "A1",
+     "SM-6 checks presence, not values; TCP declared unprompted: 3/83 local, 45/120 frontier; 0/3 and 3/28 match"),
+    ("main_access.tex", r"exact \$p = 0\.111\$; asymptotic|post hoc and rest on few|asymptotic \$p = 0\.135\$|does not reject\s+homogeneity at either level", "A2",
+     "registered naive test asymptotic p first; post hoc bases exact p first"),
+    ("main_access.tex", r"gate-passing outputs \(post hoc\)", "A2", "Table 6: post hoc gate-passing result with exact p first"),
     ("main_access.tex", r"although a non-LLM comparator shows that much of this rate", "A1",
      "I-C first finding qualified by the comparator and the TCP lower bound"),
     ("main_access.tex", r"Exact permutation \$p\$ values are given beside|\$p = 0\.002\$ and below 0\.001|3 of them discordant", "A2",

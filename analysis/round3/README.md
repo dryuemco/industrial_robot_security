@@ -1,7 +1,8 @@
 # Round-3 analyses for Access-2026-55984 (Reviewer 1, A1 to A4, and Follow-up 1)
 
-Recomputes every number of the round-3 revision from committed inputs. Nothing outside
-`analysis/round3/out/` is written; the paper, the existing scripts and the data are only read.
+Recomputes every number of the round-3 revision from committed inputs. The scripts write under
+`analysis/round3/out/`, except `s09_tables.py` (writes `paper/tables/` when run without
+`--out-dir`) and `s13_import_runs.py` (wrote the run copies in `data/` once; `--check` only reads).
 
 ```bash
 bash analysis/round3/run_all.sh                # uses the cached OSF responses in out/osf/
