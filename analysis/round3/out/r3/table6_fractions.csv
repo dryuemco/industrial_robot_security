@@ -1,0 +1,15 @@
+quantity,k,N,denominator,rate
+substantive-safe rate,1,135,baseline generations,0.007407407407407408
+"combined violation rate, gate-passing",82,83,gate-passing outputs,0.9879518072289156
+"combined violation rate, all outputs (naive)",82,135,baseline generations,0.6074074074074074
+high-precision (first audit),77,83,gate-passing outputs,0.927710843373494
+"high-precision (first audit), violation-free",6,130,stored outputs,0.046153846153846156
+SM6-only (rater B),74,83,gate-passing outputs,0.891566265060241
+"SM6-only (rater B), violation-free",9,130,stored outputs,0.06923076923076923
+SM2+SM6 (adjudicated),82,83,gate-passing outputs,0.9879518072289156
+"SM2+SM6 (adjudicated), violation-free",1,130,stored outputs,0.007692307692307693
+corrected SM-5,82,83,gate-passing outputs,0.9879518072289156
+"corrected SM-5, violation-free",1,130,stored outputs,0.007692307692307693
+structural gate,38,38,gate-passing outputs,1.0
+"structural gate, violation-free",0,130,stored outputs,0.0
+"structural gate, admitted",38,130,stored outputs,0.2923076923076923

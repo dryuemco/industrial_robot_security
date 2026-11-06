@@ -24,6 +24,7 @@ OSF refresh.
 | `s07_followup1.py` | Follow-up 1, F1 to F7 (runs after `s02_a2.py` and `s06_osf.py`) | `out/f1/` |
 | `s08_paper_numbers.py` | per-rule decomposition of the Table 14 count contrasts, SM-2 per program | `out/r3/` |
 | `s09_tables.py` | the round-3 paper tables | `paper/tables/` or `--out-dir` |
+| `s10_osf_mirror.py` | verbatim Amendment 1 excerpts for `docs/OSF_PREREGISTRATION.md` | `out/r3/osf_amendment1_excerpt.md` |
 | `test_round3.py` | checks of the statistics helpers | pytest |
 
 `common.py` holds the paths and the shared statistics (Wilson, Clopper-Pearson, Cohen's kappa,

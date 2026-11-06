@@ -171,8 +171,8 @@ ISO 10218-1:2025 clauses, including the new cybersecurity clause 5.1.16.
 rates approach saturation across three open-weight models and are driven by the
 security checks rather than the motion-safety checks (\ref{sec:res-baseline}).
 \item \textbf{A validity-aware outcome measure.} The substantive-safe rate, which
-counts only generations that are both valid and violation-free, is 1 of 135 at
-baseline under the full registered rule set and is used to compare models and conditions within the evaluated corpus;
+counts only generations that are both valid and violation-free, is 1 of the 135 baseline
+generations under the full registered rule set and is used to compare models and conditions within the evaluated corpus;
 the preregistered binary analysis is retained alongside it for fidelity
 (\ref{sec:res-baseline}).
 \item \textbf{A non-LLM comparator and a sensitivity analysis of the instrument.}
@@ -875,18 +875,18 @@ of violation counts are on the gate-passing basis unless stated.}
 \label{tab:summary}
 \centering
 \footnotesize
-\begin{tabular}{@{}p{0.30\columnwidth}p{0.17\columnwidth}p{0.42\columnwidth}@{}}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.30\columnwidth}>{\raggedright\arraybackslash}p{0.19\columnwidth}>{\raggedright\arraybackslash}p{0.40\columnwidth}@{}}
 \toprule
 \textbf{Quantity} & \textbf{Value} & \textbf{95\% interval or note} \\
 \midrule
-Substantive-safe rate (primary) & 1/135 (0.7\%) & [0.02, 4.06], Clopper-Pearson \\
-Combined violation rate, gate-passing outputs & 98.8\% & [93.5, 99.8], call level \\
-\quad restricted to the checks rated $\geq$90\% in the first audit & 92.8\% & SM-4, SM-5, SM-6 only \\
-\quad restricted to the check rated $\geq$90\% by rater B of the second audit (primary) & 89.2\% & SM-6 only; 9 of 130 violation-free \\
-\quad restricted to the checks rated $\geq$90\% after adjudication (sensitivity) & 98.8\% & SM-2 and SM-6; 1 of 130 violation-free \\
-\quad with the corrected SM-5 unit reading & 98.8\% & Table~\ref{tab:sensitivity} \\
-\quad under the structural validity gate & 100\% & 38 of 130 outputs admitted \\
-Combined violation rate, all outputs (naive) & 60.7\% & [46, 73], cell level \\
+Substantive-safe rate (primary) & 1/135 (0.7\%) & of the 135 baseline generations; [0.02, 4.06], Clopper-Pearson \\
+Combined violation rate, gate-passing outputs & 82/83 (98.8\%) & of the 83 gate-passing outputs; [93.5, 99.8], call level \\
+\quad restricted to the checks rated $\geq$90\% in the first audit & 77/83 (92.8\%) & SM-4, SM-5, SM-6 only \\
+\quad restricted to the check rated $\geq$90\% by rater B of the second audit (primary) & 74/83 (89.2\%) & SM-6 only; 9 of the 130 stored outputs violation-free \\
+\quad restricted to the checks rated $\geq$90\% after adjudication (sensitivity) & 82/83 (98.8\%) & SM-2 and SM-6; 1 of the 130 stored outputs violation-free \\
+\quad with the corrected SM-5 unit reading & 82/83 (98.8\%) & Table~\ref{tab:sensitivity} \\
+\quad under the structural validity gate & 38/38 (100\%) & 38 of the 130 stored outputs admitted \\
+Combined violation rate, all outputs (naive) & 82/135 (60.7\%) & of the 135 baseline generations; [46, 73], cell level \\
 Refusal rate & 0/585 & none observed \\
 Safety-prompt effect on mean violations & 10.37 to 6.39 & 38\% lower; descriptive, no test \\
 Adversarial uplift in mean violations, pooled & $+1.24$ & all-outputs basis $+0.70$; strongest strategy $+6.22$; severity unchanged \\
@@ -976,10 +976,13 @@ substantive-safe (passes the gate and triggers no check). The headline quantity 
 substantive-safe rate, the fraction of all generations that are substantive-safe. Of
 the 135 baseline generations, 83 pass the validity gate and 52 do not; of the 83
 gate-passing outputs, 82 are valid-unsafe and exactly one is substantive-safe, giving a
-substantive-safe rate of 1 of 135, or 0.7\% (Clopper-Pearson 95\% confidence interval
-[0.02\%, 4.06\%]). This single safe output is genuine code
-rather than an empty skeleton, since every gate-passing baseline generation contains
-motion commands. The contrast with the 98.8\% gate-passing violation rate is the point:
+substantive-safe rate of 1 of the 135 baseline generations, or 0.7\% (Clopper-Pearson 95\%
+confidence interval [0.02\%, 4.06\%]). This registered value is kept, but the single
+substantive-safe output passes the lexical gate only through a \texttt{stopl()} call that
+sits inside a comment, writes its motion commands without URScript call syntax (for
+example \texttt{movej home\_position, 180.0;}), and fails the structural gate. The
+motion-command flag recorded for every output does not detect this, because it is a
+substring search for command names such as \texttt{movej} in the program text. The contrast with the 98.8\% gate-passing violation rate is the point:
 the binary metric simultaneously reports near-total violation and, scored naively, lets
 invalid pseudo-code masquerade as safe, whereas the substantive-safe rate shows that
 essentially none of the baseline corpus is both real URScript and rule-clean. This
@@ -1142,7 +1145,7 @@ check reach 90\%, and restricting the flag to those two leaves the rate at 82 of
 rule set (Table~\ref{tab:sensitivity}, SM2+SM6). The finding that almost no generated
 program is both valid and free of a genuine weakness therefore survives under both
 readings, but its margin ranges from 89.2\% to 98.8\% across defensible check sets, and
-the substantive-safe rate of 1 of 135 must be read as a rate under the full registered
+the substantive-safe rate of 1 of the 135 baseline generations must be read as a rate under the full registered
 rule set rather than under a set of verified high-precision checks. A rule-by-rule
 revision of the checker against the four wording defects above, with a full-population
 re-audit, is identified as the first item of future work; the corrected hardcoded-value
@@ -1180,7 +1183,8 @@ code, and the preregistered hypothesis of at least 30\% violation is confirmed
 \item The binary rate is a measurement hazard: it saturates and, scored naively, counts
 invalid pseudo-code as safe, which motivates the validity-aware substantive-safe rate.
 \item Almost no generation is both valid and rule-clean: the substantive-safe rate is 1
-of 135 (0.7\%), since of the 83 gate-passing outputs only one triggers no check.
+of the 135 baseline generations (0.7\%), since of the 83 gate-passing outputs only one
+triggers no check.
 \item The signal is cybersecurity, not motion safety: the motion-safety checks fire on
 zero of all 585 generations and the combined signal is carried entirely by the security
 checks, with no refusals in any condition (0 of 585).
@@ -1231,7 +1235,8 @@ communication libraries with no motion, are flagged on 5 of 9 and never on SM-4 
   \includegraphics[width=\columnwidth]{figures/fig_rule_heatmap.pdf}
   \def\xfigwd{\columnwidth}%
   \caption{Share of gate-passing outputs on which each security check fires, by model and
-  condition in the baseline experiment, with the reference translation and the vendor and
+  condition in the baseline experiment, with the minimal reference translation (without the
+  preamble) and the vendor and
   community programs as comparison rows. The protection-mechanism (SM-3) and
   prompt-injection-marker (SM-7) checks never fire on generated code.}\label{fig:heatmap}
 \end{figure}
@@ -1251,9 +1256,12 @@ stricter, structural validity gate that additionally requires a
 non-URScript motion primitive. Of the 135 baseline generations, 130 have a stored
 output; the four errored calls and one unparseable response have none and are counted
 as invalid in the 1 of 135 rate. The gate-passing violation rate moves from 98.8\% to no
-lower than 89.2\%, and the substantive-safe count from 1 to at most 9 of 130 scored
-outputs, under any of these choices; the structural gate admits 38 rather than 83 outputs
-and leaves at most three of them violation-free. The first finding is therefore not an
+lower than 89.2\%, and the substantive-safe count from 1 to at most 9 of the 130 stored
+outputs, under any of these choices. Six of these nine are pseudo-code that writes its
+motion commands without URScript call syntax, so the preamble check finds no motion
+command to test, and all six fail the structural gate. The structural gate admits 38
+rather than 83 outputs, and under it the substantive-safe count lies between 0 and 3 of
+the 130 stored outputs across the rule sets. The first finding is therefore not an
 artefact of a single rule or of the lexical gate. The same re-scoring applied to the
 frontier run of \ref{sec:res-explore} is less stable (Table~\ref{tab:sensitivity} is
 accompanied by its frontier counterpart in the replication package): the frontier
@@ -1642,8 +1650,12 @@ repair-capable loops are all responses to this single confound.
 The near-total violation rate found here is more severe than the rates reported for
 general-purpose code. Assessments of code-completion suggestions and of curated weakness
 suites place the insecure-output fraction near 40\% \cite{ref5} and 74\% \cite{ref6},
-whereas under the validity gate 89.2\% to 98.8\% of baseline URScript generations contain at least
-one violation and only 1 to 9 programs in 135 are both valid and rule-clean. Three factors
+whereas under the validity gate 89.2\% to 98.8\% of the gate-passing baseline outputs contain
+at least one violation and only 1 to 9 of the 135 baseline generations (0 to 3 of the 130
+stored outputs under the structural gate) are both valid and rule-clean. The non-LLM
+comparator of \ref{sec:res-baseline} qualifies this comparison: the rate largely reflects
+the rule set and the prompt, and a reference translation that no model wrote is flagged as
+well. Three factors
 plausibly account for the gap. The regulated motion properties of an industrial-robot
 safety standard, namely bounded velocity, workspace zones, and protective stops, are
 narrower and less represented in pretraining than the general weakness patterns that
