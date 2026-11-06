@@ -7,7 +7,7 @@ Outputs under out/a3/:
                           gate, motion present, per-rule counts (preregistered and corrected SM-5),
                           SM-2 split into the global and the per-line firing
   per_rule_means.csv      mean firings per program per rule, by set (and per model)
-  reviewer_check.csv      the reviewer's and the user's derived values against direct means
+  reviewer_check.csv      the values derived by the reviewer and by the authors against direct means
   differences.csv         LLM minus translator, per rule, both SM-5 definitions
   ratios.csv              candidate pairs for "about twice as many rule firings"
   never_fires.md          the "on which the reference never fires" sentence against the counts
@@ -83,7 +83,7 @@ def reviewer_check(m: pd.DataFrame) -> pd.DataFrame:
     derived["SM-1"] = lex["preregistered"] - lex["high-precision"] - derived["SM-2"]
     claims = [("LLM", "SM-1", 3.2, "reviewer"), ("LLM", "SM-2", 1.3, "reviewer"), ("LLM", "SM-4", 0.7, "reviewer"),
               ("LLM", "SM-5", 3.5, "reviewer"), ("LLM", "SM-6", 1.7, "reviewer"),
-              ("Translator", "SM-4", 1.0, "user"), ("Translator", "SM-6", 2.0, "user")]
+              ("Translator", "SM-4", 1.0, "authors"), ("Translator", "SM-6", 2.0, "authors")]
     rows = []
     for who, rule, val, src in claims:
         if who == "LLM":
