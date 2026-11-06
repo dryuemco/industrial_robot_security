@@ -1,0 +1,36 @@
+\begin{table*}[t]
+\caption{Every cross-model Cochran $Q$ test registered in the first preregistration
+amendment: one test per prompt condition across the three models, as an exploratory
+analysis reported with an uncorrected $p$ value. The registered conditions are the
+baseline and safety-prompted conditions of E1, each prompt-injection strategy of E2
+(one repetition per cell) and the repair loop of E3, scored at its final attempt. The
+three bases are those of Table~\ref{tab:quant}: naive and the gate-pass indicator on all
+15 tasks, gate-passing on the Tasks on which every model has a gate-passing output. A test
+in which no task is discordant is undefined. All $p$ values are uncorrected. On the naive basis, the registered test, $p$ is the asymptotic chi-square $p$ of the statistic with two degrees of freedom and exact $p$ the permutation $p$ beside it. The gate-passing and gate-pass bases are post hoc and rest on few discordant tasks, where the chi-square approximation is poor, so on them the exact permutation $p$ comes first and the asymptotic $p$ (asym.) beside it. Naive rates are the
+per-task violation rates of Qwen2.5-Coder-32B, DeepSeek-Coder-V2-16B and CodeLlama-34B in
+percent. Run 1 gives the same values on every line.}
+\label{tab:crossmodel}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lrrrrrrrrrrr@{}}
+\toprule
+ & \multicolumn{3}{c}{Naive} & \multicolumn{4}{c}{Gate-passing} & \multicolumn{3}{c}{Gate-pass indicator} & \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-8}\cmidrule(lr){9-11}
+Condition & $Q$ & $p$ & exact $p$ & Tasks & $Q$ & exact $p$ & asym.\ $p$ & $Q$ & exact $p$ & asym.\ $p$ & Naive rates \\
+\midrule
+Baseline (neutral prompt) & 12.60 & 0.002 & 0.001 & 5 & \multicolumn{3}{c}{undefined} & 12.20 & 0.001 & 0.002 & 100/60/40 \\
+Safety-prompted & 20.00 & <0.001 & <0.001 & 8 & 6.00 & 0.111 & 0.050 & 14.00 & 0.001 & <0.001 & 100/100/33 \\
+\addlinespace
+A8.1 Direct override & 14.00 & <0.001 & <0.001 & 2 & \multicolumn{3}{c}{undefined} & 14.00 & <0.001 & <0.001 & 100/40/33 \\
+A8.2 Role playing & 14.00 & <0.001 & <0.001 & 2 & \multicolumn{3}{c}{undefined} & 14.00 & <0.001 & <0.001 & 100/60/27 \\
+A8.3 Context overflow & 10.67 & 0.005 & 0.003 & 3 & \multicolumn{3}{c}{undefined} & 10.67 & 0.003 & 0.005 & 100/47/47 \\
+A8.4 Incremental escalation & 13.50 & 0.001 & <0.001 & 3 & \multicolumn{3}{c}{undefined} & 13.50 & <0.001 & 0.001 & 100/40/40 \\
+A8.5 Authority claim & 11.69 & 0.003 & 0.002 & 2 & \multicolumn{3}{c}{undefined} & 11.69 & 0.002 & 0.003 & 100/73/33 \\
+A8.6 Performance framing & 15.38 & <0.001 & <0.001 & 2 & \multicolumn{3}{c}{undefined} & 15.38 & <0.001 & <0.001 & 100/33/33 \\
+A8.7 Obfuscation & 14.00 & <0.001 & <0.001 & 2 & \multicolumn{3}{c}{undefined} & 14.00 & <0.001 & <0.001 & 100/33/40 \\
+\addlinespace
+Repair loop, final attempt & 22.93 & <0.001 & <0.001 & 0 & \multicolumn{3}{c}{undefined} & 22.93 & <0.001 & <0.001 & 100/7/20 \\
+\bottomrule
+\end{tabular}
+\end{table*}

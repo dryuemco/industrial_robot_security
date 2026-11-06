@@ -183,25 +183,12 @@ representation-probe figures (text equal to `paper/figures/`) and the frontier s
 to `docs/frontier_spotcheck/`); `s12_frontier.py` reads the frontier run from `data/` and gives
 the committed `out/f2/` files.
 
-## Trace cleanup
+## Labels in the analysis files
 
-`out/a3/reviewer_check.csv` labels the authors' derived values "authors" (was "user"); the
-`s03_a3.py` docstring and the README script-table header ("Item", was "Brief item") are neutral,
-and the README's first line no longer refers to the analysis report. A search of
-`analysis/round3/` for "user", "brief", "Claude", "chat" and for "prompt" outside the prompts
-sent to the models leaves:
-
-- "users": the user links of the OSF API records in `out/osf/*.json` (public registration data);
-- "user name" and the `USER` column: the masking description in `s13_import_runs.py` and
-  `out/r3/import_masking.csv`;
-- "Claude": the OSF registration's own text in `out/osf/*.json` ("commercial LLM APIs (Claude,
-  GPT-4o, Grok)");
-- "chat": none;
-- "prompt": only the model prompts, the `prompt_security` fields of the task representation and
-  the SM-7 prompt-marker rule.
-
-The item labels F1 to F7 in `s07_followup1.py` and in the README refer to the analysis requests
-of this round; the analysis report that described them is no longer on the branch.
+`out/a3/reviewer_check.csv` labels the values derived by the authors "authors"; the
+`s03_a3.py` docstring and the header of the README's script table ("Item") use neutral wording,
+and the README's first line describes what the scripts recompute. The item labels F1 to F7 in
+`s07_followup1.py` and in the README refer to the analysis requests of this round.
 
 ## History rewrite
 
@@ -243,14 +230,18 @@ comparison of `data/` with the `results/` copies (`s00`, `s13 --check`) and the 
 `results/` and of the earlier submission packages for F4 (`s07`). The frontier analysis
 (`s12`), the declared-TCP analysis (`s15`) and the exploratory check (`s14`) run from `data/`.
 
-## Supplementary package
+## Submission package
 
-`docs/review/submission_v10/04_supplementary/round3_analysis.zip` (592356 bytes, SHA-256
-`32485ba7f19678a2531d8bd9331fc29ae857e82c130b2defc813a2aa853208f7`): the 136 tracked files under
-`analysis/round3/`, the same files as on the branch, built deterministically from the committed
-files. Member hashes are in `docs/review/submission_v10/MANIFEST.md`; the draft text for the
-portal's supplementary description is in `docs/review/submission_v10/portal_notes.md`. The
-package folder is gitignored like the earlier ones.
+`docs/review/submission_v10/` is in the repository and is built by `scripts/review/package_round3.sh`
+from the committed sources, in the layout of the earlier packages: `01_main_manuscript/` (clean PDF,
+`source/` with LaTeX comments removed, `source.zip`, which compiles on its own to the same text as
+the clean PDF), `02_highlighted_pdf/` (latexdiff against `797aeb3`), `03_response_to_reviewers/`
+(empty until the letter is written), `04_supplementary/round3_analysis.zip` (592356 bytes, SHA-256
+`32485ba7f19678a2531d8bd9331fc29ae857e82c130b2defc813a2aa853208f7`, the 136 tracked files under
+`analysis/round3/`, built deterministically by `scripts/review/build_round3_supplementary.py`),
+`MANIFEST.md` (size and SHA-256 of every file and of every zip member) and `portal_notes.md`
+(plain-text abstract, upload slots, draft supplementary description). File names use the prefix
+`Access-2026-55984_R1`. `docs/review/round3/INVENTORY.md` lists what is where.
 
 ## Places on the impact list that did not change
 
