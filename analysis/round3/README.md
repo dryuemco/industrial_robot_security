@@ -1,6 +1,6 @@
 # Round-3 analyses for Access-2026-55984 (Reviewer 1, A1 to A4, and Follow-up 1)
 
-Recomputes everything in `REPORT.md` from committed inputs. Nothing outside
+Recomputes every number of the round-3 revision from committed inputs. Nothing outside
 `analysis/round3/out/` is written; the paper, the existing scripts and the data are only read.
 
 ```bash
@@ -12,7 +12,7 @@ Runtime is under a minute. Requirements are the repository's own (python3 with p
 scipy, statsmodels, pytest). No model is called and no network is used except the optional
 OSF refresh.
 
-| Script | Brief item | Main outputs |
+| Script | Item | Main outputs |
 |---|---|---|
 | `s00_provenance.py` | data source, gate definition | `out/provenance_*.csv`, `out/gate_equivalence.csv` |
 | `s01_a1.py` | A1.1 to A1.5 | `out/a1/` |

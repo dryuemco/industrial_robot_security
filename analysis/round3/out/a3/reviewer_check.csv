@@ -4,6 +4,6 @@ LLM,SM-2,1.3,reviewer,1.3373493975903614,1.337349397590361,1.3,True
 LLM,SM-4,0.7,reviewer,0.6506024096385542,0.6506024096385534,0.7,True
 LLM,SM-5,3.5,reviewer,3.5180722891566263,3.5180722891566276,3.5,True
 LLM,SM-6,1.7,reviewer,1.7108433734939759,1.710843373493976,1.7,True
-Translator,SM-4,1.0,user,1.0,,1.0,True
-Translator,SM-6,2.0,user,2.0,,2.0,True
+Translator,SM-4,1.0,authors,1.0,,1.0,True
+Translator,SM-6,2.0,authors,2.0,,2.0,True
 LLM,SM-3 and SM-7 (assumed 0 by the differencing),0.0,reviewer (implicit),0.0,,0.0,True
