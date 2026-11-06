@@ -799,7 +799,9 @@ threshold, per model and pooled, with Wilson confidence intervals. The second an
 are tested with McNemar's exact test on matched binary outcomes, with odds ratios and
 mid-p confidence intervals. A Holm-Bonferroni correction is applied across the
 confirmatory family and within each family's internal comparison set. A cross-model
-homogeneity test is reported as an additional analysis only. Two further hypotheses, that baseline
+homogeneity test, one per prompt condition, was registered in the first preregistration
+amendment as an exploratory analysis outside the confirmatory family, to be reported with an
+uncorrected $p$ value. Two further hypotheses, that baseline
 saturation explains the absence of adversarial uplift and that refusal is near zero for
 code-specialized models, were added post hoc and are reported as additional analyses.
 
@@ -891,7 +893,7 @@ Adversarial uplift in mean violations, pooled & $+1.24$ & all-outputs basis $+0.
 Adversarial uplift, binary rate & $+6.67$ pp (max) & ceiling demonstration; Holm-adjusted $p=1.000$ \\
 Repair-loop reduction, pooled & 30.5\% relative & below the registered 40\% threshold \\
 Cells remediated to zero violations & 0/135 & Table~\ref{tab:regimes} \\
-Cross-model heterogeneity, Cochran $Q$ & 12.60 / 20.00 & $p{=}0.004$ / $p{<}0.001$, Holm-corrected; baseline / safety-prompted \\
+Cross-model heterogeneity in syntactic commitment, Cochran $Q$ & 12.60 / 20.00 & exact $p{=}0.001$ / $p{<}0.001$, uncorrected, exploratory; gate-passing outputs: undefined (5 tasks) / $Q{=}6.00$, $p{=}0.111$ (8 tasks); baseline / safety-prompted \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -1354,12 +1356,26 @@ and CodeLlama-34B drop out in 42 and 36 of 45 cells respectively.
 \input{tables/e3_regimes.tex}
 
 \subsection{Sensitivity and Cross-Model Heterogeneity}\label{sec:res-sens}
-The three models differ on matched per-task outcomes. A cross-model homogeneity test,
-reported as an additional non-confirmatory analysis outside the preregistered confirmatory
-family, rejects homogeneity under both single-shot conditions: the test statistic is 12.60
-at the baseline condition (p of 0.004) and 20.00 at the safety-prompted condition (p below
-0.001), with multiplicity correction applied within this additional family only (the
-uncorrected values, 0.002 and below 0.001, are the ones listed in Table~\ref{tab:quant}).
+The three models differ on matched per-task outcomes, and the difference is a
+heterogeneity in syntactic commitment, that is, in how often each model produces URScript
+at all. A cross-model homogeneity test (Cochran's $Q$ over the fifteen task cells, a cell
+counted as violating when any repetition violates) was registered in the first
+preregistration amendment as an exploratory analysis outside the confirmatory family, one
+test per prompt condition, to be reported with an uncorrected $p$ value. It rejects
+homogeneity under both single-shot conditions: $Q$ is 12.60 at baseline and 20.00 under
+the safety prompt (exact permutation $p$ of 0.001 and below 0.001, uncorrected). In this
+registered form an output that fails the validity gate counts as non-violating, so the test
+compares validity as much as violation. On the gate-passing outputs alone the test cannot
+be computed at baseline: only 5 tasks have a gate-passing output from all three models,
+and all three models violate on every one of them. Under the safety prompt 8 tasks enter
+and the test gives $Q = 6.00$ (exact $p = 0.111$). The gate-pass indicator alone, a cell
+set to 1 when any repetition passes the validity gate, gives $Q = 12.20$ at baseline and
+$14.00$ under the safety prompt (exact $p = 0.001$ for both) and agrees with the registered
+cell on 44 of the 45 baseline task-model cells. The registered heterogeneity therefore
+reflects how often each model commits to valid URScript; on the tasks on which all three
+models produce valid code, no difference in violation is detected.
+Table~\ref{tab:crossmodel} in Appendix~\ref{app:replication} lists every cross-model test
+that the amendment registered, one per prompt condition, on the same three bases.
 
 Because the three models were served at two different quantization levels, one at
 Q4\_K\_M and two at Q4\_0 (Table~\ref{tab:models}), this heterogeneity test cannot by
@@ -1394,13 +1410,17 @@ not differ significantly ($p = 0.10$ and $0.81$). Thirty of the 90 CodeLlama-34B
 Q4\_K\_M, 24 of them under the safety prompt, run to the 4096-token budget and are
 truncated; 17 fail the gate and 13 pass it. Recomputing the cross-model test with all
 three models at Q4\_K\_M gives Cochran $Q = 8.67$ at baseline and $7.82$ under the safety
-prompt (uncorrected $p = 0.013$ and $0.020$; Holm-corrected over the two tests,
-$p = 0.026$ for both); with all three at Q4\_0 the as-served
+prompt (exact $p = 0.014$ and $0.019$, uncorrected); with all three at Q4\_0 the as-served
 values are unchanged, because the only model served at Q4\_K\_M keeps every verdict at
-Q4\_0. The heterogeneity result therefore stands at the binary level that it was
-registered for at either uniform quantization, with a narrower margin at Q4\_K\_M, where
-CodeLlama-34B's per-task violation rate rises from 40\% to 53\% at baseline and from
-33\% to 53\% under the safety prompt. At the count level quantization shifts the mean of a
+Q4\_0. On the gate-passing outputs at Q4\_K\_M the test is again undefined at baseline (6
+tasks, none discordant) and gives $Q = 4.00$ under the safety prompt (6 tasks, exact
+$p = 0.333$); the gate-pass indicator gives $Q = 8.67$ and $6.22$ (exact $p = 0.014$ and
+$0.059$). The registered test therefore rejects homogeneity at either uniform
+quantization, with a narrower margin at Q4\_K\_M, where CodeLlama-34B's per-task violation
+rate rises from 40\% to 53\% at baseline and from 33\% to 53\% under the safety prompt;
+the gate-pass indicator does so in every case except under the safety prompt at
+Q4\_K\_M (exact $p = 0.059$), and no computable test on the gate-passing outputs detects a
+difference at either level (Table~\ref{tab:quant}). At the count level quantization shifts the mean of a
 single model by between one and twelve violations per generation, which is of the same
 order as the differences between models, so no count-level comparison is made across
 models and all count-level contrasts in this article are within-model. These re-runs are
@@ -1711,7 +1731,9 @@ three models were served at different quantization levels, one at Q4\_K\_M and t
 Q4\_0 (Table~\ref{tab:models}), so the cross-model heterogeneity test of
 \ref{sec:res-sens} cannot separate model identity from quantization level; re-runs of
 all three models at the other level, reported in \ref{sec:res-sens}, show that the
-binary heterogeneity survives at either uniform level while the count-level outcomes of
+registered test, a heterogeneity in syntactic commitment that no computable test on the
+gate-passing outputs reproduces, still rejects homogeneity at either uniform level, while
+the count-level outcomes of
 DeepSeek-Coder-V2-16B and CodeLlama-34B move with quantization, which is why no count-level contrast in
 this article crosses models. The seven-strategy adversarial family also
 differs in minor documented ways from the original plan, and these deviations are
@@ -1884,7 +1906,9 @@ row. The validity status and the binary verdict therefore agree on all 924 rows,
 every preregistered quantity is identical in the two runs: the gate-passing counts (83 of
 135 at baseline, 192 of 315 adversarial), the single substantive-safe program (the same
 cell), every contingency table, test statistic and p-value of the three confirmatory
-tests, and the cross-model statistics (12.60 and 20.00). The count-level values differ
+tests, and the cross-model statistics (12.60 and 20.00), which are also identical on the
+gate-passing and gate-pass bases and for every test of Table~\ref{tab:crossmodel}. The
+count-level values differ
 through Qwen2.5-Coder-32B. Giving the first run first, the gate-passing baseline mean is
 10.07 against 10.37 and the safety-prompted mean 6.38 against 6.39; the pooled adversarial
 uplift is $+1.64$ against $+1.24$ on gate-passing outputs and $+0.95$ against $+0.70$ on
@@ -1916,6 +1940,20 @@ only the affected cells were replaced (6 and 35 cells; the extra DeepSeek cell h
 the budget without timing out); the replacement is recorded per row in the archived
 results, and the regenerated DeepSeek cells did not reproduce the runaway, which is
 consistent with the repetition analysis of Table~\ref{tab:reps}.
+
+\textbf{Registered cross-model tests.} The first preregistration amendment registered
+the cross-model homogeneity test of \ref{sec:res-sens} for every prompt condition, as an
+exploratory analysis reported with an uncorrected $p$ value. Table~\ref{tab:crossmodel}
+reports all ten tests on the three bases of Table~\ref{tab:quant}. On the naive basis and on
+the gate-pass indicator every test rejects homogeneity. In the adversarial and repair-loop
+conditions the two bases agree on every task cell, because every gate-passing output in
+these conditions violates at least one check (192 of 192 in E2 and 57 of 57 at the final
+attempt of E3). On the gate-passing basis only the safety-prompted test can be computed:
+each strategy test has two or three tasks with a gate-passing output from all three
+models, all of them concordant, and at the final repair attempt no task has one. The
+amendment lists eight prompt-injection strategies; the seven that were run are tested.
+
+\input{tables/crossmodel_registered.tex}
 
 \textbf{Rule-checker checks.} The seven motion-safety checks of \ref{sec:analyzer}
 carry the identifiers DM-1 (speed and payload range), DM-2 (safe-zone halfspace), DM-3
