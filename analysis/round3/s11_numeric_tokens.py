@@ -30,6 +30,14 @@ SECTION = re.compile(r"\\(sub)?section\*?\{([^}]*)\}")
 
 # (file, regex searched in the new or the old text of the block, item code, reason)
 ANNOTATIONS = [
+    ("main_access.tex", r"although a non-LLM comparator shows that much of this rate", "A1",
+     "I-C first finding qualified by the comparator and the TCP lower bound"),
+    ("main_access.tex", r"Exact permutation \$p\$ values are given beside|\$p = 0\.002\$ and below 0\.001|3 of them discordant", "A2",
+     "asymptotic p of the registered statistic primary, exact p beside it"),
+    ("main_access.tex", r"\$p = 0\.135\$|only by\s+the asymptotic|\$p = 0\.013\$ and \$0\.020\$, uncorrected", "A2",
+     "uniform quantization: asymptotic and exact p, three bases"),
+    ("main_access.tex", r"p\{=\}0\.002\$ / \$p\{<\}0\.001\$, uncorrected", "A2", "Table 6: asymptotic p primary, exact p beside it"),
+    ("main_access.tex", r"section\{Registered Cross-Model Tests\}|192 of 192", "A2", "new Appendix E: registered cross-model tests"),
     ("main_access.tex", r"begin\{abstract\}|This article evaluates|reported from the second of two|checks flag 89\.2|tool-centre-point declaration that the task prompt|registered validity gate, lets|675B\) show no", "A1",
      "abstract replaced by the round-3 text"),
     ("main_access.tex", r"is 1 of the 135 baseline\s+generations under the full", "V4", "denominator named"),
@@ -49,7 +57,7 @@ ANNOTATIONS = [
     ("main_access.tex", r"excess of generated code over the reference|10\.37\s+firings per program|5\.88 against 5\.73", "A3/V5",
      "per-rule decomposition replaces the twice claim; minimal translation named"),
     ("main_access.tex", r"minimal reference translation \(without the", "V5", "Figure 4 caption names the minimal translation"),
-    ("main_access.tex", r"comparator_rules", "A3", "new per-rule table"),
+    ("main_access.tex", r"comparator\}, lower block", "A3", "per-rule means now in the lower block of Table 12"),
     ("main_access.tex", r"Six of these nine are pseudo-code|between 0 and 3 of", "V2/V4", "pseudo-code safe outputs, structural gate range"),
     ("main_access.tex", r"lower end of the range rests", "A1", "what the SM-6 lower bound measures"),
     ("main_access.tex", r"8\.11 more|incremental escalation comes from the hardcoded", "A3", "adversarial count contrast by check"),
@@ -65,11 +73,11 @@ ANNOTATIONS = [
      "Conclusion first finding: decomposition, structural gate, denominators"),
     ("main_access.tex", r"identical on the\s+gate-passing and gate-pass bases", "A2", "Appendix A: run agreement on the new bases"),
     ("main_access.tex", r"Registered cross-model tests|192 of 192", "A2", "Appendix A: registered cross-model tests"),
-    ("tables/sensitivity_e1_baseline.tex", r".", "A1/V4", "Table 14 (was 13): reference translation columns; 130 stored outputs"),
+    ("tables/sensitivity_e1_baseline.tex", r".", "A1/V4", "Table 13: reference translation columns; 130 stored outputs"),
     ("tables/precision_audit_v2.tex", r".", "A4", "Table 10: rater B primary, adjudicated = rater A as sensitivity"),
-    ("tables/comparator_rules.tex", r".", "A3", "new Table 13: mean firings per program by check"),
-    ("tables/quantization_summary.tex", r".", "A2", "Table 17 (was 16): three bases, exact uncorrected p, tasks per test"),
-    ("tables/crossmodel_registered.tex", r".", "A2", "new Table 19: every registered cross-model test"),
+    ("tables/comparator_summary.tex", r".", "A3", "Table 12: lower block of mean firings per program by check and differences"),
+    ("tables/quantization_summary.tex", r".", "A2", "Table 16: three bases, asymptotic and exact p, tasks per test"),
+    ("tables/crossmodel_registered.tex", r".", "A2", "new Table 21 (Appendix E): every registered cross-model test"),
 ]
 
 
