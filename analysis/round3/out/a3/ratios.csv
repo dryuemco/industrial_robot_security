@@ -1,0 +1,5 @@
+basis,numerator,denominator,llm_mean,ref_mean,ratio
+preregistered,LLM gate-passing mean,Translator mean,10.373493975903614,5.733333333333333,1.8093303446343512
+preregistered,LLM gate-passing mean,Translator + preamble mean,10.373493975903614,5.733333333333333,1.8093303446343512
+corrected-SM5,LLM gate-passing mean,Translator mean,9.843373493975903,3.0,3.281124497991968
+corrected-SM5,LLM gate-passing mean,Translator + preamble mean,9.843373493975903,3.0,3.281124497991968

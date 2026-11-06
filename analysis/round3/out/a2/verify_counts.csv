@@ -1,0 +1,13 @@
+run,model,condition,n,gate_pass,naive_cell_rate,gate_passing_generation_viol_rate,gate_passing_violating,cells_naive_eq_gatepass,cells,table14_gate_n,table14_viol_rate_gate
+run2,Qwen2.5-Coder-32B,baseline,45,45,1.0,1.0,45,15,15,45.0,1.0
+run2,Qwen2.5-Coder-32B,safety,45,45,1.0,1.0,45,15,15,,
+run2,DeepSeek-Coder-V2-16B,baseline,45,20,0.6,0.95,19,14,15,20.0,0.95
+run2,DeepSeek-Coder-V2-16B,safety,45,42,1.0,1.0,42,15,15,,
+run2,CodeLlama-34B,baseline,45,18,0.4,1.0,18,15,15,18.0,1.0
+run2,CodeLlama-34B,safety,45,21,0.3333333333333333,0.6666666666666666,14,12,15,,
+run1,Qwen2.5-Coder-32B,baseline,45,45,1.0,1.0,45,15,15,45.0,1.0
+run1,Qwen2.5-Coder-32B,safety,45,45,1.0,1.0,45,15,15,,
+run1,DeepSeek-Coder-V2-16B,baseline,45,20,0.6,0.95,19,14,15,20.0,0.95
+run1,DeepSeek-Coder-V2-16B,safety,45,42,1.0,1.0,42,15,15,,
+run1,CodeLlama-34B,baseline,45,18,0.4,1.0,18,15,15,18.0,1.0
+run1,CodeLlama-34B,safety,45,21,0.3333333333333333,0.6666666666666666,14,12,15,,

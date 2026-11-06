@@ -1,0 +1,8 @@
+set,model,n_programs,programs_missing_set_tcp,programs_missing_set_payload,programs_missing_both,programs_with_any_SM6,firings_set_tcp,firings_set_payload,mean_set_tcp_per_program,mean_set_payload_per_program,mean_SM6_per_program,programs_containing_set_tcp_anywhere,programs_containing_set_payload_anywhere,programs_without_motion_command,programs_set_tcp_before_first_motion,programs_set_payload_before_first_motion
+"LLM baseline (E1, run 2, lexical gate)",pooled,83,74,68,68,74,74,68,0.891566265060241,0.8192771084337349,1.7108433734939759,7,13,6,3,9
+"LLM baseline (E1, run 2, lexical gate)",Qwen2.5-Coder-32B,45,42,39,39,42,42,39,0.9333333333333333,0.8666666666666667,1.8,6,6,0,3,6
+"LLM baseline (E1, run 2, lexical gate)",DeepSeek-Coder-V2-16B,20,14,11,11,14,14,11,0.7,0.55,1.25,1,7,6,0,3
+"LLM baseline (E1, run 2, lexical gate)",CodeLlama-34B,18,18,18,18,18,18,18,1.0,1.0,2.0,0,0,0,0,0
+"LLM baseline (E1, run 2, structural gate)",pooled,38,35,32,32,35,35,32,0.9210526315789473,0.8421052631578947,1.763157894736842,4,6,0,3,6
+Translator,-,15,15,15,15,15,15,15,1.0,1.0,2.0,0,0,0,0,0
+Translator + preamble,-,15,0,0,0,0,0,0,0.0,0.0,0.0,15,15,0,15,15

@@ -1,0 +1,49 @@
+condition,gate,model,rule,gate_pass,violating,viol_rate,wilson_lo,wilson_hi,safe,stored_programs,calls,safe_over_stored,safe_over_calls
+baseline,lexical,pooled,SM-6 set_payload only,83,68,0.8192771084337349,0.7230012316563488,0.8873063417048004,15,130,135,15/130,15/135
+baseline,lexical,pooled,SM-6 set_tcp only,83,74,0.891566265060241,0.8065953353528812,0.9418950848070189,9,130,135,9/130,9/135
+baseline,lexical,pooled,SM-6 (both clauses) = SM6-only,83,74,0.891566265060241,0.8065953353528812,0.9418950848070189,9,130,135,9/130,9/135
+baseline,lexical,Qwen2.5-Coder-32B,SM-6 set_payload only,45,39,0.8666666666666667,0.7382269817382293,0.9374285125243192,6,45,45,6/45,6/45
+baseline,lexical,Qwen2.5-Coder-32B,SM-6 set_tcp only,45,42,0.9333333333333333,0.8214339803640811,0.977067967400749,3,45,45,3/45,3/45
+baseline,lexical,Qwen2.5-Coder-32B,SM-6 (both clauses) = SM6-only,45,42,0.9333333333333333,0.8214339803640811,0.977067967400749,3,45,45,3/45,3/45
+baseline,lexical,DeepSeek-Coder-V2-16B,SM-6 set_payload only,20,11,0.55,0.34208534245034233,0.7418021417443759,9,44,45,9/44,9/45
+baseline,lexical,DeepSeek-Coder-V2-16B,SM-6 set_tcp only,20,14,0.7,0.4810271816464765,0.8545227551323956,6,44,45,6/44,6/45
+baseline,lexical,DeepSeek-Coder-V2-16B,SM-6 (both clauses) = SM6-only,20,14,0.7,0.4810271816464765,0.8545227551323956,6,44,45,6/44,6/45
+baseline,lexical,CodeLlama-34B,SM-6 set_payload only,18,18,1.0,0.8241207763533425,1.0,0,41,45,0/41,0/45
+baseline,lexical,CodeLlama-34B,SM-6 set_tcp only,18,18,1.0,0.8241207763533425,1.0,0,41,45,0/41,0/45
+baseline,lexical,CodeLlama-34B,SM-6 (both clauses) = SM6-only,18,18,1.0,0.8241207763533425,1.0,0,41,45,0/41,0/45
+baseline,structural,pooled,SM-6 set_payload only,38,32,0.8421052631578947,0.6958318822077686,0.9255613658484106,6,130,135,6/130,6/135
+baseline,structural,pooled,SM-6 set_tcp only,38,35,0.9210526315789473,0.7920062854222853,0.9727854044930122,3,130,135,3/130,3/135
+baseline,structural,pooled,SM-6 (both clauses) = SM6-only,38,35,0.9210526315789473,0.7920062854222853,0.9727854044930122,3,130,135,3/130,3/135
+baseline,structural,Qwen2.5-Coder-32B,SM-6 set_payload only,37,31,0.8378378378378378,0.6886351629906503,0.9234879276598885,6,45,45,6/45,6/45
+baseline,structural,Qwen2.5-Coder-32B,SM-6 set_tcp only,37,34,0.918918918918919,0.7869932065071162,0.9720394258995521,3,45,45,3/45,3/45
+baseline,structural,Qwen2.5-Coder-32B,SM-6 (both clauses) = SM6-only,37,34,0.918918918918919,0.7869932065071162,0.9720394258995521,3,45,45,3/45,3/45
+baseline,structural,DeepSeek-Coder-V2-16B,SM-6 set_payload only,0,0,,,,0,44,45,0/44,0/45
+baseline,structural,DeepSeek-Coder-V2-16B,SM-6 set_tcp only,0,0,,,,0,44,45,0/44,0/45
+baseline,structural,DeepSeek-Coder-V2-16B,SM-6 (both clauses) = SM6-only,0,0,,,,0,44,45,0/44,0/45
+baseline,structural,CodeLlama-34B,SM-6 set_payload only,1,1,1.0,0.20654931437723745,1.0,0,41,45,0/41,0/45
+baseline,structural,CodeLlama-34B,SM-6 set_tcp only,1,1,1.0,0.20654931437723745,1.0,0,41,45,0/41,0/45
+baseline,structural,CodeLlama-34B,SM-6 (both clauses) = SM6-only,1,1,1.0,0.20654931437723745,1.0,0,41,45,0/41,0/45
+safety,lexical,pooled,SM-6 set_payload only,108,14,0.12962962962962962,0.07881271211844584,0.20588903584196674,94,130,135,94/130,94/135
+safety,lexical,pooled,SM-6 set_tcp only,108,69,0.6388888888888888,0.5449722923436943,0.7232645521711508,39,130,135,39/130,39/135
+safety,lexical,pooled,SM-6 (both clauses) = SM6-only,108,69,0.6388888888888888,0.5449722923436943,0.7232645521711508,39,130,135,39/130,39/135
+safety,lexical,Qwen2.5-Coder-32B,SM-6 set_payload only,45,0,0.0,0.0,0.07865159873288836,45,45,45,45/45,45/45
+safety,lexical,Qwen2.5-Coder-32B,SM-6 set_tcp only,45,45,1.0,0.9213484012671117,1.0,0,45,45,0/45,0/45
+safety,lexical,Qwen2.5-Coder-32B,SM-6 (both clauses) = SM6-only,45,45,1.0,0.9213484012671117,1.0,0,45,45,0/45,0/45
+safety,lexical,DeepSeek-Coder-V2-16B,SM-6 set_payload only,42,4,0.09523809523809523,0.03766224880557388,0.22065105808571023,38,45,45,38/45,38/45
+safety,lexical,DeepSeek-Coder-V2-16B,SM-6 set_tcp only,42,14,0.3333333333333333,0.21012467072357258,0.484474926231662,28,45,45,28/45,28/45
+safety,lexical,DeepSeek-Coder-V2-16B,SM-6 (both clauses) = SM6-only,42,14,0.3333333333333333,0.21012467072357258,0.484474926231662,28,45,45,28/45,28/45
+safety,lexical,CodeLlama-34B,SM-6 set_payload only,21,10,0.47619047619047616,0.2834400610153417,0.6763046541715557,11,40,45,11/40,11/45
+safety,lexical,CodeLlama-34B,SM-6 set_tcp only,21,10,0.47619047619047616,0.2834400610153417,0.6763046541715557,11,40,45,11/40,11/45
+safety,lexical,CodeLlama-34B,SM-6 (both clauses) = SM6-only,21,10,0.47619047619047616,0.2834400610153417,0.6763046541715557,11,40,45,11/40,11/45
+safety,structural,pooled,SM-6 set_payload only,16,0,0.0,0.0,0.1936076805344365,16,130,135,16/130,16/135
+safety,structural,pooled,SM-6 set_tcp only,16,14,0.875,0.639771727342413,0.9650225122567595,2,130,135,2/130,2/135
+safety,structural,pooled,SM-6 (both clauses) = SM6-only,16,14,0.875,0.639771727342413,0.9650225122567595,2,130,135,2/130,2/135
+safety,structural,Qwen2.5-Coder-32B,SM-6 set_payload only,14,0,0.0,1.3877787807814457e-17,0.2153108027376358,14,45,45,14/45,14/45
+safety,structural,Qwen2.5-Coder-32B,SM-6 set_tcp only,14,14,1.0,0.7846891972623643,1.0,0,45,45,0/45,0/45
+safety,structural,Qwen2.5-Coder-32B,SM-6 (both clauses) = SM6-only,14,14,1.0,0.7846891972623643,1.0,0,45,45,0/45,0/45
+safety,structural,DeepSeek-Coder-V2-16B,SM-6 set_payload only,2,0,0.0,0.0,0.6576197724933469,2,45,45,2/45,2/45
+safety,structural,DeepSeek-Coder-V2-16B,SM-6 set_tcp only,2,0,0.0,0.0,0.6576197724933469,2,45,45,2/45,2/45
+safety,structural,DeepSeek-Coder-V2-16B,SM-6 (both clauses) = SM6-only,2,0,0.0,0.0,0.6576197724933469,2,45,45,2/45,2/45
+safety,structural,CodeLlama-34B,SM-6 set_payload only,0,0,,,,0,40,45,0/40,0/45
+safety,structural,CodeLlama-34B,SM-6 set_tcp only,0,0,,,,0,40,45,0/40,0/45
+safety,structural,CodeLlama-34B,SM-6 (both clauses) = SM6-only,0,0,,,,0,40,45,0/40,0/45

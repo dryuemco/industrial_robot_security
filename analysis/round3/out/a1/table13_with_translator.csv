@@ -1,0 +1,43 @@
+set,gate,rules,n_all,gate_pass,viol_pct,safe,safe_str,mean,total_firings
+"LLM baseline (E1, run 2)",lexical,preregistered,130,83,98.79518072289157,1,1/130,10.373493975903614,861
+"LLM baseline (E1, run 2)",lexical,corrected-SM5,130,83,98.79518072289157,1,1/130,9.843373493975903,817
+"LLM baseline (E1, run 2)",lexical,high-precision,130,83,92.7710843373494,6,6/130,5.879518072289157,488
+"LLM baseline (E1, run 2)",lexical,high-prec+corr,130,83,91.56626506024097,7,7/130,5.349397590361446,444
+"LLM baseline (E1, run 2)",lexical,drop-SM4,130,83,98.79518072289157,1,1/130,9.72289156626506,807
+"LLM baseline (E1, run 2)",lexical,SM6-only,130,83,89.1566265060241,9,9/130,1.7108433734939759,142
+"LLM baseline (E1, run 2)",lexical,SM2+SM6,130,83,98.79518072289157,1,1/130,3.0481927710843375,253
+"LLM baseline (E1, run 2)",structural,preregistered,130,38,100.0,0,0/130,11.578947368421053,440
+"LLM baseline (E1, run 2)",structural,corrected-SM5,130,38,100.0,0,0/130,10.763157894736842,409
+"LLM baseline (E1, run 2)",structural,high-precision,130,38,100.0,0,0/130,7.447368421052632,283
+"LLM baseline (E1, run 2)",structural,high-prec+corr,130,38,97.36842105263158,1,1/130,6.631578947368421,252
+"LLM baseline (E1, run 2)",structural,drop-SM4,130,38,100.0,0,0/130,11.18421052631579,425
+"LLM baseline (E1, run 2)",structural,SM6-only,130,38,92.10526315789474,3,3/130,1.763157894736842,67
+"LLM baseline (E1, run 2)",structural,SM2+SM6,130,38,100.0,0,0/130,3.210526315789474,122
+Translator,lexical,preregistered,15,15,100.0,0,0/15,5.733333333333333,86
+Translator,lexical,corrected-SM5,15,15,100.0,0,0/15,3.0,45
+Translator,lexical,high-precision,15,15,100.0,0,0/15,5.733333333333333,86
+Translator,lexical,high-prec+corr,15,15,100.0,0,0/15,3.0,45
+Translator,lexical,drop-SM4,15,15,100.0,0,0/15,4.733333333333333,71
+Translator,lexical,SM6-only,15,15,100.0,0,0/15,2.0,30
+Translator,lexical,SM2+SM6,15,15,100.0,0,0/15,2.0,30
+Translator,structural,preregistered,15,15,100.0,0,0/15,5.733333333333333,86
+Translator,structural,corrected-SM5,15,15,100.0,0,0/15,3.0,45
+Translator,structural,high-precision,15,15,100.0,0,0/15,5.733333333333333,86
+Translator,structural,high-prec+corr,15,15,100.0,0,0/15,3.0,45
+Translator,structural,drop-SM4,15,15,100.0,0,0/15,4.733333333333333,71
+Translator,structural,SM6-only,15,15,100.0,0,0/15,2.0,30
+Translator,structural,SM2+SM6,15,15,100.0,0,0/15,2.0,30
+Translator + preamble,lexical,preregistered,15,15,100.0,0,0/15,5.733333333333333,86
+Translator + preamble,lexical,corrected-SM5,15,15,100.0,0,0/15,3.0,45
+Translator + preamble,lexical,high-precision,15,15,100.0,0,0/15,3.7333333333333334,56
+Translator + preamble,lexical,high-prec+corr,15,15,100.0,0,0/15,1.0,15
+Translator + preamble,lexical,drop-SM4,15,15,100.0,0,0/15,4.733333333333333,71
+Translator + preamble,lexical,SM6-only,15,15,0.0,15,15/15,0.0,0
+Translator + preamble,lexical,SM2+SM6,15,15,100.0,0,0/15,2.0,30
+Translator + preamble,structural,preregistered,15,15,100.0,0,0/15,5.733333333333333,86
+Translator + preamble,structural,corrected-SM5,15,15,100.0,0,0/15,3.0,45
+Translator + preamble,structural,high-precision,15,15,100.0,0,0/15,3.7333333333333334,56
+Translator + preamble,structural,high-prec+corr,15,15,100.0,0,0/15,1.0,15
+Translator + preamble,structural,drop-SM4,15,15,100.0,0,0/15,4.733333333333333,71
+Translator + preamble,structural,SM6-only,15,15,0.0,15,15/15,0.0,0
+Translator + preamble,structural,SM2+SM6,15,15,100.0,0,0/15,2.0,30

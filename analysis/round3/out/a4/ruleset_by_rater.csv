@@ -1,0 +1,15 @@
+rule_set,rules,gate,gate_pass,viol_pct,safe,safe_over_130,safe_over_135,mean
+preregistered (all seven checks),all,lexical,83,98.79518072289157,1.0,1/130,1/135,10.373493975903614
+preregistered (all seven checks),all,structural,38,100.0,0.0,0/130,0/135,11.578947368421053
+"rater A, point estimate >= 90%",SM-2+SM-6,lexical,83,98.79518072289157,1.0,1/130,1/135,3.0481927710843375
+"rater A, point estimate >= 90%",SM-2+SM-6,structural,38,100.0,0.0,0/130,0/135,3.210526315789474
+"rater A, Wilson lower bound >= 90%",(empty),lexical,83,,,undefined,undefined,
+"rater A, Wilson lower bound >= 90%",(empty),structural,38,,,undefined,undefined,
+"rater B, point estimate >= 90%",SM-6,lexical,83,89.1566265060241,9.0,9/130,9/135,1.7108433734939759
+"rater B, point estimate >= 90%",SM-6,structural,38,92.10526315789474,3.0,3/130,3/135,1.763157894736842
+"rater B, Wilson lower bound >= 90%",(empty),lexical,83,,,undefined,undefined,
+"rater B, Wilson lower bound >= 90%",(empty),structural,38,,,undefined,undefined,
+"adjudicated, point estimate >= 90%",SM-2+SM-6,lexical,83,98.79518072289157,1.0,1/130,1/135,3.0481927710843375
+"adjudicated, point estimate >= 90%",SM-2+SM-6,structural,38,100.0,0.0,0/130,0/135,3.210526315789474
+"adjudicated, Wilson lower bound >= 90%",(empty),lexical,83,,,undefined,undefined,
+"adjudicated, Wilson lower bound >= 90%",(empty),structural,38,,,undefined,undefined,

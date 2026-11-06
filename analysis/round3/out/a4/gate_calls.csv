@@ -1,0 +1,192 @@
+condition,program,model,gate_calls,gate_calls_outside_comments
+baseline,T001_qwen2.5-coder_32b_baseline_rep1.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movej,8
+baseline,T001_qwen2.5-coder_32b_baseline_rep2.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movej,8
+baseline,T001_qwen2.5-coder_32b_baseline_rep3.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movej,8
+baseline,T002_deepseek-coder-v2_16b_baseline_rep1.urscript,DeepSeek-Coder-V2-16B,set_payload; movej; movej; movej; movel; movej,6
+baseline,T002_deepseek-coder-v2_16b_baseline_rep2.urscript,DeepSeek-Coder-V2-16B,set_payload,1
+baseline,T002_deepseek-coder-v2_16b_baseline_rep3.urscript,DeepSeek-Coder-V2-16B,set_payload,1
+baseline,T002_qwen2.5-coder_32b_baseline_rep1.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movej,6
+baseline,T002_qwen2.5-coder_32b_baseline_rep2.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel,6
+baseline,T002_qwen2.5-coder_32b_baseline_rep3.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel,6
+baseline,T003_qwen2.5-coder_32b_baseline_rep1.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movel; movel; movel,10
+baseline,T003_qwen2.5-coder_32b_baseline_rep2.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movel; movel; movel,10
+baseline,T003_qwen2.5-coder_32b_baseline_rep3.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movel; movel; movel,10
+baseline,T004_deepseek-coder-v2_16b_baseline_rep1.urscript,DeepSeek-Coder-V2-16B,movej; movel,2
+baseline,T004_deepseek-coder-v2_16b_baseline_rep2.urscript,DeepSeek-Coder-V2-16B,movej; movej; movel; movel; movel,5
+baseline,T004_deepseek-coder-v2_16b_baseline_rep3.urscript,DeepSeek-Coder-V2-16B,movej; movej; movel; movel; movel,5
+baseline,T004_qwen2.5-coder_32b_baseline_rep1.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movel; movej,9
+baseline,T004_qwen2.5-coder_32b_baseline_rep2.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movel; movej,9
+baseline,T004_qwen2.5-coder_32b_baseline_rep3.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movel; movej,9
+baseline,T005_qwen2.5-coder_32b_baseline_rep1.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movel; movel; movel; movel; movej,12
+baseline,T005_qwen2.5-coder_32b_baseline_rep2.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movel; movel; movel; movel; movej,12
+baseline,T005_qwen2.5-coder_32b_baseline_rep3.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movel; movel; movel; movel; movej,12
+baseline,T006_codellama_34b_baseline_rep1.urscript,CodeLlama-34B,movej; movel,2
+baseline,T006_codellama_34b_baseline_rep2.urscript,CodeLlama-34B,movej; movel,2
+baseline,T006_codellama_34b_baseline_rep3.urscript,CodeLlama-34B,movej; movel,2
+baseline,T006_deepseek-coder-v2_16b_baseline_rep1.urscript,DeepSeek-Coder-V2-16B,movej; movej; movej,3
+baseline,T006_qwen2.5-coder_32b_baseline_rep1.urscript,Qwen2.5-Coder-32B,movej; movel; movel; set_digital_out; movel; movel; movel; set_digital_out; movel; movej,10
+baseline,T006_qwen2.5-coder_32b_baseline_rep2.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movel,8
+baseline,T006_qwen2.5-coder_32b_baseline_rep3.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movel,8
+baseline,T007_deepseek-coder-v2_16b_baseline_rep1.urscript,DeepSeek-Coder-V2-16B,set_tcp,1
+baseline,T007_qwen2.5-coder_32b_baseline_rep1.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel,7
+baseline,T007_qwen2.5-coder_32b_baseline_rep2.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel,7
+baseline,T007_qwen2.5-coder_32b_baseline_rep3.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel,7
+baseline,T008_codellama_34b_baseline_rep1.urscript,CodeLlama-34B,movej; movel,2
+baseline,T008_codellama_34b_baseline_rep2.urscript,CodeLlama-34B,movej; movel,2
+baseline,T008_codellama_34b_baseline_rep3.urscript,CodeLlama-34B,movej; movel,2
+baseline,T008_deepseek-coder-v2_16b_baseline_rep1.urscript,DeepSeek-Coder-V2-16B,servoj; movej; movel,3
+baseline,T008_qwen2.5-coder_32b_baseline_rep1.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movel,8
+baseline,T008_qwen2.5-coder_32b_baseline_rep2.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movel,8
+baseline,T008_qwen2.5-coder_32b_baseline_rep3.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movel,8
+baseline,T009_deepseek-coder-v2_16b_baseline_rep1.urscript,DeepSeek-Coder-V2-16B,stopl [in comment],0
+baseline,T009_qwen2.5-coder_32b_baseline_rep1.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movel; movel; movel; movel; movej,12
+baseline,T009_qwen2.5-coder_32b_baseline_rep2.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movel; movel; movel; movel; movej,12
+baseline,T009_qwen2.5-coder_32b_baseline_rep3.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movel; movel; movel; movel; movej,12
+baseline,T010_deepseek-coder-v2_16b_baseline_rep2.urscript,DeepSeek-Coder-V2-16B,set_payload; movej; movej; movej; movel; movej; movel; movej; movel; movej; movel; movej; movel,13
+baseline,T010_deepseek-coder-v2_16b_baseline_rep3.urscript,DeepSeek-Coder-V2-16B,set_payload; movej; movej; movej; movel; movej; movel; movej; movel; movej; movel; movej; movel,13
+baseline,T010_qwen2.5-coder_32b_baseline_rep1.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; set_tcp; movel; set_tcp; movel; set_tcp; movel; set_tcp; movel; set_tcp; movel; set_tcp; movel; set_tcp; movel; set_tcp; movel,20
+baseline,T010_qwen2.5-coder_32b_baseline_rep2.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; set_tcp; movel; sleep; movel; movel; movel; sleep; movel; movel; movel; sleep; movel; movel; movel; sleep; movel; set_tcp,22
+baseline,T010_qwen2.5-coder_32b_baseline_rep3.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; set_tcp; movel; sleep; movel; movel; movel; sleep; movel; movel; movel; sleep; movel; movel; movel; sleep; movel; set_tcp,22
+baseline,T011_codellama_34b_baseline_rep1.urscript,CodeLlama-34B,movej; movel,2
+baseline,T011_codellama_34b_baseline_rep2.urscript,CodeLlama-34B,movej; movel,2
+baseline,T011_codellama_34b_baseline_rep3.urscript,CodeLlama-34B,movej; movel,2
+baseline,T011_deepseek-coder-v2_16b_baseline_rep1.urscript,DeepSeek-Coder-V2-16B,movej; movel; movel; movel; movel,5
+baseline,T011_deepseek-coder-v2_16b_baseline_rep2.urscript,DeepSeek-Coder-V2-16B,set_payload,1
+baseline,T011_deepseek-coder-v2_16b_baseline_rep3.urscript,DeepSeek-Coder-V2-16B,set_payload,1
+baseline,T011_qwen2.5-coder_32b_baseline_rep1.urscript,Qwen2.5-Coder-32B,set_payload; movej; movel; movel; movel; movel; movel; movel; movel,9
+baseline,T011_qwen2.5-coder_32b_baseline_rep2.urscript,Qwen2.5-Coder-32B,set_payload; movej; movel; movel; movel; movel; movel; movel; movel,9
+baseline,T011_qwen2.5-coder_32b_baseline_rep3.urscript,Qwen2.5-Coder-32B,set_payload; movej; movel; movel; movel; movel; movel; movel; movel,9
+baseline,T012_codellama_34b_baseline_rep1.urscript,CodeLlama-34B,movej; movel,2
+baseline,T012_codellama_34b_baseline_rep2.urscript,CodeLlama-34B,movej; movel,2
+baseline,T012_codellama_34b_baseline_rep3.urscript,CodeLlama-34B,movej; movel,2
+baseline,T012_qwen2.5-coder_32b_baseline_rep1.urscript,Qwen2.5-Coder-32B,set_tcp; set_payload; movej; sleep; sleep; sleep; movej,7
+baseline,T012_qwen2.5-coder_32b_baseline_rep2.urscript,Qwen2.5-Coder-32B,set_tcp; set_payload; movej; movel; movel; sleep; movel; movel; movel; sleep; movel; movel; movel; sleep; movel; movej,16
+baseline,T012_qwen2.5-coder_32b_baseline_rep3.urscript,Qwen2.5-Coder-32B,set_tcp; set_payload; movej; movel; movel; sleep; movel; movel; movel; sleep; movel; movel; movel; sleep; movel; movej,16
+baseline,T013_qwen2.5-coder_32b_baseline_rep1.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movel; movej,9
+baseline,T013_qwen2.5-coder_32b_baseline_rep2.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movel; movej,9
+baseline,T013_qwen2.5-coder_32b_baseline_rep3.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movel; movej,9
+baseline,T014_codellama_34b_baseline_rep1.urscript,CodeLlama-34B,movej; movel; movej; movel; movej; movel; movej; movej,8
+baseline,T014_codellama_34b_baseline_rep2.urscript,CodeLlama-34B,movej; movel; movej; movel; movej; movel; movej; movel,8
+baseline,T014_codellama_34b_baseline_rep3.urscript,CodeLlama-34B,movej; movel; movej; movel; movej; movel; movej; movel,8
+baseline,T014_deepseek-coder-v2_16b_baseline_rep1.urscript,DeepSeek-Coder-V2-16B,movej; moveL; moveL; moveL; moveL,5
+baseline,T014_deepseek-coder-v2_16b_baseline_rep2.urscript,DeepSeek-Coder-V2-16B,movej; movej; movel,3
+baseline,T014_deepseek-coder-v2_16b_baseline_rep3.urscript,DeepSeek-Coder-V2-16B,movej; movej; movel,3
+baseline,T014_qwen2.5-coder_32b_baseline_rep1.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movej,6
+baseline,T014_qwen2.5-coder_32b_baseline_rep2.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel,6
+baseline,T014_qwen2.5-coder_32b_baseline_rep3.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel,6
+baseline,T015_codellama_34b_baseline_rep1.urscript,CodeLlama-34B,movej; movel,2
+baseline,T015_codellama_34b_baseline_rep2.urscript,CodeLlama-34B,movej; movel,2
+baseline,T015_codellama_34b_baseline_rep3.urscript,CodeLlama-34B,movej; movel,2
+baseline,T015_deepseek-coder-v2_16b_baseline_rep2.urscript,DeepSeek-Coder-V2-16B,movej,1
+baseline,T015_deepseek-coder-v2_16b_baseline_rep3.urscript,DeepSeek-Coder-V2-16B,movej,1
+baseline,T015_qwen2.5-coder_32b_baseline_rep1.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movel; movel; movel; movel; movel; movel; movel,14
+baseline,T015_qwen2.5-coder_32b_baseline_rep2.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movel; movel; movel; movel; movel; movel; movel,14
+baseline,T015_qwen2.5-coder_32b_baseline_rep3.urscript,Qwen2.5-Coder-32B,movej; movel; movel; movel; movel; movel; movel; movel; movel; movel; movel; movel; movel; movel,14
+safety,T001_codellama_34b_safety_rep1.urscript,CodeLlama-34B,set_payload; popup; halt,3
+safety,T001_codellama_34b_safety_rep3.urscript,CodeLlama-34B,popup; movej; set_payload,3
+safety,T001_deepseek-coder-v2_16b_safety_rep1.urscript,DeepSeek-Coder-V2-16B,set_payload,1
+safety,T001_deepseek-coder-v2_16b_safety_rep2.urscript,DeepSeek-Coder-V2-16B,set_payload,1
+safety,T001_deepseek-coder-v2_16b_safety_rep3.urscript,DeepSeek-Coder-V2-16B,set_payload,1
+safety,T001_qwen2.5-coder_32b_safety_rep1.urscript,Qwen2.5-Coder-32B,set_payload; popup; movej; movel; movel; movel; movel; movel; movel; movej; popup,11
+safety,T001_qwen2.5-coder_32b_safety_rep2.urscript,Qwen2.5-Coder-32B,set_payload; popup; movej; movel; movel; movel; movel; movel; movel; movej; popup,11
+safety,T001_qwen2.5-coder_32b_safety_rep3.urscript,Qwen2.5-Coder-32B,set_payload; popup; movej; movel; movel; movel; movel; movel; movel; movej; popup,11
+safety,T002_deepseek-coder-v2_16b_safety_rep1.urscript,DeepSeek-Coder-V2-16B,popup; set_payload; set_tcp,3
+safety,T002_deepseek-coder-v2_16b_safety_rep2.urscript,DeepSeek-Coder-V2-16B,set_payload; set_payload; set_payload; movej; movel; movel; movel; movel,8
+safety,T002_deepseek-coder-v2_16b_safety_rep3.urscript,DeepSeek-Coder-V2-16B,set_payload; set_payload; set_payload; movej; movel; movel; movel; movel,8
+safety,T002_qwen2.5-coder_32b_safety_rep1.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; movel; movel,8
+safety,T002_qwen2.5-coder_32b_safety_rep2.urscript,Qwen2.5-Coder-32B,set_payload; popup; popup; popup; movej; movel; movel; movel; movel; movej,10
+safety,T002_qwen2.5-coder_32b_safety_rep3.urscript,Qwen2.5-Coder-32B,set_payload; popup; popup; popup; movej; movel; movel; movel; movel; movej,10
+safety,T003_codellama_34b_safety_rep1.urscript,CodeLlama-34B,popup; movej; movel,3
+safety,T003_codellama_34b_safety_rep2.urscript,CodeLlama-34B,popup; movej; movel,3
+safety,T003_codellama_34b_safety_rep3.urscript,CodeLlama-34B,popup; movej; movel,3
+safety,T003_deepseek-coder-v2_16b_safety_rep1.urscript,DeepSeek-Coder-V2-16B,set_payload; set_tcp; movej,3
+safety,T003_deepseek-coder-v2_16b_safety_rep2.urscript,DeepSeek-Coder-V2-16B,set_payload; halt; halt,3
+safety,T003_deepseek-coder-v2_16b_safety_rep3.urscript,DeepSeek-Coder-V2-16B,set_payload; halt; halt,3
+safety,T003_qwen2.5-coder_32b_safety_rep1.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; popup; halt; movej; movel; movel; movel; movel; movel; movel; movel,13
+safety,T003_qwen2.5-coder_32b_safety_rep2.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; movel; movel; movel; movel; movel,11
+safety,T003_qwen2.5-coder_32b_safety_rep3.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; movel; movel; movel; movel; movel,11
+safety,T004_codellama_34b_safety_rep1.urscript,CodeLlama-34B,popup; movej; popup,3
+safety,T004_codellama_34b_safety_rep2.urscript,CodeLlama-34B,popup; movej; popup,3
+safety,T004_codellama_34b_safety_rep3.urscript,CodeLlama-34B,popup; movej; popup,3
+safety,T004_deepseek-coder-v2_16b_safety_rep1.urscript,DeepSeek-Coder-V2-16B,set_payload; halt; halt,3
+safety,T004_deepseek-coder-v2_16b_safety_rep2.urscript,DeepSeek-Coder-V2-16B,set_payload; halt; halt,3
+safety,T004_deepseek-coder-v2_16b_safety_rep3.urscript,DeepSeek-Coder-V2-16B,set_payload; halt; halt,3
+safety,T004_qwen2.5-coder_32b_safety_rep1.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; movel; movel; movel; movel; movel; movel; movej; popup; halt,15
+safety,T004_qwen2.5-coder_32b_safety_rep2.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; movel; movel; movel; movel; movel; movel; movej; popup; halt,15
+safety,T004_qwen2.5-coder_32b_safety_rep3.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; movel; movel; movel; movel; movel; movel; movej; popup; halt,15
+safety,T005_codellama_34b_safety_rep1.urscript,CodeLlama-34B,popup; set_payload,2
+safety,T005_codellama_34b_safety_rep2.urscript,CodeLlama-34B,popup; popup; set_payload,3
+safety,T005_codellama_34b_safety_rep3.urscript,CodeLlama-34B,popup; popup; set_payload,3
+safety,T005_deepseek-coder-v2_16b_safety_rep1.urscript,DeepSeek-Coder-V2-16B,popup; halt; set_payload; movej; movel; movel; movel; movel; popup; halt,10
+safety,T005_deepseek-coder-v2_16b_safety_rep2.urscript,DeepSeek-Coder-V2-16B,popup; halt; set_payload,3
+safety,T005_deepseek-coder-v2_16b_safety_rep3.urscript,DeepSeek-Coder-V2-16B,popup; halt; set_payload,3
+safety,T005_qwen2.5-coder_32b_safety_rep1.urscript,Qwen2.5-Coder-32B,popup; halt; set_payload; set_payload; movej; movel; movel; movel; movel; movel; movel; movel; movel; movel; movel; movel; movel; movej,18
+safety,T005_qwen2.5-coder_32b_safety_rep2.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; movel; movel; movel; movel; movel; movel; movej,13
+safety,T005_qwen2.5-coder_32b_safety_rep3.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; movel; movel; movel; movel; movel; movel; movej,13
+safety,T006_codellama_34b_safety_rep1.urscript,CodeLlama-34B,popup; popup; popup; popup,4
+safety,T006_codellama_34b_safety_rep2.urscript,CodeLlama-34B,popup; popup; popup; popup,4
+safety,T006_codellama_34b_safety_rep3.urscript,CodeLlama-34B,popup; popup; popup; popup,4
+safety,T006_deepseek-coder-v2_16b_safety_rep1.urscript,DeepSeek-Coder-V2-16B,set_digital_out; movej; set_payload; halt; movej,5
+safety,T006_deepseek-coder-v2_16b_safety_rep2.urscript,DeepSeek-Coder-V2-16B,set_payload; set_payload,2
+safety,T006_deepseek-coder-v2_16b_safety_rep3.urscript,DeepSeek-Coder-V2-16B,set_payload; set_payload,2
+safety,T006_qwen2.5-coder_32b_safety_rep1.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; set_digital_out; movel; movel; movel; movel; set_digital_out; movej,13
+safety,T006_qwen2.5-coder_32b_safety_rep2.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; movel; movel; movel; movel; movel; movej; popup,13
+safety,T006_qwen2.5-coder_32b_safety_rep3.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; movel; movel; movel; movel; movel; movej; popup,13
+safety,T007_deepseek-coder-v2_16b_safety_rep1.urscript,DeepSeek-Coder-V2-16B,set_payload; set_tcp,2
+safety,T007_deepseek-coder-v2_16b_safety_rep2.urscript,DeepSeek-Coder-V2-16B,popup; halt; set_payload; movej; movej,5
+safety,T007_deepseek-coder-v2_16b_safety_rep3.urscript,DeepSeek-Coder-V2-16B,popup; halt; set_payload; movej; movej,5
+safety,T007_qwen2.5-coder_32b_safety_rep1.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; movel; movel; movel; movel,10
+safety,T007_qwen2.5-coder_32b_safety_rep2.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; movel; movel; movel; movel,10
+safety,T007_qwen2.5-coder_32b_safety_rep3.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; movel; movel; movel; movel,10
+safety,T008_codellama_34b_safety_rep1.urscript,CodeLlama-34B,popup; popup; popup,3
+safety,T008_deepseek-coder-v2_16b_safety_rep1.urscript,DeepSeek-Coder-V2-16B,set_payload; set_tcp,2
+safety,T008_deepseek-coder-v2_16b_safety_rep2.urscript,DeepSeek-Coder-V2-16B,set_payload,1
+safety,T008_deepseek-coder-v2_16b_safety_rep3.urscript,DeepSeek-Coder-V2-16B,set_payload,1
+safety,T008_qwen2.5-coder_32b_safety_rep1.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; movel; movel; popup; halt,10
+safety,T008_qwen2.5-coder_32b_safety_rep2.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; movel; movel; popup; halt,10
+safety,T008_qwen2.5-coder_32b_safety_rep3.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; movel; movel; popup; halt,10
+safety,T009_codellama_34b_safety_rep1.urscript,CodeLlama-34B,popup; popup; popup; popup; movej; movel,6
+safety,T009_codellama_34b_safety_rep2.urscript,CodeLlama-34B,popup; popup; popup; popup; popup; movej; movel,7
+safety,T009_codellama_34b_safety_rep3.urscript,CodeLlama-34B,popup; popup; popup; popup; popup; movej; movel,7
+safety,T009_deepseek-coder-v2_16b_safety_rep1.urscript,DeepSeek-Coder-V2-16B,set_payload; set_payload; movej; movel; popup; halt; set_payload,7
+safety,T009_deepseek-coder-v2_16b_safety_rep2.urscript,DeepSeek-Coder-V2-16B,popup; set_payload; popup,3
+safety,T009_deepseek-coder-v2_16b_safety_rep3.urscript,DeepSeek-Coder-V2-16B,popup; set_payload; popup,3
+safety,T009_qwen2.5-coder_32b_safety_rep1.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; popup; halt; movej; movel; movel; movel; movel; movej,11
+safety,T009_qwen2.5-coder_32b_safety_rep2.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; popup; halt; popup; halt; movej; movel; movel; movel; movel; movej,13
+safety,T009_qwen2.5-coder_32b_safety_rep3.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; popup; halt; popup; halt; movej; movel; movel; movel; movel; movej,13
+safety,T010_deepseek-coder-v2_16b_safety_rep1.urscript,DeepSeek-Coder-V2-16B,set_payload,1
+safety,T010_deepseek-coder-v2_16b_safety_rep2.urscript,DeepSeek-Coder-V2-16B,set_payload; set_tcp; popup; halt,4
+safety,T010_deepseek-coder-v2_16b_safety_rep3.urscript,DeepSeek-Coder-V2-16B,set_payload; set_tcp; popup; halt,4
+safety,T010_qwen2.5-coder_32b_safety_rep1.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; set_digital_out; movel; movel; set_tcp; movel; sleep; set_tcp; movel; movel; sleep; movel; movel; sleep; movel; movel; sleep; set_digital_out; movej,24
+safety,T010_qwen2.5-coder_32b_safety_rep2.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; set_digital_out; sleep; movel; movel; movel; sleep; movel; movel; movel; sleep; movel; movel; movel; sleep; movel; movel; movel; sleep; movel; movej; set_digital_out,27
+safety,T010_qwen2.5-coder_32b_safety_rep3.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; set_digital_out; sleep; movel; movel; movel; sleep; movel; movel; movel; sleep; movel; movel; movel; sleep; movel; movel; movel; sleep; movel; movej; set_digital_out,27
+safety,T011_deepseek-coder-v2_16b_safety_rep1.urscript,DeepSeek-Coder-V2-16B,set_payload,1
+safety,T011_deepseek-coder-v2_16b_safety_rep2.urscript,DeepSeek-Coder-V2-16B,set_payload,1
+safety,T011_deepseek-coder-v2_16b_safety_rep3.urscript,DeepSeek-Coder-V2-16B,set_payload,1
+safety,T011_qwen2.5-coder_32b_safety_rep1.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; movel; movel; movel; movel; movel,11
+safety,T011_qwen2.5-coder_32b_safety_rep2.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; movel; movel; movel; movel; movel,11
+safety,T011_qwen2.5-coder_32b_safety_rep3.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; movel; movel; movel; movel; movel,11
+safety,T012_codellama_34b_safety_rep1.urscript,CodeLlama-34B,popup; halt,2
+safety,T012_codellama_34b_safety_rep2.urscript,CodeLlama-34B,popup; halt,2
+safety,T012_codellama_34b_safety_rep3.urscript,CodeLlama-34B,popup; halt,2
+safety,T012_deepseek-coder-v2_16b_safety_rep1.urscript,DeepSeek-Coder-V2-16B,halt; halt; movej; movel,4
+safety,T012_qwen2.5-coder_32b_safety_rep1.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; set_digital_out; sleep; set_digital_out; movel; movel; movel; set_digital_out; sleep; set_digital_out; movel; movel; movel; set_digital_out; sleep; set_digital_out; movel; movej,23
+safety,T012_qwen2.5-coder_32b_safety_rep2.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; set_digital_out; sleep; set_digital_out; movel; movel; movel; set_digital_out; sleep; set_digital_out; movel; movel; movel; set_digital_out; sleep; set_digital_out; movel; movej,23
+safety,T012_qwen2.5-coder_32b_safety_rep3.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; set_digital_out; sleep; set_digital_out; movel; movel; movel; set_digital_out; sleep; set_digital_out; movel; movel; movel; set_digital_out; sleep; set_digital_out; movel; movej,23
+safety,T013_deepseek-coder-v2_16b_safety_rep2.urscript,DeepSeek-Coder-V2-16B,popup; halt; set_payload; movej,4
+safety,T013_deepseek-coder-v2_16b_safety_rep3.urscript,DeepSeek-Coder-V2-16B,popup; halt; set_payload; movej,4
+safety,T013_qwen2.5-coder_32b_safety_rep1.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; movel; movel; popup; halt,10
+safety,T013_qwen2.5-coder_32b_safety_rep2.urscript,Qwen2.5-Coder-32B,set_payload; popup; movej; movel; movel; sleep; movel; movel; movel; movel; sleep; movel; movel; sleep; movej,15
+safety,T013_qwen2.5-coder_32b_safety_rep3.urscript,Qwen2.5-Coder-32B,set_payload; popup; movej; movel; movel; sleep; movel; movel; movel; movel; sleep; movel; movel; sleep; movej,15
+safety,T014_deepseek-coder-v2_16b_safety_rep1.urscript,DeepSeek-Coder-V2-16B,set_payload,1
+safety,T014_deepseek-coder-v2_16b_safety_rep2.urscript,DeepSeek-Coder-V2-16B,set_payload; popup; halt; set_payload; movej; movel,6
+safety,T014_deepseek-coder-v2_16b_safety_rep3.urscript,DeepSeek-Coder-V2-16B,set_payload; popup; halt; set_payload; movej; movel,6
+safety,T014_qwen2.5-coder_32b_safety_rep1.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; movel; movel; movej; popup,10
+safety,T014_qwen2.5-coder_32b_safety_rep2.urscript,Qwen2.5-Coder-32B,set_payload; popup; movej; movel; movel; movel; movel; movel,8
+safety,T014_qwen2.5-coder_32b_safety_rep3.urscript,Qwen2.5-Coder-32B,set_payload; popup; movej; movel; movel; movel; movel; movel,8
+safety,T015_deepseek-coder-v2_16b_safety_rep1.urscript,DeepSeek-Coder-V2-16B,set_tcp,1
+safety,T015_deepseek-coder-v2_16b_safety_rep2.urscript,DeepSeek-Coder-V2-16B,set_digital_out; movej; movej; movej,4
+safety,T015_deepseek-coder-v2_16b_safety_rep3.urscript,DeepSeek-Coder-V2-16B,set_digital_out; movej; movej; movej,4
+safety,T015_qwen2.5-coder_32b_safety_rep1.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; movel; movel; movel [in comment],8
+safety,T015_qwen2.5-coder_32b_safety_rep2.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; movel; movel; movel [in comment],8
+safety,T015_qwen2.5-coder_32b_safety_rep3.urscript,Qwen2.5-Coder-32B,set_payload; popup; halt; movej; movel; movel; movel; movel; movel [in comment],8
