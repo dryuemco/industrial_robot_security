@@ -1,0 +1,94 @@
+# URScript for UR5e Collaborative Spot Welding
+# Task: Spot welding at 3 predefined points (T012)
+# Mode: Collaborative (Low speed, human supervision)
+# Payload: 2.5 kg
+
+# --- Configuration ---
+set_payload(2.5, [0, 0, 0.05])  # Set mass and center of gravity
+
+# --- Waypoint Definitions ---
+# Home position (Joint space)
+j_home = [-1.571, -1.571, -1.571, -1.571, -1.571, 0.0]
+
+# Spot locations (Pose vectors [x, y, z, rx, ry, rz])
+# Orientation: Pointing down (rx=0, ry=pi)
+p_spot1 = p[0.45, 0.20, 0.15, 0, 3.14159, 0]
+p_spot2 = p[0.45, 0.00, 0.15, 0, 3.14159, 0]
+p_spot3 = p[0.45, -0.20, 0.15, 0, 3.14159, 0]
+
+# Approach offset (50mm above spot)
+p_approach_offset = p[0, 0, 0.05, 0, 0, 0]
+
+# Calculate approach poses
+p_app1 = pose_trans(p_spot1, p_approach_offset)
+p_app2 = pose_trans(p_spot2, p_approach_offset)
+p_app3 = pose_trans(p_spot3, p_approach_offset)
+
+# --- Helper Functions ---
+def weld_activation():
+    # Simulate welding process (A7)
+    set_digital_out(0, True)  # Trigger weld gun
+    sleep(1.0)                # Weld duration
+    set_digital_out(0, False) # Release weld gun
+    sleep(0.5)                # Settle time
+end
+
+def check_safety_zone():
+    # Soft safety check for confinement (Safety zone)
+    current_pos = get_actual_tcp_pose()
+    # Example: Limit X to < 0.6m
+    if current_pos[0] > 0.6:
+        popup("Safety Zone Breach: X limit exceeded", "Safety Error", False, True, True)
+        stopj(5.0)
+    end
+end
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home, 200.0 mm/s
+movej(j_home, a=1.2, v=0.2)
+
+# --- Spot 1 Sequence ---
+# 2. move_linear: Approach spot 1, 200.0 mm/s
+movel(p_app1, a=0.5, v=0.2)
+check_safety_zone()
+
+# 3. move_linear: Descend to spot 1, 80.0 mm/s
+movel(p_spot1, a=0.2, v=0.08)
+
+# Perform Weld
+weld_activation()
+
+# 4. move_linear: Lift from spot 1, 150.0 mm/s
+movel(p_app1, a=0.3, v=0.15)
+
+# --- Spot 2 Sequence ---
+# 5. move_linear: Move to spot 2, 200.0 mm/s
+movel(p_app2, a=0.5, v=0.2)
+check_safety_zone()
+
+# 6. move_linear: Descend to spot 2, 80.0 mm/s
+movel(p_spot2, a=0.2, v=0.08)
+
+# Perform Weld
+weld_activation()
+
+# 7. move_linear: Lift from spot 2, 150.0 mm/s
+movel(p_app2, a=0.3, v=0.15)
+
+# --- Spot 3 Sequence ---
+# 8. move_linear: Move to spot 3, 200.0 mm/s
+movel(p_app3, a=0.5, v=0.2)
+check_safety_zone()
+
+# 9. move_linear: Descend to spot 3, 80.0 mm/s
+movel(p_spot3, a=0.2, v=0.08)
+
+# Perform Weld
+weld_activation()
+
+# 10. move_linear: Lift from spot 3, 150.0 mm/s
+movel(p_app3, a=0.3, v=0.15)
+
+# --- Return to Home ---
+movej(j_home, a=1.2, v=0.2)

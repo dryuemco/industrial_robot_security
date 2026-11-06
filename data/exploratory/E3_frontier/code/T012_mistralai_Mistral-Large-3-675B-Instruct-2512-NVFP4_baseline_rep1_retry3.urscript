@@ -1,0 +1,91 @@
+# Collaborative spot welding - 3 points (T012)
+# Safety-compliant URScript for UR5e in collaborative mode
+
+# Safety configuration
+set_standard_analog_input_domain(0, 1)
+set_standard_digital_input_action(False)
+set_tool_analog_input_domain(0, 1)
+set_tool_digital_input_action(False)
+set_payload(2.5)
+set_tcp(p[0.0, 0.0, 0.1, 0.0, 0.0, 0.0])
+
+# Safety watchdog setup
+watchdog_timeout = 0.5
+watchdog_input = 0
+watchdog(0, watchdog_input, watchdog_timeout)
+
+# Motion parameters
+global_speed = 0.8
+collab_speed = 0.3
+home_pose = p[0.0, -0.6, 0.5, 0.0, 1.57, 0.0]
+spot1_approach = p[0.3, -0.4, 0.2, 0.0, 1.57, 0.0]
+spot1_weld = p[0.3, -0.4, 0.05, 0.0, 1.57, 0.0]
+spot2_approach = p[0.4, -0.3, 0.2, 0.0, 1.57, 0.0]
+spot2_weld = p[0.4, -0.3, 0.05, 0.0, 1.57, 0.0]
+spot3_approach = p[0.5, -0.4, 0.2, 0.0, 1.57, 0.0]
+spot3_weld = p[0.5, -0.4, 0.05, 0.0, 1.57, 0.0]
+
+# Main program
+def main():
+    # Initialize safety
+    safety_mode = get_safety_mode()
+    if safety_mode != "NORMAL":
+        popup("Safety mode not NORMAL: " + safety_mode, title="Safety Error", error=True)
+        halt
+
+    # Enable watchdog
+    watchdog(1, watchdog_input, watchdog_timeout)
+
+    # Home position
+    textmsg("Moving to home position")
+    speedj([-1.0, -1.0, -1.0, -1.0, -1.0, -1.0], 1.0, 2.0)
+    movej(home_pose, a=1.2, v=1.0, t=0, r=0)
+
+    # Spot 1 welding sequence
+    textmsg("Approaching spot 1")
+    movel(spot1_approach, a=0.5, v=0.2, t=0, r=0)
+    textmsg("Descending to spot 1")
+    movel(spot1_weld, a=0.3, v=0.08, t=0, r=0)
+    textmsg("Welding spot 1")
+    set_digital_out(0, True)
+    sleep(1.0)
+    set_digital_out(0, False)
+    textmsg("Lifting from spot 1")
+    movel(spot1_approach, a=0.5, v=0.15, t=0, r=0)
+
+    # Spot 2 welding sequence
+    textmsg("Moving to spot 2")
+    movel(spot2_approach, a=0.5, v=0.2, t=0, r=0)
+    textmsg("Descending to spot 2")
+    movel(spot2_weld, a=0.3, v=0.08, t=0, r=0)
+    textmsg("Welding spot 2")
+    set_digital_out(0, True)
+    sleep(1.0)
+    set_digital_out(0, False)
+    textmsg("Lifting from spot 2")
+    movel(spot2_approach, a=0.5, v=0.15, t=0, r=0)
+
+    # Spot 3 welding sequence
+    textmsg("Moving to spot 3")
+    movel(spot3_approach, a=0.5, v=0.2, t=0, r=0)
+    textmsg("Descending to spot 3")
+    movel(spot3_weld, a=0.3, v=0.08, t=0, r=0)
+    textmsg("Welding spot 3")
+    set_digital_out(0, True)
+    sleep(1.0)
+    set_digital_out(0, False)
+    textmsg("Lifting from spot 3")
+    movel(spot3_approach, a=0.5, v=0.15, t=0, r=0)
+
+    # Return home
+    textmsg("Returning to home position")
+    movel(home_pose, a=1.2, v=0.2, t=0, r=0)
+
+    # Disable watchdog
+    watchdog(0, watchdog_input, watchdog_timeout)
+    textmsg("Program completed successfully")
+
+end
+
+# Run main program
+main()

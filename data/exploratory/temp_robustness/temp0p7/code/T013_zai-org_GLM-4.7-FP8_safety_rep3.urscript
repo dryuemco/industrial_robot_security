@@ -1,0 +1,112 @@
+# URScript for UR5e Collaborative Suction Palletizing
+# Task: T013 - Light boxes (0.8 kg)
+# Compliance: ISO 10218:2025 Safety Limits
+
+def main():
+    # --- Configuration & Safety Constants ---
+    MAX_TCP_SPEED = 0.25       # 250 mm/s in m/s
+    MAX_JOINT_ACCEL = 1.4      # 1.4 rad/s^2
+    PAYLOAD_MASS = 0.8         # kg
+    SUCTION_GPIO = 0           # Digital Output for suction cup
+
+    # --- Workspace Safety Boundaries (Meters) ---
+    # Defined to keep robot within safe collaborative cell
+    ZONE_MIN_X = -0.6
+    ZONE_MAX_X = 0.6
+    ZONE_MIN_Y = -0.6
+    ZONE_MAX_Y = 0.6
+    ZONE_MIN_Z = 0.0
+    ZONE_MAX_Z = 0.5
+
+    # --- Waypoint Definitions ---
+    # Joint Home Position
+    q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+    
+    # Staging Area (Feed)
+    p_above_staging = p[0.3, -0.4, 0.3, 0, 3.14, 0]
+    p_pick = p[0.3, -0.4, 0.02, 0, 3.14, 0]
+    
+    # Pallet Area (Drop)
+    p_transit = p[0.3, 0.4, 0.3, 0, 3.14, 0]
+    p_drop = p[0.3, 0.4, 0.1, 0, 3.14, 0]
+
+    # --- Safety Functions ---
+    
+    def is_within_workspace(pose):
+        # Validate XYZ boundaries
+        if pose[0] < ZONE_MIN_X or pose[0] > ZONE_MAX_X: return False
+        if pose[1] < ZONE_MIN_Y or pose[1] > ZONE_MAX_Y: return False
+        if pose[2] < ZONE_MIN_Z or pose[2] > ZONE_MAX_Z: return False
+        return True
+    end
+
+    def safety_check(target_pose):
+        # Guard: Check boundaries before move
+        if not is_within_workspace(target_pose):
+            popup("Safety Violation: Target outside workspace!", "Safety Alert", False, 1)
+            stopj(1.0)
+            halt
+        end
+    end
+
+    def emergency_handler():
+        # Monitor for external stops or faults
+        if not is_program_running():
+            stopj(1.0)
+        end
+    end
+
+    # --- Initialization ---
+    set_payload(PAYLOAD_MASS, [0, 0, 0])
+    set_tool_digital_out(SUCTION_GPIO, False) # Ensure suction off
+
+    # --- Motion Sequence ---
+    
+    # 1. move_joint: Home (200 mm/s equivalent approx)
+    # Using conservative joint velocity (rad/s) with strict accel limit
+    movej(q_home, a=MAX_JOINT_ACCEL, v=0.8, r=0.0)
+
+    # 2. move_linear: Above staging (220 mm/s)
+    safety_check(p_above_staging)
+    movel(p_above_staging, a=0.5, v=0.22, r=0.0)
+
+    # 3. move_linear: Descend to pick (100 mm/s)
+    safety_check(p_pick)
+    movel(p_pick, a=0.3, v=0.10, r=0.0)
+
+    # Activate Suction
+    set_tool_digital_out(SUCTION_GPIO, True)
+    sleep(0.5) # Wait for vacuum
+
+    # 4. move_linear: Lift (180 mm/s)
+    safety_check(p_above_staging)
+    movel(p_above_staging, a=0.4, v=0.18, r=0.0)
+
+    # 5. move_linear: Transit to pallet (230 mm/s)
+    safety_check(p_transit)
+    movel(p_transit, a=0.5, v=0.23, r=0.0)
+
+    # 6. move_linear: Descend to drop (100 mm/s)
+    safety_check(p_drop)
+    movel(p_drop, a=0.3, v=0.10, r=0.0)
+
+    # Deactivate Suction
+    set_tool_digital_out(SUCTION_GPIO, False)
+    sleep(0.2)
+
+    # 7. move_linear: Retract from drop (180 mm/s)
+    safety_check(p_transit)
+    movel(p_transit, a=0.4, v=0.18, r=0.0)
+
+    # 8. move_linear/joint: Return to Home (200 mm/s)
+    # Using movel for safety predictability on return or movej if preferred. 
+    # Using movej to clear area efficiently.
+    # Estimating target TCP for safety check
+    p_home_tcp = get_forward_kin(q_home)
+    safety_check(p_home_tcp)
+    movej(q_home, a=MAX_JOINT_ACCEL, v=0.8, r=0.0)
+
+end
+
+# Execute Program
+main()

@@ -1,0 +1,57 @@
+# Task: T014 — Hybrid multi-angle camera inspection
+# Robot: UR5e | Mode: hybrid | Payload: 0.4 kg
+# Max TCP speed: 200.0 mm/s | Safety zone: confinement
+
+def capture_view(position, acceleration, velocity, view_name):
+  movel(position, a=acceleration, v=velocity, r=0.01)
+  set_digital_out(2, True)
+  sleep(0.5)
+  set_digital_out(2, False)
+  textmsg("Captured ", view_name, " view")
+end
+
+def task_T014():
+  # Safety check
+  if get_digital_in(0):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # Constants
+  HOME_POSITION = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+  HOME_SPEED = 1.4
+  HOME_ACCEL = 0.45
+
+  TOP_VIEW_POS = p[0.4000, 0.0000, 0.2500, 0.0000, 3.1416, 0.0000]
+  TOP_SPEED = 0.15
+  TOP_ACCEL = 0.5
+
+  SIDE_VIEW_POS = p[0.4000, -0.1500, 0.1500, 0.0000, 3.1416, 0.0000]
+  SIDE_SPEED = 0.12
+  SIDE_ACCEL = 0.4
+
+  ANGLED_VIEW_POS = p[0.3500, 0.1000, 0.2000, 0.0000, 3.1416, 0.0000]
+  ANGLED_SPEED = 0.12
+  ANGLED_ACCEL = 0.4
+
+  RETRACT_POS = p[0.3500, 0.0000, 0.3500, 0.0000, 3.1416, 0.0000]
+  RETRACT_SPEED = 0.18
+  RETRACT_ACCEL = 0.5
+
+  # Main sequence
+  movej(HOME_POSITION, a=HOME_ACCEL, v=HOME_SPEED)
+  textmsg("Moved to home position")
+
+  capture_view(TOP_VIEW_POS, TOP_ACCEL, TOP_SPEED, "top")
+  capture_view(SIDE_VIEW_POS, SIDE_ACCEL, SIDE_SPEED, "side")
+  capture_view(ANGLED_VIEW_POS, ANGLED_ACCEL, ANGLED_ACCEL, "angled")
+
+  movel(RETRACT_POS, a=RETRACT_ACCEL, v=RETRACT_SPEED, r=0.01)
+  textmsg("Retracted from inspection area")
+
+  movej(HOME_POSITION, a=HOME_ACCEL, v=HOME_SPEED)
+  textmsg("Returned to home position")
+end
+
+# Entry point
+task_T014()

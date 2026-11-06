@@ -1,0 +1,76 @@
+# URScript for visual inspection scan (collaborative mode)
+
+# ---- Configuration ----
+set_payload(0.3, [0, 0, 0.05])   # payload 0.3 kg, CoM 5 cm along Z
+set_robot_mode(2)               # collaborative mode (protective stop enabled)
+
+# ---- Speed definitions (m/s) ----
+speed_home      = 0.15   # 150 mm/s
+speed_approach  = 0.13   # 130 mm/s
+speed_descend   = 0.08   # 80 mm/s
+speed_scan_line = 0.05   # 50 mm/s
+speed_step      = 0.08   # 80 mm/s
+speed_retreat   = 0.13   # 130 mm/s
+
+# ---- Poses (meters, radians) ----
+# Home joint configuration
+home_joints = [-0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+
+# Inspection start (above part, centered)
+p_start_above   = p[0.0, 0.0, 0.30, 0, 3.14159265, 0]   # 300 mm above base, tool pointing down
+
+# Scan height (150 mm above part surface)
+p_scan_height   = p[0.0, 0.0, 0.15, 0, 3.14159265, 0]   # 150 mm above surface
+
+# Raster scan parameters
+scan_range = 0.20   # 200 mm
+line_spacing = scan_range / 2   # three lines => 0.10 m spacing
+
+# Line 1 start (bottom‑left corner of raster)
+p_line1_start = p[-scan_range/2, -scan_range/2, 0.15, 0, 3.14159265, 0]
+# Line 1 end (bottom‑right corner)
+p_line1_end   = p[ scan_range/2, -scan_range/2, 0.15, 0, 3.14159265, 0]
+
+# Line 2 start (middle Y)
+p_line2_start = p[-scan_range/2, 0.0, 0.15, 0, 3.14159265, 0]
+p_line2_end   = p[ scan_range/2, 0.0, 0.15, 0, 3.14159265, 0]
+
+# Line 3 start (top Y)
+p_line3_start = p[-scan_range/2,  scan_range/2, 0.15, 0, 3.14159265, 0]
+p_line3_end   = p[ scan_range/2,  scan_range/2, 0.15, 0, 3.14159265, 0]
+
+# Retreat pose (back to safe height)
+p_retreat = p[0.0, 0.0, 0.30, 0, 3.14159265, 0]
+
+# ---- Motion sequence (10 moves) ----
+# 1. Move to Home position (joint move)
+movej(home_joints, a=0.5, v=speed_home, t=0, r=0)
+
+# 2. Approach inspection start (linear move)
+movel(p_start_above, a=0.5, v=speed_approach, t=0, r=0)
+
+# 3. Descend to scan height
+movel(p_scan_height, a=0.5, v=speed_descend, t=0, r=0)
+
+# 4. Scan line 1 (Y sweep)
+movel(p_line1_end, a=0.5, v=speed_scan_line, t=0, r=0)
+
+# 5. Step to line 2 (X step)
+movel(p_line2_start, a=0.5, v=speed_step, t=0, r=0)
+
+# 6. Scan line 2 (Y sweep)
+movel(p_line2_end, a=0.5, v=speed_scan_line, t=0, r=0)
+
+# 7. Step to line 3 (X step)
+movel(p_line3_start, a=0.5, v=speed_step, t=0, r=0)
+
+# 8. Scan line 3 (Y sweep)
+movel(p_line3_end, a=0.5, v=speed_scan_line, t=0, r=0)
+
+# 9. Retreat to safe height
+movel(p_retreat, a=0.5, v=speed_retreat, t=0, r=0)
+
+# 10. Return to Home position
+movej(home_joints, a=0.5, v=speed_home, t=0, r=0)
+
+# End of program

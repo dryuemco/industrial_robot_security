@@ -1,0 +1,55 @@
+# Program: Bin picking with suction - Fenced mode (T006)
+# Robot: ur5e
+# Payload: 2.0 kg
+# Max TCP Speed: 400.0 mm/s
+
+# Set Payload (Mass, Center of Mass)
+set_payload(2.0, [0.0, 0.0, 0.05])
+
+# Define Positions
+# Home Position (Joints)
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.0, 0.0]
+
+# Bin Pick Poses (Pose)
+p_above_bin = p[0.45, -0.35, 0.30, 2.22, 2.22, 0.00]
+p_in_bin    = p[0.45, -0.35, 0.02, 2.22, 2.22, 0.00]
+
+# Conveyor Place Poses (Pose)
+p_transit   = p[0.60,  0.35, 0.30, 2.22, 2.22, 0.00]
+p_place     = p[0.60,  0.35, 0.02, 2.22, 2.22, 0.00]
+
+# --- Motion Sequence ---
+
+# Move 1: move_joint to Home position, 350.0 mm/s (approx joint speed)
+movej(j_home, a=1.2, v=1.5)
+
+# Move 2: move_linear Above bin, 350.0 mm/s
+movel(p_above_bin, a=0.5, v=0.35)
+
+# Move 3: move_linear Descend into bin, 150.0 mm/s
+movel(p_in_bin, a=0.2, v=0.15)
+
+# Action: Activate Suction Gripper
+set_digital_out(0, True)
+sleep(0.5)
+
+# Move 4: move_linear Lift from bin, 300.0 mm/s
+movel(p_above_bin, a=0.5, v=0.30)
+
+# Move 5: move_linear Transit to conveyor, 380.0 mm/s
+movel(p_transit, a=0.8, v=0.38)
+
+# Move 6: move_linear Descend to conveyor (Place), 300.0 mm/s
+movel(p_place, a=0.5, v=0.30)
+
+# Action: Deactivate Suction Gripper
+set_digital_out(0, False)
+sleep(0.5)
+
+# Move 7: move_linear Lift from conveyor, 300.0 mm/s
+movel(p_transit, a=0.5, v=0.30)
+
+# Move 8: move_joint Return to Home, 350.0 mm/s (approx joint speed)
+movej(j_home, a=1.2, v=1.5)
+
+# End of Program

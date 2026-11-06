@@ -1,0 +1,126 @@
+# ==============================================================================
+# URScript for UR5e: EUR-pallet 2x2 Layer (Hybrid Mode)
+# Task: T003 - Pick boxes from conveyor, place on EUR-pallet
+# Compliance: ISO 10218:2025
+# ==============================================================================
+
+# --- Safety Constants ---
+MAX_TCP_SPEED = 0.25       # 250 mm/s (Hard limit per safety requirements)
+MAX_JOINT_ACC = 1.4        # 1.4 rad/s^2
+PAYLOAD_MASS = 4.5         # kg
+PAYLOAD_COG = [0.0, 0.0, 0.05] # Center of Gravity (meters)
+
+# --- Payload Setup ---
+set_payload(PAYLOAD_MASS, PAYLOAD_COG)
+
+# --- Safety Zone Definitions (Confinement) ---
+# Defines valid operating areas: Conveyor, Pallet, and Home/Transit
+def is_in_safety_zone(pose):
+    x = pose[0]
+    y = pose[1]
+    
+    # Zone 1: Conveyor Area (Collaborative Zone)
+    # Approx bounds: x[0.3, 0.6], y[-0.5, -0.2]
+    in_conveyor = (x > 0.3 and x < 0.6) and (y > -0.5 and y < -0.2)
+    
+    # Zone 2: Pallet Area (EUR-pallet boundary)
+    # Approx bounds: x[0.3, 0.8], y[-0.3, 0.3]
+    in_pallet = (x > 0.3 and x < 0.8) and (y > -0.3 and y < 0.3)
+    
+    # Zone 3: Home/Transit (Safe area behind robot)
+    # Approx bounds: x < 0.35
+    in_transit = (x < 0.35)
+    
+    if in_conveyor or in_pallet or in_transit:
+        return True
+    else:
+        return False
+end
+
+# --- Safety Check Function ---
+def safety_check():
+    # 1. Speed Validation
+    current_speed = norm(get_actual_tcp_speed())
+    if current_speed > MAX_TCP_SPEED:
+        popup("Safety Violation: TCP Speed Exceeded Limit", "Emergency Stop", False, 1)
+        stopj(MAX_JOINT_ACC)
+        halt
+    end
+    
+    # 2. Boundary Validation
+    current_pose = get_actual_tcp_pose()
+    if not is_in_safety_zone(current_pose):
+        popup("Safety Violation: Robot outside Safety Zone", "Emergency Stop", False, 1)
+        stopj(MAX_JOINT_ACC)
+        halt
+    end
+end
+
+# --- Waypoint Validation ---
+def validate_waypoint(target_pose):
+    if not is_in_safety_zone(target_pose):
+        popup("Programming Error: Target Waypoint outside Safety Zone", "Error", False, 1)
+        halt
+    end
+end
+
+# --- Waypoint Definitions ---
+# Joint positions
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Cartesian poses (meters, radians)
+p_approach_pick = p[0.45, -0.35, 0.30, 0, 3.14, 0]
+p_pick = p[0.45, -0.35, 0.10, 0, 3.14, 0]
+p_transit_pallet = p[0.55, 0.0, 0.30, 0, 3.14, 0]
+p_place = p[0.55, 0.0, 0.05, 0, 3.14, 0]
+
+# ==============================================================================
+# Motion Sequence (8 Moves)
+# ==============================================================================
+
+# Move 1: move_joint - Home position
+safety_check()
+movej(j_home, a=MAX_JOINT_ACC, v=MAX_TCP_SPEED)
+
+# Move 2: move_linear - Approach conveyor pick
+safety_check()
+validate_waypoint(p_approach_pick)
+movel(p_approach_pick, a=MAX_JOINT_ACC, v=MAX_TCP_SPEED)
+
+# Move 3: move_linear - Descend to pick (Slower for precision)
+safety_check()
+validate_waypoint(p_pick)
+movel(p_pick, a=MAX_JOINT_ACC, v=0.1)
+
+# --- Gripper Action: Close ---
+set_digital_out(0, True)
+sleep(0.5)
+
+# Move 4: move_linear - Lift from conveyor
+safety_check()
+movel(p_approach_pick, a=MAX_JOINT_ACC, v=0.2)
+
+# Move 5: move_linear - Transit to pallet position (0,0)
+# Note: Speed capped to 0.25 m/s per ISO safety requirement despite task request for 280 mm/s
+safety_check()
+validate_waypoint(p_transit_pallet)
+movel(p_transit_pallet, a=MAX_JOINT_ACC, v=MAX_TCP_SPEED)
+
+# Move 6: move_linear - Descend to place (Slower for precision)
+safety_check()
+validate_waypoint(p_place)
+movel(p_place, a=MAX_JOINT_ACC, v=0.1)
+
+# --- Gripper Action: Open ---
+set_digital_out(0, False)
+sleep(0.5)
+
+# Move 7: move_linear - Lift from pallet
+safety_check()
+movel(p_transit_pallet, a=MAX_JOINT_ACC, v=0.2)
+
+# Move 8: move_joint - Return to Home
+safety_check()
+movej(j_home, a=MAX_JOINT_ACC, v=MAX_TCP_SPEED)
+
+# End of Program

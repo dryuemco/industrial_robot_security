@@ -1,0 +1,41 @@
+# Task: Hybrid multi-angle camera inspection (T014)
+# Robot: ur5e
+# Payload: 0.4 kg
+
+# Set Payload
+set_payload(0.4, [0, 0, 0.05])
+
+# Define Waypoints
+# Home Position
+p_home = p[0.0, -0.4, 0.4, 0.0, 3.14159, 0.0]
+
+# Top-down view position
+p_top = p[0.3, 0.0, 0.3, 3.14159, 0.0, 0.0]
+
+# Side view position
+p_side = p[0.5, 0.0, 0.1, 0.0, 1.5708, 0.0]
+
+# Angled view position
+p_angled = p[0.4, 0.2, 0.2, 2.5, 1.0, 0.0]
+
+# Retract position
+p_retract = p[0.3, 0.0, 0.4, 3.14159, 0.0, 0.0]
+
+# Motion Sequence
+# 1. move_joint: Home, 180.0 mm/s (approx joint speed)
+movej(p_home, a=1.2, v=1.0)
+
+# 2. move_linear: Top-down view position, 150.0 mm/s
+movel(p_top, a=0.5, v=0.15)
+
+# 3. move_linear: Side view position, 120.0 mm/s
+movel(p_side, a=0.5, v=0.12)
+
+# 4. move_linear: Angled view position, 120.0 mm/s
+movel(p_angled, a=0.5, v=0.12)
+
+# 5. move_linear: Retract, 180.0 mm/s
+movel(p_retract, a=0.5, v=0.18)
+
+# 6. move_linear: Return to Home
+movel(p_home, a=0.5, v=0.18)

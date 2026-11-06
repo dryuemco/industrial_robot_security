@@ -1,0 +1,66 @@
+def main():
+    # -------------------------------------------------
+    # Safety and payload configuration
+    # -------------------------------------------------
+    # Set payload (mass, center of gravity)
+    set_payload(1.2, [0,0,0])          # 1.2 kg payload, CoG at TCP
+
+    # Define TCP (no offset, default mass)
+    set_tcp(p[0,0,0], 0.0)            # No tool offset, zero tool mass
+
+    # Define safety zones
+    # Confinement zone (example: a cubic zone centered at [0.5,0,0.2] with 0.6 m half‑size)
+    add_confinement_zone(p[0.5,0,0.2], 0.6, 0.6, 0.6, 0.0, 0.0, 0.0)
+
+    # Exclusion zone (example: a spherical zone centered at [0.2,0.2,0.1] with 0.15 m radius)
+    add_exclusion_zone(p[0.2,0.2,0.1], 0.15)
+
+    # -------------------------------------------------
+    # Set robot to hybrid mode (2 = hybrid)
+    # -------------------------------------------------
+    set_robot_mode(2)
+
+    # -------------------------------------------------
+    # Pre‑defined positions (placeholders – replace with real coordinates)
+    # -------------------------------------------------
+    p_home          = p[0.0, -1.57, 1.57, 0.0, 1.57, 0.0]
+    p_above_bin     = p[0.4, -0.8, 0.5, 0.0, 1.57, 0.0]
+    p_pick          = p[0.4, -0.8, 0.2, 0.0, 1.57, 0.0]
+    p_lift          = p[0.4, -0.8, 0.5, 0.0, 1.57, 0.0]
+    p_handoff       = p[0.6, 0.0, 0.5, 0.0, 1.57, 0.0]
+    p_place         = p[0.6, 0.0, 0.2, 0.0, 1.57, 0.0]
+    p_retreat       = p[0.6, 0.0, 0.5, 0.0, 1.57, 0.0]
+    p_home2         = p[0.0, -1.57, 1.57, 0.0, 1.57, 0.0]
+
+    # -------------------------------------------------
+    # Motion sequence (speeds in m/s, all ≤ 0.3 m/s)
+    # -------------------------------------------------
+    # 1. Move to Home (joint move)
+    movej(p_home, a=1.2, v=0.25)          # 250 mm/s → 0.25 m/s
+
+    # 2. Move above storage bin (linear)
+    movel(p_above_bin, a=1.2, v=0.28)    # 280 mm/s → 0.28 m/s
+
+    # 3. Descend to pick position (linear)
+    movel(p_pick, a=1.2, v=0.12)         # 120 mm/s → 0.12 m/s
+
+    # 4. Lift from bin (linear)
+    movel(p_lift, a=1.2, v=0.20)         # 200 mm/s → 0.20 m/s
+
+    # 5. Transit to handoff zone (linear)
+    movel(p_handoff, a=1.2, v=0.25)      # 250 mm/s → 0.25 m/s
+
+    # 6. Lower to handoff (operator handover) (linear)
+    movel(p_place, a=1.2, v=0.12)        # 120 mm/s → 0.12 m/s
+
+    # 7. Retract after handoff (linear)
+    movel(p_retreat, a=1.2, v=0.20)      # 200 mm/s → 0.20 m/s
+
+    # 8. Return to Home (joint move)
+    movej(p_home2, a=1.2, v=0.25)         # 250 mm/s → 0.25 m/s
+
+    # -------------------------------------------------
+    # End of program
+    # -------------------------------------------------
+    stopj(2)                              # Safely stop the robot
+end

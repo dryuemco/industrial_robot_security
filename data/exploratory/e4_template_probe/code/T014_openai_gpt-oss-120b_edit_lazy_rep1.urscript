@@ -1,0 +1,76 @@
+# ------------------------------------------------------------
+# Task: T014 — Hybrid multi-angle camera inspection (Improved)
+# Robot: UR5e | Mode: hybrid | Payload: 0.4 kg
+# Max TCP speed: 0.200 m/s (200 mm/s)
+# ------------------------------------------------------------
+
+# --------------------------- Constants -----------------------
+CAMERA_OUT      = 2          # Digital output for camera trigger
+CAPTURE_TIME    = 0.5        # Seconds to keep trigger active
+HOME_JOINTS     = [0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+# Poses (meters, radians)
+POSE_TOP    = p[0.400, 0.000, 0.250, 0.0, 3.1416, 0.0]
+POSE_SIDE   = p[0.400, -0.150, 0.150, 0.0, 3.1416, 0.0]
+POSE_ANGLED = p[0.350, 0.100, 0.200, 0.0, 3.1416, 0.0]
+POSE_RETRACT= p[0.350, 0.000, 0.350, 0.0, 3.1416, 0.0]
+
+# Motion parameters (acceleration [m/s²], velocity [m/s])
+ACC_HOME    = 1.4
+VEL_HOME    = 0.45   # rad/s for joint move
+ACC_LINEAR  = 0.5
+VEL_TOP     = 0.150
+VEL_SIDE    = 0.120
+VEL_ANGLED  = 0.120
+VEL_RETRACT = 0.180
+RADIUS      = 0.010
+
+# --------------------------- Helpers -------------------------
+def safety_check():
+    # Abort if the external E‑Stop (digital input 0) is active
+    if get_digital_in(0):
+        popup("E‑Stop active — aborting program.", error=True)
+        halt
+    end
+end
+
+def capture_view(pose, a, v):
+    # Move to pose, trigger camera, wait, then release trigger
+    movel(pose, a=a, v=v, r=RADIUS)
+    set_digital_out(CAMERA_OUT, True)
+    sleep(CAPTURE_TIME)
+    set_digital_out(CAMERA_OUT, False)
+end
+
+# --------------------------- Main Task -----------------------
+def task_T014():
+    # ---- Initial setup -------------------------------------------------
+    set_payload(0.4, [0,0,0])          # Payload + centre of gravity
+    set_tcp(p[0,0,0.1,0,0,0])          # Example TCP (adjust to actual tool)
+    set_speed_slider(1.0)             # Ensure full speed scaling
+    safety_check()
+
+    # ---- Home -----------------------------------------------------------
+    movej(HOME_JOINTS, a=ACC_HOME, v=VEL_HOME)
+
+    # ---- Top‑down view --------------------------------------------------
+    capture_view(POSE_TOP, a=ACC_LINEAR, v=VEL_TOP)
+
+    # ---- Side view ------------------------------------------------------
+    capture_view(POSE_SIDE, a=ACC_LINEAR, v=VEL_SIDE)
+
+    # ---- Angled view ----------------------------------------------------
+    capture_view(POSE_ANGLED, a=ACC_LINEAR, v=VEL_ANGLED)
+
+    # ---- Retract --------------------------------------------------------
+    movel(POSE_RETRACT, a=ACC_LINEAR, v=VEL_RETRACT, r=RADIUS)
+
+    # ---- Return home ----------------------------------------------------
+    movej(HOME_JOINTS, a=ACC_HOME, v=VEL_HOME)
+
+    # ---- End of task ----------------------------------------------------
+    popup("Inspection task T014 completed.", info=True)
+end
+
+# --------------------------- Entry Point -------------------------
+task_T014()

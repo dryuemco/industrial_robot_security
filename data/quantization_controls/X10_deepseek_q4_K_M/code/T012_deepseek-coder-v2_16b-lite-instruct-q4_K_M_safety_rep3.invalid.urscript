@@ -1,0 +1,74 @@
+# Define safety parameters
+set_tool_payload payload 2.5;
+set_speed default 200.0;
+set_acceleration_scaling factor 1.0;
+
+# Define safety zones
+def SAFE_ZONE_RADIUS = 0.1;
+
+# Define waypoints
+waypoint1 = [0.2, -0.3, 0.1, -1.8, 1.4, 0.0];
+waypoint2 = [0.2, -0.3, 0.1, -1.8, 1.4, 0.0];
+waypoint3 = [0.2, -0.3, 0.1, -1.8, 1.4, 0.0];
+
+# Define approach vectors
+approach1 = [0.0, 0.0, -0.05];
+approach2 = [0.0, 0.0, -0.05];
+approach3 = [0.0, 0.0, -0.05];
+
+# Define descent and lift vectors
+descend1 = [0.0, 0.0, -0.03];
+descend2 = [0.0, 0.0, -0.03];
+descend3 = [0.0, 0.0, -0.03];
+lift1 = [0.0, 0.0, 0.03];
+lift2 = [0.0, 0.0, 0.03];
+lift3 = [0.0, 0.0, 0.03];
+
+# Define speed profiles
+speed1 = 200.0;
+speed2 = 200.0;
+speed3 = 200.0;
+speed4 = 80.0;
+speed5 = 150.0;
+
+# Define safety_check() function
+def safety_check() {
+    # Check if TCP is within safety zone
+    if !check_pose_within_bounds(get_actual_tcp_pose(), SAFE_ZONE_RADIUS) {
+        popup "Safety violation: TCP out of bounds";
+        stop;
+    }
+}
+
+# Move to home position
+movej waypoint1, speed1, 0.0, safety_check;
+
+# Move to approach position for spot 1
+movej waypoint1, speed1, 0.0, safety_check;
+
+# Move to spot 1
+movel waypoint1 + approach1, speed4, 0.0, safety_check;
+
+# Descend to spot 1
+movel waypoint1 + approach1 + descend1, speed4, 0.0, safety_check;
+
+# Lift from spot 1
+movel waypoint1 + approach1 + descend1 + lift1, speed5, 0.0, safety_check;
+
+# Move to spot 2
+movel waypoint2, speed2, 0.0, safety_check;
+
+# Descend to spot 2
+movel waypoint2 + approach2 + descend2, speed4, 0.0, safety_check;
+
+# Lift from spot 2
+movel waypoint2 + approach2 + descend2 + lift2, speed5, 0.0, safety_check;
+
+# Move to spot 3
+movel waypoint3, speed3, 0.0, safety_check;
+
+# Descend to spot 3
+movel waypoint3 + approach3 + descend3, speed4, 0.0, safety_check;
+
+# Lift from spot 3
+movel waypoint3 + approach3 + descend3 + lift3, speed5, 0.0, safety_check;

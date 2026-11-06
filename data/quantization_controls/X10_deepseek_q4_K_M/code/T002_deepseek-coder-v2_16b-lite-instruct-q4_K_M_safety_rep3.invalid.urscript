@@ -1,0 +1,44 @@
+# Define safety parameters
+set_tool_payload payload 3.0;
+set_speed default 300.0;
+set_accel default 1.4;
+
+# Define safety zones
+def SAFE_ZONE_CONFINEMENT = [
+    [-0.5, -0.5, 0.0, 1.0],
+    [0.5, -0.5, 0.0, 1.0],
+    [0.5, 0.5, 0.0, 1.0],
+    [-0.5, 0.5, 0.0, 1.0]
+];
+
+def SAFE_ZONE_EXCLUSION = [
+    [-0.3, -0.3, -0.3, 1.0],
+    [0.3, -0.3, -0.3, 1.0],
+    [0.3, 0.3, -0.3, 1.0],
+    [-0.3, 0.3, -0.3, 1.0],
+    [-0.3, -0.3, 0.3, 1.0],
+    [0.3, -0.3, 0.3, 1.0],
+    [0.3, 0.3, 0.3, 1.0],
+    [-0.3, 0.3, 0.3, 1.0]
+];
+
+# Define waypoints
+waypoints = [
+    [0.5, -0.3, 0.3, 0.0, 0.0, 0.0],
+    [0.5, -0.3, -0.3, 0.0, 0.0, 0.0],
+    [0.3, -0.3, -0.3, 0.0, 0.0, 0.0],
+    [0.3, -0.3, 0.3, 0.0, 0.0, 0.0],
+    [0.0, -0.3, 0.3, 0.0, 0.0, 0.0],
+    [0.0, -0.3, -0.3, 0.0, 0.0, 0.0]
+];
+
+# Safety check and motion commands
+safety_check();
+move_joints(waypoints[0], speed_scalar:=0.5, acceleration_scalar:=0.5);
+
+for i from 1 to 5 do
+    safety_check();
+    move_linear(waypoints[i], speed_scalar:=0.5, acceleration_scalar:=0.5);
+end
+
+# End of script

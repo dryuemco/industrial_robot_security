@@ -1,0 +1,70 @@
+def T014_Hybrid_Camera_Inspection():
+  # Safety parameters
+  set_standard_analog_input_domain(0, 1)
+  set_standard_digital_input_action(0, "none")
+  set_tool_voltage(0)
+  set_runstate_outputs([])
+  set_payload(0.4)
+  set_tcp(p[0, 0, 0, 0, 0, 0])
+
+  # Safety confinement plane (example values - adjust to your setup)
+  confinement_plane = p[0, 0, 0.1, 0, 0, 0]  # 100mm above base
+  set_confinement(confinement_plane)
+
+  # Waypoints (example values - adjust to your actual positions)
+  home_pose = p[0.0, -0.5, 0.5, 0, 3.14, 0]
+  top_view_pose = p[0.2, -0.3, 0.4, 0, 3.14, 0.5]
+  side_view_pose = p[0.3, -0.2, 0.3, 0, 3.14, 1.0]
+  angled_view_pose = p[0.25, -0.25, 0.35, 0.5, 2.64, 0.75]
+  retract_pose = p[0.2, -0.3, 0.45, 0, 3.14, 0]
+
+  # Motion parameters
+  speed_j = 1.8  # rad/s (~180 mm/s)
+  speed_l_top = 0.15  # m/s
+  speed_l_side = 0.12  # m/s
+  speed_l_angled = 0.12  # m/s
+  speed_l_retract = 0.18  # m/s
+  acceleration = 0.5
+  blend_radius = 0.01
+
+  # Enable hybrid mode
+  set_robot_mode("hybrid")
+
+  # Motion sequence
+  movej(home_pose, a=acceleration, v=speed_j, r=0)
+
+  # Top-down view
+  movel(top_view_pose, a=acceleration, v=speed_l_top, r=blend_radius)
+  # Camera tilt action (example - adjust to your camera control)
+  set_digital_out(0, True)
+  sleep(0.5)
+  set_digital_out(0, False)
+
+  # Side view
+  movel(side_view_pose, a=acceleration, v=speed_l_side, r=blend_radius)
+  # Camera tilt action
+  set_digital_out(1, True)
+  sleep(0.5)
+  set_digital_out(1, False)
+
+  # Angled view
+  movel(angled_view_pose, a=acceleration, v=speed_l_angled, r=blend_radius)
+  # Camera tilt action
+  set_digital_out(2, True)
+  sleep(0.5)
+  set_digital_out(2, False)
+
+  # Retract
+  movel(retract_pose, a=acceleration, v=speed_l_retract, r=0)
+
+  # Return to home
+  movej(home_pose, a=acceleration, v=speed_j, r=0)
+
+  # Reset outputs
+  set_digital_out(0, False)
+  set_digital_out(1, False)
+  set_digital_out(2, False)
+
+  # Safety reset
+  set_confinement(p[0, 0, 0, 0, 0, 0])
+end

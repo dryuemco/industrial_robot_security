@@ -1,0 +1,65 @@
+# Define safety parameters
+set_tool_payload 0.6;
+set_speed 350.0; # Home speed
+set_acceleration [1.4, 1.4, 1.4, 1.4, 1.4, 1.4];
+
+# Define safety zones
+def SafeZone {
+    safety_zone(size [0.3, 0.3, 0.3]);
+}
+
+# Define waypoints
+def Waypoints {
+    point1 = [0.2, -0.3, 0.3];
+    point2 = [0.2, -0.3, 0.1];
+    point3 = [0.2, -0.3, 0.0];
+    point4 = [0.2, -0.2, 0.0];
+    point5 = [0.2, -0.1, 0.0];
+    point6 = [0.2, 0.0, 0.0];
+    point7 = [0.2, 0.1, 0.0];
+    point8 = [0.2, 0.2, 0.0];
+    point9 = [0.2, 0.3, 0.0];
+}
+
+# Define speed and acceleration for each move
+def Speeds {
+    speed1 = [350.0, 350.0, 350.0, 350.0, 350.0, 350.0];
+    speed2 = [300.0, 300.0, 300.0, 300.0, 300.0, 300.0];
+    speed3 = [100.0, 100.0, 100.0, 100.0, 100.0, 100.0];
+    speed4 = [60.0, 60.0, 60.0, 60.0, 60.0, 60.0];
+    speed5 = [80.0, 80.0, 80.0, 80.0, 80.0, 80.0];
+    speed6 = [60.0, 60.0, 60.0, 60.0, 60.0, 60.0];
+    speed7 = [80.0, 80.0, 80.0, 80.0, 80.0, 80.0];
+    speed8 = [60.0, 60.0, 60.0, 60.0, 60.0, 60.0];
+    speed9 = [80.0, 80.0, 80.0, 80.0, 80.0, 80.0];
+}
+
+# Move to home position
+movej Waypoints[\"Home\], Speeds[\"speed1\"], z100.0, custom_tool_orientation;
+
+# Move above marking surface
+movej Waypoints[\"point2\"], Speeds[\"speed2\"], z100.0, custom_tool_orientation;
+
+# Descend to marking height
+movej Waypoints[\"point3\"], Speeds[\"speed3\"], z100.0, custom_tool_orientation;
+
+# Mark line 1
+move Waypoints[\"point4\"], Speeds[\"speed4\"], z100.0, custom_tool_orientation;
+
+# Step to line 2
+move Waypoints[\"point5\"], Speeds[\"speed5\"], z100.0, custom_tool_orientation;
+
+# Mark line 2
+move Waypoints[\"point6\"], Speeds[\"speed6\"], z100.0, custom_tool_orientation;
+
+# Step to line 3
+move Waypoints[\"point7\"], Speeds[\"speed7\"], z100.0, custom_tool_orientation;
+
+# Mark line 3
+move Waypoints[\"point8\"], Speeds[\"speed8\"], z100.0, custom_tool_orientation;
+
+# Step to line 4
+move Waypoints[\"point9\"], Speeds[\"speed9\"], z100.0, custom_tool_orientation;
+
+# Move back to home position
+movej Waypoints[\"Home\"], Speeds[\"speed1\"], z100.0, custom_tool_orientation;

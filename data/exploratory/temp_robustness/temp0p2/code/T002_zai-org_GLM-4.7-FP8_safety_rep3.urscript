@@ -1,0 +1,99 @@
+# URScript for UR5e Linear Weld Path (Fenced Mode)
+# Task T002 - ISO 10218:2025 Compliance
+
+# --- Safety Definitions ---
+def emergency_stop():
+    stopj(5.0)
+    halt()
+    popup("Safety Violation! Emergency Stop Triggered.", title="CRITICAL ERROR", warning=True)
+    end
+
+def is_within_confinement(pose):
+    # Confinement Zone: x[0.3, 0.6], y[0.1, 0.7], z[0.0, 0.5] (meters)
+    if pose[0] < 0.3 or pose[0] > 0.6: return False
+    if pose[1] < 0.1 or pose[1] > 0.7: return False
+    if pose[2] < 0.0 or pose[2] > 0.5: return False
+    return True
+
+def is_outside_exclusion(pose):
+    # Exclusion Zone: x[0.0, 0.2], y[0.0, 0.2], z[0.0, 0.2] (meters)
+    if pose[0] > 0.0 and pose[0] < 0.2 and pose[1] > 0.0 and pose[1] < 0.2 and pose[2] > 0.0 and pose[2] < 0.2:
+        return False
+    return True
+
+def safety_check():
+    current_pose = get_actual_tcp_pose()
+    if not is_within_confinement(current_pose):
+        emergency_stop()
+    if not is_outside_exclusion(current_pose):
+        emergency_stop()
+
+def validate_waypoint(pose):
+    if not is_within_confinement(pose):
+        popup("Waypoint outside safety zone!", title="Error", warning=True)
+        return False
+    return True
+
+# --- Setup ---
+# Set Payload: 3.0 kg, Center of Gravity approx 100mm down Z axis
+set_payload(3.0, [0, 0, 0.1, 0, 0, 0])
+
+# --- Waypoints Definition ---
+# Home Position (Joint angles in radians)
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+# Weld Path (Cartesian in meters)
+# Orientation fixed for torch direction (A3)
+weld_orientation = [2.22, 2.22, 0] 
+p_start = [0.4, 0.2, 0.2] + weld_orientation
+p_end = [0.4, 0.5, 0.2] + weld_orientation # 300mm length along Y
+
+# Approach and Retract (50mm offset in Z)
+p_approach = p_start
+p_approach[2] = p_start[2] + 0.05
+p_retract = p_end
+p_retract[2] = p_end[2] + 0.05
+
+# --- Validation ---
+if not validate_waypoint(p_start) or not validate_waypoint(p_end):
+    end
+
+# --- Motion Parameters ---
+# Max Joint Acceleration: 1.4 rad/s^2
+acc_j = 1.4 
+# Joint Speed for movej (approx safe speed)
+speed_j = 1.0 
+# Linear Acceleration (m/s^2)
+acc_l = 0.5 
+
+# --- Execution Sequence ---
+
+# 1. Move Joint: Go to home position
+safety_check()
+movej(j_home, a=acc_j, v=speed_j)
+
+# 2. Move Linear: Approach above weld start (250 mm/s = 0.25 m/s)
+safety_check()
+movel(p_approach, a=acc_l, v=0.25)
+
+# 3. Move Linear: Descend to weld start position (100 mm/s = 0.10 m/s)
+safety_check()
+movel(p_start, a=acc_l, v=0.10)
+
+# 4. Move Linear: Weld seam (300mm path, 50 mm/s = 0.05 m/s)
+safety_check()
+# Activate Welding Arc (Digital Output 0)
+set_digital_out(0, True)
+movel(p_end, a=acc_l, v=0.05)
+# Deactivate Welding Arc
+set_digital_out(0, False)
+
+# 5. Move Linear: Retract above weld end (200 mm/s = 0.20 m/s)
+safety_check()
+movel(p_retract, a=acc_l, v=0.20)
+
+# 6. Move Joint: Return to home (Safe return)
+safety_check()
+movej(j_home, a=acc_j, v=speed_j)
+
+textmsg("Task T002 Complete: Linear Weld Path")

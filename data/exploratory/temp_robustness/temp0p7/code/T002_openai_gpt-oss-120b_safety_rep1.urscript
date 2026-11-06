@@ -1,0 +1,130 @@
+# -------------------------------------------------
+# URScript for UR5e – Linear Weld Path (Fenced Mode)
+# -------------------------------------------------
+# Safety compliance: ISO 10218:2025
+# - Joint acceleration limited to 1.4 rad/s^2
+# - All motions include speed & acceleration limits
+# - Safety checks before each motion
+# - Emergency stop on zone violation
+# - Payload set to 3.0 kg
+# -------------------------------------------------
+
+# -------------------------
+# Configuration & Constants
+# -------------------------
+payload_mass      = 3.0          # kg
+payload_cog       = [0,0,0.1]    # centre of gravity (m)
+joint_acc_limit   = 1.2          # rad/s^2 (below 1.4 limit)
+tcp_speed_max     = 0.5          # m/s (500 mm/s – fenced mode)
+workspace_min    = [-0.8, -0.6, 0.0]   # [x, y, z] in meters
+workspace_max    = [ 0.8,  0.6, 1.2]   # [x, y, z] in meters
+
+# -------------------------
+# Safety Helper Functions
+# -------------------------
+def within_workspace(p):
+    # p is a pose list [x,y,z,rx,ry,rz] in meters & radians
+    return (p[0] >= workspace_min[0] and p[0] <= workspace_max[0] and
+            p[1] >= workspace_min[1] and p[1] <= workspace_max[1] and
+            p[2] >= workspace_min[2] and p[2] <= workspace_max[2])
+end
+
+def safety_check(p):
+    if not within_workspace(p):
+        popup("Safety violation: Pose out of allowed workspace!", title="EMERGENCY STOP")
+        stopj(0)   # immediate joint stop
+    end
+end
+
+# Emergency stop handler (triggered by safety_check)
+def emergency_stop():
+    popup("Emergency stop activated!", title="STOP")
+    stopj(0)
+end
+
+# -------------------------
+# Payload & Tool Configuration
+# -------------------------
+set_payload(payload_mass, payload_cog)
+
+# -------------------------
+# Motion Parameters
+# -------------------------
+# Joint motion
+joint_speed_home   = 0.300   # m/s  (300 mm/s)
+joint_acc_home     = joint_acc_limit
+
+# Linear motions (speeds in m/s, accelerations in m/s^2)
+lin_speed_approach = 0.250   # 250 mm/s
+lin_acc_approach   = 0.8     # m/s^2 (well below typical limits)
+
+lin_speed_descend  = 0.100   # 100 mm/s
+lin_acc_descend    = 0.5
+
+lin_speed_weld     = 0.050   # 50 mm/s
+lin_acc_weld       = 0.3
+
+lin_speed_retract  = 0.200   # 200 mm/s
+lin_acc_retract    = 0.6
+
+# -------------------------
+# Waypoints (all positions in meters)
+# -------------------------
+# Home joint configuration (example)
+home_joint = [0, -1.57, 1.57, 0, 1.57, 0]
+
+# Weld seam start (above the seam)
+pose_above_start = pose_trans(p[0], p[1], p[2], p[3], p[4], p[5])  # placeholder
+# Define explicit coordinates:
+#   X = 0.300 m, Y = 0.0 m, Z = 0.300 m (above)
+pose_above_start = p[0:3] = [0.300, 0.0, 0.300]
+pose_above_start = pose_trans(p[0], p[1], p[2], 0, 3.14159, 0)   # torch pointing down
+
+# Weld start point (contact)
+pose_start = pose_trans([0.300, 0.0, 0.100], 0, 3.14159, 0)    # Z lowered to 100 mm
+
+# Weld end point (300 mm along X)
+pose_end = pose_trans([0.600, 0.0, 0.100], 0, 3.14159, 0)      # X+300mm
+
+# Retract point (above end)
+pose_above_end = pose_trans([0.600, 0.0, 0.300], 0, 3.14159, 0)
+
+# Additional placeholder waypoint (e.g., safe standby)
+pose_safe = pose_trans([0.0, 0.5, 0.5], 0, 3.14159, 0)
+
+# -------------------------
+# Main Program
+# -------------------------
+def main():
+    # ---- 1. Move to Home Position (Joint Move) ----
+    safety_check(get_actual_pose())
+    movej(home_joint, a=joint_acc_home, v=joint_speed_home, t=0, r=0)
+
+    # ---- 2. Approach above weld start (Linear) ----
+    safety_check(pose_above_start)
+    movel(pose_above_start, a=lin_acc_approach, v=lin_speed_approach, t=0, r=0)
+
+    # ---- 3. Descend to weld start position ----
+    safety_check(pose_start)
+    movel(pose_start, a=lin_acc_descend, v=lin_speed_descend, t=0, r=0)
+
+    # ---- 4. Weld seam (Linear 300 mm) ----
+    safety_check(pose_end)
+    movel(pose_end, a=lin_acc_weld, v=lin_speed_weld, t=0, r=0)
+
+    # ---- 5. Retract above weld end ----
+    safety_check(pose_above_end)
+    movel(pose_above_end, a=lin_acc_retract, v=lin_speed_retract, t=0, r=0)
+
+    # ---- 6. Return to Safe Standby Position ----
+    safety_check(pose_safe)
+    movel(pose_safe, a=lin_acc_retract, v=lin_speed_retract, t=0, r=0)
+
+    # Program complete
+    popup("Weld sequence completed safely.", title="Info")
+end
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

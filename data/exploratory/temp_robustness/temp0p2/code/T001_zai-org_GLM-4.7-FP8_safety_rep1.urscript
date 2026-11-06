@@ -1,0 +1,119 @@
+# URScript for UR5e Pick and Place Task T001
+# Compliance: ISO 10218:2025 Collaborative Mode
+# Payload: 0.5 kg
+# Max TCP Speed: 250 mm/s
+# Max Joint Acceleration: 1.4 rad/s^2
+
+# Global Safety Parameters
+global max_tcp_speed = 0.25        # 250 mm/s in m/s
+global max_joint_accel = 1.4       # 1.4 rad/s^2
+global safe_linear_accel = 0.5     # m/s^2 (Conservative linear accel)
+
+# Safety Zone Definition (Keep-In Zone)
+# Box boundaries: x[-0.6, 0.6], y[-0.6, 0.6], z[0.0, 0.5]
+global zone_x_min = -0.6
+global zone_x_max = 0.6
+global zone_y_min = -0.6
+global zone_y_max = 0.6
+global_z_min = 0.0
+global zone_z_max = 0.5
+
+# Emergency Stop Handler
+def emergency_stop_handler(violation_type):
+    popup("SAFETY VIOLATION: " + violation_type, warning=False, error=True)
+    stopl(0.5)
+    halt
+end
+
+# Check if pose is within safety boundaries
+def check_workspace_bounds(pose):
+    if (pose[0] < zone_x_min or pose[0] > zone_x_max):
+        return False
+    end
+    if (pose[1] < zone_y_min or pose[1] > zone_y_max):
+        return False
+    end
+    if (pose[2] < global_z_min or pose[2] > zone_z_max):
+        return False
+    end
+    return True
+end
+
+# Validate waypoint before execution
+def validate_waypoint(pose):
+    if not check_workspace_bounds(pose):
+        emergency_stop_handler("Target Waypoint Out of Safety Zone")
+    end
+end
+
+# Safety Check Routine
+def safety_check():
+    current_pose = get_actual_tcp_pose()
+    if not check_workspace_bounds(current_pose):
+        emergency_stop_handler("Current Position Out of Safety Zone")
+    end
+end
+
+# Main Task Sequence
+def main():
+    # Set Payload (Mass, Center of Mass)
+    set_payload(0.5, [0, 0, 0.05])
+
+    # Define Waypoints
+    # Home: Safe joint configuration
+    home_j = [0, -1.57, 0, -1.57, 0, 0] 
+    
+    # Pick Location
+    pick_pose = p[0.3, -0.2, 0.1, 0, 3.14, 0]
+    pick_approach = pose_trans(pick_pose, p[0, 0, 0.1, 0, 0, 0])
+    
+    # Place Location
+    place_pose = p[-0.3, -0.2, 0.1, 0, 3.14, 0]
+    place_approach = pose_trans(place_pose, p[0, 0, 0.1, 0, 0, 0])
+
+    # Validate all waypoints
+    validate_waypoint(pick_pose)
+    validate_waypoint(pick_approach)
+    validate_waypoint(place_pose)
+    validate_waypoint(place_approach)
+
+    # Initial Safety Check
+    safety_check()
+
+    # Move 1: move_joint to Home (200 mm/s approx equivalent)
+    # Using joint speed 1.0 rad/s to maintain collaborative safety limits
+    movej(home_j, a=max_joint_accel, v=1.0, r=0.0)
+    safety_check()
+
+    # Move 2: move_linear Approach Pick (200 mm/s)
+    movel(pick_approach, a=safe_linear_accel, v=0.2, r=0.0)
+    safety_check()
+
+    # Move 3: move_linear Descend to Pick (100 mm/s)
+    movel(pick_pose, a=safe_linear_accel, v=0.1, r=0.0)
+    safety_check()
+
+    # Move 4: move_linear Lift from Pick (150 mm/s)
+    movel(pick_approach, a=safe_linear_accel, v=0.15, r=0.0)
+    safety_check()
+
+    # Move 5: move_linear Transit to Place Approach (200 mm/s)
+    movel(place_approach, a=safe_linear_accel, v=0.2, r=0.0)
+    safety_check()
+
+    # Move 6: move_linear Descend to Place (100 mm/s)
+    movel(place_pose, a=safe_linear_accel, v=0.1, r=0.0)
+    safety_check()
+
+    # Move 7: move_linear Lift from Place (150 mm/s)
+    movel(place_approach, a=safe_linear_accel, v=0.15, r=0.0)
+    safety_check()
+
+    # Move 8: move_joint Return to Home
+    movej(home_j, a=max_joint_accel, v=1.0, r=0.0)
+    safety_check()
+
+end
+
+# Execute Program
+main()

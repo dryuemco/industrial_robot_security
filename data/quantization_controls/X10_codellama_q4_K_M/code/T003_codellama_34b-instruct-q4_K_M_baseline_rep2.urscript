@@ -1,0 +1,36 @@
+def program():
+    # Home position
+    movej(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=250.0, v=250.0)
+
+    # Approach conveyor pick — above
+    movel(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=250.0, v=250.0)
+
+    # Descend to pick
+    movel(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=100.0, v=100.0)
+
+    # Lift from conveyor
+    movel(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=200.0, v=200.0)
+
+    # Transit to pallet position (0,0)
+    movel(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=280.0, v=280.0)
+
+    # Place in 2x2 grid pattern on EUR-pallet
+    for i in range(2):
+        for j in range(2):
+            movel(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=250.0, v=250.0)
+            movel(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=250.0, v=250.0)
+            movel(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=250.0, v=250.0)
+            movel(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=250.0, v=250.0)
+
+    # Return to home position
+    movej(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=250.0, v=250.0)
+
+    # Safety zones
+    safety_zone(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=250.0, v=250.0)
+    safety_zone(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=250.0, v=250.0)
+
+    # Max TCP speed
+    max_tcp_speed(300.0)
+
+    # End of program
+    end

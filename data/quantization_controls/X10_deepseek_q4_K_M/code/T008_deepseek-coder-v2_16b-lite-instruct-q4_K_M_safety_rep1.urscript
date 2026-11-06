@@ -1,0 +1,31 @@
+# Define safety parameters
+set_payload(5.0, [0, 0, 0], [0, 0, 0]);
+set_standard_digital_out(1, true);  # Enable fenced mode
+
+# Define safety zones
+set_safe_position([-1.5, -1.5, -0.5, -1.5, -1.5, 0], [1.5, 1.5, 1.0, 1.5, 1.5, 1.5], 0.1);
+
+# Define safety check function
+def safety_check():
+    if safety_status() == 0:
+        popup("Safety violation detected!");
+        stop;
+
+# Define waypoints
+waypoints = [
+    [0.4, -0.6, 0.2, -1.5, -1.5, 0],  # Home position
+    [0.4, -0.6, 0.5, -1.5, -1.5, 0],  # Above pallet
+    [0.4, -0.6, -0.3, -1.5, -1.5, 0], # Descend to top layer
+    [0.4, -0.6, -0.3, -1.5, -1.5, 0], # Lift box
+    [0.4, -0.6, -0.3, -1.5, -1.5, 0], # Transit to conveyor
+    # Add more waypoints as needed
+];
+
+# Define speeds and accelerations
+speeds = [400.0, 450.0, 150.0, 200.0, 350.0];
+accelerations = [1.4, 1.4, 1.4, 1.4, 1.4];
+
+# Execute motion commands with safety checks
+for i in range(len(waypoints)):
+    safety_check();
+    move_joints(waypoints[i], speeds[i], accelerations[i]);

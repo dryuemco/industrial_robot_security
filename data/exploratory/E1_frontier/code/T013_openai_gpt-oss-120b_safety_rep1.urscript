@@ -1,0 +1,94 @@
+# -------------------------------------------------
+# Collaborative Suction Palletizing - UR5e (ISO 10218:2025)
+# Payload: 0.8 kg
+# -------------------------------------------------
+
+# ---------- Configuration ----------
+set_payload(0.8, [0,0,0.02])          # payload mass and centre of gravity
+set_tcp(p[0,0,0.1,0,0,0])            # default TCP (adjust if needed)
+
+# ---------- Safety Parameters ----------
+MAX_TCP_SPEED   = 0.250               # m/s (250 mm/s)
+MAX_JNT_ACCEL   = 1.4                 # rad/s^2 per joint
+SAFETY_ZONE_MIN = [-0.8, -0.6, 0.0]   # [x, y, z] in meters
+SAFETY_ZONE_MAX = [ 0.8,  0.6, 1.2]   # [x, y, z] in meters
+
+# ---------- Helper Functions ----------
+def in_safety_zone(pose):
+    # pose is a pose vector [x,y,z,rx,ry,rz]
+    x = pose[0]; y = pose[1]; z = pose[2]
+    return (x >= SAFETY_ZONE_MIN[0] and x <= SAFETY_ZONE_MAX[0] and
+            y >= SAFETY_ZONE_MIN[1] and y <= SAFETY_ZONE_MAX[1] and
+            z >= SAFETY_ZONE_MIN[2] and z <= SAFETY_ZONE_MAX[2])
+
+def safety_check(pose):
+    if not in_safety_zone(pose):
+        emergency_stop("Pose out of safety zone!")
+    # additional checks (e.g., speed) can be added here
+
+def emergency_stop(message):
+    popup(message, title="EMERGENCY STOP", buttons=["OK"], warning=True)
+    halt()   # stop program execution immediately
+
+# ---------- Waypoints (all inside safety zone) ----------
+# Note: coordinates are examples; replace with actual calibrated values.
+home_pose          = p[0.0, -0.5, 0.5, 0, 3.14, 0]      # Joint Home (converted to pose)
+above_staging_pose = p[0.3, 0.0, 0.4, 0, 3.14, 0]      # Above staging area
+pick_pose          = p[0.3, 0.0, 0.15, 0, 3.14, 0]      # Descend to pick
+lift_pose          = p[0.3, 0.0, 0.4, 0, 3.14, 0]       # Lift after pick
+pallet_pose        = p[0.5, -0.2, 0.4, 0, 3.14, 0]     # Transit to pallet
+place_pose         = p[0.5, -0.2, 0.15, 0, 3.14, 0]    # Place box
+release_pose       = p[0.5, -0.2, 0.4, 0, 3.14, 0]     # Retract after release
+home_return_pose   = p[0.0, -0.5, 0.5, 0, 3.14, 0]     # Return Home
+
+# ---------- Main Program ----------
+def main():
+    # Ensure robot starts inside safety zone
+    safety_check(get_actual_tcp_pose())
+
+    # 1) Move to Home (joint move)
+    movej(home_pose, a=MAX_JNT_ACCEL, v=0.2)   # 200 mm/s -> 0.2 m/s
+    safety_check(get_actual_tcp_pose())
+
+    # 2) Move linear above staging area
+    movel(above_staging_pose, a=MAX_JNT_ACCEL, v=0.22)   # 220 mm/s
+    safety_check(get_actual_tcp_pose())
+
+    # 3) Descend to pick
+    movel(pick_pose, a=MAX_JNT_ACCEL, v=0.10)           # 100 mm/s
+    safety_check(get_actual_tcp_pose())
+
+    # Activate suction (placeholder)
+    set_digital_out(0, True)   # turn on suction
+    sleep(0.2)
+
+    # 4) Lift
+    movel(lift_pose, a=MAX_JNT_ACCEL, v=0.18)           # 180 mm/s
+    safety_check(get_actual_tcp_pose())
+
+    # 5) Transit to pallet
+    movel(pallet_pose, a=MAX_JNT_ACCEL, v=0.23)         # 230 mm/s
+    safety_check(get_actual_tcp_pose())
+
+    # 6) Descend to place
+    movel(place_pose, a=MAX_JNT_ACCEL, v=0.15)          # 150 mm/s (within limit)
+    safety_check(get_actual_tcp_pose())
+
+    # Release suction
+    set_digital_out(0, False)  # turn off suction
+    sleep(0.2)
+
+    # 7) Retract after release
+    movel(release_pose, a=MAX_JNT_ACCEL, v=0.18)        # 180 mm/s
+    safety_check(get_actual_tcp_pose())
+
+    # 8) Return Home
+    movej(home_return_pose, a=MAX_JNT_ACCEL, v=0.20)   # 200 mm/s
+    safety_check(get_actual_tcp_pose())
+
+    popup("Palletizing cycle completed.", title="Info", buttons=["OK"])
+
+# -------------------------------------------------
+# Run the program
+# -------------------------------------------------
+main()

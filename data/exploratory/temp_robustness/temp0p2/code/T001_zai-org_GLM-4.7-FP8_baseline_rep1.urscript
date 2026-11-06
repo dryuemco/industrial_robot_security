@@ -1,0 +1,53 @@
+# Task: Simple collaborative pick-place (T001)
+# Robot: UR5e
+# Payload: 0.5 kg
+# Max TCP Speed: 250.0 mm/s
+
+# Set payload and gravity
+set_payload(0.5)
+set_gravity([0, 0, -9.82])
+
+# Define Poses
+p_home = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+p_pick_approach = p[0.4, -0.2, 0.3, 0, 3.14, 0]
+p_pick = p[0.4, -0.2, 0.1, 0, 3.14, 0]
+p_place_approach = p[0.4, 0.2, 0.3, 0, 3.14, 0]
+p_place = p[0.4, 0.2, 0.1, 0, 3.14, 0]
+
+# Initialize Gripper (Open)
+set_digital_out(0, False)
+
+# Move 1: move_joint - Go to home position
+movej(p_home, a=1.0, v=1.0)
+
+# Move 2: move_linear - Approach pick point (200 mm/s)
+movel(p_pick_approach, a=0.5, v=0.2)
+
+# Move 3: move_linear - Descend to pick (100 mm/s)
+movel(p_pick, a=0.2, v=0.1)
+
+# Grip Object
+set_digital_out(0, True)
+sleep(0.5)
+
+# Move 4: move_linear - Lift from pick (150 mm/s)
+movel(p_pick_approach, a=0.3, v=0.15)
+
+# Move 5: move_linear - Transit to place approach (200 mm/s)
+movel(p_place_approach, a=0.5, v=0.2)
+
+# Move 6: move_linear - Descend to place (100 mm/s)
+movel(p_place, a=0.2, v=0.1)
+
+# Release Object
+set_digital_out(0, False)
+sleep(0.5)
+
+# Move 7: move_linear - Lift from place (150 mm/s)
+movel(p_place_approach, a=0.3, v=0.15)
+
+# Move 8: move_joint - Return to home position
+movej(p_home, a=1.0, v=1.0)
+
+# End of Task
+halt

@@ -1,0 +1,96 @@
+# URScript program for curved contour weld in hybrid mode
+# Safety checks and error handling added per SM-2 and SM-4 requirements
+
+# ---- Configuration ---------------------------------------------------------
+set_payload(3.5)               # payload in kg
+set_tcp_speed(300.0)           # max TCP speed in mm/s
+set_joint_acceleration(1.2)    # default joint acceleration
+set_cartesian_acceleration(0.5)# default Cartesian acceleration
+
+# ---- Safety zone definition (box) -----------------------------------------
+# Define a simple rectangular safety zone in robot base coordinates
+# [xmin, xmax, ymin, ymax, zmin, zmax] in mm
+safety_zone = [ -800.0, 800.0,   # X limits
+                -600.0, 600.0,   # Y limits
+                 0.0, 1500.0 ]   # Z limits
+
+# Function to verify that a pose is inside the safety zone
+def within_safety_zone(pose):
+    # pose = [X, Y, Z, Rx, Ry, Rz]
+    if pose[0] < safety_zone[0] or pose[0] > safety_zone[1]:
+        return false
+    if pose[1] < safety_zone[2] or pose[1] > safety_zone[3]:
+        return false
+    if pose[2] < safety_zone[4] or pose[2] > safety_zone[5]:
+        return false
+    return true
+end
+
+# ---- Motion targets ---------------------------------------------------------
+# Joint target for Home position (example values)
+home_joints = [-1.57, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Cartesian targets (all in mm and rad)
+approach_pose   = p[200.0, 0.0, 800.0, 0.0, 3.1415, 0.0]   # above fixture
+start_pose      = p[200.0, 0.0, 600.0, 0.0, 3.1415, 0.0]   # descend to start
+mid_pose        = p[300.0, 100.0, 600.0, 0.0, 3.1415, 0.0] # weld midpoint
+end_pose        = p[400.0, 0.0, 600.0, 0.0, 3.1415, 0.0]   # weld end
+# Two additional placeholder poses (can be edited as needed)
+extra_pose1     = p[450.0, -50.0, 600.0, 0.0, 3.1415, 0.0]
+extra_pose2     = p[500.0, 0.0, 600.0, 0.0, 3.1415, 0.0]
+
+# ---- Helper to execute a motion with safety and error handling -------------
+def safe_movej(target_joints, speed):
+    if not within_safety_zone(p[0,0,0,0,0,0]):  # joint moves are always safe w.r.t. box
+        textmsg("Joint target outside safety zone – aborting.")
+        halt()
+    end
+    try:
+        movej(target_joints, a=1.2, v=speed)
+    catch (err):
+        textmsg("Error during movej: " + err)
+        halt()
+    end
+end
+
+def safe_movel(target_pose, speed):
+    if not within_safety_zone(target_pose):
+        textmsg("Target pose out of safety zone – aborting.")
+        halt()
+    end
+    try:
+        movel(target_pose, a=0.5, v=speed)
+    catch (err):
+        textmsg("Error during movel: " + err)
+        halt()
+    end
+end
+
+# ---- Main program -----------------------------------------------------------
+def main():
+    # 1) Move to Home position
+    safe_movej(home_joints, 300.0)
+
+    # 2) Approach above weld fixture
+    safe_movel(approach_pose, 250.0)
+
+    # 3) Descend to weld start
+    safe_movel(start_pose, 100.0)
+
+    # 4) Weld midpoint
+    safe_movel(mid_pose, 60.0)
+
+    # 5) Weld end
+    safe_movel(end_pose, 60.0)
+
+    # 6) Additional motion 1
+    safe_movel(extra_pose1, 80.0)
+
+    # 7) Additional motion 2
+    safe_movel(extra_pose2, 80.0)
+
+    textmsg("Weld contour completed successfully.")
+end
+
+# Execute the program
+main()

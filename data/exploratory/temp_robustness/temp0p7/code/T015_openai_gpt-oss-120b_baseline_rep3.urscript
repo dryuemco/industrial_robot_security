@@ -1,0 +1,55 @@
+def laser_marking():
+    # ----- Safety and payload configuration -----
+    setSafetyMode(2)                     # Fenced mode (reduced speed)
+    setPayload(0.6, [0,0,0.1])            # Payload 0.6 kg, centre of mass approx. 10 cm above TCP
+    setSpeedScaling(1)                   # 100 % speed scaling
+
+    # ----- Position definitions (meters) -----
+    # Home position
+    p_home = p[0.0, -0.500, 0.500, 0, 1.5708, 0]
+
+    # Above marking surface (safe approach height)
+    p_above = p[0.200, 0.000, 0.100, 0, 1.5708, 0]
+
+    # First contact point (marking height)
+    p_mark_start = p[0.200, 0.000, 0.030, 0, 1.5708, 0]
+
+    # Line 1 end point
+    p_line1_end = p[0.250, 0.000, 0.030, 0, 1.5708, 0]
+
+    # Transition to line 2 start
+    p_step_line2 = p[0.250, 0.020, 0.030, 0, 1.5708, 0]
+
+    # Line 2 end point
+    p_line2_end = p[0.300, 0.020, 0.030, 0, 1.5708, 0]
+
+    # Transition to line 3 start
+    p_step_line3 = p[0.300, 0.040, 0.030, 0, 1.5708, 0]
+
+    # Line 3 end point
+    p_line3_end = p[0.350, 0.040, 0.030, 0, 1.5708, 0]
+
+    # Retract after marking
+    p_retract = p[0.350, 0.040, 0.100, 0, 1.5708, 0]
+
+    # ----- Motion sequence (10 moves) -----
+    movej(p_home, a=1.2, v=0.35)                 # 1) Home (joint move, 350 mm/s)
+    movel(p_above, a=1.2, v=0.30)                # 2) Above marking surface (linear, 300 mm/s)
+    movel(p_mark_start, a=1.2, v=0.10)           # 3) Descend to marking height (linear, 100 mm/s)
+
+    # Laser activation (digital output 8 assumed for laser control)
+    set_digital_out(8, True)                    # Laser ON
+
+    movel(p_line1_end, a=1.2, v=0.06)            # 4) Mark line 1 (linear, 60 mm/s)
+    movel(p_step_line2, a=1.2, v=0.08)           # 5) Step to line 2 start (linear, 80 mm/s)
+    movel(p_line2_end, a=1.2, v=0.06)            # 6) Mark line 2 (linear, 60 mm/s)
+    movel(p_step_line3, a=1.2, v=0.08)           # 7) Step to line 3 start (linear, 80 mm/s)
+    movel(p_line3_end, a=1.2, v=0.06)            # 8) Mark line 3 (linear, 60 mm/s)
+
+    set_digital_out(8, False)                   # Laser OFF
+
+    movel(p_retract, a=1.2, v=0.10)              # 9) Retract from surface (linear, 100 mm/s)
+    movej(p_home, a=1.2, v=0.35)                 # 10) Return Home (joint move, 350 mm/s)
+end
+
+laser_marking()

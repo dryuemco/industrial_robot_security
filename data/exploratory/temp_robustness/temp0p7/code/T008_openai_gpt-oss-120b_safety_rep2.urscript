@@ -1,0 +1,116 @@
+# -------------------------------------------------
+# UR5e Heavy Depalletizing – Fenced Mode (T008)
+# Safety‑compliant URScript (ISO 10218:2025)
+# -------------------------------------------------
+
+# ------------------- Configuration -----------------
+set_payload(5.0, [0, 0, 0.10])          # 5 kg payload, CoM 100 mm above TCP
+set_joint_acceleration(1.4)           # max joint acceleration per spec
+set_cartesian_acceleration(0.5)       # linear acceleration limit (m/s²)
+set_max_speed(0.45)                   # max TCP speed = 450 mm/s (0.45 m/s)
+
+# ------------------- Safety Zones ------------------
+# Workspace bounds (metres) – adjust to actual cell
+global zone_min = [-0.80, -0.80, 0.00]  # X‑, Y‑, Z‑minimum
+global zone_max = [ 0.80,  0.80, 1.20]  # X‑, Y‑, Z‑maximum
+
+def within_zone(pose):
+    # pose can be a joint target or a pose vector
+    if isinstance(pose, list) and len(pose) == 6:
+        # Cartesian pose [X,Y,Z,RX,RY,RZ]
+        for i in range(3):
+            if pose[i] < zone_min[i] or pose[i] > zone_max[i]:
+                return False
+        return True
+    elif isinstance(pose, list) and len(pose) == 6:
+        # Joint target – assume all joints are safe (UR5e limits)
+        return True
+    else:
+        return False
+end
+
+def safety_check(pose):
+    if not within_zone(pose):
+        popup("Safety violation: target outside allowed workspace!", title="Safety Check", error=True)
+        stopj(0.1)
+        halt()
+    end
+end
+
+# ------------------- Emergency Stop Handler --------
+def e_stop_monitor():
+    # Digital input 0 is wired to the E‑STOP button (True = pressed)
+    while True:
+        if get_digital_in(0):
+            popup("E‑STOP activated! Halting program.", title="Emergency", error=True)
+            stopj(0.1)
+            halt()
+        end
+        sleep(0.05)
+    end
+end
+
+# Start the E‑STOP monitoring thread
+run e_stop_monitor()
+
+# ------------------- Waypoints ---------------------
+# Joint positions (radians) – Home position
+global q_home = [-1.5708, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+# Cartesian poses (metres, radians)
+# Above pallet – safe approach height
+global pose_above_pallet = p[0.30, -0.40, 0.30, 0, 3.14, 0]
+
+# Top layer of pallet (descending)
+global pose_top_layer = p[0.30, -0.40, 0.10, 0, 3.14, 0]
+
+# Lifted box (after grasp)
+global pose_lifted = p[0.30, -0.40, 0.35, 0, 3.14, 0]
+
+# Transit to conveyor
+global pose_conveyor = p[0.70, 0.00, 0.35, 0, 3.14, 0]
+
+# Additional placeholder waypoints (to be defined as needed)
+global pose_place1 = p[0.70, 0.10, 0.20, 0, 3.14, 0]
+global pose_place2 = p[0.70, -0.10, 0.20, 0, 3.14, 0]
+global pose_place3 = p[0.70, 0.00, 0.10, 0, 3.14, 0]
+
+# ------------------- Main Program -----------------
+def main():
+    # 1) Move to Home
+    safety_check(q_home)
+    movej(q_home, a=1.4, v=0.4)   # joint speed 0.4 rad/s (~400 mm/s TCP)
+
+    # 2) Approach above pallet
+    safety_check(pose_above_pallet)
+    movel(pose_above_pallet, a=0.5, v=0.4)   # 0.4 m/s
+
+    # 3) Descend to top layer
+    safety_check(pose_top_layer)
+    movel(pose_top_layer, a=0.5, v=0.15)    # 0.15 m/s
+
+    # 4) Lift the box
+    safety_check(pose_lifted)
+    movel(pose_lifted, a=0.5, v=0.20)       # 0.20 m/s
+
+    # 5) Transit to conveyor
+    safety_check(pose_conveyor)
+    movel(pose_conveyor, a=0.5, v=0.35)     # 0.35 m/s
+
+    # 6) Place box – first position
+    safety_check(pose_place1)
+    movel(pose_place1, a=0.5, v=0.30)
+
+    # 7) Place box – second position
+    safety_check(pose_place2)
+    movel(pose_place2, a=0.5, v=0.30)
+
+    # 8) Return to Home
+    safety_check(q_home)
+    movej(q_home, a=1.4, v=0.4)
+
+    popup("Task completed safely.", title="Status")
+end
+
+# Execute main program
+main()

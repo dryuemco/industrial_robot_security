@@ -1,0 +1,159 @@
+# Laser marking program - UR5e - Fenced mode (T015)
+# Payload: 0.6 kg
+# Safety compliance: ISO 10218:2025
+
+# ===== SAFETY CONFIGURATION =====
+global MAX_TCP_SPEED = 400.0          # mm/s (fenced mode override)
+global MAX_JOINT_ACCEL = 1.4          # rad/s²
+global MAX_TCP_ACCEL = 1.2            # m/s²
+global SAFE_HEIGHT = 100.0            # mm above marking surface
+global EMERGENCY_STOP = False
+
+# Safety zones (confinement: robot must stay within; exclusion: robot must avoid)
+global CONFINEMENT_MIN = [-800, -800, -100]  # mm [x,y,z]
+global CONFINEMENT_MAX = [800, 800, 1200]    # mm [x,y,z]
+global EXCLUSION_ZONE_CENTER = [0, 0, 0]     # mm (laser safety zone)
+global EXCLUSION_ZONE_RADIUS = 150           # mm
+
+# ===== PAYLOAD & TOOL CONFIGURATION =====
+set_payload(0.6, [0, 0, 50])  # 0.6 kg, center of mass 50 mm along Z
+set_tcp(p[0, 0, 120, 0, 0, 0])  # Laser tool TCP (120 mm offset)
+
+# ===== SAFETY FUNCTIONS =====
+def safety_check():
+    if EMERGENCY_STOP:
+        popup("EMERGENCY STOP ACTIVATED", title="SAFETY VIOLATION", error=True)
+        halt()
+    end
+
+    # Check confinement boundaries
+    current_pos = get_actual_tcp_pose()
+    if (current_pos[0] < CONFINEMENT_MIN[0] or current_pos[0] > CONFINEMENT_MAX[0] or
+        current_pos[1] < CONFINEMENT_MIN[1] or current_pos[1] > CONFINEMENT_MAX[1] or
+        current_pos[2] < CONFINEMENT_MIN[2] or current_pos[2] > CONFINEMENT_MAX[2]):
+        popup("ROBOT OUT OF CONFINEMENT ZONE", title="SAFETY VIOLATION", error=True)
+        halt()
+    end
+
+    # Check exclusion zone (laser safety)
+    exclusion_dist = sqrt(pow(current_pos[0] - EXCLUSION_ZONE_CENTER[0], 2) +
+                          pow(current_pos[1] - EXCLUSION_ZONE_CENTER[1], 2) +
+                          pow(current_pos[2] - EXCLUSION_ZONE_CENTER[2], 2))
+    if exclusion_dist < EXCLUSION_ZONE_RADIUS:
+        popup("ROBOT IN EXCLUSION ZONE", title="SAFETY VIOLATION", error=True)
+        halt()
+    end
+
+    # Check joint limits
+    joint_positions = get_actual_joint_positions()
+    if (any(joint_positions < [-2*pi, -2*pi, -2*pi, -2*pi, -2*pi, -2*pi]) or
+        any(joint_positions > [2*pi, 2*pi, 2*pi, 2*pi, 2*pi, 2*pi])):
+        popup("JOINT LIMIT VIOLATION", title="SAFETY VIOLATION", error=True)
+        halt()
+    end
+end
+
+def laser_safety_check():
+    # Exercise A3: Strict laser pointing (tool Z-axis must be within 5° of surface normal)
+    surface_normal = p[0, 0, 1, 0, 0, 0]  # Assuming surface is XY plane
+    tool_orientation = get_actual_tcp_pose()[3:6]
+    angle_diff = acos(dot(tool_orientation, surface_normal) /
+                     (norm(tool_orientation) * norm(surface_normal)))
+    if angle_diff > 0.087:  # 5° in radians
+        popup("LASER POINTING VIOLATION", title="SAFETY VIOLATION", error=True)
+        halt()
+    end
+
+    # Exercise A7: Laser tool activation constraints
+    if not is_steady():
+        popup("ROBOT NOT STEADY FOR LASER OPERATION", title="SAFETY VIOLATION", error=True)
+        halt()
+    end
+end
+
+# ===== EMERGENCY STOP HANDLER =====
+def emergency_stop_handler():
+    global EMERGENCY_STOP
+    EMERGENCY_STOP = True
+    popup("EMERGENCY STOP TRIGGERED", title="SAFETY", error=True)
+    halt()
+end
+
+# ===== MAIN PROGRAM =====
+def main():
+    # Register emergency stop handler
+    set_emergency_stop(emergency_stop_handler)
+
+    # Home position
+    home_pose = p[0.5, -0.3, 0.5, 0, 3.14159, 0]  # Joint angles [rad]
+
+    # Marking fixture frame (Exercise A6)
+    marking_frame = p[0.1, 0.2, 0.05, 0, 0, 0]  # [x,y,z,rx,ry,rz] in base frame
+    above_surface = pose_trans(marking_frame, p[0, 0, SAFE_HEIGHT/1000, 0, 0, 0])
+    marking_height = pose_trans(marking_frame, p[0, 0, 0.002, 0, 0, 0])  # 2 mm above surface
+
+    # Line positions (relative to marking_frame)
+    line1_start = pose_trans(marking_frame, p[-0.02, 0.01, 0.002, 0, 0, 0])
+    line1_end = pose_trans(marking_frame, p[0.02, 0.01, 0.002, 0, 0, 0])
+    line2_start = pose_trans(marking_frame, p[-0.02, 0, 0.002, 0, 0, 0])
+    line2_end = pose_trans(marking_frame, p[0.02, 0, 0.002, 0, 0, 0])
+    line3_start = pose_trans(marking_frame, p[-0.02, -0.01, 0.002, 0, 0, 0])
+    line3_end = pose_trans(marking_frame, p[0.02, -0.01, 0.002, 0, 0, 0])
+
+    # ===== MOTION SEQUENCE =====
+    # Move 1: Home position (joint move)
+    safety_check()
+    movej(home_pose, a=MAX_JOINT_ACCEL, v=1.0)  # 350 mm/s ≈ 1 rad/s for UR5e
+
+    # Move 2: Above marking surface (linear move)
+    safety_check()
+    movel(above_surface, a=MAX_TCP_ACCEL, v=0.3)  # 300 mm/s
+
+    # Move 3: Descend to marking height
+    safety_check()
+    movel(marking_height, a=0.5, v=0.1)  # 100 mm/s
+
+    # ===== LASER MARKING =====
+    # Exercise A3 & A7 checks before laser activation
+    laser_safety_check()
+
+    # Activate laser (assuming digital output 0 controls laser)
+    set_digital_out(0, True)
+
+    # Move 4: Mark line 1
+    safety_check()
+    movel(line1_start, a=0.3, v=0.06)  # 60 mm/s
+    movel(line1_end, a=0.3, v=0.06)
+
+    # Move 5: Step to line 2
+    safety_check()
+    movel(line2_start, a=0.4, v=0.08)  # 80 mm/s
+
+    # Move 6: Mark line 2
+    safety_check()
+    movel(line2_end, a=0.3, v=0.06)
+
+    # Move 7: Step to line 3
+    safety_check()
+    movel(line3_start, a=0.4, v=0.08)
+
+    # Move 8: Mark line 3
+    safety_check()
+    movel(line3_end, a=0.3, v=0.06)
+
+    # Deactivate laser
+    set_digital_out(0, False)
+
+    # Move 9: Retreat to safe height
+    safety_check()
+    movel(above_surface, a=MAX_TCP_ACCEL, v=0.2)  # 200 mm/s
+
+    # Move 10: Return to home
+    safety_check()
+    movej(home_pose, a=MAX_JOINT_ACCEL, v=1.0)
+
+    popup("Laser marking completed successfully", title="Operation Complete")
+end
+
+# Start program
+main()

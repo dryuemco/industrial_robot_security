@@ -1,0 +1,109 @@
+# URScript for UR5e - Hybrid mode palletizing (2x2 grid) with 4.5 kg payload
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(4.5, [0,0,0.1])          # payload mass (kg) and center of gravity (m)
+set_tcp([0,0,0.1,0,0,0])            # default TCP (10 cm offset along Z)
+
+# Safety: confinement zone around pallet (example dimensions)
+# zone_center: pallet origin in base frame
+# zone_size: 0.6 m x 0.6 m x 0.3 m (X, Y, Z)
+# Note: replace with actual safety API if different
+set_safety_zone("pallet_confinement", p[0.5,0.0,0.0,0,0,0], [0.6,0.6,0.3], "confinement")
+
+# -------------------------------------------------
+# Positions (all poses expressed in base frame, meters)
+# -------------------------------------------------
+# Home joint configuration (example)
+home_joints = [-1.57, -1.57, -1.57, -1.57, 1.57, 0]
+
+# Conveyor pick positions
+pick_above   = p[0.8, -0.3, 0.4, 0, 3.14, 0]   # 10 cm above pick point
+pick_down    = p[0.8, -0.3, 0.1, 0, 3.14, 0]   # pick point (Z lowered)
+
+# Pallet grid positions (relative to pallet origin at [0.5,0,0])
+grid_origin  = p[0.5, 0.0, 0.2, 0, 3.14, 0]   # 20 cm above pallet surface
+offset = 0.2                                 # 20 cm spacing
+
+grid_pos = [
+    pose_add(grid_origin, p[0, 0, 0, 0,0,0]),                     # (0,0)
+    pose_add(grid_origin, p[offset, 0, 0, 0,0,0]),               # (dx,0)
+    pose_add(grid_origin, p[0, offset, 0, 0,0,0]),               # (0,dy)
+    pose_add(grid_origin, p[offset, offset, 0, 0,0,0])          # (dx,dy)
+]
+
+# -------------------------------------------------
+# Motion parameters (m/s)
+# -------------------------------------------------
+speed_home      = 0.25   # 250 mm/s
+speed_approach  = 0.25   # 250 mm/s
+speed_descend   = 0.10   # 100 mm/s
+speed_lift      = 0.20   # 200 mm/s
+speed_transit   = 0.28   # 280 mm/s
+speed_place     = 0.25   # 250 mm/s
+max_tcp_speed   = 0.30   # 300 mm/s
+
+# -------------------------------------------------
+# Helper functions
+# -------------------------------------------------
+def safe_movej(q, v):
+    movej(q, a=1.4, v=v, t=0, r=0)
+
+def safe_movel(pose, v):
+    movel(pose, a=1.2, v=v, t=0, r=0)
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # 1) Move to home
+    safe_movej(home_joints, speed_home)
+
+    # 2) Approach conveyor pick (above)
+    safe_movel(pick_above, speed_approach)
+
+    # 3) Descend to pick
+    safe_movel(pick_down, speed_descend)
+
+    # 4) Close gripper (placeholder)
+    # set_digital_out(0, True)   # assume output 0 controls gripper close
+    sleep(0.5)
+
+    # 5) Lift from conveyor
+    safe_movel(pick_above, speed_lift)
+
+    # 6) Transit to first pallet cell (0,0)
+    safe_movel(grid_pos[0], speed_transit)
+
+    # 7) Place box (lower, open, lift)
+    safe_movel(pose_add(grid_pos[0], p[0,0,-0.1,0,0,0]), speed_descend)  # lower 10 cm
+    # set_digital_out(0, False)  # open gripper
+    sleep(0.5)
+    safe_movel(grid_pos[0], speed_lift)
+
+    # 8) Repeat for remaining three cells
+    for i in range(1,4):
+        # Transit to next cell
+        safe_movel(grid_pos[i], speed_transit)
+
+        # Lower
+        safe_movel(pose_add(grid_pos[i], p[0,0,-0.1,0,0,0]), speed_descend)
+
+        # Open gripper
+        # set_digital_out(0, False)
+        sleep(0.5)
+
+        # Lift back up
+        safe_movel(grid_pos[i], speed_lift)
+
+    # Return to home
+    safe_movej(home_joints, speed_home)
+
+    # End of program
+    stopj(0)
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

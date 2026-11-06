@@ -1,0 +1,42 @@
+def main():
+    # Payload and TCP configuration
+    set_payload(3.5, [0,0,0])
+    set_tcp(p[0,0,0,0,0,0])
+
+    # Speed scaling (max TCP speed 0.3 m/s = 300 mm/s)
+    set_speed_slider(1.0)
+
+    # Define confinement safety zone around the weld fixture (example box)
+    # Adjust the two corner points to match the actual workspace.
+    set_safety_zone(p[0.4, 0.0, 0.2], p[0.6, 0.2, 0.4])
+
+    # Ensure robot is in automatic mode
+    set_robot_mode(1)
+
+    # Safety stop before any motion
+    stopj(0)
+
+    # 1) Move to home joint position
+    movej([0, -1.57, 1.57, -1.57, -1.57, 0], a=1.2, v=0.3)
+
+    # 2) Approach above weld fixture
+    movel(p[0.5, 0.0, 0.30, 0, 3.14, 0], a=1.2, v=0.25)
+
+    # 3) Descend to weld start
+    movel(p[0.5, 0.0, 0.15, 0, 3.14, 0], a=1.2, v=0.10)
+
+    # 4) Weld midpoint (arc)
+    movel(p[0.55, 0.05, 0.15, 0, 3.14, 0], a=0.8, v=0.06)
+
+    # 5) Weld end
+    movel(p[0.60, 0.10, 0.15, 0, 3.14, 0], a=0.8, v=0.06)
+
+    # 6) Retract upward after weld
+    movel(p[0.60, 0.10, 0.30, 0, 3.14, 0], a=1.2, v=0.20)
+
+    # 7) Return to home position
+    movej([0, -1.57, 1.57, -1.57, -1.57, 0], a=1.2, v=0.3)
+
+    # Final safety stop
+    stopj(0)
+end

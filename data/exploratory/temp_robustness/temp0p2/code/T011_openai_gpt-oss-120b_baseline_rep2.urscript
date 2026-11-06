@@ -1,0 +1,81 @@
+# URScript for Dual‑zone Pick‑Place (Hybrid Mode) – T011
+# Robot: UR5e, Payload: 1.2 kg
+# Max TCP speed: 300 mm/s, safety zones: confinement & exclusion
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(1.2, [0,0,0])               # payload in kg, centre of gravity
+set_tcp(p[0,0,0.1,0,0,0])               # example TCP offset (10 cm along Z)
+
+# Hybrid mode activation (requires appropriate controller setup)
+set_mode("hybrid")                     # switch to hybrid mode
+
+# Safety limits (speed in m/s, acceleration in m/s^2)
+set_safety_limits(
+    max_tcp_speed = 0.300,             # 300 mm/s
+    max_joint_speed = 1.5,             # rad/s (example)
+    max_tcp_acceleration = 1.0,        # m/s^2 (example)
+    max_joint_acceleration = 1.5)      # rad/s^2 (example)
+
+# -------------------------------------------------
+# Pose definitions (in meters)
+# -------------------------------------------------
+# Home position (joint configuration)
+p_home = p[-0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Above storage bin (Cartesian pose)
+p_above_bin = p[0.5, -0.2, 0.4, 0, 3.14, 0]
+
+# Pick position (descend)
+p_pick = p[0.5, -0.2, 0.1, 0, 3.14, 0]
+
+# Lift after pick
+p_lift = p[0.5, -0.2, 0.4, 0, 3.14, 0]
+
+# Hand‑off zone (operator handover)
+p_handoff = p[0.3, 0.4, 0.3, 0, 3.14, 0]
+
+# Additional poses for remaining moves
+p_safe = p[0.0, -0.5, 0.5, 0, 3.14, 0]   # safe standby pose
+p_idle = p[0.0, 0.0, 0.5, 0, 3.14, 0]    # idle pose
+p_home2 = p_home                         # return to home
+
+# -------------------------------------------------
+# Motion sequence
+# -------------------------------------------------
+# 1. Move to Home (joint move)
+set_joint_speed(250.0/1000)             # convert mm/s to m/s for joint speed scaling
+movej(p_home, a=1.4, v=250.0/1000)
+
+# 2. Move linear above storage bin
+set_cartesian_speed(280.0/1000)         # convert mm/s to m/s
+movel(p_above_bin, a=1.2, v=280.0/1000)
+
+# 3. Descend to pick
+set_cartesian_speed(120.0/1000)
+movel(p_pick, a=0.8, v=120.0/1000)
+
+# 4. Lift from bin
+set_cartesian_speed(200.0/1000)
+movel(p_lift, a=1.0, v=200.0/1000)
+
+# 5. Transit to hand‑off zone
+set_cartesian_speed(250.0/1000)
+movel(p_handoff, a=1.2, v=250.0/1000)
+
+# 6. Move to safe standby pose
+set_cartesian_speed(150.0/1000)
+movel(p_safe, a=1.0, v=150.0/1000)
+
+# 7. Return to Home
+set_joint_speed(250.0/1000)
+movej(p_home2, a=1.4, v=250.0/1000)
+
+# 8. Move to idle pose (await next command)
+set_cartesian_speed(100.0/1000)
+movel(p_idle, a=0.8, v=100.0/1000)
+
+# -------------------------------------------------
+# End of program
+# -------------------------------------------------

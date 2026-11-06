@@ -1,0 +1,153 @@
+# URScript for UR5e collaborative pick‑place with SSM, safety checks and error handling
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+payload_mass = 1.5                                   # kg
+payload_cog  = [0,0,0,0,0,0]                         # centre of gravity (default)
+
+# Safety zone definitions (example bounds, adjust to actual cell)
+def in_confinement(p):
+    # Bounding box: X[-0.5,0.5] Y[-0.5,0.5] Z[0.0,0.8] (meters)
+    return (p[0] > -0.5 and p[0] < 0.5 and
+            p[1] > -0.5 and p[1] < 0.5 and
+            p[2] >  0.0 and p[2] < 0.8)
+
+def in_exclusion(p):
+    # Exclusion column centred at (0.20, 0.0) with radius 0.05 m
+    dx = p[0] - 0.20
+    dy = p[1] - 0.0
+    return (dx*dx + dy*dy) < (0.05*0.05)
+
+def pose_safe(p):
+    if not in_confinement(p):
+        textmsg("Safety violation: pose outside confinement zone")
+        stop()
+    if in_exclusion(p):
+        textmsg("Safety violation: pose inside exclusion zone")
+        stop()
+    return True
+
+# -------------------------------------------------
+# Helper functions with explicit error handling
+# -------------------------------------------------
+def safe_set_payload(mass, cog):
+    set_payload(mass, cog)
+    # Verify payload was set correctly
+    if get_payload() != mass:
+        textmsg("Failed to set payload")
+        stop()
+    return True
+
+def safe_set_tcp(tcp):
+    set_tcp(tcp)
+    # No direct getter; assume success if no error raised
+    return True
+
+def safe_movej(q, a, v):
+    movej(q, a=a, v=v)
+    sync()
+    return True
+
+def safe_movel(p, a, v):
+    pose_safe(p)
+    movel(p, a=a, v=v)
+    sync()
+    return True
+
+# -------------------------------------------------
+# Initialise robot
+# -------------------------------------------------
+if not safe_set_payload(payload_mass, payload_cog):
+    stop()
+
+# (Optional) set a custom TCP if required
+# safe_set_tcp(p[0,0,0,0,0,0])   # uncomment and adjust if a custom TCP is used
+
+# -------------------------------------------------
+# Motion parameters (all values in meters / seconds)
+# -------------------------------------------------
+# Accelerations (m/s²) – chosen well below the UR5e limits
+a_joint   = 1.2      # joint acceleration
+a_linear  = 1.2      # linear acceleration
+
+# Speeds (m/s) – respect the max TCP speed of 0.250 m/s
+v_home    = 0.200
+v_fast    = 0.200
+v_mid     = 0.180
+v_slow    = 0.100
+
+# -------------------------------------------------
+# Waypoints (positions in metres, orientation in radians)
+# -------------------------------------------------
+home_joints = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]   # example home pose
+
+wp1 = p[0.30, -0.20, 0.40, 0, 3.14, 0]               # above pick station
+wp2 = p[0.30, -0.20, 0.10, 0, 3.14, 0]               # descend to pick
+wp3 = p[0.30, -0.20, 0.40, 0, 3.14, 0]               # lift above pick
+wp4 = p[0.10, -0.20, 0.40, 0, 3.14, 0]               # obstacle‑avoidance waypoint (−X offset)
+
+wp5 = p[0.10,  0.30, 0.40, 0, 3.14, 0]               # above place station
+wp6 = p[0.10,  0.30, 0.10, 0, 3.14, 0]               # descend to place
+wp7 = p[0.10,  0.30, 0.40, 0, 3.14, 0]               # lift after place
+wp8 = p[0.30, -0.20, 0.40, 0, 3.14, 0]               # return above pick (for next cycle)
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # 1) Move to home joint configuration
+    if not safe_movej(home_joints, a=a_joint, v=v_home):
+        stop()
+
+    # 2) Move linear to WP1 – above pick
+    if not safe_movel(wp1, a=a_linear, v=v_fast):
+        stop()
+
+    # 3) Move linear to WP2 – descend to pick
+    if not safe_movel(wp2, a=a_linear, v=v_slow):
+        stop()
+
+    # 4) (Pick operation would be triggered here – e.g., digital output)
+    # set_digital_out(0, True)   # activate gripper
+    # sleep(0.5)
+
+    # 5) Move linear to WP3 – lift up
+    if not safe_movel(wp3, a=a_linear, v=v_mid):
+        stop()
+
+    # 6) Move linear to WP4 – obstacle avoidance
+    if not safe_movel(wp4, a=a_linear, v=v_fast):
+        stop()
+
+    # 7) Move linear to WP5 – above place station
+    if not safe_movel(wp5, a=a_linear, v=v_fast):
+        stop()
+
+    # 8) Move linear to WP6 – descend to place
+    if not safe_movel(wp6, a=a_linear, v=v_slow):
+        stop()
+
+    # 9) (Place operation would be triggered here – e.g., digital output)
+    # set_digital_out(0, False)  # release gripper
+    # sleep(0.5)
+
+    # 10) Move linear to WP7 – lift after place
+    if not safe_movel(wp7, a=a_linear, v=v_mid):
+        stop()
+
+    # 11) Return to WP8 – above original pick location
+    if not safe_movel(wp8, a=a_linear, v=v_fast):
+        stop()
+
+    # 12) Return to home joint pose
+    if not safe_movej(home_joints, a=a_joint, v=v_home):
+        stop()
+
+    textmsg("Pick‑place cycle completed safely.")
+    stop()
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

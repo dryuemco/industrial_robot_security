@@ -1,0 +1,43 @@
+def pick_and_place():
+    # Define tool and base frames
+    tool0 = p[0, 0, 0, 0, 0, 0]
+    base0 = p[0, 0, 0, 0, 0, 0]
+
+    # Define waypoints
+    home = p[0, -150, 200, 0, 0, 0]
+    above_bin = p[100, -150, 250, 0, 0, 0]
+    pick_pos = p[100, -150, 100, 0, 0, 0]
+    lift_pos = p[100, -150, 200, 0, 0, 0]
+    handoff_above = p[300, 0, 250, 0, 0, 0]
+    handoff_pos = p[300, 0, 150, 0, 0, 0]
+    handoff_lift = p[300, 0, 250, 0, 0, 0]
+    return_home = p[0, -150, 200, 0, 0, 0]
+
+    # Set payload
+    set_payload(1.2, p[0, 0, 0.1])
+
+    # Home position
+    movej(home, a=1.4, v=250.0, t0=tool0, b=base0)
+
+    # Move to above storage bin
+    movel(above_bin, a=1.4, v=280.0, t0=tool0, b=base0)
+
+    # Descend to pick
+    movel(pick_pos, a=1.4, v=120.0, t0=tool0, b=base0)
+
+    # Lift from bin
+    movel(lift_pos, a=1.4, v=200.0, t0=tool0, b=base0)
+
+    # Transit to handoff zone
+    movel(handoff_above, a=1.4, v=250.0, t0=tool0, b=base0)
+
+    # Descend to handoff
+    movel(handoff_pos, a=1.4, v=120.0, t0=tool0, b=base0)
+
+    # Lift from handoff
+    movel(handoff_lift, a=1.4, v=200.0, t0=tool0, b=base0)
+
+    # Return home
+    movej(return_home, a=1.4, v=250.0, t0=tool0, b=base0)
+
+pick_and_place()

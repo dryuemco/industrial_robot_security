@@ -1,0 +1,88 @@
+# =============================================================================
+# Task: T002 — Linear weld path — fenced mode
+# Description: Single linear weld seam (300 mm length) in fenced automatic mode.
+# Robot: ur5e | Payload: 3.0 kg | Max TCP speed: 0.500 m/s
+# =============================================================================
+
+def task_T002():
+  # --- Configuration & Constants ---
+  # Welding Parameters
+  WELD_SPEED      = 0.05   # 50.0 mm/s
+  APPROACH_SPEED  = 0.25   # 250.0 mm/s
+  DESCEND_SPEED   = 0.10   # 100.0 mm/s
+  RETRACT_SPEED   = 0.20   # 200.0 mm/s
+  
+  # IO Mapping
+  IO_ARC_ENABLE   = 0
+  IO_GAS_VALVE    = 1
+  AO_CURRENT      = 0
+  AO_WIRE_FEED    = 1
+  
+  # Process Timing
+  GAS_PRE_FLOW    = 0.5
+  GAS_POST_FLOW   = 1.0
+
+  # --- Initialization ---
+  # Set payload (3.0 kg, Center of Mass assumed at TCP for simplicity)
+  set_payload(3.0, [0.0, 0.0, 0.0])
+
+  # [0] Safety Check (Simulation Placeholder)
+  # Verifies external E-Stop signal before proceeding
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # --- Motion Sequence ---
+
+  # [1] Move to Home Position
+  # Joint move to reset configuration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=1.0000)
+
+  # [2] Approach Above Weld Start
+  # Linear move to safe height above start point
+  movel(p[0.450000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.0000, v=APPROACH_SPEED, r=0.0100)
+
+  # [3] Descend to Weld Start Position
+  # Precise vertical descent to start the seam
+  movel(p[0.450000, 0.000000, 0.200000, 0.0000, 3.1416, 0.0000], a=0.5000, v=DESCEND_SPEED, r=0.0)
+
+  # --- Welding Sequence Start ---
+  
+  # [4] Gas Pre-flow
+  set_digital_out(IO_GAS_VALVE, True)
+  sleep(GAS_PRE_FLOW)
+
+  # [5] Arc Ignition
+  set_digital_out(IO_ARC_ENABLE, True)
+  set_analog_out(AO_CURRENT, 0.400)   # Normalized Current
+  set_analog_out(AO_WIRE_FEED, 0.333) # Normalized Wire Feed
+
+  # [6] Execute Weld Seam
+  # 300mm linear path at constant weld speed
+  movel(p[0.450000, 0.300000, 0.200000, 0.0000, 3.1416, 0.0000], a=0.2000, v=WELD_SPEED, r=0.0)
+
+  # --- Welding Sequence End ---
+
+  # [7] Arc Extinguish
+  set_digital_out(IO_ARC_ENABLE, False)
+  set_analog_out(AO_CURRENT, 0.0)
+  set_analog_out(AO_WIRE_FEED, 0.0)
+
+  # [8] Gas Post-flow
+  sleep(GAS_POST_FLOW)
+  set_digital_out(IO_GAS_VALVE, False)
+
+  # --- Motion Completion ---
+
+  # [9] Retract Above Weld End
+  # Vertical lift to clear the workpiece
+  movel(p[0.450000, 0.300000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.0000, v=RETRACT_SPEED, r=0.0100)
+
+  # [10] Return to Home Position
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=1.0000)
+
+end
+
+# Entry Point
+task_T002()

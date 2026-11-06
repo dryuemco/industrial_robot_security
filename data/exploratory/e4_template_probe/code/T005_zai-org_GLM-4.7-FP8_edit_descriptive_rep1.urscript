@@ -1,0 +1,87 @@
+# Task: T005 — Visual inspection scan — collaborative mode (Improved)
+# Description: Camera-based visual inspection scan over a 200x200 mm part surface.
+# Raster pattern (3 scan lines). Collaborative mode at low speed.
+# Robot: ur5e | Payload: 0.3 kg | Max TCP speed: 150.0 mm/s
+
+def task_T005():
+  # --- Configuration & Variables ---
+  # Orientation: Pointing strictly downward (180 deg rotation around Y)
+  pose_orient = [0.0000, 3.1416, 0.0000]
+  
+  # Scan Area: 200x200mm, starting at X=0.25, Y=-0.1
+  scan_height = 0.150
+  safe_height = 0.300
+  x_start = 0.250
+  x_step  = 0.100
+  y_min   = -0.100
+  y_max   = 0.100
+  
+  # Speeds (m/s or rad/s)
+  v_joint_home = 1.0      # ~57 deg/s, collaborative
+  v_approach   = 0.130
+  v_descend    = 0.080
+  v_scan       = 0.050
+  v_step       = 0.080
+  v_retract    = 0.120
+  
+  # Accelerations (m/s^2 or rad/s^2)
+  a_joint = 1.4
+  a_linear = 0.4
+  a_scan   = 0.2
+  
+  # Blending radius (meters)
+  blend_precise = 0.005
+  blend_coarse  = 0.010
+
+  # --- Initialization ---
+  # Set payload for improved motion accuracy (0.3 kg)
+  set_payload(0.3)
+  
+  # Safety Check: E-Stop status (Digital Input 0)
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # --- Motion Sequence ---
+  
+  # [1] Move to Home Position
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=a_joint, v=v_joint_home)
+  
+  # [2] Approach Inspection Start (Above surface)
+  movel(p[x_start, y_min, safe_height, pose_orient], a=a_linear, v=v_approach, r=blend_coarse)
+  
+  # [3] Descend to Scan Height
+  movel(p[x_start, y_min, scan_height, pose_orient], a=a_linear, v=v_descend, r=blend_precise)
+  
+  # [4] Start Camera Trigger
+  set_digital_out(2, True)
+  
+  # [5] Scan Line 1: Y Sweep (Min -> Max)
+  movel(p[x_start, y_max, scan_height, pose_orient], a=a_scan, v=v_scan, r=blend_precise)
+  
+  # [6] Step to Scan Line 2 (+X)
+  movel(p[x_start + x_step, y_max, scan_height, pose_orient], a=a_linear, v=v_step, r=blend_precise)
+  
+  # [7] Scan Line 2: Reverse Y Sweep (Max -> Min)
+  movel(p[x_start + x_step, y_min, scan_height, pose_orient], a=a_scan, v=v_scan, r=blend_precise)
+  
+  # [8] Step to Scan Line 3 (+X)
+  movel(p[x_start + (2*x_step), y_min, scan_height, pose_orient], a=a_linear, v=v_step, r=blend_precise)
+  
+  # [9] Scan Line 3: Y Sweep (Min -> Max)
+  movel(p[x_start + (2*x_step), y_max, scan_height, pose_orient], a=a_scan, v=v_scan, r=0.0)
+  
+  # [10] Stop Camera Trigger
+  set_digital_out(2, False)
+  
+  # [11] Retract to Safe Height (Center of part)
+  movel(p[0.350000, 0.000000, safe_height, pose_orient], a=a_linear, v=v_retract, r=blend_coarse)
+  
+  # [12] Return to Home Position
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=a_joint, v=v_joint_home)
+  
+end
+
+# Execute Task
+task_T005()

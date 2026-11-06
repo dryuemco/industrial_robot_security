@@ -3,9 +3,8 @@
 """SM-6 split for the frontier run behind Table 7 ("49.2% under SM-6 only"), and the
 frontier prompts checked for a tool-centre-point offset.
 
-Input: results/E1_frontier/ (code/, e1_results.csv, logs/idun_log.jsonl). That directory
-is outside version control; when it is absent the script prints a notice and leaves its
-committed outputs as they are.
+Input: data/exploratory/E1_frontier/ (code/, e1_results.csv, logs/idun_log.jsonl), copied from
+results/E1_frontier/ by s13_import_runs.py; no file of this run needed masking.
 
 Outputs under out/f2/:
   frontier_programs.csv     one row per stored frontier program: model, condition, gates,
@@ -27,7 +26,7 @@ from common import REPO, TABLES, get_flag, load_tasks, out, sr, violations
 
 from enfield_watchdog_static.rules.sm6_missing_preamble import _FIRST_MOTION_RE  # noqa: E402
 
-FRONTIER = REPO / "results" / "E1_frontier"
+FRONTIER = REPO / "data" / "exploratory" / "E1_frontier"  # copied from results/ by s13_import_runs.py
 NAME = re.compile(r"^(T\d{3})_(.+)_(baseline|safety)_rep(\d)(\.invalid)?\.urscript$")
 SET_TCP = re.compile(r"\bset_tcp\s*\(", re.I)
 SET_PAYLOAD = re.compile(r"\bset_payload\s*\(", re.I)
@@ -123,8 +122,7 @@ def main() -> None:
         print("STOP: data_mismatch flag set by s00_provenance.py")
         return
     if not (FRONTIER / "code").is_dir():
-        print(f"SKIP s12: {FRONTIER.relative_to(REPO)} is not in this checkout (outside version control); "
-              "the committed out/f2/ files are left as they are")
+        print(f"SKIP s12: {FRONTIER.relative_to(REPO)} is not in this checkout")
         return
     p = programs()
     p.to_csv(out("f2", "frontier_programs.csv"), index=False)

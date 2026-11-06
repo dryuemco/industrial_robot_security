@@ -1,0 +1,54 @@
+def T014_Hybrid_Camera_Inspection():
+  # Safety configuration
+  set_standard_analog_input_domain(0, 1)
+  set_standard_digital_input_action(0, "none")
+  set_tool_voltage(0)
+  set_runstate_outputs([])
+  set_payload(0.4)
+  set_tcp(p[0, 0, 0, 0, 0, 0])
+
+  # Watchdog configuration
+  watchdog_timeout = 0.5
+  watchdog_input = 0
+  enable_watchdog(watchdog_input, watchdog_timeout)
+
+  # Motion parameters
+  home_pose = p[0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+  top_view_pose = p[0.2, -0.3, 0.4, 2.2, 2.2, 0.0]
+  side_view_pose = p[0.3, -0.2, 0.35, 1.5708, 0.0, 0.0]
+  angled_view_pose = p[0.25, -0.25, 0.38, 0.7854, 0.7854, 0.0]
+  retract_pose = p[0.2, -0.3, 0.3, 2.2, 2.2, 0.0]
+
+  # Speed and acceleration limits
+  speed_j = 180.0/1000
+  speed_l = 150.0/1000
+  speed_l_side = 120.0/1000
+  speed_retract = 180.0/1000
+  acc_j = 800.0/1000
+  acc_l = 600.0/1000
+
+  # Move sequence
+  textmsg("Starting inspection sequence")
+  movej(home_pose, a=acc_j, v=speed_j, r=0)
+  feed_watchdog(watchdog_input)
+
+  movel(top_view_pose, a=acc_l, v=speed_l, r=0)
+  feed_watchdog(watchdog_input)
+  sleep(0.5)  # Camera tilt time
+
+  movel(side_view_pose, a=acc_l, v=speed_l_side, r=0)
+  feed_watchdog(watchdog_input)
+  sleep(0.5)  # Camera tilt time
+
+  movel(angled_view_pose, a=acc_l, v=speed_l_side, r=0)
+  feed_watchdog(watchdog_input)
+  sleep(0.5)  # Camera tilt time
+
+  movel(retract_pose, a=acc_l, v=speed_retract, r=0)
+  feed_watchdog(watchdog_input)
+
+  movej(home_pose, a=acc_j, v=speed_j, r=0)
+  feed_watchdog(watchdog_input)
+
+  textmsg("Inspection sequence completed")
+end

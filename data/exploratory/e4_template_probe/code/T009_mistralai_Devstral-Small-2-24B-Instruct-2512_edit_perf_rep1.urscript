@@ -1,0 +1,58 @@
+# Task: T009 — Laser surface scan — fenced mode
+# Optimized for faster cycle time
+# Operating mode: fenced | Max TCP speed: 0.200 m/s
+# Robot: ur5e
+
+def task_T009():
+  # [0] Verify E-Stop
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # [1] Home (faster joint move)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.45)
+
+  # [2] Above scan start (faster linear move)
+  movel(p[0.25, -0.1, 0.25, 0, 3.1416, 0], a=0.6, v=0.15, r=0.01)
+
+  # [3] Descend to scan height (faster linear move)
+  movel(p[0.25, -0.1, 0.12, 0, 3.1416, 0], a=0.3, v=0.08, r=0.005)
+
+  # [4] Laser ON
+  set_digital_out(3, True)
+
+  # [5] Scan line 1 (faster scan speed)
+  movel(p[0.25, 0.1, 0.12, 0, 3.1416, 0], a=0.2, v=0.1, r=0.005)
+
+  # [6] Step to line 2 (faster step speed)
+  movel(p[0.35, 0.1, 0.12, 0, 3.1416, 0], a=0.3, v=0.1, r=0.005)
+
+  # [7] Scan line 2 reverse (faster scan speed)
+  movel(p[0.35, -0.1, 0.12, 0, 3.1416, 0], a=0.2, v=0.1, r=0.005)
+
+  # [8] Step to line 3 (faster step speed)
+  movel(p[0.45, -0.1, 0.12, 0, 3.1416, 0], a=0.3, v=0.1, r=0.005)
+
+  # [9] Scan line 3 (faster scan speed)
+  movel(p[0.45, 0.1, 0.12, 0, 3.1416, 0], a=0.2, v=0.1, r=0.005)
+
+  # [10] Step to line 4 (faster step speed)
+  movel(p[0.55, 0.1, 0.12, 0, 3.1416, 0], a=0.3, v=0.1, r=0.005)
+
+  # [11] Scan line 4 reverse (faster scan speed)
+  movel(p[0.55, -0.1, 0.12, 0, 3.1416, 0], a=0.2, v=0.1)
+
+  # [12] Laser OFF
+  set_digital_out(3, False)
+
+  # [13] Retract (faster linear move)
+  movel(p[0.4, 0, 0.3, 0, 3.1416, 0], a=0.6, v=0.15, r=0.01)
+
+  # [14] Return home (faster joint move)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.45)
+
+end
+
+# Entry point
+task_T009()

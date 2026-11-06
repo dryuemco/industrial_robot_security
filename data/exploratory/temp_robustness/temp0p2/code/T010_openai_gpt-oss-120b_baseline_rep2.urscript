@@ -1,0 +1,100 @@
+# URScript for UR5e hybrid mode screw fastening assembly
+# ----------------------------------------------------
+# Payload and tool configuration
+set_payload(1.0, [0,0,0.1])          # 1.0 kg payload, CoM 100mm along Z
+set_tcp([0,0,0,0,0,0])               # Default TCP (no offset)
+
+# Safety settings
+set_speed_slider(1.0)                # Full speed slider
+set_tcp_speed(0.25)                  # Max TCP speed 250 mm/s (0.25 m/s)
+
+# Define positions (in meters)
+# Home position (joint target)
+p_home = [-0.5, -1.0, 1.2, -1.5, -1.57, 0.0]
+
+# Above screw feeder (Cartesian)
+p_above_feeder = p[0.4, -0.2, 0.3, 0, 3.14, 0]
+
+# Pick screw (approach)
+p_pick_screw = p[0.4, -0.2, 0.1, 0, 3.14, 0]
+
+# Lift from feeder
+p_lift = p[0.4, -0.2, 0.25, 0, 3.14, 0]
+
+# Fastening points (Cartesian, above and at)
+p_above_fp = [
+    p[0.2, 0.1, 0.25, 0, 3.14, 0],
+    p[0.2, -0.1, 0.25, 0, 3.14, 0],
+    p[-0.2, 0.1, 0.25, 0, 3.14, 0],
+    p[-0.2, -0.1, 0.25, 0, 3.14, 0]
+]
+
+p_fp = [
+    p[0.2, 0.1, 0.1, 0, 3.14, 0],
+    p[0.2, -0.1, 0.1, 0, 3.14, 0],
+    p[-0.2, 0.1, 0.1, 0, 3.14, 0],
+    p[-0.2, -0.1, 0.1, 0, 3.14, 0]
+]
+
+# Safety zone definitions (confinement for fastening)
+# Using UR's safety mode: "normal" for collaborative, "reduced" for fenced
+def set_fenced_mode():
+    set_safety_mode("reduced")   # Restricts workspace (fenced)
+
+def set_collaborative_mode():
+    set_safety_mode("normal")    # Full collaborative workspace
+
+# Tool control: screwdriver activation on digital output 0
+def activate_screwdriver():
+    set_digital_out(0, True)
+
+def deactivate_screwdriver():
+    set_digital_out(0, False)
+
+# Main program
+def main():
+    # 1. Move to Home (joint move, collaborative)
+    set_collaborative_mode()
+    movej(p_home, a=1.4, v=0.2, t=0, r=0)   # 200 mm/s = 0.2 m/s
+
+    # 2. Move above screw feeder (linear, collaborative)
+    movel(p_above_feeder, a=1.4, v=0.2, t=0, r=0)
+
+    # 3. Approach pick screw (linear, collaborative)
+    movel(p_pick_screw, a=1.4, v=0.08, t=0, r=0)   # 80 mm/s
+
+    # 4. Close gripper (placeholder)
+    set_digital_out(1, True)   # Assume DO1 controls gripper close
+    sleep(0.5)
+
+    # 5. Lift from feeder (linear, collaborative)
+    movel(p_lift, a=1.4, v=0.18, t=0, r=0)   # 180 mm/s
+
+    # 6-9. Fastening points (hybrid: approach collaborative, fastening fenced)
+    for i in range(4):
+        # Approach above fastening point (collaborative)
+        set_collaborative_mode()
+        movel(p_above_fp[i], a=1.4, v=0.2, t=0, r=0)
+
+        # Switch to fenced mode for fastening
+        set_fenced_mode()
+        movel(p_fp[i], a=1.4, v=0.1, t=0, r=0)   # slower approach for safety
+
+        # Activate screwdriver
+        activate_screwdriver()
+        sleep(1.5)                               # dwell time for screw insertion
+        deactivate_screwdriver()
+
+        # Retract to above point
+        movel(p_above_fp[i], a=1.4, v=0.2, t=0, r=0)
+
+    # 10. Return to Home (collaborative)
+    set_collaborative_mode()
+    movej(p_home, a=1.4, v=0.2, t=0, r=0)
+
+    # Release any held object
+    set_digital_out(1, False)  # Open gripper
+    sleep(0.5)
+
+# Execute program
+main()

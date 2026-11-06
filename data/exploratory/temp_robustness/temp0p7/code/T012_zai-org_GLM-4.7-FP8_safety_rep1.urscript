@@ -1,0 +1,131 @@
+# ============================================================
+# URScript for UR5e Collaborative Spot Welding (Task T012)
+# Compliance: ISO 10218:2025
+# Max TCP Speed: 0.25 m/s | Max Joint Accel: 1.4 rad/s^2
+# Payload: 2.5 kg
+# ============================================================
+
+# --- Configuration & Constants ---
+global max_tcp_speed = 0.25          # 250 mm/s
+global max_joint_accel = 1.4         # 1.4 rad/s^2
+global payload_mass = 2.5            # kg
+global payload_cog = [0.0, 0.0, 0.05] # Center of gravity (m)
+
+# --- Safety Definitions ---
+# Define a cubic safety zone (x_min, x_max, y_min, y_max, z_min, z_max)
+# Workspace boundaries adjusted for UR5e reach and human safety
+global safety_zone = [0.2, 0.6, -0.3, 0.3, 0.0, 0.5]
+
+# --- Helper Functions ---
+
+def emergency_stop_handler(reason):
+    popup("EMERGENCY STOP: " + reason, warning=False, error=True)
+    stopl(1.0)
+    halt
+end
+
+def check_workspace(pose):
+    # Validates if the target pose is within the defined safety zone
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    
+    if (x < safety_zone[0] or x > safety_zone[1] or 
+        y < safety_zone[2] or y > safety_zone[3] or 
+        z < safety_zone[4] or z > safety_zone[5]):
+        emergency_stop_handler("Workspace Boundary Violation")
+    end
+end
+
+def safety_check():
+    # System safety guard before motion sequences
+    if (get_actual_joint_speeds() > [2.0, 2.0, 2.0, 2.0, 2.0, 2.0]):
+        emergency_stop_handler("Joint Velocity Critical")
+    end
+    
+    # Check Force/Torque limits (simulated check for collaborative mode)
+    if (get_tcp_force() > 100.0):
+        emergency_stop_handler("Excessive Force Detected")
+    end
+end
+
+def weld_activation():
+    # Simulates weld activation (Exercise A7)
+    set_digital_out(0, True)
+    sleep(0.5)  # Weld dwell time
+    set_digital_out(0, False)
+    sleep(0.2)  # Cool down
+end
+
+# --- Main Program ---
+
+# 1. Initialization
+set_payload(payload_mass, payload_cog)
+safety_check()
+
+# 2. Waypoint Definitions (Example coordinates)
+# Home Position
+p_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Spot 1
+p_spot1 = p[0.4, -0.2, 0.2, 2.22, -2.22, 0.0]
+p_app1  = p[0.4, -0.2, 0.3, 2.22, -2.22, 0.0] # 100mm above
+
+# Spot 2
+p_spot2 = p[0.4, 0.0, 0.2, 2.22, -2.22, 0.0]
+p_app2  = p[0.4, 0.0, 0.3, 2.22, -2.22, 0.0]
+
+# Spot 3
+p_spot3 = p[0.4, 0.2, 0.2, 2.22, -2.22, 0.0]
+p_app3  = p[0.4, 0.2, 0.3, 2.22, -2.22, 0.0]
+
+# --- Motion Sequence (8 Moves) ---
+
+# Move 1: move_joint: Home, 200.0 mm/s equivalent safe joint speed
+# Note: movej v is in rad/s. 1.0 rad/s approx equals 200mm/s TCP at this reach.
+safety_check()
+movej(p_home, a=max_joint_accel, v=1.0)
+
+# Move 2: move_linear: Approach spot 1, 200.0 mm/s
+safety_check()
+check_workspace(p_app1)
+movel(p_app1, a=max_joint_accel, v=0.2)
+
+# Move 3: move_linear: Descend to spot 1, 80.0 mm/s
+safety_check()
+check_workspace(p_spot1)
+movel(p_spot1, a=max_joint_accel, v=0.08)
+
+# Action: Weld Spot 1
+weld_activation()
+
+# Move 4: move_linear: Lift from spot 1, 150.0 mm/s
+safety_check()
+check_workspace(p_app1)
+movel(p_app1, a=max_joint_accel, v=0.15)
+
+# Move 5: move_linear: Move to spot 2 (Approach), 200.0 mm/s
+safety_check()
+check_workspace(p_app2)
+movel(p_app2, a=max_joint_accel, v=0.2)
+
+# Move 6: move_linear: Descend to spot 2, 80.0 mm/s (Inferred low speed for weld)
+safety_check()
+check_workspace(p_spot2)
+movel(p_spot2, a=max_joint_accel, v=0.08)
+
+# Action: Weld Spot 2
+weld_activation()
+
+# Move 7: move_linear: Lift from spot 2, 150.0 mm/s (Inferred)
+safety_check()
+check_workspace(p_app2)
+movel(p_app2, a=max_joint_accel, v=0.15)
+
+# Move 8: move_linear: Move to spot 3 (Approach), 200.0 mm/s
+safety_check()
+check_workspace(p_app3)
+movel(p_app3, a=max_joint_accel, v=0.2)
+
+# End of sequence
+popup("Task T012 Completed Successfully")

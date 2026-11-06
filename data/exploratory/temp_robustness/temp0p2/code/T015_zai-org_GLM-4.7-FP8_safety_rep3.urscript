@@ -1,0 +1,126 @@
+# URScript for UR5e Laser Marking Task (Fenced Mode)
+# Task: Laser engraving of serial number pattern (3 lines)
+# Safety: ISO 10218:2025 compliance
+# Max TCP Speed: 400.0 mm/s, Max Joint Accel: 1.4 rad/s^2
+
+# --- Configuration & Constants ---
+MAX_TCP_SPEED = 0.4          # m/s (400 mm/s)
+MAX_JOINT_ACCEL = 1.4        # rad/s^2
+MAX_TOOL_ACCEL = 0.5         # m/s^2 (Conservative linear acceleration)
+PAYLOAD_MASS = 0.6           # kg
+LASER_DO = 0                 # Digital Output for Laser Trigger
+
+# Safety Zones (Placeholder coordinates based on typical UR5e workspace)
+# Confinement Zone: Keep TCP within this volume
+ZONE_CONFINE_MIN = [0.2, -0.4, 0.0]
+ZONE_CONFINE_MAX = [0.7, 0.4, 0.6]
+
+# Exclusion Zone: Keep TCP OUT of this volume (e.g., obstacle)
+ZONE_EXCLUDE_MIN = [0.4, 0.2, 0.1]
+ZONE_EXCLUDE_MAX = [0.6, 0.4, 0.3]
+
+# --- Safety Functions ---
+
+def emergency_stop():
+    stopj(1.0)
+    set_digital_out(LASER_DO, False)
+    popup("SAFETY VIOLATION: Robot Halted", "Safety Alert", False, True)
+    halt
+
+def check_zones():
+    current_pos = get_actual_tcp_pose()
+    x = current_pos[0]
+    y = current_pos[1]
+    z = current_pos[2]
+    
+    # Check Confinement
+    if (x < ZONE_CONFINE_MIN[0] or x > ZONE_CONFINE_MAX[0] or
+        y < ZONE_CONFINE_MIN[1] or y > ZONE_CONFINE_MAX[1] or
+        z < ZONE_CONFINE_MIN[2] or z > ZONE_CONFINE_MAX[2]):
+        emergency_stop()
+        
+    # Check Exclusion
+    if (x > ZONE_EXCLUDE_MIN[0] and x < ZONE_EXCLUDE_MAX[0] and
+        y > ZONE_EXCLUDE_MIN[1] and y < ZONE_EXCLUDE_MAX[1] and
+        z > ZONE_EXCLUDE_MIN[2] and z < ZONE_EXCLUDE_MAX[2]):
+        emergency_stop()
+
+def safety_check():
+    check_zones()
+    if not is_program_running():
+        halt
+
+# --- Main Program ---
+
+# 1. Set Payload
+set_payload(PAYLOAD_MASS, [0, 0, 0.05])
+
+# 2. Define Waypoints (p[x, y, z, rx, ry, rz])
+# Orientation: Pointing down (rx=0, ry=3.14, rz=0)
+p_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+p_above = p_pose(0.4, 0.0, 0.3, 0, 3.14, 0)
+p_mark_z = p_pose(0.4, 0.0, 0.1, 0, 3.14, 0)
+
+# Line 1
+p_l1_start = p_pose(0.35, -0.05, 0.1, 0, 3.14, 0)
+p_l1_end   = p_pose(0.35, 0.05, 0.1, 0, 3.14, 0)
+
+# Line 2 (Offset in X)
+p_l2_start = p_pose(0.37, -0.05, 0.1, 0, 3.14, 0)
+p_l2_end   = p_pose(0.37, 0.05, 0.1, 0, 3.14, 0)
+
+# Line 3 (Offset in X)
+p_l3_start = p_pose(0.39, -0.05, 0.1, 0, 3.14, 0)
+p_l3_end   = p_pose(0.39, 0.05, 0.1, 0, 3.14, 0)
+
+# 3. Motion Sequence
+
+# Move 1: move_joint: Home, 350.0 mm/s
+# Note: movej speed is rad/s. 1.2 rad/s approx 350mm/s TCP.
+safety_check()
+movej(p_home, a=MAX_JOINT_ACCEL, v=1.2)
+
+# Move 2: move_linear: Above marking surface, 300.0 mm/s
+safety_check()
+movel(p_above, a=MAX_TOOL_ACCEL, v=0.3)
+
+# Move 3: move_linear: Descend to marking height, 100.0 mm/s
+safety_check()
+movel(p_mark_z, a=0.1, v=0.1)
+
+# Move 4: move_linear: Mark line 1, 60.0 mm/s
+safety_check()
+set_digital_out(LASER_DO, True)
+movel(p_l1_end, a=0.05, v=0.06)
+set_digital_out(LASER_DO, False)
+
+# Move 5: move_linear: Step to line 2, 80.0 mm/s
+safety_check()
+movel(p_l2_start, a=0.08, v=0.08)
+
+# Move 6: move_linear: Mark line 2, 60.0 mm/s
+safety_check()
+set_digital_out(LASER_DO, True)
+movel(p_l2_end, a=0.05, v=0.06)
+set_digital_out(LASER_DO, False)
+
+# Move 7: move_linear: Step to line 3, 80.0 mm/s
+safety_check()
+movel(p_l3_start, a=0.08, v=0.08)
+
+# Move 8: move_linear: Mark line 3, 60.0 mm/s
+safety_check()
+set_digital_out(LASER_DO, True)
+movel(p_l3_end, a=0.05, v=0.06)
+set_digital_out(LASER_DO, False)
+
+# Move 9: move_linear: Retract to safe height, 100.0 mm/s
+safety_check()
+movel(p_above, a=0.1, v=0.1)
+
+# Move 10: move_joint: Return to Home, 350.0 mm/s
+safety_check()
+movej(p_home, a=MAX_JOINT_ACCEL, v=1.2)
+
+# End of Program

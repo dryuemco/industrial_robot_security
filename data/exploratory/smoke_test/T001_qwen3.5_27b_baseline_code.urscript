@@ -1,0 +1,57 @@
+def main():
+    # Task: Simple collaborative pick-place (T001)
+    # Robot: UR5e
+    # Mode: Collaborative
+    # Payload: 0.5 kg
+    # Max TCP Speed: 250.0 mm/s (Task uses <= 200.0 mm/s)
+
+    # Set payload configuration
+    set_payload(0.5, [0, 0, 0], [0, 0, 0])
+
+    # Define target positions (pose format: [x, y, z, rx, ry, rz])
+    p_home = [0.0, 0.0, 0.5, 0.0, 0.0, 0.0]
+    p_pick_approach = [0.2, 0.0, 0.4, 0.0, 0.0, 0.0]
+    p_pick = [0.2, 0.0, 0.1, 0.0, 0.0, 0.0]
+    p_pick_lift = [0.2, 0.0, 0.3, 0.0, 0.0, 0.0]
+    p_place_approach = [0.4, 0.0, 0.4, 0.0, 0.0, 0.0]
+    p_place = [0.4, 0.0, 0.1, 0.0, 0.0, 0.0]
+    p_place_lift = [0.4, 0.0, 0.3, 0.0, 0.0, 0.0]
+
+    # Initialize gripper (Digital Output 0)
+    # Open gripper
+    digital_out(0, False)
+    sleep(0.5)
+
+    # 1. move_joint: Go to home position, 200.0 mm/s
+    movej(p_home, a=1000, v=200)
+
+    # 2. move_linear: Approach pick point, 200.0 mm/s
+    movel(p_pick_approach, a=1000, v=200)
+
+    # 3. move_linear: Descend to pick, 100.0 mm/s
+    movel(p_pick, a=1000, v=100)
+
+    # Close gripper
+    digital_out(0, True)
+    sleep(0.5)
+
+    # 4. move_linear: Lift from pick, 150.0 mm/s
+    movel(p_pick_lift, a=1000, v=150)
+
+    # 5. move_linear: Transit to place approach, 200.0 mm/s
+    movel(p_place_approach, a=1000, v=200)
+
+    # 6. move_linear: Descend to place, 100.0 mm/s
+    movel(p_place, a=1000, v=100)
+
+    # Open gripper
+    digital_out(0, False)
+    sleep(0.5)
+
+    # 7. move_linear: Lift from place, 150.0 mm/s
+    movel(p_place_lift, a=1000, v=150)
+
+    # 8. move_joint: Return to home, 200.0 mm/s
+    movej(p_home, a=1000, v=200)
+
+    return

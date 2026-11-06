@@ -1,0 +1,76 @@
+# Visual inspection scan for UR5e
+# Task: T005 - Collaborative Raster Scan
+# Payload: 0.3 kg
+# Max Speed: 150 mm/s
+
+def inspection_scan_t005():
+  # --- Configuration ---
+  # Set payload (mass, center_of_gravity)
+  # 0.3 kg payload, CoG approx 50mm along Z-axis of tool
+  set_payload(0.3, [0, 0, 0.05])
+
+  # Orientation: Camera pointing strictly downward
+  # Rotation vector [rx, ry, rz]. ry=pi (180 deg) points tool Z down
+  r_down = [0, 3.14159, 0]
+
+  # Scan Area Definition (Meters)
+  # Part surface 200x200mm. Scan height 150mm.
+  # Origin of part assumed at X=0.5, Y=0.0 in Base Frame
+  x_origin = 0.5
+  y_min = -0.1
+  y_max = 0.1
+  z_scan = 0.15
+  z_safe = 0.30
+  x_step = 0.1 # 100mm spacing for 3 lines over 200mm
+
+  # Joint Home Position
+  j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+  # --- Motion Sequence ---
+
+  # 1. move_joint: Home position, 150.0 mm/s
+  movej(j_home, a=1.4, v=0.15)
+
+  # 2. move_linear: Approach inspection start — above surface, 130.0 mm/s
+  p_approach = p[x_origin, y_min, z_safe, r_down[0], r_down[1], r_down[2]]
+  movel(p_approach, a=0.5, v=0.13)
+
+  # 3. move_linear: Descend to scan height (150 mm above part), 80.0 mm/s
+  p_start = p[x_origin, y_min, z_scan, r_down[0], r_down[1], r_down[2]]
+  movel(p_start, a=0.5, v=0.08)
+
+  # 4. move_linear: Scan line 1 — Y sweep, 50.0 mm/s
+  # Sweep from Y=-0.1 to Y=0.1
+  p_line1_end = p[x_origin, y_max, z_scan, r_down[0], r_down[1], r_down[2]]
+  movel(p_line1_end, a=0.2, v=0.05)
+
+  # 5. move_linear: Step to scan line 2 (+X), 80.0 mm/s
+  x_line2 = x_origin + x_step
+  p_line2_start = p[x_line2, y_max, z_scan, r_down[0], r_down[1], r_down[2]]
+  movel(p_line2_start, a=0.5, v=0.08)
+
+  # 6. move_linear: Scan line 2 — Y sweep (Return), 50.0 mm/s
+  # Sweep from Y=0.1 to Y=-0.1
+  p_line2_end = p[x_line2, y_min, z_scan, r_down[0], r_down[1], r_down[2]]
+  movel(p_line2_end, a=0.2, v=0.05)
+
+  # 7. move_linear: Step to scan line 3 (+X), 80.0 mm/s
+  x_line3 = x_line2 + x_step
+  p_line3_start = p[x_line3, y_min, z_scan, r_down[0], r_down[1], r_down[2]]
+  movel(p_line3_start, a=0.5, v=0.08)
+
+  # 8. move_linear: Scan line 3 — Y sweep, 50.0 mm/s
+  # Sweep from Y=-0.1 to Y=0.1
+  p_line3_end = p[x_line3, y_max, z_scan, r_down[0], r_down[1], r_down[2]]
+  movel(p_line3_end, a=0.2, v=0.05)
+
+  # 9. move_linear: Retract to safe height, 80.0 mm/s
+  movel(p_approach, a=0.5, v=0.08)
+
+  # 10. move_joint: Return to Home, 150.0 mm/s
+  movej(j_home, a=1.4, v=0.15)
+
+end
+
+# Execute the program
+inspection_scan_t005()

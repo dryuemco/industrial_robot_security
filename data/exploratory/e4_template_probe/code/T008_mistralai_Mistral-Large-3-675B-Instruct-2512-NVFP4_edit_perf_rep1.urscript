@@ -1,0 +1,53 @@
+# Task: T008 — Heavy depalletizing — fenced mode (Optimized)
+# Optimized for faster cycle time while maintaining safety
+
+def task_T008():
+  # [0] Verify E-Stop
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # Set payload at program start
+  set_payload(5.0)
+
+  # [1] Home - Increased acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=3.0000, v=1.5000)
+
+  # [2] Above pallet - Increased speed and acceleration
+  movel(p[0.500000, -0.250000, 0.500000, 0.0000, 3.1416, 0.0000], a=3.0000, v=0.4500, r=0.0200)
+
+  # [3] Descend to top layer - Optimized acceleration
+  movel(p[0.500000, -0.250000, 0.320000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.2000)
+
+  # [4] Gripper CLOSE - Parallel with motion
+  set_digital_out(0, True)
+
+  # [5] Grip settle - Reduced time
+  sleep(0.2000)
+
+  # [6] Lift box - Increased speed and acceleration
+  movel(p[0.500000, -0.250000, 0.500000, 0.0000, 3.1416, 0.0000], a=2.0000, v=0.3500, r=0.0150)
+
+  # [7] Transit to conveyor - Increased speed and acceleration
+  movel(p[0.500000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=3.0000, v=0.4500, r=0.0200)
+
+  # [8] Place on conveyor - Optimized acceleration
+  movel(p[0.500000, 0.250000, 0.120000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.2000)
+
+  # [9] Gripper OPEN - Parallel with motion
+  set_digital_out(0, False)
+
+  # [10] Release settle - Reduced time
+  sleep(0.1000)
+
+  # [11] Retract - Increased speed and acceleration
+  movel(p[0.500000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=3.0000, v=0.4500, r=0.0100)
+
+  # [12] Return home - Increased acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=3.0000, v=1.5000)
+
+end
+
+# Entry point
+task_T008()

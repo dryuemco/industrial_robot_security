@@ -1,0 +1,42 @@
+def heavy_depalletizing():
+    # Safety parameters
+    max_tcp_speed = 450.0  # mm/s
+    max_joint_accel = 1.4  # rad/s²
+    safety_zone = [0.5, 0.5, 0.5]  # 500mm confinement in X, Y, Z
+
+    # Payload setup
+    set_payload(5.0, [0.0, 0.0, 0.0])  # 5.0 kg, COG at TCP
+
+    # Home position
+    home_joints = [0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+    move_j(home_joints, a=max_joint_accel, v=400.0, t=0, r=0)
+
+    # Safety check before motion
+    if not safety_check():
+        popup("Safety violation! Stopping operation.", "Error", True)
+        halt
+
+    # Waypoints
+    above_pallet = [0.5, -0.2, 0.5, 0.0, 0.0, 0.0]  # X, Y, Z, RX, RY, RZ
+    top_layer = [0.5, -0.2, 0.1, 0.0, 0.0, 0.0]
+    lift_box = [0.5, -0.2, 0.4, 0.0, 0.0, 0.0]
+    transit_conveyor = [0.8, -0.2, 0.4, 0.0, 0.0, 0.0]
+    above_conveyor = [0.8, -0.2, 0.2, 0.0, 0.0, 0.0]
+    place_box = [0.8, -0.2, 0.0, 0.0, 0.0, 0.0]
+    lift_after_place = [0.8, -0.2, 0.3, 0.0, 0.0, 0.0]
+    return_home = [0.5, -0.2, 0.4, 0.0, 0.0, 0.0]
+
+    # Motion sequence
+    move_l(above_pallet, a=max_joint_accel, v=400.0, t=0, r=0)
+    move_l(top_layer, a=max_joint_accel, v=150.0, t=0, r=0)
+    move_l(lift_box, a=max_joint_accel, v=200.0, t=0, r=0)
+    move_l(transit_conveyor, a=max_joint_accel, v=350.0, t=0, r=0)
+    move_l(above_conveyor, a=max_joint_accel, v=300.0, t=0, r=0)
+    move_l(place_box, a=max_joint_accel, v=100.0, t=0, r=0)
+    move_l(lift_after_place, a=max_joint_accel, v=200.0, t=0, r=0)
+    move_l(return_home, a=max_joint_accel, v=350.0, t=0, r=0)
+
+    # Final safety check
+    if not safety_check():
+        popup("Safety violation! Stopping operation.", "Error", True)
+        halt

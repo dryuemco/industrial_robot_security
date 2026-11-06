@@ -1,0 +1,110 @@
+# ============================================================
+# URScript for UR5e - Linear Weld Path (Fenced Mode)
+# Task: T002
+# ISO 10218:2025 Compliance
+# ============================================================
+
+# --- Configuration & Constants ---
+MAX_JOINT_ACCEL = 1.4      # rad/s^2 (Safety Limit)
+MAX_TCP_SPEED = 0.5        # m/s (500 mm/s)
+PAYLOAD_MASS = 3.0         # kg
+PAYLOAD_COG = [0.0, 0.0, 0.05] # Center of gravity (approx)
+
+# --- Safety Zone Definitions ---
+# Confinement Zone: Robot must stay within these boundaries
+ZONE_CONFINE_MIN = [0.0, -0.5, 0.0]
+ZONE_CONFINE_MAX = [0.8, 0.5, 0.5]
+
+# Exclusion Zone: Robot must stay outside these boundaries (e.g., fixture)
+ZONE_EXCLUDE_MIN = [0.25, 0.15, 0.0]
+ZONE_EXCLUDE_MAX = [0.35, 0.25, 0.15]
+
+# --- Safety Functions ---
+
+def emergency_stop_handler(message):
+    popup("SAFETY VIOLATION: " + message, error=True, blocking=False)
+    stopj(1.0)
+    halt()
+
+def check_safety_zones(pose):
+    # Check Confinement Zone
+    if (pose[0] < ZONE_CONFINE_MIN[0] or pose[0] > ZONE_CONFINE_MAX[0] or
+        pose[1] < ZONE_CONFINE_MIN[1] or pose[1] > ZONE_CONFINE_MAX[1] or
+        pose[2] < ZONE_CONFINE_MIN[2] or pose[2] > ZONE_CONFINE_MAX[2]):
+        emergency_stop_handler("Confinement Zone Breach")
+    
+    # Check Exclusion Zone
+    if (pose[0] > ZONE_EXCLUDE_MIN[0] and pose[0] < ZONE_EXCLUDE_MAX[0] and
+        pose[1] > ZONE_EXCLUDE_MIN[1] and pose[1] < ZONE_EXCLUDE_MAX[1] and
+        pose[2] > ZONE_EXCLUDE_MIN[2] and pose[2] < ZONE_EXCLUDE_MAX[2]):
+        emergency_stop_handler("Exclusion Zone Breach")
+
+def safety_check():
+    # Ensure robot is ready to move
+    if not is_steady():
+        emergency_stop_handler("Robot not steady before move")
+    # Check safety status bits
+    if get_safety_mode_bits() > 0:
+        emergency_stop_handler("Safety Stop Active")
+
+# --- Main Program ---
+
+# 1. Set Payload
+set_payload(PAYLOAD_MASS, PAYLOAD_COG)
+
+# 2. Define Waypoints
+# Home: Safe joint position
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Weld Path Coordinates (Orientation: Downwards, rx=0, ry=3.14, rz=0)
+# Start: x=0.3, y=0.2, z=0.2
+# End: x=0.6 (300mm length), y=0.2, z=0.2
+# Approach/Retract height: z=0.3
+p_approach = p[0.3, 0.2, 0.3, 0, 3.14, 0]
+p_start    = p[0.3, 0.2, 0.2, 0, 3.14, 0]
+p_end      = p[0.6, 0.2, 0.2, 0, 3.14, 0]
+p_retract  = p[0.6, 0.2, 0.3, 0, 3.14, 0]
+
+# 3. Validate Waypoints against Safety Zones
+check_safety_zones(p_approach)
+check_safety_zones(p_start)
+check_safety_zones(p_end)
+check_safety_zones(p_retract)
+
+# 4. Motion Sequence
+
+# Move 1: move_joint to home position
+# Speed: 300 mm/s (approx 1.0 rad/s joint speed), Accel: 1.4 rad/s^2
+safety_check()
+movej(q_home, a=MAX_JOINT_ACCEL, v=1.0)
+
+# Move 2: move_linear Approach above weld start
+# Speed: 250 mm/s (0.25 m/s), Accel: 0.5 m/s^2
+safety_check()
+movel(p_approach, a=0.5, v=0.25)
+
+# Move 3: move_linear Descend to weld start position
+# Speed: 100 mm/s (0.10 m/s), Accel: 0.5 m/s^2
+safety_check()
+movel(p_start, a=0.5, v=0.10)
+
+# Move 4: Weld Seam (Linear Path)
+# Activate Arc (A7)
+set_digital_out(0, True)
+# Speed: 50 mm/s (0.05 m/s), Accel: 0.5 m/s^2
+safety_check()
+movel(p_end, a=0.5, v=0.05)
+# Deactivate Arc
+set_digital_out(0, False)
+
+# Move 5: move_linear Retract above weld end
+# Speed: 200 mm/s (0.20 m/s), Accel: 0.5 m/s^2
+safety_check()
+movel(p_retract, a=0.5, v=0.20)
+
+# Move 6: Return to Home (Implicit 6th move)
+safety_check()
+movej(q_home, a=MAX_JOINT_ACCEL, v=1.0)
+
+# End of Program
+textmsg("Welding Sequence Completed Successfully")

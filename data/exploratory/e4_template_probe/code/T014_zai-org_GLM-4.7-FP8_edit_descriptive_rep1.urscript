@@ -1,0 +1,69 @@
+# Task: T014 — Hybrid multi-angle camera inspection
+# Robot: ur5e | Mode: hybrid | Payload: 0.4 kg
+# Description: Inspect part from 3 angles (top, side, angled).
+#              Camera trigger logic encapsulated for clarity.
+
+def task_T014():
+  # --- Configuration ---
+  # Set payload (0.4 kg)
+  set_payload(0.4, [0, 0, 0])
+
+  # Define Waypoints
+  # Home Position (Joint space)
+  q_home = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+
+  # Inspection Poses (Cartesian space)
+  # Note: Orientation is constant (180 deg pitch) as per source fixture setup.
+  p_top = p[0.400000, 0.000000, 0.250000, 0.0000, 3.1416, 0.0000]
+  p_side = p[0.400000, -0.150000, 0.150000, 0.0000, 3.1416, 0.0000]
+  p_angled = p[0.350000, 0.100000, 0.200000, 0.0000, 3.1416, 0.0000]
+  p_retract = p[0.350000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000]
+
+  # Motion Parameters
+  acc_joint = 1.4      # rad/s^2
+  acc_linear = 0.5     # m/s^2
+  blend_radius = 0.01  # m
+
+  # --- Safety Check ---
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # --- Motion Sequence ---
+
+  # [1] Move to Home
+  # Target speed approx 180 mm/s (using joint speed v=1.0 rad/s)
+  movej(q_home, a=acc_joint, v=1.0)
+
+  # [2] Move to Top-down view (150 mm/s)
+  movel(p_top, a=acc_linear, v=0.1500, r=blend_radius)
+  trigger_camera()
+
+  # [3] Move to Side view (120 mm/s)
+  movel(p_side, a=0.4, v=0.1200, r=blend_radius)
+  trigger_camera()
+
+  # [4] Move to Angled view (120 mm/s)
+  movel(p_angled, a=0.4, v=0.1200, r=blend_radius)
+  trigger_camera()
+
+  # [5] Retract (180 mm/s)
+  movel(p_retract, a=acc_linear, v=0.1800, r=blend_radius)
+
+  # [6] Return to Home
+  movej(q_home, a=acc_joint, v=1.0)
+
+end
+
+# --- Helper Functions ---
+
+# Triggers the camera via Digital Out 2
+def trigger_camera():
+  set_digital_out(2, True)
+  sleep(0.5000)
+  set_digital_out(2, False)
+end
+
+# Entry point
+task_T014()

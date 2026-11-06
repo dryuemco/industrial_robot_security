@@ -1,0 +1,60 @@
+# URScript for UR5e collaborative visual inspection scan
+# ----------------------------------------------------
+# Payload and TCP configuration
+set_payload(0.3, [0,0,0])               # 0.3 kg payload, CoM at TCP
+set_tcp(p[0,0,0,3.14159265,0,0])       # TCP orientation: Z axis pointing downwards
+
+# Safety and speed scaling
+set_safety_mode(2)                     # Collaborative safety mode
+set_speed_slider(0.1)                  # 10 % speed scaling for extra safety
+
+# Define key poses (all positions in meters, orientation in radians)
+home_pose          = p[0.0, -0.5, 0.2, 0, 3.14159265, 0]
+approach_pose      = p[0.1, 0.0, 0.4, 3.14159265, 0, 0]   # 250 mm above part
+scan_height_pose   = p[0.1, 0.0, 0.25, 3.14159265, 0, 0]  # 150 mm above part
+scan_line1_end     = p[0.1, 0.2, 0.25, 3.14159265, 0, 0]  # Y +200 mm
+step_to_line2_pose = p[0.2, 0.2, 0.25, 3.14159265, 0, 0]  # X +100 mm
+scan_line2_end     = p[0.2, 0.0, 0.25, 3.14159265, 0, 0]  # Y -200 mm
+step_to_line3_pose = p[0.3, 0.0, 0.25, 3.14159265, 0, 0]  # X +100 mm
+scan_line3_end     = p[0.3, 0.2, 0.25, 3.14159265, 0, 0]  # Y +200 mm
+retreat_pose       = p[0.1, 0.0, 0.4, 3.14159265, 0, 0]   # Back to approach height
+
+# Motion parameters (speed in m/s, acceleration in m/s^2)
+joint_speed        = 0.5    # rad/s (≈ 30 °/s) – within safe limits
+joint_acc          = 0.5    # rad/s²
+lin_speed_fast     = 0.13   # 130 mm/s
+lin_speed_medium   = 0.08   # 80 mm/s
+lin_speed_slow     = 0.05   # 50 mm/s
+lin_acc            = 0.5    # m/s² (common for all linear moves)
+
+# 1) Move to Home position (joint move)
+movej(home_pose, a=joint_acc, v=joint_speed, t=0, r=0)
+
+# 2) Approach inspection start – above surface
+movel(approach_pose, a=lin_acc, v=lin_speed_fast, t=0, r=0)
+
+# 3) Descend to scan height (150 mm above part)
+movel(scan_height_pose, a=lin_acc, v=lin_speed_medium, t=0, r=0)
+
+# 4) Scan line 1 – Y sweep (200 mm)
+movel(scan_line1_end, a=lin_acc, v=lin_speed_slow, t=0, r=0)
+
+# 5) Step to scan line 2 (+X 100 mm)
+movel(step_to_line2_pose, a=lin_acc, v=lin_speed_medium, t=0, r=0)
+
+# 6) Scan line 2 – Y sweep back
+movel(scan_line2_end, a=lin_acc, v=lin_speed_slow, t=0, r=0)
+
+# 7) Step to scan line 3 (+X 100 mm)
+movel(step_to_line3_pose, a=lin_acc, v=lin_speed_medium, t=0, r=0)
+
+# 8) Scan line 3 – Y sweep (200 mm)
+movel(scan_line3_end, a=lin_acc, v=lin_speed_slow, t=0, r=0)
+
+# 9) Retreat – move up to safe height
+movel(retreat_pose, a=lin_acc, v=lin_speed_fast, t=0, r=0)
+
+# 10) Return to Home position
+movej(home_pose, a=joint_acc, v=joint_speed, t=0, r=0)
+
+# End of program

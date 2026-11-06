@@ -1,0 +1,115 @@
+# -------------------------------------------------
+# UR5e Hybrid Mode Screw Fastening Task
+# Payload: 1.0 kg
+# Safety limits: TCP speed ≤ 250 mm/s, joint accel ≤ 1.4 rad/s^2
+# -------------------------------------------------
+
+# ---- Safety Functions -------------------------------------------------
+def safety_check(target_pose):
+    # Workspace limits (meters)
+    min_x = -0.800
+    max_x =  0.800
+    min_y = -0.800
+    max_y =  0.800
+    min_z =  0.000
+    max_z =  1.200
+    if (target_pose[0] < min_x) or (target_pose[0] > max_x) or
+       (target_pose[1] < min_y) or (target_pose[1] > max_y) or
+       (target_pose[2] < min_z) or (target_pose[2] > max_z):
+        popup("Safety violation: target pose out of workspace bounds", true, "Error")
+        stop()
+    end
+end
+
+def e_stop():
+    popup("Emergency stop triggered!", true, "Error")
+    stop()
+end
+
+# ---- Set Payload -------------------------------------------------------
+set_payload(1.0, [0,0,0.1])   # 1 kg payload, CoM 10 cm above TCP
+
+# ---- Set Joint Speed & Acceleration Limits -------------------------------
+# Max joint velocity ~1.5 rad/s (≈250 mm/s TCP) and max accel 1.4 rad/s²
+set_joint_max_velocity([1.5,1.5,1.5,1.5,1.5,1.5])
+set_joint_max_acceleration([1.4,1.4,1.4,1.4,1.4,1.4])
+
+# ---- Define Poses -------------------------------------------------------
+# All poses are defined in meters / radians
+home_pose               = p[0.0, -0.5, 0.5, 0, 3.14, 0]
+
+above_feeder_pose       = p[0.3, -0.4, 0.4, 0, 3.14, 0]
+pick_screw_pose         = p[0.3, -0.4, 0.2, 0, 3.14, 0]
+lift_from_feeder_pose   = p[0.3, -0.4, 0.45, 0, 3.14, 0]
+
+above_fp1_pose          = p[0.2, 0.0, 0.5, 0, 3.14, 0]
+above_fp2_pose          = p[0.2, 0.1, 0.5, 0, 3.14, 0]
+above_fp3_pose          = p[0.2, -0.1, 0.5, 0, 3.14, 0]
+above_fp4_pose          = p[0.2, 0.2, 0.5, 0, 3.14, 0]
+
+# ---- Main Program -------------------------------------------------------
+def main():
+    # ---- 1) Move to Home (joint move) -----------------------------------
+    safety_check(home_pose)
+    movej(home_pose, a=1.4, v=1.0)   # a: rad/s², v: rad/s
+    safety_check(pose())
+
+    # ---- 2) Approach Screw Feeder (linear, collaborative) -------------
+    safety_check(above_feeder_pose)
+    movel(above_feeder_pose, a=1.2, v=0.20)   # v in m/s (0.20 m/s = 200 mm/s)
+    safety_check(pose())
+
+    # ---- 3) Pick Screw --------------------------------------------------
+    safety_check(pick_screw_pose)
+    movel(pick_screw_pose, a=1.2, v=0.08)    # 80 mm/s
+    safety_check(pose())
+
+    # ---- 4) Lift from Feeder --------------------------------------------
+    safety_check(lift_from_feeder_pose)
+    movel(lift_from_feeder_pose, a=1.2, v=0.18)   # 180 mm/s
+    safety_check(pose())
+
+    # ---- 5) Move Above Fastening Point 1 (collaborative) ---------------
+    safety_check(above_fp1_pose)
+    movel(above_fp1_pose, a=1.2, v=0.20)   # 200 mm/s
+    safety_check(pose())
+
+    # ---- 6) Fastening Point 2 (fenced – keep same speed) ---------------
+    safety_check(above_fp2_pose)
+    movel(above_fp2_pose, a=1.2, v=0.20)
+    safety_check(pose())
+
+    # ---- 7) Fastening Point 3 -------------------------------------------
+    safety_check(above_fp3_pose)
+    movel(above_fp3_pose, a=1.2, v=0.20)
+    safety_check(pose())
+
+    # ---- 8) Fastening Point 4 -------------------------------------------
+    safety_check(above_fp4_pose)
+    movel(above_fp4_pose, a=1.2, v=0.20)
+    safety_check(pose())
+
+    # ---- Return to Home -------------------------------------------------
+    safety_check(home_pose)
+    movej(home_pose, a=1.4, v=1.0)
+    safety_check(pose())
+
+    popup("Task completed safely.", false, "Info")
+end
+
+# ---- Emergency Stop Monitoring -------------------------------------------
+# Simple watchdog: if any digital input (e.g., safety stop) goes high, trigger e_stop
+def watchdog():
+    while True:
+        if get_digital_in(0):   # assuming DI0 is emergency stop
+            e_stop()
+        end
+        sleep(0.1)
+    end
+end
+
+# Launch watchdog in a separate thread
+thread watchdog_thread = run watchdog()
+
+# Execute main program
+main()

@@ -1,0 +1,48 @@
+def main():
+    # Set payload (0.8 kg) and default TCP (placeholder)
+    set_payload(0.8, [0,0,0,0,0,0])
+    set_tcp([0,0,0,0,0,0])
+    
+    # Enable collaborative safety mode and speed scaling
+    setSafetyMode("collaborative")
+    setSpeedScaling(0.5)  # 50 % speed scaling for collaborative operation
+    
+    # Joint positions (radians) for Home pose
+    home_joint = [0, -1.57, 0, -1.57, 0, 0]
+    
+    # Move to Home (joint move) – speed limited to 0.5 rad/s (≈200 mm/s end‑effector)
+    movej(home_joint, a=1.2, v=0.5)
+    
+    # Pose definitions (meters, radians)
+    above_staging = p[0.5, -0.2, 0.30, 0, 3.14, 0]   # 30 cm above staging area
+    pick_pose      = p[0.5, -0.2, 0.10, 0, 3.14, 0]   # descend to pick
+    lift_pose      = p[0.5, -0.2, 0.30, 0, 3.14, 0]   # lift after pick
+    pallet_pose    = p[0.6,  0.2, 0.30, 0, 3.14, 0]   # above pallet
+    place_pose     = p[0.6,  0.2, 0.10, 0, 3.14, 0]   # place down
+    
+    # Linear move to above staging area (220 mm/s)
+    movel(above_staging, a=1.2, v=0.22)
+    
+    # Descend to pick (100 mm/s)
+    movel(pick_pose, a=1.2, v=0.10)
+    
+    # Activate suction cup (digital output 0)
+    set_digital_out(0, True)
+    
+    # Lift the box (180 mm/s)
+    movel(lift_pose, a=1.2, v=0.18)
+    
+    # Transit to pallet (230 mm/s)
+    movel(pallet_pose, a=1.2, v=0.23)
+    
+    # Place the box down (150 mm/s)
+    movel(place_pose, a=1.2, v=0.15)
+    
+    # Release suction
+    set_digital_out(0, False)
+    
+    # Return to Home position
+    movej(home_joint, a=1.2, v=0.5)
+end
+
+main()

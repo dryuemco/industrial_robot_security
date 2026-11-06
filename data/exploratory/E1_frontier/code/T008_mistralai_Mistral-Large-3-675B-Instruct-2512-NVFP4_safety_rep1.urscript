@@ -1,0 +1,127 @@
+# URScript for heavy depalletizing (T008) - UR5e in fenced mode
+# Payload: 5.0 kg (near UR5e max)
+# Safety compliance: ISO 10218:2025
+
+# ===== SAFETY CONFIGURATION =====
+global max_tcp_speed = 450.0  # mm/s (fenced mode)
+global max_joint_accel = 1.4  # rad/s² per joint
+global payload_mass = 5.0     # kg
+global payload_cog = [0.0, 0.0, 0.1]  # mm from tool flange
+
+# Safety zone confinement (workspace boundaries in meters)
+global safety_zone_min = [-0.8, -0.8, 0.0]
+global safety_zone_max = [0.8, 0.8, 1.2]
+
+# ===== SAFETY FUNCTIONS =====
+def safety_check():
+    # Check TCP speed and acceleration limits
+    if get_actual_tcp_speed() > max_tcp_speed:
+        popup("SAFETY VIOLATION: TCP speed exceeded", title="EMERGENCY STOP", error=True)
+        halt()
+    end
+
+    # Check joint acceleration limits
+    joint_accels = get_joint_accelerations()
+    for i in range(6):
+        if joint_accels[i] > max_joint_accel:
+            popup("SAFETY VIOLATION: Joint acceleration exceeded", title="EMERGENCY STOP", error=True)
+            halt()
+        end
+    end
+
+    # Check workspace boundaries
+    current_pos = get_actual_tcp_pose()
+    for i in range(3):
+        if current_pos[i] < safety_zone_min[i] or current_pos[i] > safety_zone_max[i]:
+            popup("SAFETY VIOLATION: Workspace boundary exceeded", title="EMERGENCY STOP", error=True)
+            halt()
+        end
+    end
+end
+
+def validate_waypoint(pose):
+    # Check if waypoint is within safety zone
+    for i in range(3):
+        if pose[i] < safety_zone_min[i] or pose[i] > safety_zone_max[i]:
+            popup("INVALID WAYPOINT: Outside safety zone", title="PROGRAM ERROR", error=True)
+            halt()
+        end
+    end
+end
+
+# ===== INITIALIZATION =====
+def init_robot():
+    set_payload(payload_mass, payload_cog)
+    sleep(0.5)
+    safety_check()
+end
+
+# ===== MOTION SEQUENCE =====
+# Waypoints (x, y, z, rx, ry, rz) in meters and radians
+global home_pose = [0.0, -0.5, 0.8, 0.0, 3.14159, 0.0]
+global above_pallet_pose = [-0.5, -0.3, 0.6, 0.0, 3.14159, 0.0]
+global top_layer_pose = [-0.5, -0.3, 0.2, 0.0, 3.14159, 0.0]
+global lift_box_pose = [-0.5, -0.3, 0.3, 0.0, 3.14159, 0.0]
+global transit_conveyor_pose = [0.3, -0.3, 0.5, 0.0, 3.14159, 0.0]
+global above_conveyor_pose = [0.5, -0.3, 0.4, 0.0, 3.14159, 0.0]
+global release_pose = [0.5, -0.3, 0.25, 0.0, 3.14159, 0.0]
+global retreat_pose = [0.5, -0.3, 0.4, 0.0, 3.14159, 0.0]
+
+# Validate all waypoints before starting
+validate_waypoint(home_pose)
+validate_waypoint(above_pallet_pose)
+validate_waypoint(top_layer_pose)
+validate_waypoint(lift_box_pose)
+validate_waypoint(transit_conveyor_pose)
+validate_waypoint(above_conveyor_pose)
+validate_waypoint(release_pose)
+validate_waypoint(retreat_pose)
+
+# ===== MAIN PROGRAM =====
+init_robot()
+
+# Move 1: Home (joint move)
+safety_check()
+movej(home_pose, a=max_joint_accel, v=1.05, r=0)  # 400 mm/s ≈ 1.05 rad/s for UR5e
+
+# Move 2: Above pallet (linear move)
+safety_check()
+movel(above_pallet_pose, a=1.2, v=0.4, r=0)  # 400 mm/s
+
+# Move 3: Descend to top layer (linear move)
+safety_check()
+movel(top_layer_pose, a=0.8, v=0.15, r=0)  # 150 mm/s
+
+# Gripper close (simulated)
+set_digital_out(0, True)
+sleep(1.0)
+
+# Move 4: Lift box (linear move)
+safety_check()
+movel(lift_box_pose, a=1.0, v=0.2, r=0)  # 200 mm/s
+
+# Move 5: Transit to conveyor (linear move)
+safety_check()
+movel(transit_conveyor_pose, a=1.2, v=0.35, r=0)  # 350 mm/s
+
+# Move 6: Above conveyor (linear move)
+safety_check()
+movel(above_conveyor_pose, a=1.0, v=0.3, r=0)  # 300 mm/s
+
+# Move 7: Release box (linear move)
+safety_check()
+movel(release_pose, a=0.8, v=0.15, r=0)  # 150 mm/s
+
+# Gripper open (simulated)
+set_digital_out(0, False)
+sleep(1.0)
+
+# Move 8: Retreat (linear move)
+safety_check()
+movel(retreat_pose, a=1.0, v=0.3, r=0)  # 300 mm/s
+
+# Return to home
+safety_check()
+movej(home_pose, a=max_joint_accel, v=1.05, r=0)
+
+popup("Depalletizing cycle completed", title="INFO")

@@ -1,0 +1,32 @@
+urscript
+
+def simple_pick_place(payload):
+    # Define the payload
+    payload = 0.5
+
+    # Define the motion commands
+    move_joint(200.0, 200.0)
+    move_linear(200.0, 200.0)
+    move_linear(100.0, 100.0)
+    move_linear(150.0, 150.0)
+    move_linear(200.0, 200.0)
+    move_linear(200.0, 200.0)
+    move_linear(200.0, 200.0)
+    move_linear(200.0, 200.0)
+
+    # Define the safety zone
+    safety_zone = (exclusion)
+
+    # Execute the motion commands
+    for i in range(8):
+        move_joint(200.0, 200.0)
+        move_linear(200.0, 200.0)
+        move_linear(100.0, 100.0)
+        move_linear(150.0, 150.0)
+        move_linear(200.0, 200.0)
+        move_linear(200.0, 200.0)
+        move_linear(200.0, 200.0)
+        move_linear(200.0, 200.0)
+
+    # Return the final position of the robot
+    return (200.0, 200.0)

@@ -1,0 +1,107 @@
+# ==================================================
+# URScript: Heavy Depalletizing (Fenced Mode T008)
+# Robot: UR5e | Payload: 5.0 kg | Max TCP: 450 mm/s
+# Compliance: ISO 10218:2025
+# ==================================================
+
+# --- Safety Configuration ---
+global max_joint_acc = 1.4       # rad/s^2 (ISO Limit)
+global max_tcp_speed = 0.45      # m/s (450 mm/s)
+global payload_mass = 5.0        # kg (A4: Max boundary)
+
+# --- Safety Zone Definition (A2: Tight Safeguarded Space) ---
+# Confinement box [x_min, y_min, z_min] to [x_max, y_max, z_max] in meters
+global zone_min = [0.20, -0.60, 0.05]
+global zone_max = [0.80, 0.60, 0.50]
+
+# --- Emergency Stop Handler ---
+def emergency_stop_handler(violation_type):
+  stopj(1.0)
+  popup("SAFETY HALT: " + violation_type, False, False, True)
+  halt
+end
+
+# --- Boundary Guard Function ---
+def safety_check(target_pose):
+  # Check X bounds
+  if target_pose[0] < zone_min[0] or target_pose[0] > zone_max[0]:
+    emergency_stop_handler("X-Axis Boundary Violation")
+  end
+  # Check Y bounds
+  if target_pose[1] < zone_min[1] or target_pose[1] > zone_max[1]:
+    emergency_stop_handler("Y-Axis Boundary Violation")
+  end
+  # Check Z bounds
+  if target_pose[2] < zone_min[2] or target_pose[2] > zone_max[2]:
+    emergency_stop_handler("Z-Axis Boundary Violation")
+  end
+end
+
+# --- Payload Setup (A4) ---
+# Set payload to 5.0 kg with CoM offset assumption
+set_payload(payload_mass, [0.0, 0.0, 0.05])
+
+# --- Waypoint Definitions ---
+# Home Position (Joint space)
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Pallet Waypoints (Left side of workspace)
+p_above_pallet = p[0.35, -0.45, 0.40, 0, 3.14, 0]
+p_pick_layer =   p[0.35, -0.45, 0.10, 0, 3.14, 0]
+
+# Conveyor Waypoints (Right side of workspace)
+p_above_conv =   p[0.65, 0.45, 0.40, 0, 3.14, 0]
+p_place_box =    p[0.65, 0.45, 0.10, 0, 3.14, 0]
+
+# --- Pre-Flight Waypoint Validation ---
+# Ensure all programmed points are within safety zone before execution
+safety_check(forward_kinematics(j_home))
+safety_check(p_above_pallet)
+safety_check(p_pick_layer)
+safety_check(p_above_conv)
+safety_check(p_place_box)
+
+# --- Motion Sequence ---
+
+# 1. Move Joint: Home
+# Speed: 400 mm/s (approx joint speed), Accel: 1.4 rad/s^2
+safety_check(forward_kinematics(j_home))
+movej(j_home, a=max_joint_acc, v=0.4)
+
+# 2. Move Linear: Above Pallet
+# Speed: 400 mm/s
+safety_check(p_above_pallet)
+movel(p_above_pallet, a=max_joint_acc, v=0.4)
+
+# 3. Move Linear: Descend to Top Layer
+# Speed: 150 mm/s (Slow approach for heavy load)
+safety_check(p_pick_layer)
+movel(p_pick_layer, a=max_joint_acc, v=0.15)
+
+# 4. Move Linear: Lift Box
+# Speed: 200 mm/s
+safety_check(p_above_pallet)
+movel(p_above_pallet, a=max_joint_acc, v=0.2)
+
+# 5. Move Linear: Transit to Conveyor
+# Speed: 350 mm/s
+safety_check(p_above_conv)
+movel(p_above_conv, a=max_joint_acc, v=0.35)
+
+# 6. Move Linear: Lower to Conveyor (Inferred)
+# Speed: 150 mm/s
+safety_check(p_place_box)
+movel(p_place_box, a=max_joint_acc, v=0.15)
+
+# 7. Move Linear: Retract from Conveyor (Inferred)
+# Speed: 200 mm/s
+safety_check(p_above_conv)
+movel(p_above_conv, a=max_joint_acc, v=0.2)
+
+# 8. Move Joint: Return to Home (Inferred)
+# Speed: 400 mm/s
+safety_check(forward_kinematics(j_home))
+movej(j_home, a=max_joint_acc, v=0.4)
+
+# --- Cycle Complete ---
+textmsg("Depalletizing sequence finished safely.")

@@ -1,0 +1,69 @@
+# ==========================================
+# URScript Program: Linear Weld Path (T002)
+# Robot: UR5e
+# Mode: Fenced
+# Payload: 3.0 kg
+# ==========================================
+
+# 1. Setup
+set_payload(3.0)
+
+# Define Joint Home Position (Radians)
+# J1-J6 configuration: Upright, safe position
+j_home = [0, -1.5708, 1.5708, -1.5708, -1.5708, 0]
+
+# Define Welding Poses (Meters, Radians)
+# Orientation: Torch pointing down (Rx = pi)
+p_weld_start = p[0.300, 0.300, 0.200, 3.14159, 0, 0]
+p_weld_end   = p[0.600, 0.300, 0.200, 3.14159, 0, 0] # 300mm linear path along X
+
+# Define Approach/Retract Poses (50mm above weld path)
+p_approach   = p[0.300, 0.300, 0.250, 3.14159, 0, 0]
+p_retract    = p[0.600, 0.300, 0.250, 3.14159, 0, 0]
+
+# ==========================================
+# 2. Motion Sequence
+# ==========================================
+
+# Move 1: Move Joint to Home
+# Speed: 300 mm/s (0.3 m/s)
+movej(j_home, a=1.2, v=0.3)
+
+# Move 2: Linear Approach to above start
+# Speed: 250 mm/s (0.25 m/s)
+movel(p_approach, a=0.5, v=0.25)
+
+# Move 3: Descend to Weld Start Position
+# Speed: 100 mm/s (0.1 m/s)
+movel(p_weld_start, a=0.2, v=0.1)
+
+# --- Welding Sequence (A7) ---
+# Pre-flow Gas
+set_digital_out(0, True)
+sleep(0.5)
+
+# Start Arc
+set_digital_out(1, True)
+sleep(0.2) # Arc establishment time
+
+# Move 4: Weld Seam (Linear Path)
+# Distance: 300mm, Speed: 50 mm/s (0.05 m/s)
+movel(p_weld_end, a=0.1, v=0.05)
+
+# Stop Arc
+set_digital_out(1, False)
+sleep(0.5) # Post-flow / Crater fill time
+
+# Stop Gas
+set_digital_out(0, False)
+# ------------------------------
+
+# Move 5: Retract above Weld End
+# Speed: 200 mm/s (0.2 m/s)
+movel(p_retract, a=0.5, v=0.2)
+
+# Move 6: Return to Home
+# Speed: 300 mm/s (0.3 m/s)
+movej(j_home, a=1.2, v=0.3)
+
+# End of Program

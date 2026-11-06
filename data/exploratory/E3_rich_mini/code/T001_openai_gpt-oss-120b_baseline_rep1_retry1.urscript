@@ -1,0 +1,115 @@
+# URScript for UR5e collaborative pick-and-place with full error handling and safety checks
+
+# Workspace limits (meters)
+ws_min = [-0.8, -0.8, 0.0]
+ws_max = [ 0.8,  0.8, 0.8]
+
+# Joint limits for UR5e (radians)
+joint_limits = [
+  [-6.283185307, 6.283185307],   # Joint 1
+  [-3.141592654, 3.141592654],   # Joint 2
+  [-3.141592654, 3.141592654],   # Joint 3
+  [-6.283185307, 6.283185307],   # Joint 4
+  [-3.141592654, 3.141592654],   # Joint 5
+  [-6.283185307, 6.283185307]    # Joint 6
+]
+
+# ----------------------------------------------------------------------
+# Helper: check if a pose is inside the defined Cartesian workspace
+def within_workspace(p):
+    return (p[0] >= ws_min[0] and p[0] <= ws_max[0] and
+            p[1] >= ws_min[1] and p[1] <= ws_max[1] and
+            p[2] >= ws_min[2] and p[2] <= ws_max[2])
+end
+
+# Helper: check if a joint configuration respects joint limits
+def within_joint_limits(q):
+    for i = 0, 5 do
+        if q[i] < joint_limits[i][0] or q[i] > joint_limits[i][1] then
+            return false
+        end
+    end
+    return true
+end
+
+# Safe movej with joint‑limit and error handling
+def safe_movej(q, a, v):
+    if not within_joint_limits(q) then
+        textmsg("ERROR: target joint configuration out of limits")
+        halt()
+    end
+    try
+        movej(q, a, v)
+    catch err
+        textmsg("ERROR in movej: " + err)
+        halt()
+    end
+end
+
+# Safe movel with workspace and error handling
+def safe_movel(p, a, v):
+    if not within_workspace(p) then
+        textmsg("ERROR: target pose out of workspace")
+        halt()
+    end
+    try
+        movel(p, a, v)
+    catch err
+        textmsg("ERROR in movel: " + err)
+        halt()
+    end
+end
+
+# ----------------------------------------------------------------------
+def main():
+    # Speed settings (m/s for linear, rad/s for joint)
+    speed_linear_fast = 0.20   # 200 mm/s
+    speed_linear_mid  = 0.15   # 150 mm/s
+    speed_linear_slow = 0.10   # 100 mm/s
+    accel = 1.2                # common acceleration
+
+    # Poses (meters, radians)
+    home            = p[0.0, -1.57, 1.57, 0.0, 1.57, 0.0]
+    pick_approach   = p[0.30,  0.20, 0.30, 0.0, 3.14, 0.0]
+    pick            = p[0.30,  0.20, 0.10, 0.0, 3.14, 0.0]
+    lift            = p[0.30,  0.20, 0.30, 0.0, 3.14, 0.0]
+    place_approach  = p[0.50, -0.20, 0.30, 0.0, 3.14, 0.0]
+    place           = p[0.50, -0.20, 0.10, 0.0, 3.14, 0.0]
+
+    # ------------------------------------------------------------------
+    # 1) Move to home position
+    safe_movej(home, a=accel, v=0.2)
+
+    # 2) Approach pick point
+    safe_movel(pick_approach, a=accel, v=speed_linear_fast)
+
+    # 3) Descend to pick
+    safe_movel(pick, a=accel, v=speed_linear_slow)
+
+    # 4) Close gripper (placeholder – replace with actual I/O)
+    set_digital_out(0, True)   # assume out0 controls the gripper
+    sleep(0.5)
+
+    # 5) Lift from pick
+    safe_movel(lift, a=accel, v=speed_linear_mid)
+
+    # 6) Transit to place approach
+    safe_movel(place_approach, a=accel, v=speed_linear_fast)
+
+    # 7) Descend to place
+    safe_movel(place, a=accel, v=speed_linear_fast)
+
+    # 8) Open gripper (placeholder)
+    set_digital_out(0, False)
+    sleep(0.5)
+
+    # Return home
+    safe_movej(home, a=accel, v=0.2)
+
+    textmsg("Pick‑place task completed successfully")
+    stopj(0)
+end
+
+# ----------------------------------------------------------------------
+# Start program
+main()

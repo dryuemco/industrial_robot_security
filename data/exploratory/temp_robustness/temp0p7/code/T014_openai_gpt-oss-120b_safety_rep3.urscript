@@ -1,0 +1,95 @@
+# ------------------------------------------------------------
+# UR5e Hybrid Multi‑Angle Camera Inspection (Task T014)
+# Payload: 0.4 kg
+# Safety limits: TCP ≤ 250 mm/s, joint accel ≤ 1.4 rad/s²
+# ------------------------------------------------------------
+
+# ---------- Payload ----------
+set_payload(0.4, [0,0,0])   # mass (kg) and centre of gravity (m)
+
+# ---------- Safety zone (workspace boundaries) ----------
+# Define rectangular workspace limits (meters)
+global const X_MIN = 0.200
+global const X_MAX = 0.800
+global const Y_MIN = -0.400
+global const Y_MAX =  0.400
+global const Z_MIN = 0.100
+global const Z_MAX = 0.600
+
+# ---------- Safety check function ----------
+def safety_check(pose):
+    # pose is a pose vector [X,Y,Z,RX,RY,RZ]
+    if pose[0] < X_MIN or pose[0] > X_MAX or \
+       pose[1] < Y_MIN or pose[1] > Y_MAX or \
+       pose[2] < Z_MIN or pose[2] > Z_MAX then
+        popup("Safety violation: TCP pose out of allowed workspace!", title="Safety Stop", warning=True)
+        halt()
+    end
+end
+
+# ---------- Emergency stop monitor ----------
+def monitor_e_stop():
+    # Assume digital input 0 is wired to an e‑stop button (True = pressed)
+    while (true) do
+        if get_digital_in(0) then
+            popup("Emergency stop activated!", title="E‑Stop", warning=True)
+            halt()
+        end
+        sleep(0.05)
+    end
+end
+
+# Start e‑stop monitor in background
+thread safety_thread = monitor_e_stop()
+
+# ---------- Waypoints ----------
+# Joint configuration for Home position (radians) – adjust to your robot
+global const HOME_JOINT = [0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# TCP poses for inspection (meters & radians)
+global const TOP_POSE    = p[0.500,  0.000, 0.300, 0, 3.14159, 0]   # top‑down view
+global const SIDE_POSE   = p[0.500, -0.300, 0.250, 0, 3.14159, 0]   # side view
+global const ANGLED_POSE = p[0.450,  0.250, 0.280, 0, 3.14159, 0]   # angled view
+global const RETRACT_POSE= p[0.600,  0.000, 0.400, 0, 3.14159, 0]   # safe retract
+
+# ---------- Motion parameters ----------
+# Joint move: speed (rad/s) & acceleration (rad/s²)
+global const JOINT_SPEED = 1.5          # ≈ 180 mm/s in joint space
+global const JOINT_ACCEL = 1.4
+
+# Linear moves: speed (m/s) & acceleration (m/s²)
+global const LINEAR_SPEED = 0.200       # 200 mm/s (≤ 250 mm/s)
+global const LINEAR_ACCEL = 1.4
+
+# ---------- Main program ----------
+def main():
+    # ---- Move to Home (joint) ----
+    safety_check(get_actual_tcp_pose())
+    movej(HOME_JOINT, a=JOINT_ACCEL, v=JOINT_SPEED)
+
+    # ---- Top‑down view (linear) ----
+    safety_check(TOP_POSE)
+    movel(TOP_POSE, a=LINEAR_ACCEL, v=LINEAR_SPEED)
+
+    # ---- Side view (linear) ----
+    safety_check(SIDE_POSE)
+    movel(SIDE_POSE, a=LINEAR_ACCEL, v=LINEAR_SPEED)
+
+    # ---- Angled view (linear) ----
+    safety_check(ANGLED_POSE)
+    movel(ANGLED_POSE, a=LINEAR_ACCEL, v=LINEAR_SPEED)
+
+    # ---- Retract (linear) ----
+    safety_check(RETRACT_POSE)
+    movel(RETRACT_POSE, a=LINEAR_ACCEL, v=LINEAR_SPEED)
+
+    # ---- Return to Home (joint) ----
+    safety_check(get_actual_tcp_pose())
+    movej(HOME_JOINT, a=JOINT_ACCEL, v=JOINT_SPEED)
+
+    # Program finished
+    popup("Inspection sequence completed safely.", title="Info")
+end
+
+# Execute main
+main()

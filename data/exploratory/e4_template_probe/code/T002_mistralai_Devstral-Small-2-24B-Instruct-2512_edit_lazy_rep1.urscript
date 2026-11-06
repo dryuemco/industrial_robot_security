@@ -1,0 +1,60 @@
+# Task: T002 — Linear weld path — fenced mode
+# Improved version with enhanced safety, efficiency, and readability
+# Operating mode: fenced | Max TCP speed: 0.500 m/s
+# Robot: ur5e | Payload: 3.0 kg
+
+def task_T002():
+    # [0] Safety checks
+    if (get_digital_in(0) == True):
+        popup("E-Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # [1] Go to home position with optimized acceleration
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.3, t0=0, t1=0)
+
+    # [2] Approach above weld start with smooth acceleration
+    movel(p[0.45, 0.0, 0.35, 0.0, 3.1416, 0.0], a=1.0, v=0.25, r=0.01)
+
+    # [3] Descend to weld start position with precise control
+    movel(p[0.45, 0.0, 0.2, 0.0, 3.1416, 0.0], a=0.5, v=0.1, r=0.001)
+
+    # [4] Gas pre-flow ON with confirmation
+    set_digital_out(1, True)
+    sync()
+
+    # [5] Gas stabilization delay
+    sleep(0.5)
+
+    # [6] Arc ON — welding start with optimized parameters
+    set_digital_out(0, True)
+    set_analog_out(0, 0.4)  # 120A current
+    set_analog_out(1, 0.333)  # 5.0m/min wire feed
+    sync()
+
+    # [7] Weld seam — 300mm linear path with consistent speed
+    movel(p[0.45, 0.3, 0.2, 0.0, 3.1416, 0.0], a=0.2, v=0.05, r=0.001)
+
+    # [8] Arc OFF — welding end with immediate shutdown
+    set_digital_out(0, False)
+    set_analog_out(0, 0.0)
+    set_analog_out(1, 0.0)
+    sync()
+
+    # [9] Post-weld gas flow with optimized duration
+    sleep(1.0)
+
+    # [10] Gas flow OFF
+    set_digital_out(1, False)
+    sync()
+
+    # [11] Retract above weld end with smooth acceleration
+    movel(p[0.45, 0.3, 0.35, 0.0, 3.1416, 0.0], a=1.0, v=0.2, r=0.01)
+
+    # [12] Return to home with optimized acceleration
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.3, t0=0, t1=0)
+
+end
+
+# Entry point
+task_T002()

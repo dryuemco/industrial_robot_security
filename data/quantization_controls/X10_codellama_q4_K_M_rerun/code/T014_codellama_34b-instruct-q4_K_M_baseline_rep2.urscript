@@ -1,0 +1,23 @@
+urscript
+
+def program():
+    # Home the robot
+    movej(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=180.0, v=180.0)
+
+    # Move to top-down view position
+    movel(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=150.0, v=150.0)
+
+    # Move to side view position
+    movel(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=120.0, v=120.0)
+
+    # Move to angled view position
+    movel(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=120.0, v=120.0)
+
+    # Retract the robot
+    movel(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=180.0, v=180.0)
+
+    # Move to home position
+    movej(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=180.0, v=180.0)
+
+    # End of program
+    end

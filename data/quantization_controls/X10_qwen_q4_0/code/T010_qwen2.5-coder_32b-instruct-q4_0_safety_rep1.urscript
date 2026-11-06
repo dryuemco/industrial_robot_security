@@ -1,0 +1,98 @@
+# Set payload
+set_payload(1.0, [0,0,0])
+
+# Define safety zones
+def in_safety_zone(p):
+    # Define the boundaries of the safety zone
+    x_min = -0.5
+    x_max = 0.5
+    y_min = -0.5
+    y_max = 0.5
+    z_min = 0.0
+    z_max = 1.0
+    
+    # Check if the point is within the safety zone
+    return p[0] >= x_min and p[0] <= x_max and p[1] >= y_min and p[1] <= y_max and p[2] >= z_min and p[2] <= z_max
+
+# Emergency stop handler
+def emergency_stop():
+    popup("Emergency stop triggered!")
+    halt()
+
+# Safety check function
+def safety_check():
+    if not in_safety_zone(get_tcp_pose()):
+        emergency_stop()
+
+# Home position
+home_j = [0, -1.57, 0, -1.57, 0, 0]
+
+# Waypoints
+above_feeder = p[0.1, 0.2, 0.3, 0, 3.14, 0]
+pick_screw = p[0.1, 0.2, 0.1, 0, 3.14, 0]
+lift_from_feeder = p[0.1, 0.2, 0.3, 0, 3.14, 0]
+above_fastening_1 = p[0.3, 0.2, 0.3, 0, 3.14, 0]
+fastening_1 = p[0.3, 0.2, 0.1, 0, 3.14, 0]
+above_fastening_2 = p[0.4, 0.2, 0.3, 0, 3.14, 0]
+fastening_2 = p[0.4, 0.2, 0.1, 0, 3.14, 0]
+above_fastening_3 = p[0.5, 0.2, 0.3, 0, 3.14, 0]
+fastening_3 = p[0.5, 0.2, 0.1, 0, 3.14, 0]
+above_fastening_4 = p[0.6, 0.2, 0.3, 0, 3.14, 0]
+fastening_4 = p[0.6, 0.2, 0.1, 0, 3.14, 0]
+
+# Motion sequence
+# Move to home position
+movej(home_j, a=1.4, v=1.05)
+
+# Move above screw feeder
+movej(get_inverse_kin(above_feeder), a=1.4, v=1.05)
+safety_check()
+
+# Move to pick screw
+movel(pick_screw, a=1.4, v=0.4)
+
+# Lift from feeder
+movel(lift_from_feeder, a=1.4, v=1.05)
+
+# Move above fastening point 1
+movej(get_inverse_kin(above_fastening_1), a=1.4, v=1.05)
+safety_check()
+
+# Fasten at point 1
+movel(fastening_1, a=1.4, v=0.4)
+# Fastening action (simulated here as a pause)
+sleep(1)
+movel(above_fastening_1, a=1.4, v=1.05)
+
+# Move above fastening point 2
+movej(get_inverse_kin(above_fastening_2), a=1.4, v=1.05)
+safety_check()
+
+# Fasten at point 2
+movel(fastening_2, a=1.4, v=0.4)
+# Fastening action (simulated here as a pause)
+sleep(1)
+movel(above_fastening_2, a=1.4, v=1.05)
+
+# Move above fastening point 3
+movej(get_inverse_kin(above_fastening_3), a=1.4, v=1.05)
+safety_check()
+
+# Fasten at point 3
+movel(fastening_3, a=1.4, v=0.4)
+# Fastening action (simulated here as a pause)
+sleep(1)
+movel(above_fastening_3, a=1.4, v=1.05)
+
+# Move above fastening point 4
+movej(get_inverse_kin(above_fastening_4), a=1.4, v=1.05)
+safety_check()
+
+# Fasten at point 4
+movel(fastening_4, a=1.4, v=0.4)
+# Fastening action (simulated here as a pause)
+sleep(1)
+movel(above_fastening_4, a=1.4, v=1.05)
+
+# Return to home position
+movej(home_j, a=1.4, v=1.05)

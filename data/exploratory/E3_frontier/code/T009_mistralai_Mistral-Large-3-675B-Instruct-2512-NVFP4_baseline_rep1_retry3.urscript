@@ -1,0 +1,116 @@
+def laser_surface_scan():
+  # Safety configuration
+  conf = {
+    "speed_max": 200.0,
+    "accel_max": 1200.0,
+    "payload_mass": 0.5,
+    "payload_cog": [0.0, 0.0, 0.05],
+    "safety_mode": "fenced"
+  }
+
+  # Tool configuration (laser profilometer)
+  set_tcp(p[0.0, 0.0, 0.1, 0.0, 0.0, 0.0])
+  set_payload(conf["payload_mass"], conf["payload_cog"])
+
+  # Waypoints
+  home_pose = p[0.0, -0.6, 0.4, 0.0, 1.57, 0.0]
+  above_scan_start = p[0.15, -0.3, 0.15, 0.0, 1.57, 0.0]
+  scan_height = 0.05
+  scan_start = p[0.15, -0.3, scan_height, 0.0, 1.57, 0.0]
+  scan_end = p[0.15, -0.1, scan_height, 0.0, 1.57, 0.0]
+  step_over = 0.066  # 200mm / 3 steps
+
+  # Motion parameters
+  speed_joint_home = 1.57  # ~180 mm/s
+  speed_linear_approach = 0.15  # ~150 mm/s
+  speed_linear_descend = 0.08  # ~80 mm/s
+  speed_scan = 0.05  # ~50 mm/s
+  speed_step = 0.08  # ~80 mm/s
+
+  # Watchdog setup
+  watchdog_timeout = 0.5
+  watchdog_input = 0
+  set_standard_digital_out(0, False)
+
+  # Main program
+  textmsg("Starting laser surface scan - fenced mode")
+
+  # Move to home position
+  movej(home_pose, a=conf["accel_max"], v=speed_joint_home)
+
+  # Activate laser tool (A7)
+  set_standard_digital_out(0, True)
+  sleep(0.2)
+
+  # Approach scan area
+  movel(above_scan_start, a=conf["accel_max"], v=speed_linear_approach)
+
+  # Descend to scan height
+  movel(scan_start, a=conf["accel_max"], v=speed_linear_descend)
+
+  # Watchdog activation
+  watchdog_input = 1
+  watchdog(watchdog_input, watchdog_timeout, "watchdog_error()")
+
+  # Scan line 1
+  movel(scan_end, a=conf["accel_max"], v=speed_scan)
+  sync()
+
+  # Step to line 2
+  movel(p[scan_end[0], scan_end[1], scan_end[2] + step_over, 0.0, 1.57, 0.0],
+        a=conf["accel_max"], v=speed_step)
+  movel(p[scan_start[0], scan_start[1] + step_over, scan_start[2], 0.0, 1.57, 0.0],
+        a=conf["accel_max"], v=speed_scan)
+  sync()
+
+  # Scan line 2
+  movel(p[scan_end[0], scan_end[1] + step_over, scan_end[2], 0.0, 1.57, 0.0],
+        a=conf["accel_max"], v=speed_scan)
+  sync()
+
+  # Step to line 3
+  movel(p[scan_end[0], scan_end[1] + step_over, scan_end[2] + step_over, 0.0, 1.57, 0.0],
+        a=conf["accel_max"], v=speed_step)
+  movel(p[scan_start[0], scan_start[1] + 2*step_over, scan_start[2], 0.0, 1.57, 0.0],
+        a=conf["accel_max"], v=speed_scan)
+  sync()
+
+  # Scan line 3
+  movel(p[scan_end[0], scan_end[1] + 2*step_over, scan_end[2], 0.0, 1.57, 0.0],
+        a=conf["accel_max"], v=speed_scan)
+  sync()
+
+  # Step to line 4
+  movel(p[scan_end[0], scan_end[1] + 2*step_over, scan_end[2] + step_over, 0.0, 1.57, 0.0],
+        a=conf["accel_max"], v=speed_step)
+  movel(p[scan_start[0], scan_start[1] + 3*step_over, scan_start[2], 0.0, 1.57, 0.0],
+        a=conf["accel_max"], v=speed_scan)
+  sync()
+
+  # Scan line 4
+  movel(p[scan_end[0], scan_end[1] + 3*step_over, scan_end[2], 0.0, 1.57, 0.0],
+        a=conf["accel_max"], v=speed_scan)
+  sync()
+
+  # Retract and deactivate laser
+  movel(above_scan_start, a=conf["accel_max"], v=speed_linear_approach)
+  set_standard_digital_out(0, False)
+
+  # Return home
+  movej(home_pose, a=conf["accel_max"], v=speed_joint_home)
+
+  # Watchdog deactivation
+  watchdog_input = 0
+  watchdog(watchdog_input, watchdog_timeout)
+
+  textmsg("Laser surface scan completed")
+end
+
+def watchdog_error():
+  textmsg("Watchdog error - stopping program")
+  set_standard_digital_out(0, False)
+  stopl(2.0)
+  halt()
+end
+
+laser_surface_scan()

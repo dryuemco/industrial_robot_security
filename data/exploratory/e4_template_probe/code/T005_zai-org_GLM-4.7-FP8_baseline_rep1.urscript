@@ -1,0 +1,49 @@
+# Visual Inspection Scan - UR5e
+# Task: T005 - Collaborative Mode
+
+# Configuration
+set_tcp(p[0, 0, 0.1, 0, 0, 0])  # TCP at camera tip (100mm offset)
+set_payload(0.3, [0, 0, 0.05])  # Payload 0.3kg
+
+# Safety Settings
+# Max TCP speed 150mm/s (0.15 m/s)
+set_safety_limits(0.15, 0.5)
+
+# 1. move_joint: Home position, 150.0 mm/s (approx joint speed)
+movej([0, -1.57, 0, -1.57, 0, 0], a=1.0, v=1.0)
+
+# 2. move_linear: Approach inspection start — above surface, 130.0 mm/s
+movel(p[0, 0, 0.25, 0, 0, 0], a=0.5, v=0.13)
+
+# 3. move_linear: Descend to scan height (150 mm above part), 80.0 mm/s
+# Start at corner of 200x200mm area (-100, -100)
+movel(p[-0.1, -0.1, 0.15, 0, 0, 0], a=0.5, v=0.08)
+
+# 4. move_linear: Scan line 1 — Y sweep, 50.0 mm/s
+# Sweep Y from -100 to 100 at X=-100
+movel(p[-0.1, 0.1, 0.15, 0, 0, 0], a=0.2, v=0.05)
+
+# 5. move_linear: Step to scan line 2 (+X), 80.0 mm/s
+# Step X to 0
+movel(p[0, 0.1, 0.15, 0, 0, 0], a=0.5, v=0.08)
+
+# 6. move_linear: Scan line 2, 50.0 mm/s
+# Sweep Y from 100 to -100 at X=0
+movel(p[0, -0.1, 0.15, 0, 0, 0], a=0.2, v=0.05)
+
+# 7. move_linear: Step to scan line 3 (+X), 80.0 mm/s
+# Step X to 100
+movel(p[0.1, -0.1, 0.15, 0, 0, 0], a=0.5, v=0.08)
+
+# 8. move_linear: Scan line 3, 50.0 mm/s
+# Sweep Y from -100 to 100 at X=100
+movel(p[0.1, 0.1, 0.15, 0, 0, 0], a=0.2, v=0.05)
+
+# 9. move_linear: Retract, 80.0 mm/s
+movel(p[0, 0, 0.25, 0, 0, 0], a=0.5, v=0.08)
+
+# 10. move_joint: Return to Home, 150.0 mm/s
+movej([0, -1.57, 0, -1.57, 0, 0], a=1.0, v=1.0)
+
+# End of program
+stopj(1.0)

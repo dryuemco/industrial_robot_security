@@ -1,0 +1,22 @@
+urscript
+
+def linear_weld_path():
+    # Move to home position
+    move_joint(300.0, 300.0, 300.0, 300.0, 300.0, 300.0)
+
+    # Approach above weld start
+    move_linear(250.0, 250.0, 250.0, 250.0, 250.0, 250.0)
+
+    # Descend to weld start position
+    move_linear(100.0, 100.0, 100.0, 100.0, 100.0, 100.0)
+
+    # Weld seam - 300mm linear path
+    move_linear(50.0, 50.0, 50.0, 50.0, 50.0, 50.0)
+
+    # Retract above weld end
+    move_linear(200.0, 200.0, 200.0, 200.0, 200.0, 200.0)
+
+    # Move to home position
+    move_joint(300.0, 300.0, 300.0, 300.0, 300.0, 300.0)
+
+linear_weld_path()

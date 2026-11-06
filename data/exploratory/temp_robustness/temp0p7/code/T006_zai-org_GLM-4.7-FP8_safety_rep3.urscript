@@ -1,0 +1,113 @@
+# =============================================================================
+# URScript Program: Bin Picking with Suction (Fenced Mode - T006)
+# Robot: UR5e
+# Payload: 2.0 kg
+# Safety: ISO 10218:2025 compliant
+# =============================================================================
+
+# --- Safety Configuration ---
+MAX_JOINT_ACCEL = 1.4        # rad/s^2 (Constraint)
+MAX_TCP_SPEED = 0.4          # m/s (400 mm/s)
+PAYLOAD_MASS = 2.0           # kg
+GRIPPER_IO = 0               # Digital Output for Suction
+
+# --- Workspace Boundary Definitions (Safety Zone) ---
+# Format: [x_min, x_max, y_min, y_max, z_min, z_max]
+SAFE_ZONE = [-0.6, 0.8, -0.6, 0.6, 0.0, 0.8]
+
+# --- Safety Functions ---
+
+def emergency_stop_handler():
+    popup("Safety Violation: Emergency Stop Triggered", "Emergency Stop", 1, 1)
+    stopj(5.0)
+    halt
+end
+
+def check_safety_zone():
+    current_pose = get_actual_tcp_pose()
+    x = current_pose[0]
+    y = current_pose[1]
+    z = current_pose[2]
+    
+    if (x < SAFE_ZONE[0] or x > SAFE_ZONE[1] or 
+        y < SAFE_ZONE[2] or y > SAFE_ZONE[3] or 
+        z < SAFE_ZONE[4] or z > SAFE_ZONE[5]):
+        
+        emergency_stop_handler()
+    end
+end
+
+def safety_check():
+    # Check speed limits
+    tcp_speed = get_actual_tcp_speed()
+    if tcp_speed > MAX_TCP_SPEED:
+        emergency_stop_handler()
+    end
+    
+    # Check position boundaries
+    check_safety_zone()
+end
+
+# --- Main Program ---
+
+# 1. Setup
+set_payload(PAYLOAD_MASS, [0.0, 0.0, 0.05])
+set_digital_out(GRIPPER_IO, False) # Ensure suction is off initially
+
+# Define Waypoints (Joint space for Home, Pose space for moves)
+# Home position (Joint angles)
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Bin Area
+p_above_bin = p[0.3, -0.4, 0.4, 2.22, -2.22, 0.0]
+p_pick = p[0.3, -0.4, 0.05, 2.22, -2.22, 0.0]
+
+# Conveyor Area
+p_transit = p[0.6, 0.2, 0.4, 2.22, -2.22, 0.0] # Transit waypoint
+p_above_conv = p[0.7, 0.2, 0.4, 2.22, -2.22, 0.0]
+p_place = p[0.7, 0.2, 0.05, 2.22, -2.22, 0.0]
+
+# --- Motion Sequence ---
+
+# Move 1: move_joint to Home position (350 mm/s approx equivalent)
+# Note: movej 'v' is rad/s. 1.0 rad/s approx 350 mm/s at this config.
+safety_check()
+movej(q_home, a=MAX_JOINT_ACCEL, v=1.0, r=0.0)
+
+# Move 2: move_linear to Above Bin (350.0 mm/s)
+safety_check()
+movel(p_above_bin, a=0.5, v=0.35, r=0.0)
+
+# Move 3: move_linear Descend into bin (150.0 mm/s)
+safety_check()
+movel(p_pick, a=0.5, v=0.15, r=0.0)
+
+# Actuate Suction
+set_digital_out(GRIPPER_IO, True)
+sleep(0.5) # Wait for vacuum
+
+# Move 4: move_linear Lift from bin (300.0 mm/s)
+safety_check()
+movel(p_above_bin, a=0.5, v=0.30, r=0.0)
+
+# Move 5: move_linear Transit to conveyor (380.0 mm/s)
+safety_check()
+movel(p_above_conv, a=0.5, v=0.38, r=0.0)
+
+# Move 6: move_linear Descend to conveyor (150.0 mm/s)
+safety_check()
+movel(p_place, a=0.5, v=0.15, r=0.0)
+
+# Release Suction
+set_digital_out(GRIPPER_IO, False)
+sleep(0.5) # Wait for release
+
+# Move 7: move_linear Lift from conveyor (300.0 mm/s)
+safety_check()
+movel(p_above_conv, a=0.5, v=0.30, r=0.0)
+
+# Move 8: move_joint Return to Home (350.0 mm/s approx equivalent)
+safety_check()
+movej(q_home, a=MAX_JOINT_ACCEL, v=1.0, r=0.0)
+
+# End of Program

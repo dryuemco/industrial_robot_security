@@ -1,0 +1,97 @@
+# URScript for UR5e Bin Picking - Fenced Mode (T006)
+# Safety: ISO 10218:2025 compliant
+# Payload: 2.0 kg
+# Max TCP Speed: 400 mm/s
+# Max Joint Accel: 1.4 rad/s^2
+
+# --- Configuration ---
+set_payload(2.0, [0.0, 0.0, 0.0])
+global max_joint_accel = 1.4
+global max_tcp_speed = 0.4
+
+# --- Safety Zone Definition (Confinement) ---
+# Define a bounding box for the robot workspace
+global safe_x_min = -0.8
+global safe_x_max = 0.8
+global safe_y_min = -0.8
+global safe_y_max = 0.8
+global safe_z_min = 0.0
+global safe_z_max = 1.2
+
+# --- Safety Functions ---
+def safety_check(target_pose):
+    # Extract position (x, y, z)
+    x = target_pose[0]
+    y = target_pose[1]
+    z = target_pose[2]
+
+    # Check boundaries
+    if (x < safe_x_min or x > safe_x_max or
+        y < safe_y_min or y > safe_y_max or
+        z < safe_z_min or z > safe_z_max):
+        
+        # Emergency Stop Handler
+        popup("Safety Zone Violation! Robot Halted.", "Safety Alert", False, True, False)
+        stopj(1.0)
+        halt
+    end
+end
+
+# --- Waypoints ---
+# Joint positions for Home
+j_home = [-1.57, -1.57, -1.57, -1.57, 1.57, 0.0]
+
+# Poses for Bin Picking
+p_above_bin = p[-0.3, -0.5, 0.4, 2.2, -2.2, 0.0]
+p_pick       = p[-0.3, -0.5, 0.02, 2.2, -2.2, 0.0]
+
+# Poses for Conveyor
+p_transit    = p[0.4, -0.5, 0.4, 2.2, -2.2, 0.0]
+p_above_conv = p[0.6, 0.0, 0.4, 3.14, 0.0, 0.0]
+p_place      = p[0.6, 0.0, 0.02, 3.14, 0.0, 0.0]
+p_retract    = p[0.6, 0.0, 0.4, 3.14, 0.0, 0.0]
+
+# --- Main Execution ---
+# Initialize Suction (Off)
+set_digital_out(0, False)
+set_tool_voltage(24)
+
+# 1. Move Joint: Home position, 350.0 mm/s
+movej(j_home, a=max_joint_accel, v=0.35)
+
+# 2. Move Linear: Above bin, 350.0 mm/s
+safety_check(p_above_bin)
+movel(p_above_bin, a=0.5, v=0.35)
+
+# 3. Move Linear: Descend into bin, 150.0 mm/s
+safety_check(p_pick)
+movel(p_pick, a=0.2, v=0.15)
+
+# Activate Suction
+set_digital_out(0, True)
+sleep(0.5)
+
+# 4. Move Linear: Lift from bin, 300.0 mm/s
+movel(p_above_bin, a=0.5, v=0.30)
+
+# 5. Move Linear: Transit to conveyor, 380.0 mm/s
+safety_check(p_transit)
+movel(p_transit, a=0.5, v=0.38)
+
+# 6. Move Linear: Above Conveyor, 350.0 mm/s
+safety_check(p_above_conv)
+movel(p_above_conv, a=0.5, v=0.35)
+
+# 7. Move Linear: Place (Descend), 150.0 mm/s
+safety_check(p_place)
+movel(p_place, a=0.2, v=0.15)
+
+# Deactivate Suction
+set_digital_out(0, False)
+sleep(0.2)
+
+# 8. Move Linear: Retract, 350.0 mm/s
+movel(p_retract, a=0.5, v=0.35)
+
+# Return to Home
+movej(j_home, a=max_joint_accel, v=0.35)

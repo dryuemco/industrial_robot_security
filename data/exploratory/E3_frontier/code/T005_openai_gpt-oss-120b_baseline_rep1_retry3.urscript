@@ -1,0 +1,75 @@
+# URScript for UR5e collaborative visual inspection scan
+# ----------------------------------------------------
+# Payload and TCP configuration
+set_payload(0.3, [0,0,0])               # payload 0.3 kg, CoG at TCP
+set_tcp([0,0,0,0,0,0])                  # default TCP, no offset
+
+# Safety parameters (collaborative mode)
+set_speed_slider(0.5)                   # limit speed scaling to 50%
+set_joint_acceleration(0.1)             # low joint acceleration for safety
+set_cartesian_acceleration(0.1)         # low Cartesian acceleration
+
+# Helper function to create a pose with downward orientation
+def pose_down(x, y, z):
+    # Rotation: 180° about X axis => Rx = pi, Ry = 0, Rz = 0
+    return p[x, y, z, 3.14159265359, 0, 0]
+end
+
+# -----------------------------------------------------------------
+# Define key poses (all with camera pointing strictly downward)
+# -----------------------------------------------------------------
+home_pose          = pose_down(0.0, -0.5, 0.5)          # example home position
+approach_pose      = pose_down(0.0, 0.0, 0.3)          # 30 cm above part start
+descend_pose       = pose_down(0.0, 0.0, 0.15)         # 15 cm above part (scan height)
+
+# Scan line 1 (Y sweep)
+scan1_start        = pose_down(0.0, -0.10, 0.15)       # start at Y = -100 mm
+scan1_end          = pose_down(0.0,  0.10, 0.15)       # end   at Y = +100 mm
+
+# Step to line 2 (+X offset)
+line2_offset_x     = 0.05                                 # 50 mm shift in X
+scan2_start        = pose_down(line2_offset_x, -0.10, 0.15)
+scan2_end          = pose_down(line2_offset_x,  0.10, 0.15)
+
+# Step to line 3 (+X further)
+line3_offset_x     = 0.10                                 # 100 mm total X offset
+scan3_start        = pose_down(line3_offset_x, -0.10, 0.15)
+scan3_end          = pose_down(line3_offset_x,  0.10, 0.15)
+
+# Return pose (above part)
+retract_pose       = pose_down(0.0, 0.0, 0.3)
+
+# -----------------------------------------------------------------
+# Motion sequence (10 moves)
+# -----------------------------------------------------------------
+# 1. Move to Home position (joint move, max 150 mm/s)
+movej(home_pose, a=0.1, v=0.15, t=0, r=0)
+
+# 2. Approach inspection start (linear, 130 mm/s)
+movel(approach_pose, a=0.1, v=0.13, t=0, r=0)
+
+# 3. Descend to scan height (linear, 80 mm/s)
+movel(descend_pose, a=0.1, v=0.08, t=0, r=0)
+
+# 4. Scan line 1 – Y sweep (linear, 50 mm/s)
+movel(scan1_end, a=0.05, v=0.05, t=0, r=0)
+
+# 5. Step to scan line 2 (+X) (linear, 80 mm/s)
+movel(scan2_start, a=0.1, v=0.08, t=0, r=0)
+
+# 6. Scan line 2 – Y sweep (linear, 50 mm/s)
+movel(scan2_end, a=0.05, v=0.05, t=0, r=0)
+
+# 7. Step to scan line 3 (+X) (linear, 80 mm/s)
+movel(scan3_start, a=0.1, v=0.08, t=0, r=0)
+
+# 8. Scan line 3 – Y sweep (linear, 50 mm/s)
+movel(scan3_end, a=0.05, v=0.05, t=0, r=0)
+
+# 9. Retract to safe height (linear, 130 mm/s)
+movel(retract_pose, a=0.1, v=0.13, t=0, r=0)
+
+# 10. Return to Home position (joint move, 150 mm/s)
+movej(home_pose, a=0.1, v=0.15, t=0, r=0)
+
+# End of program

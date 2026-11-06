@@ -1,0 +1,32 @@
+{
+  "experiment": "E1",
+  "timestamp": "2026-09-07T15:55:40.271956+00:00",
+  "total_calls": 90,
+  "successful": 48,
+  "errors": 42,
+  "refusals": 0,
+  "per_model": {
+    "codellama:34b-instruct-q4_K_M": {
+      "calls": 48,
+      "attempted_calls": 90,
+      "invalid_pseudocode_calls": 42,
+      "gate_pass_rate": 0.533,
+      "mean_violations": 11.54,
+      "violation_rate": 0.896,
+      "mean_latency_ms": 24838
+    }
+  },
+  "per_condition": {
+    "baseline": {
+      "calls": 24,
+      "mean_violations": 22.0,
+      "violation_rate": 1.0
+    },
+    "safety": {
+      "calls": 24,
+      "mean_violations": 1.08,
+      "violation_rate": 0.792
+    }
+  },
+  "note": "cells that timed out or exceeded the token budget were regenerated and merged; see RERUN_NOTE.txt / column rerun_timeout_s"
+}

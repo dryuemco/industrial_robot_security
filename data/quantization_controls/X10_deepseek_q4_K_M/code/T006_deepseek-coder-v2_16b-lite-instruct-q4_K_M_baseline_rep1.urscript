@@ -1,0 +1,39 @@
+# Define constants
+HOME_POSITION = [0.0, -1.8, 1.8, -1.5, 1.5, 0.0]
+BIN_POSITION = [0.0, -1.8, 1.8, -1.5, 1.5, 0.0]
+ABOVE_BIN_POSITION = [0.0, -1.8, 1.8, -1.5, 1.5, 0.0]
+DESCEND_POSITION = [0.0, -1.8, 1.8, -1.5, 1.5, 0.0]
+LIFT_POSITION = [0.0, -1.8, 1.8, -1.5, 1.5, 0.0]
+TRANSIT_POSITION = [0.0, -1.8, 1.8, -1.5, 1.5, 0.0]
+
+# Define speeds
+HOME_SPEED = 350.0
+ABOVE_BIN_SPEED = 350.0
+DESCEND_SPEED = 150.0
+LIFT_SPEED = 300.0
+TRANSIT_SPEED = 380.0
+
+# Define safety zone (confinement)
+SAFETY_ZONE = [0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
+
+# Define payload
+PAYLOAD = 2.0
+
+# Define tool type (suction cup)
+TOOL_TYPE = "suction"
+
+# Define move commands
+def move_joint(positions, speed):
+    speed_list = [speed, speed, speed, speed, speed, speed]
+    movej(positions, speed=speed_list, relative=False)
+
+def move_linear(positions, speed):
+    speed_list = [speed, speed, speed, speed, speed, speed]
+    movel(positions, speed=speed_list, relative=False)
+
+# Main program
+move_joint(HOME_POSITION, HOME_SPEED)
+move_linear(ABOVE_BIN_POSITION, ABOVE_BIN_SPEED)
+move_linear(DESCEND_POSITION, DESCEND_SPEED)
+move_linear(LIFT_POSITION, LIFT_SPEED)
+move_linear(TRANSIT_POSITION, TRANSIT_SPEED)

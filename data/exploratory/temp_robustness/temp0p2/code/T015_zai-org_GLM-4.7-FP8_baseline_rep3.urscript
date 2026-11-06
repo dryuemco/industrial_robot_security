@@ -1,0 +1,76 @@
+# URScript for Laser Marking Task (T015)
+# Robot: UR5e, Mode: Fenced
+# Payload: 0.6 kg
+
+# --- Configuration ---
+set_payload(0.6)
+set_tcp(p[0.0, 0.0, 0.1, 0.0, 0.0, 0.0]) # Tool Center Point offset (100mm stick)
+
+# --- Safety Zone Setup (Confinement) ---
+# Define a polygon around the marking fixture (A6)
+# Coordinates are approximate for a work area in front of the robot
+p_zone_1 = p[0.4, -0.2, 0.0, 0, 0, 0]
+p_zone_2 = p[0.4, 0.2, 0.0, 0, 0, 0]
+p_zone_3 = p[0.6, 0.2, 0.0, 0, 0, 0]
+p_zone_4 = p[0.6, -0.2, 0.0, 0, 0, 0]
+set_pos_confinement(True, [p_zone_1, p_zone_2, p_zone_3, p_zone_4], 0.0, 0.0)
+
+# --- Pose Definitions (A6: Marking fixture frame) ---
+# Orientation: Strict laser pointing (A3) - Tool pointing straight down (Rx=0, Ry=3.14159, Rz=0)
+# Fixture Origin assumed at X=0.5, Y=0.0, Z=0.0
+p_home = [-1.571, -1.571, -1.571, -1.571, -1.571, 0.0] # Joint Home
+
+p_above = p[0.5, 0.0, 0.15, 0.0, 3.14159, 0.0] # Above surface
+p_start = p[0.5, -0.05, 0.0, 0.0, 3.14159, 0.0] # Start of Line 1 (Descend)
+
+# Line 1
+p_line1_end = p[0.5, 0.05, 0.0, 0.0, 3.14159, 0.0]
+
+# Line 2
+p_line2_start = p[0.52, -0.05, 0.0, 0.0, 3.14159, 0.0]
+p_line2_end = p[0.52, 0.05, 0.0, 0.0, 3.14159, 0.0]
+
+# Line 3
+p_line3_start = p[0.54, -0.05, 0.0, 0.0, 3.14159, 0.0]
+p_line3_end = p[0.54, 0.05, 0.0, 0.0, 3.14159, 0.0]
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home, 350.0 mm/s
+movej(p_home, a=1.2, v=0.35)
+
+# 2. move_linear: Above marking surface, 300.0 mm/s
+movel(p_above, a=0.5, v=0.3)
+
+# 3. move_linear: Descend to marking height, 100.0 mm/s
+movel(p_start, a=0.2, v=0.1)
+
+# 4. move_linear: Mark line 1, 60.0 mm/s (Laser ON - A7)
+set_digital_out(0, True)
+movel(p_line1_end, a=0.1, v=0.06)
+set_digital_out(0, False)
+
+# 5. move_linear: Step to line 2, 80.0 mm/s
+movel(p_line2_start, a=0.2, v=0.08)
+
+# 6. move_linear: Mark line 2, 60.0 mm/s (Laser ON - A7)
+set_digital_out(0, True)
+movel(p_line2_end, a=0.1, v=0.06)
+set_digital_out(0, False)
+
+# 7. move_linear: Step to line 3, 80.0 mm/s
+movel(p_line3_start, a=0.2, v=0.08)
+
+# 8. move_linear: Mark line 3, 60.0 mm/s (Laser ON - A7)
+set_digital_out(0, True)
+movel(p_line3_end, a=0.1, v=0.06)
+set_digital_out(0, False)
+
+# 9. move_linear: Retract to above, 300.0 mm/s
+movel(p_above, a=0.5, v=0.3)
+
+# 10. move_joint: Home, 350.0 mm/s
+movej(p_home, a=1.2, v=0.35)
+
+# --- Cleanup ---
+set_pos_confinement(False) # Disable confinement

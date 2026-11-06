@@ -1,0 +1,69 @@
+def add_pose(p1, p2):
+    return p[p1[0]+p2[0], p1[1]+p2[1], p1[2]+p2[2],
+             p1[3]+p2[3], p1[4]+p2[4], p1[5]+p2[5]]
+end
+
+def main():
+    # ----- Safety & Payload -------------------------------------------------
+    set_payload(4.5, [0,0,0])                     # heavy payload
+    set_tcp([0,0,0.1,0,0,0])                      # example TCP offset
+
+    # ----- Speed & Zone ----------------------------------------------------
+    set_speed(0.3)                               # max TCP speed 300 mm/s
+    set_zone(0.001)                              # fine positioning
+
+    # ----- Home Joint Position ---------------------------------------------
+    home = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+    movej(home, a=1.2, v=0.25)                   # 250 mm/s
+
+    # ----- Conveyor Pick Positions -----------------------------------------
+    conveyor_above = p[0.5, -0.30, 0.40, 0, 3.14, 0]   # above pick
+    conveyor_pick  = p[0.5, -0.30, 0.10, 0, 3.14, 0]   # pick point
+    lift_above     = p[0.5, -0.30, 0.40, 0, 3.14, 0]   # lift after pick
+
+    # ----- Pallet Grid (2x2) -----------------------------------------------
+    pallet_origin = p[0.60, 0.00, 0.20, 0, 3.14, 0]   # first cell (0,0)
+    offset = 0.20                                     # 200 mm spacing
+
+    pos00 = pallet_origin
+    pos10 = add_pose(pallet_origin, p[offset, 0, 0, 0, 0, 0])
+    pos01 = add_pose(pallet_origin, p[0, offset, 0, 0, 0, 0])
+    pos11 = add_pose(pallet_origin, p[offset, offset, 0, 0, 0, 0])
+
+    pallet_positions = [pos00, pos10, pos01, pos11]
+
+    # ----- Approach Conveyor ------------------------------------------------
+    movel(conveyor_above, a=1.2, v=0.25)          # fast approach
+    movel(conveyor_pick,  a=0.8, v=0.10)          # descend to pick
+
+    # ----- Gripper Close (placeholder) ------------------------------------
+    set_digital_out(0, True)                     # close gripper
+    sleep(0.5)
+
+    # ----- Lift from Conveyor -----------------------------------------------
+    movel(lift_above, a=1.0, v=0.20)              # lift up
+
+    # ----- Place Boxes on Pallet (2x2) -------------------------------------
+    for i = 0, 3, 1 do
+        # Move above target cell (200 mm above)
+        above_target = add_pose(pallet_positions[i], p[0, 0, 0.20, 0, 0, 0])
+        movel(above_target, a=1.5, v=0.28)       # fast transit (280 mm/s)
+
+        # Move down to place
+        movel(pallet_positions[i], a=0.8, v=0.10)
+
+        # Open gripper to release
+        set_digital_out(0, False)               # open gripper
+        sleep(0.5)
+
+        # Retract back above the cell
+        movel(above_target, a=1.0, v=0.20)
+    end
+
+    # ----- Return to Home ---------------------------------------------------
+    movej(home, a=1.2, v=0.25)
+
+end
+
+# Start program
+main()

@@ -1,0 +1,115 @@
+# Program: T004 Multi-waypoint SSM Pick-Place with Obstacle Avoidance
+# Robot: UR5e
+# Payload: 1.5 kg
+# Logic: A5 (Speed Guard + Collision Monitor), A6 (Dual Work Objects)
+
+# --- Configuration ---
+global max_tcp_speed = 0.25          # 250.0 mm/s
+global collision_force_threshold = 50.0 # Newtons
+global payload_mass = 1.5            # kg
+global payload_cog = p[0.0, 0.0, 0.05] # Center of gravity offset
+
+# --- Work Objects (A6: Dual Work Objects) ---
+# Pick Station Location
+global wobj_pick = p[0.45, -0.2, 0.0, 0, 3.14159, 0]
+# Place Station Location
+global wobj_place = p[0.45, 0.2, 0.0, 0, 3.14159, 0]
+
+# --- Waypoint Offsets ---
+global wp_offset_above = p[0.0, 0.0, 0.15, 0.0, 0.0, 0.0]
+global wp_offset_pick = p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+# Obstacle avoidance offset (Move -X relative to pick station)
+global wp_offset_avoid = p[-0.15, 0.1, 0.15, 0.0, 0.0, 0.0] 
+
+# --- Safety Zones (Soft Logic) ---
+# Confinement: Box around workspace
+global zone_conf_min = p[0.2, -0.5, -0.1, 0, 0, 0]
+global zone_conf_max = p[0.6, 0.5, 0.5, 0, 0, 0]
+# Exclusion: Column at x=0.45, y=0.0
+global zone_excl_center = p[0.45, 0.0, 0.2, 0, 0, 0]
+global zone_excl_radius = 0.1
+
+# --- Home Position ---
+global home_joints = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# --- Setup ---
+set_payload(payload_mass, payload_cog)
+set_tcp(p[0.0, 0.0, 0.1, 0.0, 0.0, 0.0]) # Tool offset
+
+# --- A5: Enhanced Safety Logic Thread (Speed Guard + Collision Monitor) #
+thread safety_monitor():
+    while True:
+        # Speed Guard
+        current_speed = get_actual_tcp_speed()
+        if current_speed > max_tcp_speed:
+            popup("Safety Alert: TCP Speed Exceeded!")
+            stopl(0.5)
+            halt
+        
+        # Collision Monitor (Force check)
+        current_force = norm(get_tcp_force())
+        if current_force > collision_force_threshold:
+            popup("Safety Alert: Collision Detected!")
+            stopl(0.1)
+            halt
+
+        # Soft Zone Check (Confinement)
+        actual_pose = get_actual_tcp_pose()
+        if (actual_pose[0] < zone_conf_min[0] or actual_pose[0] > zone_conf_max[0] or \
+            actual_pose[1] < zone_conf_min[1] or actual_pose[1] > zone_conf_max[1] or \
+            actual_pose[2] < zone_conf_min[2] or actual_pose[2] > zone_conf_max[2]):
+            popup("Safety Alert: Robot left confinement zone!")
+            stopl(0.5)
+            halt
+            
+        # Soft Zone Check (Exclusion - Simple distance check)
+        dist_to_obstacle = sqrt(pose_dist(actual_pose, zone_excl_center))
+        if dist_to_obstacle < zone_excl_radius:
+            popup("Safety Alert: Robot entered exclusion zone!")
+            stopl(0.5)
+            halt
+            
+        sleep(0.01)
+    end
+end
+
+# Start Safety Thread
+thread_run safety_monitor, 1
+
+# --- Motion Sequence ---
+
+# 1. Move Joint: Home position, 200.0 mm/s
+movej(home_joints, a=1.2, v=0.2)
+
+# 2. Move Linear: WP1 — Above pick station, 200.0 mm/s
+movel(pose_trans(wobj_pick, wp_offset_above), a=0.5, v=0.2)
+
+# 3. Move Linear: WP2 — Descend to pick, 100.0 mm/s
+movel(pose_trans(wobj_pick, wp_offset_pick), a=0.2, v=0.1)
+
+# Gripper Close Action (Simulated)
+sleep(0.5)
+
+# 4. Move Linear: WP3 — Lift above pick, 180.0 mm/s
+movel(pose_trans(wobj_pick, wp_offset_above), a=0.5, v=0.18)
+
+# 5. Move Linear: WP4 — Obstacle avoidance waypoint (offset in -X), 200.0 mm/s
+movel(pose_trans(wobj_pick, wp_offset_avoid), a=0.5, v=0.2)
+
+# 6. Move Linear: WP5 — Above place station, 200.0 mm/s
+movel(pose_trans(wobj_place, wp_offset_above), a=0.5, v=0.2)
+
+# 7. Move Linear: WP6 — Descend to place, 100.0 mm/s
+movel(pose_trans(wobj_place, wp_offset_pick), a=0.2, v=0.1)
+
+# Gripper Open Action (Simulated)
+sleep(0.5)
+
+# 8. Move Linear: WP7 — Lift above place, 180.0 mm/s
+movel(pose_trans(wobj_place, wp_offset_above), a=0.5, v=0.18)
+
+# 9. Move Joint: Return to Home, 200.0 mm/s
+movej(home_joints, a=1.2, v=0.2)
+
+# Stop Safety Thread
+thread_kill safety_monitor

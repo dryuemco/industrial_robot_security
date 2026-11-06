@@ -1,0 +1,83 @@
+# Task: T002 — Linear weld path — fenced mode (Improved)
+# Description: Single linear weld seam (300 mm) with 3.0kg payload.
+# Improvements: Added payload definition, pose variables, explicit speeds,
+#               and refined welding IO sequence.
+
+def task_T002():
+  # --- Configuration ---
+  # Set payload: 3.0 kg, Center of Gravity approx 100mm along Z-axis (typical torch)
+  set_payload(3.0, [0.0, 0.0, 0.1])
+
+  # Define Poses for readability and easy modification
+  # Home position (Joint space)
+  j_home = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+
+  # Weld Path Poses (Cartesian space)
+  # Orientation: Pointing down (rx=0, ry=3.1416, rz=0)
+  p_approach = p[0.450000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000]
+  p_start    = p[0.450000, 0.000000, 0.200000, 0.0000, 3.1416, 0.0000]
+  p_end      = p[0.450000, 0.300000, 0.200000, 0.0000, 3.1416, 0.0000]
+  p_retract  = p[0.450000, 0.300000, 0.350000, 0.0000, 3.1416, 0.0000]
+
+  # --- Safety / Start Check ---
+  # Wait for Start Signal (e.g., DI 0 = True) to begin sequence
+  # Replaces generic E-Stop check with a practical cell start signal
+  while (get_digital_in(0) == False):
+    sleep(0.1)
+  end
+
+  # --- Motion Sequence ---
+
+  # [1] Go to home position
+  # Speed: ~300 mm/s equivalent (using joint speed 1.2 rad/s)
+  movej(j_home, a=1.4000, v=1.2000)
+
+  # [2] Approach above weld start
+  # Speed: 250 mm/s
+  movel(p_approach, a=1.0000, v=0.2500, r=0.0100)
+
+  # [3] Descend to weld start position
+  # Speed: 100 mm/s, Blend radius 0 to ensure precise positioning
+  movel(p_start, a=0.5000, v=0.1000, r=0.0000)
+
+  # --- Welding Sequence ---
+
+  # [4] Gas pre-flow ON
+  set_digital_out(1, True)
+
+  # [5] Gas stabilization delay
+  sleep(0.5000)
+
+  # [6] Arc ON
+  set_digital_out(0, True)   # Arc enable
+  set_analog_out(0, 0.400)  # Current (normalized)
+  set_analog_out(1, 0.333)  # Wire feed (normalized)
+
+  # [7] Weld seam — 300mm linear path
+  # Speed: 50 mm/s, Blend radius 0 to ensure stop at end
+  movel(p_end, a=0.2000, v=0.0500, r=0.0000)
+
+  # [8] Arc OFF
+  set_digital_out(0, False)
+  set_analog_out(0, 0.0)
+  set_analog_out(1, 0.0)
+
+  # [9] Post-weld gas flow (Crater fill / Purge)
+  sleep(1.0000)
+
+  # [10] Gas flow OFF
+  set_digital_out(1, False)
+
+  # --- Motion Sequence Continued ---
+
+  # [11] Retract above weld end
+  # Speed: 200 mm/s
+  movel(p_retract, a=1.0000, v=0.2000, r=0.0100)
+
+  # [12] Return to home
+  movej(j_home, a=1.4000, v=1.2000)
+
+end
+
+# Entry point
+task_T002()

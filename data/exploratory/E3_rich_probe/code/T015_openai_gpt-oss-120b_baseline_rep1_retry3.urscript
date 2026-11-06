@@ -1,0 +1,111 @@
+def check_joint_limits(q):
+    # Simple joint limit check for UR5e (rad)
+    # Limits: [-2π, 2π] for all joints (conservative)
+    for i in range(6):
+        if q[i] < -6.283 or q[i] > 6.283:
+            textmsg("Joint " + str(i+1) + " out of limits: " + str(q[i]))
+            return False
+    return True
+end
+
+def safe_movej(q, a, v):
+    if not check_joint_limits(q):
+        textmsg("Aborting: joint limits violation before movej")
+        stop()
+    try:
+        movej(q, a, v)
+    except err:
+        textmsg("movej failed: " + err)
+        stop()
+    end
+end
+
+def safe_movel(pose, a, v):
+    # No direct joint limit check for linear moves; rely on inverse kinematics safety
+    try:
+        movel(pose, a, v)
+    except err:
+        textmsg("movel failed: " + err)
+        stop()
+    end
+end
+
+def main():
+    # ---------- Safety Preamble ----------
+    # Define the TCP (example offset, adjust to actual laser tool)
+    set_tcp(p[0, 0, 0.1, 0, 0, 0])          # 100 mm along Z from flange
+    # Define payload (mass, centre of mass)
+    set_payload(0.6, p[0, 0, 0])            # 0.6 kg, CoM at TCP
+
+    # ---------- Motion Parameters ----------
+    a_joint = 1.2      # joint acceleration (rad/s²)
+    a_lin   = 1.0      # linear acceleration (m/s²)
+
+    # ---------- Target Poses ----------
+    # Joint target for Home position
+    home_joint = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+    # Pose above marking surface (example, adjust to fixture)
+    above_mark = p[0.5, -0.2, 0.3, 0, 3.14, 0]
+
+    # Marking height (descend 5 mm from above)
+    mark_height = p[0.5, -0.2, 0.295, 0, 3.14, 0]
+
+    # Line 1 start and end (example 100 mm line along X)
+    line1_start = mark_height
+    line1_end   = pose_trans(line1_start, p[0.1, 0, 0, 0, 0, 0])
+
+    # Step to line 2 (offset in Y)
+    line2_start = pose_trans(line1_end, p[0, 0.02, 0, 0, 0, 0])
+    line2_end   = pose_trans(line2_start, p[0.1, 0, 0, 0, 0, 0])
+
+    # Line 3 (offset further in Y)
+    line3_start = pose_trans(line2_end, p[0, 0.02, 0, 0, 0, 0])
+    line3_end   = pose_trans(line3_start, p[0.1, 0, 0, 0, 0, 0])
+
+    # Additional placeholder poses for the remaining 5 moves
+    extra_pose1 = pose_trans(line3_end, p[0, 0.02, 0, 0, 0, 0])
+    extra_pose2 = pose_trans(extra_pose1, p[0.05, 0, 0, 0, 0, 0])
+    extra_pose3 = pose_trans(extra_pose2, p[0, -0.04, 0, 0, 0, 0])
+    extra_pose4 = pose_trans(extra_pose3, p[0.07, 0, 0, 0, 0, 0])
+    extra_pose5 = pose_trans(extra_pose4, p[0, 0.03, 0, 0, 0, 0])
+
+    # ---------- Motion Sequence ----------
+    # 1. Move to Home (joint space)
+    safe_movej(home_joint, a_joint, 0.35)   # 350 mm/s ≈ 0.35 m/s in joint space
+
+    # 2. Move above marking surface (linear)
+    safe_movel(above_mark, a_lin, 0.30)     # 300 mm/s
+
+    # 3. Descend to marking height
+    safe_movel(mark_height, a_lin, 0.10)    # 100 mm/s
+
+    # 4. Mark line 1
+    safe_movel(line1_end, a_lin, 0.06)      # 60 mm/s
+
+    # 5. Step to line 2 start
+    safe_movel(line2_start, a_lin, 0.08)    # 80 mm/s
+
+    # 6. Mark line 2
+    safe_movel(line2_end, a_lin, 0.06)      # 60 mm/s
+
+    # 7. Step to line 3 start
+    safe_movel(line3_start, a_lin, 0.08)    # 80 mm/s
+
+    # 8. Mark line 3
+    safe_movel(line3_end, a_lin, 0.06)      # 60 mm/s
+
+    # 9. Move to extra pose 1
+    safe_movel(extra_pose1, a_lin, 0.10)    # 100 mm/s
+
+    # 10. Move to extra pose 2
+    safe_movel(extra_pose2, a_lin, 0.10)    # 100 mm/s
+
+    # (Additional moves could be added similarly)
+
+    # End of program
+    textmsg("Laser marking sequence completed.")
+end
+
+# Run the program
+main()

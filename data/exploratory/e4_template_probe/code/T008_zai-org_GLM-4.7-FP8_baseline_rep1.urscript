@@ -1,0 +1,56 @@
+# URScript for Heavy Depalletizing Task (T008)
+# Robot: UR5e
+# Payload: 5.0 kg
+# Mode: Fenced
+
+# Set Payload (Mass 5.0 kg, CoG [0,0,0])
+set_payload(5.0, [0.0, 0.0, 0.0])
+
+# Define Waypoints
+# Home Position (Joint space)
+q_home = [0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Pallet Waypoints
+p_above_pallet = p[0.4, -0.3, 0.4, 0, 3.14, 0]
+p_pick = p[0.4, -0.3, 0.1, 0, 3.14, 0]
+p_lift = p[0.4, -0.3, 0.3, 0, 3.14, 0]
+
+# Conveyor Waypoints
+p_transit = p[0.0, -0.3, 0.4, 0, 3.14, 0]
+p_drop = p[-0.4, -0.3, 0.1, 0, 3.14, 0]
+p_above_conveyor = p[-0.4, -0.3, 0.4, 0, 3.14, 0]
+
+# Motion Sequence
+# 1. Move Joint: Home (Speed approx 400mm/s equivalent)
+movej(q_home, a=1.0, v=0.8)
+
+# 2. Move Linear: Above Pallet (400 mm/s)
+movel(p_above_pallet, a=0.5, v=0.4)
+
+# 3. Move Linear: Descend to Top Layer (150 mm/s)
+movel(p_pick, a=0.2, v=0.15)
+
+# Gripper Close
+set_standard_digital_out(0, True)
+sleep(1.0)
+
+# 4. Move Linear: Lift Box (200 mm/s)
+movel(p_lift, a=0.3, v=0.2)
+
+# 5. Move Linear: Transit to Conveyor (350 mm/s)
+movel(p_transit, a=0.5, v=0.35)
+
+# 6. Move Linear: Descend to Conveyor (150 mm/s)
+movel(p_drop, a=0.2, v=0.15)
+
+# Gripper Open
+set_standard_digital_out(0, False)
+sleep(1.0)
+
+# 7. Move Linear: Release/Retract (400 mm/s)
+movel(p_above_conveyor, a=0.5, v=0.4)
+
+# 8. Move Joint: Return to Home (Speed approx 400mm/s equivalent)
+movej(q_home, a=1.0, v=0.8)
+
+# End of Program

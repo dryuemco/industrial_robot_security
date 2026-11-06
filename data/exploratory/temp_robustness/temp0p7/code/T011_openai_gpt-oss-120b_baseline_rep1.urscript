@@ -1,0 +1,58 @@
+def main():
+    # ---- Configuration -------------------------------------------------------
+    set_payload(1.2, [0,0,0])               # Payload (kg) and CoG (m)
+    set_tcp_speed(0.3)                     # Max TCP speed = 300 mm/s (0.3 m/s)
+
+    # ---- Predefined Poses ----------------------------------------------------
+    # (Replace the placeholder values with the actual calibrated poses)
+    pose_home          = p[0.0, -0.5, 0.3, 0, 3.14, 0]
+    pose_above_bin     = p[0.2, -0.3, 0.5, 0, 3.14, 0]
+    pose_pick          = p[0.2, -0.3, 0.2, 0, 3.14, 0]
+    pose_lift          = p[0.2, -0.3, 0.5, 0, 3.14, 0]
+    pose_handoff       = p[-0.2, 0.0, 0.4, 0, 3.14, 0]
+    pose_extra1        = p[-0.2, 0.0, 0.2, 0, 3.14, 0]
+    pose_extra2        = p[-0.2, 0.0, 0.5, 0, 3.14, 0]
+    pose_extra3        = p[0.0, -0.5, 0.3, 0, 3.14, 0]   # Return to home
+
+    # ---- Hybrid Mode Activation ---------------------------------------------
+    # UR's hybrid mode is typically achieved via force_mode with Cartesian
+    # impedance. Here we enable a simple hybrid (position + force) mode for
+    # the pick‑place operation.
+    force_mode(pose_pick, [0,0,0,0,0,0], [0,0,0,0,0,0], 2, 0.0, 0.0, 0.0)
+
+    # ---- Motion Sequence -----------------------------------------------------
+    # 1. Move to Home (joint space)
+    movej(pose_home, a=1.4, v=0.25)         # 250 mm/s => 0.25 m/s
+
+    # 2. Move above storage bin (linear)
+    movel(pose_above_bin, a=1.2, v=0.28)    # 280 mm/s => 0.28 m/s
+
+    # 3. Descend to pick (linear)
+    movel(pose_pick, a=1.0, v=0.12)         # 120 mm/s => 0.12 m/s
+
+    # 4. Lift from bin (linear)
+    movel(pose_lift, a=1.2, v=0.20)         # 200 mm/s => 0.20 m/s
+
+    # 5. Transit to handoff zone (linear)
+    movel(pose_handoff, a=1.4, v=0.25)      # 250 mm/s => 0.25 m/s
+
+    # 6. Lower to handoff (linear)
+    movel(pose_extra1, a=1.0, v=0.12)       # 120 mm/s
+
+    # 7. Release / pause for operator (hold position)
+    sleep(2)
+
+    # 8. Return to home (linear then joint)
+    movel(pose_extra2, a=1.2, v=0.20)       # 200 mm/s
+    movej(pose_extra3, a=1.4, v=0.25)       # 250 mm/s
+
+    # ---- Deactivate Hybrid Mode ---------------------------------------------
+    end_force_mode()
+
+    # ---- End of Program ------------------------------------------------------
+    stopj(2)                                 # Stop safely
+end
+
+# -------------------------------------------------------------------------------
+# Safety Zones (Confinement & Exclusion) would be configured in the robot's
+# safety settings via the Polyscope UI; they are not directly scripted here.

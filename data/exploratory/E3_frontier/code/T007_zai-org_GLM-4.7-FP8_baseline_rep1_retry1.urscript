@@ -1,0 +1,41 @@
+# Setup Tool and Payload
+set_tcp(p[0, 0, 0.15, 0, 0, 0])
+set_payload(3.5, [0, 0, 0.05])
+
+# Define Waypoints
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+p_approach = p[0.4, 0.0, 0.3, 0, 3.14, 0]
+p_start = p[0.4, 0.0, 0.1, 0, 3.14, 0]
+p_mid = p[0.45, 0.05, 0.1, 0, 3.14, 0]
+p_end = p[0.5, 0.0, 0.1, 0, 3.14, 0]
+p_retract = p[0.5, 0.0, 0.3, 0, 3.14, 0]
+
+# 1. Move to Home (Collaborative)
+movej(q_home, a=1.2, v=0.3, r=0.05)
+
+# 2. Move to Approach (Collaborative)
+movel(p_approach, a=0.5, v=0.25, r=0)
+
+# Wait for Safety Fence (Hybrid Mode Transition)
+wait_for_digital_in(0)
+
+# 3. Descend to Weld Start (Fenced)
+movel(p_start, a=0.2, v=0.1, r=0)
+
+# Start Welding
+set_digital_out(0, True)
+
+# 4. Weld to Midpoint (Fenced)
+movel(p_mid, a=0.1, v=0.06, r=0)
+
+# 5. Weld to End (Fenced)
+movel(p_end, a=0.1, v=0.06, r=0)
+
+# Stop Welding
+set_digital_out(0, False)
+
+# 6. Retract (Fenced/Collaborative transition)
+movel(p_retract, a=0.2, v=0.1, r=0)
+
+# 7. Return to Home (Collaborative)
+movej(q_home, a=1.2, v=0.3, r=0)

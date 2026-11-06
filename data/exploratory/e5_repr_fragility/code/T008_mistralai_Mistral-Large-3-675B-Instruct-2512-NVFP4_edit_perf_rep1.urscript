@@ -1,0 +1,53 @@
+# Task: T008 — Heavy depalletizing — fenced mode (Optimized for speed)
+# Robot: ur5e | Mode: fenced | Payload: 5.0 kg
+# Max TCP speed: 0.450 m/s
+
+def task_T008():
+  TCP_SPEED_CAP = 0.450
+  def safe_movel(pose, a, v, r=0):
+    if (v > TCP_SPEED_CAP):
+      popup("TCP speed cap exceeded", error=True)
+      halt
+    end
+    movel(pose, a=a, v=v, r=r)
+  end
+
+  # [0] Verify E-Stop
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # [1] Home - Increased acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=3.0000, v=1.5000)
+
+  # [2] Above pallet - Increased acceleration, max speed
+  safe_movel(p[0.500000, -0.250000, 0.500000, 0.0000, 3.1416, 0.0000], 3.0000, 0.4500, 0.0200)
+
+  # [3] Descend to top layer - Optimized acceleration
+  safe_movel(p[0.500000, -0.250000, 0.320000, 0.0000, 3.1416, 0.0000], 1.2000, 0.1500, 0.0)
+
+  # [4] Gripper CLOSE - Parallel with motion
+  set_digital_out(0, True)
+
+  # [5] Lift box - Increased acceleration, optimized speed
+  safe_movel(p[0.500000, -0.250000, 0.500000, 0.0000, 3.1416, 0.0000], 2.5000, 0.3000, 0.0150)
+
+  # [6] Transit to conveyor - Max speed, increased acceleration
+  safe_movel(p[0.500000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], 3.0000, 0.4500, 0.0200)
+
+  # [7] Place on conveyor - Optimized acceleration
+  safe_movel(p[0.500000, 0.250000, 0.120000, 0.0000, 3.1416, 0.0000], 1.5000, 0.1500, 0.0)
+
+  # [8] Gripper OPEN - Parallel with motion
+  set_digital_out(0, False)
+
+  # [9] Retract - Max speed, increased acceleration
+  safe_movel(p[0.500000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], 3.0000, 0.4500, 0.0100)
+
+  # [10] Return home - Increased acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=3.0000, v=1.5000)
+end
+
+# Entry point
+task_T008()

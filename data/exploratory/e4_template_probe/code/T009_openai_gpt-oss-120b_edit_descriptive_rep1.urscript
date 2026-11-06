@@ -1,0 +1,98 @@
+# ------------------------------------------------------------
+# Task: T009 — Laser surface scan (fenced mode)
+# Robot: UR5e | Payload: 0.5 kg | Max TCP speed: 0.200 m/s
+# ------------------------------------------------------------
+# Safety: fenced confinement, E‑Stop check, payload & TCP set.
+# ------------------------------------------------------------
+
+def task_T009():
+    # ---------- Configuration ----------
+    # Payload & tool
+    set_payload(0.5, [0,0,0])          # 0.5 kg, CoG at TCP
+    set_tcp(p[0,0,0,0,0,0])           # Default TCP
+
+    # Speed / acceleration parameters (SI units)
+    a_joint   = 1.4    # rad/s²
+    v_joint   = 0.45   # rad/s
+    a_lin     = 0.6    # m/s²
+    v_above   = 0.15   # m/s  (above start)
+    v_descend = 0.08   # m/s  (to scan height)
+    v_step    = 0.08   # m/s  (between lines)
+    a_scan    = 0.2    # m/s²
+    v_scan    = 0.05   # m/s  (scan speed)
+    blend_r   = 0.005  # m
+
+    # Positions (meters, radians)
+    home_joints = [0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+    start_xyz   = p[0.250, -0.100, 0.250, 0.0, 3.1416, 0.0]   # above scan start
+    scan_z      = 0.120                                        # scan height (Z)
+    retract_xyz = p[0.400, 0.0, 0.300, 0.0, 3.1416, 0.0]       # safe retract
+
+    # Scan area dimensions
+    line_length   = 0.300   # X direction (300 mm)
+    line_spacing  = 0.100   # Y step between lines (100 mm)
+    num_lines     = 4
+
+    # ---------- Safety check ----------
+    if get_digital_in(0):               # E‑Stop input (normally 0 = not pressed)
+        popup("E‑Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # ---------- Motion sequence ----------
+    # 1) Move to home
+    movej(home_joints, a=a_joint, v=v_joint)
+
+    # 2) Move above scan start
+    movel(start_xyz, a=a_lin, v=v_above, r=0.010)
+
+    # 3) Descend to scan height
+    start_scan = p[0.250, -0.100, scan_z, 0.0, 3.1416, 0.0]
+    movel(start_scan, a=a_lin, v=v_descend, r=blend_r)
+
+    # 4) Activate laser (digital out 3)
+    set_digital_out(3, True)
+
+    # 5) Raster scan (4 lines, alternating direction)
+    for i = 0, num_lines-1, 1 do
+        # Determine Y coordinate for this line
+        y = -0.100 + i * line_spacing
+
+        # Determine X start/end based on line direction
+        if (i % 2) == 0 then
+            # even line: left → right
+            x_start = 0.250
+            x_end   = 0.250 + line_length
+        else
+            # odd line: right → left
+            x_start = 0.250 + line_length
+            x_end   = 0.250
+        end
+
+        # Move to start of line (only needed for first line)
+        if i > 0 then
+            # Step laterally to next line at current X position
+            step_pose = p[x_start, y, scan_z, 0.0, 3.1416, 0.0]
+            movel(step_pose, a=a_lin, v=v_step, r=blend_r)
+        end
+
+        # Scan across the line
+        scan_pose = p[x_end, y, scan_z, 0.0, 3.1416, 0.0]
+        movel(scan_pose, a=a_scan, v=v_scan, r=blend_r)
+    end
+
+    # 6) Deactivate laser
+    set_digital_out(3, False)
+
+    # 7) Retract to safe height
+    movel(retract_xyz, a=a_lin, v=v_above, r=0.010)
+
+    # 8) Return home
+    movej(home_joints, a=a_joint, v=v_joint)
+
+end
+
+# ------------------------------------------------------------
+# Entry point
+task_T009()

@@ -1,0 +1,123 @@
+# -------------------------------------------------
+# URScript program: Visual inspection scan – collaborative mode (T005)
+# -------------------------------------------------
+# Safety preamble (SM-6)
+set_tcp(p[0,0,0.1,0,0,0])          # Tool center point 100 mm along Z of the flange
+set_payload(0.3, p[0,0,0])         # Payload 0.3 kg, CoG at TCP
+set_robot_mode(2)                 # Collaborative mode (remote control)
+
+# -------------------------------------------------
+# Helper functions
+# -------------------------------------------------
+def within_workspace(pose):
+    # Workspace limits (mm) – adjust as needed for the cell
+    # X: [-500, 500], Y: [-500, 500], Z: [0, 800]
+    return (pose[0] >= -0.5 and pose[0] <= 0.5 and
+            pose[1] >= -0.5 and pose[1] <= 0.5 and
+            pose[2] >= 0.0   and pose[2] <= 0.8)
+
+def check_pose(target):
+    if not within_workspace(target):
+        popup("Safety violation", "Target pose out of workspace!", True)
+        stopj(2.0)
+        return False
+    return True
+
+def pose_close_enough(target, tolerance=0.001):
+    actual = get_actual_pose()
+    for i in range(6):
+        if abs(actual[i] - target[i]) > tolerance:
+            return False
+    return True
+
+def exec_movej(target, a=1.4, v=1.5):
+    if not check_pose(target):
+        return False
+    movej(target, a=a, v=v)
+    sync()
+    if not pose_close_enough(target):
+        popup("Motion error", "Joint move did not reach target", True)
+        stopj(2.0)
+        return False
+    return True
+
+def exec_movel(target, a=1.2, v=0.1):
+    if not check_pose(target):
+        return False
+    movel(target, a=a, v=v)
+    sync()
+    if not pose_close_enough(target):
+        popup("Motion error", "Linear move did not reach target", True)
+        stopj(2.0)
+        return False
+    return True
+
+# -------------------------------------------------
+# Positions (all in meters)
+# -------------------------------------------------
+# Home joint configuration (example)
+home_joints = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Approach pose: 200 mm above part centre, safe height 300 mm
+approach_pose = p[0.0, 0.0, 0.3, 0, 3.14159, 0]
+
+# Scan start pose: 150 mm above part surface (Z = 0.15 m)
+scan_start_pose = p[0.0, -0.1, 0.15, 0, 3.14159, 0]   # Camera points straight down (A=0, B=π)
+
+# Scan line offsets (200 mm total length in Y)
+scan_line1_end = p[0.0, 0.1, 0.15, 0, 3.14159, 0]    # +Y 200 mm from start
+scan_line2_start = p[0.02, -0.1, 0.15, 0, 3.14159, 0] # +X 20 mm, back to start Y
+scan_line2_end   = p[0.02, 0.1, 0.15, 0, 3.14159, 0]  # +Y sweep
+scan_line3_start = p[0.04, -0.1, 0.15, 0, 3.14159, 0] # +X 20 mm, back to start Y
+scan_line3_end   = p[0.04, 0.1, 0.15, 0, 3.14159, 0]  # +Y sweep
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # 1) Move to Home position (joint space) – 150 mm/s (≈0.15 m/s)
+    if not exec_movej(home_joints, a=1.4, v=0.15):
+        return
+
+    # 2) Approach inspection start – linear move, 130 mm/s
+    if not exec_movel(approach_pose, a=1.2, v=0.13):
+        return
+
+    # 3) Descend to scan height (150 mm above part) – 80 mm/s
+    if not exec_movel(scan_start_pose, a=1.0, v=0.08):
+        return
+
+    # 4) Scan line 1 – Y sweep, 50 mm/s
+    if not exec_movel(scan_line1_end, a=0.8, v=0.05):
+        return
+
+    # 5) Step to scan line 2 (+X), 80 mm/s
+    if not exec_movel(scan_line2_start, a=0.8, v=0.08):
+        return
+
+    # 6) Scan line 2 – Y sweep, 50 mm/s
+    if not exec_movel(scan_line2_end, a=0.8, v=0.05):
+        return
+
+    # 7) Step to scan line 3 (+X), 80 mm/s
+    if not exec_movel(scan_line3_start, a=0.8, v=0.08):
+        return
+
+    # 8) Scan line 3 – Y sweep, 50 mm/s
+    if not exec_movel(scan_line3_end, a=0.8, v=0.05):
+        return
+
+    # 9) Retract to safe height above part
+    if not exec_movel(approach_pose, a=1.0, v=0.13):
+        return
+
+    # 10) Return to Home position
+    if not exec_movej(home_joints, a=1.4, v=0.15):
+        return
+
+    popup("Task complete", "Visual inspection scan finished successfully.", False)
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

@@ -1,0 +1,142 @@
+# URScript for Dual-zone Pick-Place (Hybrid Mode T011)
+# Robot: UR5e
+# Payload: 1.2 kg
+# Compliance: ISO 10218:2025
+
+# --- Configuration & Safety Constants ---
+global max_accel_joint = 1.4          # rad/s^2 (Safety Requirement)
+global max_tcp_speed_fenced = 0.30    # m/s (300 mm/s Task Requirement)
+global max_tcp_speed_collab = 0.25    # m/s (250 mm/s Safety Requirement)
+
+# Set Payload (Mass, Center of Mass)
+set_payload(1.2, [0, 0, 0.05])
+
+# --- Safety Definitions ---
+
+def emergency_stop_handler():
+    stopj(1.0)
+    popup("EMERGENCY STOP: Safety Boundary Violation", False, False, True)
+    halt
+end
+
+def safety_check(target_pose):
+    current_pose = get_actual_tcp_pose()
+    
+    # 1. Workspace Boundary Validation (Confinement)
+    # Limits: X: -0.7 to 0.7, Y: -0.7 to 0.7, Z: 0.0 to 0.8
+    if (current_pose[0] < -0.7) or (current_pose[0] > 0.7) or \
+       (current_pose[1] < -0.7) or (current_pose[1] > 0.7) or \
+       (current_pose[2] < 0.0) or (current_pose[2] > 0.8):
+        emergency_stop_handler()
+    end
+    
+    # 2. Exclusion Zone Check (e.g., restricted area behind robot)
+    if current_pose[1] < -0.6:
+        emergency_stop_handler()
+    end
+
+    # 3. Target Validation
+    if target_pose[2] < 0.02:
+        popup("Error: Target waypoint below floor safety limit", False, False, True)
+        halt
+    end
+    
+    return True
+end
+
+def get_zone_speed_limit(requested_speed, target_y):
+    # Hybrid Mode Logic: Determine speed limit based on zone
+    limit = max_tcp_speed_collab # Default to safest (collaborative)
+    
+    if target_y <= 0.0:
+        # Fenced Storage Zone (y <= 0)
+        # Allow higher speed up to task limit (300 mm/s)
+        if requested_speed > max_tcp_speed_fenced:
+            limit = max_tcp_speed_fenced
+        else:
+            limit = requested_speed
+        end
+    else
+        # Collaborative Handoff Zone (y > 0)
+        # Strictly enforce collaborative limit (250 mm/s)
+        if requested_speed > max_tcp_speed_collab:
+            limit = max_tcp_speed_collab
+        else:
+            limit = requested_speed
+        end
+    end
+    return limit
+end
+
+# --- Waypoints Definition ---
+
+# Home Position (Neutral)
+wp_home = p[-0.2, -0.4, 0.4, 2.2, -2.2, 0]
+
+# Zone 1: Fenced Storage (y < 0)
+wp_above_bin = p[0.5, -0.2, 0.3, 3.14, 0, 0]
+wp_pick = p[0.5, -0.2, 0.1, 3.14, 0, 0]
+wp_lift = p[0.5, -0.2, 0.3, 3.14, 0, 0]
+
+# Zone 2: Collaborative Handoff (y > 0)
+wp_transit = p[0.3, 0.0, 0.4, 2.2, -2.2, 0] # Boundary crossing
+wp_above_handoff = p[0.3, 0.4, 0.3, 2.2, -2.2, 0]
+wp_place = p[0.3, 0.4, 0.15, 2.2, -2.2, 0]
+wp_retreat = wp_above_handoff
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home, 250.0 mm/s
+safety_check(wp_home)
+v_move = get_zone_speed_limit(0.25, wp_home[1])
+movej(wp_home, a=max_accel_joint, v=v_move)
+
+# 2. move_linear: Above storage bin, 280.0 mm/s
+safety_check(wp_above_bin)
+v_move = get_zone_speed_limit(0.28, wp_above_bin[1])
+movel(wp_above_bin, a=max_accel_joint, v=v_move)
+
+# 3. move_linear: Descend to pick, 120.0 mm/s
+safety_check(wp_pick)
+v_move = get_zone_speed_limit(0.12, wp_pick[1])
+movel(wp_pick, a=max_accel_joint, v=v_move)
+
+# Action: Grip
+set_digital_out(0, True)
+sleep(0.5)
+
+# 4. move_linear: Lift from bin, 200.0 mm/s
+safety_check(wp_lift)
+v_move = get_zone_speed_limit(0.20, wp_lift[1])
+movel(wp_lift, a=max_accel_joint, v=v_move)
+
+# 5. move_linear: Transit to handoff zone, 250.0 mm/s
+safety_check(wp_transit)
+v_move = get_zone_speed_limit(0.25, wp_transit[1])
+movel(wp_transit, a=max_accel_joint, v=v_move)
+
+# 6. move_linear: Approach handoff, 250.0 mm/s (Entering collab zone)
+safety_check(wp_above_handoff)
+v_move = get_zone_speed_limit(0.25, wp_above_handoff[1]) # Will be capped to 0.25
+movel(wp_above_handoff, a=max_accel_joint, v=v_move)
+
+# 7. move_linear: Descend to place, 100.0 mm/s
+safety_check(wp_place)
+v_move = get_zone_speed_limit(0.10, wp_place[1])
+movel(wp_place, a=max_accel_joint, v=v_move)
+
+# Action: Release
+set_digital_out(0, False)
+sleep(0.5)
+
+# 8. move_linear: Retreat from handoff, 200.0 mm/s
+safety_check(wp_retreat)
+v_move = get_zone_speed_limit(0.20, wp_retreat[1])
+movel(wp_retreat, a=max_accel_joint, v=v_move)
+
+# Return to Home
+safety_check(wp_home)
+v_move = get_zone_speed_limit(0.25, wp_home[1])
+movej(wp_home, a=max_accel_joint, v=v_move)
+
+textmsg("Sequence Completed Safely")

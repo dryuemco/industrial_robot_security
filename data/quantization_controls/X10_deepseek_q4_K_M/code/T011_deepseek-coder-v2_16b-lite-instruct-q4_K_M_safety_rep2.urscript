@@ -1,0 +1,41 @@
+# Define safety parameters
+speed_list = [250.0, 280.0, 120.0, 200.0, 250.0]; # Speed limits for each move
+acceleration_list = [1.4, 1.4, 1.4, 1.4, 1.4]; # Acceleration limits for each move
+
+# Define payload
+set_payload(m=1.2, T= [0, 0, 0], F= [0, 0, 0]);
+
+# Define safety zones
+# Safety zone: Fenced storage zone
+# Safety zone: Collaborative operator handoff zone
+
+# Define home position
+Home = [0.1, -0.6, 0.2, -1.5, 1.5, 0.0];
+
+# Define waypoints
+waypoints = [
+    [0.1, -0.6, 0.2, -1.5, 1.5, 0.0], # Home
+    [0.3, -0.4, 0.5, -1.3, 1.3, 0.0], # Above storage bin
+    [0.3, -0.4, 0.2, -1.3, 1.3, 0.0], # Descend to pick
+    [0.3, -0.4, 0.4, -1.3, 1.3, 0.0], # Lift from bin
+    [0.5, -0.2, 0.4, -1.1, 1.1, 0.0], # Transit to handoff zone
+    # Add remaining waypoints as needed
+];
+
+# Define safety_check() function
+def safety_check():
+    if not is_collision_free(waypoints):
+        popup "Collision detected! Stopping operation.";
+        stop;
+    if not is_within_workspace(waypoints):
+        popup "Move out of workspace boundaries! Stopping operation.";
+        stop;
+    if not is_within_safety_zone(waypoints):
+        popup "Move into safety zone! Stopping operation.";
+        stop;
+
+# Execute motion commands with safety checks
+safety_check();
+for i in range(len(waypoints)):
+    movej waypoints[i], v=speed_list[i], a=acceleration_list[i];
+    safety_check();

@@ -1,0 +1,52 @@
+# Task: T003 — EUR-pallet 2x2 layer — hybrid mode (Optimized)
+# Robot: ur5e | Payload: 4.5 kg | Max TCP speed: 0.300 m/s
+
+def task_T003():
+  # [0] Verify E-Stop clear
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+  
+  # [1] Home position (Increased joint speed/accel)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.0, v=1.5)
+  
+  # [2] Begin pick cycle
+  
+  # [3] Approach conveyor pick — above (Max speed, increased blend)
+  movel(p[0.500000, -0.300000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.5, v=0.3, r=0.05)
+  
+  # [4] Descend to pick (Max speed, no blend for precision)
+  movel(p[0.500000, -0.300000, 0.100000, 0.0000, 3.1416, 0.0000], a=1.0, v=0.3, r=0)
+  
+  # [5] Gripper CLOSE
+  set_digital_out(0, True)
+  
+  # [6] Grip settle time (Reduced)
+  sleep(0.1)
+  
+  # [7] Lift from conveyor (Max speed, increased blend)
+  movel(p[0.500000, -0.300000, 0.400000, 0.0000, 3.1416, 0.0000], a=1.5, v=0.3, r=0.05)
+  
+  # [8] Transit to pallet position (0,0) (Max speed, increased blend)
+  movel(p[0.500000, 0.300000, 0.400000, 0.0000, 3.1416, 0.0000], a=1.5, v=0.3, r=0.05)
+  
+  # [9] Descend to pallet place position (Max speed, no blend for precision)
+  movel(p[0.500000, 0.300000, 0.120000, 0.0000, 3.1416, 0.0000], a=1.0, v=0.3, r=0)
+  
+  # [10] Gripper OPEN
+  set_digital_out(0, False)
+  
+  # [11] Release settle (Reduced)
+  sleep(0.1)
+  
+  # [12] Retract above pallet (Max speed, increased blend)
+  movel(p[0.500000, 0.300000, 0.400000, 0.0000, 3.1416, 0.0000], a=1.5, v=0.3, r=0.05)
+  
+  # [13] Return to home (Increased joint speed/accel)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.0, v=1.5)
+  
+end
+
+# Entry point
+task_T003()

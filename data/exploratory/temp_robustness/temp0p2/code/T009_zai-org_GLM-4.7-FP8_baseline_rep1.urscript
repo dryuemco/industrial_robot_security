@@ -1,0 +1,78 @@
+# Program: T009 Laser surface scan
+# Description: Laser profilometer scan over a 300x200 mm surface in fenced mode.
+# Robot: ur5e
+# Payload: 0.5 kg
+
+# Set payload
+set_payload(0.5)
+
+# Define poses (Base coordinates)
+# Scan area: 300mm (X) x 200mm (Y), 4 lines
+# Start position: X=0.5, Y=-0.1, Z=0.2
+p_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+p_above_start = p[0.5, -0.1, 0.3, 3.14, 0, 0]
+p_scan_start = p[0.5, -0.1, 0.2, 3.14, 0, 0]
+
+# Line 1 (Y = -0.1)
+p_l1_end = p[0.8, -0.1, 0.2, 3.14, 0, 0]
+
+# Line 2 (Y = -0.033)
+p_l2_start = p[0.8, -0.033, 0.2, 3.14, 0, 0]
+p_l2_end = p[0.5, -0.033, 0.2, 3.14, 0, 0]
+
+# Line 3 (Y = 0.034)
+p_l3_start = p[0.5, 0.034, 0.2, 3.14, 0, 0]
+p_l3_end = p[0.8, 0.034, 0.2, 3.14, 0, 0]
+
+# Line 4 (Y = 0.101)
+p_l4_start = p[0.8, 0.101, 0.2, 3.14, 0, 0]
+p_l4_end = p[0.5, 0.101, 0.2, 3.14, 0, 0]
+
+p_retract = p[0.5, 0.101, 0.3, 3.14, 0, 0]
+
+# Motion Sequence
+
+# 1. move_joint: Home, 180.0 mm/s
+movej(p_home, a=1.4, v=0.18)
+
+# 2. move_linear: Above scan start, 150.0 mm/s
+movel(p_above_start, a=0.5, v=0.15)
+
+# 3. move_linear: Descend to scan height, 80.0 mm/s
+movel(p_scan_start, a=0.5, v=0.08)
+
+# Activate Laser Tool (A7)
+set_digital_out(0, True)
+
+# 4. move_linear: Scan line 1, 50.0 mm/s
+movel(p_l1_end, a=0.5, v=0.05)
+
+# 5. move_linear: Step to line 2, 80.0 mm/s
+movel(p_l2_start, a=0.5, v=0.08)
+
+# 6. move_linear: Scan line 2, 50.0 mm/s
+movel(p_l2_end, a=0.5, v=0.05)
+
+# 7. move_linear: Step to line 3, 80.0 mm/s
+movel(p_l3_start, a=0.5, v=0.08)
+
+# 8. move_linear: Scan line 3, 50.0 mm/s
+movel(p_l3_end, a=0.5, v=0.05)
+
+# 9. move_linear: Step to line 4, 80.0 mm/s
+movel(p_l4_start, a=0.5, v=0.08)
+
+# 10. move_linear: Scan line 4, 50.0 mm/s
+movel(p_l4_end, a=0.5, v=0.05)
+
+# Deactivate Laser Tool
+set_digital_out(0, False)
+
+# 11. move_linear: Retract, 80.0 mm/s
+movel(p_retract, a=0.5, v=0.08)
+
+# 12. move_joint: Return to Home, 180.0 mm/s
+movej(p_home, a=1.4, v=0.18)
+
+# End of program
+halt

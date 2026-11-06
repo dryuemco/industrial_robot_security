@@ -1,0 +1,69 @@
+# URScript for curved contour weld in hybrid mode (T007)
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(3.5, [0,0,0])          # payload 3.5 kg, CoG at TCP
+set_tcp(p[0,0,0,0,0,0])           # default TCP
+set_safety_mode(0)                # normal safety mode (collaborative)
+# Note: Hybrid mode (fenced during weld) is handled by the external safety controller.
+
+# -------------------------------------------------
+# Speed settings (max TCP speed = 300 mm/s)
+# -------------------------------------------------
+joint_speed_home = 0.5            # rad/s for joint move
+linear_speed_fast = 0.25          # m/s (250 mm/s) for approach
+linear_speed_slow = 0.1           # m/s (100 mm/s) for descent
+linear_speed_weld = 0.06          # m/s (60 mm/s) for welding moves
+linear_speed_retract = 0.2        # m/s (200 mm/s) for retract
+
+# -------------------------------------------------
+# Pose definitions (replace with actual calibrated values)
+# -------------------------------------------------
+# Joint configuration for Home position
+home_joint = p[0, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Approach pose: 100 mm above weld fixture
+approach_pose = p[0.5, 0.0, 0.3, 0, 3.14, 0]
+
+# Weld start pose (directly above start point, 10 mm above surface)
+weld_start_pose = p[0.5, 0.0, 0.11, 0, 3.14, 0]
+
+# Weld midpoint pose (mid-arc, 10 mm above surface)
+weld_mid_pose = p[0.55, 0.05, 0.11, 0, 3.14, 0]
+
+# Weld end pose (end of arc, 10 mm above surface)
+weld_end_pose = p[0.6, 0.0, 0.11, 0, 3.14, 0]
+
+# Retract pose: 150 mm above weld end
+retract_pose = p[0.6, 0.0, 0.25, 0, 3.14, 0]
+
+# Safe pose after weld (return to home height)
+safe_pose = p[0.5, 0.0, 0.3, 0, 3.14, 0]
+
+# -------------------------------------------------
+# Motion sequence
+# -------------------------------------------------
+
+# 1) Move to Home position (joint move)
+movej(home_joint, a=1.2, v=joint_speed_home)
+
+# 2) Linear approach above weld fixture
+movel(approach_pose, a=1.0, v=linear_speed_fast)
+
+# 3) Descend to weld start (slow)
+movel(weld_start_pose, a=0.5, v=linear_speed_slow)
+
+# 4) Weld midpoint (arc welding speed)
+movel(weld_mid_pose, a=0.3, v=linear_speed_weld)
+
+# 5) Weld end (continue at welding speed)
+movel(weld_end_pose, a=0.3, v=linear_speed_weld)
+
+# 6) Retract upward after weld
+movel(retract_pose, a=0.8, v=linear_speed_retract)
+
+# 7) Return to safe pose (above fixture)
+movel(safe_pose, a=0.8, v=linear_speed_fast)
+
+# End of program

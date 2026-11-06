@@ -1,0 +1,52 @@
+def T011_dual_zone_pick_place():
+    # Safety configuration
+    set_payload(1.2)
+    set_safety_mode("reduced")
+    set_tcp(p[0, 0, 0.1, 0, 0, 0])
+
+    # Define waypoints
+    home_pose = p[0.0, -0.5, 0.5, 0, 3.14159, 0]
+    above_bin_pose = p[0.3, -0.4, 0.2, 0, 3.14159, 0]
+    pick_pose = p[0.3, -0.4, 0.05, 0, 3.14159, 0]
+    lift_pose = p[0.3, -0.4, 0.2, 0, 3.14159, 0]
+    transit_pose = p[0.0, 0.0, 0.3, 0, 3.14159, 0]
+    above_handoff_pose = p[-0.3, 0.2, 0.2, 0, 3.14159, 0]
+    handoff_pose = p[-0.3, 0.2, 0.1, 0, 3.14159, 0]
+    retract_pose = p[-0.3, 0.2, 0.2, 0, 3.14159, 0]
+
+    # Define speed and acceleration
+    speed_j = 250.0/1000
+    speed_l = 280.0/1000
+    speed_pick = 120.0/1000
+    speed_lift = 200.0/1000
+    speed_transit = 250.0/1000
+    accel = 1.2
+
+    # Motion sequence
+    movej(home_pose, a=accel, v=speed_j)
+
+    # Transition to reduced mode for fenced zone
+    set_safety_mode("reduced")
+    movel(above_bin_pose, a=accel, v=speed_l)
+    movel(pick_pose, a=accel, v=speed_pick)
+
+    # Gripper action (simulated)
+    set_digital_out(0, True)
+
+    movel(lift_pose, a=accel, v=speed_lift)
+
+    # Transition to protective stop for collaborative zone
+    set_safety_mode("protective_stop")
+    movel(transit_pose, a=accel, v=speed_transit)
+
+    # Transition to normal mode for handoff
+    set_safety_mode("normal")
+    movel(above_handoff_pose, a=accel, v=speed_l)
+    movel(handoff_pose, a=accel, v=speed_pick)
+
+    # Release part
+    set_digital_out(0, False)
+
+    movel(retract_pose, a=accel, v=speed_lift)
+    movej(home_pose, a=accel, v=speed_j)
+end

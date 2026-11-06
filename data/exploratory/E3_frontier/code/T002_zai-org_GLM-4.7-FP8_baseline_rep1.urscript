@@ -1,0 +1,54 @@
+# UR5e Linear Weld Path - Fenced Mode (T002)
+# Description: Single linear weld seam (300 mm) with arc activation.
+# Payload: 3.0 kg
+# Safety: Confinement zone active
+
+# --- Setup ---
+set_payload(3.0, [0, 0, 0.05])
+# Set TCP to simulate a welding torch tip (100mm offset from flange)
+set_tcp(p[0, 0, 0.1, 0, 0, 0])
+
+# --- Safety Zone Definition (Confinement) ---
+# Limits robot to a box around the work area (Base Frame)
+# X: 0.3m to 0.9m, Y: -0.2m to 0.2m, Z: 0.0m to 0.5m
+set_pos_confinement(True, p[0, 0, 0, 0, 0, 0], [0.3, 0.9], [-0.2, 0.2], [0.0, 0.5])
+
+# --- Waypoint Definitions ---
+# Home Joint Position (Radians)
+home_j = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Weld Path Poses (Meters, Radians)
+# Orientation: Torch pointing down (rx=0, ry=3.14, rz=0)
+weld_start = p[0.5, 0.0, 0.2, 0, 3.14, 0]
+weld_end   = p[0.8, 0.0, 0.2, 0, 3.14, 0] # 300mm length
+
+# Approach/Retract Poses (50mm above Z)
+approach_start = p[0.5, 0.0, 0.25, 0, 3.14, 0]
+retract_end    = p[0.8, 0.0, 0.25, 0, 3.14, 0]
+
+# --- Motion Sequence ---
+
+# 1. Move Joint: Go to home position (300.0 mm/s)
+movej(home_j, a=1.4, v=0.3)
+
+# 2. Move Linear: Approach above weld start (250.0 mm/s)
+movel(approach_start, a=1.2, v=0.25)
+
+# 3. Move Linear: Descend to weld start position (100.0 mm/s)
+movel(weld_start, a=0.5, v=0.1)
+
+# 4. Move Linear: Weld seam - 300mm linear path (50.0 mm/s)
+# Activate Welding Arc (Digital Output 0)
+set_standard_digital_out(0, True)
+sleep(0.1) # Wait for arc stabilization
+movel(weld_end, a=0.1, v=0.05)
+# Deactivate Welding Arc
+set_standard_digital_out(0, False)
+
+# 5. Move Linear: Retract above weld end (200.0 mm/s)
+movel(retract_end, a=1.0, v=0.2)
+
+# 6. Move Joint: Return to home position (300.0 mm/s)
+movej(home_j, a=1.4, v=0.3)
+
+# End of Task

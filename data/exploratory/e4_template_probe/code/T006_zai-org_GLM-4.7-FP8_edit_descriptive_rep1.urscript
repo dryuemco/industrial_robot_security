@@ -1,0 +1,65 @@
+# Task: T006 — Bin picking with suction — fenced mode
+# Robot: ur5e | Payload: 2.0 kg | Max TCP Speed: 0.4 m/s
+# Description: High-speed pick and place cycle from bin to conveyor.
+
+def task_T006():
+  # --- Configuration ---
+  # Set payload for accurate motion planning (2.0 kg)
+  set_payload(2.0, [0.0, 0.0, 0.0])
+
+  # --- Safety Check ---
+  # Verify external safety interlock (DI 0) is clear
+  if (get_digital_in(0) == True):
+    popup("Safety Interlock Active — Aborting program.", error=True)
+    halt
+  end
+
+  # --- Motion Poses ---
+  # Joint positions for Home
+  j_home = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+  
+  # Waypoints (x, y, z, rx, ry, rz)
+  p_above_bin = p[0.450000, -0.200000, 0.350000, 0.0000, 3.1416, 0.0000]
+  p_pick      = p[0.450000, -0.200000, 0.100000, 0.0000, 3.1416, 0.0000]
+  p_lift      = p[0.450000, -0.200000, 0.400000, 0.0000, 3.1416, 0.0000]
+  p_transit   = p[0.450000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000]
+  p_drop      = p[0.450000, 0.250000, 0.150000, 0.0000, 3.1416, 0.0000]
+
+  # --- Motion Sequence ---
+
+  # 1. Move to Home Position
+  movej(j_home, a=1.4000, v=1.0500)
+
+  # 2. Move Above Bin
+  movel(p_above_bin, a=1.5000, v=0.3500, r=0.0200)
+
+  # 3. Descend into Bin (Slow approach)
+  movel(p_pick, a=0.8000, v=0.1500, r=0.0)
+
+  # 4. Activate Suction Gripper
+  set_digital_out(0, True)
+  sleep(0.3000)
+
+  # 5. Lift from Bin
+  movel(p_lift, a=1.2000, v=0.3000, r=0.0200)
+
+  # 6. Transit to Conveyor (High speed)
+  movel(p_transit, a=1.8000, v=0.3800, r=0.0200)
+
+  # 7. Descend to Drop Position
+  movel(p_drop, a=1.0000, v=0.2000, r=0.0)
+
+  # 8. Release Part (Suction OFF)
+  set_digital_out(0, False)
+  sleep(0.2000)
+
+  # 9. Retract from Conveyor
+  movel(p_transit, a=1.5000, v=0.3500, r=0.0100)
+
+  # 10. Return to Home
+  movej(j_home, a=1.4000, v=1.0500)
+
+end
+
+# Execute Task
+task_T006()

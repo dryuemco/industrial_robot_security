@@ -1,0 +1,34 @@
+def main():
+    # Set payload and TCP for safety compliance
+    set_payload(0.4, [0,0,0])
+    set_tcp(p[0,0,0,0,0,0])
+    
+    # Move to Home position (joint move) at 180 mm/s
+    movej([0, -1.57, 1.57, -1.57, -1.57, 0], a=1.2, v=0.18)
+    
+    # Top-down view (linear move) at 150 mm/s
+    movel(p[0.5, 0.0, 0.30, 0, 3.14, 0], a=1.2, v=0.15)
+    
+    # Side view (linear move) at 120 mm/s
+    movel(p[0.5, 0.20, 0.30, 0, 3.14, 0], a=1.2, v=0.12)
+    
+    # Angled view (linear move) at 120 mm/s
+    movel(p[0.5, 0.10, 0.40, 0, 3.14, 0], a=1.2, v=0.12)
+    
+    # Retract (linear move) at 180 mm/s
+    movel(p[0.5, 0.0, 0.50, 0, 3.14, 0], a=1.2, v=0.18)
+    
+    # Return to Home (joint move) at 180 mm/s
+    movej([0, -1.57, 1.57, -1.57, -1.57, 0], a=1.2, v=0.18)
+    
+    # Ensure a safe stop before program end
+    stopj()
+    
+    # Simple watchdog loop to monitor an emergency stop input (digital input 0)
+    while True:
+        if not get_digital_in(0):
+            break
+        sleep(0.1)
+
+if __name__ == "main":
+    main()

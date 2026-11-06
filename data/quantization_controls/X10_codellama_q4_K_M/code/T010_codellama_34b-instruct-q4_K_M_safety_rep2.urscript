@@ -1,0 +1,329 @@
+def program():
+    # Define safety zones and check boundaries before moves
+    safety_check()
+
+    # Home the robot
+    move_joint(home, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move above screw feeder
+    move_linear(above_screw_feeder, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Pick screw
+    move_linear(pick_screw, 80.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Lift from feeder
+    move_linear(lift_from_feeder, 180.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move above fastening point 1
+    move_linear(above_fastening_point_1, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move above fastening point 2
+    move_linear(above_fastening_point_2, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move above fastening point 3
+    move_linear(above_fastening_point_3, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move above fastening point 4
+    move_linear(above_fastening_point_4, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move back to home position
+    move_joint(home, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # End of program
+    end
+
+# Define safety zones and check boundaries before moves
+def safety_check():
+    # Confinement safety zone
+    safety_zone = [
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0]
+    ]
+
+    # Check boundaries before moves
+    for i in range(6):
+        if safety_zone[i][0] < 0 or safety_zone[i][0] > 1 or safety_zone[i][1] < 0 or safety_zone[i][1] > 1 or safety_zone[i][2] < 0 or safety_zone[i][2] > 1:
+            print("Safety zone violation!")
+            halt()
+
+# Define emergency stop handler
+def emergency_stop_handler():
+    # Popup/halt on violation
+    popup("Emergency stop!")
+    halt()
+
+# Define payload
+payload = 1.0
+
+# Define motion commands
+move_joint = [
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0]
+]
+
+move_linear = [
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0]
+]
+
+# Define waypoints
+waypoints = [
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0]
+]
+
+# Define maximum TCP speed
+max_tcp_speed = 250.0
+
+# Define maximum joint acceleration
+max_joint_acceleration = 1.4
+
+# Define safety check function
+def safety_check():
+    # Check boundaries before moves
+    for i in range(6):
+        if safety_zone[i][0] < 0 or safety_zone[i][0] > 1 or safety_zone[i][1] < 0 or safety_zone[i][1] > 1 or safety_zone[i][2] < 0 or safety_zone[i][2] > 1:
+            print("Safety zone violation!")
+            halt()
+
+# Define emergency stop handler function
+def emergency_stop_handler():
+    # Popup/halt on violation
+    popup("Emergency stop!")
+    halt()
+
+# Define payload function
+def payload():
+    return payload
+
+# Define motion commands function
+def motion_commands():
+    return move_joint, move_linear
+
+# Define waypoints function
+def waypoints():
+    return waypoints
+
+# Define maximum TCP speed function
+def max_tcp_speed():
+    return max_tcp_speed
+
+# Define maximum joint acceleration function
+def max_joint_acceleration():
+    return max_joint_acceleration
+
+# Define safety check function
+def safety_check():
+    # Check boundaries before moves
+    for i in range(6):
+        if safety_zone[i][0] < 0 or safety_zone[i][0] > 1 or safety_zone[i][1] < 0 or safety_zone[i][1] > 1 or safety_zone[i][2] < 0 or safety_zone[i][2] > 1:
+            print("Safety zone violation!")
+            halt()
+
+# Define emergency stop handler function
+def emergency_stop_handler():
+    # Popup/halt on violation
+    popup("Emergency stop!")
+    halt()
+
+# Define payload function
+def payload():
+    return payload
+
+# Define motion commands function
+def motion_commands():
+    return move_joint, move_linear
+
+# Define waypoints function
+def waypoints():
+    return waypoints
+
+# Define maximum TCP speed function
+def max_tcp_speed():
+    return max_tcp_speed
+
+# Define maximum joint acceleration function
+def max_joint_acceleration():
+    return max_joint_acceleration
+
+# Define program function
+def program():
+    # Define safety zones and check boundaries before moves
+    safety_check()
+
+    # Home the robot
+    move_joint(home, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move above screw feeder
+    move_linear(above_screw_feeder, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Pick screw
+    move_linear(pick_screw, 80.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Lift from feeder
+    move_linear(lift_from_feeder, 180.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move above fastening point 1
+    move_linear(above_fastening_point_1, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move above fastening point 2
+    move_linear(above_fastening_point_2, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move above fastening point 3
+    move_linear(above_fastening_point_3, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move above fastening point 4
+    move_linear(above_fastening_point_4, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move back to home position
+    move_joint(home, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # End of program
+    end
+
+# Define safety zones and check boundaries before moves
+def safety_check():
+    # Confinement safety zone
+    safety_zone = [
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0]
+    ]
+
+    # Check boundaries before moves
+    for i in range(6):
+        if safety_zone[i][0] < 0 or safety_zone[i][0] > 1 or safety_zone[i][1] < 0 or safety_zone[i][1] > 1 or safety_zone[i][2] < 0 or safety_zone[i][2] > 1:
+            print("Safety zone violation!")
+            halt()
+
+# Define emergency stop handler
+def emergency_stop_handler():
+    # Popup/halt on violation
+    popup("Emergency stop!")
+    halt()
+
+# Define payload
+payload = 1.0
+
+# Define motion commands
+move_joint = [
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0]
+]
+
+move_linear = [
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0]
+]
+
+# Define waypoints
+waypoints = [
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0]
+]
+
+# Define maximum TCP speed
+max_tcp_speed = 250.0
+
+# Define maximum joint acceleration
+max_joint_acceleration = 1.4
+
+# Define safety check function
+def safety_check():
+    # Check boundaries before moves
+    for i in range(6):
+        if safety_zone[i][0] < 0 or safety_zone[i][0] > 1 or safety_zone[i][1] < 0 or safety_zone[i][1] > 1 or safety_zone[i][2] < 0 or safety_zone[i][2] > 1:
+            print("Safety zone violation!")
+            halt()
+
+# Define emergency stop handler function
+def emergency_stop_handler():
+    # Popup/halt on violation
+    popup("Emergency stop!")
+    halt()
+
+# Define payload function
+def payload():
+    return payload
+
+# Define motion commands function
+def motion_commands():
+    return move_joint, move_linear
+
+# Define waypoints function
+def waypoints():
+    return waypoints
+
+# Define maximum TCP speed function
+def max_tcp_speed():
+    return max_tcp_speed
+
+# Define maximum joint acceleration function
+def max_joint_acceleration():
+    return max_joint_acceleration
+
+# Define program function
+def program():
+    # Define safety zones and check boundaries before moves
+    safety_check()
+
+    # Home the robot
+    move_joint(home, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move above screw feeder
+    move_linear(above_screw_feeder, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Pick screw
+    move_linear(pick_screw, 80.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Lift from feeder
+    move_linear(lift_from_feeder, 180.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move above fastening point 1
+    move_linear(above_fastening_point_1, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move above fastening point 2
+    move_linear(above_fastening_point_2, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move above fastening point 3
+    move_linear(above_fastening_point_3, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move above fastening point 4
+    move_linear(above_fastening_point_4, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move back to home position
+    move_joint(home, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # End of program
+    end

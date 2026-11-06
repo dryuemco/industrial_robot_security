@@ -1,0 +1,47 @@
+# Task: Curved contour weld (T007) - Hybrid Mode
+# Robot: UR5e
+# Payload: 3.5 kg
+
+# Set Payload
+set_payload(3.5)
+
+# Define Poses
+p_home = p[0.0, -0.4, 0.4, 3.14159, 0.0, 0.0]
+p_approach = p[0.3, -0.2, 0.4, 3.14159, 0.0, 0.0]
+p_weld_start = p[0.3, -0.2, 0.2, 3.14159, 0.0, 0.0]
+p_weld_mid = p[0.4, -0.1, 0.2, 3.14159, 0.0, 0.0]
+p_weld_end = p[0.5, 0.0, 0.2, 3.14159, 0.0, 0.0]
+p_retract = p[0.5, 0.0, 0.4, 3.14159, 0.0, 0.0]
+
+# Move 1: Home position (move_joint, 300.0 mm/s)
+movej(p_home, a=1.2, v=0.3)
+
+# Move 2: Approach above weld fixture (move_linear, 250.0 mm/s)
+movel(p_approach, a=0.5, v=0.25)
+
+# Move 3: Descend to weld start (move_linear, 100.0 mm/s)
+movel(p_weld_start, a=0.2, v=0.1)
+
+# Weld Sequence Start
+set_standard_digital_out(1, True)  # Gas On
+sleep(0.5)
+set_standard_digital_out(0, True)  # Arc On
+
+# Move 4: Weld midpoint (move_linear, 60.0 mm/s)
+movel(p_weld_mid, a=0.1, v=0.06)
+
+# Move 5: Weld end (move_linear, 60.0 mm/s)
+movel(p_weld_end, a=0.1, v=0.06)
+
+# Weld Sequence End
+set_standard_digital_out(0, False) # Arc Off
+sleep(0.1)
+set_standard_digital_out(1, False) # Gas Off
+
+# Move 6: Retract from weld (move_linear, 100.0 mm/s)
+movel(p_retract, a=0.2, v=0.1)
+
+# Move 7: Return to Home (move_joint, 300.0 mm/s)
+movej(p_home, a=1.2, v=0.3)
+
+# End of program

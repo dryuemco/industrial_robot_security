@@ -1,0 +1,96 @@
+# URScript for hybrid mode screw fastening assembly (T010)
+
+def main():
+    # Payload configuration
+    set_payload(1.0, [0,0,0])
+    # TCP (tool centre point) at the tool origin
+    set_tcp(p[0,0,0,0,0,0])
+
+    # Speed limits (m/s)
+    max_speed = 0.25
+
+    # -------------------------------------------------------------------------
+    # Predefined poses (meters, radians)
+    # -------------------------------------------------------------------------
+    p_home          = p[0.0, -0.5, 0.5, 0, 1.57, 0]
+    p_above_feeder  = p[0.30, -0.20, 0.40, 0, 1.57, 0]
+    p_pick_screw    = p[0.30, -0.20, 0.10, 0, 1.57, 0]
+    p_lift          = p[0.30, -0.20, 0.30, 0, 1.57, 0]
+    p_above_fp1     = p[0.00,  0.20, 0.40, 0, 1.57, 0]
+    p_above_fp2     = p[-0.10, 0.20, 0.40, 0, 1.57, 0]
+    p_above_fp3     = p[-0.20, 0.20, 0.40, 0, 1.57, 0]
+    p_above_fp4     = p[-0.30, 0.20, 0.40, 0, 1.57, 0]
+
+    # -------------------------------------------------------------------------
+    # Hybrid mode note:
+    # The robot is configured in the safety controller for hybrid operation:
+    #   • Collaborative (free) zone during approach moves.
+    #   • Fenced (protective stop) zone during fastening.
+    # -------------------------------------------------------------------------
+
+    # Move to Home (joint move)
+    movej(p_home, a=1.4, v=0.20, t=0, r=0)
+
+    # Approach screw feeder (linear, collaborative)
+    movel(p_above_feeder, a=1.2, v=0.20, t=0, r=0)
+
+    # Pick screw
+    movel(p_pick_screw, a=0.8, v=0.08, t=0, r=0)
+    set_digital_out(0, True)   # close gripper
+    sleep(0.5)
+
+    # Lift screw from feeder
+    movel(p_lift, a=1.0, v=0.18, t=0, r=0)
+
+    # Fastening point 1
+    movel(p_above_fp1, a=1.2, v=0.20, t=0, r=0)
+    fasten_screw()
+
+    # Fastening point 2
+    movel(p_above_fp2, a=1.2, v=0.20, t=0, r=0)
+    fasten_screw()
+
+    # Fastening point 3
+    movel(p_above_fp3, a=1.2, v=0.20, t=0, r=0)
+    fasten_screw()
+
+    # Fastening point 4
+    movel(p_above_fp4, a=1.2, v=0.20, t=0, r=0)
+    fasten_screw()
+
+    # Release any remaining tool (optional)
+    set_digital_out(0, False)  # open gripper
+    sleep(0.5)
+
+    # Return to Home
+    movej(p_home, a=1.4, v=0.20, t=0, r=0)
+
+end
+
+# -------------------------------------------------------------------------
+# Helper: Fasten screw at current above‑point pose
+# -------------------------------------------------------------------------
+def fasten_screw():
+    # Activate screwdriver spindle (digital out 1)
+    set_digital_out(1, True)
+    sleep(0.2)
+
+    # Move down 20 mm to engage screw (still within fenced zone)
+    current_pose = get_actual_pose()
+    p_down = p[current_pose[0], current_pose[1], current_pose[2] - 0.020,
+               current_pose[3], current_pose[4], current_pose[5]]
+    movel(p_down, a=0.5, v=0.05, t=0, r=0)
+
+    # Apply torque / drive screw (digital out 2 as torque enable)
+    set_digital_out(2, True)
+    sleep(1.0)                     # simulate fastening time
+    set_digital_out(2, False)
+
+    # Retract 20 mm
+    p_up = p[current_pose[0], current_pose[1], current_pose[2] + 0.020,
+             current_pose[3], current_pose[4], current_pose[5]]
+    movel(p_up, a=0.5, v=0.05, t=0, r=0)
+
+    # Stop spindle
+    set_digital_out(1, False)
+end

@@ -1,0 +1,80 @@
+# Task: T007 — Curved Contour Weld — Hybrid Mode
+# Robot: UR5e | Payload: 3.5 kg | Max TCP Speed: 300.0 mm/s
+# Operating Mode: Hybrid (Fenced during weld, collaborative during approach)
+# Safety: Strict torch-down cones (A3), Weld arc sequence (A7)
+
+def task_T007():
+    # --- Safety Check ---
+    if get_digital_in(0):  # E-Stop active
+        popup("E-Stop active — aborting program.", error=True)
+        halt()
+    end
+
+    # --- Constants ---
+    HOME_POS = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+    APPROACH_HEIGHT = 0.350
+    WELD_HEIGHT = 0.200
+    RETRACT_HEIGHT = 0.380
+    WELD_SPEED = 0.060
+    APPROACH_SPEED = 0.250
+    DESCENT_SPEED = 0.100
+    HOME_SPEED = 0.750
+
+    # --- Motion Parameters ---
+    global weld_accel = 0.200
+    global approach_accel = 1.000
+    global descent_accel = 0.500
+    global home_accel = 1.400
+
+    # --- Weld Path Points ---
+    weld_start = p[0.450000, 0.000000, WELD_HEIGHT, 0.0000, 3.1416, 0.0000]
+    weld_mid = p[0.550000, 0.150000, WELD_HEIGHT, 0.0000, 3.1416, 0.0000]
+    weld_end = p[0.500000, 0.300000, WELD_HEIGHT, 0.0000, 3.1416, 0.0000]
+    approach_start = p[0.450000, 0.000000, APPROACH_HEIGHT, 0.0000, 3.1416, 0.0000]
+    retract_end = p[0.500000, 0.300000, RETRACT_HEIGHT, 0.0000, 3.1416, 0.0000]
+
+    # --- Motion Sequence ---
+    # [1] Home Position
+    movej(HOME_POS, a=home_accel, v=HOME_SPEED)
+
+    # [2] Approach above weld fixture
+    movel(approach_start, a=approach_accel, v=APPROACH_SPEED, r=0.010)
+
+    # [3] Descend to weld start
+    movel(weld_start, a=descent_accel, v=DESCENT_SPEED, r=0.001)
+
+    # --- Weld Process ---
+    # [4] Gas pre-flow ON
+    set_digital_out(1, True)
+    sleep(0.5)  # Gas stabilization
+
+    # [5] Arc ON (I=150A, wire=6.0m/min)
+    set_digital_out(0, True)  # Arc enable
+    set_analog_out(0, 0.500)  # Current (normalized)
+    set_analog_out(1, 0.400)  # Wire feed (normalized)
+
+    # [6] Weld midpoint
+    movel(weld_mid, a=weld_accel, v=WELD_SPEED, r=0.005)
+
+    # [7] Weld end
+    movel(weld_end, a=weld_accel, v=WELD_SPEED)
+
+    # [8] Arc OFF
+    set_digital_out(0, False)
+    set_analog_out(0, 0.0)
+    set_analog_out(1, 0.0)
+
+    # [9] Post-weld gas flow
+    sleep(1.0)
+    set_digital_out(1, False)
+
+    # [10] Retract above weld end
+    movel(retract_end, a=approach_accel, v=APPROACH_SPEED, r=0.010)
+
+    # [11] Return to home
+    movej(HOME_POS, a=home_accel, v=HOME_SPEED)
+
+end
+
+# Entry point
+task_T007()

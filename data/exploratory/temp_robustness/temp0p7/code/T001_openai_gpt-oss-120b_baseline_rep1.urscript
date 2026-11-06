@@ -1,0 +1,65 @@
+def main():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    set_payload(0.5, [0, 0, 0.1])      # 0.5 kg payload, CG 100 mm above TCP
+    set_tcp([0,0,0,0,0,0])            # default TCP
+
+    # Speed and acceleration (m/s, m/s²)
+    speed_fast = 0.200                # 200 mm/s
+    speed_mid  = 0.150                # 150 mm/s
+    speed_slow = 0.100                # 100 mm/s
+    a = 0.5                           # 0.5 m/s² (common for all moves)
+
+    # -------------------------------------------------
+    # Pose definitions (meters, radians)
+    # -------------------------------------------------
+    home            = p[0.0, -1.57, 2.0, 0, 2.22, 0]
+
+    pick_approach   = p[0.300,  0.200, 0.300, 0, 2.22, 0]
+    pick_down       = p[0.300,  0.200, 0.100, 0, 2.22, 0]   # descend 200 mm
+    lift_up         = p[0.300,  0.200, 0.300, 0, 2.22, 0]
+
+    place_approach  = p[0.600, -0.200, 0.300, 0, 2.22, 0]
+    place_down      = p[0.600, -0.200, 0.100, 0, 2.22, 0]   # descend 200 mm
+    retreat_up      = p[0.600, -0.200, 0.300, 0, 2.22, 0]
+
+    # -------------------------------------------------
+    # Gripper I/O (example: digital output 8)
+    # -------------------------------------------------
+    def gripper_close():
+        set_digital_out(8, True)      # close
+        sleep(0.5)
+
+    def gripper_open():
+        set_digital_out(8, False)     # open
+        sleep(0.5)
+
+    # -------------------------------------------------
+    # Motion sequence (8 moves)
+    # -------------------------------------------------
+    movej(home, a, speed_fast, 0)                 # 1 – go to home
+
+    movel(pick_approach, a, speed_fast, 0)        # 2 – approach pick
+    movel(pick_down, a, speed_slow, 0)            # 3 – descend to pick
+    gripper_close()                               # grasp
+
+    movel(lift_up, a, speed_mid, 0)               # 4 – lift from pick
+
+    movel(place_approach, a, speed_fast, 0)       # 5 – transit to place approach
+    movel(place_down, a, speed_slow, 0)           # 6 – descend to place
+    gripper_open()                                # release
+
+    movel(retreat_up, a, speed_mid, 0)            # 7 – retreat from place
+    movej(home, a, speed_fast, 0)                 # 8 – return home
+
+    # -------------------------------------------------
+    # End of program
+    # -------------------------------------------------
+    stopj(2)                                      # brake
+end
+
+# -------------------------------------------------
+# Run the program
+# -------------------------------------------------
+main()

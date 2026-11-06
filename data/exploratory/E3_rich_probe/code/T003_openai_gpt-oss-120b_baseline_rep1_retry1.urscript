@@ -1,0 +1,119 @@
+# URScript for UR5e – Hybrid mode, 4.5 kg payload, 2×2 pallet placement
+# All motions include explicit speed/acceleration, error handling, and workspace checks.
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+payload_mass = 4.5                                   # kg
+payload_cog = [0,0,0.1]                               # m, approx. centre of box
+set_payload(payload_mass, payload_cog)
+
+# TCP (tool) – assume default
+set_tcp(p[0,0,0.1,0,0,0])                             # 10 cm offset along Z
+
+# Safety workspace (confinement) – pallet area + margin (meters)
+workspace_min = p[-0.6, -0.6, 0.0, 0, 0, 0]
+workspace_max = p[ 0.6,  0.6, 0.5, 0, 0, 0]
+
+# Motion limits (collaborative mode)
+lin_speed_max = 0.25   # m/s  (250 mm/s)
+lin_acc_max   = 1.2    # m/s² (reasonable for UR5e)
+joint_speed_max = 1.0 # rad/s
+joint_acc_max   = 1.2 # rad/s²
+
+# -------------------------------------------------
+# Helper functions
+# -------------------------------------------------
+def within_workspace(pose):
+    # Checks if the Cartesian pose is inside the defined safety box
+    return (pose[0] >= workspace_min[0] and pose[0] <= workspace_max[0] and
+            pose[1] >= workspace_min[1] and pose[1] <= workspace_max[1] and
+            pose[2] >= workspace_min[2] and pose[2] <= workspace_max[2])
+
+def safe_movel(target_pose, v, a):
+    if not within_workspace(target_pose):
+        textmsg("Target pose out of workspace bounds, aborting.")
+        halt()
+    try:
+        movel(target_pose, a=a, v=v)
+    except:
+        textmsg("movel failed – stopping robot safely.")
+        stopj(joint_acc_max)
+        halt()
+
+def safe_movej(target_joints, v, a):
+    try:
+        movej(target_joints, a=a, v=v)
+    except:
+        textmsg("movej failed – stopping robot safely.")
+        stopj(joint_acc_max)
+        halt()
+
+# -------------------------------------------------
+# Pre‑defined positions
+# -------------------------------------------------
+home_joints = [0, -1.57, 0, -1.57, 0, 0]               # Home configuration (rad)
+
+# Approach above conveyor (example coordinates, adjust to real setup)
+approach_conveyor = p[0.5, -0.3, 0.3, 0, 3.14, 0]      # 30 cm above pick point
+pick_conveyor    = p[0.5, -0.3, 0.1, 0, 3.14, 0]      # 10 cm above pick point (descend)
+
+# Pallet grid positions (2×2) – centre of each cell, 0.2 m spacing
+pallet_origin = p[0.0, 0.0, 0.2, 0, 3.14, 0]           # First cell (0,0)
+cell_offset   = 0.2                                   # m
+
+pallet_positions = [
+    pose_trans(pallet_origin,   [ 0*cell_offset,  0*cell_offset, 0, 0,0,0]),  # (0,0)
+    pose_trans(pallet_origin,   [ 1*cell_offset,  0*cell_offset, 0, 0,0,0]),  # (1,0)
+    pose_trans(pallet_origin,   [ 0*cell_offset,  1*cell_offset, 0, 0,0,0]),  # (0,1)
+    pose_trans(pallet_origin,   [ 1*cell_offset,  1*cell_offset, 0, 0,0,0])   # (1,1)
+]
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # 1) Move to Home position
+    safe_movej(home_joints, v=joint_speed_max, a=joint_acc_max)
+
+    # 2) Approach conveyor – above pick point
+    safe_movel(approach_conveyor, v=lin_speed_max, a=lin_acc_max)
+
+    # 3) Descend to pick
+    safe_movel(pick_conveyor, v=0.10, a=lin_acc_max)   # slower for precision
+
+    # 4) (Placeholder) Activate gripper – assume digital out 0 controls it
+    set_digital_out(0, True)                          # close gripper
+    sleep(0.5)                                         # wait for grip
+
+    # 5) Lift from conveyor
+    safe_movel(approach_conveyor, v=0.20, a=lin_acc_max)
+
+    # 6) Transit to first pallet cell (0,0)
+    safe_movel(pallet_positions[0], v=lin_speed_max, a=lin_acc_max)
+
+    # 7) Place box – lower, release, lift
+    safe_movel(pose_trans(pallet_positions[0], [0,0,-0.1,0,0,0]), v=0.10, a=lin_acc_max)
+    set_digital_out(0, False)                         # open gripper
+    sleep(0.5)
+    safe_movel(pallet_positions[0], v=0.20, a=lin_acc_max)
+
+    # 8) Move to remaining pallet cells (1,0), (0,1), (1,1) sequentially
+    for i in [1,2,3]:
+        safe_movel(pallet_positions[i], v=lin_speed_max, a=lin_acc_max)
+        safe_movel(pose_trans(pallet_positions[i], [0,0,-0.1,0,0,0]), v=0.10, a=lin_acc_max)
+        set_digital_out(0, False)                     # release (if still holding)
+        sleep(0.5)
+        safe_movel(pallet_positions[i], v=0.20, a=lin_acc_max)
+
+    # 9) Return to Home
+    safe_movej(home_joints, v=joint_speed_max, a=joint_acc_max)
+
+    textmsg("Task completed successfully.")
+    # End of program – robot stays idle
+    stopj(joint_acc_max)
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

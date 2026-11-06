@@ -1,0 +1,133 @@
+# ============================================================
+# URScript for UR5e: Multi-waypoint SSM Pick-Place (T004)
+# ISO 10218:2025 Compliance Mode
+# ============================================================
+
+# --- Safety Constants ---
+MAX_TCP_SPEED = 0.25          # m/s (250 mm/s)
+MAX_JOINT_ACC = 1.4           # rad/s^2
+MAX_LINEAR_ACC = 0.5          # m/s^2 (Conservative for collaborative mode)
+PAYLOAD_MASS = 1.5            # kg
+PAYLOAD_COG = [0.0, 0.0, 0.05] # Center of mass (m)
+
+# --- Safety Zone Definitions ---
+# Confinement Zone (Workspace Limits)
+ZONE_MIN_X = -0.6
+ZONE_MAX_X = 0.8
+ZONE_MIN_Y = -0.6
+ZONE_MAX_Y = 0.6
+ZONE_MIN_Z = 0.0
+ZONE_MAX_Z = 0.8
+
+# Exclusion Zone (Obstacle Column: Cylinder at x=0.4, y=0.0)
+OBS_X = 0.4
+OBS_Y = 0.0
+OBS_RADIUS = 0.15
+OBS_HEIGHT = 0.5
+
+# --- Safety Functions ---
+
+def emergency_stop(msg):
+    popup("SAFETY VIOLATION: " + msg, error=False, warning=True)
+    halt()
+    stop()
+
+def check_workspace(pose):
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    
+    # 1. Check Confinement Zone
+    if x < ZONE_MIN_X or x > ZONE_MAX_X or y < ZONE_MIN_Y or y > ZONE_MAX_Y or z < ZONE_MIN_Z or z > ZONE_MAX_Z:
+        return False
+        
+    # 2. Check Exclusion Zone (Obstacle)
+    # Calculate horizontal distance to obstacle center
+    dist_sq = (x - OBS_X)**2 + (y - OBS_Y)**2
+    if dist_sq < OBS_RADIUS**2 and z < OBS_HEIGHT:
+        return False
+        
+    return True
+
+def safety_check():
+    # Speed Guard
+    current_speed = get_actual_tcp_speed()
+    if current_speed > MAX_TCP_SPEED:
+        emergency_stop("TCP Speed Limit Exceeded: " + current_speed)
+    
+    # Collision Monitor / Boundary Check
+    current_pose = get_forward_kinematics()
+    if not check_workspace(current_pose):
+        emergency_stop("Workspace Boundary or Exclusion Zone Violation")
+    
+    return True
+
+# --- Initialization ---
+
+# Set Payload
+set_payload(PAYLOAD_MASS, PAYLOAD_COG)
+
+# Define Waypoints
+# Home Position
+q_home = [0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Pick Station (Work Object 1)
+p_wp1 = p[0.3, -0.4, 0.3, 3.14, 0.0, 0.0] # Above Pick
+p_wp2 = p[0.3, -0.4, 0.1, 3.14, 0.0, 0.0] # Descend to Pick
+p_wp3 = p[0.3, -0.4, 0.3, 3.14, 0.0, 0.0] # Lift above Pick
+
+# Obstacle Avoidance
+p_wp4 = p[0.2, 0.0, 0.4, 3.14, 0.0, 0.0]  # Offset -X to avoid column
+
+# Place Station (Work Object 2)
+p_wp5 = p[0.5, 0.4, 0.3, 3.14, 0.0, 0.0]  # Above Place
+p_wp6 = p[0.5, 0.4, 0.1, 3.14, 0.0, 0.0]  # Descend to Place
+p_wp7 = p[0.5, 0.4, 0.3, 3.14, 0.0, 0.0]  # Lift above Place
+
+# --- Pre-Flight Validation ---
+# Validate all waypoints are within workspace boundaries
+waypoints = [p_wp1, p_wp2, p_wp3, p_wp4, p_wp5, p_wp6, p_wp7]
+for wp in waypoints:
+    if not check_workspace(wp):
+        popup("Error: Defined waypoint violates safety zones.", error=True)
+        stop()
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home position, 200.0 mm/s
+safety_check()
+movej(q_home, a=MAX_JOINT_ACC, v=0.2)
+
+# 2. move_linear: WP1 — Above pick station, 200.0 mm/s
+safety_check()
+movel(p_wp1, a=MAX_LINEAR_ACC, v=0.2)
+
+# 3. move_linear: WP2 — Descend to pick, 100.0 mm/s
+safety_check()
+movel(p_wp2, a=MAX_LINEAR_ACC, v=0.1)
+
+# 4. move_linear: WP3 — Lift above pick, 180.0 mm/s
+safety_check()
+movel(p_wp3, a=MAX_LINEAR_ACC, v=0.18)
+
+# 5. move_linear: WP4 — Obstacle avoidance waypoint (offset in -X), 200.0 mm/s
+safety_check()
+movel(p_wp4, a=MAX_LINEAR_ACC, v=0.2)
+
+# 6. move_linear: WP5 — Approach place station, 200.0 mm/s
+safety_check()
+movel(p_wp5, a=MAX_LINEAR_ACC, v=0.2)
+
+# 7. move_linear: WP6 — Descend to place, 100.0 mm/s
+safety_check()
+movel(p_wp6, a=MAX_LINEAR_ACC, v=0.1)
+
+# 8. move_linear: WP7 — Lift above place, 180.0 mm/s
+safety_check()
+movel(p_wp7, a=MAX_LINEAR_ACC, v=0.18)
+
+# 9. move_joint: Home position, 200.0 mm/s
+safety_check()
+movej(q_home, a=MAX_JOINT_ACC, v=0.2)
+
+textmsg("Task T004 Completed Successfully.")

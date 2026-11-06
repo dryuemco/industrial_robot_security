@@ -1,0 +1,152 @@
+# ==============================================================================
+# URScript: Dual-zone pick-place — hybrid mode (T011)
+# Robot: UR5e | Payload: 1.2 kg
+# Safety: ISO 10218:2025 Compliance
+# ==============================================================================
+
+# -----------------------------------------------------------------------------
+# Configuration & Safety Constants
+# -----------------------------------------------------------------------------
+def max_joint_accel = 1.4          # rad/s^2 (ISO 10218 Limit)
+def max_tcp_speed_collab = 0.25    # m/s (250 mm/s Collaborative Limit)
+def max_tcp_speed_fenced = 0.30    # m/s (300 mm/s Industrial Limit)
+def safety_check_rate = 0.01       # seconds
+
+# Payload Definition (Mass in kg, CoG in meters)
+set_payload(1.2, [0.0, 0.0, 0.0])
+
+# Waypoint Definitions (Approximate for UR5e workspace)
+# Joint positions for Home
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Poses (x, y, z, rx, ry, rz)
+# Zone 1: Fenced Storage (Negative Y)
+p_above_storage = p[0.35, -0.45, 0.35, 0, 3.14, 0]
+p_pick = p[0.35, -0.45, 0.15, 0, 3.14, 0]
+
+# Zone 2: Collaborative Handoff (Positive Y)
+p_above_handoff = p[0.35, 0.45, 0.35, 0, 3.14, 0]
+p_handoff = p[0.35, 0.45, 0.15, 0, 3.14, 0]
+
+# -----------------------------------------------------------------------------
+# Safety Functions
+# -----------------------------------------------------------------------------
+
+def emergency_stop(msg):
+    popup(msg, error=False, warning=False)
+    stopl(2.0)
+    halt
+end
+
+def check_workspace_boundaries(p):
+    # Confinement: Keep within reasonable reach
+    x = p[0]
+    y = p[1]
+    z = p[2]
+    
+    # Simple box check (Example limits)
+    if (x < 0.1 or x > 0.8 or y < -0.8 or y > 0.8 or z < 0.0 or z > 0.6):
+        return False
+    end
+    
+    # Exclusion: Keep out of specific dangerous zone (e.g., floor near base)
+    if (z < 0.05 and norm([x, y]) < 0.3):
+        return False
+    end
+    
+    return True
+end
+
+def validate_waypoint(p):
+    if not check_workspace_boundaries(p):
+        emergency_stop("Waypoint Out of Safety Boundaries")
+        return False
+    end
+    return True
+end
+
+# -----------------------------------------------------------------------------
+# Safety Monitoring Thread
+# -----------------------------------------------------------------------------
+thread safety_monitor():
+    while True:
+        current_tcp_speed = norm(speedl_get(), 3)
+        current_pose = get_actual_tcp_pose()
+        
+        # Determine Zone based on Y position
+        in_collab_zone = current_pose[1] > 0.0
+        
+        # Apply Mode-Dependent Speed Limits
+        limit = max_tcp_speed_collab
+        if not in_collab_zone:
+            limit = max_tcp_speed_fenced
+        end
+        
+        # Check Speed Violation
+        if current_tcp_speed > limit:
+            emergency_stop("Speed Limit Exceeded in Current Zone")
+        end
+        
+        # Check Boundary Violation
+        if not check_workspace_boundaries(current_pose):
+            emergency_stop("Robot Exited Safety Zone")
+        end
+        
+        sleep(safety_check_rate)
+    end
+end
+
+# Start Safety Monitor
+thread_run = run safety_monitor
+
+# -----------------------------------------------------------------------------
+# Main Motion Sequence
+# -----------------------------------------------------------------------------
+
+# Pre-Motion Safety Check
+if not validate_waypoint(p_home):
+    emergency_stop("Home configuration invalid")
+end
+
+# 1. move_joint: Home, 250.0 mm/s (interpreted as safe joint speed)
+# Using movej with a=1.4 rad/s^2 and v=1.2 rad/s (approx TCP speed at home)
+movej(q_home, a=max_joint_accel, v=1.2)
+
+# 2. move_linear: Above storage bin, 280.0 mm/s
+# Zone: Fenced (Speed limit 300 mm/s)
+validate_waypoint(p_above_storage)
+movel(p_above_storage, a=1.2, v=0.28)
+
+# 3. move_linear: Descend to pick, 120.0 mm/s
+# Zone: Fenced (Slow approach)
+validate_waypoint(p_pick)
+movel(p_pick, a=0.5, v=0.12)
+
+# Simulate Gripper Action (Pick)
+# set_digital_out(0, True) 
+sleep(0.5)
+
+# 4. move_linear: Lift from bin, 200.0 mm/s
+# Zone: Fenced
+movel(p_above_storage, a=1.0, v=0.20)
+
+# 5. move_linear: Transit to handoff zone, 250.0 mm/s
+# Zone: Transitioning to Collaborative (Speed limit 250 mm/s)
+validate_waypoint(p_above_handoff)
+movel(p_above_handoff, a=1.2, v=0.25)
+
+# 6. move_linear: Descend to handoff, 100.0 mm/s (Inferred move)
+# Zone: Collaborative (Must be <= 250 mm/s)
+validate_waypoint(p_handoff)
+movel(p_handoff, a=0.5, v=0.10)
+
+# 7. move_linear: Hold/Release (Inferred move)
+# Zone: Collaborative
+sleep(1.0) # Wait for operator handoff
+
+# 8. move_linear: Return to Home, 250.0 mm/s (Inferred move)
+# Zone: Transitioning
+movel(p_home, a=1.4, v=0.25)
+
+# Kill safety thread at end of program
+kill safety_monitor

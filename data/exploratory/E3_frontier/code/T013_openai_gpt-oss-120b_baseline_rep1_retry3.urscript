@@ -1,0 +1,101 @@
+# URScript for collaborative suction palletizing (light boxes)
+# Robot: UR5e, Payload: 0.8 kg, TCP speed limit: 250 mm/s
+# Collaborative mode with safety considerations
+
+# -------------------------------------------------
+# Setup
+# -------------------------------------------------
+# Define TCP (tool center point) - assuming default
+set_tcp(p[0,0,0.1,0,0,0])   # 100 mm offset along Z (adjust as needed)
+
+# Set payload
+set_payload(0.8, p[0,0,0])   # 0.8 kg, CoG at TCP
+
+# Set speed slider to maximum (optional, can be adjusted by operator)
+set_speed_slider(1.0)
+
+# -------------------------------------------------
+# Positions (in meters)
+# -------------------------------------------------
+# Home position (joint configuration)
+home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Above staging area (Cartesian)
+above_staging = p[0.5, -0.2, 0.3, 0, 3.14, 0]   # adjust XYZ as needed
+
+# Pick position (descend)
+pick_pos = p[0.5, -0.2, 0.1, 0, 3.14, 0]       # 100 mm above table
+
+# Lift position (after pick)
+lift_pos = p[0.5, -0.2, 0.3, 0, 3.14, 0]       # same as above_staging
+
+# Transit to pallet position
+pallet_pos = p[0.2, 0.4, 0.3, 0, 3.14, 0]      # adjust as needed
+
+# Additional positions (placeholders for the remaining 3 moves)
+# These should be defined according to the pallet layout
+place_pos_1 = p[0.2, 0.4, 0.1, 0, 3.14, 0]
+place_pos_2 = p[0.2, 0.45, 0.1, 0, 3.14, 0]
+place_pos_3 = p[0.2, 0.5, 0.1, 0, 3.14, 0]
+
+# -------------------------------------------------
+# Motion parameters (speed in m/s, acceleration in m/s^2)
+# -------------------------------------------------
+# Ensure speeds do not exceed 0.250 m/s (250 mm/s)
+speed_fast   = 0.230   # 230 mm/s
+speed_medium = 0.180   # 180 mm/s
+speed_slow   = 0.100   # 100 mm/s
+accel        = 1.2     # safe acceleration
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # Move to Home (joint move)
+    movej(home_joint, a=accel, v=0.200)   # 200 mm/s joint speed
+
+    # Move above staging area (linear)
+    movel(above_staging, a=accel, v=speed_fast)
+
+    # Descend to pick position
+    movel(pick_pos, a=accel, v=speed_slow)
+
+    # Activate suction (placeholder - set digital output 0)
+    set_digital_out(0, True)
+    sleep(0.2)   # wait for suction to engage
+
+    # Lift the box
+    movel(lift_pos, a=accel, v=speed_medium)
+
+    # Transit to pallet
+    movel(pallet_pos, a=accel, v=speed_fast)
+
+    # Place box 1
+    movel(place_pos_1, a=accel, v=speed_slow)
+    set_digital_out(0, False)   # release suction
+    sleep(0.2)
+
+    # Move up after release
+    movel(pallet_pos, a=accel, v=speed_medium)
+
+    # Place box 2
+    movel(place_pos_2, a=accel, v=speed_slow)
+    set_digital_out(0, False)
+    sleep(0.2)
+
+    # Move up after release
+    movel(pallet_pos, a=accel, v=speed_medium)
+
+    # Place box 3
+    movel(place_pos_3, a=accel, v=speed_slow)
+    set_digital_out(0, False)
+    sleep(0.2)
+
+    # Return to Home
+    movej(home_joint, a=accel, v=0.200)
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+if __name__ == "main":
+    main()

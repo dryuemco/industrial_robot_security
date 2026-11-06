@@ -1,0 +1,77 @@
+# -------------------------------------------------
+# UR5e Hybrid Inspection Task - T014
+# Safety-compliant URScript (ISO 10218:2025)
+# -------------------------------------------------
+
+# ---------- Payload ----------
+set_payload(0.4, [0,0,0.02])   # 0.4 kg, CoM 20 mm above TCP
+
+# ---------- Joint Limits ----------
+set_joint_acceleration(1.4)   # rad/s^2, per joint (max allowed)
+# Joint speed limit for movej (rad/s). 180 mm/s ≈ 1.0 rad/s for UR5e typical link lengths
+set_joint_speed(1.0)          # rad/s, safe for collaborative mode
+
+# ---------- Cartesian Speed Limits ----------
+# These limits are used for all movel commands
+max_cartesian_speed = 0.200   # m/s (200 mm/s)
+default_cartesian_acc  = 0.5  # m/s² (well below joint accel limit)
+
+# ---------- Safety Zone (confinement) ----------
+# Define a rectangular workspace (meters)
+zone_min = [-0.500, -0.500, 0.000]   # X, Y, Z minimum
+zone_max = [ 0.500,  0.500, 0.800]   # X, Y, Z maximum
+
+def safety_check(pose):
+    # pose = [x, y, z, Rx, Ry, Rz]
+    x = pose[0]; y = pose[1]; z = pose[2]
+    if (x < zone_min[0]) or (x > zone_max[0]) or \
+       (y < zone_min[1]) or (y > zone_max[1]) or \
+       (z < zone_min[2]) or (z > zone_max[2]):
+        popup("Safety violation: Pose out of confinement zone!", title="EMERGENCY STOP", warning=True)
+        halt()
+    end
+end
+
+# ---------- Emergency Stop Handler ----------
+def emergency_stop():
+    popup("Emergency stop triggered!", title="EMERGENCY", warning=True)
+    halt()
+end
+
+# ---------- Waypoints ----------
+# All poses are defined in meters and radians
+home_pose          = p[0.0, -0.5, 0.5, 0, 3.1415, 0]          # Home (standing)
+top_view_pose      = p[0.2, 0.0, 0.3, -1.5708, 0, 0]        # Top‑down view
+side_view_pose     = p[0.0, 0.3, 0.4, 0, -1.5708, 0]        # Side view
+angled_view_pose   = p[-0.2, 0.2, 0.35, -0.7854, 0, 0.7854] # Angled view
+retract_pose       = p[0.0, -0.4, 0.5, 0, 3.1415, 0]       # Safe retract
+final_pose         = home_pose                               # Return to Home
+
+# ---------- Motion Sequence ----------
+# 1) Move to Home (joint move)
+safety_check(home_pose)
+movej(home_pose, a=1.4, v=1.0, t=0, r=0)
+
+# 2) Move to Top‑down view (linear)
+safety_check(top_view_pose)
+movel(top_view_pose, a=default_cartesian_acc, v=max_cartesian_speed, t=0, r=0)
+
+# 3) Move to Side view (linear)
+safety_check(side_view_pose)
+movel(side_view_pose, a=default_cartesian_acc, v=max_cartesian_speed, t=0, r=0)
+
+# 4) Move to Angled view (linear)
+safety_check(angled_view_pose)
+movel(angled_view_pose, a=default_cartesian_acc, v=max_cartesian_speed, t=0, r=0)
+
+# 5) Retract to safe position (linear)
+safety_check(retract_pose)
+movel(retract_pose, a=default_cartesian_acc, v=max_cartesian_speed, t=0, r=0)
+
+# 6) Return to Home (linear for smooth finish)
+safety_check(final_pose)
+movel(final_pose, a=default_cartesian_acc, v=max_cartesian_speed, t=0, r=0)
+
+# -------------------------------------------------
+# End of program
+# -------------------------------------------------

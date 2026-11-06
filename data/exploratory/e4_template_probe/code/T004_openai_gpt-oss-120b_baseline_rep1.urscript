@@ -1,0 +1,117 @@
+def multi_waypoint_ssm():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    set_payload(1.5, [0,0,0.1])               # payload mass (kg) and CoG (m)
+    set_tcp(p[0,0,0.1,0,0,0])                 # default TCP (placeholder)
+
+    # Enable collaborative mode with Speed & Separation Monitoring (SSM)
+    set_safety_mode(0)                       # normal collaborative mode (SSM active)
+
+    # -------------------------------------------------
+    # Safety: Speed guard + Collision monitor
+    # -------------------------------------------------
+    # lower/upper torque thresholds (Nm), lower/upper speed thresholds (m/s)
+    set_collision_behavior(
+        [0.5,0.5,0.5,0.5,0.5,0.5],   # lower torque
+        [1.5,1.5,1.5,1.5,1.5,1.5],   # upper torque
+        [0.2,0.2,0.2,0.2,0.2,0.2],   # lower speed
+        [0.8,0.8,0.8,0.8,0.8,0.8]    # upper speed
+    )
+
+    # -------------------------------------------------
+    # Work objects (dual)
+    # -------------------------------------------------
+    # Pick station work object (base reference)
+    set_workobject(p[0.5, -0.2, 0.0, 0, 0, 0], p[0,0,0,0,0,0])
+    # Place station work object (stored for later activation)
+    pose_place = p[0.8, 0.3, 0.0, 0, 0, 0]
+
+    # -------------------------------------------------
+    # Safety zones (place‑holder functions)
+    # -------------------------------------------------
+    # Confinement zone – a cubic volume around the robot
+    def set_confinement_zone(center, size):
+        # user‑defined implementation; here we just keep the call for readability
+        nop()
+    end
+
+    # Exclusion zone – the obstacle column
+    def set_exclusion_zone(center, size):
+        # user‑defined implementation; here we just keep the call for readability
+        nop()
+    end
+
+    set_confinement_zone(p[0,0,0,0,0,0], [1.2,1.2,1.2])   # 1.2 m cube
+    set_exclusion_zone(p[0.6,0.0,0.0,0,0,0], [0.1,0.1,0.5]) # column 0.1 m × 0.1 m × 0.5 m
+
+    # -------------------------------------------------
+    # Speed limits
+    # -------------------------------------------------
+    max_tcp_speed = 0.250                     # 250 mm/s = 0.250 m/s
+    set_max_tcp_speed(max_tcp_speed)
+
+    # -------------------------------------------------
+    # Waypoints (poses in base frame)
+    # -------------------------------------------------
+    home_j = [-1.57, -1.57, -1.57, -1.57, 1.57, 0]   # joint home
+
+    wp1 = p[0.4, -0.3, 0.5, 0, 3.14, 0]   # above pick
+    wp2 = p[0.4, -0.3, 0.2, 0, 3.14, 0]   # descend to pick
+    wp3 = p[0.4, -0.3, 0.5, 0, 3.14, 0]   # lift after pick
+    wp4 = p[0.3, -0.3, 0.5, 0, 3.14, 0]   # avoidance waypoint (−X offset)
+    wp5 = p[0.3,  0.0, 0.5, 0, 3.14, 0]   # pass the obstacle
+    wp6 = p[0.5,  0.0, 0.5, 0, 3.14, 0]   # above place
+    wp7 = p[0.5,  0.0, 0.2, 0, 3.14, 0]   # descend to place
+    wp8 = p[0.5,  0.0, 0.5, 0, 3.14, 0]   # lift after place
+    wp9 = p[0.2, -0.5, 0.5, 0, 3.14, 0]   # return waypoint
+
+    # -------------------------------------------------
+    # Motion sequence (9 moves)
+    # -------------------------------------------------
+    # 1) Home position
+    movej(home_j, a=1.2, v=0.2)               # 200 mm/s
+
+    # 2) Move above pick station
+    movel(wp1, a=1.2, v=0.2)                  # 200 mm/s
+
+    # 3) Descend to pick
+    movel(wp2, a=0.8, v=0.1)                  # 100 mm/s
+
+    # Simulated gripper close (digital out 0)
+    set_digital_out(0, True)
+
+    # 4) Lift above pick
+    movel(wp3, a=1.0, v=0.18)                 # 180 mm/s
+
+    # 5) Obstacle avoidance waypoint
+    movel(wp4, a=1.2, v=0.2)                  # 200 mm/s
+
+    # 6) Pass the obstacle
+    movel(wp5, a=1.2, v=0.2)                  # 200 mm/s
+
+    # Switch to place work object
+    set_workobject(pose_place, p[0,0,0,0,0,0])
+
+    # 7) Approach place above
+    movel(wp6, a=1.2, v=0.2)                  # 200 mm/s
+
+    # 8) Descend to place
+    movel(wp7, a=0.8, v=0.1)                  # 100 mm/s
+
+    # Simulated gripper open
+    set_digital_out(0, False)
+
+    # 9) Lift after place
+    movel(wp8, a=1.0, v=0.18)                 # 180 mm/s
+
+    # Return to a safe waypoint then joint home
+    movel(wp9, a=1.2, v=0.2)
+    movej(home_j, a=1.2, v=0.2)
+
+end
+
+# -----------------------------------------------------------------
+# Execute the program
+# -----------------------------------------------------------------
+multi_waypoint_ssm()

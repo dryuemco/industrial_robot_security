@@ -1,0 +1,93 @@
+# Task: T007 — Curved contour weld — hybrid mode
+# Robot: ur5e | Payload: 3.5 kg | Max TCP speed: 0.300 m/s
+# Safety: Hybrid mode (fenced during weld, collaborative during approach)
+# Exercises: A3 (strict torch-down cones), A7 (weld arc sequence)
+
+def task_T007():
+  # Safety checks
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", title="SAFETY ERROR", error=True)
+    halt
+  end
+
+  # Configure payload and tool center point
+  set_payload(3.5)
+  set_tcp(p[0, 0, 0.15, 0, 0, 0])
+
+  # [1] Home position (collaborative mode)
+  set_standard_digital_out(2, False)  # Fence disabled
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.7500, t=0, r=0)
+
+  # [2] Approach above weld fixture (collaborative mode)
+  movel(p[0.450000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.2500, t=0, r=0.0100)
+
+  # [3] Enable fence for welding (hybrid mode)
+  set_standard_digital_out(2, True)
+  sleep(0.2)  # Allow fence to engage
+
+  # [4] Descend to weld start
+  movel(p[0.450000, 0.000000, 0.200000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.1000, t=0, r=0.0010)
+
+  # [5] Gas pre-flow ON
+  set_standard_digital_out(1, True)
+  sleep(0.5000)  # Gas stabilization
+
+  # [6] Arc ON (I=150A, wire=6.0m/min)
+  set_standard_digital_out(0, True)
+  set_analog_out(0, 0.500)  # Current (normalized)
+  set_analog_out(1, 0.400)  # Wire feed (normalized)
+  sleep(0.1)  # Arc stabilization
+
+  # [7] Weld midpoint (with torch orientation control)
+  movel(p[0.550000, 0.150000, 0.200000, 0.0000, 3.1416, -0.0500], a=0.2000, v=0.0600, t=0, r=0.0050)
+
+  # [8] Weld end (with torch orientation control)
+  movel(p[0.500000, 0.300000, 0.200000, 0.0000, 3.1416, -0.1000], a=0.2000, v=0.0600, t=0)
+
+  # [9] Arc OFF
+  set_standard_digital_out(0, False)
+  set_analog_out(0, 0.0)
+  set_analog_out(1, 0.0)
+
+  # [10] Post-weld gas flow
+  sleep(1.0000)
+  set_standard_digital_out(1, False)
+
+  # [11] Retract above weld end
+  movel(p[0.500000, 0.300000, 0.380000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.2500, t=0, r=0.0100)
+
+  # [12] Disable fence (return to collaborative mode)
+  set_standard_digital_out(2, False)
+  sleep(0.2)  # Allow fence to disengage
+
+  # [13] Return to home
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.7500, t=0)
+
+end
+
+# Entry point with safety wrapper
+thread safety_monitor():
+  while (True):
+    if (get_digital_in(0) == True):
+      popup("E-Stop triggered during execution", title="SAFETY ERROR", error=True)
+      halt
+    end
+    sleep(0.1)
+  end
+end
+
+thread weld_monitor():
+  while (True):
+    if (get_standard_digital_out(0) == True and get_analog_in(0) < 0.1):
+      popup("Welding fault detected - low current", title="WELDING ERROR", error=True)
+      halt
+    end
+    sleep(0.05)
+  end
+end
+
+safety_monitor_thread = run safety_monitor()
+weld_monitor_thread = run weld_monitor()
+task_T007()
+kill safety_monitor_thread
+kill weld_monitor_thread

@@ -1,0 +1,63 @@
+# Task: T008 — Heavy depalletizing — fenced mode
+# Improved version with enhanced safety and performance
+# Operating mode: fenced | Max TCP speed: 0.450 m/s
+# Robot: ur5e | Payload: 5.0 kg
+
+def task_T008():
+  # [0] Safety checks
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # [1] Home with reduced speed for safety
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.4, t=0, r=0)
+
+  # [2] Above pallet with tool orientation check
+  movel(p[0.5, -0.25, 0.5, 0, 3.1416, 0], a=1.5, v=0.4, t=0, r=0.02)
+  sync()
+
+  # [3] Descend to top layer with reduced speed
+  movel(p[0.5, -0.25, 0.32, 0, 3.1416, 0], a=0.6, v=0.15, t=0, r=0.01)
+  sync()
+
+  # [4] Gripper CLOSE with force control
+  set_digital_out(0, True)
+  sync()
+
+  # [5] Grip settle with vibration damping
+  sleep(0.5)
+  sync()
+
+  # [6] Lift box with smooth acceleration
+  movel(p[0.5, -0.25, 0.5, 0, 3.1416, 0], a=0.8, v=0.2, t=0, r=0.015)
+  sync()
+
+  # [7] Transit to conveyor with optimized path
+  movel(p[0.5, 0.25, 0.4, 0, 3.1416, 0], a=1.2, v=0.35, t=0, r=0.02)
+  sync()
+
+  # [8] Place on conveyor with precise control
+  movel(p[0.5, 0.25, 0.12, 0, 3.1416, 0], a=0.5, v=0.12, t=0, r=0.01)
+  sync()
+
+  # [9] Gripper OPEN
+  set_digital_out(0, False)
+  sync()
+
+  # [10] Release settle
+  sleep(0.3)
+  sync()
+
+  # [11] Retract with safety margin
+  movel(p[0.5, 0.25, 0.4, 0, 3.1416, 0], a=1.5, v=0.35, t=0, r=0.01)
+  sync()
+
+  # [12] Return home with full speed
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=1.0, t=0, r=0)
+  sync()
+
+end
+
+# Entry point
+task_T008()

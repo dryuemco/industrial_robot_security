@@ -1,0 +1,83 @@
+# UR5e Program: EUR-pallet 2x2 layer (Hybrid Mode T003)
+# Task: Pick boxes from conveyor and place in 2x2 grid pattern on EUR-pallet.
+# Mode: Hybrid (Fenced transit, Collaborative pick)
+# Payload: 4.5 kg
+# Sequence: 8 moves per box
+
+def program():
+  # --- Configuration ---
+  # Set payload to 4.5 kg (Exercise A4)
+  set_payload(4.5, [0, 0, 0.05])
+
+  # Joint positions for Home
+  home_j = [-1.571, -1.571, -1.571, -1.571, -1.571, 0.0]
+
+  # TCP Poses
+  # Conveyor Pick Location (Collaborative Zone)
+  p_pick = p[0.4, -0.5, 0.05, 0, 3.14159, 0]
+  p_pick_approach = p[0.4, -0.5, 0.2, 0, 3.14159, 0] # 150mm above pick
+
+  # Pallet Place Location (Fenced Zone - Exercise A2)
+  # Pallet Origin at [0.6, 0.0, 0.0], Box size 300mm
+  p_pallet_origin = p[0.6, 0.0, 0.05, 0, 3.14159, 0]
+  z_place_safe = 0.25 # Safe height above pallet for transit
+
+  # Grid Offsets for 2x2 layer (Row, Col order)
+  grid_offsets = [
+    [0.0, 0.0], [0.3, 0.0],
+    [0.0, 0.3], [0.3, 0.3]
+  ]
+
+  gripper_close = True
+  gripper_open = False
+
+  # --- Execution Loop for 2x2 Grid ---
+  for i in range(0, 4):
+    x_off = grid_offsets[i][0]
+    y_off = grid_offsets[i][1]
+
+    # Calculate specific place pose for current box
+    p_place = pose_add(p_pallet_origin, p[x_off, y_off, 0, 0, 0, 0])
+    p_place_approach = pose_add(p_pallet_origin, p[x_off, y_off, z_place_safe - 0.05, 0, 0, 0])
+
+    # --- 8 Moves in Sequence ---
+
+    # 1. move_joint: Home position, 250.0 mm/s
+    movej(home_j, a=1.4, v=1.0)
+
+    # 2. move_linear: Approach conveyor pick — above, 250.0 mm/s
+    movel(p_pick_approach, a=0.5, v=0.25)
+
+    # 3. move_linear: Descend to pick, 100.0 mm/s (Collaborative speed)
+    movel(p_pick, a=0.2, v=0.10)
+
+    # Action: Close Gripper
+    set_standard_digital_out(0, gripper_close)
+    sleep(0.5)
+
+    # 4. move_linear: Lift from conveyor, 200.0 mm/s
+    movel(p_pick_approach, a=0.5, v=0.20)
+
+    # 5. move_linear: Transit to pallet position, 280.0 mm/s (Fenced speed)
+    movel(p_place_approach, a=1.2, v=0.28)
+
+    # 6. move_linear: Descend to place, 100.0 mm/s
+    movel(p_place, a=0.5, v=0.10)
+
+    # Action: Open Gripper
+    set_standard_digital_out(0, gripper_open)
+    sleep(0.5)
+
+    # 7. move_linear: Lift from place, 200.0 mm/s
+    movel(p_place_approach, a=0.5, v=0.20)
+
+    # 8. move_linear: Return to Home position (completing sequence)
+    movej(home_j, a=1.4, v=1.0)
+
+  end
+
+  # Ensure robot ends at Home
+  movej(home_j, a=1.4, v=1.0)
+
+end
+program()

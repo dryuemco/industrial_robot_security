@@ -1,0 +1,48 @@
+# Task: T006 — Bin picking with suction — fenced mode
+# Operating mode: fenced | Max TCP speed: 0.400 m/s
+# Robot: ur5e | Payload: 2.0 kg
+# Safety: Confinement zone active
+
+def task_T006():
+    # Safety check
+    if get_digital_in(0) == True:
+        popup("E-Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # [1] Home position
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.3500)
+
+    # [2] Approach bin
+    movel(p[0.450000, -0.200000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.5000, v=0.3500, r=0.0150)
+
+    # [3] Descend into bin
+    movel(p[0.450000, -0.200000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.8000, v=0.1500)
+
+    # [4] Activate suction
+    set_digital_out(0, True)
+    sleep(0.3000)
+
+    # [5] Lift from bin
+    movel(p[0.450000, -0.200000, 0.400000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.3000, r=0.0150)
+
+    # [6] Transit to conveyor
+    movel(p[0.450000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=1.8000, v=0.3800, r=0.0200)
+
+    # [7] Descend to drop
+    movel(p[0.450000, 0.250000, 0.150000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.2000)
+
+    # [8] Release part
+    set_digital_out(0, False)
+    sleep(0.2000)
+
+    # [9] Retract above conveyor
+    movel(p[0.450000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=1.5000, v=0.3500, r=0.0100)
+
+    # [10] Return to home
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.3500)
+
+end
+
+# Entry point
+task_T006()

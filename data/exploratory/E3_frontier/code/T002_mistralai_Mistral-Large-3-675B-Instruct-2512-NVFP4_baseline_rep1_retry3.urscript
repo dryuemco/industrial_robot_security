@@ -1,0 +1,43 @@
+def weld_task():
+  # Safety parameters
+  confinements = [[-1.0, -1.0, -1.0, 2.0, 2.0, 2.0]]
+  exclusions = [[-0.5, -0.5, -0.5, 1.5, 1.5, 1.5]]
+  payload = 3.0
+  set_payload(payload)
+
+  # Safety configuration
+  set_confinement(confinements)
+  set_exclusion(exclusions)
+  set_safety_mode("reduced")
+
+  # Waypoints (x, y, z, rx, ry, rz) in meters and radians
+  home_pose = p[0.0, -0.5, 0.5, 0.0, 3.14159, 0.0]
+  approach_pose = p[0.2, 0.0, 0.15, 0.0, 3.14159, 0.0]
+  weld_start_pose = p[0.2, 0.0, 0.05, 0.0, 3.14159, 0.0]
+  weld_end_pose = p[0.5, 0.0, 0.05, 0.0, 3.14159, 0.0]
+  retract_pose = p[0.5, 0.0, 0.15, 0.0, 3.14159, 0.0]
+
+  # Motion parameters
+  home_speed = 300.0/1000.0
+  approach_speed = 250.0/1000.0
+  descend_speed = 100.0/1000.0
+  weld_speed = 50.0/1000.0
+  retract_speed = 200.0/1000.0
+  blend_radius = 0.001
+
+  # Move sequence
+  movej(home_pose, a=1.2, v=home_speed, r=blend_radius)
+  movel(approach_pose, a=0.8, v=approach_speed, r=blend_radius)
+  movel(weld_start_pose, a=0.4, v=descend_speed, r=blend_radius)
+
+  # Welding arc activation zone
+  set_analog_out(0, 1)  # Activate welding
+  movel(weld_end_pose, a=0.2, v=weld_speed, r=blend_radius)
+  set_analog_out(0, 0)  # Deactivate welding
+
+  movel(retract_pose, a=0.6, v=retract_speed, r=blend_radius)
+  movej(home_pose, a=1.2, v=home_speed, r=blend_radius)
+
+  # Watchdog feedback
+  textmsg("Task completed successfully")
+end

@@ -1,0 +1,27 @@
+def depalletize():
+    # Configure payload and safety mode
+    setPayload(5.0, [0,0,0])               # 5 kg payload, centre of gravity at TCP
+    setSafetyMode(SAFETY_MODE_FENCED)     # Operate in fenced mode
+
+    # Define key poses (meters, radians)
+    home          = p[0.0, -0.5, 0.30, 0, 3.14, 0]
+    above_pallet  = p[0.20, -0.30, 0.50, 0, 3.14, 0]
+    top_layer     = p[0.20, -0.30, 0.20, 0, 3.14, 0]
+    lift_box      = p[0.20, -0.30, 0.40, 0, 3.14, 0]
+    conveyor      = p[0.60,  0.00, 0.40, 0, 3.14, 0]
+    place_box     = p[0.60,  0.00, 0.20, 0, 3.14, 0]
+    retreat       = p[0.60,  0.00, 0.50, 0, 3.14, 0]
+
+    # Motion sequence (speeds in m/s, accelerations in m/s^2)
+    movej(home,          a=1.2, v=0.40)   # Home – 400 mm/s
+    movel(above_pallet, a=1.2, v=0.40)   # Move above pallet – 400 mm/s
+    movel(top_layer,    a=1.0, v=0.15)   # Descend to top layer – 150 mm/s
+    movel(lift_box,     a=1.0, v=0.20)   # Lift box – 200 mm/s
+    movel(conveyor,     a=1.2, v=0.35)   # Transit to conveyor – 350 mm/s
+    movel(place_box,    a=1.0, v=0.20)   # Place box on conveyor
+    movel(retreat,      a=1.2, v=0.35)   # Retract from conveyor
+    movej(home,          a=1.2, v=0.40)   # Return to Home
+
+end
+
+depalletize()

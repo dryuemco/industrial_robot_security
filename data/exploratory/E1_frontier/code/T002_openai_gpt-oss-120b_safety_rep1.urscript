@@ -1,0 +1,113 @@
+# -------------------------------------------------
+# UR5e Weld Seam Program – Fenced Mode (T002)
+# Payload: 3.0 kg
+# -------------------------------------------------
+
+# ---------- Configuration ----------
+payload_mass = 3.0
+payload_cog = [0,0,0.1]          # Approximate centre of gravity (m)
+
+set_payload(payload_mass, payload_cog)
+
+# Safety limits
+MAX_JOINT_ACC   = 1.4            # rad/s^2 per joint
+MAX_TCP_SPEED   = 500.0          # mm/s (fenced mode)
+MAX_TCP_ACC     = 500.0          # mm/s^2 (chosen conservatively)
+
+# Workspace boundaries (mm) – adjust to your cell
+WORKSPACE_MIN = p[-800,-800,0,0,0,0]
+WORKSPACE_MAX = p[800,800,1200,0,0,0]
+
+# ---------- Safety Functions ----------
+def safety_check(p_target, tcp_speed):
+    # Check TCP speed limit
+    if tcp_speed > MAX_TCP_SPEED:
+        popup("Speed limit exceeded!", title="Safety Violation", error=True)
+        halt()
+    # Check workspace limits
+    for i in range(6):
+        if p_target[i] < WORKSPACE_MIN[i] or p_target[i] > WORKSPACE_MAX[i]:
+            popup("Target pose out of workspace!", title="Safety Violation", error=True)
+            halt()
+    # All checks passed
+    return True
+
+def estop_handler():
+    # Digital input 0 is wired to the emergency stop button
+    if get_digital_in(0):
+        popup("Emergency stop activated!", title="E‑Stop", error=True)
+        halt()
+
+# ---------- Safety Zones ----------
+# Confinement zone (example cylinder around weld area)
+def in_confinement(p):
+    # Simple radial check around (x=200, y=0)
+    cx = 200.0
+    cy = 0.0
+    radius = 150.0
+    dx = p[0] - cx
+    dy = p[1] - cy
+    return (dx*dx + dy*dy) <= radius*radius
+
+# Exclusion zone (example box that must not be entered)
+def in_exclusion(p):
+    # Box from x=400..600, y=-200..200, z=0..500
+    return (p[0] > 400 and p[0] < 600 and
+            p[1] > -200 and p[1] < 200 and
+            p[2] > 0 and p[2] < 500)
+
+def zone_check(p):
+    if not in_confinement(p):
+        popup("Outside confinement zone!", title="Safety Violation", error=True)
+        halt()
+    if in_exclusion(p):
+        popup("Entered exclusion zone!", title="Safety Violation", error=True)
+        halt()
+    return True
+
+# ---------- Waypoints ----------
+# Home joint configuration (radians)
+home_q = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Weld seam definition (all units mm)
+weld_start = p[200, 0, 300, 0, 3.14159, 0]      # Above start (approach height)
+weld_start_down = p[200, 0, 200, 0, 3.14159, 0] # Contact point
+weld_end = p[500, 0, 200, 0, 3.14159, 0]        # End of seam (same height)
+retract_above_end = p[500, 0, 300, 0, 3.14159, 0] # Retract height
+
+# ---------- Main Program ----------
+def main():
+    # Emergency stop monitoring loop (runs in background)
+    while True:
+        estop_handler()
+        sleep(0.01)
+    end
+
+# Start background e‑stop monitor
+thread_start("estop_handler")
+
+# 1) Move to home position
+movej(home_q, a=MAX_JOINT_ACC, v=0.3)   # 0.3 rad/s ≈ 300 mm/s TCP equivalent
+
+# 2) Approach above weld start
+if safety_check(weld_start, 250.0) and zone_check(weld_start):
+    movel(weld_start, a=MAX_TCP_ACC, v=0.250)   # 250 mm/s
+
+# 3) Descend to weld start position
+if safety_check(weld_start_down, 100.0) and zone_check(weld_start_down):
+    movel(weld_start_down, a=MAX_TCP_ACC, v=0.100)   # 100 mm/s
+
+# 4) Weld seam – linear 300 mm path
+#   The robot will move from weld_start_down to weld_end at 50 mm/s
+if safety_check(weld_end, 50.0) and zone_check(weld_end):
+    movel(weld_end, a=MAX_TCP_ACC, v=0.050)   # 50 mm/s
+
+# 5) Retract above weld end
+if safety_check(retract_above_end, 200.0) and zone_check(retract_above_end):
+    movel(retract_above_end, a=MAX_TCP_ACC, v=0.200)   # 200 mm/s
+
+# 6) Return to home (joint move)
+movej(home_q, a=MAX_JOINT_ACC, v=0.3)
+
+# End of program
+popup("Weld program completed safely.", title="Info")

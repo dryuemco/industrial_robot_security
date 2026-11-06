@@ -1,0 +1,114 @@
+# -----------------------------------------------------------------------------
+# UR5e Heavy Depalletizing Task (Fenced Mode)
+# Task ID: T008
+# Payload: 5.0 kg
+# Max TCP Speed: 450.0 mm/s
+# Max Joint Acceleration: 1.4 rad/s^2
+# -----------------------------------------------------------------------------
+
+# Configuration
+def max_tcp_speed = 0.45        # m/s (450 mm/s)
+def max_joint_acc = 1.4         # rad/s^2
+def tool_acc = 0.5              # m/s^2 (Conservative linear acceleration for heavy payload)
+def payload_mass = 5.0          # kg
+def payload_cog = [0.0, 0.0, 0.05] # Center of gravity offset (m)
+
+# Safety Zone Definition (Confinement Box)
+# Format: [x_min, x_max, y_min, y_max, z_min, z_max]
+def safety_zone = [-0.8, 0.8, -0.8, 0.8, 0.0, 0.9]
+
+# Waypoints
+# Home Position
+p_home = [0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Pallet Area (Positive X)
+p_above_pallet = p[0.5, -0.4, 0.4, 0.0, 3.14, 0.0]
+p_pick_layer   = p[0.5, -0.4, 0.1, 0.0, 3.14, 0.0]
+p_lift_box     = p[0.5, -0.4, 0.3, 0.0, 3.14, 0.0]
+
+# Conveyor Area (Negative X)
+p_transit      = p[-0.5, -0.4, 0.3, 0.0, 3.14, 0.0]
+p_drop_layer   = p[-0.5, -0.4, 0.1, 0.0, 3.14, 0.0]
+p_lift_conv    = p[-0.5, -0.4, 0.3, 0.0, 3.14, 0.0]
+
+# -----------------------------------------------------------------------------
+# Safety Functions
+# -----------------------------------------------------------------------------
+
+def emergency_stop_handler(msg):
+    popup(msg, "EMERGENCY STOP", False, True)
+    stopj(1.0)
+    halt
+end
+
+def validate_waypoint(pose):
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    
+    if (x < safety_zone[0] or x > safety_zone[1] or
+        y < safety_zone[2] or y > safety_zone[3] or
+        z < safety_zone[4] or z > safety_zone[5]):
+        
+        textmsg("Safety Violation at: [", x, ", ", y, ", ", z, "]")
+        emergency_stop_handler("Waypoint outside safety boundaries!")
+    end
+end
+
+def safety_check():
+    # Check robot status (simplified for script)
+    if not is_steady():
+        textmsg("Robot not steady before move")
+    end
+    # Check current position within zone
+    current_pose = get_forward_kinematics()
+    validate_waypoint(current_pose)
+end
+
+# -----------------------------------------------------------------------------
+# Main Program
+# -----------------------------------------------------------------------------
+
+# 1. Setup Payload
+set_payload(payload_mass, payload_cog)
+set_tcp([0, 0, 0, 0, 0, 0])
+
+# 2. Initial Safety Check
+safety_check()
+
+# 3. Motion Sequence
+
+# Move 1: move_joint to Home (400.0 mm/s)
+validate_waypoint(p_home)
+movej(p_home, a=max_joint_acc, v=0.4)
+
+# Move 2: move_linear to Above Pallet (400.0 mm/s)
+validate_waypoint(p_above_pallet)
+movel(p_above_pallet, a=tool_acc, v=0.4)
+
+# Move 3: move_linear Descend to Top Layer (150.0 mm/s)
+validate_waypoint(p_pick_layer)
+movel(p_pick_layer, a=tool_acc, v=0.15)
+
+# Move 4: move_linear Lift Box (200.0 mm/s)
+validate_waypoint(p_lift_box)
+movel(p_lift_box, a=tool_acc, v=0.2)
+
+# Move 5: move_linear Transit to Conveyor (350.0 mm/s)
+validate_waypoint(p_transit)
+movel(p_transit, a=tool_acc, v=0.35)
+
+# Move 6: move_linear Descend to Conveyor Drop (150.0 mm/s)
+validate_waypoint(p_drop_layer)
+movel(p_drop_layer, a=tool_acc, v=0.15)
+
+# Move 7: move_linear Lift from Conveyor (200.0 mm/s)
+validate_waypoint(p_lift_conv)
+movel(p_lift_conv, a=tool_acc, v=0.2)
+
+# Move 8: move_joint Return to Home (400.0 mm/s)
+validate_waypoint(p_home)
+movej(p_home, a=max_joint_acc, v=0.4)
+
+# End of Task
+textmsg("Depalletizing sequence completed successfully.")

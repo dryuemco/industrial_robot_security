@@ -1,0 +1,147 @@
+# -------------------------------------------------
+# URScript for UR5e - Multi‑waypoint SSM Pick‑Place
+# -------------------------------------------------
+# Safety constants (ISO 10218:2025)
+MAX_TCP_SPEED      = 0.25      # m/s  (250 mm/s)
+MAX_JOINT_ACC      = 1.4       # rad/s^2 per joint
+MAX_JOINT_SPEED    = 1.0       # rad/s (conservative)
+SAFETY_ZONE_MIN    = p[-0.5, -0.5, 0.0, -3.14, -3.14, -3.14]
+SAFETY_ZONE_MAX    = p[ 0.5,  0.5, 0.8,  3.14,  3.14,  3.14]
+EXCLUSION_MIN      = p[ 0.10, -0.10, 0.0, -3.14, -3.14, -3.14]   # obstacle column
+EXCLUSION_MAX      = p[ 0.20,  0.10, 0.8,  3.14,  3.14,  3.14]
+
+# -------------------------------------------------
+# Helper functions
+# -------------------------------------------------
+def e_stop():
+    popup("Safety violation detected – emergency stop activated!", True)
+    stopj(2)               # brake joints
+    halt()                 # stop program execution
+end
+
+def pose_in_box(pose, box_min, box_max):
+    # Returns True if pose is inside the axis‑aligned box
+    for i = 0, 5 do
+        if pose[i] < box_min[i] or pose[i] > box_max[i] then
+            return False
+        end
+    end
+    return True
+end
+
+def safety_check(pose):
+    # Confinement zone
+    if not pose_in_box(pose, SAFETY_ZONE_MIN, SAFETY_ZONE_MAX) then
+        e_stop()
+    end
+    # Exclusion (obstacle) zone
+    if pose_in_box(pose, EXCLUSION_MIN, EXCLUSION_MAX) then
+        e_stop()
+    end
+end
+
+def speed_guard(v):
+    if v > MAX_TCP_SPEED then
+        popup("Requested speed exceeds TCP limit – aborting.", True)
+        e_stop()
+    end
+end
+
+# -------------------------------------------------
+# Payload & Collision settings
+# -------------------------------------------------
+set_payload(1.5, [0,0,0.1])                     # 1.5 kg payload, CoG offset
+set_tcp([0,0,0.1,0,0,0])                       # standard TCP
+set_collision_behavior(
+    lower_torque=[30,30,30,30,30,30],
+    upper_torque=[150,150,150,150,150,150],
+    lower_speed=[0.1,0.1,0.1,0.1,0.1,0.1],
+    upper_speed=[0.5,0.5,0.5,0.5,0.5,0.5],
+    lower_force=[10,10,10,10,10,10],
+    upper_force=[200,200,200,200,200,200]
+)
+
+# -------------------------------------------------
+# Work objects (dual stations)
+# -------------------------------------------------
+# 0 – Pick station (origin)
+set_workobject(0, p[0,0,0,0,0,0])
+# 1 – Place station (offset 0.5 m in X)
+set_workobject(1, p[0.5,0,0,0,0,0])
+
+# -------------------------------------------------
+# Waypoints (all positions are expressed in the base frame)
+# -------------------------------------------------
+# Joint home position
+q_home = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Linear waypoints (TCP poses)
+WP1 = p[0.30, 0.00, 0.40, 0, 3.14, 0]   # Above pick station
+WP2 = p[0.30, 0.00, 0.10, 0, 3.14, 0]   # Descend to pick
+WP3 = p[0.30, 0.00, 0.40, 0, 3.14, 0]   # Lift above pick
+WP4 = p[0.15, -0.20, 0.40, 0, 3.14, 0]  # Obstacle‑avoidance waypoint (offset -X)
+WP5 = p[0.40, 0.00, 0.40, 0, 3.14, 0]   # Above place station
+WP6 = p[0.40, 0.00, 0.10, 0, 3.14, 0]   # Descend to place
+WP7 = p[0.40, 0.00, 0.40, 0, 3.14, 0]   # Lift after place
+WP8 = p[0.00, 0.00, 0.50, 0, 3.14, 0]   # Safe standby pose
+WP9 = p[0.00, 0.00, 0.30, 0, 3.14, 0]   # Final home TCP (optional)
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # ---- 1) Move to joint home ------------------------------------------------
+    speed_guard(0.20)                     # 200 mm/s ≈ 0.20 m/s for safety guard
+    movej(q_home, a=MAX_JOINT_ACC, v=MAX_JOINT_SPEED, r=0.0)
+
+    # ---- 2) Above pick station -------------------------------------------------
+    speed_guard(0.20)
+    safety_check(WP1)
+    movel(WP1, a=MAX_JOINT_ACC, v=0.20, r=0.0)
+
+    # ---- 3) Descend to pick ----------------------------------------------------
+    speed_guard(0.10)
+    safety_check(WP2)
+    movel(WP2, a=MAX_JOINT_ACC, v=0.10, r=0.0)
+
+    # ---- 4) Lift after pick ----------------------------------------------------
+    speed_guard(0.18)
+    safety_check(WP3)
+    movel(WP3, a=MAX_JOINT_ACC, v=0.18, r=0.0)
+
+    # ---- 5) Obstacle avoidance waypoint ----------------------------------------
+    speed_guard(0.20)
+    safety_check(WP4)
+    movel(WP4, a=MAX_JOINT_ACC, v=0.20, r=0.0)
+
+    # ---- 6) Move above place station -------------------------------------------
+    speed_guard(0.20)
+    safety_check(WP5)
+    movel(WP5, a=MAX_JOINT_ACC, v=0.20, r=0.0)
+
+    # ---- 7) Descend to place ---------------------------------------------------
+    speed_guard(0.10)
+    safety_check(WP6)
+    movel(WP6, a=MAX_JOINT_ACC, v=0.10, r=0.0)
+
+    # ---- 8) Lift after place ---------------------------------------------------
+    speed_guard(0.18)
+    safety_check(WP7)
+    movel(WP7, a=MAX_JOINT_ACC, v=0.18, r=0.0)
+
+    # ---- 9) Return to safe standby ---------------------------------------------
+    speed_guard(0.20)
+    safety_check(WP8)
+    movel(WP8, a=MAX_JOINT_ACC, v=0.20, r=0.0)
+
+    # Optional final move to a defined home TCP pose
+    # safety_check(WP9)
+    # movel(WP9, a=MAX_JOINT_ACC, v=0.20, r=0.0)
+
+    popup("Task completed safely.", False)
+end
+
+# -------------------------------------------------
+# Run program
+# -------------------------------------------------
+main()

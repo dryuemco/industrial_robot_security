@@ -1,0 +1,117 @@
+# ------------------------------------------------------------
+# UR5e Heavy Depalletizing - Fenced Mode (T008)
+# Payload: 5.0 kg
+# Safety: ISO 10218:2025 compliance
+# ------------------------------------------------------------
+
+# ---------- Configuration ----------
+payload_mass = 5.0                         # kg
+payload_cog  = [0, 0, 0.1]                  # m, approx centre of box
+set_payload(payload_mass, payload_cog)
+
+# Joint speed/acceleration limits (rad/s, rad/s^2)
+joint_max_speed = 2.0                       # generous joint speed, limited by movej argument
+joint_max_acc   = 1.4                       # rad/s^2 per joint (max allowed)
+
+# TCP speed limits (m/s) for fenced mode (task max 450 mm/s)
+tcp_speed_limit = 0.45                      # 450 mm/s
+
+# Workspace safety box (metres) – must encompass pallet & conveyor
+safe_min = [-0.8, -0.8, 0.0]                 # [x, y, z]
+safe_max = [ 0.8,  0.8, 1.2]                 # [x, y, z]
+
+# Emergency stop digital input (example: input 0)
+estop_input = 0
+
+# ---------- Helper Functions ----------
+def in_workspace(pose):
+    # pose: [x, y, z, rx, ry, rz] in metres / radians
+    for i in range(3):
+        if pose[i] < safe_min[i] or pose[i] > safe_max[i]:
+            return false
+    return true
+end
+
+def safety_check():
+    # abort program if robot is outside safe workspace or estop pressed
+    if not in_workspace(get_actual_tcp_pose()):
+        textmsg("Safety violation: TCP outside workspace")
+        halt()
+    end
+    if get_digital_input(estop_input):
+        textmsg("Emergency stop activated")
+        halt()
+    end
+end
+
+def move_joint_safe(target_joint, speed_mm_s):
+    # Convert linear speed (mm/s) to joint speed (rad/s) using a safe default
+    # Here we use the provided joint_max_speed as upper bound
+    speed = min(joint_max_speed, speed_mm_s/1000)   # crude conversion, kept <= joint_max_speed
+    amax  = joint_max_acc
+    safety_check()
+    movej(target_joint, a=amax, v=speed, t=0, r=0)
+    safety_check()
+end
+
+def move_linear_safe(target_pose, speed_mm_s):
+    speed = speed_mm_s/1000.0                       # convert mm/s to m/s
+    if speed > tcp_speed_limit:
+        speed = tcp_speed_limit
+    end
+    amax = joint_max_acc
+    safety_check()
+    movel(target_pose, a=amax, v=speed, t=0, r=0)
+    safety_check()
+end
+
+# ---------- Waypoints (TCP poses) ----------
+# All poses are defined in the robot base frame.
+# Positions are placeholders – replace with calibrated values.
+
+pose_home          = p[-0.1, -0.5, 0.5, 0, 3.14, 0]   # Joint “Home” (converted to pose for safety check)
+pose_above_pallet  = p[0.2, -0.3, 0.8, 0, 3.14, 0]   # 10 cm above pallet
+pose_descend_layer = p[0.2, -0.3, 0.5, 0, 3.14, 0]   # Top layer of boxes
+pose_lift_box      = p[0.2, -0.3, 0.7, 0, 3.14, 0]   # Lifted box
+pose_to_conveyor   = p[0.5, 0.2, 0.7, 0, 3.14, 0]    # Above conveyor
+# --- placeholders for the remaining three moves ---
+pose_place_box     = p[0.5, 0.2, 0.4, 0, 3.14, 0]    # Place box on conveyor
+pose_return_above  = p[0.2, -0.3, 0.8, 0, 3.14, 0]   # Return above pallet
+pose_safe_home     = p[-0.1, -0.5, 0.5, 0, 3.14, 0]   # Safe home position
+
+# ---------- Main Program ----------
+def main():
+    # Ensure robot starts within safe workspace
+    safety_check()
+
+    # 1) Joint move to Home
+    move_joint_safe(get_joint_angles(), 400)   # speed argument ignored for joint move, kept for consistency
+
+    # 2) Linear move above pallet
+    move_linear_safe(pose_above_pallet, 400)
+
+    # 3) Descend to top layer
+    move_linear_safe(pose_descend_layer, 150)
+
+    # 4) Lift box
+    move_linear_safe(pose_lift_box, 200)
+
+    # 5) Transit to conveyor
+    move_linear_safe(pose_to_conveyor, 350)
+
+    # 6) Place box on conveyor
+    move_linear_safe(pose_place_box, 150)
+
+    # 7) Return to above pallet
+    move_linear_safe(pose_return_above, 300)
+
+    # 8) Return to safe home
+    move_linear_safe(pose_safe_home, 400)
+
+    textmsg("Depalletizing sequence completed safely.")
+end
+
+# ------------------------------------------------------------
+# Execute
+main()
+# ------------------------------------------------------------

@@ -1,0 +1,107 @@
+# URScript for UR5e - Dual-zone pick-place (Hybrid Mode)
+# ISO 10218:2025 compliant safety implementation
+# Payload: 1.2 kg, Max TCP speed: 300 mm/s (hybrid mode)
+
+# ===== SAFETY CONFIGURATION =====
+def safety_check():
+    # Check safety boundaries and conditions
+    if (get_actual_tcp_speed() > 300.0):
+        popup("SAFETY VIOLATION: TCP speed exceeded 300 mm/s", title="EMERGENCY STOP", error=True)
+        halt()
+    end
+
+    # Workspace boundary check (UR5e reach: 850mm)
+    current_pos = get_actual_tcp_pose()
+    if (norm(current_pos[0:3]) > 800.0):
+        popup("SAFETY VIOLATION: TCP outside workspace boundary", title="EMERGENCY STOP", error=True)
+        halt()
+    end
+
+    # Safety zone confinement (storage zone)
+    if (current_pos[2] < 0.0 and current_pos[0] > -0.5 and current_pos[0] < 0.5 and current_pos[1] > -0.5 and current_pos[1] < 0.5):
+        popup("SAFETY VIOLATION: TCP in exclusion zone (storage)", title="EMERGENCY STOP", error=True)
+        halt()
+    end
+
+    # Safety zone exclusion (operator handoff)
+    if (current_pos[2] < 0.2 and current_pos[0] > 0.3 and current_pos[0] < 0.8 and current_pos[1] > -0.3 and current_pos[1] < 0.3):
+        if (get_actual_tcp_speed() > 250.0):
+            popup("SAFETY VIOLATION: Speed > 250 mm/s in collaborative zone", title="EMERGENCY STOP", error=True)
+            halt()
+        end
+    end
+end
+
+# ===== ROBOT CONFIGURATION =====
+set_payload(1.2, [0, 0, 0.1])
+set_tcp([0, 0, 0.15, 0, 0, 0])
+set_safety_mode_transition_hardness("medium")
+
+# ===== WAYPOINTS =====
+global home_pose = p[0.0, -0.5, 0.6, 0, 3.14159, 0]
+global above_bin = p[-0.3, 0.0, 0.3, 0, 3.14159, 0]
+global pick_pose = p[-0.3, 0.0, 0.1, 0, 3.14159, 0]
+global lift_pose = p[-0.3, 0.0, 0.25, 0, 3.14159, 0]
+global transit_pose = p[0.0, 0.0, 0.4, 0, 3.14159, 0]
+global above_handoff = p[0.5, 0.0, 0.3, 0, 3.14159, 0]
+global place_pose = p[0.5, 0.0, 0.15, 0, 3.14159, 0]
+global retract_pose = p[0.5, 0.0, 0.25, 0, 3.14159, 0]
+
+# ===== MOTION SEQUENCE =====
+def main():
+    # Initialize safety
+    safety_check()
+
+    # Move 1: Home (joint move)
+    movej(home_pose, a=1.4, v=1.05, r=0)
+    safety_check()
+
+    # Enable hybrid mode (simulated via speed limits)
+    set_standard_digital_out(0, True)  # Signal mode transition
+
+    # Move 2: Above storage bin (linear)
+    movel(above_bin, a=1.2, v=0.28, r=0)
+    safety_check()
+
+    # Move 3: Descend to pick (linear)
+    movel(pick_pose, a=0.8, v=0.12, r=0)
+    safety_check()
+
+    # Gripper close (simulated)
+    set_standard_digital_out(1, True)
+    sleep(0.5)
+
+    # Move 4: Lift from bin (linear)
+    movel(lift_pose, a=1.0, v=0.2, r=0)
+    safety_check()
+
+    # Move 5: Transit to handoff zone (linear)
+    movel(transit_pose, a=1.2, v=0.25, r=0)
+    safety_check()
+
+    # Move 6: Above handoff (linear)
+    movel(above_handoff, a=1.2, v=0.25, r=0)
+    safety_check()
+
+    # Move 7: Descend to place (linear, collaborative speed)
+    movel(place_pose, a=0.8, v=0.15, r=0)
+    safety_check()
+
+    # Gripper open (simulated)
+    set_standard_digital_out(1, False)
+    sleep(0.5)
+
+    # Move 8: Retract from handoff (linear)
+    movel(retract_pose, a=1.0, v=0.2, r=0)
+    safety_check()
+
+    # Return to home
+    movej(home_pose, a=1.4, v=1.05, r=0)
+    safety_check()
+
+    # Disable hybrid mode
+    set_standard_digital_out(0, False)
+end
+
+# Run program
+main()

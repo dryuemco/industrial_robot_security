@@ -1,0 +1,98 @@
+# ============================================================
+# URScript for UR5e: Bin Picking with Suction (Fenced Mode)
+# Task: T006 - High-speed bin picking
+# Compliance: ISO 10218:2025
+# ============================================================
+
+# --- Configuration & Constants ---
+MAX_JOINT_ACCEL = 1.4          # rad/s^2 (Safety Limit)
+PAYLOAD_MASS = 2.0             # kg
+PAYLOAD_COG = [0.0, 0.0, 0.05] # Center of Gravity (m)
+GRIPPER_IO = 0                 # Digital Output for Suction
+
+# Safety Zone Boundaries (Confinement Box)
+ZONE_X_MIN = -0.8
+ZONE_X_MAX = 0.8
+ZONE_Y_MIN = -0.8
+ZONE_Y_MAX = 0.8
+ZONE_Z_MIN = 0.0
+ZONE_Z_MAX = 1.0
+
+# --- Waypoint Definitions ---
+# Home Position (Defined as Pose to enforce TCP speed limit)
+p_home = p[0.0, -0.4, 0.4, 0, 3.14159, 0]
+
+# Bin Area
+p_bin_above = p[0.3, -0.3, 0.3, 0, 3.14159, 0]
+p_bin_pick  = p[0.3, -0.3, 0.05, 0, 3.14159, 0]
+
+# Conveyor Area
+p_conv_transit = p[0.5, 0.0, 0.35, 0, 3.14159, 0]
+p_conv_above   = p[0.7, 0.3, 0.3, 0, 3.14159, 0]
+p_conv_place   = p[0.7, 0.3, 0.05, 0, 3.14159, 0]
+
+# --- Safety Functions ---
+
+def emergency_stop_handler():
+    stopj(5.0)
+    popup("SAFETY VIOLATION: Emergency Stop Triggered")
+    halt
+
+def safety_zone_check(pose):
+    # Validate waypoint is within workspace boundaries
+    if pose[0] < ZONE_X_MIN or pose[0] > ZONE_X_MAX:
+        emergency_stop_handler()
+    if pose[1] < ZONE_Y_MIN or pose[1] > ZONE_Y_MAX:
+        emergency_stop_handler()
+    if pose[2] < ZONE_Z_MIN or pose[2] > ZONE_Z_MAX:
+        emergency_stop_handler()
+    return True
+
+# --- Initialization ---
+
+# Set Payload
+set_payload(PAYLOAD_MASS, PAYLOAD_COG)
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home position, 350.0 mm/s
+safety_zone_check(p_home)
+movej(p_home, a=MAX_JOINT_ACCEL, v=0.35)
+
+# 2. move_linear: Above bin, 350.0 mm/s
+safety_zone_check(p_bin_above)
+movel(p_bin_above, a=MAX_JOINT_ACCEL, v=0.35)
+
+# 3. move_linear: Descend into bin, 150.0 mm/s
+safety_zone_check(p_bin_pick)
+movel(p_bin_pick, a=MAX_JOINT_ACCEL, v=0.15)
+
+# Activate Suction Gripper
+set_standard_digital_out(GRIPPER_IO, True)
+sleep(1.0) # Wait for vacuum to generate
+
+# 4. move_linear: Lift from bin, 300.0 mm/s
+safety_zone_check(p_bin_above)
+movel(p_bin_above, a=MAX_JOINT_ACCEL, v=0.30)
+
+# 5. move_linear: Transit to conveyor, 380.0 mm/s
+safety_zone_check(p_conv_transit)
+movel(p_conv_transit, a=MAX_JOINT_ACCEL, v=0.38)
+
+# 6. move_linear: Above conveyor (Approach), 300.0 mm/s
+safety_zone_check(p_conv_above)
+movel(p_conv_above, a=MAX_JOINT_ACCEL, v=0.30)
+
+# 7. move_linear: Descend to conveyor, 150.0 mm/s
+safety_zone_check(p_conv_place)
+movel(p_conv_place, a=MAX_JOINT_ACCEL, v=0.15)
+
+# Release Suction Gripper
+set_standard_digital_out(GRIPPER_IO, False)
+sleep(0.5) # Wait for release
+
+# 8. move_linear: Lift from conveyor, 300.0 mm/s
+safety_zone_check(p_conv_above)
+movel(p_conv_above, a=MAX_JOINT_ACCEL, v=0.30)
+
+# End of Task

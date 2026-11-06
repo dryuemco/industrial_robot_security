@@ -1,0 +1,30 @@
+def pick_place_hybrid():
+    # Set payload
+    set_payload(1.2, [0, 0, 0.05])  # Mass in kg, COG in meters
+
+    # Home position
+    movej([0, -1.57, 0, -1.57, 0, 0], a=1.4, v=250.0)
+
+    # Above storage bin
+    tool_zero_frame_acc([1, 0, 0, 0, 0, 0, 0])
+    movel(p[0.3, -0.3, 0.3, 0, 0, 0], a=1.4, v=280.0)
+
+    # Descend to pick
+    movel(p[0.3, -0.3, 0.1, 0, 0, 0], a=1.4, v=120.0)
+
+    # Lift from bin
+    movel(p[0.3, -0.3, 0.3, 0, 0, 0], a=1.4, v=200.0)
+
+    # Transit to handoff zone
+    movel(p[0.5, 0.2, 0.3, 0, 0, 0], a=1.4, v=250.0)
+
+    # Descend to place
+    movel(p[0.5, 0.2, 0.1, 0, 0, 0], a=1.4, v=120.0)
+
+    # Lift from handoff
+    movel(p[0.5, 0.2, 0.3, 0, 0, 0], a=1.4, v=200.0)
+
+    # Return to home
+    movej([0, -1.57, 0, -1.57, 0, 0], a=1.4, v=250.0)
+
+pick_place_hybrid()

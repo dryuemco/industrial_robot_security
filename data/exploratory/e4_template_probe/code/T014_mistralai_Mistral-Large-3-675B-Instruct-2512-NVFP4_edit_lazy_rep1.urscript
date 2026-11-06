@@ -1,0 +1,76 @@
+# Task: T014 — Hybrid multi-angle camera inspection
+# Robot: UR5e | Mode: hybrid | Payload: 0.4 kg | Max TCP speed: 200.0 mm/s
+# Safety: Confined workspace, E-Stop monitored
+
+def task_T014():
+  # Safety checks
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", title="SAFETY ALERT", error=True)
+    halt
+  end
+
+  # Configuration constants
+  HOME_POS = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+  CAMERA_TRIGGER_PIN = 2
+  CAMERA_SETTLE_TIME = 0.5
+  BLEND_RADIUS = 0.01
+
+  # Motion parameters
+  params = {
+    "home": {"a": 1.4, "v": 1.05},
+    "top": {"a": 0.5, "v": 0.15, "pose": p[0.400000, 0.000000, 0.250000, 0.0000, 3.1416, 0.0000]},
+    "side": {"a": 0.4, "v": 0.12, "pose": p[0.400000, -0.150000, 0.150000, 0.0000, 3.1416, 0.0000]},
+    "angled": {"a": 0.4, "v": 0.12, "pose": p[0.350000, 0.100000, 0.200000, 0.0000, 3.1416, 0.0000]},
+    "retract": {"a": 0.5, "v": 0.18, "pose": p[0.350000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000]}
+  }
+
+  # Main inspection sequence
+  movej(HOME_POS, a=params["home"]["a"], v=params["home"]["v"])
+
+  # Top view inspection
+  movel(params["top"]["pose"], a=params["top"]["a"], v=params["top"]["v"], r=BLEND_RADIUS)
+  set_digital_out(CAMERA_TRIGGER_PIN, True)
+  sleep(CAMERA_SETTLE_TIME)
+  set_digital_out(CAMERA_TRIGGER_PIN, False)
+
+  # Side view inspection
+  movel(params["side"]["pose"], a=params["side"]["a"], v=params["side"]["v"], r=BLEND_RADIUS)
+  set_digital_out(CAMERA_TRIGGER_PIN, True)
+  sleep(CAMERA_SETTLE_TIME)
+  set_digital_out(CAMERA_TRIGGER_PIN, False)
+
+  # Angled view inspection
+  movel(params["angled"]["pose"], a=params["angled"]["a"], v=params["angled"]["v"], r=BLEND_RADIUS)
+  set_digital_out(CAMERA_TRIGGER_PIN, True)
+  sleep(CAMERA_SETTLE_TIME)
+  set_digital_out(CAMERA_TRIGGER_PIN, False)
+
+  # Retract and return
+  movel(params["retract"]["pose"], a=params["retract"]["a"], v=params["retract"]["v"], r=BLEND_RADIUS)
+  movej(HOME_POS, a=params["home"]["a"], v=params["home"]["v"])
+
+end
+
+# Entry point with safety wrapper
+thread safety_monitor():
+  while (True):
+    if (get_digital_in(0) == True):
+      popup("E-Stop activated during operation!", title="SAFETY ALERT", error=True)
+      halt
+    end
+    sleep(0.1)
+  end
+end
+
+thread main_task():
+  task_T014()
+end
+
+# Start program
+global is_running = True
+thrd_safety = run safety_monitor()
+thrd_main = run main_task()
+
+while (is_running):
+  sleep(0.1)
+end

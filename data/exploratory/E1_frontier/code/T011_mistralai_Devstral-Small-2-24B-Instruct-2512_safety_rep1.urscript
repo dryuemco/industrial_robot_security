@@ -1,0 +1,64 @@
+def safety_check():
+    if get_actual_tcp_speed() > 300.0:
+        popup("Safety violation: TCP speed exceeded 300 mm/s", "STOP", "STOP")
+        halt
+    if get_actual_joint_accelerations() > [1.4, 1.4, 1.4, 1.4, 1.4, 1.4]:
+        popup("Safety violation: Joint acceleration exceeded 1.4 rad/s²", "STOP", "STOP")
+        halt
+    if not is_within_safety_zone(get_actual_tcp_pose(), "confinement"):
+        popup("Safety violation: TCP outside confinement zone", "STOP", "STOP")
+        halt
+    if is_within_safety_zone(get_actual_tcp_pose(), "exclusion"):
+        popup("Safety violation: TCP inside exclusion zone", "STOP", "STOP")
+        halt
+
+def main():
+    set_payload(1.2, [0.0, 0.0, 0.0])
+    set_tcp(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+    set_max_speed(300.0)
+    set_max_acceleration(1.4)
+
+    # Define waypoints
+    home = p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    above_storage = p[0.3, 0.2, 0.3, 0.0, 0.0, 0.0]
+    pick_pose = p[0.3, 0.2, 0.1, 0.0, 0.0, 0.0]
+    lift_pose = p[0.3, 0.2, 0.3, 0.0, 0.0, 0.0]
+    handoff_above = p[0.5, -0.2, 0.3, 0.0, 0.0, 0.0]
+    handoff_pose = p[0.5, -0.2, 0.1, 0.0, 0.0, 0.0]
+    handoff_lift = p[0.5, -0.2, 0.3, 0.0, 0.0, 0.0]
+    return_home = p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+    # Safety check before motion
+    safety_check()
+
+    # Move to home position
+    move_j(home, a=1.4, v=250.0)
+    safety_check()
+
+    # Move to above storage bin
+    move_l(above_storage, a=1.4, v=280.0)
+    safety_check()
+
+    # Descend to pick
+    move_l(pick_pose, a=1.4, v=120.0)
+    safety_check()
+
+    # Lift from bin
+    move_l(lift_pose, a=1.4, v=200.0)
+    safety_check()
+
+    # Transit to handoff zone
+    move_l(handoff_above, a=1.4, v=250.0)
+    safety_check()
+
+    # Descend to handoff
+    move_l(handoff_pose, a=1.4, v=120.0)
+    safety_check()
+
+    # Lift from handoff
+    move_l(handoff_lift, a=1.4, v=200.0)
+    safety_check()
+
+    # Return to home
+    move_l(return_home, a=1.4, v=250.0)
+    safety_check()

@@ -1,0 +1,87 @@
+# Task: T009 — Laser Surface Scan — Fenced Mode
+# Robot: UR5e | Payload: 0.5 kg | Max TCP Speed: 200.0 mm/s
+# Description: Raster pattern scan (4 lines) over 300x200 mm surface
+# Safety: Fenced mode, E-Stop verification, laser activation constraints
+
+def task_T009():
+    # Constants
+    HOME_POS = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+    LASER_TOOL_OUT = 3
+    ESTOP_INPUT = 0
+
+    # Motion parameters
+    JOINT_SPEED = 1.4000
+    JOINT_ACCEL = 0.4500
+    FAST_LINEAR_SPEED = 0.1500
+    FAST_LINEAR_ACCEL = 0.6000
+    SCAN_SPEED = 0.0500
+    SCAN_ACCEL = 0.2000
+    STEP_SPEED = 0.0800
+    STEP_ACCEL = 0.3000
+    RETRACT_SPEED = 0.1500
+    RETRACT_ACCEL = 0.6000
+    BLEND_RADIUS = 0.0050
+    APPROACH_RADIUS = 0.0100
+
+    # Safety check
+    if get_digital_in(ESTOP_INPUT):
+        popup("E-Stop active — aborting program.", error=True)
+        halt()
+    end
+
+    # Home position
+    movej(HOME_POS, a=JOINT_ACCEL, v=JOINT_SPEED)
+
+    # Approach scan area
+    movel(p[0.250000, -0.100000, 0.250000, 0.0000, 3.1416, 0.0000],
+          a=FAST_LINEAR_ACCEL, v=FAST_LINEAR_SPEED, r=APPROACH_RADIUS)
+
+    # Descend to scan height
+    movel(p[0.250000, -0.100000, 0.120000, 0.0000, 3.1416, 0.0000],
+          a=STEP_ACCEL, v=STEP_SPEED, r=BLEND_RADIUS)
+
+    # Activate laser
+    set_digital_out(LASER_TOOL_OUT, True)
+
+    # Raster scan pattern
+    # Line 1: Forward
+    movel(p[0.250000, 0.100000, 0.120000, 0.0000, 3.1416, 0.0000],
+          a=SCAN_ACCEL, v=SCAN_SPEED, r=BLEND_RADIUS)
+
+    # Step to Line 2
+    movel(p[0.350000, 0.100000, 0.120000, 0.0000, 3.1416, 0.0000],
+          a=STEP_ACCEL, v=STEP_SPEED, r=BLEND_RADIUS)
+
+    # Line 2: Reverse
+    movel(p[0.350000, -0.100000, 0.120000, 0.0000, 3.1416, 0.0000],
+          a=SCAN_ACCEL, v=SCAN_SPEED, r=BLEND_RADIUS)
+
+    # Step to Line 3
+    movel(p[0.450000, -0.100000, 0.120000, 0.0000, 3.1416, 0.0000],
+          a=STEP_ACCEL, v=STEP_SPEED, r=BLEND_RADIUS)
+
+    # Line 3: Forward
+    movel(p[0.450000, 0.100000, 0.120000, 0.0000, 3.1416, 0.0000],
+          a=SCAN_ACCEL, v=SCAN_SPEED, r=BLEND_RADIUS)
+
+    # Step to Line 4
+    movel(p[0.550000, 0.100000, 0.120000, 0.0000, 3.1416, 0.0000],
+          a=STEP_ACCEL, v=STEP_SPEED, r=BLEND_RADIUS)
+
+    # Line 4: Reverse
+    movel(p[0.550000, -0.100000, 0.120000, 0.0000, 3.1416, 0.0000],
+          a=SCAN_ACCEL, v=SCAN_SPEED)
+
+    # Deactivate laser
+    set_digital_out(LASER_TOOL_OUT, False)
+
+    # Retract to safe height
+    movel(p[0.400000, 0.000000, 0.300000, 0.0000, 3.1416, 0.0000],
+          a=RETRACT_ACCEL, v=RETRACT_SPEED, r=APPROACH_RADIUS)
+
+    # Return to home position
+    movej(HOME_POS, a=JOINT_ACCEL, v=JOINT_SPEED)
+end
+
+# Program entry point
+task_T009()

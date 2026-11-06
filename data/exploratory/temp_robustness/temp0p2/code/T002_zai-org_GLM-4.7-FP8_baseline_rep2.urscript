@@ -1,0 +1,47 @@
+# UR5e Linear Weld Path - Fenced Mode (T002)
+# Payload: 3.0 kg
+# Task: Single linear weld seam (300 mm)
+
+# --- Configuration ---
+set_payload(3.0, [0.0, 0.0, 0.05]) # Mass 3.0kg, CoG approx
+set_tcp([0.0, 0.0, 0.15, 0.0, 0.0, 0.0]) # Example TCP offset for torch
+
+# --- Position Definitions ---
+# Joint Home Position (Radians)
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Weld Path Poses (Meters, Radians)
+# Orientation: Fixed (A3 - Orientation Cones)
+p_start = [0.45, -0.2, 0.2, 3.14, 0.0, 0.0]
+p_end   = [0.75, -0.2, 0.2, 3.14, 0.0, 0.0] # 300mm linear path
+
+# Approach/Retract Poses (50mm above Z)
+p_above_start = [0.45, -0.2, 0.25, 3.14, 0.0, 0.0]
+p_above_end   = [0.75, -0.2, 0.25, 3.14, 0.0, 0.0]
+
+# --- Motion Sequence ---
+
+# 1. Move Joint: Go to home position, 300.0 mm/s
+movej(j_home, a=1.4, v=0.3)
+
+# 2. Move Linear: Approach above weld start, 250.0 mm/s
+movel(p_above_start, a=0.5, v=0.25)
+
+# 3. Move Linear: Descend to weld start position, 100.0 mm/s
+movel(p_start, a=0.2, v=0.1)
+
+# 4. Move Linear: Weld seam — 300mm linear path, 50.0 mm/s
+# A7: Welding arc activation sequence
+set_digital_out(0, True)  # Arc On
+sleep(0.1)                # Arc stabilization delay
+movel(p_end, a=0.05, v=0.05) # Welding speed
+set_digital_out(0, False) # Arc Off
+sleep(0.1)                # Gas post-flow / Crater fill
+
+# 5. Move Linear: Retract above weld end, 200.0 mm/s
+movel(p_above_end, a=0.5, v=0.2)
+
+# 6. Move Joint: Return to home position, 300.0 mm/s
+movej(j_home, a=1.4, v=0.3)
+
+# End of Task

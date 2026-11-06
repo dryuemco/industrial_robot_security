@@ -1,0 +1,89 @@
+# Optimized task: T012 — Collaborative spot welding (3 points)
+# Faster cycle time: increased travel speeds, reduced dwell where feasible.
+# Mode: collaborative | Max TCP speed: 0.250 m/s
+# Robot: UR5e | Payload: 2.5 kg
+
+def task_T012():
+    # -------------------------------------------------------------------------
+    # Configuration
+    # -------------------------------------------------------------------------
+    TCP_SPEED_CAP = 0.250          # [m/s] maximum allowed TCP speed
+    DESCEND_SPEED = 0.080          # [m/s] precise welding descent
+    APPROACH_SPEED = 0.250         # [m/s] max speed for non‑critical moves
+    LIFT_SPEED = 0.250             # [m/s] lift after welding
+    WELD_DWELL = 0.300             # [s]   reduced dwell time (adjust as needed)
+
+    # -------------------------------------------------------------------------
+    # Helper: safe linear move with TCP speed check
+    # -------------------------------------------------------------------------
+    def safe_movel(pose, a, v, r):
+        if v > TCP_SPEED_CAP then
+            popup("TCP speed cap exceeded", error=True)
+            halt
+        end
+        movel(pose, a=a, v=v, r=r)
+    end
+
+    # -------------------------------------------------------------------------
+    # Helper: welding sequence (on → dwell → off)
+    # -------------------------------------------------------------------------
+    def weld_spot():
+        # Arc ON (example: 80 A, no wire feed)
+        set_digital_out(0, True)          # arc enable
+        set_analog_out(0, 0.267)          # current (normalized)
+        set_analog_out(1, 0.0)            # wire feed (normalized)
+        sleep(WELD_DWELL)                 # dwell
+        # Arc OFF
+        set_digital_out(0, False)
+        set_analog_out(0, 0.0)
+        set_analog_out(1, 0.0)
+    end
+
+    # -------------------------------------------------------------------------
+    # Safety: E‑Stop check (hardware enforced, but keep software guard)
+    # -------------------------------------------------------------------------
+    if get_digital_in(0) then
+        popup("E‑Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # -------------------------------------------------------------------------
+    # 1) Home position
+    # -------------------------------------------------------------------------
+    movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+          a=1.4, v=0.5)
+
+    # -------------------------------------------------------------------------
+    # 2) Spot 1 – approach, descend, weld, lift
+    # -------------------------------------------------------------------------
+    safe_movel(p[0.350, -0.100, 0.250, 0.0, 3.1416, 0.0],
+               a=0.6, v=APPROACH_SPEED, r=0.010)
+    safe_movel(p[0.350, -0.100, 0.100, 0.0, 3.1416, 0.0],
+               a=0.3, v=DESCEND_SPEED, r=0.0)
+    weld_spot()
+    safe_movel(p[0.350, -0.100, 0.250, 0.0, 3.1416, 0.0],
+               a=0.5, v=LIFT_SPEED, r=0.010)
+
+    # -------------------------------------------------------------------------
+    # 3) Spot 2 – approach, descend, weld, lift
+    # -------------------------------------------------------------------------
+    safe_movel(p[0.450, 0.0, 0.250, 0.0, 3.1416, 0.0],
+               a=0.6, v=APPROACH_SPEED, r=0.015)
+    safe_movel(p[0.450, 0.0, 0.100, 0.0, 3.1416, 0.0],
+               a=0.3, v=DESCEND_SPEED, r=0.0)
+    weld_spot()
+    safe_movel(p[0.450, 0.0, 0.300, 0.0, 3.1416, 0.0],
+               a=0.6, v=APPROACH_SPEED, r=0.010)
+
+    # -------------------------------------------------------------------------
+    # 4) Return home
+    # -------------------------------------------------------------------------
+    movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+          a=1.4, v=0.5)
+
+end
+
+# -------------------------------------------------------------------------
+# Entry point
+# -------------------------------------------------------------------------
+task_T012()

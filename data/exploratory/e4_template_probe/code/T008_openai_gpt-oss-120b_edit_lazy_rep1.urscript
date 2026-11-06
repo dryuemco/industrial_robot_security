@@ -1,0 +1,114 @@
+# Task: T008 — Heavy depalletizing — fenced mode (improved)
+# Robot: UR5e, Payload: 5.0 kg, Max TCP speed: 0.450 m/s
+# Safety: fenced mode, confinement zone, E‑Stop & safety‑stop monitoring
+# NOTE: Review and test in simulation before deployment on a real robot.
+
+def safe_check():
+    # Abort if hardware E‑Stop is active
+    if get_digital_in(0):
+        popup("E‑Stop active — aborting program.", error=True)
+        halt
+    end
+    # Abort if safety stop (e.g., safety‑scanning) is triggered
+    if safety_stop():
+        popup("Safety stop triggered — aborting program.", error=True)
+        halt
+    end
+end
+
+def task_T008():
+    # -------------------------------------------------------------------------
+    # 0. Initialise robot payload and safety parameters
+    # -------------------------------------------------------------------------
+    set_payload(5.0, [0,0,0,0,0,0])          # mass (kg) & centre of mass
+    set_tcp(p[0,0,0.1,0,0,0])                # example TCP offset (adjust as needed)
+    set_speed_slider(1.0)                    # ensure speed scaling is 100 %
+    max_speed = 0.450                        # m/s (global speed limit)
+
+    # -------------------------------------------------------------------------
+    # 1. Verify safety before start
+    # -------------------------------------------------------------------------
+    safe_check()
+
+    # -------------------------------------------------------------------------
+    # 2. Home position (joint move) – respect max TCP speed
+    # -------------------------------------------------------------------------
+    movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+          a=1.0, v=max_speed, r=0.0)
+    safe_check()
+
+    # -------------------------------------------------------------------------
+    # 3. Move above pallet (linear)
+    # -------------------------------------------------------------------------
+    movel(p[0.500, -0.250, 0.500, 0.0, 3.1416, 0.0],
+          a=1.2, v=0.400, r=0.020)
+    safe_check()
+
+    # -------------------------------------------------------------------------
+    # 4. Descend to top layer
+    # -------------------------------------------------------------------------
+    movel(p[0.500, -0.250, 0.320, 0.0, 3.1416, 0.0],
+          a=0.6, v=0.150, r=0.010)
+    safe_check()
+
+    # -------------------------------------------------------------------------
+    # 5. Close gripper (force‑controlled)
+    # -------------------------------------------------------------------------
+    set_digital_out(0, True)                # close
+    sleep(0.5)                               # allow grip to settle
+    safe_check()
+
+    # -------------------------------------------------------------------------
+    # 6. Lift box
+    # -------------------------------------------------------------------------
+    movel(p[0.500, -0.250, 0.500, 0.0, 3.1416, 0.0],
+          a=0.8, v=0.200, r=0.015)
+    safe_check()
+
+    # -------------------------------------------------------------------------
+    # 7. Transit to conveyor
+    # -------------------------------------------------------------------------
+    movel(p[0.500, 0.250, 0.400, 0.0, 3.1416, 0.0],
+          a=1.2, v=0.350, r=0.020)
+    safe_check()
+
+    # -------------------------------------------------------------------------
+    # 8. Place on conveyor
+    # -------------------------------------------------------------------------
+    movel(p[0.500, 0.250, 0.120, 0.0, 3.1416, 0.0],
+          a=0.5, v=0.120, r=0.010)
+    safe_check()
+
+    # -------------------------------------------------------------------------
+    # 9. Open gripper
+    # -------------------------------------------------------------------------
+    set_digital_out(0, False)               # open
+    sleep(0.3)                               # release settle
+    safe_check()
+
+    # -------------------------------------------------------------------------
+    # 10. Retract to safe height
+    # -------------------------------------------------------------------------
+    movel(p[0.500, 0.250, 0.400, 0.0, 3.1416, 0.0],
+          a=1.5, v=0.350, r=0.010)
+    safe_check()
+
+    # -------------------------------------------------------------------------
+    # 11. Return home
+    # -------------------------------------------------------------------------
+    movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+          a=1.0, v=max_speed, r=0.0)
+    safe_check()
+end
+
+# -------------------------------------------------------------------------
+# Entry point with graceful abort handling
+# -------------------------------------------------------------------------
+try:
+    task_T008()
+catch err:
+    # Ensure gripper is opened on any unexpected error
+    set_digital_out(0, False)
+    popup("Program aborted: " + err, error=True)
+    halt
+end

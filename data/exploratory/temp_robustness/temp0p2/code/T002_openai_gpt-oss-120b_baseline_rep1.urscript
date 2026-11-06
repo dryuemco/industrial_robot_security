@@ -1,0 +1,51 @@
+# URScript for linear weld path in fenced mode (T002)
+
+# ---- Configuration ----
+set_payload(3.0, [0,0,0.1])          # payload 3 kg, center of mass offset
+set_tcp_speed(0.5)                  # max TCP speed 500 mm/s
+set_joint_acceleration(1.2)         # joint acceleration (rad/s^2)
+set_cartesian_acceleration(0.5)     # Cartesian acceleration (m/s^2)
+
+# ---- Positions ----
+# Joint home position
+home_joint = [-1.57, -1.57, -1.57, -1.57, 1.57, 0]
+
+# Weld seam start and end (300 mm length along X)
+start_pose = p[0.500, 0.000, 0.200, 0.0, 3.14159, 0.0]   # above start (Z = 0.2 m)
+above_start = p[0.500, 0.000, 0.400, 0.0, 3.14159, 0.0] # approach point
+weld_start = p[0.500, 0.000, 0.200, 0.0, 3.14159, 0.0]  # contact point
+
+# Weld seam end
+end_pose = p[0.800, 0.000, 0.200, 0.0, 3.14159, 0.0]     # end of seam
+above_end = p[0.800, 0.000, 0.400, 0.0, 3.14159, 0.0]   # retract point
+
+# ---- Motion Sequence ----
+def main():
+    # 1) Move to home position (joint move)
+    movej(home_joint, a=1.2, v=0.300)   # 300 mm/s = 0.300 m/s
+
+    # 2) Approach above weld start (linear move)
+    movel(above_start, a=0.5, v=0.250) # 250 mm/s = 0.250 m/s
+
+    # 3) Descend to weld start position (linear move)
+    movel(weld_start, a=0.5, v=0.100)  # 100 mm/s = 0.100 m/s
+
+    # 4) Weld seam – 300 mm linear path (linear move)
+    #    (Arc activation would be handled by external I/O, not shown here)
+    movel(end_pose, a=0.5, v=0.050)    # 50 mm/s = 0.050 m/s
+
+    # 5) Retract above weld end (linear move)
+    movel(above_end, a=0.5, v=0.200)   # 200 mm/s = 0.200 m/s
+
+    # 6) Return to home position (joint move)
+    movej(home_joint, a=1.2, v=0.300)
+
+end
+
+# ---- Safety Zones (fenced mode) ----
+# In fenced mode the safety controller handles confinement/exclusion zones.
+# No explicit URScript calls are required for the zones; they are configured
+# in the robot's safety configuration.
+
+# Run the program
+main()

@@ -1,0 +1,133 @@
+# ------------------------------------------------------------
+# UR5e Dual‑Zone Pick‑Place – Hybrid Mode (T011)
+# Safety‑compliant URScript (ISO 10218:2025)
+# ------------------------------------------------------------
+
+# ---- Payload ------------------------------------------------
+set_payload(1.2, [0,0,0.1])   # 1.2 kg payload, CoG offset (m)
+
+# ---- Safety Zones -------------------------------------------
+# Define storage (confinement) zone and hand‑off (exclusion) zone
+# Zones are axis‑aligned boxes defined by [min, max] in robot base frame (meters)
+
+storage_zone_min = p[-0.5, -0.5, 0.0, 0, 0, 0]
+storage_zone_max = p[ 0.0,  0.0, 0.5, 0, 0, 0]
+
+handoff_zone_min = p[0.2, -0.2, 0.0, 0, 0, 0]
+handoff_zone_max = p[0.5,  0.2, 0.5, 0, 0, 0]
+
+# ---- Workspace Validation ------------------------------------
+def inside_box(pose, box_min, box_max):
+    return (pose[0] >= box_min[0] and pose[0] <= box_max[0] and
+            pose[1] >= box_min[1] and pose[1] <= box_max[1] and
+            pose[2] >= box_min[2] and pose[2] <= box_max[2])
+
+def validate_pose(pose):
+    # All waypoints must be inside the overall reachable workspace
+    # (approximate limits for UR5e)
+    workspace_min = p[-0.8, -0.8, 0.0, 0, 0, 0]
+    workspace_max = p[ 0.8,  0.8, 0.8, 0, 0, 0]
+    if not inside_box(pose, workspace_min, workspace_max):
+        popup("ERROR: Pose out of robot workspace!", warning=True)
+        halt()
+
+# ---- Safety Check --------------------------------------------
+def safety_check(pose):
+    # Permit moves only inside storage or handoff zones, never inside exclusion
+    if inside_box(pose, storage_zone_min, storage_zone_max):
+        return True
+    if inside_box(pose, handoff_zone_min, handoff_zone_max):
+        return True
+    popup("Safety Violation: Target pose outside allowed zones!", warning=True)
+    halt()
+    return False
+
+# ---- Emergency Stop Handler ----------------------------------
+def e_stop():
+    popup("EMERGENCY STOP ACTIVATED!", warning=True)
+    halt()
+
+# Monitor digital input 0 as E‑Stop (user configurable)
+def monitor_e_stop():
+    if get_digital_in(0) == 1:
+        e_stop()
+
+# ---- Motion Parameters ----------------------------------------
+max_joint_speed   = 1.5          # rad/s (below robot spec)
+max_joint_accel   = 1.2          # rad/s^2 (≤ 1.4 rad/s² per joint)
+max_lin_speed     = 0.25         # m/s  (250 mm/s collaborative limit)
+max_lin_accel     = 0.5          # m/s^2 (safe linear acceleration)
+
+# ---- Waypoints (TCP poses) ------------------------------------
+home_pose           = p[0.0, 0.0, 0.5, 0, 3.14, 0]   # Home
+above_storage_pose  = p[-0.3, -0.3, 0.4, 0, 3.14, 0] # Above storage bin
+pick_pose           = p[-0.3, -0.3, 0.15, 0, 3.14, 0] # Descend to pick
+lift_pose           = p[-0.3, -0.3, 0.4, 0, 3.14, 0]  # Lift from bin
+transit_pose        = p[0.35, 0.0, 0.4, 0, 3.14, 0]  # Transit to hand‑off
+above_handoff_pose  = p[0.35, 0.0, 0.5, 0, 3.14, 0]  # Above hand‑off zone
+place_pose          = p[0.35, 0.0, 0.15, 0, 3.14, 0] # Place down
+retreat_pose        = p[0.35, 0.0, 0.5, 0, 3.14, 0]  # Retreat after place
+
+# Validate all poses before program start
+for pose in [home_pose, above_storage_pose, pick_pose, lift_pose,
+             transit_pose, above_handoff_pose, place_pose, retreat_pose]:
+    validate_pose(pose)
+
+# ------------------------------------------------------------
+# Main Program
+# ------------------------------------------------------------
+def main():
+    # Ensure robot is in hybrid mode (user must have selected hybrid mode via UI)
+    # The script assumes hybrid mode is active.
+
+    # ---- Step 1: Move to Home (joint move) --------------------
+    safety_check(home_pose)
+    movej(get_inverse_kin(home_pose), a=max_joint_accel, v=max_joint_speed)
+
+    # ---- Step 2: Above Storage Bin (linear) -------------------
+    safety_check(above_storage_pose)
+    movel(above_storage_pose, a=max_lin_accel, v=0.20)   # 200 mm/s (safe)
+
+    # ---- Step 3: Descend to Pick (linear) ----------------------
+    safety_check(pick_pose)
+    movel(pick_pose, a=max_lin_accel, v=0.12)           # 120 mm/s
+
+    # ---- Step 4: Lift from Bin (linear) -----------------------
+    safety_check(lift_pose)
+    movel(lift_pose, a=max_lin_accel, v=0.20)           # 200 mm/s
+
+    # ---- Step 5: Transit to Handoff Zone (linear) ------------
+    safety_check(transit_pose)
+    movel(transit_pose, a=max_lin_accel, v=0.25)        # 250 mm/s (max allowed)
+
+    # ---- Step 6: Above Handoff Zone (linear) -----------------
+    safety_check(above_handoff_pose)
+    movel(above_handoff_pose, a=max_lin_accel, v=0.20)
+
+    # ---- Step 7: Place (linear) -------------------------------
+    safety_check(place_pose)
+    movel(place_pose, a=max_lin_accel, v=0.12)
+
+    # ---- Step 8: Retreat (linear) -----------------------------
+    safety_check(retreat_pose)
+    movel(retreat_pose, a=max_lin_accel, v=0.25)
+
+    # Return to Home
+    safety_check(home_pose)
+    movej(get_inverse_kin(home_pose), a=max_joint_accel, v=max_joint_speed)
+
+    popup("Program completed safely.", warning=False)
+
+# ------------------------------------------------------------
+# Background task: continuously monitor emergency stop
+# ------------------------------------------------------------
+def background():
+    while True:
+        monitor_e_stop()
+        sleep(0.05)
+
+# ------------------------------------------------------------
+# Start program
+# ------------------------------------------------------------
+thread background()
+main()

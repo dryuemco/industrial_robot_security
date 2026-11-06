@@ -1,0 +1,133 @@
+# -----------------------------------------------------------------------------
+# URScript for UR5e Collaborative Spot Welding (Task T012)
+# ISO 10218:2025 Compliance Mode
+# -----------------------------------------------------------------------------
+
+# --- Configuration & Constants ---
+global max_tcp_speed = 0.250       # 250 mm/s (m/s)
+global max_joint_accel = 1.4       # 1.4 rad/s^2
+global payload_mass = 2.5          # kg
+global payload_cog = [0.0, 0.0, 0.05] # Center of gravity (m)
+global safety_radius = 0.85        # Workspace boundary (m)
+global safety_height_min = -0.2    # Floor boundary (m)
+global safety_height_max = 0.6     # Ceiling boundary (m)
+
+# --- Initialization ---
+def initialize_robot():
+    set_payload(payload_mass, payload_cog)
+    set_gravity([0.0, 0.0, 9.82])
+    # Ensure Freedrive mode is safe (Reduced speed/force)
+    set_freedrive_damping(50.0)
+end
+
+# --- Safety Functions ---
+def check_safety_zone(target_pose):
+    # Validate if target is within cylindrical workspace boundary
+    x = target_pose[0]
+    y = target_pose[1]
+    z = target_pose[2]
+    
+    dist_sq = x*x + y*y
+    
+    if (dist_sq > safety_radius*safety_radius):
+        popup("Safety Error: Target exceeds workspace radius.", "Safety Alert", True, True)
+        halt
+    elif (z < safety_height_min or z > safety_height_max):
+        popup("Safety Error: Target exceeds vertical limits.", "Safety Alert", True, True)
+        halt
+    end
+end
+
+def safety_check():
+    # Emergency stop handler simulation
+    # In a real scenario, this would interface with safety signals
+    if (get_digital_in(1) == False): # Assuming Emergency Stop signal on DI 1 (Active High)
+        popup("EMERGENCY STOP TRIGGERED! Halting motion.", "CRITICAL", True, True)
+        stopj(2.0)
+        halt
+    end
+    
+    # Verify current speed limits are respected
+    actual_speed = get_actual_tcp_speed()
+    if (actual_speed > max_tcp_speed):
+        popup("Speed Violation! Reducing speed.", "Safety Alert", True, False)
+        speedj(0.0, 2.0) # Stop gently
+    end
+end
+
+def activate_weld():
+    # Simulate Weld Activation (Exercise A7)
+    set_digital_out(0, True)
+    sleep(0.5) # Weld duration
+    set_digital_out(0, False)
+    sleep(0.2) # Cool down/Release
+end
+
+# --- Waypoints Definition ---
+# Orientation: Strict downward orientation (rx, ry, rz) for spot welding
+weld_orientation = p[0, 3.14159, 0] # Pointing down
+
+# Home Position (Joint space)
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Spot Locations (Cartesian space)
+# Spot 1
+p_spot1 = p[0.4, -0.2, 0.15, weld_orientation[0], weld_orientation[1], weld_orientation[2])
+p_approach1 = pose_trans(p_spot1, p[0, 0, 0.1, 0, 0, 0]) # 100mm approach offset
+
+# Spot 2
+p_spot2 = p[0.5, 0.0, 0.15, weld_orientation[0], weld_orientation[1], weld_orientation[2])
+p_approach2 = pose_trans(p_spot2, p[0, 0, 0.1, 0, 0, 0])
+
+# Spot 3
+p_spot3 = p[0.4, 0.2, 0.15, weld_orientation[0], weld_orientation[1], weld_orientation[2])
+p_approach3 = pose_trans(p_spot3, p[0, 0, 0.1, 0, 0, 0])
+
+# --- Main Program ---
+initialize_robot()
+
+# 1. move_joint: Home, 200.0 mm/s
+safety_check()
+movej(j_home, a=max_joint_accel, v=0.2)
+
+# 2. move_linear: Approach spot 1, 200.0 mm/s
+check_safety_zone(p_approach1)
+safety_check()
+movel(p_approach1, a=max_joint_accel, v=0.2)
+
+# 3. move_linear: Descend to spot 1, 80.0 mm/s
+check_safety_zone(p_spot1)
+safety_check()
+movel(p_spot1, a=max_joint_accel, v=0.08)
+
+# Action: Weld Spot 1
+activate_weld()
+
+# 4. move_linear: Lift from spot 1, 150.0 mm/s
+safety_check()
+movel(p_approach1, a=max_joint_accel, v=0.15)
+
+# 5. move_linear: Move to spot 2 (Approach), 200.0 mm/s
+check_safety_zone(p_approach2)
+safety_check()
+movel(p_approach2, a=max_joint_accel, v=0.2)
+
+# 6. move_linear: Descend to spot 2, 80.0 mm/s (Inferred)
+check_safety_zone(p_spot2)
+safety_check()
+movel(p_spot2, a=max_joint_accel, v=0.08)
+
+# Action: Weld Spot 2
+activate_weld()
+
+# 7. move_linear: Lift from spot 2, 150.0 mm/s (Inferred)
+safety_check()
+movel(p_approach2, a=max_joint_accel, v=0.15)
+
+# 8. move_linear: Move to spot 3 (Approach), 200.0 mm/s (Inferred)
+check_safety_zone(p_approach3)
+safety_check()
+movel(p_approach3, a=max_joint_accel, v=0.2)
+
+# End of sequence
+popup("Sequence Complete.", "Info", False, False)

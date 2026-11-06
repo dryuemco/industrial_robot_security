@@ -1,0 +1,30 @@
+# Define safety parameters
+set_tool_payload(2.0);
+set_digital_out(0, False);  # Ensure suction gripper is off initially
+
+# Define safety zones
+safety_zone(def_zone, 0);
+
+# Define home position
+def_home := [0.0, -pi/2, pi/2, -pi/2, pi/2, 0.0];
+
+# Define waypoints
+waypoints := [[0.0, -pi/2, pi/2, -pi/2, pi/2, 0.0],  # Home position
+              [0.5, -pi/2, pi/2, -pi/2, pi/2, 0.0],  # Above bin
+              [0.5, -pi/2, pi/2, -pi/2, pi/2, -0.1], # Descend into bin
+              [0.5, -pi/2, pi/2, -pi/2, pi/2, 0.0],  # Lift from bin
+              [1.0, -pi/2, pi/2, -pi/2, pi/2, 0.0]]; # Transit to conveyor
+
+# Define speeds and accelerations
+speeds := [350.0, 350.0, 150.0, 300.0, 380.0];
+accelerations := [1.4, 1.4, 1.4, 1.4, 1.4];
+
+# Safety check and motion execution
+for i in range(length(waypoints)) do
+    safety_check(waypoints[i], def_zone);
+    move_joints(def_home, speeds[i], accelerations[i]);
+    move_linear(waypoints[i], speeds[i], accelerations[i]);
+end
+
+# Final move to ensure TCP is clear
+move_linear([1.0, -pi/2, pi/2, -pi/2, pi/2, 0.1], 250.0, 1.4);

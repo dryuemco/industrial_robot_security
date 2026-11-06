@@ -1,0 +1,114 @@
+# UR5e Multi-waypoint Pick-Place with Obstacle Avoidance (T004)
+# Features: SSM (Collaborative), A5 (Speed/Collision Monitor), A6 (Dual Work Objects)
+
+# --- Configuration & Variables ---
+global max_tcp_speed = 0.25          # 250.0 mm/s
+global payload_mass = 1.5            # 1.5 kg
+global safety_force_limit = 40.0     # Newtons (Collision threshold)
+global safety_speed_limit = 0.30     # m/s (Speed guard threshold)
+
+# Work Objects (Base Frames)
+# Work Object 1: Pick Station
+global wo_pick = p[0.45, -0.3, 0.0, 0, 0, 3.14159]
+# Work Object 2: Place Station
+global wo_place = p[0.45, 0.3, 0.0, 0, 0, 3.14159]
+
+# Offsets
+global offset_approach = p[0, 0, 0.15, 0, 0, 0]   # Z offset for approach
+global offset_avoid = p[-0.15, 0, 0.05, 0, 0, 0]  # -X offset for obstacle avoidance
+
+# --- Waypoint Definitions ---
+# Home Position (Joint space)
+j_home = [0, -1.5708, 1.5708, -1.5708, -1.5708, 0]
+
+# Pick Waypoints (Relative to wo_pick)
+p_wp1 = pose_trans(wo_pick, offset_approach)      # Above pick
+p_wp2 = pose_trans(wo_pick, p[0,0,0,0,0,0])       # At pick
+p_wp3 = p_wp1                                      # Lift above pick
+
+# Avoidance Waypoint (Relative to WP1, offset -X)
+p_wp4 = pose_trans(p_wp1, offset_avoid)           # Obstacle avoidance
+
+# Place Waypoints (Relative to wo_place)
+p_wp5 = pose_trans(wo_place, offset_approach)     # Above place
+p_wp6 = pose_trans(wo_place, p[0,0,0,0,0,0])      # At place
+p_wp7 = p_wp5                                      # Lift above place
+
+# --- Safety Logic (A5: Speed Guard + Collision Monitor) ---
+thread safety_monitor():
+    while True:
+        actual_speed = norm(get_actual_tcp_speed())
+        actual_force = norm(get_tcp_force())
+        
+        # Speed Guard: Stop if exceeding safety limit
+        if actual_speed > safety_speed_limit:
+            popup("Speed Limit Exceeded!", "Safety Error", 1, 1)
+            stopj(1.0)
+            end
+        
+        # Collision Monitor: Stop if force threshold exceeded
+        if actual_force > safety_force_limit:
+            popup("Collision Detected!", "Safety Error", 1, 1)
+            stopj(1.0)
+            end
+            
+        # Soft Safety Zone Check (Confinement/Exclusion)
+        # Ensure robot stays within X[0.2, 0.6], Y[-0.5, 0.5]
+        p_curr = get_actual_tcp_pose()
+        if p_curr[0] < 0.2 or p_curr[0] > 0.6 or p_curr[1] < -0.5 or p_curr[1] > 0.5:
+            popup("Workspace Boundary Exceeded!", "Safety Error", 1, 1)
+            stopj(1.0)
+            end
+            
+        sync()
+end
+
+# --- Main Program ---
+def main():
+    # Set Payload
+    set_payload(payload_mass, [0, 0, 0.05])
+    
+    # Start Safety Thread
+    thread_run(safety_monitor, cycle=1)
+    
+    # 1. Move to Home (move_joint, 200 mm/s)
+    movej(j_home, a=1.0, v=0.2)
+    
+    # 2. Move to WP1 - Above Pick Station (move_linear, 200 mm/s)
+    movel(p_wp1, a=0.5, v=0.2)
+    
+    # 3. Move to WP2 - Descend to Pick (move_linear, 100 mm/s)
+    movel(p_wp2, a=0.2, v=0.1)
+    
+    # Simulate Gripper Close
+    set_digital_out(0, True)
+    sleep(0.5)
+    
+    # 4. Move to WP3 - Lift Above Pick (move_linear, 180 mm/s)
+    movel(p_wp3, a=0.5, v=0.18)
+    
+    # 5. Move to WP4 - Obstacle Avoidance (-X offset) (move_linear, 200 mm/s)
+    movel(p_wp4, a=0.5, v=0.2)
+    
+    # 6. Move to WP5 - Above Place Station (move_linear, 200 mm/s)
+    movel(p_wp5, a=0.5, v=0.2)
+    
+    # 7. Move to WP6 - Descend to Place (move_linear, 100 mm/s)
+    movel(p_wp6, a=0.2, v=0.1)
+    
+    # Simulate Gripper Open
+    set_digital_out(0, False)
+    sleep(0.5)
+    
+    # 8. Move to WP7 - Lift Above Place (move_linear, 180 mm/s)
+    movel(p_wp7, a=0.5, v=0.18)
+    
+    # 9. Move to Home (move_joint, 200 mm/s)
+    movej(j_home, a=1.0, v=0.2)
+    
+    # Stop Safety Monitor
+    kill safety_monitor
+end
+
+# Execute
+main()

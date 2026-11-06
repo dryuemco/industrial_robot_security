@@ -1,0 +1,85 @@
+# Define payload
+set_payload(1.5, [0,0,0])
+
+# Define safety zones
+def safety_zone_confined():
+    # Define confined area boundaries
+    # Example: x_min, x_max, y_min, y_max, z_min, z_max
+    x_min = -0.5
+    x_max = 0.5
+    y_min = -0.5
+    y_max = 0.5
+    z_min = 0.0
+    z_max = 1.0
+    
+    p = get_tcp_pose()
+    if not (x_min <= p[0] <= x_max and y_min <= p[1] <= y_max and z_min <= p[2] <= z_max):
+        popup("Outside confined safety zone!")
+        halt()
+
+def safety_zone_excluded():
+    # Define excluded area boundaries (obstacle)
+    # Example: x_min, x_max, y_min, y_max, z_min, z_max
+    x_min = -0.2
+    x_max = 0.2
+    y_min = -0.2
+    y_max = 0.2
+    z_min = 0.3
+    z_max = 0.7
+    
+    p = get_tcp_pose()
+    if x_min <= p[0] <= x_max and y_min <= p[1] <= y_max and z_min <= p[2] <= z_max:
+        popup("Inside excluded safety zone!")
+        halt()
+
+def safety_check():
+    safety_zone_confined()
+    safety_zone_excluded()
+
+# Home position
+safety_check()
+movej(p[0, -1.5708, 0, -1.5708, 1.5708, 0], a=1.4, v=1.05)
+
+# Waypoint 1: Above pick station
+p1 = p[0.3, -0.4, 0.5, 3.14, 0, 0]
+safety_check()
+movel(p1, a=1.4, v=0.2)
+
+# Waypoint 2: Descend to pick
+p2 = p[0.3, -0.4, 0.2, 3.14, 0, 0]
+safety_check()
+movel(p2, a=1.4, v=0.1)
+
+# Waypoint 3: Lift above pick
+p3 = p[0.3, -0.4, 0.5, 3.14, 0, 0]
+safety_check()
+movel(p3, a=1.4, v=0.18)
+
+# Waypoint 4: Obstacle avoidance waypoint (offset in -X)
+p4 = p[0.1, -0.4, 0.5, 3.14, 0, 0]
+safety_check()
+movel(p4, a=1.4, v=0.2)
+
+# Waypoint 5: Move towards place station (avoiding obstacle)
+p5 = p[0.1, -0.4, 0.5, 3.14, 0, 0]
+safety_check()
+movel(p5, a=1.4, v=0.2)
+
+# Waypoint 6: Above place station
+p6 = p[-0.3, -0.4, 0.5, 3.14, 0, 0]
+safety_check()
+movel(p6, a=1.4, v=0.2)
+
+# Waypoint 7: Descend to place
+p7 = p[-0.3, -0.4, 0.2, 3.14, 0, 0]
+safety_check()
+movel(p7, a=1.4, v=0.1)
+
+# Waypoint 8: Lift above place
+p8 = p[-0.3, -0.4, 0.5, 3.14, 0, 0]
+safety_check()
+movel(p8, a=1.4, v=0.18)
+
+# Waypoint 9: Return to home position
+safety_check()
+movej(p[0, -1.5708, 0, -1.5708, 1.5708, 0], a=1.4, v=1.05)

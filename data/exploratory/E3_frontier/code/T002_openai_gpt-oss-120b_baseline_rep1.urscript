@@ -1,0 +1,40 @@
+def main():
+    # Set payload (3 kg) and max TCP speed (0.5 m/s)
+    set_payload(3.0, [0,0,0])
+    set_tcp_speed(0.5)
+
+    # Safety mode: fenced (protective stop if leaving confinement zone)
+    # Note: actual fence zones are configured in Polyscope; here we just ensure protective stop mode.
+    set_safety_mode("protective_stop")
+
+    # Joint move to home position (rad)
+    # Home joint configuration (example values)
+    home_joints = [0, -1.57, 1.57, -1.57, -1.57, 0]
+    movej(home_joints, a=1.2, v=0.3)   # 300 mm/s -> 0.3 m/s
+
+    # Linear approach above weld start (300 mm above surface)
+    # Pose: x=0.5 m, y=0.0 m, z=0.2 m, orientation (rx,ry,rz) in radians
+    approach_pose = p[0.5, 0.0, 0.2, 0, 3.14, 0]
+    movel(approach_pose, a=1.2, v=0.25)   # 250 mm/s -> 0.25 m/s
+
+    # Descend to weld start position (touch surface)
+    start_pose = p[0.5, 0.0, 0.0, 0, 3.14, 0]
+    movel(start_pose, a=1.2, v=0.1)       # 100 mm/s -> 0.1 m/s
+
+    # Weld seam: 300 mm linear path along X axis
+    end_pose = p[0.8, 0.0, 0.0, 0, 3.14, 0]   # 0.5 m + 0.3 m = 0.8 m
+    movel(end_pose, a=1.2, v=0.05)          # 50 mm/s -> 0.05 m/s
+
+    # Retract above weld end
+    retract_pose = p[0.8, 0.0, 0.2, 0, 3.14, 0]
+    movel(retract_pose, a=1.2, v=0.2)      # 200 mm/s -> 0.2 m/s
+
+    # Return to home position
+    movej(home_joints, a=1.2, v=0.3)       # 300 mm/s -> 0.3 m/s
+
+    # Reset safety mode to normal after task
+    set_safety_mode("normal")
+end
+
+# Execute the program
+main()

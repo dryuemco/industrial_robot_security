@@ -1,0 +1,74 @@
+def laser_marking():
+  # Safety configuration
+  conf = p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  conf[2] = 0.1  # Safe height
+  conf[3] = 0.5  # Max joint speed fraction
+  conf[4] = 0.5  # Max TCP speed fraction
+  conf[5] = 1.0  # Safety plane distance
+
+  # Payload and tool center point
+  set_payload(0.6, [0.0, 0.0, 0.05])
+  set_tcp(p[0.0, 0.0, 0.15, 0.0, 0.0, 0.0])
+
+  # Safety plane setup
+  safety_plane = p[0.0, 0.0, 0.2, 0.0, 0.0, 0.0]
+  set_safety_planes([safety_plane])
+
+  # Confinement and exclusion zones
+  confinement_zone = [[-0.5, -0.5, 0.0], [0.5, 0.5, 0.5]]
+  exclusion_zone = [[-0.2, -0.2, 0.0], [0.2, 0.2, 0.2]]
+  set_confinement_zone(confinement_zone)
+  set_exclusion_zone(exclusion_zone)
+
+  # Watchdog setup
+  watchdog_timeout = 0.5
+  watchdog_input = 0
+  set_standard_digital_out(0, False)
+  set_standard_digital_out(1, True)  # Watchdog enable
+
+  # Home position
+  home_pose = p[0.0, -0.5, 0.5, 0.0, 3.14159, 0.0]
+  movej(home_pose, a=1.2, v=3.5, r=0.0)
+
+  # Above marking surface
+  above_surface = p[0.1, -0.3, 0.15, 0.0, 3.14159, 0.0]
+  movel(above_surface, a=1.2, v=3.0, r=0.0)
+
+  # Descend to marking height with watchdog
+  marking_height = p[0.1, -0.3, 0.05, 0.0, 3.14159, 0.0]
+  watchdog_input = 1
+  movel(marking_height, a=0.5, v=1.0, r=0.0)
+  set_standard_digital_out(0, True)  # Laser enable
+
+  # Mark line 1
+  line1_start = p[0.1, -0.3, 0.05, 0.0, 3.14159, 0.0]
+  line1_end = p[0.15, -0.3, 0.05, 0.0, 3.14159, 0.0]
+  movel(line1_start, a=0.1, v=0.6)
+  movel(line1_end, a=0.1, v=0.6)
+
+  # Step to line 2
+  line2_start = p[0.1, -0.32, 0.05, 0.0, 3.14159, 0.0]
+  movel(line2_start, a=0.3, v=0.8)
+
+  # Mark line 2
+  line2_end = p[0.15, -0.32, 0.05, 0.0, 3.14159, 0.0]
+  movel(line2_end, a=0.1, v=0.6)
+
+  # Step to line 3
+  line3_start = p[0.1, -0.34, 0.05, 0.0, 3.14159, 0.0]
+  movel(line3_start, a=0.3, v=0.8)
+
+  # Mark line 3
+  line3_end = p[0.15, -0.34, 0.05, 0.0, 3.14159, 0.0]
+  movel(line3_end, a=0.1, v=0.6)
+
+  # Retract and disable laser
+  set_standard_digital_out(0, False)
+  movel(above_surface, a=0.5, v=1.0, r=0.0)
+
+  # Return home
+  movej(home_pose, a=1.2, v=3.5, r=0.0)
+
+  # Watchdog cleanup
+  set_standard_digital_out(1, False)
+end

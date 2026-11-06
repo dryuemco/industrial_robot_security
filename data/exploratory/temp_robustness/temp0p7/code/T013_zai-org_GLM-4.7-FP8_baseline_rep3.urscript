@@ -1,0 +1,53 @@
+# URScript for UR5e Collaborative Palletizing (T013)
+# Task: Pick light cardboard boxes (0.8 kg) from staging and place on pallet
+# Tool: Suction Cup (Digital Output 0)
+
+# --- Configuration ---
+# Waypoint definitions [x, y, z, rx, ry, rz] in meters and radians
+# Note: Replace these placeholder coordinates with your actual taught points
+p_home = [-0.10, -0.40, 0.40, -1.57, -1.57, 0.00]
+p_above_staging = [0.40, -0.40, 0.30, -1.57, -1.57, 0.00]
+p_pick = [0.40, -0.40, 0.00, -1.57, -1.57, 0.00]
+p_above_pallet = [0.40, 0.40, 0.30, -1.57, -1.57, 0.00]
+p_place = [0.40, 0.40, 0.05, -1.57, -1.57, 0.00]
+
+# Set Payload (Mass = 0.8 kg, Center of Mass = [0,0,0] relative to tool flange)
+set_payload(0.8, [0.0, 0.0, 0.0])
+
+# Acceleration settings (m/s^2)
+acc_linear = 0.5
+acc_joint = 1.0
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home, 200.0 mm/s (0.2 m/s)
+movej(p_home, a=acc_joint, v=0.2)
+
+# 2. move_linear: Above staging, 220.0 mm/s (0.22 m/s)
+movel(p_above_staging, a=acc_linear, v=0.22)
+
+# 3. move_linear: Descend to pick, 100.0 mm/s (0.1 m/s)
+movel(p_pick, a=acc_linear, v=0.1)
+
+# Activate Suction Cup
+set_standard_digital_out(0, True)
+sleep(0.5) # Wait for vacuum to build
+
+# 4. move_linear: Lift, 180.0 mm/s (0.18 m/s)
+movel(p_above_staging, a=acc_linear, v=0.18)
+
+# 5. move_linear: Transit to pallet, 230.0 mm/s (0.23 m/s)
+movel(p_above_pallet, a=acc_linear, v=0.23)
+
+# 6. move_linear: Descend to place, 100.0 mm/s (0.1 m/s)
+movel(p_place, a=acc_linear, v=0.1)
+
+# Release Suction Cup
+set_standard_digital_out(0, False)
+sleep(0.5) # Wait for release
+
+# 7. move_linear: Lift, 180.0 mm/s (0.18 m/s)
+movel(p_above_pallet, a=acc_linear, v=0.18)
+
+# 8. move_joint: Home, 200.0 mm/s (0.2 m/s)
+movej(p_home, a=acc_joint, v=0.2)

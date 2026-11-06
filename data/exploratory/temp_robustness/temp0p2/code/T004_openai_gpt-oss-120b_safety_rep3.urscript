@@ -1,0 +1,147 @@
+# ------------------------------------------------------------
+# URScript: Collaborative SSM Pick‑Place with Obstacle Avoidance
+# Robot: UR5e
+# Payload: 1.5 kg
+# Safety: ISO 10218:2025 compliant
+# ------------------------------------------------------------
+
+# ------------------- Global Settings ------------------------
+set_payload(1.5, [0,0,0.1])               # payload mass (kg) and CoM (m)
+
+# Safety limits (max TCP speed 0.25 m/s, max joint accel 1.4 rad/s²)
+set_safety_limits(speed = 0.25,          # m/s
+                  accel = 1.4,           # rad/s² per joint
+                  stop_speed = 0.0)      # stop speed (m/s)
+
+# Enable collaborative mode with Speed & Separation Monitoring (SSM)
+set_safety_mode(2)                       # 2 = collaborative (SSM)
+
+# ------------------- Safety Zones ---------------------------
+# Confinement zone (allowed workspace) – box centered at robot base
+# format: set_safety_zone(type, pose, size_x, size_y, size_z)
+set_safety_zone("confinement", p[0,0,0,0,0,0], 1.6, 1.6, 1.2)   # 1.6 m × 1.6 m × 1.2 m
+
+# Exclusion zone (obstacle column) – box region to avoid
+set_safety_zone("exclusion", p[0.3,0,0.5,0,0,0], 0.2, 0.2, 1.0) # column at X=0.3 m
+
+# ------------------- Emergency Stop Handler -----------------
+def e_stop_handler():
+    popup("EMERGENCY STOP ACTIVATED – Halting robot.", true)
+    stopj(2)                               # joint stop with 2 s deceleration
+    halt()
+end
+
+# ------------------- Safety Check Function ------------------
+def safety_check(target_pose):
+    # Workspace limits (meters)
+    const min_x = -0.8
+    const max_x =  0.8
+    const min_y = -0.8
+    const max_y =  0.8
+    const min_z =  0.0
+    const max_z =  1.2
+
+    if (target_pose[0] < min_x) or (target_pose[0] > max_x) or
+       (target_pose[1] < min_y) or (target_pose[1] > max_y) or
+       (target_pose[2] < min_z) or (target_pose[2] > max_z):
+        popup("Safety violation: waypoint out of workspace!", true)
+        e_stop_handler()
+    end
+end
+
+# ------------------- Work Objects ----------------------------
+# Dual work objects for pick and place stations
+# Pick station work object (relative to robot base)
+set_workobject(p[0.5, -0.3, 0.0, 0, 0, 0])   # pick station origin
+# Place station work object (will be switched later)
+set_workobject(p[-0.5, 0.3, 0.0, 0, 0, 0])   # place station origin
+
+# ------------------- Waypoints Definition --------------------
+# All poses are defined in robot base frame (meters, radians)
+
+# Home joint configuration (joint space)
+home_joints = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# WP1 – Above pick station (safe height 0.3 m)
+wp1 = p[0.5, -0.3, 0.3, 0, 3.14, 0]
+
+# WP2 – Descend to pick (0.1 m above part)
+wp2 = p[0.5, -0.3, 0.12, 0, 3.14, 0]
+
+# WP3 – Lift after pick (back to safe height)
+wp3 = p[0.5, -0.3, 0.3, 0, 3.14, 0]
+
+# WP4 – Obstacle avoidance waypoint (offset -X by 0.15 m)
+wp4 = p[0.35, -0.3, 0.3, 0, 3.14, 0]
+
+# WP5 – Move towards place corridor (mid‑point)
+wp5 = p[0.0, 0.0, 0.3, 0, 3.14, 0]
+
+# WP6 – Above place station (safe height)
+wp6 = p[-0.5, 0.3, 0.3, 0, 3.14, 0]
+
+# WP7 – Descend to place (0.12 m above target)
+wp7 = p[-0.5, 0.3, 0.12, 0, 3.14, 0]
+
+# WP8 – Lift after place
+wp8 = p[-0.5, 0.3, 0.3, 0, 3.14, 0]
+
+# WP9 – Return to home (joint space)
+home_pose = p[0,0,0,0,0,0]               # dummy for safety_check only
+
+# ------------------- Motion Sequence ------------------------
+def main():
+    # Ensure safety before starting
+    safety_check(wp1)
+    safety_check(wp2)
+    safety_check(wp3)
+    safety_check(wp4)
+    safety_check(wp5)
+    safety_check(wp6)
+    safety_check(wp7)
+    safety_check(wp8)
+
+    # 1) Move to Home (joint move, 0.2 m/s → 0.2 m/s ≈ 0.2 m/s linear equivalent)
+    movej(home_joints, a=1.2, v=0.2)
+
+    # 2) Linear move to WP1 – Above pick
+    movel(wp1, a=1.2, v=0.2)
+
+    # 3) Linear move to WP2 – Descend to pick
+    movel(wp2, a=1.0, v=0.1)
+
+    # Simulate gripper close (placeholder)
+    set_digital_out(0, True)   # gripper close
+
+    # 4) Linear move to WP3 – Lift after pick
+    movel(wp3, a=1.2, v=0.18)
+
+    # 5) Linear move to WP4 – Obstacle avoidance waypoint
+    movel(wp4, a=1.2, v=0.2)
+
+    # 6) Linear move to WP5 – Corridor crossing
+    movel(wp5, a=1.2, v=0.2)
+
+    # 7) Linear move to WP6 – Above place station
+    movel(wp6, a=1.2, v=0.2)
+
+    # 8) Linear move to WP7 – Descend to place
+    movel(wp7, a=1.0, v=0.1)
+
+    # Simulate gripper open (placeholder)
+    set_digital_out(0, False)  # gripper open
+
+    # 9) Linear move to WP8 – Lift after place
+    movel(wp8, a=1.2, v=0.18)
+
+    # Return to Home joint position
+    movej(home_joints, a=1.2, v=0.2)
+
+    popup("Task completed safely.", false)
+end
+
+# ------------------- Run Main -------------------------------
+# Register emergency stop callback
+set_stop_condition("e_stop_handler()")
+
+main()

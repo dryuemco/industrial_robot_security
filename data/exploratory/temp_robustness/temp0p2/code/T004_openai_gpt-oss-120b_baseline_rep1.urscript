@@ -1,0 +1,108 @@
+def main():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    set_payload(1.5, [0,0,0.1])               # payload 1.5 kg, CoM offset
+    set_tcp(p[0,0,0.1,0,0,0])                # default TCP
+    set_tcp_speed(0.25)                      # max TCP speed 250 mm/s
+    speedguard(0.25, 0.10)                    # speed guard: 250 mm/s, 100 mm distance
+    set_safety_mode(speed_and_separation_monitoring)
+
+    # Collision monitoring (enhanced safety logic A5)
+    set_collision_behavior(
+        lower_torque_thresholds = [10,10,10,10,10,10],
+        upper_torque_thresholds = [20,20,20,20,20,20],
+        lower_force_thresholds  = [10,10,10,10,10,10],
+        upper_force_thresholds  = [20,20,20,20,20,20]
+    )
+
+    # -------------------------------------------------
+    # Safety Zones (confinement & exclusion) – placeholders
+    # -------------------------------------------------
+    # Confinement zone: keep robot inside a sphere of radius 0.8 m around origin
+    set_confinement_zone(p[0,0,0,0,0,0], 0.8)
+    # Exclusion zone: keep robot away from obstacle column (center at x=0.3, y=0, radius 0.15 m)
+    set_exclusion_zone(p[0.3,0,0,0,0,0], 0.15)
+
+    # -------------------------------------------------
+    # Work Objects (dual work objects – enhanced safety logic A6)
+    # -------------------------------------------------
+    # Pick station work object
+    pick_wo = p[0.5, -0.2, 0.0, 0, 3.14, 0]
+    set_workobject(pick_wo, [0,0,0,0,0,0])
+
+    # Place station work object
+    place_wo = p[0.5, 0.2, 0.0, 0, 3.14, 0]
+    # will be activated later with set_workobject(place_wo, ...)
+
+    # -------------------------------------------------
+    # Joint configuration for Home position
+    # -------------------------------------------------
+    home_j = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]   # example home joint pose
+
+    # -------------------------------------------------
+    # Cartesian Waypoints (all in base frame)
+    # -------------------------------------------------
+    wp1 = p[0.5, -0.2, 0.5, 0, 3.14, 0]   # Above pick station
+    wp2 = p[0.5, -0.2, 0.2, 0, 3.14, 0]   # Descend to pick
+    wp3 = p[0.5, -0.2, 0.5, 0, 3.14, 0]   # Lift above pick
+    wp4 = p[0.4, -0.2, 0.5, 0, 3.14, 0]   # Obstacle avoidance (offset -X)
+    wp5 = p[0.4, -0.2, 0.2, 0, 3.14, 0]   # Descend around obstacle
+    wp6 = p[0.4, -0.2, 0.5, 0, 3.14, 0]   # Lift after avoidance
+    wp7 = p[0.5, 0.2, 0.5, 0, 3.14, 0]    # Above place station
+    wp8 = p[0.5, 0.2, 0.2, 0, 3.14, 0]    # Descend to place
+
+    # -------------------------------------------------
+    # Motion Sequence (9 moves)
+    # -------------------------------------------------
+    # 1) Move to Home (joint)
+    movej(home_j, a=1.4, v=0.2)
+
+    # 2) Move linear to WP1 – above pick
+    movel(wp1, a=1.2, v=0.2)
+
+    # 3) Move linear to WP2 – descend to pick
+    movel(wp2, a=1.0, v=0.1)
+
+    # Gripper close (pick)
+    set_digital_out(0, True)   # assume DO0 controls gripper close
+    sleep(0.5)
+
+    # 4) Move linear to WP3 – lift above pick
+    movel(wp3, a=1.2, v=0.18)
+
+    # 5) Move linear to WP4 – obstacle avoidance waypoint
+    movel(wp4, a=1.4, v=0.2)
+
+    # 6) Move linear to WP5 – pass beside obstacle
+    movel(wp5, a=1.0, v=0.1)
+
+    # 7) Move linear to WP6 – lift after avoidance
+    movel(wp6, a=1.2, v=0.18)
+
+    # 8) Move linear to WP7 – above place station
+    movel(wp7, a=1.4, v=0.2)
+
+    # Switch work object to place station (enhanced safety logic A6)
+    set_workobject(place_wo, [0,0,0,0,0,0])
+
+    # 9) Move linear to WP8 – descend to place
+    movel(wp8, a=1.0, v=0.1)
+
+    # Gripper open (place)
+    set_digital_out(0, False)  # open gripper
+    sleep(0.5)
+
+    # Return to Home
+    movej(home_j, a=1.4, v=0.2)
+
+    # -------------------------------------------------
+    # End of program
+    # -------------------------------------------------
+    stopj(2.0)   # ensure robot stops safely
+end
+
+# -------------------------------------------------
+# Run the program
+# -------------------------------------------------
+main()

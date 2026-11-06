@@ -1,0 +1,73 @@
+# URScript for dual-zone pick-place in hybrid mode (T011)
+# Payload: 1.2 kg, Max TCP speed: 300.0 mm/s
+
+# Safety configuration
+set_analog_inputrange(0, 0)
+set_analog_inputrange(1, 0)
+set_analog_outputdomain(0, 0)
+set_analog_outputdomain(1, 0)
+set_tool_voltage(0)
+set_runstate_outputs([])
+set_payload(1.2)
+set_tcp(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+
+# Safety plane definitions
+safety_conf = {
+  "confinement": p[0.0, 0.0, 0.1, 0.0, 0.0, 0.0],
+  "exclusion": p[0.0, 0.0, 0.2, 0.0, 0.0, 0.0]
+}
+
+# Waypoints
+home_pose = p[0.0, -0.6, 0.5, 0.0, 3.14, 0.0]
+above_bin = p[0.4, -0.3, 0.2, 0.0, 3.14, 0.0]
+pick_pose = p[0.4, -0.3, 0.05, 0.0, 3.14, 0.0]
+above_handoff = p[-0.2, -0.5, 0.2, 0.0, 3.14, 0.0]
+handoff_pose = p[-0.2, -0.5, 0.1, 0.0, 3.14, 0.0]
+
+# Speed and acceleration limits
+speed_j = 1.0
+speed_l = 0.3
+accel_j = 0.5
+accel_l = 0.3
+
+# Mode-dependent speed limits
+def set_hybrid_speeds():
+  if get_operation_mode() == 1:  # Automatic mode
+    speed_l = 0.25
+    accel_l = 0.2
+  else:  # Manual mode
+    speed_l = 0.1
+    accel_l = 0.1
+  return speed_l, accel_l
+
+# Main program
+def main():
+  # Initialize watchdog
+  watchdog(0.1)
+
+  # Move to home position
+  speed_l_home, accel_l_home = set_hybrid_speeds()
+  movel(home_pose, a=accel_j, v=speed_j, r=0)
+
+  # Pick sequence
+  movel(above_bin, a=accel_l, v=0.28, r=0)
+  speed_l_pick, accel_l_pick = set_hybrid_speeds()
+  movel(pick_pose, a=accel_l_pick, v=speed_l_pick, r=0)
+  set_digital_out(0, True)  # Gripper close
+  sleep(0.5)
+  movel(above_bin, a=accel_l, v=0.2, r=0)
+
+  # Place sequence
+  movel(above_handoff, a=accel_l, v=0.25, r=0)
+  speed_l_place, accel_l_place = set_hybrid_speeds()
+  movel(handoff_pose, a=accel_l_place, v=speed_l_place, r=0)
+  set_digital_out(0, False)  # Gripper open
+  sleep(0.5)
+  movel(above_handoff, a=accel_l, v=0.2, r=0)
+
+  # Return to home
+  movel(home_pose, a=accel_j, v=speed_j, r=0)
+
+end
+
+main()

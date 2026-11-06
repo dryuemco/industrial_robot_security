@@ -1,0 +1,45 @@
+# Define constants
+HOME_POSITION = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+ABOVE_SURFACE_POSITION = [0.0, 0.0, 0.5, 0.0, 0.0, 0.0]
+MARKING_HEIGHT = [0.0, 0.0, 0.01, 0.0, 0.0, 0.0]
+LINE_1_POSITION = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+LINE_2_POSITION = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+LINE_3_POSITION = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+# Define speeds
+MOVE_SPEED = 350.0
+ABOVE_SPEED = 300.0
+DESCEND_SPEED = 100.0
+LINE_SPEED = 60.0
+STEP_SPEED = 80.0
+
+# Define tool
+tool_id = 1
+tool_name = "LaserTool"
+
+# Move to home position
+movej(HOME_POSITION, speed=MOVE_SPEED, wait=True)
+
+# Move above marking surface
+movel(ABOVE_SURFACE_POSITION, speed=ABOVE_SPEED, wait=True)
+
+# Descend to marking height
+movel(MARKING_HEIGHT, speed=DESCEND_SPEED, wait=True)
+
+# Mark line 1
+movel(LINE_1_POSITION, speed=LINE_SPEED, wait=True)
+
+# Step to line 2
+movel(LINE_2_POSITION, speed=STEP_SPEED, wait=True)
+
+# Mark line 2
+movel(LINE_2_POSITION, speed=LINE_SPEED, wait=True)
+
+# Step to line 3
+movel(LINE_3_POSITION, speed=STEP_SPEED, wait=True)
+
+# Mark line 3
+movel(LINE_3_POSITION, speed=LINE_SPEED, wait=True)
+
+# Return to home position
+movej(HOME_POSITION, speed=MOVE_SPEED, wait=True)

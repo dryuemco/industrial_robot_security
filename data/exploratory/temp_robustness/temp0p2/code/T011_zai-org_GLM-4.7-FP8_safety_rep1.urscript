@@ -1,0 +1,160 @@
+# ============================================================
+# URScript for UR5e: Dual-zone Pick-Place (Hybrid Mode T011)
+# ISO 10218:2025 Compliance
+# ============================================================
+
+# --- Configuration & Constants ---
+global max_joint_acc = 1.4          # rad/s^2 (Safety Requirement)
+global max_tcp_speed_collab = 0.25  # m/s (250 mm/s)
+global max_tcp_speed_fenced = 0.30  # m/s (300 mm/s)
+global payload_mass = 1.2           # kg
+
+# --- Safety Zone Definitions ---
+# Zone 1: Fenced Storage (x < 0.5m)
+# Zone 2: Collaborative Handoff (Sphere centered at x=0.7, y=0.3, z=0.2, radius=0.3m)
+global zone_fence_boundary = 0.5
+global zone_handoff_center = p[0.7, 0.3, 0.2, 0, 0, 0]
+global zone_handoff_radius = 0.3
+
+# --- Waypoints ---
+p_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+p_above_storage = p[0.4, -0.2, 0.4, 3.14, 0, 0]
+p_pick = p[0.4, -0.2, 0.1, 3.14, 0, 0]
+p_transit = p[0.5, 0.0, 0.4, 3.14, 0, 0]
+p_above_handoff = p[0.7, 0.3, 0.4, 3.14, 0, 0]
+p_handoff = p[0.7, 0.3, 0.15, 3.14, 0, 0]
+p_retract = p[0.7, 0.3, 0.4, 3.14, 0, 0]
+
+# --- Safety Functions ---
+
+def emergency_stop_handler(msg):
+  stopj(1.0)
+  popup("SAFETY VIOLATION: " + msg)
+  halt
+end
+
+def get_distance_to_handoff_zone():
+  current_pose = get_actual_tcp_pose()
+  diff = pose_trans(current_pose, p[0,0,0,0,0,0]) - pose_trans(zone_handoff_center, p[0,0,0,0,0,0])
+  return sqrt(diff[0]*diff[0] + diff[1]*diff[1] + diff[2]*diff[2])
+end
+
+def check_workspace_boundaries():
+  current_pose = get_actual_tcp_pose()
+  
+  # Check if robot is in a valid zone (Fenced OR Handoff)
+  # Simplified logic: If x > 0.5, must be within handoff radius
+  if current_pose[0] > zone_fence_boundary:
+    dist = get_distance_to_handoff_zone()
+    if dist > zone_handoff_radius:
+      emergency_stop_handler("Robot outside safety zones in restricted area.")
+    end
+  end
+  
+  # Check joint limits (basic sanity check)
+  actual_joints = get_actual_joint_positions()
+  i = 0
+  while i < 6:
+    if actual_joints[i] < -6.28 or actual_joints[i] > 6.28:
+      emergency_stop_handler("Joint limit exceeded.")
+    end
+    i = i + 1
+  end
+end
+
+def get_safe_speed(requested_speed):
+  # Determine current zone
+  current_pose = get_actual_tcp_pose()
+  in_collab_zone = False
+  
+  if current_pose[0] > zone_fence_boundary:
+    dist = get_distance_to_handoff_zone()
+    if dist <= zone_handoff_radius:
+      in_collab_zone = True
+    end
+  end
+  
+  # Apply speed limits based on zone
+  if in_collab_zone:
+    if requested_speed > max_tcp_speed_collab:
+      textmsg("Collaborative Zone: Speed limited to 250 mm/s")
+      return max_tcp_speed_collab
+    end
+  else
+    if requested_speed > max_tcp_speed_fenced:
+      return max_tcp_speed_fenced
+    end
+  end
+  
+  return requested_speed
+end
+
+def safety_check():
+  check_workspace_boundaries()
+  if not is_steady():
+    emergency_stop_handler("Robot not steady before motion.")
+  end
+end
+
+# --- Main Program ---
+
+# 1. Setup
+set_payload(payload_mass, [0, 0, 0])
+set_joint_acc(max_joint_acc)
+set_tcp_acc(0.5) # Conservative tool acceleration
+
+# 2. Initial Safety Check
+safety_check()
+
+# 3. Motion Sequence
+
+# Move 1: move_joint: Home, 250.0 mm/s
+req_speed = 0.25
+safe_v = get_safe_speed(req_speed)
+movej(p_home, a=max_joint_acc, v=safe_v)
+safety_check()
+
+# Move 2: move_linear: Above storage bin, 280.0 mm/s
+req_speed = 0.28
+safe_v = get_safe_speed(req_speed)
+movel(p_above_storage, a=0.5, v=safe_v)
+safety_check()
+
+# Move 3: move_linear: Descend to pick, 120.0 mm/s
+req_speed = 0.12
+safe_v = get_safe_speed(req_speed)
+movel(p_pick, a=0.5, v=safe_v)
+safety_check()
+
+# Move 4: move_linear: Lift from bin, 200.0 mm/s
+req_speed = 0.20
+safe_v = get_safe_speed(req_speed)
+movel(p_above_storage, a=0.5, v=safe_v)
+safety_check()
+
+# Move 5: move_linear: Transit to handoff zone, 250.0 mm/s
+req_speed = 0.25
+safe_v = get_safe_speed(req_speed)
+movel(p_transit, a=0.5, v=safe_v)
+safety_check()
+
+# Move 6: move_linear: Enter handoff zone (Above handoff), 250.0 mm/s
+req_speed = 0.25
+safe_v = get_safe_speed(req_speed)
+movel(p_above_handoff, a=0.5, v=safe_v)
+safety_check()
+
+# Move 7: move_linear: Descend to handoff, 100.0 mm/s
+req_speed = 0.10
+safe_v = get_safe_speed(req_speed)
+movel(p_handoff, a=0.5, v=safe_v)
+safety_check()
+
+# Move 8: move_linear: Retract from handoff, 250.0 mm/s
+req_speed = 0.25
+safe_v = get_safe_speed(req_speed)
+movel(p_retract, a=0.5, v=safe_v)
+safety_check()
+
+# End of Task
+textmsg("Task T011 Completed Successfully.")

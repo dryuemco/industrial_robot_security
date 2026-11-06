@@ -1,0 +1,86 @@
+def main():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    set_payload(4.5, [0,0,0])          # Payload 4.5 kg, CoG at TCP
+    set_tcp_speed(300)                # Max TCP speed 300 mm/s
+    set_joint_acceleration(1.2)       # Default joint acceleration
+    set_cartesian_acceleration(1.2)   # Default Cartesian acceleration
+
+    # -------------------------------------------------
+    # Positions (in meters)
+    # -------------------------------------------------
+    home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]          # Home joint configuration
+    above_conveyor = p[0.5, -0.2, 0.3, 0, 3.14, 0]              # Above pick point
+    pick_point = p[0.5, -0.2, 0.1, 0, 3.14, 0]                  # Pick point (descend)
+    lift_point = p[0.5, -0.2, 0.3, 0, 3.14, 0]                  # Lift after pick
+    pallet_origin = p[0.0, 0.0, 0.2, 0, 3.14, 0]                # First pallet cell (0,0)
+    pallet_cell_1 = p[0.2, 0.0, 0.2, 0, 3.14, 0]                # (1,0)
+    pallet_cell_2 = p[0.0, 0.2, 0.2, 0, 3.14, 0]                # (0,1)
+    pallet_cell_3 = p[0.2, 0.2, 0.2, 0, 3.14, 0]                # (1,1)
+
+    # -------------------------------------------------
+    # Helper: safe motion with error handling
+    # -------------------------------------------------
+    def safe_movej(target, speed):
+        try:
+            movej(target, a=get_joint_acceleration(), v=speed, r=0.0)
+        except Exception as e:
+            textmsg("Error in movej: " + str(e))
+            stopj(0)          # Emergency stop of joints
+            halt()            # Halt program
+        end
+
+    def safe_movel(target, speed):
+        try:
+            movel(target, a=get_cartesian_acceleration(), v=speed, r=0.0)
+        except Exception as e:
+            textmsg("Error in movel: " + str(e))
+            stopl(0)          # Emergency stop of linear motion
+            halt()            # Halt program
+        end
+
+    # -------------------------------------------------
+    # Motion sequence (8 moves)
+    # -------------------------------------------------
+    # 1. Move to Home position
+    safe_movej(home_joint, 0.250)
+
+    # 2. Approach conveyor pick – above
+    safe_movel(above_conveyor, 0.250)
+
+    # 3. Descend to pick
+    safe_movel(pick_point, 0.100)
+
+    # 4. Lift from conveyor
+    safe_movel(lift_point, 0.200)
+
+    # 5. Transit to pallet position (0,0)
+    safe_movel(pallet_origin, 0.280)
+
+    # 6. Place box at (0,0) – simulate release (pause)
+    sleep(0.5)
+
+    # 7. Move to next pallet cell (1,0)
+    safe_movel(pallet_cell_1, 0.280)
+
+    # 8. Place box at (1,0) – simulate release (pause)
+    sleep(0.5)
+
+    # Additional moves to complete 2x2 grid
+    safe_movel(pallet_cell_2, 0.280)
+    sleep(0.5)
+
+    safe_movel(pallet_cell_3, 0.280)
+    sleep(0.5)
+
+    # Return to Home
+    safe_movej(home_joint, 0.250)
+
+    textmsg("Task completed successfully.")
+end
+
+# -------------------------------------------------
+# Start program
+# -------------------------------------------------
+main()

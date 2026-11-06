@@ -1,0 +1,63 @@
+# Task: T006 — Bin picking with suction — fenced mode (Optimized)
+# Optimized for faster cycle time: Increased speeds, accelerations, and blending.
+# Robot: ur5e | Payload: 2.0 kg
+#
+# WARNING: This is auto-generated code for SIMULATION ONLY.
+# Do NOT deploy to a physical robot without safety review.
+
+def task_T006():
+  # Increased TCP speed cap for fenced mode optimization (1.2 m/s)
+  TCP_SPEED_CAP = 1.200
+  def safe_movel(pose, a, v, r):
+    if (v > TCP_SPEED_CAP):
+      popup("TCP speed cap exceeded", error=True)
+      halt
+    end
+    movel(pose, a=a, v=v, r=r)
+  end
+  # [0] Verify E-Stop clear
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+  
+  # [1] Home position - Increased joint velocity and acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.0, v=2.0)
+  
+  # [2] Above bin - Faster approach, increased blend
+  safe_movel(p[0.450000, -0.200000, 0.350000, 0.0000, 3.1416, 0.0000], a=2.0, v=1.2, 0.02)
+  
+  # [3] Descend into bin - Controlled approach speed, no blend
+  safe_movel(p[0.450000, -0.200000, 0.100000, 0.0000, 3.1416, 0.0000], a=1.0, v=0.5, 0.0)
+  
+  # [4] Suction ON
+  set_digital_out(0, True)
+  
+  # [5] Vacuum settle - Reduced delay
+  sleep(0.2)
+  
+  # [6] Lift from bin - High acceleration, blend into transit
+  safe_movel(p[0.450000, -0.200000, 0.400000, 0.0000, 3.1416, 0.0000], a=2.5, v=1.2, 0.05)
+  
+  # [7] Transit to conveyor - High speed, blend into drop
+  safe_movel(p[0.450000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=2.5, v=1.2, 0.05)
+  
+  # [8] Descend to drop - Controlled speed, no blend
+  safe_movel(p[0.450000, 0.250000, 0.150000, 0.0000, 3.1416, 0.0000], a=1.0, v=0.5, 0.0)
+  
+  # [9] Suction OFF - Corrected logic to False
+  set_digital_out(0, False)
+  
+  # [10] Release settle - Reduced delay
+  sleep(0.1)
+  
+  # [11] Retract above conveyor - High speed, blend into home
+  safe_movel(p[0.450000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=2.0, v=1.2, 0.05)
+  
+  # [12] Return to home - Increased joint velocity and acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.0, v=2.0)
+  
+end
+
+# Entry point
+task_T006()

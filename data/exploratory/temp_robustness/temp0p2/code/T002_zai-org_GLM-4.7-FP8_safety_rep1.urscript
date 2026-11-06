@@ -1,0 +1,135 @@
+# URScript for UR5e Linear Weld Path (Fenced Mode)
+# Task T002: Single linear weld seam (300 mm)
+# Compliance: ISO 10218:2025
+
+# ==========================================
+# CONFIGURATION & CONSTANTS
+# ==========================================
+MAX_JOINT_ACCEL = 1.4          # rad/s^2 (Safety Requirement)
+PAYLOAD_MASS = 3.0             # kg
+PAYLOAD_COG = [0.0, 0.0, 0.05] # Center of Gravity (m)
+
+# Safety Zones (Definition)
+# Confinement: Sphere centered at work area
+ZONE_CENTER = p[0.5, 0.2, 0.2, 0, 0, 0]
+ZONE_RADIUS = 0.6              # meters
+# Exclusion: Floor below Z=0
+FLOOR_Z = 0.0
+
+# ==========================================
+# SAFETY FUNCTIONS
+# ==========================================
+
+def emergency_stop_handler():
+  popup("EMERGENCY STOP TRIGGERED: Safety Zone Violation!", "Safety Error", True, False, 1)
+  stop()
+end
+
+def check_workspace(p_target):
+  # Validate waypoint is within confinement zone
+  dist = point_dist(p_target, ZONE_CENTER)
+  if dist > ZONE_RADIUS:
+    popup("Error: Target waypoint outside confinement zone.", "Safety Error")
+    emergency_stop_handler()
+  end
+  
+  # Validate waypoint is not in exclusion zone
+  if p_target[2] < FLOOR_Z:
+    popup("Error: Target waypoint in floor exclusion zone.", "Safety Error")
+    emergency_stop_handler()
+  end
+end
+
+def safety_check():
+  # Check robot status (e.g., not emergency stopped, not protective stopped)
+  # Simplified check for script execution
+  if (get_safety_mode_bits() & 1) == 0:
+     # Logic placeholder: ensure robot is operational
+  end
+end
+
+# Safety Monitor Thread
+thread safety_monitor():
+  while True:
+    current_pose = get_actual_tcp_pose()
+    
+    # Check Confinement
+    dist = point_dist(current_pose, ZONE_CENTER)
+    if dist > ZONE_RADIUS:
+      emergency_stop_handler()
+    end
+    
+    # Check Exclusion
+    if current_pose[2] < FLOOR_Z:
+      emergency_stop_handler()
+    end
+    
+    sleep(0.1)
+  end
+end
+
+# ==========================================
+# MAIN PROGRAM
+# ==========================================
+
+# 1. Setup
+set_payload(PAYLOAD_MASS, PAYLOAD_COG)
+run safety_monitor()
+
+# 2. Define Waypoints
+# Home Position (Joint space)
+home_j = [-1.57, -1.57, -1.57, -1.57, 1.57, 0.0]
+
+# Weld Start Position (Cartesian space)
+# Orientation set for torch direction (A3)
+weld_start = p[0.5, 0.2, 0.2, 2.22, -2.22, 0.0]
+
+# Approach Position (50mm above start)
+weld_approach = pose_trans(weld_start, p[0.0, 0.0, 0.05, 0.0, 0.0, 0.0])
+
+# Weld End Position (300mm along X from start)
+weld_end = pose_trans(weld_start, p[0.3, 0.0, 0.0, 0.0, 0.0, 0.0])
+
+# Retract Position (50mm above end)
+weld_retract = pose_trans(weld_end, p[0.0, 0.0, 0.05, 0.0, 0.0, 0.0])
+
+# 3. Validate Waypoints
+check_workspace(weld_start)
+check_workspace(weld_approach)
+check_workspace(weld_end)
+check_workspace(weld_retract)
+
+# 4. Execute Motion Sequence
+
+# Move 1: move_joint to home (300 mm/s approx)
+# Using safe joint speed/accel limits
+safety_check()
+movej(home_j, a=MAX_JOINT_ACCEL, v=1.0)
+
+# Move 2: move_linear Approach above weld start (250.0 mm/s)
+safety_check()
+movel(weld_approach, a=MAX_JOINT_ACCEL, v=0.25)
+
+# Move 3: move_linear Descend to weld start (100.0 mm/s)
+safety_check()
+movel(weld_start, a=MAX_JOINT_ACCEL, v=0.10)
+
+# Move 4: Weld seam — 300mm linear path (50.0 mm/s)
+safety_check()
+# Activate Welding Torch (Digital Out 0) - A7 Sequence
+set_standard_digital_out(0, True)
+movel(weld_end, a=MAX_JOINT_ACCEL, v=0.05)
+# Deactivate Welding Torch
+set_standard_digital_out(0, False)
+
+# Move 5: move_linear Retract above weld end (200.0 mm/s)
+safety_check()
+movel(weld_retract, a=MAX_JOINT_ACCEL, v=0.20)
+
+# Move 6: move_joint Return to home (Safe speed)
+safety_check()
+movej(home_j, a=MAX_JOINT_ACCEL, v=1.0)
+
+# Cleanup
+kill safety_monitor
+popup("Task Complete: T002 Linear Weld", "Success")

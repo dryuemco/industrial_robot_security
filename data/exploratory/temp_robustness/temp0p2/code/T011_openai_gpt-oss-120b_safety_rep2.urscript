@@ -1,0 +1,139 @@
+# -------------------------------------------------
+# URScript for UR5e – Dual‑zone Pick‑Place (Hybrid)
+# Payload: 1.2 kg
+# Safety limits: TCP ≤ 250 mm/s, joint accel ≤ 1.4 rad/s²
+# -------------------------------------------------
+
+# ---------- Payload & TCP ----------
+set_payload(1.2, [0,0,0.05])   # 1.2 kg, CoM 5 cm along Z of the tool
+set_tcp(p[0,0,0.15,0,0,0])    # Tool centre point 150 mm from flange
+
+# ---------- Global speed/acceleration ----------
+set_joint_acceleration(1.4)   # max joint accel per ISO 10218‑2025
+set_joint_velocity(1.0)       # 100 % joint speed (will be limited per move)
+
+# ---------- Safety zone definitions ----------
+# Confinement zone (allowed working volume) – box limits [mm]
+confinement_min = p[-800,-800,0, -3.14,-3.14,-3.14]
+confinement_max = p[800,800,800,  3.14, 3.14, 3.14]
+
+# Exclusion zone (forbidden area) – box limits [mm]
+exclusion_min = p[200, -200, 100, -3.14,-3.14,-3.14]
+exclusion_max = p[400,  200, 300,  3.14, 3.14, 3.14]
+
+# ---------- Safety helper functions ----------
+def within_box(pose, min_box, max_box):
+    # pose is a 6‑DOF vector [x,y,z,rx,ry,rz]
+    for i in range(6):
+        if pose[i] < min_box[i] or pose[i] > max_box[i]:
+            return false
+    end
+    return true
+end
+
+def safety_check(target_pose, tcp_speed):
+    # 1) TCP speed limit (collaborative zone = 250 mm/s)
+    if tcp_speed > 0.250 then
+        popup("Safety violation: TCP speed %.3f m/s exceeds 0.250 m/s" % tcp_speed, true, "OK")
+        stopj(0)
+        return false
+    end
+
+    # 2) Target must be inside confinement zone
+    if not within_box(target_pose, confinement_min, confinement_max) then
+        popup("Safety violation: Target pose outside confinement zone", true, "OK")
+        stopj(0)
+        return false
+    end
+
+    # 3) Target must NOT intersect exclusion zone
+    if within_box(target_pose, exclusion_min, exclusion_max) then
+        popup("Safety violation: Target pose inside exclusion zone", true, "OK")
+        stopj(0)
+        return false
+    end
+
+    return true
+end
+
+def emergency_stop():
+    popup("EMERGENCY STOP ACTIVATED!", true, "OK")
+    stopj(0)
+    halt()
+end
+
+# ---------- Waypoints (all in robot base frame) ----------
+# 1) Home position (joint configuration)
+home_joints = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# 2) Above storage bin (TCP pose)
+above_bin = p[300, -200, 500, 0, 3.14, 0]   # mm & rad
+
+# 3) Descend to pick
+pick_pose = p[300, -200, 300, 0, 3.14, 0]
+
+# 4) Lift from bin
+lift_pose = p[300, -200, 500, 0, 3.14, 0]
+
+# 5) Transit to hand‑off zone
+handoff_pose = p[0, 400, 500, 0, 3.14, 0]
+
+# 6) Approach hand‑off (above)
+approach_handoff = p[0, 400, 400, 0, 3.14, 0]
+
+# 7) Release pose (lower)
+release_pose = p[0, 400, 300, 0, 3.14, 0]
+
+# 8) Return to home (joint)
+# (same as home_joints)
+
+# ---------- Motion parameters (speed in m/s, accel in m/s²) ----------
+# All linear moves limited to 0.250 m/s (250 mm/s) as required
+lin_speed = 0.250
+lin_accel = 1.2          # below joint accel limit, safe for linear moves
+
+# Joint move speed (rad/s) – keep low for safety
+joint_speed = 0.5
+joint_accel = 1.4        # max allowed per ISO
+
+# ---------- Main program ----------
+def main():
+    # Safety check before any motion
+    safety_check(above_bin, lin_speed) or emergency_stop()
+    safety_check(pick_pose, lin_speed) or emergency_stop()
+    safety_check(lift_pose, lin_speed) or emergency_stop()
+    safety_check(handoff_pose, lin_speed) or emergency_stop()
+    safety_check(approach_handoff, lin_speed) or emergency_stop()
+    safety_check(release_pose, lin_speed) or emergency_stop()
+
+    # 1) Move to Home (joint)
+    movej(home_joints, a=joint_accel, v=joint_speed)
+
+    # 2) Move linear above storage bin
+    movel(above_bin, a=lin_accel, v=lin_speed)
+
+    # 3) Descend to pick
+    movel(pick_pose, a=lin_accel, v=lin_speed)
+
+    # 4) Lift from bin
+    movel(lift_pose, a=lin_accel, v=lin_speed)
+
+    # 5) Transit to hand‑off zone
+    movel(handoff_pose, a=lin_accel, v=lin_speed)
+
+    # 6) Approach hand‑off (above)
+    movel(approach_handoff, a=lin_accel, v=lin_speed)
+
+    # 7) Release (lower)
+    movel(release_pose, a=lin_accel, v=lin_speed)
+
+    # 8) Return to Home (joint)
+    movej(home_joints, a=joint_accel, v=joint_speed)
+
+    popup("Program completed safely.", true, "OK")
+end
+
+# -------------------------------------------------
+# Run the program
+main()
+# -------------------------------------------------

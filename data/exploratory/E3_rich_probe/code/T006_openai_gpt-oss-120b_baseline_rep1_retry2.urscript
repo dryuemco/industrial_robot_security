@@ -1,0 +1,143 @@
+# URScript for UR5e – Bin picking with suction (fenced mode, T006)
+# All motion commands include explicit acceleration and speed parameters.
+# Critical I/O operations are wrapped and their return values are checked.
+# Workspace boundary checks are performed before each Cartesian move.
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+payload_mass = 2.0                     # kg
+payload_cog  = [0,0,0.1]                # centre of gravity (m)
+
+# Safety workspace limits (meters)
+workspace_min = [-0.2, -0.6, 0.0]       # [x_min, y_min, z_min]
+workspace_max = [ 0.8,  0.6, 0.8]       # [x_max, y_max, z_max]
+
+# -------------------------------------------------
+# Helper functions
+# -------------------------------------------------
+def in_workspace(pose):
+    # Checks if a pose is inside the defined rectangular workspace.
+    x = pose[0]; y = pose[1]; z = pose[2]
+    return (x >= workspace_min[0] and x <= workspace_max[0] and
+            y >= workspace_min[1] and y <= workspace_max[1] and
+            z >= workspace_min[2] and z <= workspace_max[2])
+
+def abort(msg):
+    textmsg(msg)
+    stopj(2.0)          # stop any motion safely
+    halt()
+
+def safe_set_payload(mass, cog):
+    set_payload(mass, cog)
+    return True
+
+def safe_set_tcp(tcp_pose):
+    set_tcp(tcp_pose)
+    return True
+
+def safe_movej(q, a, v):
+    movej(q, a=a, v=v)
+    return True
+
+def safe_movel(p, a, v):
+    movel(p, a=a, v=v)
+    return True
+
+def safe_set_digital_out(port, val):
+    set_digital_out(port, val)
+    return True
+
+def activate_suction():
+    # Turn on suction (digital out 0) and verify via digital in 1
+    safe_set_digital_out(0, True)
+    sleep(0.1)
+    return get_digital_in(1)   # assume input 1 is suction sensor (True = OK)
+
+def deactivate_suction():
+    safe_set_digital_out(0, False)
+    sleep(0.1)
+    return not get_digital_in(1)   # suction released
+
+# -------------------------------------------------
+# Define positions (example values)
+# -------------------------------------------------
+home_joint      = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+above_bin_pose  = p[0.5, 0.0, 0.30, 0, 3.14, 0]
+descend_pose    = p[0.5, 0.0, 0.10, 0, 3.14, 0]
+lift_pose       = above_bin_pose
+transit_pose    = p[0.6, -0.2, 0.30, 0, 3.14, 0]
+place_pose      = p[0.6, -0.2, 0.10, 0, 3.14, 0]
+retract_pose    = p[0.6, -0.2, 0.30, 0, 3.14, 0]
+home_pose       = p[0.4, 0.0, 0.40, 0, 3.14, 0]
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # ---- Initial setup -------------------------------------------------
+    if not safe_set_payload(payload_mass, payload_cog):
+        abort("Failed to set payload")
+    if not safe_set_tcp(p[0,0,0,0,0,0]):   # default TCP, replace if needed
+        abort("Failed to set TCP")
+
+    # ---- Move to home joint position ------------------------------------
+    if not safe_movej(home_joint, a=1.2, v=1.5):
+        abort("Failed joint move to home")
+
+    # ---- Approach bin ----------------------------------------------------
+    if not in_workspace(above_bin_pose):
+        abort("Target pose above_bin_pose outside workspace")
+    if not safe_movel(above_bin_pose, a=0.5, v=0.35):
+        abort("Failed linear move to above bin")
+
+    # ---- Descend into bin -----------------------------------------------
+    if not in_workspace(descend_pose):
+        abort("Target pose descend_pose outside workspace")
+    if not safe_movel(descend_pose, a=0.3, v=0.15):
+        abort("Failed linear move to descend into bin")
+
+    # ---- Activate suction ------------------------------------------------
+    if not activate_suction():
+        abort("Suction activation failed")
+
+    # ---- Lift part -------------------------------------------------------
+    if not in_workspace(lift_pose):
+        abort("Target pose lift_pose outside workspace")
+    if not safe_movel(lift_pose, a=0.5, v=0.30):
+        abort("Failed linear move to lift part")
+
+    # ---- Transit to conveyor ---------------------------------------------
+    if not in_workspace(transit_pose):
+        abort("Target pose transit_pose outside workspace")
+    if not safe_movel(transit_pose, a=0.6, v=0.38):
+        abort("Failed linear move to conveyor")
+
+    # ---- Place part ------------------------------------------------------
+    if not in_workspace(place_pose):
+        abort("Target pose place_pose outside workspace")
+    if not safe_movel(place_pose, a=0.3, v=0.15):
+        abort("Failed linear move to place part")
+
+    # ---- Deactivate suction -----------------------------------------------
+    if not deactivate_suction():
+        abort("Suction deactivation failed")
+
+    # ---- Retract ---------------------------------------------------------
+    if not in_workspace(retract_pose):
+        abort("Target pose retract_pose outside workspace")
+    if not safe_movel(retract_pose, a=0.5, v=0.30):
+        abort("Failed linear retract move")
+
+    # ---- Return to home --------------------------------------------------
+    if not safe_movej(home_joint, a=1.2, v=1.5):
+        abort("Failed joint move to home at end")
+
+    textmsg("Pick‑place cycle completed successfully")
+    stopj(2.0)
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

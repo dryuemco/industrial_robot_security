@@ -1,0 +1,82 @@
+# URScript for UR5e heavy depalletizing in fenced mode (T008)
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+payload_mass = 5.0                           # kg
+payload_cog = [0,0,0]                         # Center of gravity (m) relative to TCP
+set_payload(payload_mass, payload_cog)        # Set payload
+
+max_tcp_speed = 0.45                          # m/s (450 mm/s)
+default_acceleration = 1.2                   # m/s^2 (reasonable default)
+
+# -------------------------------------------------
+# Safety: Restricted (fenced) mode
+# -------------------------------------------------
+# Define a single cylindrical safety zone covering the work cell.
+# Pose: [x, y, z, Rx, Ry, Rz] in meters and radians
+# Radius: 1.0 m (example); adjust to actual confinement size.
+safety_zone_pose = p[1.0, 0.0, 0.0, 0, 0, 0]   # centre of the fenced area
+safety_zone_radius = 1.0                      # meters
+set_safety_mode(SafetyMode.RESTRICTED, [[safety_zone_pose, safety_zone_radius]])
+
+# -------------------------------------------------
+# Poses (placeholders – replace with calibrated values)
+# -------------------------------------------------
+# Joint configuration for Home position (in radians)
+home_joint = [-1.5708, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+# Above pallet pose (TCP pose)
+above_pallet_pose = p[0.6, -0.3, 0.5, 0, 3.14, 0]   # 0.5 m above pallet
+
+# Top layer (descending) pose – 150 mm above pallet surface
+top_layer_pose = p[0.6, -0.3, 0.35, 0, 3.14, 0]    # adjust Z as needed
+
+# Lifted box pose – lift 200 mm from top layer
+lifted_box_pose = p[0.6, -0.3, 0.55, 0, 3.14, 0]
+
+# Conveyor pose – location where box is placed
+conveyor_pose = p[0.8, 0.2, 0.4, 0, 3.14, 0]
+
+# Additional placeholder poses for the remaining three moves
+# (replace with actual coordinates)
+pose_step5 = p[0.85, 0.2, 0.45, 0, 3.14, 0]
+pose_step6 = p[0.85, 0.2, 0.55, 0, 3.14, 0]
+pose_step7 = p[0.9, 0.25, 0.5, 0, 3.14, 0]
+pose_step8 = p[0.0, 0.0, 0.5, 0, 3.14, 0]   # Return to a safe standby pose
+
+# -------------------------------------------------
+# Motion sequence
+# -------------------------------------------------
+def depalletize_heavy():
+    # 1) Joint move to Home
+    movej(home_joint, a=default_acceleration, v=0.4)   # 400 mm/s = 0.4 m/s
+
+    # 2) Linear move above pallet
+    movel(above_pallet_pose, a=default_acceleration, v=0.4)   # 400 mm/s
+
+    # 3) Descend to top layer
+    movel(top_layer_pose, a=default_acceleration, v=0.15)    # 150 mm/s
+
+    # 4) Lift box from pallet
+    movel(lifted_box_pose, a=default_acceleration, v=0.2)    # 200 mm/s
+
+    # 5) Transit to conveyor
+    movel(conveyor_pose, a=default_acceleration, v=0.35)    # 350 mm/s
+
+    # 6) Place box (example: lower 100 mm, release, then lift)
+    place_pose = p[0.8, 0.2, 0.30, 0, 3.14, 0]   # 100 mm lower
+    movel(place_pose, a=default_acceleration, v=0.15)      # 150 mm/s
+    # (Insert gripper release command here, e.g., set_digital_out(0, False))
+    movel(conveyor_pose, a=default_acceleration, v=0.2)   # lift back, 200 mm/s
+
+    # 7) Move to standby position within safety zone
+    movel(pose_step5, a=default_acceleration, v=0.35)     # 350 mm/s
+
+    # 8) Return to Home (or another safe pose)
+    movej(home_joint, a=default_acceleration, v=0.4)      # 400 mm/s
+
+# -------------------------------------------------
+# Run the program
+# -------------------------------------------------
+depalletize_heavy()

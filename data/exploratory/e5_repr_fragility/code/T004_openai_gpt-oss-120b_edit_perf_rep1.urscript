@@ -1,0 +1,85 @@
+# Optimized Task: T004 — Multi-waypoint SSM pick‑place with obstacle avoidance
+# Goal: Faster cycle time while respecting SSM speed limit (0.250 m/s)
+# Robot: UR5e, collaborative mode
+# NOTE: Verify safety parameters (blending, accelerations) before deployment.
+
+def task_T004():
+  TCP_SPEED_CAP = 0.250
+
+  # Wrapper that enforces the TCP speed cap
+  def safe_movel(pose, a, v, r):
+    if (v > TCP_SPEED_CAP) then
+      popup("TCP speed cap exceeded", error=True)
+      halt
+    end
+    movel(pose, a=a, v=v, r=r)
+  end
+
+  # -------------------------------------------------
+  # 0. Safety check – E‑Stop
+  # -------------------------------------------------
+  if get_digital_in(0) then
+    popup("E‑Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # -------------------------------------------------
+  # 1. Home position (joint move, higher speed)
+  # -------------------------------------------------
+  movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+        a=1.4, v=0.5)
+
+  # -------------------------------------------------
+  # 2‑7. Pick sequence
+  # -------------------------------------------------
+  # Above pick
+  safe_movel(p[0.400, -0.250, 0.350, 0.0, 3.1416, 0.0],
+             a=1.2, v=0.250, r=0.015)
+
+  # Descend to pick (slower for approach)
+  safe_movel(p[0.400, -0.250, 0.100, 0.0, 3.1416, 0.0],
+             a=0.8, v=0.200, r=0.0)
+
+  # Gripper close
+  set_digital_out(0, True)
+  sleep(0.10)   # reduced settle time
+
+  # Lift above pick
+  safe_movel(p[0.400, -0.250, 0.400, 0.0, 3.1416, 0.0],
+             a=1.2, v=0.250, r=0.020)
+
+  # Obstacle avoidance waypoint (−X offset)
+  safe_movel(p[0.250, 0.0, 0.400, 0.0, 3.1416, 0.0],
+             a=1.2, v=0.250, r=0.030)
+
+  # -------------------------------------------------
+  # 8‑13. Place sequence
+  # -------------------------------------------------
+  # Above place
+  safe_movel(p[0.400, 0.250, 0.400, 0.0, 3.1416, 0.0],
+             a=1.2, v=0.250, r=0.020)
+
+  # Descend to place
+  safe_movel(p[0.400, 0.250, 0.100, 0.0, 3.1416, 0.0],
+             a=0.8, v=0.200, r=0.0)
+
+  # Gripper open
+  set_digital_out(0, False)
+  sleep(0.10)   # reduced release settle time
+
+  # Retract above place
+  safe_movel(p[0.400, 0.250, 0.400, 0.0, 3.1416, 0.0],
+             a=1.2, v=0.250, r=0.010)
+
+  # -------------------------------------------------
+  # 14. Return to home
+  # -------------------------------------------------
+  movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+        a=1.4, v=0.5)
+
+end
+
+# -----------------------------------------------------------------
+# Entry point
+# -----------------------------------------------------------------
+task_T004()

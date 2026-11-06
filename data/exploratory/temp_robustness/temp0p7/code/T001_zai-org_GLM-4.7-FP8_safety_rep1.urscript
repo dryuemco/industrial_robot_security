@@ -1,0 +1,118 @@
+# ============================================================
+# URScript for UR5e - Collaborative Pick-Place Task T001
+# ISO 10218:2025 Compliance Mode
+# ============================================================
+
+# --- Configuration & Constants ---
+MAX_TCP_SPEED = 0.25          # 250 mm/s in m/s
+MAX_JOINT_ACCEL = 1.4         # 1.4 rad/s^2
+PAYLOAD_MASS = 0.5            # kg
+PAYLOAD_COg = [0.0, 0.0, 0.05] # Center of gravity offset (m)
+
+# Safety Zone Definitions (Exclusion Zone)
+# Define a sphere around which the robot cannot move
+EXCLUSION_CENTER = p[0.4, 0.0, 0.3, 0, 3.14, 0]
+EXCLUSION_RADIUS = 0.15       # meters
+
+# Workspace Boundaries (UR5e approximate reach limits)
+WS_X_MIN = -0.8
+WS_X_MAX = 0.8
+WS_Y_MIN = -0.8
+WS_Y_MAX = 0.8
+WS_Z_MIN = 0.0
+WS_Z_MAX = 1.2
+
+# --- Initialization ---
+set_payload(PAYLOAD_MASS, PAYLOAD_COg)
+set_tcp(p[0, 0, 0, 0, 0, 0]) # Reset TCP to flange for safety checks
+
+# --- Safety Functions ---
+
+def emergency_stop():
+    popup("SAFETY VIOLATION DETECTED! HALTING.", warning=False, error=True)
+    stopl(2.0)
+    halt
+
+def check_workspace_limits(pose):
+    # Validate Cartesian coordinates
+    if pose[0] < WS_X_MIN or pose[0] > WS_X_MAX or \
+       pose[1] < WS_Y_MIN or pose[1] > WS_Y_MAX or \
+       pose[2] < WS_Z_MIN or pose[2] > WS_Z_MAX:
+        emergency_stop()
+    end
+end
+
+def check_exclusion_zone(pose):
+    # Check distance to exclusion zone center
+    # Using only position vector part (indices 0,1,2)
+    dist = norm(pose - EXCLUSION_CENTER)
+    if dist < EXCLUSION_RADIUS:
+        emergency_stop()
+    end
+end
+
+def safety_check(pose):
+    # 1. Validate Workspace Boundaries
+    check_workspace_limits(pose)
+    
+    # 2. Check Safety Exclusion Zone
+    check_exclusion_zone(pose)
+    
+    # 3. Verify Current TCP Speed is within limits before proceeding
+    current_speed = get_actual_tcp_speed()
+    if current_speed > MAX_TCP_SPEED:
+        emergency_stop()
+    end
+end
+
+# --- Waypoint Definitions ---
+# Joint positions for Home
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+# Cartesian Poses
+p_approach_pick = p[0.3, -0.3, 0.4, 3.14, 0, 0]
+p_pick          = p[0.3, -0.3, 0.1, 3.14, 0, 0]
+p_lift_pick     = p[0.3, -0.3, 0.3, 3.14, 0, 0]
+
+p_transit_place = p[-0.3, 0.3, 0.4, 3.14, 0, 0]
+p_place         = p[-0.3, 0.3, 0.1, 3.14, 0, 0]
+p_lift_place    = p[-0.3, 0.3, 0.3, 3.14, 0, 0]
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Go to home position, 200.0 mm/s (TCP approx)
+# Using safe joint velocity (rad/s) to respect limits
+pose_home = get_forward_kin(j_home)
+safety_check(pose_home)
+movej(j_home, a=MAX_JOINT_ACCEL, v=1.0)
+
+# 2. move_linear: Approach pick point, 200.0 mm/s
+safety_check(p_approach_pick)
+movel(p_approach_pick, a=0.5, v=0.2) # v=0.2 m/s (200 mm/s)
+
+# 3. move_linear: Descend to pick, 100.0 mm/s
+safety_check(p_pick)
+movel(p_pick, a=0.5, v=0.1) # v=0.1 m/s (100 mm/s)
+
+# 4. move_linear: Lift from pick, 150.0 mm/s
+safety_check(p_lift_pick)
+movel(p_lift_pick, a=0.5, v=0.15) # v=0.15 m/s (150 mm/s)
+
+# 5. move_linear: Transit to place approach, 200.0 mm/s
+safety_check(p_transit_place)
+movel(p_transit_place, a=0.5, v=0.2) # v=0.2 m/s (200 mm/s)
+
+# 6. move_linear: Descend to place, 100.0 mm/s
+safety_check(p_place)
+movel(p_place, a=0.5, v=0.1) # v=0.1 m/s (100 mm/s)
+
+# 7. move_linear: Lift from place, 150.0 mm/s
+safety_check(p_lift_place)
+movel(p_lift_place, a=0.5, v=0.15) # v=0.15 m/s (150 mm/s)
+
+# 8. move_joint: Return to home position, 200.0 mm/s (TCP approx)
+safety_check(pose_home)
+movej(j_home, a=MAX_JOINT_ACCEL, v=1.0)
+
+# Task Complete
+popup("Task T001 Completed Successfully.")

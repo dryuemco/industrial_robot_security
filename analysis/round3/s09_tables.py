@@ -208,17 +208,21 @@ def table12() -> str:
 
 # ----------------------------------------------------------------------------- Cochran p (A2)
 
-P_NOTE = ("The $p$ values are asymptotic chi-square $p$ values with two degrees of freedom, the registered "
-          "statistic, uncorrected; exact permutation $p$ values are given beside them because several tests "
-          "rest on few discordant tasks, where the chi-square approximation is poor.")
+P_NOTE = ("All $p$ values are uncorrected. On the naive basis, the registered test, $p$ is the asymptotic "
+          "chi-square $p$ of the statistic with two degrees of freedom and exact $p$ the permutation $p$ beside "
+          "it. The gate-passing and gate-pass bases are post hoc and rest on few discordant tasks, where the "
+          "chi-square approximation is poor, so on them the exact permutation $p$ comes first and the "
+          "asymptotic $p$ (asym.) beside it.")
 
 
-def _cells(r, tasks: bool) -> str:
-    """Q, asymptotic p and exact p (with the number of tasks first when tasks is True)."""
+def _cells(r, tasks: bool, exact_first: bool) -> str:
+    """Q and the two p values (exact first on the post hoc bases), with the number of tasks
+    first when tasks is True."""
     lead = f"{int(r.tasks_in_test)} & " if tasks else ""
     if math.isnan(r.Q):
         return lead + "\\multicolumn{3}{c}{undefined}"
-    return lead + f"{r.Q:.2f} & {fmt_p(r.p_asymptotic)} & {fmt_p(r.p_exact)}"
+    first, second = (r.p_exact, r.p_asymptotic) if exact_first else (r.p_asymptotic, r.p_exact)
+    return lead + f"{r.Q:.2f} & {fmt_p(first)} & {fmt_p(second)}"
 
 
 def _naive_tasks_all(*frames) -> None:
@@ -258,7 +262,7 @@ def table16() -> str:
         "\\label{tab:quant}",
         "\\centering",
         "\\footnotesize",
-        "\\setlength{\\tabcolsep}{3pt}",
+        "\\setlength{\\tabcolsep}{2.7pt}",
         "\\begin{tabular}{@{}llrrrrrrrrrrr@{}}",
         "\\toprule",
         " & & \\multicolumn{3}{c}{Q4\\_K\\_M} & \\multicolumn{3}{c}{Q4\\_0} & & & & & \\\\",
@@ -280,7 +284,7 @@ def table16() -> str:
         "\\multicolumn{13}{@{}l}{\\textit{Cross-model Cochran $Q$ over the 15 task cells}} \\\\",
         " & & \\multicolumn{3}{c}{Naive} & \\multicolumn{4}{c}{Gate-passing} & \\multicolumn{3}{c}{Gate-pass indicator} & \\\\",
         "\\cmidrule(lr){3-5}\\cmidrule(lr){6-9}\\cmidrule(lr){10-12}",
-        "Levels & Condition & $Q$ & $p$ & exact $p$ & Tasks & $Q$ & $p$ & exact $p$ & $Q$ & $p$ & exact $p$ & Naive rates \\\\",
+        "Levels & Condition & $Q$ & $p$ & exact $p$ & Tasks & $Q$ & exact $p$ & asym.\\ $p$ & $Q$ & exact $p$ & asym.\\ $p$ & Naive rates \\\\",
         "\\midrule",
     ]
     names = {"as served (Q4_K_M / Q4_0 / Q4_0)": "As served", "all Q4_K_M": "All Q4\\_K\\_M", "all Q4_0": "All Q4\\_0"}
@@ -289,8 +293,8 @@ def table16() -> str:
             g = cq[(cq.variant == variant) & (cq.condition == cond)].set_index("basis")
             nv = g.loc["naive"]
             rates = "/".join(f"{100 * nv[f'rate_{m}']:.0f}" for m in MODELS)
-            lines.append(f"{label if cond == 'baseline' else ''} & {COND_LABEL[cond]} & {_cells(nv, False)} & "
-                         f"{_cells(g.loc['gate-passing'], True)} & {_cells(g.loc['gate-pass'], False)} & {rates} \\\\")
+            lines.append(f"{label if cond == 'baseline' else ''} & {COND_LABEL[cond]} & {_cells(nv, False, False)} & "
+                         f"{_cells(g.loc['gate-passing'], True, True)} & {_cells(g.loc['gate-pass'], False, True)} & {rates} \\\\")
     lines += ["\\bottomrule", "\\end{tabular}", "\\end{table*}", ""]
     return "\n".join(lines)
 
@@ -332,15 +336,15 @@ def crossmodel_registered() -> str:
         "\\toprule",
         " & \\multicolumn{3}{c}{Naive} & \\multicolumn{4}{c}{Gate-passing} & \\multicolumn{3}{c}{Gate-pass indicator} & \\\\",
         "\\cmidrule(lr){2-4}\\cmidrule(lr){5-8}\\cmidrule(lr){9-11}",
-        "Condition & $Q$ & $p$ & exact $p$ & Tasks & $Q$ & $p$ & exact $p$ & $Q$ & $p$ & exact $p$ & Naive rates \\\\",
+        "Condition & $Q$ & $p$ & exact $p$ & Tasks & $Q$ & exact $p$ & asym.\\ $p$ & $Q$ & exact $p$ & asym.\\ $p$ & Naive rates \\\\",
         "\\midrule",
     ]
     for label, g in rows:
         g = g.set_index("basis")
         nv = g.loc["naive"]
         rates = "/".join(f"{100 * nv[c]:.0f}" for c in rate_cols)
-        lines.append(f"{label} & {_cells(nv, False)} & {_cells(g.loc['gate-passing'], True)} & "
-                     f"{_cells(g.loc['gate-pass'], False)} & {rates} \\\\")
+        lines.append(f"{label} & {_cells(nv, False, False)} & {_cells(g.loc['gate-passing'], True, True)} & "
+                     f"{_cells(g.loc['gate-pass'], False, True)} & {rates} \\\\")
         if label.startswith("Safety") or label.startswith("A8.7"):
             lines.append("\\addlinespace")
     lines += ["\\bottomrule", "\\end{tabular}", "\\end{table*}", ""]

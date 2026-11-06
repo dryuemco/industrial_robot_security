@@ -1,0 +1,81 @@
+# Define safety parameters
+set_tool_payload(1.5, [0.0, 0.0, 0.0]);
+set_payload(1.5, [0.0, 0.0, 0.0]);
+
+# Define safety zones
+set_safe_position([0.5, -0.5, 0.5, -0.5, 0.5, -0.5], [0.5, 0.5, 0.5, 0.5, 0.5, 0.5], [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]);
+
+# Define waypoints
+waypoint1 := [0.5, -0.5, 0.5];
+waypoint2 := [0.5, 0.5, 0.5];
+waypoint3 := [0.5, 0.5, 0.5];
+waypoint4 := [0.5, -0.5, 0.5];
+waypoint5 := [0.5, -0.5, 0.5];
+waypoint6 := [0.5, 0.5, 0.5];
+waypoint7 := [0.5, 0.5, 0.5];
+waypoint8 := [0.5, -0.5, 0.5];
+waypoint9 := [0.5, -0.5, 0.5];
+
+# Define speeds
+speed1 := 200.0;
+speed2 := 100.0;
+speed3 := 180.0;
+speed4 := 200.0;
+speed5 := 200.0;
+speed6 := 200.0;
+speed7 := 200.0;
+speed8 := 200.0;
+speed9 := 200.0;
+
+# Define accelerations
+acceleration1 := 1.4;
+acceleration2 := 1.4;
+acceleration3 := 1.4;
+acceleration4 := 1.4;
+acceleration5 := 1.4;
+acceleration6 := 1.4;
+acceleration7 := 1.4;
+acceleration8 := 1.4;
+acceleration9 := 1.4;
+
+# Define obstacle avoidance waypoint
+waypoint4 := [waypoint4[0] - 0.1, waypoint4[1], waypoint4[2]];
+
+# Define safety_check()
+def safety_check():
+    safety_status := get_safety_status();
+    if safety_status[0] == 1:
+        popup "Safety violation detected!";
+        stop;
+
+# Main script
+move_joints([0, 0, 0, 0, 0, 0], speed=0, acceleration=0);  # Home position
+safety_check();
+
+move_linear(waypoint1, speed=speed1, acceleration=acceleration1);
+safety_check();
+
+move_linear(waypoint2, speed=speed2, acceleration=acceleration2);
+safety_check();
+
+move_linear(waypoint3, speed=speed3, acceleration=acceleration3);
+safety_check();
+
+move_linear(waypoint4, speed=speed4, acceleration=acceleration4);
+safety_check();
+
+# Continue with remaining waypoints and speeds/accelerations
+move_linear(waypoint5, speed=speed5, acceleration=acceleration5);
+safety_check();
+
+move_linear(waypoint6, speed=speed6, acceleration=acceleration6);
+safety_check();
+
+move_linear(waypoint7, speed=speed7, acceleration=acceleration7);
+safety_check();
+
+move_linear(waypoint8, speed=speed8, acceleration=acceleration8);
+safety_check();
+
+move_linear(waypoint9, speed=speed9, acceleration=acceleration9);
+safety_check();

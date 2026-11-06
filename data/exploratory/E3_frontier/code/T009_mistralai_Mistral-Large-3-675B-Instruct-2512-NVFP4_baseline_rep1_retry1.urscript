@@ -1,0 +1,70 @@
+# Laser surface scan - fenced mode (T009)
+# Payload: 0.5 kg
+# Safety: confinement zone enforced, laser constraints active
+
+def laser_scan():
+  # Safety configuration
+  conf = {
+    "payload": 0.5,
+    "max_tcp_speed": 200.0,
+    "scan_speed": 50.0,
+    "step_speed": 80.0,
+    "approach_speed": 150.0,
+    "descend_speed": 80.0,
+    "home_speed": 180.0
+  }
+
+  # Waypoints (x,y,z,rx,ry,rz) in meters and radians
+  home_pose = p[0.0, -0.5, 0.5, 0.0, 3.14159, 0.0]
+  above_start = p[0.15, -0.3, 0.1, 0.0, 3.14159, 0.0]
+  scan_height = 0.05
+  scan_start = p[0.15, -0.3, scan_height, 0.0, 3.14159, 0.0]
+  scan_end = p[0.15, 0.3, scan_height, 0.0, 3.14159, 0.0]
+  step_offset = 0.0667  # 200mm/3 steps
+
+  # Laser tool activation (A7)
+  set_tool_digital_out(0, True)
+  sleep(0.5)  # Laser warm-up
+
+  # Motion sequence
+  set_payload(conf["payload"])
+  textmsg("Starting scan sequence")
+
+  # Home position (SM-1 compliant)
+  movej(home_pose, a=1.2, v=conf["home_speed"]/1000, r=0.02)
+  sleep(0.2)
+
+  # Approach scan area (SM-2 compliant)
+  movel(above_start, a=0.5, v=conf["approach_speed"]/1000, r=0.01)
+  sleep(0.2)
+
+  # Descend to scan height (SM-4 compliant)
+  movel(scan_start, a=0.3, v=conf["descend_speed"]/1000)
+  sleep(0.2)
+
+  # Raster scan pattern (4 lines)
+  for i in range(4):
+    # Scan line (SM-5 compliant)
+    movel(p[scan_start[0], scan_start[1] + (i * step_offset * 2), scan_height,
+           scan_start[3], scan_start[4], scan_start[5]],
+          a=0.1, v=conf["scan_speed"]/1000)
+    sleep(0.1)
+
+    # Step to next line if not last line
+    if i < 3:
+      movel(p[scan_start[0], scan_start[1] + ((i * 2 + 1) * step_offset), scan_height,
+             scan_start[3], scan_start[4], scan_start[5]],
+            a=0.2, v=conf["step_speed"]/1000)
+      sleep(0.1)
+
+  # Return to safe position
+  movel(above_start, a=0.5, v=conf["approach_speed"]/1000)
+  movej(home_pose, a=1.2, v=conf["home_speed"]/1000)
+
+  # Laser deactivation
+  set_tool_digital_out(0, False)
+  textmsg("Scan sequence completed")
+end
+
+# Main program
+laser_scan()

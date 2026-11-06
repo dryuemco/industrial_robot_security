@@ -1,0 +1,85 @@
+def main():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    # Payload: 4.5 kg, centre of mass approx 100 mm above TCP
+    set_payload(4.5, [0, 0, 0.1])
+
+    # Safety zones (confinement) – defined in the robot's safety controller.
+    # Here we only add comments; actual zone setup is done in the Polyscope UI.
+    # Zone A2 : boundary around the pallet
+    # Zone A4 : heavy payload handling
+
+    # -------------------------------------------------
+    # Positions
+    # -------------------------------------------------
+    # Joint configuration for a safe home position
+    home_joint = [-1.5708, -1.5708, 1.5708, -1.5708, -1.5708, 0]
+
+    # Pose above the conveyor (safe approach height 400 mm)
+    above_conveyor = p[0.5, -0.2, 0.4, 0, 3.14, 0]
+
+    # Pick pose (down to 100 mm height)
+    pick_pose = p[0.5, -0.2, 0.1, 0, 3.14, 0]
+
+    # Lift pose after picking (back to 350 mm)
+    lift_pose = p[0.5, -0.2, 0.35, 0, 3.14, 0]
+
+    # Base pose of the pallet (corner of the 2x2 grid)
+    pallet_base = p[0.0, 0.4, 0.2, 0, 3.14, 0]
+
+    # Grid offsets (200 mm spacing)
+    offset = 0.2
+
+    # 2x2 grid positions on the pallet
+    pallet_pos_1 = pose_trans(pallet_base, p[0,      0,      0, 0, 0, 0])
+    pallet_pos_2 = pose_trans(pallet_base, p[offset, 0,      0, 0, 0, 0])
+    pallet_pos_3 = pose_trans(pallet_base, p[0,      offset, 0, 0, 0, 0])
+    pallet_pos_4 = pose_trans(pallet_base, p[offset, offset, 0, 0, 0, 0])
+
+    # -------------------------------------------------
+    # Motion sequence (8 moves)
+    # -------------------------------------------------
+    # 1) Move to Home (joint move, 250 mm/s)
+    movej(home_joint, a=1.2, v=0.250)
+
+    # 2) Approach conveyor – linear move, 250 mm/s
+    movel(above_conveyor, a=1.2, v=0.250)
+
+    # 3) Descend to pick – linear move, 100 mm/s
+    movel(pick_pose, a=1.2, v=0.100)
+
+    # Close gripper (digital output 0 = close)
+    set_digital_output(0, True)
+    sleep(0.5)
+
+    # 4) Lift from conveyor – linear move, 200 mm/s
+    movel(lift_pose, a=1.2, v=0.200)
+
+    # 5) Transit to first pallet cell (0,0) – linear move, 280 mm/s
+    movel(pallet_pos_1, a=1.2, v=0.280)
+
+    # Open gripper to release box
+    set_digital_output(0, False)
+    sleep(0.5)
+
+    # 6) Retract after placing – linear move up 100 mm
+    movel(pose_trans(pallet_pos_1, p[0,0,0.1,0,0,0]), a=1.2, v=0.200)
+
+    # 7) Return above conveyor for next pick – linear move, 250 mm/s
+    movel(above_conveyor, a=1.2, v=0.250)
+
+    # (Optional) repeat steps 3‑7 for remaining pallet cells
+    # Example for second cell:
+    #   movel(pick_pose, a=1.2, v=0.100)
+    #   set_digital_output(0, True); sleep(0.5)
+    #   movel(lift_pose, a=1.2, v=0.200)
+    #   movel(pallet_pos_2, a=1.2, v=0.280)
+    #   set_digital_output(0, False); sleep(0.5)
+    #   movel(pose_trans(pallet_pos_2, p[0,0,0.1,0,0,0]), a=1.2, v=0.200)
+    #   movel(above_conveyor, a=1.2, v=0.250)
+
+    # 8) Return to Home – joint move, 250 mm/s
+    movej(home_joint, a=1.2, v=0.250)
+
+end

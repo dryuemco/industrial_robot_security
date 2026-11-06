@@ -1,0 +1,70 @@
+def safety_check():
+    if not is_within_safety_zone():
+        popup("Safety violation detected! Halting operation.")
+        halt()
+
+def is_within_safety_zone():
+    # Define safety zones here
+    # Placeholder for confinement and exclusion zones
+    confinement_zone = p[0.5, -0.5, 0.5, 0, 0, 0]  # Example confinement zone
+    exclusion_zone = p[1.0, 0.5, 0.5, 0, 0, 0]    # Example exclusion zone
+    
+    tcp_pos = get_actual_tcp_pose()
+    
+    # Check if TCP is within confinement zone
+    if not (tcp_pos[0] >= confinement_zone[0] and tcp_pos[0] <= confinement_zone[0] + 1.0 and
+            tcp_pos[1] >= confinement_zone[1] and tcp_pos[1] <= confinement_zone[1] + 1.0 and
+            tcp_pos[2] >= confinement_zone[2] and tcp_pos[2] <= confinement_zone[2] + 1.0):
+        return False
+    
+    # Check if TCP is outside exclusion zone
+    if (tcp_pos[0] >= exclusion_zone[0] and tcp_pos[0] <= exclusion_zone[0] + 0.1 and
+        tcp_pos[1] >= exclusion_zone[1] and tcp_pos[1] <= exclusion_zone[1] + 0.1 and
+        tcp_pos[2] >= exclusion_zone[2] and tcp_pos[2] <= exclusion_zone[2] + 0.1):
+        return False
+    
+    return True
+
+def validate_waypoints():
+    # Validate waypoints are within workspace boundaries
+    # Placeholder for waypoint validation
+    waypoints = [
+        p[0.5, -0.5, 0.5, 0, 0, 0],  # Home position
+        p[0.5, -0.5, 0.6, 0, 0, 0],  # Approach above weld start
+        p[0.5, -0.5, 0.4, 0, 0, 0],  # Descend to weld start position
+        p[0.8, -0.5, 0.4, 0, 0, 0],  # Weld seam - 300mm linear path
+        p[0.8, -0.5, 0.6, 0, 0, 0],  # Retract above weld end
+        p[0.5, -0.5, 0.6, 0, 0, 0]   # Final position
+    ]
+    
+    for waypoint in waypoints:
+        if not (waypoint[0] >= -0.5 and waypoint[0] <= 0.5 and
+                waypoint[1] >= -0.5 and waypoint[1] <= 0.5 and
+                waypoint[2] >= 0.4 and waypoint[2] <= 0.6):
+            popup("Waypoint out of workspace boundaries! Halting operation.")
+            halt()
+            return False
+    return True
+
+# Set payload
+set_payload(3.0, [0, 0, 0.05])
+
+# Validate waypoints
+validate_waypoints()
+
+# Safety check before motion
+safety_check()
+
+# Motion sequence
+movej(p[0.5, -0.5, 0.5, 0, 0, 0], a=1.4, v=3.0)  # Home position
+safety_check()
+movel(p[0.5, -0.5, 0.6, 0, 0, 0], a=1.4, v=2.5)  # Approach above weld start
+safety_check()
+movel(p[0.5, -0.5, 0.4, 0, 0, 0], a=1.4, v=1.0)  # Descend to weld start position
+safety_check()
+movel(p[0.8, -0.5, 0.4, 0, 0, 0], a=1.4, v=0.5)  # Weld seam - 300mm linear path
+safety_check()
+movel(p[0.8, -0.5, 0.6, 0, 0, 0], a=1.4, v=2.0)  # Retract above weld end
+safety_check()
+movel(p[0.5, -0.5, 0.6, 0, 0, 0], a=1.4, v=2.5)  # Final position
+safety_check()

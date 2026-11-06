@@ -1,0 +1,103 @@
+# Task: T004 — Multi-waypoint SSM pick-place with obstacle avoidance
+# Robot: ur5e | Mode: collaborative | Max TCP speed: 0.250 m/s
+# Payload: 1.5 kg | Safety: SSM with speed guard and collision monitoring
+# Dual work objects: pick_station (WP2) and place_station (WP6)
+
+def task_T004():
+  # [0] Safety checks
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", title="SAFETY ALERT", error=True)
+    halt
+  end
+
+  # [1] Configure safety parameters
+  set_payload(1.5)
+  set_safety_mode_transition_hardness(1)
+  set_tcp([0, 0, 0.15, 0, 0, 0])
+
+  # [2] Define work objects
+  pick_station = p[0.400000, -0.250000, 0.000000, 0.0000, 3.1416, 0.0000]
+  place_station = p[0.400000, 0.250000, 0.000000, 0.0000, 3.1416, 0.0000]
+
+  # [3] Home position (joint move)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.5000, r=0.010)
+
+  # [4] WP1 — Above pick station (linear move)
+  movel(pick_station + p[0, 0, 0.35, 0, 0, 0], a=0.8000, v=0.2000, r=0.015)
+
+  # [5] WP2 — Descend to pick (linear move, reduced speed)
+  movel(pick_station + p[0, 0, 0.10, 0, 0, 0], a=0.5000, v=0.1000)
+
+  # [6] Gripper CLOSE (force=40 N)
+  set_digital_out(0, True)
+  sleep(0.200)
+
+  # [7] WP3 — Lift above pick (linear move)
+  movel(pick_station + p[0, 0, 0.40, 0, 0, 0], a=0.7000, v=0.1800, r=0.020)
+
+  # [8] WP4 — Obstacle avoidance waypoint (linear move)
+  movel(p[0.250000, 0.000000, 0.400000, 0.0000, 3.1416, 0.0000], a=0.8000, v=0.2000, r=0.030)
+
+  # [9] WP5 — Above place station (linear move)
+  movel(place_station + p[0, 0, 0.40, 0, 0, 0], a=0.8000, v=0.2000, r=0.020)
+
+  # [10] WP6 — Descend to place (linear move, reduced speed)
+  movel(place_station + p[0, 0, 0.10, 0, 0, 0], a=0.5000, v=0.1000)
+
+  # [11] Gripper OPEN
+  set_digital_out(0, False)
+  sleep(0.200)
+
+  # [12] WP7 — Retract above place (linear move)
+  movel(place_station + p[0, 0, 0.40, 0, 0, 0], a=0.7000, v=0.1800, r=0.010)
+
+  # [13] Return to home (joint move)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.5000, r=0.010)
+
+  # [14] Safety reset
+  set_digital_out(0, False)
+end
+
+# Entry point with safety monitoring
+thread safety_monitor():
+  while (True):
+    if (get_digital_in(0) == True):
+      popup("E-Stop triggered during operation!", title="SAFETY ALERT", error=True)
+      halt
+    end
+    sync()
+  end
+end
+
+thread collision_monitor():
+  while (True):
+    if (get_actual_tcp_force() > 50):
+      popup("High force detected — possible collision!", title="SAFETY ALERT", error=True)
+      halt
+    end
+    sync()
+  end
+end
+
+thread speed_guard():
+  while (True):
+    if (get_actual_tcp_speed() > 0.26):
+      popup("Speed limit exceeded!", title="SAFETY ALERT", error=True)
+      halt
+    end
+    sync()
+  end
+end
+
+# Start safety threads
+thrd_safety = run safety_monitor()
+thrd_collision = run collision_monitor()
+thrd_speed = run speed_guard()
+
+# Execute main task
+task_T004()
+
+# Terminate safety threads
+kill thrd_safety
+kill thrd_collision
+kill thrd_speed

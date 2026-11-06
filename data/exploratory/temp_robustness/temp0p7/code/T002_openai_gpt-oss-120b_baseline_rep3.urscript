@@ -1,0 +1,86 @@
+# URScript program for UR5e – Linear Weld Path (Fenced Mode)
+# Task: Single 300 mm weld seam, 6 sequential moves
+# Payload: 3 kg, TCP speed limit 0.5 m/s
+
+def weld_path():
+    # -------------------------------------------------------------------------
+    # Safety & payload configuration
+    # -------------------------------------------------------------------------
+    set_payload(3.0, {0,0,0.1})               # 3 kg payload, CoM 10 cm behind TCP
+    set_tcp(p[0,0,0.1,0,0,0])                # TCP offset (10 cm along Z)
+    set_speed_slider(1.0)                    # Ensure speed scaling is 100 %
+    set_standard_digital_output(0, False)   # Ensure safety output OFF (if used)
+
+    # -------------------------------------------------------------------------
+    # Joint and pose definitions (example values)
+    # -------------------------------------------------------------------------
+    # Home joint configuration
+    home_joint    = [-0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+    # Weld start pose (above the seam)
+    weld_start    = p[0.5, 0.0, 0.20, 0.0, 3.1416, 0.0]   # 20 cm above workpiece
+    # Directly at weld start (TCP touching surface)
+    weld_start_pt = p[0.5, 0.0, 0.10, 0.0, 3.1416, 0.0]   # 10 cm above base (adjust as needed)
+
+    # Weld end pose (directly at end of seam)
+    weld_end_pt   = p[0.8, 0.0, 0.10, 0.0, 3.1416, 0.0]   # 300 mm forward from start
+
+    # Retract pose above weld end
+    retract_end   = p[0.8, 0.0, 0.20, 0.0, 3.1416, 0.0]
+
+    # -------------------------------------------------------------------------
+    # Motion parameters (acceleration a, velocity v in m/s)
+    # -------------------------------------------------------------------------
+    a_joint   = 1.2      # rad/s²
+    v_joint   = 1.5      # rad/s  (≈300 mm/s TCP speed for joint move)
+
+    a_fast    = 1.2      # m/s²
+    v_fast    = 0.25     # 250 mm/s
+
+    a_medium  = 1.0
+    v_medium  = 0.10     # 100 mm/s
+
+    a_weld    = 0.8
+    v_weld    = 0.05     # 50 mm/s (slow welding speed)
+
+    a_retract = 1.2
+    v_retract = 0.20     # 200 mm/s
+
+    # -------------------------------------------------------------------------
+    # 1) Move to home position
+    # -------------------------------------------------------------------------
+    movej(home_joint, a_joint, v_joint, t=0, r=0)
+
+    # -------------------------------------------------------------------------
+    # 2) Approach above weld start
+    # -------------------------------------------------------------------------
+    movel(weld_start, a_fast, v_fast, t=0, r=0)
+
+    # -------------------------------------------------------------------------
+    # 3) Descend to weld start point (TCP contacts workpiece)
+    # -------------------------------------------------------------------------
+    movel(weld_start_pt, a_medium, v_medium, t=0, r=0)
+
+    # -------------------------------------------------------------------------
+    # 4) Perform linear weld seam (300 mm forward)
+    # -------------------------------------------------------------------------
+    movel(weld_end_pt, a_weld, v_weld, t=0, r=0)
+
+    # -------------------------------------------------------------------------
+    # 5) Retract above weld end
+    # -------------------------------------------------------------------------
+    movel(retract_end, a_retract, v_retract, t=0, r=0)
+
+    # -------------------------------------------------------------------------
+    # 6) Return to home position (optional safety pose)
+    # -------------------------------------------------------------------------
+    movej(home_joint, a_joint, v_joint, t=0, r=0)
+
+    # End of program
+    stopj(2)   # stop motion, keep brakes engaged
+end
+
+# -------------------------------------------------------------------------
+# Execute the defined procedure
+# -------------------------------------------------------------------------
+weld_path()

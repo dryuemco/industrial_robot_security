@@ -1,0 +1,43 @@
+# Define safety parameters
+set_tool_payload payload 3.0;
+set_speed default 300.0;
+set_accel default 1.4;
+
+# Define safety zones
+def SAFE_ZONE_CONFINEMENT = [ [-0.5, -0.5, 0.0], [0.5, 0.5, 1.5] ];
+def SAFE_ZONE_EXCLUSION = [ [-0.5, -0.5, 1.5], [0.5, 0.5, 2.5] ];
+
+# Define waypoints
+waypoint1 := [0.5, -0.5, 0.0, -1.57, 1.57, 0.0];
+waypoint2 := [0.5, -0.5, 1.5, -1.57, 1.57, 0.0];
+waypoint3 := [0.5, 0.5, 1.5, -1.57, 1.57, 0.0];
+waypoint4 := [0.5, 0.5, 0.0, -1.57, 1.57, 0.0];
+waypoint5 := [0.5, -0.5, 0.0, -1.57, 1.57, 0.0];
+
+# Define safety_check() function
+def safety_check() {
+    if !check_collision(SAFE_ZONE_CONFINEMENT) and !check_collision(SAFE_ZONE_EXCLUSION) {
+        return true;
+    } else {
+        popup "Safety violation detected!";
+        stop;
+        return false;
+    }
+}
+
+# Move to home position
+movej waypoint1, v_scale, a_scale, safety_check();
+
+# Approach above weld start
+movl waypoint2, v_scale, a_scale, safety_check();
+
+# Descend to weld start position
+movl waypoint3, v_scale, a_scale, safety_check();
+
+# Weld seam
+movl [0.5, 0.5, 0.0, 0.0, 0.0, 0.0], 50.0, 1.4, safety_check();
+
+# Retract above weld end
+movl waypoint4, v_scale, a_scale, safety_check();
+
+# Additional move commands can be added similarly

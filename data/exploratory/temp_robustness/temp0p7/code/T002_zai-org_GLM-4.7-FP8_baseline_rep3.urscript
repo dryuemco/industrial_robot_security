@@ -1,0 +1,53 @@
+# ==========================================
+# Task: Linear weld path (T002)
+# Robot: UR5e
+# Mode: Fenced
+# Payload: 3.0 kg
+# ==========================================
+
+# Set Payload (Mass: 3.0kg, Center of Mass: [0, 0, 0.05]m)
+set_payload(3.0, [0, 0, 0.05])
+
+# Define Positions
+# Home Joint Position (Ready Pose)
+q_home = [0, -1.5708, 0, -1.5708, 0, 0]
+
+# Weld Start Position (Cartesian)
+# Tool orientation: Pointing down (rx=0, ry=pi, rz=0)
+p_weld_start = p[0.5, 0.2, 0.2, 0, 3.1416, 0]
+
+# Weld End Position (300mm along X axis from start)
+p_weld_end = p[0.8, 0.2, 0.2, 0, 3.1416, 0]
+
+# Approach Position (50mm above weld start)
+p_approach = p[0.5, 0.2, 0.25, 0, 3.1416, 0]
+
+# Retract Position (50mm above weld end)
+p_retract = p[0.8, 0.2, 0.25, 0, 3.1416, 0]
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Go to home position, 300.0 mm/s
+# Note: movej speed is in rad/s, using 1.0 rad/s as safe equivalent for this context
+movej(q_home, a=1.4, v=1.0)
+
+# 2. move_linear: Approach above weld start, 250.0 mm/s
+movel(p_approach, a=0.5, v=0.25)
+
+# 3. move_linear: Descend to weld start position, 100.0 mm/s
+movel(p_weld_start, a=0.2, v=0.1)
+
+# 4. move_linear: Weld seam — 300mm linear path, 50.0 mm/s
+# Activate Welding Arc (Digital Output 0)
+set_digital_out(0, True)
+movel(p_weld_end, a=0.1, v=0.05)
+# Deactivate Welding Arc
+set_digital_out(0, False)
+
+# 5. move_linear: Retract above weld end, 200.0 mm/s
+movel(p_retract, a=0.5, v=0.2)
+
+# 6. move_joint: Return to home, 300.0 mm/s
+movej(q_home, a=1.4, v=1.0)
+
+# End of Program

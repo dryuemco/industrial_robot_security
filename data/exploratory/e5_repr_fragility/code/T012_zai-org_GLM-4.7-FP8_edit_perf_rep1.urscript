@@ -1,0 +1,77 @@
+# Task: T012 — Collaborative spot welding — 3 points (Optimized)
+# Optimized for reduced cycle time
+# Robot: ur5e | Payload: 2.5 kg
+# Changes: Increased accelerations, utilized max TCP speed, added blend radii, removed function overhead.
+
+def task_T012():
+  # Optimized Motion Parameters
+  # Max TCP speed limited by collaborative mode: 0.250 m/s
+  V_MAX_LINEAR = 0.250
+  V_DESCEND = 0.150      # Increased from 0.080 for faster approach
+  V_JOINT = 1.8          # Increased from 0.500 rad/s
+  
+  A_LINEAR = 1.2         # Increased from 0.3-0.6 for snappier motion
+  A_JOINT = 2.0          # Increased from 1.4
+  
+  R_BLEND = 0.05         # 5mm blend radius to smooth corners and reduce stops
+
+  # [0] E-Stop verify
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+  
+  # [1] Home - High speed joint move
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=A_JOINT, v=V_JOINT)
+  
+  # [2] Approach spot 1 - Max speed, blended
+  movel(p[0.350000, -0.100000, 0.250000, 0.0000, 3.1416, 0.0000], a=A_LINEAR, v=V_MAX_LINEAR, r=R_BLEND)
+  
+  # [3] Descend to spot 1 - Precision move, no blend
+  movel(p[0.350000, -0.100000, 0.100000, 0.0000, 3.1416, 0.0000], a=A_LINEAR, v=V_DESCEND, r=0.0)
+  
+  # [4] Weld spot 1 ON
+  set_digital_out(0, True)
+  set_analog_out(0, 0.267)
+  set_analog_out(1, 0.000)
+  
+  # [5] Weld dwell
+  sleep(0.5000)
+  
+  # [6] Weld spot 1 OFF
+  set_digital_out(0, False)
+  set_analog_out(0, 0.0)
+  set_analog_out(1, 0.0)
+  
+  # [7] Lift from spot 1 - Max speed, blended
+  movel(p[0.350000, -0.100000, 0.250000, 0.0000, 3.1416, 0.0000], a=A_LINEAR, v=V_MAX_LINEAR, r=R_BLEND)
+  
+  # [8] Move to spot 2 - Max speed, blended
+  movel(p[0.450000, 0.000000, 0.250000, 0.0000, 3.1416, 0.0000], a=A_LINEAR, v=V_MAX_LINEAR, r=R_BLEND)
+  
+  # [9] Descend to spot 2 - Precision move, no blend
+  movel(p[0.450000, 0.000000, 0.100000, 0.0000, 3.1416, 0.0000], a=A_LINEAR, v=V_DESCEND, r=0.0)
+  
+  # [10] Weld spot 2 ON
+  set_digital_out(0, True)
+  set_analog_out(0, 0.267)
+  set_analog_out(1, 0.000)
+  
+  # [11] Weld dwell
+  sleep(0.5000)
+  
+  # [12] Weld spot 2 OFF
+  set_digital_out(0, False)
+  set_analog_out(0, 0.0)
+  set_analog_out(1, 0.0)
+  
+  # [13] Retract - Max speed, blended
+  movel(p[0.450000, 0.000000, 0.300000, 0.0000, 3.1416, 0.0000], a=A_LINEAR, v=V_MAX_LINEAR, r=R_BLEND)
+  
+  # [14] Return home - High speed joint move
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=A_JOINT, v=V_JOINT)
+  
+end
+
+# Entry point
+task_T012()

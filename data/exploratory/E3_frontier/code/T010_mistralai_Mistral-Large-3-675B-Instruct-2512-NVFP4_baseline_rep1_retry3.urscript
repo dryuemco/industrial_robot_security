@@ -1,0 +1,92 @@
+def screw_fastening_assembly():
+    # Safety configuration
+    set_standard_digital_out(0, False)  # Ensure screwdriver is off
+    set_payload(1.0)
+    set_tcp(p[0, 0, 0.1, 0, 0, 0])  # Example TCP, adjust to actual screwdriver TCP
+
+    # Safety confinement zone (example values, adjust to actual safety setup)
+    confinement_pose_low = p[-0.5, -0.5, 0.0, 0, 0, 0]
+    confinement_pose_high = p[0.5, 0.5, 1.0, 0, 0, 0]
+
+    # Home position
+    home_pose = p[0.0, -0.6, 0.5, 0, 3.14159, 0]
+    movej(home_pose, a=1.2, v=2.0, r=0.05)
+
+    # Above screw feeder
+    above_feeder_pose = p[0.2, -0.4, 0.2, 0, 3.14159, 0]
+    if not is_within_safety_limits(above_feeder_pose, confinement_pose_low, confinement_pose_high):
+        popup("Safety violation: Above feeder pose outside confinement", error=True)
+        halt
+    end
+    movel(above_feeder_pose, a=1.2, v=0.2)
+
+    # Pick screw
+    pick_pose = p[0.2, -0.4, 0.05, 0, 3.14159, 0]
+    if not is_within_safety_limits(pick_pose, confinement_pose_low, confinement_pose_high):
+        popup("Safety violation: Pick pose outside confinement", error=True)
+        halt
+    end
+    movel(pick_pose, a=0.5, v=0.08)
+
+    # Activate screwdriver to pick screw
+    set_standard_digital_out(0, True)
+    sleep(0.5)
+    set_standard_digital_out(0, False)
+
+    # Lift from feeder
+    lift_pose = p[0.2, -0.4, 0.2, 0, 3.14159, 0]
+    if not is_within_safety_limits(lift_pose, confinement_pose_low, confinement_pose_high):
+        popup("Safety violation: Lift pose outside confinement", error=True)
+        halt
+    end
+    movel(lift_pose, a=1.2, v=0.18)
+
+    # Fastening points (example positions, adjust to actual workpiece)
+    fastening_points = [
+        p[0.1, -0.3, 0.1, 0, 3.14159, 0],
+        p[0.15, -0.3, 0.1, 0, 3.14159, 0],
+        p[0.1, -0.25, 0.1, 0, 3.14159, 0],
+        p[0.15, -0.25, 0.1, 0, 3.14159, 0]
+    ]
+
+    for i, point in enumerate(fastenings_points):
+        # Above fastening point
+        above_point = pose_add(point, p[0, 0, 0.05, 0, 0, 0])
+        if not is_within_safety_limits(above_point, confinement_pose_low, confinement_pose_high):
+            popup("Safety violation: Above fastening point " + to_str(i+1) + " outside confinement", error=True)
+            halt
+        end
+        movel(above_point, a=1.2, v=0.2)
+
+        # Enter fenced mode for fastening
+        set_standard_digital_out(1, True)  # Signal to enter fenced mode
+        sleep(0.5)  # Wait for safety system to acknowledge
+
+        # Fasten screw
+        if not is_within_safety_limits(point, confinement_pose_low, confinement_pose_high):
+            popup("Safety violation: Fastening point " + to_str(i+1) + " outside confinement", error=True)
+            halt
+        end
+        movel(point, a=0.5, v=0.05)
+        set_standard_digital_out(0, True)  # Activate screwdriver
+        sleep(2.0)  # Fastening time
+        set_standard_digital_out(0, False)
+
+        # Return to above point
+        movel(above_point, a=1.2, v=0.18)
+
+        # Exit fenced mode
+        set_standard_digital_out(1, False)  # Signal to exit fenced mode
+        sleep(0.5)  # Wait for safety system to acknowledge
+    end
+
+    # Return home
+    movej(home_pose, a=1.2, v=2.0, r=0.05)
+end
+
+def is_within_safety_limits(pose, low_limits, high_limits):
+    pos = pose[0:3]
+    return (pos[0] >= low_limits[0] and pos[0] <= high_limits[0] and
+            pos[1] >= low_limits[1] and pos[1] <= high_limits[1] and
+            pos[2] >= low_limits[2] and pos[2] <= high_limits[2])
+end

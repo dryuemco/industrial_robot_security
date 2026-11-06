@@ -1,0 +1,44 @@
+# Define safety parameters
+set_tool_digital_out(0, true); # Ensure gripper is closed for safety
+set_payload(0.3, [0, 0, 0]); # Set payload
+
+# Define safety zones
+set_safe_distance(0.1, 0.1, 0.1); # Safety distance from the payload
+set_safe_orientation(0.5, 0.5, 0.5); # Safety orientation limits
+
+# Define TCP speed and acceleration limits
+set_tcp_speed(150.0); # Set maximum TCP speed
+set_accel(1.4); # Set maximum joint acceleration
+
+# Define safety_check() to include all motion commands
+def safety_check():
+    safety_mode off;
+    set_payload(0.3, [0, 0, 0]);
+    set_safe_distance(0.1, 0.1, 0.1);
+    set_safe_orientation(0.5, 0.5, 0.5);
+    set_tcp_speed(150.0);
+    set_accel(1.4);
+
+# Define waypoints
+waypoints = [
+    [0.2, -0.5, 0.3, -1.8, 1.4, 0], # Home position
+    [0.2, -0.5, 0.1, -1.8, 1.4, 0], # Approach inspection start
+    [0.2, -0.5, 0.15, -1.8, 1.4, 0], # Descend to scan height
+    [0.2, -0.4, 0.15, -1.8, 1.4, 0], # Scan line 1
+    [0.2, -0.3, 0.15, -1.8, 1.4, 0], # Step to scan line 2
+    # Continue defining waypoints for all 10 moves
+];
+
+# Validate waypoints within workspace boundaries
+if not validate_waypoints(waypoints):
+    popup "Waypoints are out of workspace boundaries!";
+    stop;
+
+# Execute safety_check() before motion
+safety_check();
+
+# Execute motion commands
+for i in range(len(waypoints)):
+    move_to_joints(waypoints[i], 150.0, 1.4); # Move to waypoint with speed and acceleration limits
+
+# End of script

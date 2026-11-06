@@ -1,0 +1,94 @@
+# UR5e Collaborative Suction Palletizing Program
+# Payload: 0.8 kg, Collaborative mode, Confinement safety zone
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(0.8, [0,0,0,0,0,0])          # Set payload (kg) and center of mass
+set_robot_mode(2)                       # 2 = Collaborative mode
+set_tcp_speed(0.25)                     # Max TCP speed 250 mm/s = 0.25 m/s
+
+# -------------------------------------------------
+# Pose Definitions (in meters)
+# -------------------------------------------------
+# Home position (joint configuration)
+home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Above staging area (TCP pose)
+above_staging = p[0.5, -0.2, 0.3, 0, 3.14, 0]
+
+# Pick position (descend to box)
+pick_pose = p[0.5, -0.2, 0.1, 0, 3.14, 0]
+
+# Lift after pick
+lift_pose = p[0.5, -0.2, 0.3, 0, 3.14, 0]
+
+# Transit to pallet
+pallet_pose = p[0.2, 0.4, 0.3, 0, 3.14, 0]
+
+# Additional poses (place, retreat, etc.)
+place_pose   = p[0.2, 0.4, 0.1, 0, 3.14, 0]
+retreat_pose = p[0.2, 0.4, 0.3, 0, 3.14, 0]
+final_pose   = p[0.0, 0.0, 0.5, 0, 3.14, 0]
+
+# -------------------------------------------------
+# Helper: Move with error handling
+# -------------------------------------------------
+def safe_movej(target, speed):
+    try:
+        movej(target, a=1.2, v=speed)
+    except:
+        textmsg("Error during movej to %s" % str(target))
+        stopj(2)          # emergency stop
+        halt()            # halt program
+
+def safe_movel(target, speed):
+    try:
+        movel(target, a=1.2, v=speed)
+    except:
+        textmsg("Error during movel to %s" % str(target))
+        stopj(2)          # emergency stop
+        halt()            # halt program
+
+# -------------------------------------------------
+# Main Program
+# -------------------------------------------------
+def main():
+    # 1. Move to Home (joint move)
+    safe_movej(home_joint, 0.2)          # 200 mm/s
+
+    # 2. Move above staging area (linear)
+    safe_movel(above_staging, 0.22)      # 220 mm/s
+
+    # 3. Descend to pick position (linear)
+    safe_movel(pick_pose, 0.10)          # 100 mm/s
+
+    # 4. Activate suction (placeholder)
+    set_digital_out(0, True)            # Turn on suction cup
+
+    # 5. Lift the box (linear)
+    safe_movel(lift_pose, 0.18)          # 180 mm/s
+
+    # 6. Transit to pallet (linear)
+    safe_movel(pallet_pose, 0.23)        # 230 mm/s
+
+    # 7. Place box on pallet (linear)
+    safe_movel(place_pose, 0.15)         # 150 mm/s (example speed)
+
+    # 8. Deactivate suction (placeholder)
+    set_digital_out(0, False)           # Turn off suction cup
+
+    # 9. Retreat from pallet (linear)
+    safe_movel(retreat_pose, 0.20)       # 200 mm/s
+
+    # 10. Return to Home (joint move)
+    safe_movej(home_joint, 0.2)          # 200 mm/s
+
+    # End of program
+    textmsg("Palletizing cycle completed.")
+    stopj(2)
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

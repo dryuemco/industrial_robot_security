@@ -1,0 +1,131 @@
+# -------------------------------------------------
+# URScript for UR5e Collaborative Visual Inspection
+# -------------------------------------------------
+# Safety configuration (ISO 10218:2025 compliant)
+
+# Payload definition
+set_payload(0.3, [0,0,0])   # 0.3 kg payload, CoG at TCP
+
+# Joint acceleration limit (rad/s^2) – must not exceed 1.4 rad/s²
+set_joint_acceleration(1.2)   # conservative limit
+
+# Maximum allowed TCP speed (m/s) in collaborative mode
+MAX_TCP_SPEED = 0.15          # 150 mm/s
+
+# Workspace boundaries (meters) – adjust to your cell
+X_MIN = -0.5; X_MAX = 0.5
+Y_MIN = -0.5; Y_MAX = 0.5
+Z_MIN = 0.0;  Z_MAX = 0.8
+
+# Emergency stop digital input (e‑stop wired to DI0)
+ESTOP_DI = 0
+
+# -------------------------------------------------
+# Safety helper functions
+# -------------------------------------------------
+def safety_check(pose):
+    # Verify pose is inside the defined workspace
+    if pose[0] < X_MIN or pose[0] > X_MAX or
+       pose[1] < Y_MIN or pose[1] > Y_MAX or
+       pose[2] < Z_MIN or pose[2] > Z_MAX then
+        popup("Safety violation: target pose out of workspace bounds.", title="Safety Stop")
+        halt()
+    end
+end
+
+def estop_monitor():
+    # Continuous monitoring of the emergency‑stop input
+    while (true) do
+        if get_digital_input(ESTOP_DI) == True then
+            popup("Emergency stop activated!", title="E‑Stop")
+            halt()
+        end
+        sleep(0.05)
+    end
+end
+
+# Start the e‑stop monitor in a background thread
+thread estop_monitor()
+
+# -------------------------------------------------
+# Motion waypoints (all poses in meters & radians)
+# -------------------------------------------------
+# Home joint configuration (rad)
+HOME_JOINT = [0, -1.57, 0, -1.57, 0, 0]
+
+# Approach pose – 130 mm/s above the part centre, camera pointing downwards
+APPROACH_POSE = p[0.30, 0.00, 0.45, 0, 3.14159, 0]
+
+# Scan height – 150 mm above the part surface
+SCAN_HEIGHT_POSE = p[0.30, 0.00, 0.35, 0, 3.14159, 0]
+
+# Scan line parameters (200 mm × 200 mm part)
+LINE_LENGTH = 0.20          # 200 mm
+LINE_SPACING = 0.07         # 70 mm between lines (example)
+START_X = 0.20
+START_Y = -0.10
+
+# Helper to build a pose with fixed orientation (camera down)
+def pose_xy(x, y, z):
+    return p[x, y, z, 0, 3.14159, 0]
+end
+
+# -------------------------------------------------
+# Motion execution (all moves include speed & acceleration)
+# -------------------------------------------------
+# 1) Move to Home (joint move, 150 mm/s equivalent joint speed)
+movej(HOME_JOINT, a=1.2, v=0.15)   # joint speed limited by MAX_TCP_SPEED indirectly
+
+# 2) Approach inspection start – linear move, 130 mm/s
+safety_check(APPROACH_POSE)
+movel(APPROACH_POSE, a=1.2, v=0.13)
+
+# 3) Descend to scan height – linear move, 80 mm/s
+safety_check(SCAN_HEIGHT_POSE)
+movel(SCAN_HEIGHT_POSE, a=1.2, v=0.08)
+
+# 4) Scan line 1 – Y sweep, 50 mm/s
+pose_start_line1 = pose_xy(START_X, START_Y, SCAN_HEIGHT_POSE[2])
+pose_end_line1   = pose_xy(START_X, START_Y + LINE_LENGTH, SCAN_HEIGHT_POSE[2])
+safety_check(pose_start_line1)
+movel(pose_start_line1, a=1.2, v=0.05)   # move to line start
+safety_check(pose_end_line1)
+movel(pose_end_line1, a=1.2, v=0.05)     # sweep
+
+# 5) Step to line 2 (+X), 80 mm/s
+pose_step_line2 = pose_xy(START_X + LINE_SPACING, START_Y + LINE_LENGTH, SCAN_HEIGHT_POSE[2])
+safety_check(pose_step_line2)
+movel(pose_step_line2, a=1.2, v=0.08)
+
+# 6) Scan line 2 – Y sweep back, 50 mm/s
+pose_start_line2 = pose_xy(START_X + LINE_SPACING, START_Y + LINE_LENGTH, SCAN_HEIGHT_POSE[2])
+pose_end_line2   = pose_xy(START_X + LINE_SPACING, START_Y, SCAN_HEIGHT_POSE[2])
+safety_check(pose_start_line2)
+movel(pose_start_line2, a=1.2, v=0.05)
+safety_check(pose_end_line2)
+movel(pose_end_line2, a=1.2, v=0.05)
+
+# 7) Step to line 3 (+X), 80 mm/s
+pose_step_line3 = pose_xy(START_X + 2*LINE_SPACING, START_Y, SCAN_HEIGHT_POSE[2])
+safety_check(pose_step_line3)
+movel(pose_step_line3, a=1.2, v=0.08)
+
+# 8) Scan line 3 – Y sweep forward, 50 mm/s
+pose_start_line3 = pose_xy(START_X + 2*LINE_SPACING, START_Y, SCAN_HEIGHT_POSE[2])
+pose_end_line3   = pose_xy(START_X + 2*LINE_SPACING, START_Y + LINE_LENGTH, SCAN_HEIGHT_POSE[2])
+safety_check(pose_start_line3)
+movel(pose_start_line3, a=1.2, v=0.05)
+safety_check(pose_end_line3)
+movel(pose_end_line3, a=1.2, v=0.05)
+
+# 9) Retract to approach pose – linear move, 130 mm/s
+safety_check(APPROACH_POSE)
+movel(APPROACH_POSE, a=1.2, v=0.13)
+
+# 10) Return to Home joint position – joint move, 150 mm/s
+movej(HOME_JOINT, a=1.2, v=0.15)
+
+# -------------------------------------------------
+# End of program – safe stop
+# -------------------------------------------------
+popup("Inspection task completed safely.", title="Info")

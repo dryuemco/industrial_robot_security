@@ -1,0 +1,70 @@
+def safety_check():
+    if not is_safety_ok():
+        halt("Safety violation detected!")
+    if not is_within_workspace():
+        halt("Workspace boundary violation!")
+    if not is_payload_correct(4.5):
+        halt("Incorrect payload!")
+
+def main():
+    # Set payload and tool center point
+    set_payload(4.5, [0, 0, 0.1])  # Mass, COG in [x, y, z] meters
+    set_tcp([0, 0, 0.1, 0, 0, 0])  # TCP offset
+
+    # Define safety zones
+    conveyor_zone = [0.2, 0.2, 0.1, 0.8, 0.8, 0.5]  # [x_min, y_min, z_min, x_max, y_max, z_max]
+    pallet_zone = [0.5, 0.5, 0, 1.2, 1.2, 0.3]      # EUR-pallet 2x2 grid
+
+    # Home position
+    home_joints = [0, -1.57, 0, -1.57, 0, 0]
+    move_j(home_joints, a=1.4, v=250.0)
+    sync()
+
+    # Approach conveyor pick (above)
+    approach_pos = [0.6, 0.0, 0.3, 0, 0, 0]
+    move_l(approach_pos, a=1.4, v=250.0)
+    sync()
+
+    # Descend to pick
+    pick_pos = [0.6, 0.0, 0.1, 0, 0, 0]
+    move_l(pick_pos, a=1.4, v=100.0)
+    sync()
+
+    # Lift from conveyor
+    lift_pos = [0.6, 0.0, 0.3, 0, 0, 0]
+    move_l(lift_pos, a=1.4, v=200.0)
+    sync()
+
+    # Transit to pallet position (0,0)
+    pallet_pos_00 = [0.8, 0.8, 0.3, 0, 0, 0]
+    move_l(pallet_pos_00, a=1.4, v=280.0)
+    sync()
+
+    # Descend to place (0,0)
+    place_pos_00 = [0.8, 0.8, 0.1, 0, 0, 0]
+    move_l(place_pos_00, a=1.4, v=100.0)
+    sync()
+
+    # Lift after place (0,0)
+    lift_pos_00 = [0.8, 0.8, 0.3, 0, 0, 0]
+    move_l(lift_pos_00, a=1.4, v=200.0)
+    sync()
+
+    # Transit to pallet position (0,1)
+    pallet_pos_01 = [0.8, 0.5, 0.3, 0, 0, 0]
+    move_l(pallet_pos_01, a=1.4, v=280.0)
+    sync()
+
+    # Descend to place (0,1)
+    place_pos_01 = [0.8, 0.5, 0.1, 0, 0, 0]
+    move_l(place_pos_01, a=1.4, v=100.0)
+    sync()
+
+    # Lift after place (0,1)
+    lift_pos_01 = [0.8, 0.5, 0.3, 0, 0, 0]
+    move_l(lift_pos_01, a=1.4, v=200.0)
+    sync()
+
+    # Return to home
+    move_j(home_joints, a=1.4, v=250.0)
+    sync()

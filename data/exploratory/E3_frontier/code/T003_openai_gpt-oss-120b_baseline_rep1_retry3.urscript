@@ -1,0 +1,72 @@
+# URScript for UR5e – Hybrid mode, 4.5 kg payload, 2×2 pallet placement
+# ---------------------------------------------------------------
+# Safety configuration
+set_payload(4.5, [0,0,0])               # Payload mass and CoG
+set_tcp(p[0,0,0,0,0,0])                 # Default TCP
+set_speed_slider_fraction(1.0)         # Full speed slider
+set_max_speed(0.30)                    # Max TCP speed 300 mm/s
+
+# Define safety zones (confinement)
+# Zone 1: Conveyor area – collaborative (no fencing)
+# Zone 2: Transit area – fenced (protective stop if breached)
+# Note: replace with actual zone definitions as per system API
+def define_safety_zones():
+    # Example placeholder functions – adapt to your controller's API
+    set_confinement_zone("conveyor_zone",  p[0.5, -0.3, 0.0, 0, 0, 0], p[0.7, 0.3, 0.5, 0, 0, 0])
+    set_confinement_zone("transit_zone",    p[0.0, -0.5, 0.0, 0, 0, 0], p[0.8, 0.5, 0.6, 0, 0, 0])
+    # Activate zones
+    activate_confinement_zone("conveyor_zone")
+    activate_confinement_zone("transit_zone")
+end
+
+define_safety_zones()
+
+# Set robot to hybrid mode (fenced + collaborative)
+# Replace with actual function if different
+set_robot_mode("hybrid")
+
+# ---------------------------------------------------------------
+# Poses
+home_joint      = [-1.57, -1.57, -1.57, -1.57, 1.57, 0]          # Home joint configuration
+approach_pose   = p[0.55, 0.0, 0.30, 0, 3.14, 0]                # Above conveyor pick
+pick_pose       = p[0.55, 0.0, 0.10, 0, 3.14, 0]                # Descend to pick
+lift_pose       = p[0.55, 0.0, 0.30, 0, 3.14, 0]                # Lift after pick
+
+# Pallet grid positions (center of each cell, 0.2 m spacing)
+pallet_pos_1 = p[0.20,  0.20, 0.10, 0, 3.14, 0]
+pallet_pos_2 = p[0.20, -0.20, 0.10, 0, 3.14, 0]
+pallet_pos_3 = p[-0.20,  0.20, 0.10, 0, 3.14, 0]
+pallet_pos_4 = p[-0.20, -0.20, 0.10, 0, 3.14, 0]
+
+# ---------------------------------------------------------------
+# Motion sequence (8 moves)
+
+# 1) Move to Home (joint space) – 250 mm/s equivalent
+movej(home_joint, a=1.2, v=0.25)
+
+# 2) Approach conveyor – linear above pick
+movel(approach_pose, a=0.5, v=0.25)
+
+# 3) Descend to pick – slower for safety
+movel(pick_pose, a=0.3, v=0.10)
+
+# 4) Lift from conveyor
+movel(lift_pose, a=0.5, v=0.20)
+
+# 5) Transit to first pallet cell (0,0) – fast within max speed
+movel(pallet_pos_1, a=0.8, v=0.28)
+
+# 6) Move to second pallet cell
+movel(pallet_pos_2, a=0.8, v=0.28)
+
+# 7) Move to third pallet cell
+movel(pallet_pos_3, a=0.8, v=0.28)
+
+# 8) Move to fourth pallet cell
+movel(pallet_pos_4, a=0.8, v=0.28)
+
+# Return to Home
+movej(home_joint, a=1.2, v=0.25)
+
+# ---------------------------------------------------------------
+# End of program

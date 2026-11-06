@@ -1,0 +1,68 @@
+# Optimized Task: T010 — Screw fastening assembly — hybrid mode
+# Adjusted for faster cycle time while respecting safety constraints.
+# Max TCP speed: 0.250 m/s (250 mm/s)
+
+def task_T010():
+  # [0] Verify E-Stop (hardware enforced)
+  if get_digital_in(0):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # Optional: set speed scaling for hybrid collaborative phase
+  set_speed_slider(0.9)   # 90 % of max speed during approach
+
+  # [1] Home (fast joint move)
+  movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+        a=1.4, v=0.5)
+
+  # [2] Approach above screw feeder (blended linear move)
+  movel(p[0.300, -0.200, 0.250, 0.0, 3.1416, 0.0],
+        a=1.2, v=0.25, r=0.015)
+
+  # [3] Descend to pick screw (higher speed, short distance)
+  movel(p[0.300, -0.200, 0.110, 0.0, 3.1416, 0.0],
+        a=1.0, v=0.15, r=0.010)
+
+  # [4] Activate pickup magnet
+  set_digital_out(4, True)
+
+  # [5] Magnet settle – reduced pause
+  sleep(0.10)
+
+  # [6] Lift from feeder (blended with next move)
+  movel(p[0.300, -0.200, 0.300, 0.0, 3.1416, 0.0],
+        a=1.2, v=0.25, r=0.015)
+
+  # [7] Move above fastening point 1 (blend into next descent)
+  movel(p[0.420, 0.120, 0.200, 0.0, 3.1416, 0.0],
+        a=1.2, v=0.25, r=0.020)
+
+  # [8] Descend to fastening point 1 (no stop, small blend radius)
+  movel(p[0.420, 0.120, 0.080, 0.0, 3.1416, 0.0],
+        a=0.8, v=0.12, r=0.005)
+
+  # [9] Activate screwdriver (torque control assumed via digital out)
+  set_digital_out(0, True)
+
+  # [10] Fastening – shortened dwell (ensure torque achieved)
+  sleep(1.5)
+
+  # [11] Deactivate screwdriver
+  set_digital_out(0, False)
+
+  # [12] Retract from fastening point (blended)
+  movel(p[0.420, 0.120, 0.200, 0.0, 3.1416, 0.0],
+        a=0.8, v=0.20, r=0.010)
+
+  # [13] Return home (fast joint move)
+  movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+        a=1.4, v=0.5)
+
+  # Reset speed scaling to default
+  set_speed_slider(1.0)
+
+end
+
+# Entry point
+task_T010()

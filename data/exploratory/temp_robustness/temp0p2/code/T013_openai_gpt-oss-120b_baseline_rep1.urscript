@@ -1,0 +1,49 @@
+def main():
+    # ----- Configuration -----
+    set_payload(0.8, [0, 0, 0.1])          # payload mass (kg) and CoM (m)
+    set_tcp_speed(0.25)                   # max TCP speed (m/s) = 250 mm/s
+    set_safety_mode("collaborative")      # collaborative safety mode
+
+    # ----- Positions (example values, replace with calibrated poses) -----
+    home           = p[0.0, -0.5, 0.5, 0, 3.14, 0]
+    above_staging  = p[0.30, 0.0, 0.40, 0, 3.14, 0]
+    pick_pos       = p[0.30, 0.0, 0.20, 0, 3.14, 0]
+    lift_pos       = p[0.30, 0.0, 0.40, 0, 3.14, 0]
+    pallet_pos     = p[0.50, -0.30, 0.40, 0, 3.14, 0]
+    place_pos      = p[0.50, -0.30, 0.20, 0, 3.14, 0]
+    retreat_pos    = p[0.50, -0.30, 0.40, 0, 3.14, 0]
+
+    # ----- Motion sequence (8 moves) -----
+    # 1) Move to Home
+    movej(home, a=1.4, v=0.20)            # 200 mm/s
+
+    # 2) Move above staging area
+    movel(above_staging, a=1.4, v=0.22)   # 220 mm/s
+
+    # 3) Descend to pick position
+    movel(pick_pos, a=1.4, v=0.10)        # 100 mm/s
+
+    # Activate suction to grasp the box
+    set_digital_out(0, True)             # suction ON
+
+    # 4) Lift the box
+    movel(lift_pos, a=1.4, v=0.18)        # 180 mm/s
+
+    # 5) Transit to pallet location
+    movel(pallet_pos, a=1.4, v=0.23)      # 230 mm/s
+
+    # 6) Lower to place the box on pallet
+    movel(place_pos, a=1.4, v=0.15)       # 150 mm/s (example)
+
+    # Release suction to drop the box
+    set_digital_out(0, False)            # suction OFF
+
+    # 7) Retreat from pallet
+    movel(retreat_pos, a=1.4, v=0.20)     # 200 mm/s
+
+    # 8) Return to Home
+    movej(home, a=1.4, v=0.20)            # 200 mm/s
+
+    # ----- End of program -----
+    stopj(2)
+end

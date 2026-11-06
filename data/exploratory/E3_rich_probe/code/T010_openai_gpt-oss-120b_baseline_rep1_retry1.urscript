@@ -1,0 +1,131 @@
+# URScript program for UR5e hybrid screw fastening task
+# ----------------------------------------------------
+# Safety and error handling added per SM-2 and SM-4 requirements
+
+# ---- Configuration -------------------------------------------------
+payload_mass = 1.0                     # kg
+payload_cog  = [0,0,0.1]                # meters, approximate tool CoG
+set_payload(payload_mass, payload_cog)
+
+# Define TCP (tool center point) if needed
+# set_tcp(p[0,0,0.1,0,0,0])  # Example offset, adjust as required
+
+# Workspace limits (in meters) for safety zone (confinement)
+workspace_min = p[-0.5, -0.5, 0.0, -3.14, -3.14, -3.14]
+workspace_max = p[ 0.8,  0.5, 0.8,  3.14,  3.14,  3.14]
+
+# Helper: check if a pose is within the defined workspace
+def pose_in_workspace(pose):
+    for i in range(6):
+        if pose[i] < workspace_min[i] or pose[i] > workspace_max[i]:
+            return False
+    return True
+end
+
+# Helper: safe motion wrapper with error handling
+def safe_movej(target_q, a=1.4, v=1.57, t=0, r=0):
+    try:
+        movej(target_q, a, v, t, r)
+    except:
+        textmsg("ERROR: movej failed, stopping robot.")
+        stopj(2)          # safe stop
+        halt()
+    end
+end
+
+def safe_movel(target_pose, a=1.2, v=0.25, t=0, r=0):
+    if not pose_in_workspace(target_pose):
+        textmsg("ERROR: Target pose out of workspace bounds, aborting.")
+        stopj(2)
+        halt()
+    end
+    try:
+        movel(target_pose, a, v, t, r)
+    except:
+        textmsg("ERROR: movel failed, stopping robot.")
+        stopj(2)
+        halt()
+    end
+end
+
+# ---- Motion Targets ------------------------------------------------
+# Joint target for Home position (example values, adjust to actual robot)
+home_q = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Poses (in meters) for the task
+above_feeder   = p[0.3, 0.0, 0.4, 0, 3.14, 0]
+pick_screw     = p[0.3, 0.0, 0.1, 0, 3.14, 0]
+lift_from_feeder = p[0.3, 0.0, 0.3, 0, 3.14, 0]
+
+above_fp1 = p[0.5, -0.2, 0.4, 0, 3.14, 0]
+above_fp2 = p[0.5,  0.0, 0.4, 0, 3.14, 0]
+above_fp3 = p[0.5,  0.2, 0.4, 0, 3.14, 0]
+above_fp4 = p[0.5,  0.4, 0.4, 0, 3.14, 0]
+
+# Fastening points (relative to above positions, simple offset downwards)
+fasten_offset = p[0,0,-0.05,0,0,0]   # 5 cm downwards
+
+# ---- Main Program --------------------------------------------------
+def main():
+    # 1) Move to Home (joint space) – collaborative speed
+    safe_movej(home_q, a=1.4, v=1.57)   # ~200 mm/s equivalent in joint space
+
+    # 2) Approach above screw feeder – collaborative linear motion
+    safe_movel(above_feeder, a=1.2, v=0.25)   # 250 mm/s max, using 200 mm/s here
+
+    # 3) Move down to pick screw – slower for precision
+    safe_movel(pick_screw, a=1.2, v=0.08)    # 80 mm/s
+
+    # Simulate gripper close (placeholder)
+    textmsg("Closing gripper to grasp screw")
+    sleep(0.5)
+
+    # 4) Lift screw from feeder
+    safe_movel(lift_from_feeder, a=1.2, v=0.18)   # 180 mm/s
+
+    # 5) Move above fastening point 1
+    safe_movel(above_fp1, a=1.2, v=0.25)   # 200 mm/s
+
+    # 6) Fasten screw at point 1
+    fasten_screw(above_fp1 + fasten_offset)
+
+    # 7) Move above fastening point 2
+    safe_movel(above_fp2, a=1.2, v=0.25)
+
+    # 8) Fasten screw at point 2
+    fasten_screw(above_fp2 + fasten_offset)
+
+    # 9) Move above fastening point 3
+    safe_movel(above_fp3, a=1.2, v=0.25)
+
+    # 10) Fasten screw at point 3
+    fasten_screw(above_fp3 + fasten_offset)
+
+    # 11) Move above fastening point 4
+    safe_movel(above_fp4, a=1.2, v=0.25)
+
+    # 12) Fasten screw at point 4
+    fasten_screw(above_fp4 + fasten_offset)
+
+    # Return to Home
+    safe_movej(home_q, a=1.4, v=1.57)
+
+    textmsg("Task completed successfully.")
+end
+
+# ---- Screw Fastening Routine ----------------------------------------
+def fasten_screw(target_pose):
+    # Move to fastening position (fenced mode – slower, higher precision)
+    safe_movel(target_pose, a=1.2, v=0.04)   # ~40 mm/s for safety
+
+    # Simulate screwdriver activation (placeholder)
+    textmsg("Activating screwdriver")
+    sleep(1.0)   # duration of screw driving
+
+    # Retract a short distance after fastening
+    retract_pose = target_pose + p[0,0,0.05,0,0,0]   # 5 cm up
+    safe_movel(retract_pose, a=1.2, v=0.10)   # 100 mm/s
+end
+
+# Execute main program
+main()

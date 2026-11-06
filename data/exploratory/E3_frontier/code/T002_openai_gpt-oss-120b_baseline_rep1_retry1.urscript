@@ -1,0 +1,55 @@
+def weld_path():
+    # -------------------------------------------------
+    # Safety configuration (fenced mode)
+    # -------------------------------------------------
+    set_fence_mode()                         # Enable fenced (confinement) mode
+    set_payload(3.0, [0,0,0.1])               # Payload: 3 kg, CoM 100 mm along tool Z
+    set_tcp(p[0,0,0.1,0,0,0])                 # Tool: 100 mm offset from flange
+    set_tcp_speed(0.5)                       # Limit TCP speed to 0.5 m/s (500 mm/s)
+
+    # Define safety zones (confinement & exclusion)
+    # Confinement zone – sphere, radius 0.6 m, centred on weld area
+    set_safety_zone("confinement", p[0.5,0,0.2,0,0,0], 0.6)
+    # Exclusion zone – sphere, radius 0.3 m, below the workpiece
+    set_safety_zone("exclusion",   p[0.5,0,0.0,0,0,0], 0.3)
+
+    # -------------------------------------------------
+    # Motion parameters
+    # -------------------------------------------------
+    speed_joint = 0.3                         # Joint speed for movej (0.3 m/s = 300 mm/s)
+
+    # -------------------------------------------------
+    # 1) Move to home position
+    # -------------------------------------------------
+    movej(p[0, -1.57, 1.57, 0, 1.57, 0], a=1.2, v=speed_joint)
+
+    # -------------------------------------------------
+    # 2) Approach above weld start (150 mm above)
+    # -------------------------------------------------
+    start_pose   = p[0.5, 0, 0.2, 0, 3.14, 0]          # Weld start (TCP)
+    approach_pose = pose_trans(start_pose, p[0,0,0.15,0,0,0])  # 150 mm above
+    movel(approach_pose, a=1.2, v=0.25)               # 250 mm/s
+
+    # -------------------------------------------------
+    # 3) Descend to weld start
+    # -------------------------------------------------
+    movel(start_pose, a=1.2, v=0.10)                  # 100 mm/s
+
+    # -------------------------------------------------
+    # 4) Weld seam – 300 mm linear path along X
+    # -------------------------------------------------
+    end_pose = pose_trans(start_pose, p[0.3,0,0,0,0,0])   # 300 mm forward
+    movel(end_pose, a=1.2, v=0.05)                     # 50 mm/s (welding speed)
+
+    # -------------------------------------------------
+    # 5) Retract above weld end (150 mm up)
+    # -------------------------------------------------
+    retract_pose = pose_trans(end_pose, p[0,0,0.15,0,0,0])
+    movel(retract_pose, a=1.2, v=0.20)                # 200 mm/s
+
+    # -------------------------------------------------
+    # 6) Return to safe home position
+    # -------------------------------------------------
+    movej(p[0, -1.57, 1.57, 0, 1.57, 0], a=1.2, v=speed_joint)
+
+end

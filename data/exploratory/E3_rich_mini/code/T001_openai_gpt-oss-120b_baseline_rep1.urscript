@@ -1,0 +1,56 @@
+def main():
+    # Payload configuration (0.5 kg, CoG 10 cm above TCP)
+    set_payload(0.5, [0,0,0.1])
+    # Tool centre point (default)
+    set_tcp([0,0,0.1,0,0,0])
+
+    # Speed definitions (m/s)
+    speed_fast = 0.2   # 200 mm/s
+    speed_mid  = 0.15  # 150 mm/s
+    speed_slow = 0.1   # 100 mm/s
+
+    # Joint positions
+    home = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+    # Cartesian positions (in metres)
+    pick_approach = p[0.5, -0.2, 0.30, 0, 3.14, 0]
+    pick          = p[0.5, -0.2, 0.10, 0, 3.14, 0]
+    lift          = p[0.5, -0.2, 0.30, 0, 3.14, 0]
+
+    place_approach = p[0.0, 0.30, 0.30, 0, 3.14, 0]
+    place          = p[0.0, 0.30, 0.10, 0, 3.14, 0]
+    retreat        = p[0.0, 0.30, 0.30, 0, 3.14, 0]
+
+    # 1) Move to home position
+    movej(home, a=1.0, v=speed_fast)
+
+    # 2) Approach pick point
+    movel(pick_approach, a=1.0, v=speed_fast)
+
+    # 3) Descend to pick
+    movel(pick, a=0.5, v=speed_slow)
+
+    # 4) Close gripper (digital output 0)
+    set_digital_output(0, True)
+
+    # 5) Lift from pick
+    movel(lift, a=0.8, v=speed_mid)
+
+    # 6) Transit to place approach
+    movel(place_approach, a=1.0, v=speed_fast)
+
+    # 7) Descend to place
+    movel(place, a=0.5, v=speed_slow)
+
+    # 8) Open gripper (release object)
+    set_digital_output(0, False)
+
+    # 9) Retreat from place
+    movel(retreat, a=0.8, v=speed_mid)
+
+    # 10) Return to home
+    movej(home, a=1.0, v=speed_fast)
+end
+
+# Start the program
+main()

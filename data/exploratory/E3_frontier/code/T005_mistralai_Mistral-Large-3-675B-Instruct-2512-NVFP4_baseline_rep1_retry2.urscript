@@ -1,0 +1,87 @@
+# Visual inspection scan - collaborative mode (T005)
+# Safety parameters
+set_analog_inputrange(0, 0)
+set_analog_inputrange(1, 0)
+set_analog_outputdomain(0, 0)
+set_analog_outputdomain(1, 0)
+set_tool_voltage(0)
+set_runstate_outputs([])
+set_payload(0.3)
+set_tcp(p[0, 0, 0.15, 0, 0, 0])
+
+# Safety configuration
+conf = [0, 0, 0, 0]
+speed_limit = 150.0
+force_limit = 150.0
+safety_status = 0
+
+# Home position
+def home_pos():
+  movej([-1.5707, -1.5707, -1.5707, -1.5707, 1.5707, 0], a=1.0, v=1.5, t=0, r=0)
+end
+
+# Approach inspection start
+def approach_start():
+  movej(p[0.3, 0.1, 0.3, 0, 3.1415, 0], a=0.5, v=1.3, t=0, r=0)
+  movel(p[0.3, 0.1, 0.2, 0, 3.1415, 0], a=0.3, v=0.8, t=0, r=0)
+end
+
+# Descend to scan height
+def descend_scan():
+  movel(p[0.3, 0.1, 0.15, 0, 3.1415, 0], a=0.2, v=0.5, t=0, r=0)
+end
+
+# Scan line 1
+def scan_line1():
+  movel(p[0.3, -0.1, 0.15, 0, 3.1415, 0], a=0.1, v=0.05, t=0, r=0)
+end
+
+# Step to scan line 2
+def step_line2():
+  movel(p[0.35, -0.1, 0.15, 0, 3.1415, 0], a=0.2, v=0.08, t=0, r=0)
+end
+
+# Scan line 2
+def scan_line2():
+  movel(p[0.35, 0.1, 0.15, 0, 3.1415, 0], a=0.1, v=0.05, t=0, r=0)
+end
+
+# Step to scan line 3
+def step_line3():
+  movel(p[0.4, 0.1, 0.15, 0, 3.1415, 0], a=0.2, v=0.08, t=0, r=0)
+end
+
+# Scan line 3
+def scan_line3():
+  movel(p[0.4, -0.1, 0.15, 0, 3.1415, 0], a=0.1, v=0.05, t=0, r=0)
+end
+
+# Retract after scan
+def retract():
+  movel(p[0.4, -0.1, 0.2, 0, 3.1415, 0], a=0.3, v=0.8, t=0, r=0)
+end
+
+# Main program
+thread watchdog_thread():
+  while True:
+    watchdog_feed = 0
+    sync()
+    watchdog_feed = 1
+    sleep(0.1)
+  end
+end
+
+thread program_thread():
+  home_pos()
+  approach_start()
+  descend_scan()
+  scan_line1()
+  step_line2()
+  scan_line2()
+  step_line3()
+  scan_line3()
+  retract()
+end
+
+watchdog_thread()
+program_thread()

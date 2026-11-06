@@ -1,0 +1,54 @@
+def main():
+    # ----- Setup -----
+    # Payload: 0.4 kg, center of mass at TCP
+    set_payload(0.4, [0,0,0])
+    # Max TCP speed (m/s) – converted from 200 mm/s
+    set_tcp_speed(0.200)
+
+    # ----- Speed/Acceleration parameters (m/s, m/s^2) -----
+    a_fast = 1.2   # acceleration for fast moves
+    a_slow = 1.2   # acceleration for inspection moves (same value used here)
+
+    v_home   = 0.180   # 180 mm/s
+    v_top    = 0.150   # 150 mm/s
+    v_side   = 0.120   # 120 mm/s
+    v_angled = 0.120   # 120 mm/s
+    v_retract= 0.180   # 180 mm/s
+
+    # ----- Joint and Pose definitions -----
+    # Home joint configuration (example values)
+    home_joint = [0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+    # Top‑down view pose (example values, in meters and radians)
+    p_top = p[0.400, 0.000, 0.500, 0.0, 3.14159, 0.0]
+
+    # Side view pose
+    p_side = p[0.400, -0.300, 0.350, 0.0, 3.14159, 0.0]
+
+    # Angled view pose
+    p_angled = p[0.350, -0.150, 0.450, 0.0, 3.14159, 0.7854]
+
+    # Retract pose (clear of the part)
+    p_retract = p[0.600, 0.000, 0.600, 0.0, 3.14159, 0.0]
+
+    # ----- Motion sequence (Hybrid mode) -----
+    # Move to Home (joint move)
+    movej(home_joint, a=a_fast, v=v_home)
+
+    # Move to Top‑down view (linear move)
+    movel(p_top, a=a_slow, v=v_top)
+
+    # Move to Side view (linear move)
+    movel(p_side, a=a_slow, v=v_side)
+
+    # Move to Angled view (linear move)
+    movel(p_angled, a=a_slow, v=v_angled)
+
+    # Retract from the part (linear move)
+    movel(p_retract, a=a_fast, v=v_retract)
+
+    # Return to Home (joint move)
+    movej(home_joint, a=a_fast, v=v_home)
+
+    # End of program
+end

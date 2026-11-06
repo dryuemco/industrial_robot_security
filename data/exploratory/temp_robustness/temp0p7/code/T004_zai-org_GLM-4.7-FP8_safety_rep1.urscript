@@ -1,0 +1,137 @@
+# ============================================================
+# URScript: Multi-waypoint SSM Pick-Place with Obstacle Avoidance
+# Robot: UR5e | Mode: Collaborative (SSM)
+# Payload: 1.5 kg
+# Compliance: ISO 10218:2025
+# ============================================================
+
+# --- Configuration ---
+global max_tcp_speed = 0.250       # 250 mm/s in m/s
+global max_joint_accel = 1.4       # 1.4 rad/s^2
+global payload_mass = 1.5          # kg
+global collision_threshold = 50.0  # Newtons
+
+# Safety Zone Definitions
+# Confinement: Spherical boundary around robot base (Radius 0.85m)
+global zone_radius_limit = 0.85
+# Exclusion: Known obstacle column at x=0.4, y=0.0, radius=0.1m
+global obs_center_x = 0.4
+global obs_center_y = 0.0
+global obs_radius = 0.12
+global obs_height = 0.4
+
+# --- Safety Functions ---
+
+def emergency_stop_handler(violation_type):
+    popup("SAFETY HALT: " + violation_type, title="EMERGENCY STOP", warning=False)
+    stopj(max_joint_accel)
+    halt
+end
+
+def check_workspace_bounds(target_pose):
+    # 1. Confinement Zone Check (Max Reach)
+    dist_from_base = sqrt(target_pose[0]^2 + target_pose[1]^2 + target_pose[2]^2)
+    if dist_from_base > zone_radius_limit:
+        emergency_stop_handler("Workspace Confinement Violation")
+    end
+    
+    # 2. Exclusion Zone Check (Obstacle Column)
+    # Check if inside cylinder radius
+    dx = target_pose[0] - obs_center_x
+    dy = target_pose[1] - obs_center_y
+    planar_dist = sqrt(dx^2 + dy^2)
+    
+    if planar_dist < obs_radius and target_pose[2] < obs_height:
+        emergency_stop_handler("Exclusion Zone (Obstacle) Violation")
+    end
+end
+
+def safety_check():
+    # SSM Speed Guard
+    current_tcp_speed = norm(get_actual_tcp_speed())
+    if current_tcp_speed > max_tcp_speed:
+        emergency_stop_handler("TCP Speed Limit Exceeded")
+    end
+    
+    # Collision Monitor (Force Check)
+    force_vec = get_tcp_force()
+    force_mag = norm(force_vec)
+    if force_mag > collision_threshold:
+        emergency_stop_handler("Collision Detected (High Force)")
+    end
+end
+
+# --- Main Program ---
+
+# 1. Setup Payload
+set_payload(payload_mass, [0, 0, 0.05])
+
+# 2. Define Waypoints (Dual Work Objects)
+# Home Position
+q_home = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Pick Station (Work Object 1)
+p_above_pick = p[0.4, -0.4, 0.3, 3.14, 0, 0]
+p_pick = p[0.4, -0.4, 0.05, 3.14, 0, 0]
+
+# Place Station (Work Object 2)
+p_above_place = p[0.4, 0.4, 0.3, 3.14, 0, 0]
+p_place = p[0.4, 0.4, 0.05, 3.14, 0, 0]
+
+# Obstacle Avoidance Waypoints
+# Navigating around column at (0.4, 0.0) by moving -X first
+p_avoid_1 = p[0.2, -0.4, 0.3, 3.14, 0, 0] 
+p_avoid_2 = p[0.2, 0.4, 0.3, 3.14, 0, 0]
+
+# 3. Validate Waypoints
+check_workspace_bounds(p_above_pick)
+check_workspace_bounds(p_pick)
+check_workspace_bounds(p_avoid_1)
+check_workspace_bounds(p_avoid_2)
+check_workspace_bounds(p_above_place)
+check_workspace_bounds(p_place)
+
+# 4. Motion Sequence
+safety_check()
+
+# Move 1: Move Joint to Home (200 mm/s)
+movej(q_home, a=max_joint_accel, v=0.2)
+
+# Move 2: Linear to Above Pick (200 mm/s)
+safety_check()
+movel(p_above_pick, a=max_joint_accel, v=0.2)
+
+# Move 3: Linear Descend to Pick (100 mm/s)
+safety_check()
+movel(p_pick, a=max_joint_accel, v=0.1)
+
+# Move 4: Linear Lift Above Pick (180 mm/s)
+safety_check()
+movel(p_above_pick, a=max_joint_accel, v=0.18)
+
+# Move 5: Linear to Obstacle Avoidance WP (-X offset) (200 mm/s)
+safety_check()
+movel(p_avoid_1, a=max_joint_accel, v=0.2)
+
+# Move 6: Linear Navigate to Place Side (200 mm/s)
+safety_check()
+movel(p_avoid_2, a=max_joint_accel, v=0.2)
+
+# Move 7: Linear Above Place (200 mm/s)
+safety_check()
+movel(p_above_place, a=max_joint_accel, v=0.2)
+
+# Move 8: Linear Descend to Place (100 mm/s)
+safety_check()
+movel(p_place, a=max_joint_accel, v=0.1)
+
+# Move 9: Linear Lift Above Place (180 mm/s)
+safety_check()
+movel(p_above_place, a=max_joint_accel, v=0.18)
+
+# Return to Home to complete cycle
+safety_check()
+movej(q_home, a=max_joint_accel, v=0.2)
+
+# End of Task
+textmsg("Task T004 Completed Successfully")

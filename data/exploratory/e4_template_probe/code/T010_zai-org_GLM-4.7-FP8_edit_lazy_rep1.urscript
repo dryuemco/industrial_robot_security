@@ -1,0 +1,89 @@
+# Task: T010 — Screw fastening assembly — hybrid mode (Improved)
+# Robot: ur5e | Payload: 1.0 kg
+# Improvements: 
+# 1. Implemented 4 fastening points as per task description.
+# 2. Fixed logic error: Screwdriver OFF now sets digital output to False.
+# 3. Added set_payload() for accurate dynamics.
+# 4. Added safety gate check to enforce "fenced during fastening" hybrid mode.
+# 5. Modularized fastening sequence for clarity and maintainability.
+
+def fasten_screw(target_pose_above, target_pose_down):
+  # Move to approach point
+  movel(target_pose_above, a=0.8000, v=0.2000, r=0.0100)
+  
+  # Descend to fastening point
+  movel(target_pose_down, a=0.2000, v=0.0500)
+  
+  # Screwdriver ON
+  set_digital_out(0, True)
+  
+  # Fastening time
+  sleep(2.0000)
+  
+  # Screwdriver OFF (Fixed: was True, now False)
+  set_digital_out(0, False)
+  
+  # Retract from fastening
+  movel(target_pose_above, a=0.6000, v=0.1500, r=0.0100)
+end
+
+def task_T010():
+  # Set Payload (1.0 kg)
+  set_payload(1.0, [0, 0, 0.05])
+
+  # [0] Verify E-Stop
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+  
+  # [1] Home
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.5000)
+  
+  # [2] Above screw feeder
+  movel(p[0.300000, -0.200000, 0.250000, 0.0000, 3.1416, 0.0000], a=0.8000, v=0.2000, r=0.0100)
+  
+  # [3] Pick screw
+  movel(p[0.300000, -0.200000, 0.110000, 0.0000, 3.1416, 0.0000], a=0.4000, v=0.0800)
+  
+  # [4] Screw pickup magnet ON
+  set_digital_out(4, True)
+  
+  # [5] Magnet settle
+  sleep(0.2000)
+  
+  # [6] Lift from feeder
+  movel(p[0.300000, -0.200000, 0.300000, 0.0000, 3.1416, 0.0000], a=0.7000, v=0.1800, r=0.0150)
+
+  # [Hybrid Mode Safety Check] Wait for safety fence to close before fastening
+  # Assuming digital_in(1) indicates fence status (True = Closed/Safe)
+  textmsg("Waiting for safety fence to close for fastening phase...")
+  while (get_digital_in(1) == False):
+    sleep(0.1)
+  end
+  textmsg("Safety fence confirmed. Starting fastening sequence.")
+
+  # [7-10] Fastening Sequence (4 Points)
+  # Point 1
+  fasten_screw(p[0.420000, 0.120000, 0.200000, 0.0000, 3.1416, 0.0000], 
+               p[0.420000, 0.120000, 0.080000, 0.0000, 3.1416, 0.0000])
+  
+  # Point 2 (Offset Y +0.05m)
+  fasten_screw(p[0.420000, 0.170000, 0.200000, 0.0000, 3.1416, 0.0000], 
+               p[0.420000, 0.170000, 0.080000, 0.0000, 3.1416, 0.0000])
+               
+  # Point 3 (Offset Y +0.10m)
+  fasten_screw(p[0.420000, 0.220000, 0.200000, 0.0000, 3.1416, 0.0000], 
+               p[0.420000, 0.220000, 0.080000, 0.0000, 3.1416, 0.0000])
+               
+  # Point 4 (Offset Y +0.15m)
+  fasten_screw(p[0.420000, 0.270000, 0.200000, 0.0000, 3.1416, 0.0000], 
+               p[0.420000, 0.270000, 0.080000, 0.0000, 3.1416, 0.0000])
+  
+  # [11] Return home
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.5000)
+  
+end
+
+# Entry point
+task_T010()

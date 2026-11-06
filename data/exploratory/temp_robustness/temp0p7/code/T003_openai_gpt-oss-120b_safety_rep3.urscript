@@ -1,0 +1,143 @@
+# ------------------------------------------------------------
+# UR5e Hybrid Mode Task: EUR-pallet 2x2 layer (Hybrid - fenced transit, collaborative pick)
+# Payload: 4.5 kg
+# Safety: ISO 10218:2025 compliant
+# ------------------------------------------------------------
+
+# ---------- Global Safety Parameters ----------
+max_joint_accel   = 1.4      # rad/s^2 (per joint)
+max_tcp_speed_collab = 0.250 # m/s (250 mm/s) for collaborative moves
+max_tcp_speed_fenced = 0.280 # m/s (280 mm/s) allowed in fenced zone
+safety_stop_input = 0        # Digital input index for emergency stop
+
+# ---------- Payload ----------
+set_payload(4.5, [0,0,0.05])   # 4.5 kg, centre of gravity 5 cm above tool
+
+# ---------- Safety Zones (axis-aligned bounding boxes) ----------
+# Units: meters, relative to robot base
+pallet_zone = {
+  "xmin": 0.30, "xmax": 0.80,
+  "ymin": -0.30, "ymax": 0.30,
+  "zmin": 0.00, "zmax": 0.30
+}
+conveyor_zone = {
+  "xmin": -0.70, "xmax": -0.30,
+  "ymin": -0.20, "ymax": 0.20,
+  "zmin": 0.00, "zmax": 0.30
+}
+
+# ---------- Helper Functions ----------
+def in_zone(p, zone):
+    return (p[0] >= zone["xmin"] and p[0] <= zone["xmax"] and
+            p[1] >= zone["ymin"] and p[1] <= zone["ymax"] and
+            p[2] >= zone["zmin"] and p[2] <= zone["zmax"])
+
+def safety_check(pose, mode):
+    # mode: "collab" or "fenced"
+    if mode == "collab":
+        if not in_zone(pose, conveyor_zone):
+            popup("Safety Violation: Pose outside conveyor collaborative zone!", 
+                  title="Safety Stop", 
+                  error=True, 
+                  blocking=True)
+            halt()
+    elif mode == "fenced":
+        if not in_zone(pose, pallet_zone):
+            popup("Safety Violation: Pose outside pallet fenced zone!", 
+                  title="Safety Stop", 
+                  error=True, 
+                  blocking=True)
+            halt()
+    else:
+        popup("Unknown safety mode!", title="Safety Stop", error=True, blocking=True)
+        halt()
+
+def e_stop_handler():
+    if get_digital_in(safety_stop_input):
+        popup("Emergency Stop Activated!", title="E‑Stop", error=True, blocking=True)
+        halt()
+
+# ---------- Motion Parameters ----------
+def move_joint_safe(q, v, a):
+    e_stop_handler()
+    speedj(q, a, v, 0.0)   # joint speed command (used for safety check)
+    movel(get_forward_kin(q), a=a, v=v)
+
+def move_linear_safe(pose, v, a, mode):
+    e_stop_handler()
+    safety_check(pose, mode)
+    movel(pose, a=a, v=v)
+
+# ---------- Waypoints ----------
+# Joint home position (radians)
+home_q = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Above conveyor pick (TCP pose, meters)
+pick_above = p[-0.55, 0.0, 0.25, 0, 3.14, 0]   # Approach point, orientation facing down
+
+# Descend to pick (TCP pose)
+pick_down  = p[-0.55, 0.0, 0.10, 0, 3.14, 0]   # 150 mm descent
+
+# Lift from conveyor (TCP pose)
+lift_pose  = p[-0.55, 0.0, 0.30, 0, 3.14, 0]   # 200 mm above pick
+
+# Pallet grid positions (relative to pallet origin)
+pallet_origin = p[0.45, 0.0, 0.10, 0, 3.14, 0]   # First cell centre (0,0) at 10 cm height
+
+# Generate 2×2 grid (offset 0.15 m between cells)
+grid_offsets = [
+  [0.0, 0.0],
+  [0.15, 0.0],
+  [0.0, 0.15],
+  [0.15, 0.15]
+]
+
+# ---------- Main Routine ----------
+def main():
+    # 1) Move to Home (joint move, collaborative speed not required)
+    movel(get_forward_kin(home_q), a=max_joint_accel, v=0.2)   # safe joint speed
+
+    # 2) Approach conveyor (linear, collaborative)
+    move_linear_safe(pick_above, v=max_tcp_speed_collab, a=1.0, mode="collab")
+
+    # 3) Descend to pick (linear, collaborative)
+    move_linear_safe(pick_down, v=0.10, a=0.8, mode="collab")
+
+    # 4) Close gripper (placeholder – replace with actual I/O)
+    set_digital_out(2, True)   # gripper close
+    sleep(0.5)
+
+    # 5) Lift from conveyor (linear, collaborative)
+    move_linear_safe(lift_pose, v=0.20, a=1.0, mode="collab")
+
+    # 6–9) Transit to each pallet cell (fenced linear moves) and release
+    for offset in grid_offsets:
+        # Compute target pose for current cell
+        target = p[
+            pallet_origin[0] + offset[0],
+            pallet_origin[1] + offset[1],
+            pallet_origin[2],
+            pallet_origin[3],
+            pallet_origin[4],
+            pallet_origin[5]
+        ]
+
+        # Transit (fenced zone)
+        move_linear_safe(target, v=max_tcp_speed_fenced, a=1.2, mode="fenced")
+        sync()   # ensure motion completed
+
+        # Open gripper to place box
+        set_digital_out(2, False)   # gripper open
+        sleep(0.5)
+
+        # Retract slightly upward before next cell
+        retreat = p[target[0], target[1], target[2] + 0.10, target[3], target[4], target[5]]
+        move_linear_safe(retreat, v=0.15, a=1.0, mode="fenced")
+
+    # 10) Return to Home
+    movel(get_forward_kin(home_q), a=max_joint_accel, v=0.2)
+
+# ------------------------------------------------------------
+# Run the program
+main()
+# ------------------------------------------------------------

@@ -1,0 +1,119 @@
+# URScript for UR5e Linear Weld Path (T002)
+# Safety: ISO 10218:2025 compliance
+# Mode: Fenced Automatic
+
+# --- Configuration ---
+MAX_TCP_SPEED = 0.5        # 500 mm/s (Task requirement)
+MAX_JOINT_ACCEL = 1.4      # rad/s^2 (Safety requirement)
+PAYLOAD_MASS = 3.0         # kg
+PAYLOAD_COM = [0.0, 0.0, 0.1] # Center of mass offset (m)
+
+# Safety Zone Definitions (Boundary Checks)
+# Workspace Confinement Box: X[0.15, 0.85], Y[-0.65, -0.15], Z[0.0, 0.6]
+WS_X_MIN = 0.15
+WS_X_MAX = 0.85
+WS_Y_MIN = -0.65
+WS_Y_MAX = -0.15
+WS_Z_MIN = 0.0
+WS_Z_MAX = 0.6
+
+# Exclusion Zone (Example: Restricted area near fixture)
+EXCL_ZONE_CENTER = [0.5, 0.5, 0.3]
+EXCL_ZONE_RADIUS = 0.2
+
+# --- Helper Functions ---
+
+def emergency_stop_handler(msg):
+    popup("SAFETY VIOLATION: " + msg)
+    stopj(5.0)
+    halt
+end
+
+def validate_workspace(p_target):
+    # Check if target pose is within workspace boundaries
+    if p_target[0] < WS_X_MIN or p_target[0] > WS_X_MAX:
+        emergency_stop_handler("Waypoint X out of confinement zone")
+    elif p_target[1] < WS_Y_MIN or p_target[1] > WS_Y_MAX:
+        emergency_stop_handler("Waypoint Y out of confinement zone")
+    elif p_target[2] < WS_Z_MIN or p_target[2] > WS_Z_MAX:
+        emergency_stop_handler("Waypoint Z out of confinement zone")
+    end
+    
+    # Check Exclusion Zone (Simple spherical distance check)
+    dist = sqrt(d2(p_target[0:3], EXCL_ZONE_CENTER))
+    if dist < EXCL_ZONE_RADIUS:
+        emergency_stop_handler("Waypoint inside safety exclusion zone")
+    end
+end
+
+def safety_check():
+    # Monitor actual TCP speed
+    current_speed = get_actual_tcp_speed()
+    if current_speed > MAX_TCP_SPEED:
+        emergency_stop_handler("TCP Speed Limit Exceeded")
+    end
+    
+    # Note: Joint acceleration is limited via motion command parameters
+    # Real-time monitoring of instantaneous joint accel requires external thread or URCap
+end
+
+# --- Main Program ---
+
+# Set Payload
+set_payload(PAYLOAD_MASS, PAYLOAD_COM)
+
+# Define Waypoints
+# 1. Home position (Joint space)
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, -1.57]
+
+# 2. Weld Path (Pose space)
+# Start point: X=0.3, Y=-0.4, Z=0.2 (Orientation pointing down)
+p_weld_start = p[0.3, -0.4, 0.2, 2.22, -2.22, 0.0]
+
+# Approach point: 50mm above start
+p_weld_approach = p_weld_start
+p_weld_approach[2] = p_weld_start[2] + 0.05 
+
+# End point: 300mm along X axis
+p_weld_end = p_weld_start
+p_weld_end[0] = p_weld_start[0] + 0.3 
+
+# Retract point: 50mm above end
+p_weld_retract = p_weld_end
+p_weld_retract[2] = p_weld_end[2] + 0.05
+
+# --- Motion Sequence ---
+
+# 1. Move Joint: Go to home position
+safety_check()
+movej(q_home, a=MAX_JOINT_ACCEL, v=0.3) # 300 mm/s
+
+# 2. Move Linear: Approach above weld start
+safety_check()
+validate_workspace(p_weld_approach)
+movel(p_weld_approach, a=0.5, v=0.25) # 250 mm/s
+
+# 3. Move Linear: Descend to weld start
+safety_check()
+validate_workspace(p_weld_start)
+movel(p_weld_start, a=0.2, v=0.1) # 100 mm/s
+
+# 4. Move Linear: Weld seam (300mm)
+# Activate Arc (Simulated via Digital Out 0)
+safety_check()
+validate_workspace(p_weld_end)
+set_digital_out(0, True) # Welding ON
+movel(p_weld_end, a=0.1, v=0.05) # 50 mm/s (Weld speed)
+set_digital_out(0, False) # Welding OFF
+
+# 5. Move Linear: Retract above weld end
+safety_check()
+validate_workspace(p_weld_retract)
+movel(p_weld_retract, a=0.4, v=0.2) # 200 mm/s
+
+# 6. Move Joint: Return to home
+safety_check()
+movej(q_home, a=MAX_JOINT_ACCEL, v=0.3)
+
+# End
+popup("Task T002 Completed Successfully")

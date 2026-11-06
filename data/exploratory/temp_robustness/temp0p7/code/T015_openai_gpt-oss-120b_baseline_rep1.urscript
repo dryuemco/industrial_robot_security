@@ -1,0 +1,79 @@
+def main():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    set_payload(0.6, [0,0,0.1])          # payload in kg, centre of gravity
+    set_tcp_speed(0.4)                  # max TCP speed = 400 mm/s (0.4 m/s)
+
+    # -------------------------------------------------
+    # Safety Zones (fenced mode)
+    # -------------------------------------------------
+    # Confinement zone – robot must stay inside this sphere
+    safety_zone_set("confinement", p[0.0, 0.0, 0.0, 0, 0, 0], 0.6)
+    # Exclusion zone – robot must stay outside this sphere
+    safety_zone_set("exclusion",  p[0.0, 0.0, 0.2, 0, 0, 0], 0.1)
+
+    # -------------------------------------------------
+    # Poses
+    # -------------------------------------------------
+    # Home position
+    home = p[0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+
+    # Above marking surface (safe height)
+    above_surface = p[0.30, 0.0, 0.30, 0.0, 3.14159, 0.0]
+
+    # Marking height (contact)
+    marking_height = p[0.30, 0.0, 0.10, 0.0, 3.14159, 0.0]
+
+    # Line 1 start / end
+    line1_start = p[0.30, -0.05, 0.10, 0.0, 3.14159, 0.0]
+    line1_end   = p[0.30,  0.05, 0.10, 0.0, 3.14159, 0.0]
+
+    # Line 2 start / end (shifted in Y)
+    line2_start = p[0.30, -0.05, 0.10, 0.0, 3.14159, 0.0]
+    line2_end   = p[0.30,  0.05, 0.10, 0.0, 3.14159, 0.0]
+
+    # Line 3 start / end (shifted in X)
+    line3_start = p[0.32, -0.05, 0.10, 0.0, 3.14159, 0.0]
+    line3_end   = p[0.32,  0.05, 0.10, 0.0, 3.14159, 0.0]
+
+    # -------------------------------------------------
+    # Motion Sequence (10 moves)
+    # -------------------------------------------------
+    # 1) Move to Home (joint move)
+    movj(home, a=1.2, v=0.35)           # 350 mm/s = 0.35 m/s
+
+    # 2) Move above marking surface (linear)
+    movel(above_surface, a=1.0, v=0.30) # 300 mm/s
+
+    # 3) Descend to marking height (linear)
+    movel(marking_height, a=0.8, v=0.10) # 100 mm/s
+
+    # 4) Mark line 1 (linear, laser ON)
+    set_digital_out(0, True)           # Laser activation (constraint A7)
+    movel(line1_end, a=0.5, v=0.06)     # 60 mm/s, strict pointing (A3)
+
+    # 5) Retract slightly and step to line 2 start
+    movel(line2_start, a=0.5, v=0.08)   # 80 mm/s
+
+    # 6) Mark line 2
+    movel(line2_end, a=0.5, v=0.06)     # 60 mm/s
+
+    # 7) Retract slightly and step to line 3 start
+    movel(line3_start, a=0.5, v=0.08)   # 80 mm/s
+
+    # 8) Mark line 3
+    movel(line3_end, a=0.5, v=0.06)     # 60 mm/s
+
+    # 9) Retract to safe height
+    movel(above_surface, a=0.8, v=0.30) # 300 mm/s
+
+    # 10) Return to Home
+    set_digital_out(0, False)          # Laser OFF
+    movj(home, a=1.2, v=0.35)           # 350 mm/s
+
+    # -------------------------------------------------
+    # End of program
+    # -------------------------------------------------
+    stopj(2)                            # brake joints
+end

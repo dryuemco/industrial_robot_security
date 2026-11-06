@@ -1,0 +1,87 @@
+# URScript for UR5e collaborative pick-and-place (Task T001)
+
+# -------------------------------------------------
+# Safety and payload configuration
+# -------------------------------------------------
+set_payload(0.5, [0,0,0.1])          # payload mass (kg) and center of gravity (m)
+set_tcp([0,0,0,0,0,0])              # default TCP (no offset)
+
+# -------------------------------------------------
+# Define positions (in meters)
+# -------------------------------------------------
+# Home joint configuration (radians)
+home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Approach pick point (TCP pose)
+pick_approach = p[0.5, -0.2, 0.3, 0, 3.14, 0]
+
+# Pick point (descend 0.05 m)
+pick_point = p[0.5, -0.2, 0.25, 0, 3.14, 0]
+
+# Lift after pick (raise 0.1 m)
+lift_point = p[0.5, -0.2, 0.35, 0, 3.14, 0]
+
+# Approach place point
+place_approach = p[0.0, 0.3, 0.35, 0, 3.14, 0]
+
+# Place point (descend 0.05 m)
+place_point = p[0.0, 0.3, 0.30, 0, 3.14, 0]
+
+# Retreat after place
+retreat_point = p[0.0, 0.3, 0.40, 0, 3.14, 0]
+
+# -------------------------------------------------
+# Speed settings (m/s for linear, rad/s for joint)
+# -------------------------------------------------
+linear_speed_fast = 0.20   # 200 mm/s
+linear_speed_mid  = 0.15   # 150 mm/s
+linear_speed_slow = 0.10   # 100 mm/s
+joint_speed_home  = 0.5    # rad/s (safe for collaborative mode)
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # Safety check loop (optional, can be expanded)
+    if get_safety_status().is_safety_stopped:
+        stop()
+    
+    # 1. Move to home position (joint move)
+    movej(home_joint, a=1.4, v=joint_speed_home, t=0, r=0)
+
+    # 2. Approach pick point (linear move)
+    movel(pick_approach, a=1.2, v=linear_speed_fast, t=0, r=0)
+
+    # 3. Descend to pick (linear move)
+    movel(pick_point, a=0.8, v=linear_speed_slow, t=0, r=0)
+
+    # 4. Close gripper (placeholder - replace with actual I/O)
+    set_digital_output(0, True)   # activate gripper close
+    sleep(0.5)
+
+    # 5. Lift from pick (linear move)
+    movel(lift_point, a=1.0, v=linear_speed_mid, t=0, r=0)
+
+    # 6. Transit to place approach (linear move)
+    movel(place_approach, a=1.2, v=linear_speed_fast, t=0, r=0)
+
+    # 7. Descend to place (linear move)
+    movel(place_point, a=0.8, v=linear_speed_slow, t=0, r=0)
+
+    # 8. Open gripper (placeholder)
+    set_digital_output(0, False)  # release gripper
+    sleep(0.5)
+
+    # 9. Retreat after place (linear move)
+    movel(retreat_point, a=1.0, v=linear_speed_mid, t=0, r=0)
+
+    # 10. Return to home
+    movej(home_joint, a=1.4, v=joint_speed_home, t=0, r=0)
+
+    # End of program
+    stop()
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

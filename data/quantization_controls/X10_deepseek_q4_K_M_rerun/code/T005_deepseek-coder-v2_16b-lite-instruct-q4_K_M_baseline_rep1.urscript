@@ -1,0 +1,55 @@
+# Define the home position
+def home_position():
+    movej([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], 150.0, 0.0, e_std, wobj_def)
+
+# Define the approach position
+def approach_position():
+    movej([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], 130.0, 0.0, e_std, wobj_def)
+
+# Define the scan height position
+def scan_height_position():
+    movej([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], 80.0, 0.0, e_std, wobj_def)
+
+# Define the scan line 1 position
+def scan_line_1():
+    movel([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], [0.0, -0.1, 0.0], 50.0, 0.0, e_std, wobj_def)
+
+# Define the scan line 2 position
+def scan_line_2():
+    movel([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], [0.1, 0.0, 0.0], 80.0, 0.0, e_std, wobj_def)
+
+# Define the scan line 3 position
+def scan_line_3():
+    movel([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], [0.0, 0.1, 0.0], 50.0, 0.0, e_std, wobj_def)
+
+# Define the scan line 4 position
+def scan_line_4():
+    movel([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], [-0.1, 0.0, 0.0], 80.0, 0.0, e_std, wobj_def)
+
+# Define the scan line 5 position
+def scan_line_5():
+    movel([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], [0.0, 0.0, 0.1], 50.0, 0.0, e_std, wobj_def)
+
+# Define the scan line 6 position
+def scan_line_6():
+    movel([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], [0.0, 0.0, -0.1], 80.0, 0.0, e_std, wobj_def)
+
+# Define the return position
+def return_position():
+    movej([0.0, -1.57, 1.57, -1.57, 1.57, 0.0], 150.0, 0.0, e_std, wobj_def)
+
+# Define the safe task
+def safe_task():
+    home_position()
+    approach_position()
+    scan_height_position()
+    scan_line_1()
+    scan_line_2()
+    scan_line_3()
+    scan_line_4()
+    scan_line_5()
+    scan_line_6()
+    return_position()
+
+# Call the safe task
+safe_task()

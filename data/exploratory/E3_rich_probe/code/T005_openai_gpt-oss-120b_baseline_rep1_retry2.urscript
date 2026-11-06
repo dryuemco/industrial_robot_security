@@ -1,0 +1,109 @@
+# URScript for UR5e visual inspection scan (collaborative mode)
+# Payload: 0.3 kg, Max TCP speed: 150 mm/s
+# Safety: workspace bounding box and error handling for all motions
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+payload(0.3)               # set payload
+set_tcp(p[0,0,0.1,0,0,0])   # TCP offset (example)
+
+# Workspace limits (in meters) – adjust to actual cell
+global const X_MIN = -0.5
+global const X_MAX =  0.5
+global const Y_MIN = -0.5
+global const Y_MAX =  0.5
+global const Z_MIN =  0.0   # floor
+global const Z_MAX =  1.0   # ceiling
+
+# -------------------------------------------------
+# Helper functions
+# -------------------------------------------------
+def within_workspace(p):
+    # p is a pose list [x, y, z, Rx, Ry, Rz] in meters / radians
+    return (X_MIN <= p[0] <= X_MAX) and (Y_MIN <= p[1] <= Y_MAX) and (Z_MIN <= p[2] <= Z_MAX)
+
+def safe_movel(target_pose, a, v):
+    if not within_workspace(target_pose):
+        textmsg("Target pose out of workspace bounds, aborting.")
+        halt()
+    try:
+        movel(target_pose, a=a, v=v, wait=True)
+    except:
+        textmsg("movel failed, stopping program safely.")
+        halt()
+
+def safe_movej(target_joints, a, v):
+    # Joint limits are enforced by the robot controller; we still wrap in try/except
+    try:
+        movej(target_joints, a=a, v=v, wait=True)
+    except:
+        textmsg("movej failed, stopping program safely.")
+        halt()
+
+# -------------------------------------------------
+# Poses / Joint configurations (all units in meters / radians)
+# -------------------------------------------------
+# 1. Home joint position (example)
+global const HOME_J = [0, -1.57, 0, -1.57, 0, 0]
+
+# 2. Approach start – 200 mm above part centre, camera pointing down
+global const APPROACH_POSE = p[0.0, 0.0, 0.4, 0, 3.14159, 0]   # Rx=0, Ry=π (downward)
+
+# 3. Scan height – 150 mm above part surface
+global const SCAN_HEIGHT_POSE = p[0.0, 0.0, 0.35, 0, 3.14159, 0]
+
+# 4-9. Scan line poses (Y sweep 200 mm, step X 66.7 mm per line)
+global const LINE1_START = p[-0.1, -0.1, 0.35, 0, 3.14159, 0]
+global const LINE1_END   = p[-0.1,  0.1, 0.35, 0, 3.14159, 0]
+
+global const LINE2_START = p[ 0.0333, -0.1, 0.35, 0, 3.14159, 0]
+global const LINE2_END   = p[ 0.0333,  0.1, 0.35, 0, 3.14159, 0]
+
+global const LINE3_START = p[ 0.0666, -0.1, 0.35, 0, 3.14159, 0]
+global const LINE3_END   = p[ 0.0666,  0.1, 0.35, 0, 3.14159, 0]
+
+# 10. Retreat – back to approach height
+global const RETREAT_POSE = APPROACH_POSE
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # 1. Move to Home (joint space) – 150 mm/s (0.15 m/s)
+    safe_movej(HOME_J, a=1.4, v=0.15)
+
+    # 2. Approach start – linear move, 130 mm/s
+    safe_movel(APPROACH_POSE, a=1.2, v=0.13)
+
+    # 3. Descend to scan height – 80 mm/s
+    safe_movel(SCAN_HEIGHT_POSE, a=1.0, v=0.08)
+
+    # 4. Scan line 1 – Y sweep, 50 mm/s
+    safe_movel(LINE1_START, a=0.8, v=0.05)
+    safe_movel(LINE1_END,   a=0.8, v=0.05)
+
+    # 5. Step to line 2 (+X), 80 mm/s
+    safe_movel(LINE2_START, a=1.0, v=0.08)
+
+    # 6. Scan line 2 – Y sweep, 50 mm/s
+    safe_movel(LINE2_END,   a=0.8, v=0.05)
+
+    # 7. Step to line 3 (+X), 80 mm/s
+    safe_movel(LINE3_START, a=1.0, v=0.08)
+
+    # 8. Scan line 3 – Y sweep, 50 mm/s
+    safe_movel(LINE3_END,   a=0.8, v=0.05)
+
+    # 9. Retreat to approach height – 130 mm/s
+    safe_movel(RETREAT_POSE, a=1.2, v=0.13)
+
+    # 10. Return to Home joint position – 150 mm/s
+    safe_movej(HOME_J, a=1.4, v=0.15)
+
+    textmsg("Inspection scan completed successfully.")
+
+# -------------------------------------------------
+# Run program
+# -------------------------------------------------
+main()

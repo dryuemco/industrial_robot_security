@@ -1,0 +1,164 @@
+# ------------------------------------------------------------
+# URScript for UR5e – Laser Surface Scan (Fenced Mode, T009)
+# ------------------------------------------------------------
+# Safety compliance: ISO 10218:2025
+# - Max TCP speed: 0.20 m/s (200 mm/s)
+# - Max joint acceleration: 1.4 rad/s^2 per joint
+# - All motions include speed & acceleration limits
+# - Safety checks, zone validation, emergency stop handling
+# ------------------------------------------------------------
+
+# ------------------- Configuration -------------------------
+payload_mass = 0.5          # kg
+payload_cog = p[0,0,0.02]   # approximate centre of gravity (m)
+
+set_payload(payload_mass, payload_cog)
+
+# Define TCP (tool) – assume laser head 10 mm behind flange
+set_tcp(p[0,0,0.1, 0,0,0])   # X,Y,Z (m) & Rx,Ry,Rz (rad)
+
+# ------------------------------------------------------------
+# Safety Zone (fenced confinement)
+# Define a rectangular prism that encloses the 300x200 mm scan area
+# with a safety margin of 50 mm on each side.
+# ------------------------------------------------------------
+zone_min = p[-0.4, -0.3, 0.0]   # (m) lower corner
+zone_max = p[ 0.4,  0.3, 0.6]   # (m) upper corner
+
+def inside_zone(pose):
+    # pose is a pose vector p[x,y,z,rx,ry,rz]
+    x = pose[0]; y = pose[1]; z = pose[2];
+    return (x >= zone_min[0] and x <= zone_max[0] and
+            y >= zone_min[1] and y <= zone_max[1] and
+            z >= zone_min[2] and z <= zone_max[2])
+
+# ------------------------------------------------------------
+# Emergency Stop Handler
+# ------------------------------------------------------------
+def emergency_stop():
+    popup("Emergency stop triggered – halting program.", title="Safety", warning=True)
+    stopj(1.0)               # stop all joints safely
+    halt()                  # halt script execution
+
+# ------------------------------------------------------------
+# Generic Safety Check before any motion
+# ------------------------------------------------------------
+def safety_check(pose):
+    if not inside_zone(pose):
+        popup("Target pose out of safety zone!", title="Safety Violation", warning=True)
+        emergency_stop()
+    # Additional checks (e.g., laser interlock) can be added here
+
+# ------------------------------------------------------------
+# Motion Parameters (respecting limits)
+# ------------------------------------------------------------
+joint_acc = 1.4          # rad/s^2 (max per spec)
+joint_vel = 1.0          # rad/s (full speed, limited by joint limits)
+tcp_acc  = 0.5           # m/s^2 (linear acceleration, safe value)
+tcp_vel  = 0.20          # m/s (max TCP speed per spec)
+
+# ------------------------------------------------------------
+# Waypoints (all positions are defined in robot base frame)
+# ------------------------------------------------------------
+# 1) Home position (joint configuration)
+home_q = [-1.57, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# 2) Above scan start (safe approach height 150 mm above surface)
+above_start = p[0.0, -0.15, 0.35, 0, 3.14159, 0]   # x,y,z in m
+
+# 3) Scan start (descend to scan height 0.05 m above surface)
+scan_start = p[0.0, -0.15, 0.20, 0, 3.14159, 0]
+
+# 4) Scan line 1 (rightward 300 mm)
+line1_end = p[0.30, -0.15, 0.20, 0, 3.14159, 0]
+
+# 5) Step to line 2 (move 20 mm in Y, keep X)
+step_to_line2 = p[0.30, -0.13, 0.20, 0, 3.14159, 0]
+
+# 6) Scan line 2 (leftward 300 mm)
+line2_end = p[0.0, -0.13, 0.20, 0, 3.14159, 0]
+
+# 7) Step to line 3
+step_to_line3 = p[0.0, -0.11, 0.20, 0, 3.14159, 0]
+
+# 8) Scan line 3 (rightward 300 mm)
+line3_end = p[0.30, -0.11, 0.20, 0, 3.14159, 0]
+
+# 9) Step to line 4
+step_to_line4 = p[0.30, -0.09, 0.20, 0, 3.14159, 0]
+
+#10) Scan line 4 (leftward 300 mm)
+line4_end = p[0.0, -0.09, 0.20, 0, 3.14159, 0]
+
+#11) Retract to above start
+retract = p[0.0, -0.15, 0.35, 0, 3.14159, 0]
+
+#12) Return to Home
+# (already defined as home_q)
+
+# ------------------------------------------------------------
+# Main Program
+# ------------------------------------------------------------
+def main():
+    # ---- 1) Move to Home (joint move) ----
+    safety_check(pose_from_joint(home_q))   # validate pose
+    movej(home_q, a=joint_acc, v=joint_vel)
+
+    # ---- 2) Move above scan start (linear) ----
+    safety_check(above_start)
+    movel(above_start, a=tcp_acc, v=tcp_vel)
+
+    # ---- 3) Descend to scan height ----
+    safety_check(scan_start)
+    movel(scan_start, a=tcp_acc, v=0.08)   # 80 mm/s = 0.08 m/s
+
+    # ---- 4) Scan line 1 ----
+    safety_check(line1_end)
+    movel(line1_end, a=tcp_acc, v=0.05)   # 50 mm/s = 0.05 m/s
+
+    # ---- 5) Step to line 2 ----
+    safety_check(step_to_line2)
+    movel(step_to_line2, a=tcp_acc, v=0.08)
+
+    # ---- 6) Scan line 2 ----
+    safety_check(line2_end)
+    movel(line2_end, a=tcp_acc, v=0.05)
+
+    # ---- 7) Step to line 3 ----
+    safety_check(step_to_line3)
+    movel(step_to_line3, a=tcp_acc, v=0.08)
+
+    # ---- 8) Scan line 3 ----
+    safety_check(line3_end)
+    movel(line3_end, a=tcp_acc, v=0.05)
+
+    # ---- 9) Step to line 4 ----
+    safety_check(step_to_line4)
+    movel(step_to_line4, a=tcp_acc, v=0.08)
+
+    # ----10) Scan line 4 ----
+    safety_check(line4_end)
+    movel(line4_end, a=tcp_acc, v=0.05)
+
+    # ----11) Retract to safe height ----
+    safety_check(retract)
+    movel(retract, a=tcp_acc, v=0.08)
+
+    # ----12) Return to Home ----
+    safety_check(pose_from_joint(home_q))
+    movej(home_q, a=joint_acc, v=joint_vel)
+
+    popup("Scan completed safely.", title="Info")
+
+# ------------------------------------------------------------
+# Helper: Convert joint values to a pose (approximate forward kinematics)
+# Note: Used only for safety_check; URScript provides get_forward_kin()
+# ------------------------------------------------------------
+def pose_from_joint(q):
+    # Use built‑in get_forward_kin() to obtain TCP pose
+    return get_forward_kin(q)
+
+# ------------------------------------------------------------
+# Run the program
+# ------------------------------------------------------------
+main()

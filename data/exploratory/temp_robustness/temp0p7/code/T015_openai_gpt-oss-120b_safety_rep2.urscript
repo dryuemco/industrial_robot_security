@@ -1,0 +1,127 @@
+# URScript for UR5e – Laser Marking (Fenced Mode, Task T015)
+
+# -------------------------------------------------
+# Safety Configuration
+# -------------------------------------------------
+MAX_TCP_SPEED       = 0.250   # [m/s] (250 mm/s limit for collaborative mode)
+MAX_JOINT_ACCEL     = 1.4     # [rad/s^2] per joint
+SAFE_PAYLOAD        = 0.6     # [kg]
+
+# Define safety zones (as axis-aligned bounding boxes)
+# Each zone: {xmin, xmax, ymin, ymax, zmin, zmax}
+confinement_zone = {xmin = -0.8, xmax = 0.8,
+                    ymin = -0.8, ymax = 0.8,
+                    zmin = 0.0,  zmax = 1.2}
+exclusion_zone   = {xmin = -0.2, xmax = 0.2,
+                    ymin = -0.2, ymax = 0.2,
+                    zmin = 0.5,  zmax = 0.9}
+
+# -------------------------------------------------
+# Helper Functions
+# -------------------------------------------------
+def safety_check(pose):
+    # pose: [x, y, z, rx, ry, rz]
+    x = pose[0]; y = pose[1]; z = pose[2]
+    # Confinement (must stay inside)
+    if not (x > confinement_zone.xmin and x < confinement_zone.xmax and
+            y > confinement_zone.ymin and y < confinement_zone.ymax and
+            z > confinement_zone.zmin and z < confinement_zone.zmax):
+        popup("Safety violation: Outside confinement zone!", title="ERROR", error=True)
+        stopj(0)   # emergency stop
+    # Exclusion (must stay outside)
+    if (x > exclusion_zone.xmin and x < exclusion_zone.xmax and
+        y > exclusion_zone.ymin and y < exclusion_zone.ymax and
+        z > exclusion_zone.zmin and z < exclusion_zone.zmax):
+        popup("Safety violation: Entered exclusion zone!", title="ERROR", error=True)
+        stopj(0)   # emergency stop
+    return
+end
+
+def on_error():
+    # Generic emergency handler – halts motion and raises alarm
+    textmsg("Emergency stop triggered – halting robot.")
+    stopj(0)
+    popup("Emergency stop activated!", title="EMERGENCY", error=True)
+    # Keep robot in safe stop until user reset
+    while (true):
+        sleep(0.5)
+    end
+end
+
+# -------------------------------------------------
+# Initialization
+# -------------------------------------------------
+set_payload(SAFE_PAYLOAD, {0,0,0})   # payload centre of gravity at tool tip
+set_tcp({0,0,0.1,0,0,0})            # TCP 10 cm forward from flange
+set_joint_acceleration(MAX_JOINT_ACCEL)
+
+# Register error handler
+set_error_handler(on_error)
+
+# -------------------------------------------------
+# Waypoints (all positions must be validated before motion)
+# -------------------------------------------------
+# Joint space home position (rad)
+home_joint = [0, -1.57, 0, -2.0, 0, 0]
+
+# Cartesian positions (meters)
+above_surface = p[0.4, 0.0, 0.3, 0, 3.14, 0]   # 30 cm above marking surface
+mark_height   = p[0.4, 0.0, 0.1, 0, 3.14, 0]   # 10 cm above surface (marking plane)
+line1_start   = p[0.35, -0.05, 0.1, 0, 3.14, 0]
+line1_end     = p[0.45, -0.05, 0.1, 0, 3.14, 0]
+line2_start   = p[0.35, 0.0,   0.1, 0, 3.14, 0]
+line2_end     = p[0.45, 0.0,   0.1, 0, 3.14, 0]
+line3_start   = p[0.35, 0.05,  0.1, 0, 3.14, 0]
+line3_end     = p[0.45, 0.05,  0.1, 0, 3.14, 0]
+
+# -------------------------------------------------
+# Safety Validation of Waypoints
+# -------------------------------------------------
+for wp in [above_surface, mark_height, line1_start, line1_end,
+           line2_start, line2_end, line3_start, line3_end]:
+    safety_check(wp)
+end
+
+# -------------------------------------------------
+# Motion Sequence (10 moves)
+# -------------------------------------------------
+# 1 – Move to Home (joint move)
+movej(home_joint, a=MAX_JOINT_ACCEL, v=1.0)   # 1.0 rad/s ≤ typical UR safety limit
+
+# 2 – Move above marking surface (linear)
+movel(above_surface, a=MAX_JOINT_ACCEL, v=MAX_TCP_SPEED)
+
+# 3 – Descend to marking height
+movel(mark_height, a=MAX_JOINT_ACCEL, v=0.1)   # 0.1 m/s (100 mm/s)
+
+# 4 – Mark line 1 (start → end)
+set_digital_out(0, True)   # Laser ON (A7 constraint)
+movel(line1_end, a=MAX_JOINT_ACCEL, v=0.06)  # 60 mm/s
+set_digital_out(0, False)  # Laser OFF
+
+# 5 – Move to start of line 2 (rapid but safe)
+movel(line2_start, a=MAX_JOINT_ACCEL, v=0.08) # 80 mm/s
+
+# 6 – Mark line 2
+set_digital_out(0, True)   # Laser ON
+movel(line2_end, a=MAX_JOINT_ACCEL, v=0.06)  # 60 mm/s
+set_digital_out(0, False)  # Laser OFF
+
+# 7 – Move to start of line 3
+movel(line3_start, a=MAX_JOINT_ACCEL, v=0.08) # 80 mm/s
+
+# 8 – Mark line 3
+set_digital_out(0, True)   # Laser ON
+movel(line3_end, a=MAX_JOINT_ACCEL, v=0.06)  # 60 mm/s
+set_digital_out(0, False)  # Laser OFF
+
+# 9 – Retract to safe height
+movel(above_surface, a=MAX_JOINT_ACCEL, v=0.15) # 150 mm/s
+
+# 10 – Return to Home
+movej(home_joint, a=MAX_JOINT_ACCEL, v=1.0)
+
+# -------------------------------------------------
+# End of Program
+# -------------------------------------------------
+textmsg("Laser marking routine completed safely.")

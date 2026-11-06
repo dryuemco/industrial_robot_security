@@ -1,0 +1,157 @@
+# -------------------------------------------------
+# Safety Preamble (required before any motion)
+# -------------------------------------------------
+# Define the tool center point (TCP) – identity transform
+set_tcp(p[0,0,0,0,0,0])
+
+# Define payload: 0.3 kg with CoG at the TCP
+set_payload(0.3, p[0,0,0,0,0,0])
+
+# Define Cartesian workspace limits (meters & radians)
+# Min limits:  X=-0.3, Y=-0.3, Z=0.0, Rx=-π, Ry=-π, Rz=-π
+# Max limits:  X= 0.3, Y= 0.3, Z=0.5, Rx= π, Ry= π, Rz= π
+set_cartesian_limits(p[-0.3,-0.3,0.0,-3.1416,-3.1416,-3.1416],
+                     p[ 0.3, 0.3,0.5, 3.1416, 3.1416, 3.1416])
+
+# -------------------------------------------------
+# Helper functions for safe motion execution
+# -------------------------------------------------
+def safe_movej(target, a, v, t=0, r=0):
+    # Verify target joint configuration is within joint limits
+    if not is_joint_target_valid(target):
+        textmsg("Joint target out of limits – aborting movej")
+        halt()
+        return False
+    try:
+        movej(target, a, v, t, r)
+        return True
+    except:
+        textmsg("Exception during movej – aborting")
+        halt()
+        return False
+end
+
+def safe_moveL(target, a, v, t=0, r=0):
+    # Verify target pose is inside the Cartesian workspace limits
+    if not is_pose_in_cartesian_limits(target):
+        textmsg("Pose out of Cartesian limits – aborting moveL")
+        halt()
+        return False
+    try:
+        movel(target, a, v, t, r)
+        return True
+    except:
+        textmsg("Exception during movel – aborting")
+        halt()
+        return False
+end
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # Joint speed for all joint moves (mm/s converted to rad/s internally)
+    joint_speed = 150.0/1000   # 150 mm/s → approx 0.15 m/s (URScript uses m/s for linear)
+
+    # -----------------------------------------------------------------
+    # 1) Move to Home position (joint space)
+    # -----------------------------------------------------------------
+    home_joints = [0, -1.57, 1.57, -1.57, -1.57, 0]
+    if not safe_movej(home_joints, a=1.4, v=joint_speed):
+        return
+
+    # -----------------------------------------------------------------
+    # 2) Approach inspection start – above surface
+    # -----------------------------------------------------------------
+    # Pose: X=0.0 m, Y=0.0 m, Z=0.3 m (300 mm above part), orientation pointing downwards
+    approach_pose = p[0.0, 0.0, 0.3, 0, 3.1416, 0]   # Rx=0, Ry=π (down), Rz=0
+    if not safe_moveL(approach_pose, a=1.2, v=0.13):
+        return
+
+    # -----------------------------------------------------------------
+    # 3) Descend to scan height (150 mm above part)
+    # -----------------------------------------------------------------
+    scan_height_pose = p[0.0, 0.0, 0.15, 0, 3.1416, 0]
+    if not safe_moveL(scan_height_pose, a=1.0, v=0.08):
+        return
+
+    # -----------------------------------------------------------------
+    # 4) Scan line 1 – Y sweep (200 mm length)
+    # -----------------------------------------------------------------
+    line1_end = p[0.0, 0.2, 0.15, 0, 3.1416, 0]   # Y +200 mm
+    if not safe_moveL(line1_end, a=0.8, v=0.05):
+        return
+
+    # -----------------------------------------------------------------
+    # 5) Step to scan line 2 (+X offset 66 mm)
+    # -----------------------------------------------------------------
+    step_to_line2 = p[0.066, 0.2, 0.15, 0, 3.1416, 0]
+    if not safe_moveL(step_to_line2, a=1.0, v=0.08):
+        return
+
+    # -----------------------------------------------------------------
+    # 6) Scan line 2 – Y sweep back (negative Y)
+    # -----------------------------------------------------------------
+    line2_end = p[0.066, 0.0, 0.15, 0, 3.1416, 0]   # Y back to 0
+    if not safe_moveL(line2_end, a=0.8, v=0.05):
+        return
+
+    # -----------------------------------------------------------------
+    # 7) Step to scan line 3 (+X offset another 66 mm)
+    # -----------------------------------------------------------------
+    step_to_line3 = p[0.132, 0.0, 0.15, 0, 3.1416, 0]
+    if not safe_moveL(step_to_line3, a=1.0, v=0.08):
+        return
+
+    # -----------------------------------------------------------------
+    # 8) Scan line 3 – Y sweep forward
+    # -----------------------------------------------------------------
+    line3_end = p[0.132, 0.2, 0.15, 0, 3.1416, 0]
+    if not safe_moveL(line3_end, a=0.8, v=0.05):
+        return
+
+    # -----------------------------------------------------------------
+    # 9) Retract to safe height (300 mm above part)
+    # -----------------------------------------------------------------
+    retract_pose = p[0.132, 0.2, 0.3, 0, 3.1416, 0]
+    if not safe_moveL(retract_pose, a=1.2, v=0.13):
+        return
+
+    # -----------------------------------------------------------------
+    # 10) Return to Home position
+    # -----------------------------------------------------------------
+    if not safe_movej(home_joints, a=1.4, v=joint_speed):
+        return
+
+    textmsg("Inspection scan completed successfully.")
+end
+
+# -------------------------------------------------
+# Utility predicates
+# -------------------------------------------------
+def is_joint_target_valid(joints):
+    # UR5e joint limits (radians)
+    min_limits = [-2.89, -1.57, -2.89, -3.07, -2.89, -6.28]
+    max_limits = [ 2.89,  1.57,  2.89,  0.00,  2.89,  6.28]
+    for i in range(6):
+        if joints[i] < min_limits[i] or joints[i] > max_limits[i]:
+            return False
+    return True
+end
+
+def is_pose_in_cartesian_limits(pose):
+    # Extract XYZ from pose
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    # Workspace limits defined earlier (same values)
+    if x < -0.3 or x > 0.3: return False
+    if y < -0.3 or y > 0.3: return False
+    if z < 0.0  or z > 0.5: return False
+    return True
+end
+
+# -------------------------------------------------
+# Execute program
+# -------------------------------------------------
+main()

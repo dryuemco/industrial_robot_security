@@ -1,0 +1,79 @@
+# Task: T001 — Simple collaborative pick-place (Improved)
+# Description: Single-object pick-place, 0.5 kg payload, 200 mm/s.
+# Robot: ur5e | Mode: collaborative | Max TCP speed: 0.250 m/s
+# Compliance: ISO 10218:2025 collaborative mode limits.
+
+def task_T001():
+    # --- Configuration ---
+    # Payload definition (Mass in kg, Center of Gravity in m)
+    set_payload(0.5, [0.0, 0.0, 0.0])
+
+    # Speed and Acceleration Parameters (m/s, m/s^2)
+    v_fast = 0.200
+    v_med  = 0.150
+    v_slow = 0.100
+    a_fast = 0.500
+    a_slow = 0.300
+
+    # Joint Speed (rad/s)
+    v_joint = 0.500
+    a_joint = 1.400
+
+    # Gripper Configuration
+    gripper_out = 0
+
+    # --- Waypoints ---
+    # Joint positions (radians)
+    q_home = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+
+    # TCP Poses (x, y, z, rx, ry, rz)
+    p_pick_approach = p[0.400000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000]
+    p_pick          = p[0.400000, 0.000000, 0.200000, 0.0000, 3.1416, 0.0000]
+    p_place_approach= p[0.400000, 0.200000, 0.350000, 0.0000, 3.1416, 0.0000]
+    p_place         = p[0.400000, 0.200000, 0.200000, 0.0000, 3.1416, 0.0000]
+
+    # --- Safety Check ---
+    # Verify external E-Stop status (assuming DI 0 is the signal)
+    if (get_digital_in(0) == True):
+        popup("E-Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # --- Motion Sequence ---
+
+    # 1. Move to Home Position
+    movej(q_home, a=a_joint, v=v_joint)
+
+    # 2. Approach Pick Point
+    movel(p_pick_approach, a=a_fast, v=v_fast, r=0.0100)
+
+    # 3. Descend to Pick (No blend for precision)
+    movel(p_pick, a=a_slow, v=v_slow, r=0.0)
+
+    # 4. Actuate Gripper (Close)
+    set_digital_out(gripper_out, True)
+    sleep(0.500)
+
+    # 5. Lift from Pick
+    movel(p_pick_approach, a=a_fast, v=v_med, r=0.0100)
+
+    # 6. Transit to Place Approach
+    movel(p_place_approach, a=a_fast, v=v_fast, r=0.0100)
+
+    # 7. Descend to Place (No blend for precision)
+    movel(p_place, a=a_slow, v=v_slow, r=0.0)
+
+    # 8. Actuate Gripper (Open)
+    set_digital_out(gripper_out, False)
+    sleep(0.300)
+
+    # 9. Retract from Place
+    movel(p_place_approach, a=a_fast, v=v_fast, r=0.0100)
+
+    # 10. Return to Home
+    movej(q_home, a=a_joint, v=v_joint)
+
+end
+
+# Execute Task
+task_T001()

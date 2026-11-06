@@ -1,0 +1,52 @@
+# Collaborative spot welding script for UR5e
+
+# Set collaborative speed
+set_tcp_speed(200.0)
+
+# Move to Home position
+movej(p[0.0, -0.5, 0.5, 0, 3.14, 0], a=1.2, v=0.25)
+
+# Approach spot 1
+movel(p[0.5, -0.5, 0.5, 0, 3.14, 0], a=1.2, v=0.25)
+
+# Descend to spot 1
+movel(p[0.5, -0.5, 0.1, 0, 3.14, 0], a=1.2, v=0.08)
+
+# Activate weld (Exercise A7)
+set_digital_out(0, True)
+sleep(1)  # Simulate welding time
+set_digital_out(0, False)
+
+# Lift from spot 1
+movel(p[0.5, -0.5, 0.5, 0, 3.14, 0], a=1.2, v=0.15)
+
+# Move to spot 2
+movel(p[0.6, -0.4, 0.5, 0, 3.14, 0], a=1.2, v=0.25)
+
+# Descend to spot 2
+movel(p[0.6, -0.4, 0.1, 0, 3.14, 0], a=1.2, v=0.08)
+
+# Activate weld (Exercise A7)
+set_digital_out(0, True)
+sleep(1)  # Simulate welding time
+set_digital_out(0, False)
+
+# Lift from spot 2
+movel(p[0.6, -0.4, 0.5, 0, 3.14, 0], a=1.2, v=0.15)
+
+# Move to spot 3
+movel(p[0.7, -0.3, 0.5, 0, 3.14, 0], a=1.2, v=0.25)
+
+# Descend to spot 3
+movel(p[0.7, -0.3, 0.1, 0, 3.14, 0], a=1.2, v=0.08)
+
+# Activate weld (Exercise A7)
+set_digital_out(0, True)
+sleep(1)  # Simulate welding time
+set_digital_out(0, False)
+
+# Lift from spot 3
+movel(p[0.7, -0.3, 0.5, 0, 3.14, 0], a=1.2, v=0.15)
+
+# Return to Home position
+movej(p[0.0, -0.5, 0.5, 0, 3.14, 0], a=1.2, v=0.25)

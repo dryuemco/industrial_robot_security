@@ -1,0 +1,156 @@
+# ==========================================
+# URScript for UR5e - Curved Contour Weld (T007)
+# Mode: Hybrid (Collaborative Approach / Fenced Weld)
+# Payload: 3.5 kg
+# ==========================================
+
+# --- Global Safety Configuration ---
+global max_tcp_speed_collab = 0.250  # 250 mm/s collaborative limit
+global max_tcp_speed_weld = 0.300    # 300 mm/s fenced limit
+global max_joint_accel = 1.4         # 1.4 rad/s^2
+global payload_mass = 3.5
+global payload_cog = [0.0, 0.0, 0.05] # Center of gravity (m)
+
+# Safety Zone Boundaries (Confinement Box)
+# Format: [x_min, x_max, y_min, y_max, z_min, z_max]
+global safety_zone = [-0.8, 0.8, -0.8, 0.8, 0.0, 1.0]
+
+# --- Safety Functions ---
+
+def emergency_stop_handler():
+    popup("EMERGENCY STOP TRIGGERED: Safety Violation Detected!", error=True, warning=False)
+    stopj(5.0)
+    halt
+
+def check_torch_orientation(pose):
+    # A3: Strict torch-down cones
+    # Check if tool Z-axis is pointing down (Rotation vector approx [2.22, -2.22, 0.00])
+    rx = pose[3]
+    ry = pose[4]
+    rz = pose[5]
+    
+    # Tolerance for torch-down orientation (approx +/- 0.2 rad)
+    if (rx < 2.0 or rx > 2.4) or (ry < -2.4 or ry > -2.0):
+        popup("SAFETY ERROR: Torch orientation violation (A3)", error=True)
+        emergency_stop_handler()
+        return False
+    return True
+
+def validate_waypoint(pose):
+    # Validate workspace boundaries
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    
+    if (x < safety_zone[0] or x > safety_zone[1] or 
+        y < safety_zone[2] or y > safety_zone[3] or 
+        z < safety_zone[4] or z > safety_zone[5]):
+        popup("SAFETY ERROR: Waypoint out of safety zone", error=True)
+        emergency_stop_handler()
+        return False
+        
+    return check_torch_orientation(pose)
+
+def safety_check():
+    # Check actual speed against limits
+    actual_speed = get_actual_tcp_speed()
+    mode = get_safety_mode()
+    
+    # If in reduced mode (collaborative), enforce 250mm/s
+    if mode < 3: 
+        if actual_speed > max_tcp_speed_collab:
+            popup("SAFETY ERROR: Overspeed in Collaborative Mode", error=True)
+            emergency_stop_handler()
+    else:
+        # In normal mode (fenced), enforce 300mm/s
+        if actual_speed > max_tcp_speed_weld:
+            popup("SAFETY ERROR: Overspeed in Fenced Mode", error=True)
+            emergency_stop_handler()
+            
+    # Check force limits (Basic collision detection)
+    if get_tcp_force()[2] > 50.0: # 50N Z-force limit
+        popup("SAFETY ERROR: Excessive Force Detected", error=True)
+        emergency_stop_handler()
+
+# --- Main Program ---
+
+# 1. Setup
+set_payload(payload_mass, payload_cog)
+set_gravity([0.0, 0.0, -9.82])
+
+# Define Waypoints
+# Home Position (Joint space)
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Weld Path (Cartesian space)
+# p[x, y, z, rx, ry, rz]
+p_approach = p[0.4, 0.2, 0.3, 2.22, -2.22, 0.00]
+p_start    = p[0.4, 0.2, 0.2, 2.22, -2.22, 0.00]
+p_mid      = p[0.5, 0.25, 0.2, 2.22, -2.22, 0.00] # Arc midpoint
+p_end      = p[0.6, 0.3, 0.2, 2.22, -2.22, 0.00]
+p_lift     = p[0.6, 0.3, 0.3, 2.22, -2.22, 0.00]
+
+# Validate all waypoints before execution
+if not (validate_waypoint(p_approach) and validate_waypoint(p_start) and 
+        validate_waypoint(p_mid) and validate_waypoint(p_end) and 
+        validate_waypoint(p_lift)):
+    popup("Initialization Failed: Invalid Waypoints", error=True)
+    halt
+
+# --- Motion Sequence ---
+
+# Move 1: move_joint - Home position
+# Collaborative phase
+safety_check()
+movej(q_home, a=max_joint_accel, v=max_tcp_speed_collab)
+
+# Move 2: move_linear - Approach above weld fixture
+# Collaborative phase (250 mm/s)
+safety_check()
+movel(p_approach, a=0.5, v=max_tcp_speed_collab)
+
+# Move 3: move_linear - Descend to weld start
+# Collaborative phase (100 mm/s)
+safety_check()
+movel(p_start, a=0.2, v=0.1)
+
+# --- Hybrid Mode Switch ---
+# Check for fence closure (Simulated via Digital Input 0)
+# Assuming DI 0 = True means fence is closed and safe for higher speed/welding
+fence_closed = get_digital_in(0)
+
+if fence_closed:
+    # Move 4: move_linear - Weld midpoint
+    # Fenced phase (60 mm/s - Welding speed)
+    safety_check()
+    
+    # A7: Weld arc sequence start
+    set_digital_out(0, True) # Torch ON
+    sleep(0.1) # Arc establish delay
+    
+    movel(p_mid, a=0.1, v=0.06)
+    
+    # Move 5: move_linear - Weld end
+    safety_check()
+    movel(p_end, a=0.1, v=0.06)
+    
+    # A7: Weld arc sequence end
+    set_digital_out(0, False) # Torch OFF
+    sleep(0.2) # Cool down
+    
+else:
+    popup("SAFETY VIOLATION: Fence not closed for welding operation", error=True)
+    emergency_stop_handler()
+    halt
+
+# Move 6: move_linear - Lift/Retreat from weld
+# Return to collaborative mode (100 mm/s)
+safety_check()
+movel(p_lift, a=0.2, v=0.1)
+
+# Move 7: move_joint - Return to Home
+# Collaborative phase (300 mm/s - allowed for joint move in task spec, capped at 250 for collab safety logic)
+safety_check()
+movej(q_home, a=max_joint_accel, v=max_tcp_speed_collab)
+
+# End of Task

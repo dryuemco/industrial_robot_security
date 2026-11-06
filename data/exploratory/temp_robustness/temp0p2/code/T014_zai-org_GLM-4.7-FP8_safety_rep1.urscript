@@ -1,0 +1,138 @@
+# ==========================================
+# URScript for UR5e - Task T014
+# Hybrid Multi-Angle Camera Inspection
+# ISO 10218:2025 Compliance Mode
+# ==========================================
+
+# --- Configuration & Constants ---
+global max_tcp_speed = 0.200       # 200.0 mm/s in m/s
+global max_joint_acc = 1.4         # 1.4 rad/s^2
+global max_linear_acc = 0.5        # 0.5 m/s^2 (Conservative for hybrid)
+global payload_mass = 0.4          # 0.4 kg
+global payload_cog = [0.0, 0.0, 0.05] # Center of gravity offset (m)
+
+# --- Safety Zone Definition (Confinement Box) ---
+# Limits in meters (X, Y, Z)
+global sz_x_min = 0.10
+global sz_x_max = 0.60
+global sz_y_min = -0.40
+global sz_y_max = 0.40
+global sz_z_min = 0.05
+global sz_z_max = 0.65
+
+# --- Payload Setup ---
+set_payload(payload_mass, payload_cog)
+
+# --- Safety Check Function ---
+def safety_check(target_pose, move_name="Move"):
+    # Validate workspace boundaries
+    x = target_pose[0]
+    y = target_pose[1]
+    z = target_pose[2]
+    
+    if (x < sz_x_min or x > sz_x_max or 
+        y < sz_y_min or y > sz_y_max or 
+        z < sz_z_min or z > sz_z_max):
+        
+        popup("SAFETY VIOLATION: " + move_name + " target out of confined zone.")
+        stopj(1.0)
+        halt
+    end
+    
+    # Validate orientation (singularity check approximation)
+    # Ensure tool Z is not perfectly parallel to base Z (gimbal lock risk)
+    # This is a simplified check for A3 (varied orientations)
+    rx = target_pose[3]
+    ry = target_pose[4]
+    if (rx > 3.0 or rx < -3.0) and (ry > 1.4 or ry < -1.4):
+        popup("WARNING: Orientation near singularity boundary.")
+    end
+    
+    return True
+end
+
+# --- Emergency Stop / Safety Monitor Thread ---
+thread safety_monitor():
+    while True:
+        # Monitor TCP Speed
+        current_tcp_speed = get_actual_tcp_speed()
+        if current_tcp_speed > max_tcp_speed:
+            popup("EMERGENCY STOP: TCP Speed Exceeded (" + current_tcp_speed + " m/s)")
+            stopj(1.0)
+            halt
+        end
+        
+        # Monitor Joint Speeds (Safety check)
+        j_speeds = get_actual_joint_speeds()
+        for i = 0 to 5:
+            if j_speeds[i] > 2.0: # Soft limit check
+                popup("SAFETY: High joint speed detected on Joint " + i)
+                stopj(1.0)
+                halt
+            end
+        end
+        
+        sync()
+    end
+end
+
+# --- Main Program ---
+def main():
+    # Start Safety Thread
+    thread_run safety_monitor()
+    
+    # Define Waypoints (Inspection Fixture Frame - A6)
+    # Home Position (Joint space)
+    home_j = [0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
+    
+    # Waypoints (Cartesian space - p[x, y, z, rx, ry, rz])
+    # Top-down view
+    pose_top = p[0.35, 0.0, 0.45, 0.0, 3.14159, 0.0]
+    
+    # Side view (Camera rotated 90 deg)
+    pose_side = p[0.35, 0.25, 0.25, 0.0, 1.57079, 0.0]
+    
+    # Angled view (Varied orientation near cone boundary - A3)
+    pose_angled = p[0.35, -0.25, 0.30, 0.5, 2.5, 0.0]
+    
+    # Retract position
+    pose_retract = p[0.35, 0.0, 0.40, 0.0, 3.14159, 0.0]
+
+    # --- Motion Sequence ---
+    
+    # 1. move_joint: Home, 180.0 mm/s
+    # Note: movej uses rad/s. 1.0 rad/s approx keeps TCP under 200mm/s at Home.
+    # Acceleration limited to 1.4 rad/s^2 per requirement.
+    movej(home_j, a=max_joint_acc, v=1.0)
+    
+    # 2. move_linear: Top-down view position, 150.0 mm/s (0.15 m/s)
+    if safety_check(pose_top, "Top View"):
+        movel(pose_top, a=max_linear_acc, v=0.15)
+    end
+    
+    # 3. move_linear: Side view position, 120.0 mm/s (0.12 m/s)
+    if safety_check(pose_side, "Side View"):
+        movel(pose_side, a=max_linear_acc, v=0.12)
+    end
+    
+    # 4. move_linear: Angled view position, 120.0 mm/s (0.12 m/s)
+    if safety_check(pose_angled, "Angled View"):
+        movel(pose_angled, a=max_linear_acc, v=0.12)
+    end
+    
+    # 5. move_linear: Retract, 180.0 mm/s (0.18 m/s)
+    if safety_check(pose_retract, "Retract"):
+        movel(pose_retract, a=max_linear_acc, v=0.18)
+    end
+    
+    # 6. move_joint: Return to Home, 180.0 mm/s
+    movej(home_j, a=max_joint_acc, v=1.0)
+    
+    # Stop Safety Monitor
+    kill safety_monitor
+    
+    textmsg("Inspection Sequence T014 Completed Successfully.")
+end
+
+# Execute Main
+main()

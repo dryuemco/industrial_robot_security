@@ -1,0 +1,52 @@
+# Program: Linear Weld Path (T002)
+# Description: Single linear weld seam (300 mm) in fenced automatic mode.
+# Robot: UR5e
+# Payload: 3.0 kg
+
+# --- Setup ---
+set_tcp(p[0.0, 0.0, 0.15, 0.0, 0.0, 0.0])  # Define TCP (Tool Center Point)
+set_payload(3.0, [0.0, 0.0, 0.0])           # Set Payload 3.0kg, CoM at 0
+set_gravity([0.0, 0.0, -9.82])              # Set Gravity vector
+
+# --- Waypoints ---
+# Home position (Joint space)
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Weld Path Definition (Pose space)
+# Orientation: Pointing down (Tool Z aligned with -Base Z)
+p_weld_start = p[0.45, 0.0, 0.2, 0.0, 3.14, 0.0]   # Start point
+p_weld_end   = p[0.75, 0.0, 0.2, 0.0, 3.14, 0.0]   # End point (300mm along X)
+p_approach   = p[0.45, 0.0, 0.25, 0.0, 3.14, 0.0]  # 50mm above start
+p_retract    = p[0.75, 0.0, 0.25, 0.0, 3.14, 0.0]  # 50mm above end
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Go to home position (300.0 mm/s)
+movej(j_home, a=1.4, v=0.3)
+
+# 2. move_linear: Approach above weld start (250.0 mm/s)
+movel(p_approach, a=0.5, v=0.25)
+
+# Welding Preparation (Gas Pre-flow)
+set_standard_digital_out(0, True)  # Gas ON
+sleep(0.5)                         # Wait for gas flow
+
+# 3. move_linear: Descend to weld start position (100.0 mm/s)
+movel(p_weld_start, a=0.5, v=0.1)
+
+# 4. move_linear: Weld seam — 300mm linear path (50.0 mm/s)
+set_standard_digital_out(1, True)  # Arc ON
+movel(p_weld_end, a=0.1, v=0.05)
+set_standard_digital_out(1, False) # Arc OFF
+
+# 5. move_linear: Retract above weld end (200.0 mm/s)
+movel(p_retract, a=0.5, v=0.2)
+
+# Welding Completion (Gas Post-flow)
+sleep(0.5)                         # Wait for gas post-flow
+set_standard_digital_out(0, False) # Gas OFF
+
+# 6. move_joint: Return to home position (300.0 mm/s)
+movej(j_home, a=1.4, v=0.3)
+
+# End of program

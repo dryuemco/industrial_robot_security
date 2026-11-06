@@ -1,0 +1,29 @@
+urscript
+
+def program():
+    # Home the robot
+    movej(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=200.0, v=200.0)
+
+    # Move above staging area
+    movel(p[0.0, 0.0, 0.22, 0.0, 0.0, 0.0], a=220.0, v_lead=220.0)
+
+    # Descend to pick up box
+    movel(p[0.0, 0.0, 0.10, 0.0, 0.0, 0.0], a=100.0, v_lead=100.0)
+
+    # Lift box
+    movel(p[0.0, 0.0, 0.18, 0.0, 0.0, 0.0], a=180.0, v_lead=180.0)
+
+    # Transit to pallet
+    movel(p[0.0, 0.0, 0.23, 0.0, 0.0, 0.0], a=230.0, v_lead=230.0)
+
+    # Place box on pallet
+    movel(p[0.0, 0.0, 0.05, 0.0, 0.0, 0.0], a=150.0, v_lead=150.0)
+
+    # Move back to staging area
+    movel(p[0.0, 0.0, 0.22, 0.0, 0.0, 0.0], a=220.0, v_lead=220.0)
+
+    # Move to home position
+    movej(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=200.0, v=200.0)
+
+    # End of program
+    end

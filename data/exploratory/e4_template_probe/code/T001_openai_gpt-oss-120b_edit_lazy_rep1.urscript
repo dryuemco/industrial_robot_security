@@ -1,0 +1,115 @@
+# Task: T001 — Simple collaborative pick‑place (improved)
+# Robot: UR5e, collaborative mode, payload 0.5 kg
+# Max TCP speed limited to 0.25 m/s (200 mm/s used for moves)
+# ISO 10218‑2025 compliant – safety checks included
+# --------------------------------------------------------------
+
+def task_T001():
+    # ----------------------------------------------------------
+    # Configuration
+    # ----------------------------------------------------------
+    # Joint target for home position
+    home_j = [0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+    # Cartesian targets (pose: [X,Y,Z,RX,RY,RZ])
+    pick_approach   = p[0.400, 0.000, 0.350, 0.0, 3.1416, 0.0]
+    pick_down       = p[0.400, 0.000, 0.200, 0.0, 3.1416, 0.0]
+    place_approach  = p[0.400, 0.200, 0.350, 0.0, 3.1416, 0.0]
+    place_down      = p[0.400, 0.200, 0.200, 0.0, 3.1416, 0.0]
+
+    # Motion parameters (collaborative limits)
+    a_joint   = 1.2   # rad/s²
+    v_joint   = 0.5   # rad/s
+    a_lin     = 0.8   # m/s²
+    v_lin     = 0.200 # m/s (200 mm/s)
+    a_fast    = 0.8
+    v_fast    = 0.250 # max allowed TCP speed
+    r_blend   = 0.010
+
+    # Gripper I/O
+    GRIPPER_OUT = 0   # digital out to command gripper
+    GRIPPER_IN  = 1   # digital in to confirm state (optional)
+
+    # ----------------------------------------------------------
+    # Safety: Emergency stop check (digital input 0)
+    # ----------------------------------------------------------
+    if get_digital_in(0):
+        popup("E‑Stop active – aborting program.", error=True)
+        halt
+    end
+
+    # ----------------------------------------------------------
+    # Set speed scaling to 80 % (ensures max 0.2 m/s linear)
+    # ----------------------------------------------------------
+    set_speed_slider(0.8)
+
+    # ----------------------------------------------------------
+    # Helper: move to pose with safety radius
+    # ----------------------------------------------------------
+    def safe_move(p_target, a, v):
+        movel(p_target, a=a, v=v, r=r_blend)
+    end
+
+    # ----------------------------------------------------------
+    # Main sequence
+    # ----------------------------------------------------------
+    # 1) Home
+    movej(home_j, a=a_joint, v=v_joint)
+
+    # 2) Approach pick
+    safe_move(pick_approach, a=a_lin, v=v_lin)
+
+    # 3) Descend to pick
+    safe_move(pick_down, a=a_lin*0.75, v=v_lin*0.5)
+
+    # 4) Close gripper (force limited to 40 N)
+    set_digital_out(GRIPPER_OUT, True)
+
+    # 5) Wait until gripper reports closed (optional)
+    timeout = 2.0
+    t0 = time()
+    while (not get_digital_in(GRIPPER_IN)) and (time() - t0 < timeout):
+        sleep(0.050)
+    end
+
+    # 6) Settle after grasp
+    sleep(0.5)
+
+    # 7) Lift from pick
+    safe_move(pick_approach, a=a_lin, v=v_fast)
+
+    # 8) Transit to place approach
+    safe_move(place_approach, a=a_lin, v=v_lin)
+
+    # 9) Descend to place
+    safe_move(place_down, a=a_lin*0.75, v=v_lin*0.5)
+
+    # 10) Open gripper
+    set_digital_out(GRIPPER_OUT, False)
+
+    # 11) Wait until gripper reports open (optional)
+    t0 = time()
+    while get_digital_in(GRIPPER_IN) and (time() - t0 < timeout):
+        sleep(0.050)
+    end
+
+    # 12) Release settle time
+    sleep(0.3)
+
+    # 13) Retract from place
+    safe_move(place_approach, a=a_lin, v=v_lin)
+
+    # 14) Return home
+    movej(home_j, a=a_joint, v=v_joint)
+
+    # ----------------------------------------------------------
+    # End of task – reset speed scaling
+    # ----------------------------------------------------------
+    set_speed_slider(1.0)
+
+end
+
+# ------------------------------------------------------------------
+# Entry point
+# ------------------------------------------------------------------
+task_T001()

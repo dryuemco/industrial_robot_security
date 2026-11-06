@@ -1,0 +1,131 @@
+# Safety and Configuration Setup
+# ISO 10218:2025 Compliance Parameters
+global max_tcp_speed = 0.250 # 250 mm/s in m/s
+global max_joint_acc = 1.4   # 1.4 rad/s^2
+
+# Payload Definition (0.8 kg)
+set_payload(0.8, [0, 0, 0.05])
+
+# Safety Zone Boundaries (Confinement Box)
+# Define boundaries based on UR5e reach and cell setup
+global zone_x_min = -0.600
+global zone_x_max = 0.600
+global zone_y_min = -0.600
+global zone_y_max = 0.600
+global zone_z_min = 0.000
+global zone_z_max = 0.500
+
+# Function to validate waypoint against safety zone
+def validate_waypoint(pose):
+    if pose[0] < zone_x_min or pose[0] > zone_x_max:
+        return False
+    end
+    if pose[1] < zone_y_min or pose[1] > zone_y_max:
+        return False
+    end
+    if pose[2] < zone_z_min or pose[2] > zone_z_max:
+        return False
+    end
+    return True
+end
+
+# Safety Check Routine
+def safety_check():
+    # Check robot status
+    if (get_safety_mode_bits() & 1) == 0:
+        popup("Safety Check Failed: Robot not ready", "Safety Alert", False, 1)
+        halt
+    end
+    
+    # Check current position
+    current_pose = get_actual_tcp_pose()
+    if not validate_waypoint(current_pose):
+        popup("Safety Check Failed: Current position out of bounds", "Safety Alert", False, 1)
+        halt
+    end
+end
+
+# Emergency Stop / Boundary Violation Thread
+thread safety_monitor():
+    while True:
+        pose = get_actual_tcp_pose()
+        if not validate_waypoint(pose):
+            popup("EMERGENCY STOP: Safety Zone Violation Detected!", "CRITICAL", False, 1)
+            stopj(1.0)
+            halt
+        end
+        sync()
+    end
+end
+
+# Main Palletizing Sequence
+def palletize_task():
+    # Define Waypoints
+    # 1. Home Position (Joint space)
+    q_home = [-1.57, -1.57, -1.57, -1.57, 1.57, 0.0]
+    
+    # 2. Staging Area (Cartesian space)
+    p_staging_above = p[0.400, -0.200, 0.300, 0.0, 3.141, 0.0]
+    p_staging_pick  = p[0.400, -0.200, 0.010, 0.0, 3.141, 0.0]
+    
+    # 3. Pallet Area (Cartesian space)
+    p_pallet_transit = p[-0.400, 0.200, 0.300, 0.0, 3.141, 0.0]
+    p_pallet_place   = p[-0.400, 0.200, 0.010, 0.0, 3.141, 0.0]
+    p_pallet_lift    = p[-0.400, 0.200, 0.150, 0.0, 3.141, 0.0]
+
+    # Validate all waypoints before execution
+    if not validate_waypoint(p_staging_above) or not validate_waypoint(p_staging_pick):
+        popup("Error: Staging waypoints out of safety zone", "Config Error", False, 1)
+        halt
+    end
+    if not validate_waypoint(p_pallet_transit) or not validate_waypoint(p_pallet_place):
+        popup("Error: Pallet waypoints out of safety zone", "Config Error", False, 1)
+        halt
+    end
+
+    # --- Motion Sequence ---
+    
+    # Move 1: move_joint: Home, 200.0 mm/s
+    safety_check()
+    movej(q_home, a=max_joint_acc, v=0.200)
+    
+    # Move 2: move_linear: Above staging, 220.0 mm/s
+    safety_check()
+    movel(p_staging_above, a=max_joint_acc, v=0.220)
+    
+    # Move 3: move_linear: Descend to pick, 100.0 mm/s
+    safety_check()
+    movel(p_staging_pick, a=max_joint_acc, v=0.100)
+    
+    # Activate Suction Cup
+    set_digital_out(0, True)
+    sleep(0.5) # Wait for vacuum to build
+    
+    # Move 4: move_linear: Lift, 180.0 mm/s
+    safety_check()
+    movel(p_staging_above, a=max_joint_acc, v=0.180)
+    
+    # Move 5: move_linear: Transit to pallet, 230.0 mm/s
+    safety_check()
+    movel(p_pallet_transit, a=max_joint_acc, v=0.230)
+    
+    # Move 6: move_linear: Descend to place, 100.0 mm/s
+    safety_check()
+    movel(p_pallet_place, a=max_joint_acc, v=0.100)
+    
+    # Release Suction Cup
+    set_digital_out(0, False)
+    sleep(0.2) # Wait for release
+    
+    # Move 7: move_linear: Lift from pallet, 150.0 mm/s
+    safety_check()
+    movel(p_pallet_lift, a=max_joint_acc, v=0.150)
+    
+    # Move 8: move_linear: Return to staging/home, 200.0 mm/s
+    safety_check()
+    movel(p_staging_above, a=max_joint_acc, v=0.200)
+    
+end
+
+# Execute Program
+palletize_task()

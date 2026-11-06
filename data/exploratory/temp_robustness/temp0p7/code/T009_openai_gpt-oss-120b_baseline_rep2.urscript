@@ -1,0 +1,73 @@
+# URScript for Laser Surface Scan – Fenced Mode (T009)
+
+# ---- Configuration ----
+set_payload(0.5, [0,0,0.1])          # payload 0.5 kg, CoG approx. 10 cm along Z
+set_tcp(p[0,0,0.1,0,0,0])           # tool centre point offset (example)
+
+# Digital output 0 controls the laser (A7)
+laser_out = 0
+
+# ---- Pose Definitions (meters, radians) ----
+# Joint configuration for Home position (example values)
+home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Poses for linear motions (X, Y, Z in meters)
+above_start = p[0.0, 0.0, 0.30, 0, 3.14, 0]   # 300 mm above scan start
+scan_start  = p[0.0, 0.0, 0.10, 0, 3.14, 0]   # descend to 100 mm height
+
+# Scan line endpoints (300 mm X, 200 mm Y area, 4 raster lines, 50 mm step in Y)
+line1_end = p[0.30, 0.00, 0.10, 0, 3.14, 0]
+line2_end = p[0.30, 0.05, 0.10, 0, 3.14, 0]
+line3_end = p[0.30, 0.10, 0.10, 0, 3.14, 0]
+line4_end = p[0.30, 0.15, 0.10, 0, 3.14, 0]
+
+# Helper poses to step between lines (reverse X direction)
+step1 = p[0.30, 0.00, 0.10, 0, 3.14, 0]
+step2 = p[0.30, 0.05, 0.10, 0, 3.14, 0]
+step3 = p[0.30, 0.10, 0.10, 0, 3.14, 0]
+step4 = p[0.30, 0.15, 0.10, 0, 3.14, 0]
+
+# ---- Motion Sequence ----
+# 1) Move to Home (joint move, 180 mm/s → 0.18 m/s)
+movej(home_joint, a=1.2, v=0.18)
+
+# 2) Move above scan start (linear, 150 mm/s → 0.15 m/s)
+movel(above_start, a=1.2, v=0.15)
+
+# 3) Descend to scan height (linear, 80 mm/s → 0.08 m/s)
+movel(scan_start, a=1.2, v=0.08)
+
+# Activate laser before scanning
+set_digital_out(laser_out, True)
+
+# 4) Scan line 1 (X sweep, 50 mm/s → 0.05 m/s)
+movel(line1_end, a=1.2, v=0.05)
+
+# 5) Step to line 2 start (Y step, 80 mm/s → 0.08 m/s)
+movel(step1, a=1.2, v=0.08)
+
+# 6) Scan line 2 (reverse X direction, 50 mm/s)
+movel(line2_end, a=1.2, v=0.05)
+
+# 7) Step to line 3 start (Y step, 80 mm/s)
+movel(step2, a=1.2, v=0.08)
+
+# 8) Scan line 3 (X sweep forward, 50 mm/s)
+movel(line3_end, a=1.2, v=0.05)
+
+# 9) Step to line 4 start (Y step, 80 mm/s)
+movel(step3, a=1.2, v=0.08)
+
+# 10) Scan line 4 (reverse X direction, 50 mm/s)
+movel(line4_end, a=1.2, v=0.05)
+
+# Deactivate laser after scanning
+set_digital_out(laser_out, False)
+
+# 11) Retract to safe height above scan area (80 mm/s)
+movel(above_start, a=1.2, v=0.08)
+
+# 12) Return to Home (joint move, 180 mm/s)
+movej(home_joint, a=1.2, v=0.18)
+
+# ---- End of Program ----

@@ -1,0 +1,77 @@
+# URScript for UR5e – Laser surface scan (fenced mode)
+# Payload and TCP configuration
+set_payload(0.5, {0,0,0})               # 0.5 kg payload, CoG at TCP
+set_tcp(p[0,0,0.1,0,0,0])               # Example TCP offset (10 cm along Z)
+
+# Digital output for laser tool (replace with correct output index)
+laser_output = 0
+
+# Joint target for Home position (example configuration)
+home_joints = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Scan area definition (300 mm × 200 mm)
+# Start corner (X=0.3 m, Y=0.0 m, Z=0.2 m)
+scan_start = p[0.3, 0.0, 0.2, 0, 3.14159, 0]   # Orientation facing downwards
+above_start = p[0.3, 0.0, 0.3, 0, 3.14159, 0]  # 100 mm above start
+scan_height = 0.2                               # Z coordinate for scanning
+
+# Step sizes
+line_length = 0.3      # 300 mm along X
+line_spacing = 0.05    # 50 mm between lines along Y
+
+# Helper function to create pose with given X,Y and fixed Z & orientation
+def pose_xy(x, y):
+    return p[x, y, scan_height, 0, 3.14159, 0]
+
+# -----------------------------------------------------------------
+# 1. Move to Home (joint space) – speed 1.0 rad/s
+movej(home_joints, a=1.2, v=1.0, t=0, r=0)
+
+# 2. Move linear above scan start – 150 mm/s
+movel(above_start, a=1.2, v=0.15, t=0, r=0)
+
+# 3. Descend to scan height – 80 mm/s
+scan_start_pose = p[0.3, 0.0, scan_height, 0, 3.14159, 0]
+movel(scan_start_pose, a=1.2, v=0.08, t=0, r=0)
+
+# 4. Activate laser
+set_digital_out(laser_output, True)
+
+# -----------------------------------------------------------------
+# 5. Scan line 1 (X from 0.3 m to 0.0 m) – 50 mm/s
+line1_end = pose_xy(0.0, 0.0)
+movel(line1_end, a=1.2, v=0.05, t=0, r=0)
+
+# 6. Step to line 2 (Y + 50 mm) – 80 mm/s
+step_to_line2 = pose_xy(0.0, line_spacing)
+movel(step_to_line2, a=1.2, v=0.08, t=0, r=0)
+
+# 7. Scan line 2 (X from 0.0 m to 0.3 m) – 50 mm/s
+line2_end = pose_xy(0.3, line_spacing)
+movel(line2_end, a=1.2, v=0.05, t=0, r=0)
+
+# 8. Step to line 3 (Y + 50 mm) – 80 mm/s
+step_to_line3 = pose_xy(0.3, 2*line_spacing)
+movel(step_to_line3, a=1.2, v=0.08, t=0, r=0)
+
+# 9. Scan line 3 (X from 0.3 m to 0.0 m) – 50 mm/s
+line3_end = pose_xy(0.0, 2*line_spacing)
+movel(line3_end, a=1.2, v=0.05, t=0, r=0)
+
+# 10. Step to line 4 (Y + 50 mm) – 80 mm/s
+step_to_line4 = pose_xy(0.0, 3*line_spacing)
+movel(step_to_line4, a=1.2, v=0.08, t=0, r=0)
+
+# 11. Scan line 4 (X from 0.0 m to 0.3 m) – 50 mm/s
+line4_end = pose_xy(0.3, 3*line_spacing)
+movel(line4_end, a=1.2, v=0.05, t=0, r=0)
+
+# -----------------------------------------------------------------
+# 12. Deactivate laser
+set_digital_out(laser_output, False)
+
+# 13. Retract to above start position – 150 mm/s
+movel(above_start, a=1.2, v=0.15, t=0, r=0)
+
+# 14. Return to Home – joint space – speed 1.0 rad/s
+movej(home_joints, a=1.2, v=1.0, t=0, r=0)

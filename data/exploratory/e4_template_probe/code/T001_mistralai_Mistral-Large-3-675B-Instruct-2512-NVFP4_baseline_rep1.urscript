@@ -1,0 +1,46 @@
+# URScript for collaborative pick-place task (T001)
+  # Parameters comply with ISO 10218:2025 collaborative mode limits
+  # Robot: UR5e, Payload: 0.5 kg, Max TCP speed: 250 mm/s
+
+  # Set payload and tool center point
+  set_payload(0.5)
+  set_tcp(p[0, 0, 0.1, 0, 0, 0])
+
+  # Safety configuration
+  set_safety_mode("normal")
+  set_operation_mode("collaborative")
+  set_speed(250.0)
+
+  # Home position (joint angles in radians)
+  home_pose = [0, -1.5708, 0, -1.5708, 0, 0]
+
+  # Pick and place positions (pose: [x, y, z, rx, ry, rz])
+  pick_approach = p[0.5, 0.2, 0.3, 0, 3.14159, 0]
+  pick_point = p[0.5, 0.2, 0.15, 0, 3.14159, 0]
+  pick_lift = p[0.5, 0.2, 0.25, 0, 3.14159, 0]
+
+  place_approach = p[0.3, -0.2, 0.3, 0, 3.14159, 0]
+  place_point = p[0.3, -0.2, 0.15, 0, 3.14159, 0]
+  place_lift = p[0.3, -0.2, 0.25, 0, 3.14159, 0]
+
+  # Motion sequence
+  movej(home_pose, a=1.2, v=2.0)  # Go to home position at 200 mm/s (converted to rad/s)
+
+  # Pick sequence
+  movel(pick_approach, a=0.5, v=0.2)  # Approach pick point at 200 mm/s
+  movel(pick_point, a=0.3, v=0.1)     # Descend to pick at 100 mm/s
+  gripper_activate()                  # Close gripper (assuming gripper is configured)
+  sleep(0.5)
+  movel(pick_lift, a=0.4, v=0.15)     # Lift from pick at 150 mm/s
+
+  # Transit to place
+  movel(place_approach, a=0.5, v=0.2) # Transit to place approach at 200 mm/s
+
+  # Place sequence
+  movel(place_point, a=0.3, v=0.1)    # Descend to place at 100 mm/s
+  gripper_deactivate()                # Open gripper
+  sleep(0.5)
+  movel(place_lift, a=0.4, v=0.15)    # Lift from place at 150 mm/s
+
+  # Return to home
+  movej(home_pose, a=1.2, v=2.0)      # Return to home position at 200 mm/s

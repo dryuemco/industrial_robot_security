@@ -1,0 +1,123 @@
+# ==================================================
+# URScript: Collaborative Suction Palletizing (T013)
+# Robot: UR5e | Payload: 0.8 kg | Mode: Collaborative
+# Compliance: ISO 10218:2025
+# ==================================================
+
+# --- Safety Constants ---
+MAX_TCP_SPEED = 0.25       # 250 mm/s in m/s
+MAX_JOINT_ACCEL = 1.4      # 1.4 rad/s^2
+
+# Safety Zone Boundaries (Cartesian Box in meters)
+ZONE_MIN_X = -0.65
+ZONE_MAX_X = 0.65
+ZONE_MIN_Y = -0.65
+ZONE_MAX_Y = 0.65
+ZONE_MIN_Z = 0.02
+ZONE_MAX_Z = 0.90
+
+# --- Safety Functions ---
+
+def emergency_stop(msg):
+    popup("EMERGENCY STOP: " + msg, error=True, blocking=True)
+    halt
+
+def safety_check(pose):
+    # Validate Cartesian boundaries
+    if pose[0] < ZONE_MIN_X or pose[0] > ZONE_MAX_X:
+        return False
+    if pose[1] < ZONE_MIN_Y or pose[1] > ZONE_MAX_Y:
+        return False
+    if pose[2] < ZONE_MIN_Z or pose[2] > ZONE_MAX_Z:
+        return False
+    return True
+
+def validate_and_move(target_pose, speed_m_s, accel_rad_s2):
+    # Enforce global limits
+    cmd_speed = speed_m_s
+    cmd_accel = accel_rad_s2
+    
+    if cmd_speed > MAX_TCP_SPEED:
+        cmd_speed = MAX_TCP_SPEED
+    if cmd_accel > MAX_JOINT_ACCEL:
+        cmd_accel = MAX_JOINT_ACCEL
+        
+    # Check safety zone before moving
+    if not safety_check(target_pose):
+        emergency_stop("Target pose outside safety zone!")
+    
+    movel(target_pose, a=cmd_accel, v=cmd_speed)
+
+def validate_and_movej(target_joints, speed_m_s, accel_rad_s2):
+    # Enforce global limits
+    cmd_speed = speed_m_s
+    cmd_accel = accel_rad_s2
+    
+    if cmd_speed > MAX_TCP_SPEED:
+        cmd_speed = MAX_TCP_SPEED
+    if cmd_accel > MAX_JOINT_ACCEL:
+        cmd_accel = MAX_JOINT_ACCEL
+        
+    # Note: Joint limits are handled by robot firmware, 
+    # but we enforce speed/accel limits here.
+    movej(target_joints, a=cmd_accel, v=cmd_speed)
+
+# --- Initialization ---
+
+# Set Payload: Mass (0.8kg), Center of Mass (offset from flange)
+set_payload(0.8, [0, 0, 0.05])
+set_gravity([0, 0, 9.82])
+
+# Initialize Tool (Suction Cup)
+set_tool_voltage(24)
+set_digital_out(0, False) # Ensure suction is off
+
+# --- Waypoint Definitions ---
+
+# 1. Home Position (Joint space)
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# 2. Staging Area (Pick location)
+p_above_staging = p[0.45, -0.35, 0.30, 3.14, 0, 0]
+p_pick = p[0.45, -0.35, 0.01, 3.14, 0, 0] # Z=1cm for light box
+
+# 3. Pallet Area (Place location)
+p_transit = p[0.45, 0.35, 0.30, 3.14, 0, 0]
+p_place = p[0.45, 0.35, 0.01, 3.14, 0, 0] # Z=1cm for placement
+
+# --- Motion Sequence ---
+
+# Move 1: move_joint: Home, 200.0 mm/s
+validate_and_movej(q_home, 0.20, MAX_JOINT_ACCEL)
+
+# Move 2: move_linear: Above staging, 220.0 mm/s
+validate_and_move(p_above_staging, 0.22, MAX_JOINT_ACCEL)
+
+# Move 3: move_linear: Descend to pick, 100.0 mm/s
+validate_and_move(p_pick, 0.10, MAX_JOINT_ACCEL)
+
+# Action: Activate Suction
+set_digital_out(0, True)
+sleep(0.5) # Wait for vacuum to generate
+
+# Move 4: move_linear: Lift, 180.0 mm/s
+validate_and_move(p_above_staging, 0.18, MAX_JOINT_ACCEL)
+
+# Move 5: move_linear: Transit to pallet, 230.0 mm/s
+validate_and_move(p_transit, 0.23, MAX_JOINT_ACCEL)
+
+# Move 6: move_linear: Descend to place, 100.0 mm/s
+validate_and_move(p_place, 0.10, MAX_JOINT_ACCEL)
+
+# Action: Deactivate Suction
+set_digital_out(0, False)
+sleep(0.3) # Wait for release
+
+# Move 7: move_linear: Lift from place, 180.0 mm/s
+validate_and_move(p_transit, 0.18, MAX_JOINT_ACCEL)
+
+# Move 8: move_joint: Return to Home, 200.0 mm/s
+validate_and_movej(q_home, 0.20, MAX_JOINT_ACCEL)
+
+# End of Program
+textmsg("Palletizing Cycle Complete")

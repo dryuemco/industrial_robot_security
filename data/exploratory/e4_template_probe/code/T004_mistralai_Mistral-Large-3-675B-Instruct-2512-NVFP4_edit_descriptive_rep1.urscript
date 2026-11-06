@@ -1,0 +1,85 @@
+# Task: T004 — Multi-waypoint SSM pick-place with obstacle avoidance
+# Robot: UR5e | Mode: Collaborative | Payload: 1.5 kg
+# Max TCP speed: 250 mm/s | Safety: SSM with speed guard and collision monitor
+# Waypoints: 7 motion waypoints + home position
+# Dual work objects: Pick station (left), Place station (right)
+# Obstacle avoidance: Column at X=0.3m (WP4)
+
+def task_T004():
+    # --- Safety Checks ---
+    # Verify E-Stop clear (hardware-enforced on UR controller)
+    if get_digital_in(0):
+        popup("E-Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # --- Configuration ---
+    # Motion parameters
+    global HOME_POS = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+    global PICK_POSE_ABOVE = p[0.4000, -0.2500, 0.3500, 0.0000, 3.1416, 0.0000]
+    global PICK_POSE = p[0.4000, -0.2500, 0.1000, 0.0000, 3.1416, 0.0000]
+    global PLACE_POSE_ABOVE = p[0.4000, 0.2500, 0.4000, 0.0000, 3.1416, 0.0000]
+    global PLACE_POSE = p[0.4000, 0.2500, 0.1000, 0.0000, 3.1416, 0.0000]
+    global OBSTACLE_AVOIDANCE = p[0.2500, 0.0000, 0.4000, 0.0000, 3.1416, 0.0000]
+
+    # Speed and acceleration profiles
+    global SPEED_JOINT = 0.5000       # m/s (joint move)
+    global SPEED_LINEAR = 0.2000      # m/s (linear move)
+    global SPEED_DESCENT = 0.1000     # m/s (slow descent)
+    global SPEED_LIFT = 0.1800        # m/s (lift after pick/place)
+    global ACCEL_JOINT = 1.4000       # rad/s²
+    global ACCEL_LINEAR = 0.8000      # m/s²
+    global ACCEL_DESCENT = 0.5000     # m/s² (slow descent)
+    global ACCEL_LIFT = 0.7000        # m/s² (lift after pick/place)
+
+    # Blending radii (mm)
+    global BLEND_HOME = 0.015
+    global BLEND_PICK = 0.020
+    global BLEND_OBSTACLE = 0.030
+    global BLEND_PLACE = 0.020
+    global BLEND_RETRACT = 0.010
+
+    # Gripper parameters
+    global GRIPPER_CLOSE_TIME = 0.200 # seconds
+    global GRIPPER_OPEN_TIME = 0.200  # seconds
+
+    # --- Motion Sequence ---
+    # [1] Home position (joint move)
+    movej(HOME_POS, a=ACCEL_JOINT, v=SPEED_JOINT)
+
+    # [2] Approach pick station (linear move)
+    movel(PICK_POSE_ABOVE, a=ACCEL_LINEAR, v=SPEED_LINEAR, r=BLEND_HOME)
+
+    # [3] Descend to pick (slow linear move)
+    movel(PICK_POSE, a=ACCEL_DESCENT, v=SPEED_DESCENT)
+
+    # [4] Close gripper
+    set_digital_out(0, True)
+    sleep(GRIPPER_CLOSE_TIME)
+
+    # [5] Lift above pick (linear move)
+    movel(PICK_POSE_ABOVE, a=ACCEL_LIFT, v=SPEED_LIFT, r=BLEND_PICK)
+
+    # [6] Obstacle avoidance waypoint (linear move)
+    movel(OBSTACLE_AVOIDANCE, a=ACCEL_LINEAR, v=SPEED_LINEAR, r=BLEND_OBSTACLE)
+
+    # [7] Approach place station (linear move)
+    movel(PLACE_POSE_ABOVE, a=ACCEL_LINEAR, v=SPEED_LINEAR, r=BLEND_PLACE)
+
+    # [8] Descend to place (slow linear move)
+    movel(PLACE_POSE, a=ACCEL_DESCENT, v=SPEED_DESCENT)
+
+    # [9] Open gripper
+    set_digital_out(0, False)
+    sleep(GRIPPER_OPEN_TIME)
+
+    # [10] Retract above place (linear move)
+    movel(PLACE_POSE_ABOVE, a=ACCEL_LIFT, v=SPEED_LIFT, r=BLEND_RETRACT)
+
+    # [11] Return to home (joint move)
+    movej(HOME_POS, a=ACCEL_JOINT, v=SPEED_JOINT)
+
+end
+
+# --- Program Entry ---
+task_T004()

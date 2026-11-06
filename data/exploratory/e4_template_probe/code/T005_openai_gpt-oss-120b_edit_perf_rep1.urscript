@@ -1,0 +1,60 @@
+# Optimized Task: T005 — Visual inspection scan — collaborative mode
+# Speed optimized for faster cycle time while respecting collaborative limits (≤0.100 m/s TCP)
+# Robot: UR5e, Payload: 0.3 kg
+# Camera orientation fixed (downward)
+
+def task_T005():
+  # [0] Verify E‑Stop clear (hardware enforced)
+  if get_digital_in(0):
+    popup("E‑Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # [1] Home position (joint move, fast)
+  movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0], a=1.4, v=0.375)
+
+  # [2] Approach inspection start – above surface
+  movel(p[0.250, -0.100, 0.250, 0.0, 3.1416, 0.0],
+        a=0.8, v=0.100, r=0.020)
+
+  # [3] Descend to scan height (150 mm above part)
+  movel(p[0.250, -0.100, 0.150, 0.0, 3.1416, 0.0],
+        a=0.8, v=0.100, r=0.020)
+
+  # [4] Camera trigger ON
+  set_digital_out(2, True)
+
+  # [5] Scan line 1 – Y sweep
+  movel(p[0.250, 0.100, 0.150, 0.0, 3.1416, 0.0],
+        a=0.8, v=0.100, r=0.020)
+
+  # [6] Step to scan line 2 (+X) – blended
+  movel(p[0.350, 0.100, 0.150, 0.0, 3.1416, 0.0],
+        a=0.8, v=0.100, r=0.020)
+
+  # [7] Scan line 2 – reverse Y sweep
+  movel(p[0.350, -0.100, 0.150, 0.0, 3.1416, 0.0],
+        a=0.8, v=0.100, r=0.020)
+
+  # [8] Step to scan line 3 (+X) – blended
+  movel(p[0.450, -0.100, 0.150, 0.0, 3.1416, 0.0],
+        a=0.8, v=0.100, r=0.020)
+
+  # [9] Scan line 3 – Y sweep
+  movel(p[0.450, 0.100, 0.150, 0.0, 3.1416, 0.0],
+        a=0.8, v=0.100, r=0.020)
+
+  # [10] Camera trigger OFF
+  set_digital_out(2, False)
+
+  # [11] Retract above inspection surface
+  movel(p[0.350, 0.0, 0.300, 0.0, 3.1416, 0.0],
+        a=0.8, v=0.100, r=0.020)
+
+  # [12] Return to home
+  movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0], a=1.4, v=0.375)
+
+end
+
+# Entry point
+task_T005()

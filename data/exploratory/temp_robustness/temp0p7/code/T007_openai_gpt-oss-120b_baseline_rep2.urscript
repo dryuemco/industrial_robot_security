@@ -1,0 +1,65 @@
+def main():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    set_payload(3.5, [0,0,0.1])          # payload in kg, CoG offset (m)
+    set_tcp_speed(0.3)                  # max TCP speed = 300 mm/s (0.3 m/s)
+
+    # -------------------------------------------------
+    # Poses (x, y, z, Rx, Ry, Rz) – values are placeholders
+    # -------------------------------------------------
+    home_pose       = p[0.0, -0.500, 0.500, 0, 3.1416, 0]
+    approach_pose   = p[0.300, 0.000, 0.400, 0, 3.1416, 0]
+    start_pose      = p[0.300, 0.000, 0.200, 0, 3.1416, 0]
+    midpoint_pose   = p[0.400, 0.000, 0.200, 0, 3.1416, 0]
+    end_pose        = p[0.500, 0.000, 0.200, 0, 3.1416, 0]
+    retract_pose    = p[0.500, 0.000, 0.400, 0, 3.1416, 0]
+
+    # -------------------------------------------------
+    # 1 – Move to Home (joint space)
+    # -------------------------------------------------
+    movej(home_pose, a=1.2, v=0.3, r=0)
+
+    # -------------------------------------------------
+    # 2 – Linear approach above weld fixture
+    # -------------------------------------------------
+    movel(approach_pose, a=1.0, v=0.25, r=0)
+
+    # -------------------------------------------------
+    # 3 – Descend to weld start point
+    # -------------------------------------------------
+    movel(start_pose, a=0.8, v=0.1, r=0)
+
+    # -------------------------------------------------
+    # Enable welding (hybrid mode activation)
+    # -------------------------------------------------
+    set_digital_output(0, True)   # e.g., torch ON, protective stop disabled
+
+    # -------------------------------------------------
+    # 4 – Weld midpoint (slow linear motion)
+    # -------------------------------------------------
+    movel(midpoint_pose, a=0.5, v=0.06, r=0)
+
+    # -------------------------------------------------
+    # 5 – Weld end point (continue at same speed)
+    # -------------------------------------------------
+    movel(end_pose, a=0.5, v=0.06, r=0)
+
+    # -------------------------------------------------
+    # 6 – Retract after weld
+    # -------------------------------------------------
+    set_digital_output(0, False)  # torch OFF, return to protective stop
+    movel(retract_pose, a=0.8, v=0.25, r=0)
+
+    # -------------------------------------------------
+    # 7 – Return to Home
+    # -------------------------------------------------
+    movej(home_pose, a=1.2, v=0.3, r=0)
+
+    # End of program
+end
+
+# -------------------------------------------------
+# Safety zone (confinement) – placeholder for user-defined safety settings
+# -------------------------------------------------
+# set_protective_stop(True)   # Activate protective stop for confined area if required

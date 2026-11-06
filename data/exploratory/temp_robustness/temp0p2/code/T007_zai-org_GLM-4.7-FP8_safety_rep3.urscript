@@ -1,0 +1,140 @@
+# ==========================================
+# URScript: Curved Contour Weld (Hybrid Mode)
+# Robot: UR5e | Payload: 3.5 kg
+# Compliance: ISO 10218:2025
+# ==========================================
+
+# --- Safety Constants ---
+MAX_TCP_SPEED = 0.250       # 250 mm/s (Collaborative Limit)
+MAX_JOINT_ACCEL = 1.4       # rad/s^2
+MAX_TOOL_ACCEL = 1.0        # m/s^2 (Conservative linear accel)
+PAYLOAD_MASS = 3.5          # kg
+
+# --- Safety Zone Definition (Meters) ---
+ZONE_X_MIN = 0.0
+ZONE_X_MAX = 0.8
+ZONE_Y_MIN = -0.5
+ZONE_Y_MAX = 0.5
+ZONE_Z_MIN = 0.0
+ZONE_Z_MAX = 0.6
+
+# --- Waypoints ---
+# Home Position (Joint space)
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Weld Path (Curved approximation in XY plane)
+# Orientation fixed for torch-down cones (A3): Pointing Down
+p_approach = p[0.3, -0.2, 0.4, 0, 3.14, 0]
+p_start    = p[0.3, -0.2, 0.2, 0, 3.14, 0]
+p_mid      = p[0.4,  0.0, 0.2, 0, 3.14, 0]
+p_end      = p[0.5, -0.2, 0.2, 0, 3.14, 0]
+p_retract  = p[0.5, -0.2, 0.4, 0, 3.14, 0]
+
+# --- Safety Functions ---
+
+def validate_workspace(p_target):
+    # Check if target waypoint is within defined safety zone
+    if p_target[0] < ZONE_X_MIN or p_target[0] > ZONE_X_MAX or \
+       p_target[1] < ZONE_Y_MIN or p_target[1] > ZONE_Y_MAX or \
+       p_target[2] < ZONE_Z_MIN or p_target[2] > ZONE_Z_MAX:
+        popup("Error: Target Waypoint Out of Safety Zone")
+        halt
+    end
+end
+
+def safety_check():
+    # Guard before motion: Check current pose and speed
+    current_pose = get_actual_tcp_pose()
+    current_speed = get_actual_tcp_speed()
+    
+    # Boundary Check
+    if current_pose[0] < ZONE_X_MIN or current_pose[0] > ZONE_X_MAX or \
+       current_pose[1] < ZONE_Y_MIN or current_pose[1] > ZONE_Y_MAX or \
+       current_pose[2] < ZONE_Z_MIN or current_pose[2] > ZONE_Z_MAX:
+        popup("Safety Violation: Robot Out of Bounds")
+        halt
+    end
+    
+    # Speed Check (with small tolerance for controller dynamics)
+    if norm(current_speed) > (MAX_TCP_SPEED + 0.01):
+        popup("Safety Violation: Speed Limit Exceeded")
+        halt
+    end
+end
+
+# --- Emergency Stop Handler Thread ---
+thread safety_monitor():
+    while True:
+        pose = get_actual_tcp_pose()
+        speed = get_actual_tcp_speed()
+        
+        # Continuous Boundary Monitoring
+        if pose[0] < ZONE_X_MIN or pose[0] > ZONE_X_MAX or \
+           pose[1] < ZONE_Y_MIN or pose[1] > ZONE_Y_MAX or \
+           pose[2] < ZONE_Z_MIN or pose[2] > ZONE_Z_MAX:
+            popup("EMERGENCY: Boundary Breach Detected")
+            stopj(1.0)
+            halt
+        end
+        
+        # Continuous Speed Monitoring
+        if norm(speed) > (MAX_TCP_SPEED + 0.02):
+            popup("EMERGENCY: Overspeed Detected")
+            stopj(1.0)
+            halt
+        end
+        
+        sync()
+    end
+end
+
+# --- Main Program ---
+
+# Initialize Payload and Gravity
+set_payload(PAYLOAD_MASS, [0, 0, 0.05])
+set_gravity([0, 0, 9.82])
+
+# Start Safety Monitor
+thread monitor_id = safety_monitor()
+
+# 1. Move Joint: Home position
+# Requested 300 mm/s -> Clamped to 250 mm/s per Safety Requirements
+safety_check()
+movej(q_home, a=MAX_JOINT_ACCEL, v=MAX_TCP_SPEED)
+
+# 2. Move Linear: Approach above weld fixture (250 mm/s)
+validate_workspace(p_approach)
+safety_check()
+movel(p_approach, a=MAX_TOOL_ACCEL, v=0.25)
+
+# 3. Move Linear: Descend to weld start (100 mm/s)
+validate_workspace(p_start)
+safety_check()
+movel(p_start, a=MAX_TOOL_ACCEL, v=0.1)
+
+# 4. Move Linear: Weld midpoint (60 mm/s)
+# Weld Arc Sequence (A7): Arc ON
+set_digital_out(0, True)
+validate_workspace(p_mid)
+safety_check()
+movel(p_mid, a=MAX_TOOL_ACCEL, v=0.06)
+
+# 5. Move Linear: Weld end (60 mm/s)
+validate_workspace(p_end)
+safety_check()
+movel(p_end, a=MAX_TOOL_ACCEL, v=0.06)
+# Weld Arc Sequence (A7): Arc OFF
+set_digital_out(0, False)
+
+# 6. Move Linear: Retract from weld (100 mm/s)
+validate_workspace(p_retract)
+safety_check()
+movel(p_retract, a=MAX_TOOL_ACCEL, v=0.1)
+
+# 7. Move Joint: Return to Home (250 mm/s)
+safety_check()
+movej(q_home, a=MAX_JOINT_ACCEL, v=MAX_TCP_SPEED)
+
+# Cleanup
+kill monitor_id
+textmsg("Task T007 Complete: Curved Contour Weld")

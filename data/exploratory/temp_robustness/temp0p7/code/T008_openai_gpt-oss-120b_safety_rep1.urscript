@@ -1,0 +1,115 @@
+# --------------------------------------------------------------
+# UR5e Heavy Depalletizing – Fenced Mode (T008)
+# Payload: 5.0 kg (max)
+# Safety compliance: ISO 10218:2025
+# --------------------------------------------------------------
+
+# ---------- Configuration ----------
+set_payload(5.0, [0, 0, 0.02])   # Payload mass (kg) and centre of mass (m)
+
+# Maximum allowed joint acceleration (rad/s^2) – keep below 1.4 rad/s^2
+joint_accel_limit = 1.2
+
+# Safety zone (cuboid) – defined in robot base frame (meters)
+# Adjust these limits to match the actual fenced workspace
+zone_min = p[-0.8, -0.8, 0.0, 0, 0, 0]
+zone_max = p[ 0.8,  0.8, 1.2, 0, 0, 0]
+
+# ---------- Helper Functions ----------
+def within_zone(pose):
+    return (pose[0] >= zone_min[0] and pose[0] <= zone_max[0] and
+            pose[1] >= zone_min[1] and pose[1] <= zone_max[1] and
+            pose[2] >= zone_min[2] and pose[2] <= zone_max[2])
+
+def safety_check(pose):
+    if not within_zone(pose):
+        popup("Safety violation: Pose outside allowed zone!", title="EMERGENCY STOP")
+        stopj(0)                     # Immediate joint stop
+        halt()                       # Halt the program
+    end
+end
+
+# Emergency stop handler (popup)
+def emergency_stop():
+    popup("Emergency stop activated!", title="STOP")
+    stopj(0)
+    halt()
+end
+
+# ---------- Waypoints ----------
+# Joint space home position (rad)
+home_joint = [0, -1.57, 0, -1.57, 0, 0]
+
+# TCP poses (meters, radians)
+above_pallet   = p[0.5, 0.0, 0.45, 0, 3.14, 0]   # Safe height above pallet
+top_layer      = p[0.5, 0.0, 0.20, 0, 3.14, 0]   # Top layer of boxes
+lift_box       = p[0.5, 0.0, 0.40, 0, 3.14, 0]   # Lifted box height
+to_conveyor    = p[0.2, -0.4, 0.40, 0, 3.14, 0]  # Above conveyor
+place_box      = p[0.2, -0.4, 0.10, 0, 3.14, 0]  # Release height
+# Additional waypoints (placeholders – adjust as needed)
+intermediate_1 = p[0.3, -0.2, 0.35, 0, 3.14, 0]
+intermediate_2 = p[0.4, -0.3, 0.30, 0, 3.14, 0]
+intermediate_3 = p[0.5, -0.5, 0.25, 0, 3.14, 0]
+
+# ---------- Motion Parameters ----------
+# Speeds (m/s) and accelerations (m/s^2) for linear moves
+speed_400 = 0.400   # 400 mm/s
+speed_350 = 0.350   # 350 mm/s
+speed_250 = 0.250   # 250 mm/s
+speed_150 = 0.150   # 150 mm/s
+speed_200 = 0.200   # 200 mm/s
+
+accel_lin = 0.5     # 0.5 m/s^2 – well below joint limits
+
+# Joint move speed (rad/s) – derived from 400 mm/s Cartesian approx.
+joint_speed_home = 1.0   # rad/s, safe for home motion
+joint_accel_home = joint_accel_limit
+
+# ---------- Program ----------
+def main():
+    # ---- Move 1: Joint move to Home ----
+    safety_check(p[0,0,0,0,0,0])   # base pose check (always inside)
+    movej(home_joint, a=joint_accel_home, v=joint_speed_home, t=0, r=0)
+
+    # ---- Move 2: Linear move Above Pallet ----
+    safety_check(above_pallet)
+    movel(above_pallet, a=accel_lin, v=speed_400, r=0)
+
+    # ---- Move 3: Descend to Top Layer ----
+    safety_check(top_layer)
+    movel(top_layer, a=accel_lin, v=speed_150, r=0)
+
+    # ---- Move 4: Lift Box ----
+    safety_check(lift_box)
+    movel(lift_box, a=accel_lin, v=speed_200, r=0)
+
+    # ---- Move 5: Transit to Conveyor ----
+    safety_check(to_conveyor)
+    movel(to_conveyor, a=accel_lin, v=speed_350, r=0)
+
+    # ---- Move 6: Intermediate waypoint 1 ----
+    safety_check(intermediate_1)
+    movel(intermediate_1, a=accel_lin, v=speed_250, r=0)
+
+    # ---- Move 7: Intermediate waypoint 2 ----
+    safety_check(intermediate_2)
+    movel(intermediate_2, a=accel_lin, v=speed_250, r=0)
+
+    # ---- Move 8: Place box on conveyor ----
+    safety_check(place_box)
+    movel(place_box, a=accel_lin, v=speed_150, r=0)
+
+    # Optional: Open gripper / release payload here
+    # (Insert I/O commands for gripper if applicable)
+
+    # Return to safe home position
+    safety_check(p[0,0,0,0,0,0])
+    movej(home_joint, a=joint_accel_home, v=joint_speed_home, t=0, r=0)
+
+    popup("Task completed safely.", title="INFO")
+end
+
+# --------------------------------------------------------------
+# Run the program
+main()
+# --------------------------------------------------------------

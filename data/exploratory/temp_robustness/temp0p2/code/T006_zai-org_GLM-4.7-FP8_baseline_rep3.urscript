@@ -1,0 +1,59 @@
+# Program: Bin picking with suction - Fenced Mode (T006)
+# Robot: UR5e
+# Payload: 2.0 kg
+# Tool: Suction Gripper
+
+# --- Setup ---
+set_payload(2.0, [0, 0, 0.05])
+set_tcp([0, 0, 0.15, 0, 0, 0])
+
+# --- Safety Zone (Confinement) ---
+# Define a polygon boundary for the workspace
+p_zone_1 = p[0.2, -0.4, 0.0, 0, 0, 0]
+p_zone_2 = p[0.7, -0.4, 0.0, 0, 0, 0]
+p_zone_3 = p[0.7, 0.4, 0.0, 0, 0, 0]
+p_zone_4 = p[0.2, 0.4, 0.0, 0, 0, 0]
+set_confined_zone(1, [p_zone_1, p_zone_2, p_zone_3, p_zone_4], 0, 0)
+
+# --- Waypoints ---
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+p_above_bin = p[0.3, -0.2, 0.4, 0, 3.14, 0]
+p_in_bin = p[0.3, -0.2, 0.1, 0, 3.14, 0]
+p_above_conv = p[0.6, 0.2, 0.4, 0, 3.14, 0]
+p_on_conv = p[0.6, 0.2, 0.1, 0, 3.14, 0]
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home position, 350.0 mm/s
+movej(q_home, a=1.4, v=1.0)
+
+# 2. move_linear: Above bin, 350.0 mm/s
+movel(p_above_bin, a=0.5, v=0.35)
+
+# 3. move_linear: Descend into bin, 150.0 mm/s
+movel(p_in_bin, a=0.2, v=0.15)
+
+# Action: Activate Suction
+set_digital_out(0, True)
+sleep(0.5)
+
+# 4. move_linear: Lift from bin, 300.0 mm/s
+movel(p_above_bin, a=0.5, v=0.3)
+
+# 5. move_linear: Transit to conveyor, 380.0 mm/s
+movel(p_above_conv, a=0.8, v=0.38)
+
+# 6. move_linear: Descend to conveyor, 150.0 mm/s
+movel(p_on_conv, a=0.2, v=0.15)
+
+# Action: Deactivate Suction
+set_digital_out(0, False)
+sleep(0.2)
+
+# 7. move_linear: Lift from conveyor, 300.0 mm/s
+movel(p_above_conv, a=0.5, v=0.3)
+
+# 8. move_joint: Return to Home, 350.0 mm/s
+movej(q_home, a=1.4, v=1.0)
+
+# End of Program

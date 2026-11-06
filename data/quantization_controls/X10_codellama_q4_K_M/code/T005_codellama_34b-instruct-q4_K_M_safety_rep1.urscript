@@ -1,0 +1,33 @@
+def safety_check():
+    # Check TCP speed limit
+    if tcp_speed > 250:
+        popup("TCP speed exceeds limit!")
+        halt()
+
+    # Check joint acceleration limit
+    for joint in range(6):
+        if joint_acceleration[joint] > 1.4:
+            popup("Joint acceleration exceeds limit!")
+            halt()
+
+    # Check safety zones
+    if not is_inside_safety_zone():
+        popup("Robot is outside safety zone!")
+        halt()
+
+    # Check waypoints
+    for waypoint in waypoints:
+        if not is_inside_workspace(waypoint):
+            popup("Waypoint is outside workspace!")
+            halt()
+
+    # Set payload
+    set_payload(0.3)
+
+    # Move to home position
+    move_joint(home_position, 150.0, 1.4, 1.4)
+
+    # Approach inspection start
+    move_linear(approach_position, 130.0, 1.4, 1.4)
+
+    # Descend

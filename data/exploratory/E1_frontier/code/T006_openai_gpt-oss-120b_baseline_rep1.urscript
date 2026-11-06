@@ -1,0 +1,68 @@
+# URScript for UR5e bin picking with suction (fenced mode)
+# Payload and TCP configuration
+set_payload(2.0, [0,0,0.1])          # 2 kg payload, CoG offset
+set_tcp([0,0,0.1, 0,0,0])           # Suction cup TCP, 100mm offset along Z
+
+# Speed limits (mm/s)
+speed_joint = 350.0
+speed_approach = 150.0
+speed_lift = 300.0
+speed_transit = 380.0
+speed_place = 350.0
+speed_retreat = 350.0
+max_tcp_speed = 400.0               # safety limit
+
+# Define poses (x, y, z, Rx, Ry, Rz) – replace with calibrated values
+pose_home          = p[0.0, -0.5, 0.3, 0, 3.14, 0]
+pose_above_bin     = p[0.3, -0.4, 0.4, 0, 3.14, 0]
+pose_descend_bin   = p[0.3, -0.4, 0.1, 0, 3.14, 0]
+pose_lift_bin      = p[0.3, -0.4, 0.4, 0, 3.14, 0]
+pose_above_conveyor= p[0.6, 0.0, 0.5, 0, 3.14, 0]
+pose_place         = p[0.6, 0.0, 0.2, 0, 3.14, 0]
+pose_retreat       = p[0.6, 0.0, 0.5, 0, 3.14, 0]
+pose_safe          = p[0.0, -0.5, 0.5, 0, 3.14, 0]
+
+# Helper function to enforce max TCP speed
+def safe_movel(target, v):
+    v_limited = min(v, max_tcp_speed)
+    movel(target, a=1.2, v=v_limited, r=0.0)
+end
+
+# Main program
+def main():
+    # 1. Move to Home position (joint move)
+    movej(pose_home, a=1.4, v=speed_joint, r=0.0)
+
+    # 2. Move above the bin (linear)
+    safe_movel(pose_above_bin, speed_transit)
+
+    # 3. Descend into the bin (linear, slower)
+    safe_movel(pose_descend_bin, speed_approach)
+
+    # 4. Activate suction to pick part
+    set_digital_out(0, True)   # suction ON
+    sleep(0.2)                  # allow suction to engage
+
+    # 5. Lift part out of bin
+    safe_movel(pose_lift_bin, speed_lift)
+
+    # 6. Transit to conveyor area
+    safe_movel(pose_above_conveyor, speed_transit)
+
+    # 7. Move down to place part on conveyor
+    safe_movel(pose_place, speed_place)
+
+    # 8. Deactivate suction to release part
+    set_digital_out(0, False)  # suction OFF
+    sleep(0.2)
+
+    # 9. Retreat to safe height above conveyor
+    safe_movel(pose_retreat, speed_retreat)
+
+    # 10. Return to Home / Safe pose
+    movej(pose_home, a=1.4, v=speed_joint, r=0.0)
+
+end
+
+# Execute
+main()

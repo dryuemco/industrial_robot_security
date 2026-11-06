@@ -1,0 +1,115 @@
+# URScript for UR5e - Multi-waypoint SSM Pick-Place with Obstacle Avoidance
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(1.5, [0,0,0.1])               # Payload 1.5 kg, CoM offset
+set_tcp([0,0,0.1,0,0,0])                 # TCP definition (100 mm offset)
+
+# Enable Speed and Separation Monitoring (SSM)
+set_safety_mode('speed_guard')          # Speed guard active
+set_safety_mode('collision_monitor')    # Collision monitor active
+
+# -------------------------------------------------
+# Safety Zones
+# -------------------------------------------------
+# Confinement zone (cartesian limits) – keep robot inside a 0.8 m³ box
+set_cartesian_confinement(
+    lower = p[-0.4, -0.4, 0.0, 0, 0, 0],
+    upper = p[ 0.6,  0.4, 0.8, 0, 0, 0],
+    max_speed = 0.25)    # 250 mm/s
+
+# Exclusion zone – a column obstacle to avoid (radius 0.1 m, height 0.6 m)
+set_cartesian_exclusion(
+    lower = p[-0.05, -0.05, 0.0, 0, 0, 0],
+    upper = p[ 0.05,  0.05, 0.6, 0, 0, 0])
+
+# -------------------------------------------------
+# Work Objects (dual)
+# -------------------------------------------------
+pick_workobject  = p[0.30, 0.00, 0.10, 0, 0, 0]   # Pick station reference
+place_workobject = p[-0.20, 0.00, 0.10, 0, 0, 0]  # Place station reference
+
+# -------------------------------------------------
+# Waypoints (positions in meters, orientation in radians)
+# -------------------------------------------------
+home = p[0.0, -1.57, 0.0, -2.0, 0.0, 0.0]
+
+# Above pick station
+wp1 = p[0.30, 0.00, 0.50, 0, 3.14, 0]
+
+# Descend to pick
+wp2 = p[0.30, 0.00, 0.20, 0, 3.14, 0]
+
+# Lift after pick
+wp3 = p[0.30, 0.00, 0.50, 0, 3.14, 0]
+
+# Obstacle avoidance waypoint (offset -X)
+wp4 = p[0.00, 0.00, 0.50, 0, 3.14, 0]
+
+# Move around the obstacle
+wp5 = p[-0.20, 0.00, 0.50, 0, 3.14, 0]
+
+# Descend to place
+wp6 = p[-0.20, 0.00, 0.20, 0, 3.14, 0]
+
+# Lift after place
+wp7 = p[-0.20, 0.00, 0.50, 0, 3.14, 0]
+
+# Transfer to safe zone
+wp8 = p[0.40, -0.20, 0.50, 0, 3.14, 0]
+
+# Return to home height (above base)
+wp9 = p[0.00, 0.00, 0.50, 0, 3.14, 0]
+
+# -------------------------------------------------
+# Motion Sequence
+# -------------------------------------------------
+# 1) Joint move to home position (200 mm/s)
+movej(home, a=1.2, v=0.20)
+
+# 2) Linear move to waypoint above pick (200 mm/s)
+movel(wp1, a=1.2, v=0.20)
+
+# Activate pick work object
+set_workobject(pick_workobject, 0)
+
+# 3) Linear descend to pick (100 mm/s)
+movel(wp2, a=1.2, v=0.10)
+
+# (Gripper close command placeholder)
+# close_gripper()
+
+# 4) Linear lift after pick (180 mm/s)
+movel(wp3, a=1.2, v=0.18)
+
+# 5) Move to obstacle avoidance waypoint (200 mm/s)
+movel(wp4, a=1.2, v=0.20)
+
+# 6) Continue around obstacle (200 mm/s)
+movel(wp5, a=1.2, v=0.20)
+
+# Activate place work object
+set_workobject(place_workobject, 0)
+
+# 7) Descend to place (150 mm/s)
+movel(wp6, a=1.2, v=0.15)
+
+# (Gripper open command placeholder)
+# open_gripper()
+
+# 8) Lift after place (180 mm/s)
+movel(wp7, a=1.2, v=0.18)
+
+# 9) Transfer to safe zone (200 mm/s)
+movel(wp8, a=1.2, v=0.20)
+
+# 10) Return to home height (200 mm/s)
+movel(wp9, a=1.2, v=0.20)
+
+# Final joint move to exact home configuration
+movej(home, a=1.2, v=0.20)
+
+# -------------------------------------------------
+# End of Program
+# -------------------------------------------------

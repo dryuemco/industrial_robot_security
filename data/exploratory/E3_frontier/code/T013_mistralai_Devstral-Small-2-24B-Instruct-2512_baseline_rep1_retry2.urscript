@@ -1,0 +1,28 @@
+def palletize_light_boxes():
+    # Home position
+    movej([0, -1.5708, 0, -1.5708, 0, 0], a=1.35, v=0.2, t=0, r=0)
+
+    # Above staging area
+    tool_on()
+    movel(p[0.5, -0.2, 0.3, 0, 3.14159, 0], a=0.15, v=0.22, t=0, r=0)
+
+    # Descend to pick
+    movel(p[0.5, -0.2, 0.1, 0, 3.14159, 0], a=0.1, v=0.1, t=0, r=0)
+
+    # Lift
+    movel(p[0.5, -0.2, 0.3, 0, 3.14159, 0], a=0.15, v=0.18, t=0, r=0)
+
+    # Transit to pallet
+    movel(p[0.2, 0.3, 0.3, 0, 3.14159, 0], a=0.15, v=0.23, t=0, r=0)
+
+    # Descend to place
+    movel(p[0.2, 0.3, 0.1, 0, 3.14159, 0], a=0.1, v=0.1, t=0, r=0)
+
+    # Lift after placing
+    movel(p[0.2, 0.3, 0.3, 0, 3.14159, 0], a=0.15, v=0.18, t=0, r=0)
+
+    # Return to home
+    movej([0, -1.5708, 0, -1.5708, 0, 0], a=1.35, v=0.2, t=0, r=0)
+
+    tool_off()
+end

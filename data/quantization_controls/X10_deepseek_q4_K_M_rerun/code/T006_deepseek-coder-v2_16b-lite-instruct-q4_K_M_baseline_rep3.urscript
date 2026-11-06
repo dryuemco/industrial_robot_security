@@ -1,0 +1,28 @@
+# Define the home position
+def home_position():
+    movej([0.0, -1.5, 1.5, -1.5, 1.5, 0.0], 350.0, 0.5, tool0);
+
+# Move to above bin
+def move_above_bin():
+    movej([0.0, -1.5, 1.5, -1.5, 1.5, 0.0], 350.0, 0.5, tool0);
+    transl([0.0, 0.0, 350.0], [0.0, -1.5, 1.5, -1.5, 1.5, 0.0], 350.0, 0.5, tool0);
+
+# Descend into bin
+def descend_into_bin():
+    transl([0.0, 0.0, -150.0], [0.0, -1.5, 1.5, -1.5, 1.5, 0.0], 150.0, 0.5, tool0);
+
+# Lift from bin
+def lift_from_bin():
+    transl([0.0, 0.0, 300.0], [0.0, -1.5, 1.5, -1.5, 1.5, 0.0], 300.0, 0.5, tool0);
+
+# Move to conveyor
+def move_to_conveyor():
+    transl([0.0, 0.0, 380.0], [0.0, -1.5, 1.5, -1.5, 1.5, 0.0], 380.0, 0.5, tool0);
+
+# Main program
+home_position();
+move_above_bin();
+descend_into_bin();
+lift_from_bin();
+move_to_conveyor();
+# Add more moves as per the sequence

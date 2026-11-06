@@ -1,0 +1,106 @@
+# -------------------------------------------------
+# UR5e Hybrid Multi-Angle Camera Inspection (T014)
+# Safety-compliant URScript (ISO 10218:2025)
+# -------------------------------------------------
+
+# ---- Payload & TCP ----
+set_payload(0.4, [0,0,0])          # 0.4 kg payload, CoG at TCP
+set_tcp([0,0,0,0,0,0])            # Default TCP
+
+# ---- Safety Parameters ----
+MAX_TCP_SPEED      = 0.20          # m/s (200 mm/s)
+MAX_JOINT_ACCEL    = 1.4           # rad/s^2 per joint
+MAX_LINEAR_ACCEL   = 1.2           # m/s^2 (conservative)
+
+# Workspace bounding box (metres) – adjust to your cell
+workspace = {
+  "xmin": -0.8, "xmax": 0.8,
+  "ymin": -0.8, "ymax": 0.8,
+  "zmin": 0.0,  "zmax": 1.2
+}
+
+# ---- Emergency Stop Handler ----
+def emergency_stop():
+    popup("EMERGENCY STOP: Safety violation detected!", true)
+    halt()
+end
+
+# ---- Safety Check Functions ----
+def within_workspace(p):
+    # p is a pose [x,y,z,rx,ry,rz] in metres / radians
+    return (p[0] >= workspace["xmin"] and p[0] <= workspace["xmax"] and
+            p[1] >= workspace["ymin"] and p[1] <= workspace["ymax"] and
+            p[2] >= workspace["zmin"] and p[2] <= workspace["zmax"])
+end
+
+def safety_check(p):
+    if not within_workspace(p):
+        popup("Safety Check Failed: Pose out of workspace!", true)
+        emergency_stop()
+    end
+end
+
+# ---- Motion Guard ----
+def motion_guard():
+    # Placeholder for additional runtime checks (e.g., force limits)
+    # Extend as needed for your cell.
+    # Return true if all checks pass.
+    return true
+end
+
+# ---- Waypoints (poses in metres & radians) ----
+# Home joint configuration (used with movej)
+home_joint = [0, -1.57, 0, -1.57, 0, 0]
+
+# Linear target poses (TCP)
+top_down_pose   = p[0.0, -0.4, 0.5, 0, 3.14159, 0]   # top‑down view
+side_view_pose  = p[0.3, 0.0, 0.5, 0, 1.5708, 0]    # side view
+angled_view_pose= p[0.2, -0.2, 0.5, 0, 2.0944, 0]   # angled view
+retract_pose    = p[0.0, -0.6, 0.6, 0, 3.14159, 0]  # safe retract
+final_pose      = p[0.0, -0.4, 0.5, 0, 3.14159, 0]  # return to top‑down (example)
+
+# ---- Main Program ----
+def main():
+    # ----- Safety Zone Confirmation -----
+    popup("Starting inspection sequence – safety zone active.", false)
+
+    # ----- Move 1: Joint Home -----
+    # Joint speed 1.0 rad/s (≈180 mm/s TCP), acceleration at limit
+    movej(home_joint, a=MAX_JOINT_ACCEL, v=1.0, t=0, r=0)
+
+    # ----- Move 2: Top‑down Linear -----
+    safety_check(top_down_pose)
+    if motion_guard():
+        movel(top_down_pose, a=MAX_LINEAR_ACCEL, v=0.15)   # 150 mm/s
+    end
+
+    # ----- Move 3: Side View Linear -----
+    safety_check(side_view_pose)
+    if motion_guard():
+        movel(side_view_pose, a=MAX_LINEAR_ACCEL, v=0.12)   # 120 mm/s
+    end
+
+    # ----- Move 4: Angled View Linear -----
+    safety_check(angled_view_pose)
+    if motion_guard():
+        movel(angled_view_pose, a=MAX_LINEAR_ACCEL, v=0.12) # 120 mm/s
+    end
+
+    # ----- Move 5: Retract Linear -----
+    safety_check(retract_pose)
+    if motion_guard():
+        movel(retract_pose, a=MAX_LINEAR_ACCEL, v=0.18)    # 180 mm/s
+    end
+
+    # ----- Move 6: Final Position (example) -----
+    safety_check(final_pose)
+    if motion_guard():
+        movel(final_pose, a=MAX_LINEAR_ACCEL, v=0.15)     # 150 mm/s
+    end
+
+    popup("Inspection sequence completed safely.", false)
+end
+
+# -------------------------------------------------
+# Execute
+main()

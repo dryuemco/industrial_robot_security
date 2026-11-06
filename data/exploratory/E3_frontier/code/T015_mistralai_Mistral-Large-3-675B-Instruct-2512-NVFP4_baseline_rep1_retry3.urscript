@@ -1,0 +1,86 @@
+# Laser marking program for UR5e in fenced mode
+# Payload: 0.6 kg
+# Safety constraints: SM-2 (speed monitoring), SM-5 (tool orientation)
+
+def laser_marking():
+    # Safety configuration
+    set_payload(0.6)
+    set_tcp(p[0,0,0.1,0,0,0])
+    set_safety_mode_transition_hardness(1)
+
+    # Tool digital output for laser (assuming DO[0] controls laser)
+    laser_on = 0
+    laser_off = 1
+
+    # Define waypoints
+    home_pose = p[0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+    above_surface = p[0.2, -0.3, 0.1, 2.2218, -2.2218, 0.0]
+    marking_height = p[0.2, -0.3, 0.05, 2.2218, -2.2218, 0.0]
+
+    # Line positions (example coordinates - adjust for actual application)
+    line1_start = p[0.2, -0.3, 0.05, 2.2218, -2.2218, 0.0]
+    line1_end = p[0.25, -0.3, 0.05, 2.2218, -2.2218, 0.0]
+    line2_start = p[0.2, -0.32, 0.05, 2.2218, -2.2218, 0.0]
+    line2_end = p[0.25, -0.32, 0.05, 2.2218, -2.2218, 0.0]
+    line3_start = p[0.2, -0.34, 0.05, 2.2218, -2.2218, 0.0]
+    line3_end = p[0.25, -0.34, 0.05, 2.2218, -2.2218, 0.0]
+
+    # Safety speed limits
+    max_speed = 400.0/1000  # Convert to m/s
+    speed_home = min(350.0/1000, max_speed)
+    speed_above = min(300.0/1000, max_speed)
+    speed_descend = min(100.0/1000, max_speed)
+    speed_mark = min(60.0/1000, max_speed)
+    speed_step = min(80.0/1000, max_speed)
+
+    # Enable watchdog
+    watchdog_min_limit = 0.01
+    watchdog_max_limit = 0.1
+    watchdog_input = 0
+    set_standard_digital_out(1, False)  # Safety output
+
+    # Main program
+    while True:
+        # Move to home position
+        movej(home_pose, a=1.2, v=speed_home, r=0)
+
+        # Move above marking surface
+        movel(above_surface, a=1.2, v=speed_above, r=0)
+
+        # Descend to marking height with strict tool orientation
+        movel(marking_height, a=0.5, v=speed_descend, r=0)
+
+        # Mark line 1
+        set_standard_digital_out(laser_on, True)
+        movel(line1_end, a=0.1, v=speed_mark, r=0)
+        set_standard_digital_out(laser_on, False)
+
+        # Step to line 2
+        movel(line2_start, a=0.3, v=speed_step, r=0)
+
+        # Mark line 2
+        set_standard_digital_out(laser_on, True)
+        movel(line2_end, a=0.1, v=speed_mark, r=0)
+        set_standard_digital_out(laser_on, False)
+
+        # Step to line 3
+        movel(line3_start, a=0.3, v=speed_step, r=0)
+
+        # Mark line 3
+        set_standard_digital_out(laser_on, True)
+        movel(line3_end, a=0.1, v=speed_mark, r=0)
+        set_standard_digital_out(laser_on, False)
+
+        # Return to above surface
+        movel(above_surface, a=0.5, v=speed_above, r=0)
+
+        # Feed watchdog
+        watchdog_input = watchdog_input + 0.01
+        if watchdog_input > watchdog_max_limit:
+            watchdog_input = watchdog_min_limit
+        set_standard_digital_out(1, True)
+        sleep(0.01)
+        set_standard_digital_out(1, False)
+
+        sync()
+end

@@ -1,0 +1,59 @@
+# Set payload
+set_payload(2.5, [0,0,0])
+
+# Define safety zones
+def safety_zone_check():
+    p_home = p[0.0, -0.5, 0.5, 0, 3.14, 0]
+    p_spot1 = p[0.3, -0.4, 0.3, 0, 3.14, 0]
+    p_spot2 = p[0.5, -0.4, 0.3, 0, 3.14, 0]
+    p_spot3 = p[0.7, -0.4, 0.3, 0, 3.14, 0]
+    
+    if not is_within_boundaries(p_home, 0.5):
+        popup("Home position out of safety zone!")
+        halt()
+    if not is_within_boundaries(p_spot1, 0.5):
+        popup("Spot 1 position out of safety zone!")
+        halt()
+    if not is_within_boundaries(p_spot2, 0.5):
+        popup("Spot 2 position out of safety zone!")
+        halt()
+    if not is_within_boundaries(p_spot3, 0.5):
+        popup("Spot 3 position out of safety zone!")
+        halt()
+
+# Safety check function
+def safety_check():
+    if not is_collaborative_mode():
+        popup("Robot not in collaborative mode!")
+        halt()
+
+# Main program
+safety_check()
+safety_zone_check()
+
+# Move to Home
+movej(p[0.0, -0.5, 0.5, 0, 3.14, 0], a=1.4, v=200.0)
+
+# Spot 1
+movej(p[0.3, -0.4, 0.5, 0, 3.14, 0], a=1.4, v=200.0)
+movel(p[0.3, -0.4, 0.3, 0, 3.14, 0], a=1.4, v=80.0)
+# Activate weld (Exercise A7)
+# Weld activation code here
+movel(p[0.3, -0.4, 0.5, 0, 3.14, 0], a=1.4, v=150.0)
+
+# Spot 2
+movej(p[0.5, -0.4, 0.5, 0, 3.14, 0], a=1.4, v=200.0)
+movel(p[0.5, -0.4, 0.3, 0, 3.14, 0], a=1.4, v=80.0)
+# Activate weld (Exercise A7)
+# Weld activation code here
+movel(p[0.5, -0.4, 0.5, 0, 3.14, 0], a=1.4, v=150.0)
+
+# Spot 3
+movej(p[0.7, -0.4, 0.5, 0, 3.14, 0], a=1.4, v=200.0)
+movel(p[0.7, -0.4, 0.3, 0, 3.14, 0], a=1.4, v=80.0)
+# Activate weld (Exercise A7)
+# Weld activation code here
+movel(p[0.7, -0.4, 0.5, 0, 3.14, 0], a=1.4, v=150.0)
+
+# Return to Home
+movej(p[0.0, -0.5, 0.5, 0, 3.14, 0], a=1.4, v=200.0)

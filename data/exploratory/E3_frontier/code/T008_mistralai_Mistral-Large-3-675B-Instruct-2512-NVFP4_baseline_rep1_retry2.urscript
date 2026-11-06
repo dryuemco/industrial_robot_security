@@ -1,0 +1,59 @@
+def heavy_depalletizing():
+  # Safety configuration
+  set_payload(5.0)
+  set_tcp(p[0,0,0.1,0,0,0])
+  set_safety_mode("reduced")
+
+  # Waypoints (example positions - adjust to your actual setup)
+  home_pose = p[0.0, -1.5708, 0.0, -1.5708, 0.0, 0.0]
+  above_pallet = p[-0.5, -0.8, 0.3, 2.221, -2.221, 0.0]
+  top_layer = p[-0.5, -0.8, 0.15, 2.221, -2.221, 0.0]
+  lift_box = p[-0.5, -0.8, 0.25, 2.221, -2.221, 0.0]
+  transit_conveyor = p[0.3, -0.8, 0.3, 2.221, -2.221, 0.0]
+  above_conveyor = p[0.3, -0.8, 0.2, 2.221, -2.221, 0.0]
+  release_box = p[0.3, -0.8, 0.15, 2.221, -2.221, 0.0]
+  retreat_conveyor = p[0.3, -0.8, 0.3, 2.221, -2.221, 0.0]
+
+  # Motion sequence with safety compliance
+  while True:
+    # Move to home position
+    movej(home_pose, a=1.2, v=0.8, r=0.0)
+
+    # Approach pallet
+    movel(above_pallet, a=1.2, v=0.8, r=0.0)
+
+    # Descend to box
+    movel(top_layer, a=0.5, v=0.3, r=0.0)
+
+    # Close gripper (assuming digital output 0 controls gripper)
+    set_digital_out(0, True)
+    sync()
+
+    # Lift box
+    movel(lift_box, a=0.8, v=0.4, r=0.0)
+
+    # Transit to conveyor
+    movel(transit_conveyor, a=1.2, v=0.7, r=0.0)
+
+    # Approach conveyor
+    movel(above_conveyor, a=1.2, v=0.8, r=0.0)
+
+    # Descend to conveyor
+    movel(release_box, a=0.5, v=0.3, r=0.0)
+
+    # Release box
+    set_digital_out(0, False)
+    sync()
+
+    # Retreat from conveyor
+    movel(retreat_conveyor, a=1.2, v=0.8, r=0.0)
+
+    # Check safety status between cycles
+    if get_safety_status() != "NORMAL":
+      popup("Safety violation detected. Stopping.", title="Error", error=True)
+      break
+  end
+end
+
+# Main program
+heavy_depalletizing()

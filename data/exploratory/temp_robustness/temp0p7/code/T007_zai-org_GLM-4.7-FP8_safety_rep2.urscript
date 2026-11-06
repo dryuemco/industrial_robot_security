@@ -1,0 +1,132 @@
+# URScript for UR5e Curved Contour Weld - Hybrid Mode
+# Task: T007 - Curved weld seam along an arc path
+# Compliance: ISO 10218:2025
+
+# --- Safety Configuration ---
+MAX_JOINT_ACCEL = 1.4          # rad/s^2 (System Limit)
+PAYLOAD_MASS = 3.5             # kg
+PAYLOAD_COG = [0.0, 0.0, 0.05] # Center of gravity (m)
+
+# Safety Zone Definition (Meters) - Cartesian Boundary Box
+# Confinement zone for the robot TCP
+ZONE_X_MIN = -0.8
+ZONE_X_MAX = 0.8
+ZONE_Y_MIN = -0.8
+ZONE_Y_MAX = 0.8
+ZONE_Z_MIN = 0.0
+ZONE_Z_MAX = 1.0
+
+def check_boundary(p):
+    # Validates if point p is within the defined safety zone
+    x = p[0]
+    y = p[1]
+    z = p[2]
+    
+    if (x < ZONE_X_MIN) or (x > ZONE_X_MAX) or (y < ZONE_Y_MIN) or (y > ZONE_Y_MAX) or (z < ZONE_Z_MIN) or (z > ZONE_Z_MAX):
+        popup("SAFETY VIOLATION: Waypoint outside safety zone!")
+        halt
+    end
+end
+
+def safety_check():
+    # Pre-motion safety check
+    # In hybrid mode, assumes fence is active for higher speeds.
+    # Enforces a hard stop if speed exceeds safe operational limits unexpectedly.
+    current_speed = get_tcp_speed()
+    if current_speed > 0.31: # 310mm/s absolute safety cap
+        popup("SAFETY VIOLATION: Excessive Speed!")
+        halt
+    end
+end
+
+# Emergency Stop Handler Thread
+# Monitors an external E-Stop signal (e.g., digital_in[0])
+thread emergency_handler():
+    while True:
+        if get_digital_in(0) == False:
+            popup("EMERGENCY STOP ACTIVATED!")
+            stopj(5.0)
+            halt
+        end
+        sync()
+    end
+end
+
+# --- Main Program ---
+
+def weld_sequence():
+    # 1. Set Payload and Acceleration Limits
+    set_payload(PAYLOAD_MASS, PAYLOAD_COG)
+    
+    # Set joint acceleration globally
+    set_acc(MAX_JOINT_ACCEL) 
+    
+    # Start Safety Thread
+    thread_monitor = run emergency_handler()
+    
+    # --- Waypoint Definitions ---
+    # Positions are illustrative for a UR5e performing a curved weld
+    p_home = [0.0, -0.45, 0.45, 3.14, 0.0, 0.0]
+    p_approach = [0.3, -0.2, 0.35, 2.2, -2.2, 0.0]
+    p_start = [0.3, 0.0, 0.15, 2.2, -2.2, 0.0]      # Weld Start
+    p_mid = [0.4, 0.15, 0.15, 2.2, -2.2, 0.5]      # Weld Mid (Arc)
+    p_end = [0.3, 0.3, 0.15, 2.2, -2.2, 1.0]       # Weld End (Arc)
+    p_retract = [0.3, 0.3, 0.35, 2.2, -2.2, 1.0]   # Post-weld retreat
+    
+    # --- Pre-Flight Validation ---
+    check_boundary(p_home)
+    check_boundary(p_approach)
+    check_boundary(p_start)
+    check_boundary(p_mid)
+    check_boundary(p_end)
+    check_boundary(p_retract)
+    
+    # --- Motion Sequence (7 Moves) ---
+    
+    # Move 1: move_joint - Home position
+    # Speed: 300.0 mm/s (Approx 1.2 rad/s joint speed)
+    safety_check()
+    movej(p_home, a=MAX_JOINT_ACCEL, v=1.2)
+    
+    # Move 2: move_linear - Approach above weld fixture
+    # Speed: 250.0 mm/s (Collaborative limit respected)
+    safety_check()
+    movel(p_approach, a=MAX_JOINT_ACCEL, v=0.250)
+    
+    # Move 3: move_linear - Descend to weld start
+    # Speed: 100.0 mm/s (Precision approach)
+    safety_check()
+    movel(p_start, a=MAX_JOINT_ACCEL, v=0.100)
+    
+    # Welding Sequence Start (A7)
+    set_digital_out(1, True) # Trigger Weld Arc
+    
+    # Move 4: move_linear - Weld midpoint
+    # Speed: 60.0 mm/s (Welding speed)
+    safety_check()
+    movel(p_mid, a=MAX_JOINT_ACCEL, v=0.060)
+    
+    # Move 5: move_linear - Weld end
+    # Speed: 60.0 mm/s (Welding speed)
+    safety_check()
+    movel(p_end, a=MAX_JOINT_ACCEL, v=0.060)
+    
+    # Welding Sequence End
+    set_digital_out(1, False) # Cut Weld Arc
+    
+    # Move 6: move_linear - Retreat
+    # Speed: 100.0 mm/s
+    safety_check()
+    movel(p_retract, a=MAX_JOINT_ACCEL, v=0.100)
+    
+    # Move 7: move_joint - Return to Home
+    # Speed: 300.0 mm/s (Hybrid mode assumption)
+    safety_check()
+    movej(p_home, a=MAX_JOINT_ACCEL, v=1.2)
+    
+    # Cleanup
+    kill thread_monitor
+    textmsg("Task T007 Complete: Curved Contour Weld.")
+end
+
+weld_sequence()

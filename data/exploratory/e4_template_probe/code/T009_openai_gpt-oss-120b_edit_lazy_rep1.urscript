@@ -1,0 +1,133 @@
+# ------------------------------------------------------------
+# Task: T009 — Laser surface scan — fenced mode (Improved)
+# Robot: UR5e | Payload: 0.5 kg | Max TCP speed: 0.200 m/s
+# ------------------------------------------------------------
+# Safety enhancements:
+#   • E‑Stop check (digital input 0)
+#   • Speed‑scaling verification
+#   • Payload & TCP definition
+#   • Workspace bounding‑box validation before each move
+#   • Consolidated raster logic (loop) to reduce code duplication
+# ------------------------------------------------------------
+
+def in_workspace(pose):
+    # Workspace limits (meters) for the scan area + safety margin
+    # X: 0.20 – 0.60, Y: -0.15 – 0.15, Z: 0.10 – 0.35
+    local x = pose[0]
+    local y = pose[1]
+    local z = pose[2]
+    return (x >= 0.20 and x <= 0.60) and \
+           (y >= -0.15 and y <= 0.15) and \
+           (z >= 0.10 and z <= 0.35)
+end
+
+def move_safe(target, a, v, r=0.005):
+    if not in_workspace(target):
+        popup("Target pose out of allowed workspace – aborting.", error=True)
+        halt
+    end
+    movel(target, a=a, v=v, r=r)
+end
+
+def task_T009():
+    # --------------------------------------------------------
+    # 0 – Global safety & configuration
+    # --------------------------------------------------------
+    if get_digital_in(0):               # E‑Stop input
+        popup("E‑Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # Verify speed scaling is sufficient for safe operation
+    if get_speed_scaling() < 0.1:
+        popup("Speed scaling too low – aborting.", error=True)
+        halt
+    end
+
+    # Define payload and TCP (laser tool)
+    set_payload(0.5, [0,0,0])            # 0.5 kg centered
+    set_tcp(p[0,0,0.1,0,0,0])            # 100 mm offset along Z (example)
+
+    # --------------------------------------------------------
+    # 1 – Home position
+    # --------------------------------------------------------
+    movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+          a=1.4, v=0.45)
+
+    # --------------------------------------------------------
+    # 2 – Move above scan start (safe approach)
+    # --------------------------------------------------------
+    move_safe(p[0.250, -0.100, 0.250, 0.0, 3.1416, 0.0],
+              a=0.6, v=0.15, r=0.01)
+
+    # --------------------------------------------------------
+    # 3 – Descend to scanning height
+    # --------------------------------------------------------
+    move_safe(p[0.250, -0.100, 0.120, 0.0, 3.1416, 0.0],
+              a=0.3, v=0.08, r=0.005)
+
+    # --------------------------------------------------------
+    # 4 – Activate laser (digital out 3)
+    # --------------------------------------------------------
+    set_digital_out(3, True)
+
+    # --------------------------------------------------------
+    # 5 – Raster scan (4 lines, 0.1 m step in X)
+    # --------------------------------------------------------
+    local start_x   = 0.250
+    local start_y   = -0.100
+    local end_y     =  0.100
+    local step_x    = 0.100
+    local lines     = 4
+    local scan_z    = 0.120
+    local a_scan    = 0.2
+    local v_scan    = 0.05
+    local a_step    = 0.3
+    local v_step    = 0.08
+
+    for i = 0, lines-1 do
+        # Compute X for this line
+        local x = start_x + i*step_x
+
+        # Determine Y direction (alternating)
+        if (i % 2) == 0 then
+            # forward direction: -Y → +Y
+            local p_start = p[x, start_y, scan_z, 0.0, 3.1416, 0.0]
+            local p_end   = p[x, end_y,   scan_z, 0.0, 3.1416, 0.0]
+        else
+            # reverse direction: +Y → -Y
+            local p_start = p[x, end_y,   scan_z, 0.0, 3.1416, 0.0]
+            local p_end   = p[x, start_y, scan_z, 0.0, 3.1416, 0.0]
+        end
+
+        # Move to start of line (only for first line we are already there)
+        if i > 0 then
+            move_safe(p_start, a=a_step, v=v_step, r=0.005)
+        end
+
+        # Scan the line
+        move_safe(p_end, a=a_scan, v=v_scan, r=0.005)
+    end
+
+    # --------------------------------------------------------
+    # 6 – Deactivate laser
+    # --------------------------------------------------------
+    set_digital_out(3, False)
+
+    # --------------------------------------------------------
+    # 7 – Retract to safe height above centre
+    # --------------------------------------------------------
+    move_safe(p[0.400, 0.0, 0.300, 0.0, 3.1416, 0.0],
+              a=0.6, v=0.15, r=0.01)
+
+    # --------------------------------------------------------
+    # 8 – Return home
+    # --------------------------------------------------------
+    movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+          a=1.4, v=0.45)
+end
+
+# ------------------------------------------------------------
+# Entry point
+# ------------------------------------------------------------
+task_T009()

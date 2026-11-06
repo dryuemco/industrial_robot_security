@@ -1,0 +1,148 @@
+# ==========================================
+# URScript for Laser Marking Task (Fenced Mode)
+# Robot: UR5e
+# Payload: 0.6 kg
+# Max TCP Speed: 400.0 mm/s
+# Max Joint Accel: 1.4 rad/s^2
+# ==========================================
+
+# --- Safety Constants ---
+MAX_TCP_SPEED = 0.4          # 400 mm/s in m/s
+MAX_JOINT_ACCEL = 1.4        # rad/s^2
+PAYLOAD_MASS = 0.6           # kg
+LASER_OUTPUT_ID = 0          # Digital Output ID for Laser
+
+# --- Safety Zone Definitions ---
+# Confinement: Sphere radius 0.85m (UR5e reach limit)
+ZONE_CONFINEMENT_RADIUS = 0.85
+# Exclusion: Box behind robot (x < -0.2, y < -0.2, z < 0.5)
+ZONE_EXCLUSION_X = -0.2
+ZONE_EXCLUSION_Y = -0.2
+
+# --- Helper Functions ---
+
+def emergency_stop(violation_msg):
+    stopj(1.0)
+    set_digital_out(LASER_OUTPUT_ID, False) # Force Laser Off
+    popup(violation_msg, "SAFETY VIOLATION", False, True)
+    halt
+end
+
+def check_safety_zones():
+    current_pose = get_actual_tcp_pose()
+    current_pos = [current_pose[0], current_pose[1], current_pose[2]]
+    
+    # 1. Confinement Check (Distance from base)
+    dist_from_base = norm(current_pos)
+    if dist_from_base > ZONE_CONFINEMENT_RADIUS:
+        emergency_stop("Robot outside confinement zone")
+    end
+    
+    # 2. Exclusion Check (Keep out of restricted area)
+    if current_pos[0] < ZONE_EXCLUSION_X and current_pos[1] < ZONE_EXCLUSION_Y:
+        emergency_stop("Robot inside exclusion zone")
+    end
+end
+
+def safety_check():
+    # Check Speed
+    actual_speed = get_actual_tcp_speed()
+    if actual_speed > MAX_TCP_SPEED:
+        emergency_stop("TCP Speed limit exceeded")
+    end
+    
+    # Check Zones
+    check_safety_zones()
+    
+    # Check Laser State (A7 Constraint)
+    # If not moving at marking speed, laser should ideally be off (handled in sequence)
+end
+
+# --- Initialization ---
+
+# Set Payload (Mass, Center of Mass [x,y,z] relative to tool flange)
+set_payload(PAYLOAD_MASS, [0, 0, 0.05])
+
+# Set Acceleration Limits
+set_acc(MAX_JOINT_ACCEL, MAX_JOINT_ACCEL)
+
+# Ensure Laser is OFF initially
+set_digital_out(LASER_OUTPUT_ID, False)
+
+# --- Fixture & Waypoint Definitions (A6: Marking Fixture Frame) ---
+
+# Define Fixture Frame (Example: 400mm forward, 200mm down, rotated)
+fixture_frame = p[0.4, 0.0, 0.2, 0, 3.14159, 0]
+
+# Define Waypoints relative to Fixture Frame
+# Home Position (Joint space)
+home_joints = [-1.571, -1.571, -1.571, -1.571, -1.571, 0.0]
+
+# Approach Point (Z offset 50mm above surface)
+wp_above = pose_trans(fixture_frame, p[0.0, 0.0, 0.05, 0, 0, 0])
+
+# Marking Start Point (Surface contact)
+wp_start = pose_trans(fixture_frame, p[0.0, 0.0, 0.0, 0, 0, 0])
+
+# Line 1 (50mm length)
+wp_line1_end = pose_trans(fixture_frame, p[0.05, 0.0, 0.0, 0, 0, 0])
+
+# Line 2 Start (Step 5mm down)
+wp_line2_start = pose_trans(fixture_frame, p[0.0, 0.005, 0.0, 0, 0, 0])
+wp_line2_end = pose_trans(fixture_frame, p[0.05, 0.005, 0.0, 0, 0, 0])
+
+# Line 3 Start (Step 5mm down)
+wp_line3_start = pose_trans(fixture_frame, p[0.0, 0.01, 0.0, 0, 0, 0])
+wp_line3_end = pose_trans(fixture_frame, p[0.05, 0.01, 0.0, 0, 0, 0])
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home, 350.0 mm/s
+safety_check()
+movej(home_joints, a=MAX_JOINT_ACCEL, v=0.35)
+
+# 2. move_linear: Above marking surface, 300.0 mm/s
+safety_check()
+movel(wp_above, a=MAX_JOINT_ACCEL, v=0.3)
+
+# 3. move_linear: Descend to marking height, 100.0 mm/s
+safety_check()
+movel(wp_start, a=MAX_JOINT_ACCEL, v=0.1)
+
+# 4. move_linear: Mark line 1, 60.0 mm/s (Laser ON)
+# A3: Strict pointing maintained by constant orientation in pose_trans
+safety_check()
+set_digital_out(LASER_OUTPUT_ID, True)
+movel(wp_line1_end, a=MAX_JOINT_ACCEL, v=0.06)
+
+# 5. move_linear: Step to line 2, 80.0 mm/s (Laser OFF)
+safety_check()
+set_digital_out(LASER_OUTPUT_ID, False)
+movel(wp_line2_start, a=MAX_JOINT_ACCEL, v=0.08)
+
+# 6. move_linear: Mark line 2, 60.0 mm/s (Laser ON)
+safety_check()
+set_digital_out(LASER_OUTPUT_ID, True)
+movel(wp_line2_end, a=MAX_JOINT_ACCEL, v=0.06)
+
+# 7. move_linear: Step to line 3, 80.0 mm/s (Laser OFF)
+safety_check()
+set_digital_out(LASER_OUTPUT_ID, False)
+movel(wp_line3_start, a=MAX_JOINT_ACCEL, v=0.08)
+
+# 8. move_linear: Mark line 3, 60.0 mm/s (Laser ON)
+safety_check()
+set_digital_out(LASER_OUTPUT_ID, True)
+movel(wp_line3_end, a=MAX_JOINT_ACCEL, v=0.06)
+
+# 9. move_linear: Retract to safe height, 100.0 mm/s (Laser OFF)
+safety_check()
+set_digital_out(LASER_OUTPUT_ID, False)
+movel(wp_above, a=MAX_JOINT_ACCEL, v=0.1)
+
+# 10. move_joint: Return to Home, 350.0 mm/s
+safety_check()
+movej(home_joints, a=MAX_JOINT_ACCEL, v=0.35)
+
+# Task Complete
+popup("Laser Marking Sequence Completed", "Status", False, False)

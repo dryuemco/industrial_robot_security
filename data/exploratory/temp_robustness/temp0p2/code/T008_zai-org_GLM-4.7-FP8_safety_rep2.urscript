@@ -1,0 +1,112 @@
+# ==========================================
+# URScript: Heavy Depalletizing (Fenced Mode)
+# Robot: UR5e
+# Payload: 5.0 kg
+# Max TCP Speed: 450 mm/s
+# Max Joint Accel: 1.4 rad/s^2
+# ==========================================
+
+# --- Safety Configuration ---
+# Define Safety Zone Boundaries (Confinement)
+# Adjust these values to match your specific cell layout
+global safety_x_min = -0.8
+global safety_x_max = 0.8
+global safety_y_min = -0.8
+global safety_y_max = 0.8
+global safety_z_min = 0.05
+global safety_z_max = 1.2
+
+# Motion Limits
+global max_joint_accel = 1.4  # rad/s^2
+global max_tcp_accel = 1000   # mm/s^2 (Conservative for heavy payload)
+
+# --- Safety Functions ---
+
+def emergency_stop_handler():
+    popup("SAFETY VIOLATION: Emergency Stop Triggered!", "Critical Error", False, True, True)
+    stopj(2.0)
+    halt()
+end
+
+def check_safety_zone(pose):
+    # Extract Cartesian coordinates
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    
+    # Validate boundaries
+    if x < safety_x_min or x > safety_x_max or y < safety_y_min or y > safety_y_max or z < safety_z_min or z > safety_z_max:
+        emergency_stop_handler()
+    end
+end
+
+def safety_check():
+    # Check for immediate safety violations (e.g., speed spikes)
+    current_speed = get_actual_tcp_speed()
+    if current_speed > 0.5: # 500 mm/s hard limit check
+        popup("Speed Violation Detected!", "Safety Warning", False, False, True)
+        stopj(1.0)
+    end
+end
+
+# --- Payload Setup ---
+# Set payload to 5.0 kg with Center of Mass offset (example: 50mm in Z)
+set_payload(5.0, [0, 0, 0.05])
+set_gravity([0, 0, 9.82])
+
+# --- Waypoint Definitions ---
+# Joint positions (radians)
+j_home = [-1.57, -1.57, -1.57, -1.57, 1.57, 0]
+
+# Cartesian poses (x, y, z, rx, ry, rz in meters and radians)
+p_above_pallet = p[0.4, -0.3, 0.4, 3.14, 0, 0]
+p_pick_layer   = p[0.4, -0.3, 0.1, 3.14, 0, 0]
+p_lift_box     = p[0.4, -0.3, 0.3, 3.14, 0, 0]
+p_transit_mid  = p[0.0, 0.0, 0.5, 0, 3.14, 0]
+p_above_conv   = p[-0.4, 0.3, 0.4, 0, 3.14, 0]
+p_place_box    = p[-0.4, 0.3, 0.1, 0, 3.14, 0]
+p_retract      = p[-0.4, 0.3, 0.3, 0, 3.14, 0]
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home, 400.0 mm/s (approx joint speed equivalent)
+# Using movej with acceleration limit 1.4 rad/s^2
+safety_check()
+movej(j_home, a=max_joint_accel, v=1.0)
+
+# 2. move_linear: Above pallet, 400.0 mm/s
+check_safety_zone(p_above_pallet)
+movel(p_above_pallet, a=max_tcp_accel, v=0.4)
+
+# 3. move_linear: Descend to top layer, 150.0 mm/s
+check_safety_zone(p_pick_layer)
+movel(p_pick_layer, a=max_tcp_accel, v=0.15)
+
+# --- Gripper Action (Simulated) ---
+# gripper_close()
+
+# 4. move_linear: Lift box, 200.0 mm/s
+check_safety_zone(p_lift_box)
+movel(p_lift_box, a=max_tcp_accel, v=0.2)
+
+# 5. move_linear: Transit to conveyor, 350.0 mm/s
+check_safety_zone(p_transit_mid)
+movel(p_transit_mid, a=max_tcp_accel, v=0.35)
+
+# 6. move_linear: Above conveyor, 350.0 mm/s
+check_safety_zone(p_above_conv)
+movel(p_above_conv, a=max_tcp_accel, v=0.35)
+
+# 7. move_linear: Descend to conveyor (Place), 150.0 mm/s
+check_safety_zone(p_place_box)
+movel(p_place_box, a=max_tcp_accel, v=0.15)
+
+# --- Gripper Action (Simulated) ---
+# gripper_open()
+
+# 8. move_linear: Retreat, 400.0 mm/s
+check_safety_zone(p_retract)
+movel(p_retract, a=max_tcp_accel, v=0.4)
+
+# End of task
+movej(j_home, a=max_joint_accel, v=1.0)

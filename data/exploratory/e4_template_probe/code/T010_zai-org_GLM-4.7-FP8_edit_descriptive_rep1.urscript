@@ -1,0 +1,91 @@
+# Task: T010 — Screw fastening assembly — hybrid mode
+# Description: Pick screw from feeder, position over workpiece, and drive screw at 4 fastening points.
+# Robot: ur5e | Payload: 1.0 kg | Max TCP speed: 0.250 m/s
+# Logic: Hybrid mode (collaborative approach, fenced fastening), strict safety checks.
+
+def task_T010():
+  # --- Configuration ---
+  global payload_mass = 1.0
+  global screwdriver_time = 2.0
+  global magnet_settle_time = 0.2
+  
+  # Set Payload (Mass, Center of Mass)
+  set_payload(payload_mass, [0.0, 0.0, 0.05])
+
+  # --- Safety Check (A5: Strict Safety Logic) ---
+  # Verify E-Stop status via digital input (Active High)
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # --- Motion Definitions ---
+  # Joint Home
+  q_home = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+
+  # Feeder Poses
+  p_feeder_above = p[0.300000, -0.200000, 0.250000, 0.0000, 3.1416, 0.0000]
+  p_feeder_pick  = p[0.300000, -0.200000, 0.110000, 0.0000, 3.1416, 0.0000]
+
+  # Fastening Poses (4 points defined based on task context)
+  # Point 1 (Original)
+  p_fasten_1 = p[0.420000, 0.120000, 0.200000, 0.0000, 3.1416, 0.0000]
+  # Point 2 (Offset +0.030m Y)
+  p_fasten_2 = p[0.420000, 0.150000, 0.200000, 0.0000, 3.1416, 0.0000]
+  # Point 3 (Offset +0.060m Y)
+  p_fasten_3 = p[0.420000, 0.180000, 0.200000, 0.0000, 3.1416, 0.0000]
+  # Point 4 (Offset +0.090m Y)
+  p_fasten_4 = p[0.420000, 0.210000, 0.200000, 0.0000, 3.1416, 0.0000]
+
+  # --- Helper Function: Fasten Screw ---
+  def fasten_screw(p_approach):
+    # Calculate insertion point (120mm down from approach height)
+    p_insert = pose_add(p_approach, p[0.0, 0.0, -0.120, 0.0, 0.0, 0.0])
+
+    # Move to point (Collaborative speed)
+    movel(p_approach, a=0.8000, v=0.2000, r=0.0100)
+
+    # Descend to fastening point
+    movel(p_insert, a=0.2000, v=0.0500)
+
+    # Drive Screw (A7: Screwdriver tool)
+    set_digital_out(0, True)   # Screwdriver ON
+    sleep(screwdriver_time)
+    set_digital_out(0, False)  # Screwdriver OFF
+
+    # Retract from fastening
+    movel(p_approach, a=0.6000, v=0.1500, r=0.0100)
+  end
+
+  # --- Sequence Start ---
+
+  # [1] Move to Home
+  movej(q_home, a=1.4000, v=0.5000)
+
+  # [2] Approach Feeder
+  movel(p_feeder_above, a=0.8000, v=0.2000, r=0.0100)
+
+  # [3] Pick Screw
+  movel(p_feeder_pick, a=0.4000, v=0.0800)
+
+  # [4] Activate Magnetic Pickup
+  set_digital_out(4, True)
+  sleep(magnet_settle_time)
+
+  # [5] Lift from Feeder
+  movel(p_feeder_above, a=0.7000, v=0.1800, r=0.0150)
+
+  # --- Fastening Sequence (4 Points) ---
+  fasten_screw(p_fasten_1)
+  fasten_screw(p_fasten_2)
+  fasten_screw(p_fasten_3)
+  fasten_screw(p_fasten_4)
+
+  # --- Finalize ---
+  # Return to Home
+  movej(q_home, a=1.4000, v=0.5000)
+
+end
+
+# Entry point
+task_T010()

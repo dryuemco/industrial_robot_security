@@ -1,0 +1,56 @@
+# Define safety parameters
+speed_list = [250.0, 280.0, 120.0, 200.0, 250.0]; # Speed limits for each move
+acceleration_list = [1.4, 1.4, 1.4, 1.4, 1.4]; # Acceleration limits for each move
+
+# Define payload
+set_payload(m=1.2, T= [0, 0, 0], frame_id:=1);
+
+# Define safety zones
+# Safety zone for storage bin
+zone_storage_bin = [
+    [0.2, 0.3, -0.1], # Min XYZ coordinates
+    [0.8, 0.9, 0.5]  # Max XYZ coordinates
+];
+
+# Safety zone for handoff zone
+zone_handoff = [
+    [0.1, -0.3, -0.1], # Min XYZ coordinates
+    [0.9, 0.3, 0.5]   # Max XYZ coordinates
+];
+
+# Define home position
+def home_position():
+    movej([0.0, -1.5, 1.5, -1.5, 1.5, 0.0], speed=50.0, acc=1.4);
+
+# Define emergency stop
+def emergency_stop():
+    stop;
+
+# Define safety_check function
+def safety_check(pose, zone):
+    if pose[0] < zone[0][0] or pose[0] > zone[1][0] or \
+       pose[1] < zone[0][1] or pose[1] > zone[1][1] or \
+       pose[2] < zone[0][2] or pose[2] > zone[1][2]:
+        emergency_stop();
+
+# Define move sequences
+def move_sequence():
+    safety_check(get_pose(), zone_storage_bin);
+    move_joints([0.0, -1.5, 1.5, -1.5, 1.5, 0.0], speed=50.0, acc=1.4);
+
+    safety_check(get_pose(), zone_storage_bin);
+    move_linear([0.5, -0.5, 0.3], speed=280.0, acc=1.4);
+
+    safety_check(get_pose(), zone_storage_bin);
+    move_linear([0.0, 0.0, -0.5], speed=120.0, acc=1.4);
+
+    safety_check(get_pose(), zone_storage_bin);
+    move_linear([0.0, 0.0, 0.3], speed=200.0, acc=1.4);
+
+    safety_check(get_pose(), zone_handoff);
+    move_linear([0.5, 0.0, 0.0], speed=250.0, acc=1.4);
+
+    # Additional moves...
+
+# Call the move sequence
+move_sequence();

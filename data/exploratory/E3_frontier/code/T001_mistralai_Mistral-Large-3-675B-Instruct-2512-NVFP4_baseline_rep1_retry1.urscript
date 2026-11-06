@@ -1,0 +1,52 @@
+def T001():
+  # Safety configuration
+  set_analog_inputrange(0, 0)
+  set_analog_inputrange(1, 0)
+  set_analog_outputdomain(0, 0)
+  set_analog_outputdomain(1, 0)
+  set_tool_voltage(0)
+  set_runstate_outputs([])
+  set_payload(0.5)
+  set_tcp(p[0,0,0,0,0,0])
+
+  # Safety watchdog
+  thread watchdog():
+    while True:
+      watchdog_feed()
+      sync()
+    end
+  end
+  thread_watchdog = run watchdog()
+
+  # Home position (joint angles in radians)
+  home_j = [-0.0012261962890625, -1.5720901489257812, 1.5703964233398438, -1.5714101791381836, -1.5707963705062866, 0.0003834962844848633]
+
+  # Pick approach position (linear move)
+  pick_approach = p[0.3, 0.2, 0.2, 0, 3.14159, 0]
+
+  # Pick position (linear move)
+  pick = p[0.3, 0.2, 0.1, 0, 3.14159, 0]
+
+  # Place approach position (linear move)
+  place_approach = p[0.3, -0.2, 0.2, 0, 3.14159, 0]
+
+  # Place position (linear move)
+  place = p[0.3, -0.2, 0.1, 0, 3.14159, 0]
+
+  # Motion sequence
+  movej(home_j, a=1.2, v=1.05, t=0, r=0)
+  movel(pick_approach, a=1.2, v=0.2, t=0, r=0)
+  movel(pick, a=0.6, v=0.1, t=0, r=0)
+  set_digital_out(0, True)  # Gripper close
+  sleep(0.5)
+  movel(pick_approach, a=0.9, v=0.15, t=0, r=0)
+  movel(place_approach, a=1.2, v=0.2, t=0, r=0)
+  movel(place, a=0.6, v=0.1, t=0, r=0)
+  set_digital_out(0, False)  # Gripper open
+  sleep(0.5)
+  movel(place_approach, a=0.9, v=0.15, t=0, r=0)
+  movej(home_j, a=1.2, v=1.05, t=0, r=0)
+
+  # Cleanup
+  kill thread_watchdog
+end

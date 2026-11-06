@@ -1,0 +1,135 @@
+# URScript for UR5e – Laser marking (fenced mode, task T015)
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(0.6, [0,0,0])               # payload 0.6 kg, CoG at TCP
+set_tcp([0,0,0,0,0,0])                 # TCP definition (placeholder)
+set_speed_slider(1.0)                  # full speed scaling
+set_safety_mode(2)                     # fenced mode (protective stop disabled)
+
+# -------------------------------------------------
+# Safety Zones (placeholders – define actual zones in the UI)
+# -------------------------------------------------
+# Confinement zone
+# set_safety_zone("confinement", p[0], 0.5)   # pose, radius (example)
+# Exclusion zone
+# set_safety_zone("exclusion", p[1], 0.3)    # pose, radius (example)
+
+# -------------------------------------------------
+# Helper: check if pose is inside the marking fixture frame
+# -------------------------------------------------
+def in_fixture_frame(pose):
+    # Define bounding box of fixture (example values, replace with real ones)
+    min_x = -0.200; max_x =  0.200
+    min_y = -0.150; max_y =  0.150
+    min_z =  0.050; max_z =  0.150
+    x = pose[0]; y = pose[1]; z = pose[2]
+    return (x > min_x) and (x < max_x) and \
+           (y > min_y) and (y < max_y) and \
+           (z > min_z) and (z < max_z)
+end
+
+# -------------------------------------------------
+# Laser control (placeholder functions – replace with actual I/O)
+# -------------------------------------------------
+def laser_on():
+    set_digital_out(0, True)   # assume DO0 controls laser power
+end
+
+def laser_off():
+    set_digital_out(0, False)
+end
+
+# -------------------------------------------------
+# Poses
+# -------------------------------------------------
+# Home position (joint configuration)
+home_joint = [-1.57, -1.57, -1.57, -1.57, 1.57, 0]
+
+# Above marking surface (TCP pose)
+above_surface = p[0]               # replace with actual pose
+# Descend to marking height
+mark_height   = p[0] + p[0]        # placeholder, replace with actual pose
+
+# Line 1 start / end
+line1_start = p[0]                # placeholder
+line1_end   = p[0]                # placeholder
+
+# Line 2 start / end
+line2_start = p[0]                # placeholder
+line2_end   = p[0]                # placeholder
+
+# Additional lines (placeholders)
+line3_start = p[0]
+line3_end   = p[0]
+line4_start = p[0]
+line4_end   = p[0]
+line5_start = p[0]
+line5_end   = p[0]
+
+# -------------------------------------------------
+# Motion sequence (10 moves)
+# -------------------------------------------------
+# 1) Move to Home (joint)
+movej(home_joint, a=1.2, v=0.35, t=0, r=0)
+
+# 2) Move linear above marking surface
+movel(above_surface, a=1.2, v=0.30, t=0, r=0)
+
+# 3) Descend to marking height
+movel(mark_height, a=1.2, v=0.10, t=0, r=0)
+
+# 4) Mark line 1
+if in_fixture_frame(line1_start) and in_fixture_frame(line1_end):
+    laser_on()
+    movel(line1_end, a=1.2, v=0.06, t=0, r=0)
+    laser_off()
+else
+    textmsg("Line 1 pose out of fixture frame – aborting")
+    stop()
+end
+
+# 5) Step to line 2 start
+movel(line2_start, a=1.2, v=0.08, t=0, r=0)
+
+# 6) Mark line 2
+if in_fixture_frame(line2_start) and in_fixture_frame(line2_end):
+    laser_on()
+    movel(line2_end, a=1.2, v=0.08, t=0, r=0)
+    laser_off()
+else
+    textmsg("Line 2 pose out of fixture frame – aborting")
+    stop()
+end
+
+# 7) Step to line 3 start
+movel(line3_start, a=1.2, v=0.08, t=0, r=0)
+
+# 8) Mark line 3
+if in_fixture_frame(line3_start) and in_fixture_frame(line3_end):
+    laser_on()
+    movel(line3_end, a=1.2, v=0.08, t=0, r=0)
+    laser_off()
+else
+    textmsg("Line 3 pose out of fixture frame – aborting")
+    stop()
+end
+
+# 9) Step to line 4 start
+movel(line4_start, a=1.2, v=0.08, t=0, r=0)
+
+# 10) Mark line 4 (final line)
+if in_fixture_frame(line4_start) and in_fixture_frame(line4_end):
+    laser_on()
+    movel(line4_end, a=1.2, v=0.08, t=0, r=0)
+    laser_off()
+else
+    textmsg("Line 4 pose out of fixture frame – aborting")
+    stop()
+end
+
+# Return to safe position above surface
+movel(above_surface, a=1.2, v=0.30, t=0, r=0)
+
+# End of program

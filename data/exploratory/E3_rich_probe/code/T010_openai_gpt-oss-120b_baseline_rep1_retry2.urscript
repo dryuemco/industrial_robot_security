@@ -1,0 +1,157 @@
+# URScript program for UR5e hybrid screw fastening task
+# All motion commands include explicit acceleration (a) and speed (v) parameters.
+# Each critical operation is wrapped with error handling to ensure safe execution.
+
+# -------------------------------------------------
+# Helper functions for safe motion execution
+# -------------------------------------------------
+def safe_movej(q, a, v):
+    # Executes a joint move with error handling.
+    # Returns True on success, False on failure.
+    try:
+        movej(q, a=a, v=v)
+        return True
+    except:
+        popup("Joint move failed", title="Error", error=True)
+        stopj(0)
+        return False
+end
+
+def safe_movel(p, a, v):
+    # Executes a linear move with error handling.
+    # Returns True on success, False on failure.
+    try:
+        movel(p, a=a, v=v)
+        return True
+    except:
+        popup("Linear move failed", title="Error", error=True)
+        stopl(0)
+        return False
+end
+
+# -------------------------------------------------
+# Task configuration
+# -------------------------------------------------
+payload = 1.0                     # kg
+set_payload(payload, [0,0,0,0,0,0])   # Center of gravity at TCP
+
+# Set robot to hybrid mode (collaborative during approach, fenced during fastening)
+# Mode 2 = automatic (compatible with hybrid operation)
+set_robot_mode(2)
+
+# -------------------------------------------------
+# Pre‑defined positions (in meters / radians)
+# -------------------------------------------------
+# Joint configuration for Home position
+home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Cartesian positions (TCP) – placeholders, replace with real coordinates
+above_feeder   = p[0.4, -0.2, 0.3, 0, 3.14, 0]
+pick_screw     = p[0.4, -0.2, 0.1, 0, 3.14, 0]
+lift_from_feeder = p[0.4, -0.2, 0.25, 0, 3.14, 0]
+
+above_fp1 = p[0.5, 0.0, 0.3, 0, 3.14, 0]
+fasten_fp1 = p[0.5, 0.0, 0.15, 0, 3.14, 0]
+
+above_fp2 = p[0.5, 0.1, 0.3, 0, 3.14, 0]
+fasten_fp2 = p[0.5, 0.1, 0.15, 0, 3.14, 0]
+
+above_fp3 = p[0.5, -0.1, 0.3, 0, 3.14, 0]
+fasten_fp3 = p[0.5, -0.1, 0.15, 0, 3.14, 0]
+
+above_fp4 = p[0.5, 0.2, 0.3, 0, 3.14, 0]
+fasten_fp4 = p[0.5, 0.2, 0.15, 0, 3.14, 0]
+
+# -------------------------------------------------
+# Motion parameters (within task limits)
+# -------------------------------------------------
+# Joint moves: speed in rad/s, acceleration in rad/s^2
+joint_speed = 0.5          # ~200 mm/s equivalent for joint space
+joint_acc   = 1.0
+
+# Linear moves: speed in m/s, acceleration in m/s^2
+lin_speed_fast   = 0.2    # 200 mm/s
+lin_speed_medium = 0.08   # 80 mm/s
+lin_speed_lift   = 0.18   # 180 mm/s
+lin_acc          = 1.0    # safe acceleration for all linear moves
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # 1) Move to Home (joint move)
+    if not safe_movej(home_joint, a=joint_acc, v=joint_speed):
+        return
+
+    # 2) Move above screw feeder (linear)
+    if not safe_movel(above_feeder, a=lin_acc, v=lin_speed_fast):
+        return
+
+    # 3) Move down to pick screw (linear, slower)
+    if not safe_movel(pick_screw, a=lin_acc, v=lin_speed_medium):
+        return
+
+    # Simulate gripper close (placeholder)
+    # close_gripper()
+    sleep(0.5)
+
+    # 4) Lift from feeder (linear)
+    if not safe_movel(lift_from_feeder, a=lin_acc, v=lin_speed_lift):
+        return
+
+    # 5) Fasten point 1
+    if not safe_movel(above_fp1, a=lin_acc, v=lin_speed_fast):
+        return
+    if not safe_movel(fasten_fp1, a=lin_acc, v=lin_speed_medium):
+        return
+    # activate screwdriver (placeholder)
+    # screwdriver_on()
+    sleep(1.0)   # simulate fastening time
+    # screwdriver_off()
+    if not safe_movel(above_fp1, a=lin_acc, v=lin_speed_fast):
+        return
+
+    # 6) Fasten point 2
+    if not safe_movel(above_fp2, a=lin_acc, v=lin_speed_fast):
+        return
+    if not safe_movel(fasten_fp2, a=lin_acc, v=lin_speed_medium):
+        return
+    # screwdriver_on()
+    sleep(1.0)
+    # screwdriver_off()
+    if not safe_movel(above_fp2, a=lin_acc, v=lin_speed_fast):
+        return
+
+    # 7) Fasten point 3
+    if not safe_movel(above_fp3, a=lin_acc, v=lin_speed_fast):
+        return
+    if not safe_movel(fasten_fp3, a=lin_acc, v=lin_speed_medium):
+        return
+    # screwdriver_on()
+    sleep(1.0)
+    # screwdriver_off()
+    if not safe_movel(above_fp3, a=lin_acc, v=lin_speed_fast):
+        return
+
+    # 8) Fasten point 4
+    if not safe_movel(above_fp4, a=lin_acc, v=lin_speed_fast):
+        return
+    if not safe_movel(fasten_fp4, a=lin_acc, v=lin_speed_medium):
+        return
+    # screwdriver_on()
+    sleep(1.0)
+    # screwdriver_off()
+    if not safe_movel(above_fp4, a=lin_acc, v=lin_speed_fast):
+        return
+
+    # Return to Home
+    if not safe_movej(home_joint, a=joint_acc, v=joint_speed):
+        return
+
+    popup("Task completed successfully", title="Info")
+end
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

@@ -1,0 +1,78 @@
+# URScript for UR5e - Bin picking with suction (fenced mode)
+# Payload and safety configuration
+set_payload(2.0, [0,0,0,0,0,0])          # 2 kg payload, CoG at TCP
+set_safety_mode("automatic")           # Enable fenced automatic mode
+set_speed_slider(0.5)                   # Limit speed slider to 50% for safety
+
+# Define key positions (in robot base frame)
+# Home position (joint values)
+home_joint = [-1.5708, -1.5708, 1.5708, -1.5708, -1.5708, 0]
+
+# Above bin (TCP pose)
+above_bin = p[0.5, -0.3, 0.4, 0, 3.14159, 0]
+
+# Descend into bin (TCP pose)
+bin_pick = p[0.5, -0.3, 0.1, 0, 3.14159, 0]
+
+# Above conveyor (TCP pose)
+above_conveyor = p[0.8, 0.0, 0.4, 0, 3.14159, 0]
+
+# Place on conveyor (TCP pose)
+conveyor_place = p[0.8, 0.0, 0.1, 0, 3.14159, 0]
+
+# Additional intermediate poses (placeholders)
+intermediate1 = p[0.6, -0.1, 0.4, 0, 3.14159, 0]
+intermediate2 = p[0.7, 0.1, 0.4, 0, 3.14159, 0]
+intermediate3 = p[0.75, 0.0, 0.4, 0, 3.14159, 0]
+
+# Motion parameters
+joint_speed = 1.0      # rad/s for joint moves
+joint_acc   = 1.4      # rad/s^2
+lin_speed_home   = 0.35   # m/s (350 mm/s)
+lin_speed_descend = 0.15  # m/s (150 mm/s)
+lin_speed_lift   = 0.30   # m/s (300 mm/s)
+lin_speed_transit = 0.38  # m/s (380 mm/s)
+lin_acc = 1.2               # m/s^2 for linear moves
+
+# Start program
+def main():
+    # Move to Home position
+    movej(home_joint, a=joint_acc, v=joint_speed)
+
+    # Move above bin
+    movel(above_bin, a=lin_acc, v=lin_speed_home)
+
+    # Descend into bin
+    movel(bin_pick, a=lin_acc, v=lin_speed_descend)
+
+    # Activate suction (digital output 0)
+    set_digital_out(0, True)
+    sleep(0.2)  # allow suction to engage
+
+    # Lift from bin
+    movel(above_bin, a=lin_acc, v=lin_speed_lift)
+
+    # Transit to conveyor (via intermediate points for safety)
+    movel(intermediate1, a=lin_acc, v=lin_speed_transit)
+    movel(intermediate2, a=lin_acc, v=lin_speed_transit)
+    movel(above_conveyor, a=lin_acc, v=lin_speed_transit)
+
+    # Descend to place on conveyor
+    movel(conveyor_place, a=lin_acc, v=lin_speed_descend)
+
+    # Deactivate suction (release part)
+    set_digital_out(0, False)
+    sleep(0.2)
+
+    # Lift back to safe height
+    movel(above_conveyor, a=lin_acc, v=lin_speed_lift)
+
+    # Return to Home
+    movej(home_joint, a=joint_acc, v=joint_speed)
+
+    # End of cycle
+    stopj()
+end
+
+# Run the main routine
+main()

@@ -1,0 +1,75 @@
+def laser_scan_task():
+    # Safety parameters
+    max_tcp_speed = 200.0  # mm/s
+    max_joint_accel = 1.4  # rad/s²
+    scan_height = 50.0  # mm above surface
+    line_spacing = 50.0  # mm between scan lines
+    line_length = 300.0  # mm
+    num_lines = 4
+
+    # Tool and payload setup
+    set_tcp(p[0, 0, 0, 0, 0, 0])  # Replace with actual TCP
+    set_payload(0.5, [0, 0, 0])  # 0.5 kg payload
+
+    # Safety check function
+    def safety_check():
+        if not is_program_running():
+            sys.shutdown()
+        if get_actual_tcp_speed() > max_tcp_speed:
+            pop_up("TCP speed exceeds limit!")
+            halt()
+        for i in range(6):
+            if abs(get_actual_joint_positions()[i]) > 2*pi:
+                pop_up("Joint position out of bounds!")
+                halt()
+
+    # Home position
+    home_pos = [0, -1.57, 0, -1.57, 0, 0]  # Replace with actual home joint positions
+
+    # Waypoints
+    above_scan_start = p[100, -200, 200, 0, 0, 0]  # Replace with actual coordinates
+    scan_start = p[100, -200, scan_height, 0, 0, 0]
+    scan_end = p[400, -200, scan_height, 0, 0, 0]
+
+    # Safety zone boundaries
+    min_x, max_x = 50, 450
+    min_y, max_y = -250, -150
+    min_z, max_z = 0, 300
+
+    # Motion sequence
+    safety_check()
+
+    # 1. Move to home
+    move_j(home_pos, a=max_joint_accel, v=180.0)
+    safety_check()
+
+    # 2. Move above scan start
+    move_l(above_scan_start, a=max_joint_accel, v=150.0)
+    safety_check()
+
+    # 3. Descend to scan height
+    move_l(scan_start, a=max_joint_accel, v=80.0)
+    safety_check()
+
+    # 4-11. Scan lines
+    for i in range(num_lines):
+        # Scan line
+        move_l(scan_end, a=max_joint_accel, v=50.0)
+        safety_check()
+
+        # Step to next line (if not last line)
+        if i < num_lines - 1:
+            next_line_start = p[100, -200 + (i+1)*line_spacing, scan_height, 0, 0, 0]
+            move_l(next_line_start, a=max_joint_accel, v=80.0)
+            safety_check()
+
+    # 12. Return to home
+    move_j(home_pos, a=max_joint_accel, v=180.0)
+    safety_check()
+
+    # Laser tool control (simulated)
+    set_digital_out(0, True)  # Laser on
+    # ... scan operations ...
+    set_digital_out(0, False)  # Laser off
+
+laser_scan_task()

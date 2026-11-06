@@ -1,0 +1,56 @@
+def curved_contour_weld():
+  # --- Setup ---
+  # Set payload to 3.5 kg
+  set_payload(3.5)
+  
+  # Define TCP (Tool Center Point) for welding torch
+  # Orientation: Pointing down (rx=0, ry=3.14, rz=0)
+  set_tcp(p[0, 0, 0.15, 0, 3.14, 0])
+
+  # --- Safety Zone (Confinement) ---
+  # Define a safety box around the weld fixture (Fenced mode during weld)
+  # Coordinates define a bounding box relative to the Base feature
+  constrain_position(p[0.25, -0.15, -0.05, 0, 0, 0], p[0.55, 0.15, 0.25, 0, 0, 0], feature_base)
+
+  # --- Motion Sequence ---
+
+  # 1. Move Joint: Home position
+  # Speed: 300 mm/s (approx 1.2 rad/s joint speed)
+  movej([-1.57, -1.57, -1.57, -1.57, -1.57, 0], a=1.2, v=1.2)
+
+  # 2. Move Linear: Approach above weld fixture
+  # Mode: Collaborative (Approach)
+  # Speed: 250 mm/s (0.25 m/s)
+  movel(p[0.3, 0.0, 0.2, 0, 3.14, 0], a=0.5, v=0.25)
+
+  # 3. Move Linear: Descend to weld start
+  # Speed: 100 mm/s (0.1 m/s)
+  movel(p[0.3, 0.0, 0.0, 0, 3.14, 0], a=0.5, v=0.1)
+
+  # --- Weld Arc Sequence (A7) Start ---
+  set_digital_out(0, True)  # Turn Welding Power ON
+  sleep(0.2)                # Wait for arc stabilization
+
+  # 4. Move Linear: Weld midpoint (Curved path segment)
+  # Mode: Fenced (Welding)
+  # Speed: 60 mm/s (0.06 m/s)
+  # Strict torch-down orientation maintained
+  movel(p[0.4, 0.1, 0.0, 0, 3.14, 0], a=0.2, v=0.06)
+
+  # 5. Move Linear: Weld end
+  # Speed: 60 mm/s (0.06 m/s)
+  movel(p[0.5, 0.0, 0.0, 0, 3.14, 0], a=0.2, v=0.06)
+
+  # --- Weld Arc Sequence (A7) End ---
+  set_digital_out(0, False) # Turn Welding Power OFF
+  sleep(0.2)                # Wait for arc extinguish / gas post-flow
+
+  # 6. Move Linear: Retract from weld end
+  # Speed: 100 mm/s (0.1 m/s)
+  movel(p[0.5, 0.0, 0.2, 0, 3.14, 0], a=0.5, v=0.1)
+
+  # 7. Move Joint: Return to Home
+  # Speed: 300 mm/s (approx 1.2 rad/s joint speed)
+  movej([-1.57, -1.57, -1.57, -1.57, -1.57, 0], a=1.2, v=1.2)
+
+end

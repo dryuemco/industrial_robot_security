@@ -1,0 +1,67 @@
+# Task: T008 — Heavy depalletizing — fenced mode (Improved)
+# Description: Depalletize 5.0 kg boxes from pallet to conveyor.
+# Robot: ur5e | Mode: fenced | Max TCP speed: 0.450 m/s
+# Safety: Tight safeguarded space (reduced blend radii for path accuracy)
+
+def task_T008():
+  # --- Configuration ---
+  # Set payload to 5.0 kg (near UR5e max limit)
+  # Center of mass offset assumed 50mm below flange for typical gripper
+  set_payload(5.0, [0, 0, 0.05])
+  
+  # Set TCP (Tool Center Point) - Adjusted for standard gripper
+  set_tcp(p[0, 0, 0.15, 0, 0, 0])
+
+  # --- Initialization ---
+  # Ensure gripper starts open to avoid collision
+  set_digital_out(0, False)
+  sleep(0.2)
+
+  # --- Motion Sequence (8 Moves) ---
+
+  # [1] Home
+  # Joint speed adjusted for safe startup
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.2, v=1.0)
+
+  # [2] Above pallet
+  # Speed: 400 mm/s
+  movel(p[0.500000, -0.250000, 0.500000, 0.0000, 3.1416, 0.0000], a=1.2, v=0.4000, r=0.0200)
+
+  # [3] Descend to top layer
+  # Speed: 150 mm/s (Slow approach for heavy load)
+  movel(p[0.500000, -0.250000, 0.320000, 0.0000, 3.1416, 0.0000], a=0.5, v=0.1500)
+
+  # [4] Gripper CLOSE
+  set_digital_out(0, True)
+
+  # [5] Grip settle
+  sleep(0.5)
+
+  # [6] Lift box
+  # Speed: 200 mm/s (Controlled lift)
+  movel(p[0.500000, -0.250000, 0.500000, 0.0000, 3.1416, 0.0000], a=0.6, v=0.2000, r=0.0100)
+
+  # [7] Transit to conveyor
+  # Speed: 350 mm/s
+  movel(p[0.500000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=1.0, v=0.3500, r=0.0100)
+
+  # [8] Place on conveyor
+  # Speed: 120 mm/s (Slow placement)
+  movel(p[0.500000, 0.250000, 0.120000, 0.0000, 3.1416, 0.0000], a=0.4, v=0.1200)
+
+  # [9] Gripper OPEN
+  set_digital_out(0, False)
+
+  # [10] Release settle
+  sleep(0.3)
+
+  # [11] Retract
+  movel(p[0.500000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=1.0, v=0.3500, r=0.0100)
+
+  # [12] Return home
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.2, v=1.0)
+
+end
+
+# Entry point
+task_T008()

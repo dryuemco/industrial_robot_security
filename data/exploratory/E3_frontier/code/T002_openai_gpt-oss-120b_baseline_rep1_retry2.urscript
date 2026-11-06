@@ -1,0 +1,73 @@
+# URScript for UR5e – Linear weld path in fenced mode (T002)
+
+# -------------------------------------------------
+# Safety configuration
+# -------------------------------------------------
+# Set robot to fenced safety mode
+set_safety_mode(safety_mode_fence)
+
+# Define confinement safety zone (example: a cylinder around the weld area)
+# Parameters: zone_type, pose (position + orientation), radius, height
+# zone_type: 0 = confinement, 1 = exclusion
+set_safety_zone(0, p[0.5, 0.0, 0.2, 0, 3.14, 0], 0.3, 0.5)   # confinement zone
+set_safety_zone(1, p[0.5, 0.0, 0.2, 0, 3.14, 0], 0.6, 0.5)   # exclusion zone
+
+# -------------------------------------------------
+# Watchdog: monitor digital input 0 (e-stop). Abort if triggered.
+# -------------------------------------------------
+def watchdog():
+    while True:
+        if not get_digital_in(0):   # assume DI0 = safety OK (True)
+            popup("Safety stop triggered – aborting program", True)
+            halt()
+        sleep(0.01)
+    end
+end
+
+# Start watchdog in a separate thread
+thread watchdog_thread = run watchdog()
+
+# -------------------------------------------------
+# Motion parameters
+# -------------------------------------------------
+# Joint move to home (rad/s)
+home_q = [0, -1.57, 0, -1.57, 0, 0]
+
+# Poses (meters, radians)
+# Above weld start (20 mm above the surface)
+pose_above_start = p[0.5, 0.0, 0.22, 0, 3.14, 0]
+
+# Weld start (on surface)
+pose_start = p[0.5, 0.0, 0.20, 0, 3.14, 0]
+
+# Weld end (300 mm along X)
+pose_end = p[0.8, 0.0, 0.20, 0, 3.14, 0]
+
+# Above weld end (retract 20 mm)
+pose_above_end = p[0.8, 0.0, 0.22, 0, 3.14, 0]
+
+# -------------------------------------------------
+# Motion sequence
+# -------------------------------------------------
+# 1) Move to home position
+movej(home_q, a=0.5, v=0.5)   # a = 0.5 rad/s², v = 0.5 rad/s
+
+# 2) Approach above weld start
+movel(pose_above_start, a=1.0, v=0.25)   # 250 mm/s
+
+# 3) Descend to weld start position
+movel(pose_start, a=1.0, v=0.10)        # 100 mm/s
+
+# 4) Weld seam – linear 300 mm path
+movel(pose_end, a=1.0, v=0.05)          # 50 mm/s
+
+# 5) Retract above weld end
+movel(pose_above_end, a=1.0, v=0.20)    # 200 mm/s
+
+# 6) Return to home position (joint move)
+movej(home_q, a=0.5, v=0.5)
+
+# -------------------------------------------------
+# End of program – stop watchdog thread
+# -------------------------------------------------
+kill watchdog_thread

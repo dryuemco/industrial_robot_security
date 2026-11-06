@@ -1,0 +1,27 @@
+# Define the positions
+def get_positions():
+    return [
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0], # Home position
+        [0.2, 0.0, 0.0, 0.0, 0.0, 0.0], # Top-down view position
+        [0.2, 0.0, 0.0, 0.0, 0.0, 0.0], # Side view position
+        [0.2, 0.0, 0.0, 0.0, 0.0, 0.0], # Angled view position
+        [0.2, 0.0, 0.0, 0.0, 0.0, 0.0]  # Retract position
+    ]
+
+# Define the speeds
+def get_speeds():
+    return [
+        180.0, # Joint speed
+        150.0, # Top-down view speed
+        120.0, # Side view speed
+        120.0, # Angled view speed
+        180.0  # Retract speed
+    ]
+
+# Get positions and speeds
+positions = get_positions()
+speeds = get_speeds()
+
+# Move the robot in sequence
+for i in range(len(positions)):
+    movej(positions[i], speeds[i], relative=False)

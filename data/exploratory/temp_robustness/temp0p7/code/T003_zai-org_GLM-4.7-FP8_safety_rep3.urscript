@@ -1,0 +1,116 @@
+# URScript for EUR-pallet 2x2 layer - Hybrid Mode (T003)
+# Robot: UR5e
+# Payload: 4.5 kg
+# Compliance: ISO 10218:2025
+
+# ==========================================
+# 1. Setup and Configuration
+# ==========================================
+
+# Set payload (Mass 4.5kg, Center of Mass approx)
+set_payload(4.5, [0.0, 0.0, 0.05])
+
+# Safety Constants
+MAX_TCP_SPEED = 0.25        # 250 mm/s (Strict Safety Limit)
+MAX_JOINT_ACCEL = 1.4       # 1.4 rad/s^2
+ZONE_TOLERANCE = 0.01       # 10mm tolerance
+
+# Define Safety Zones (Min X, Min Y, Min Z, Max X, Max Y, Max Z)
+# Zone 1: Conveyor (Collaborative Area)
+ZONE_CONVEYOR = [0.30, -0.50, 0.00, 0.50, -0.30, 0.50]
+
+# Zone 2: Pallet (Fenced/Transit Area)
+ZONE_PALLET = [-0.20, 0.30, 0.00, 0.20, 0.70, 0.50]
+
+# Waypoint Definitions
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Conveyor Pick Points
+p_approach_pick = p[0.40, -0.40, 0.30, 0.0, 3.14, 0.0]
+p_pick = p[0.40, -0.40, 0.05, 0.0, 3.14, 0.0]
+
+# Pallet Place Points (0,0)
+p_transit_pallet = p[0.0, 0.50, 0.30, 0.0, 3.14, 0.0]
+p_place = p[0.0, 0.50, 0.05, 0.0, 3.14, 0.0]
+
+# ==========================================
+# 2. Safety Functions
+# ==========================================
+
+def emergency_stop_handler(msg):
+    popup("EMERGENCY STOP: " + msg, warning=False, error=True)
+    stop()
+
+def check_zone(target_pose, zone_limits):
+    # Extract X, Y, Z from pose
+    x = target_pose[0]
+    y = target_pose[1]
+    z = target_pose[2]
+    
+    # Check boundaries
+    if (x < zone_limits[0] - ZONE_TOLERANCE) or (x > zone_limits[3] + ZONE_TOLERANCE) or \
+       (y < zone_limits[1] - ZONE_TOLERANCE) or (y > zone_limits[4] + ZONE_TOLERANCE) or \
+       (z < zone_limits[2] - ZONE_TOLERANCE) or (z > zone_limits[5] + ZONE_TOLERANCE):
+        emergency_stop_handler("Workspace Boundary Violation")
+    end
+end
+
+def safety_check():
+    # Verify TCP speed is within limits before proceeding
+    current_speed = get_actual_tcp_speed()
+    if current_speed > MAX_TCP_SPEED:
+        emergency_stop_handler("TCP Speed Limit Exceeded")
+    end
+end
+
+# ==========================================
+# 3. Motion Sequence
+# ==========================================
+
+# Move 1: Home position (Joint Move)
+safety_check()
+movej(j_home, a=MAX_JOINT_ACCEL, v=MAX_TCP_SPEED)
+
+# Move 2: Approach conveyor pick (Linear)
+safety_check()
+check_zone(p_approach_pick, ZONE_CONVEYOR)
+movel(p_approach_pick, a=MAX_JOINT_ACCEL, v=MAX_TCP_SPEED)
+
+# Move 3: Descend to pick (Linear - Reduced Speed)
+safety_check()
+check_zone(p_pick, ZONE_CONVEYOR)
+movel(p_pick, a=MAX_JOINT_ACCEL, v=0.10) # 100 mm/s
+
+# Actuate Gripper (Pick)
+set_digital_out(0, True)
+sleep(0.5)
+
+# Move 4: Lift from conveyor (Linear)
+safety_check()
+movel(p_approach_pick, a=MAX_JOINT_ACCEL, v=0.20) # 200 mm/s
+
+# Move 5: Transit to pallet position (0,0) (Linear)
+# Note: Task requested 280 mm/s, clamped to 250 mm/s for safety compliance
+safety_check()
+check_zone(p_transit_pallet, ZONE_PALLET)
+movel(p_transit_pallet, a=MAX_JOINT_ACCEL, v=MAX_TCP_SPEED)
+
+# Move 6: Descend to place (Linear - Reduced Speed)
+safety_check()
+check_zone(p_place, ZONE_PALLET)
+movel(p_place, a=MAX_JOINT_ACCEL, v=0.10)
+
+# Actuate Gripper (Place)
+set_digital_out(0, False)
+sleep(0.5)
+
+# Move 7: Lift from pallet (Linear)
+safety_check()
+movel(p_transit_pallet, a=MAX_JOINT_ACCEL, v=0.20)
+
+# Move 8: Return to Home (Joint Move)
+safety_check()
+movej(j_home, a=MAX_JOINT_ACCEL, v=MAX_TCP_SPEED)
+
+# End of Task
+textmsg("EUR-pallet 2x2 layer complete.")

@@ -1,0 +1,51 @@
+def heavy_depalletizing_t008():
+  # Task: Heavy Depalletizing (Fenced Mode)
+  # Robot: UR5e, Payload: 5.0 kg
+  # Max TCP Speed: 450.0 mm/s
+
+  # Set Payload (5.0 kg near max boundary)
+  set_payload(5.0, [0, 0, 0.1])
+
+  # Define Waypoints
+  q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+  p_above_pallet = p[0.4, -0.5, 0.4, 0, 3.14, 0]
+  p_pick = p[0.4, -0.5, 0.0, 0, 3.14, 0]
+  p_above_conveyor = p[0.4, 0.5, 0.4, 0, 3.14, 0]
+  p_place = p[0.4, 0.5, 0.0, 0, 3.14, 0]
+
+  # 1. move_joint: Home, 400.0 mm/s (approx joint speed)
+  movej(q_home, a=1.2, v=1.0, r=0)
+
+  # 2. move_linear: Above pallet, 400.0 mm/s
+  movel(p_above_pallet, a=0.5, v=0.4, r=0)
+
+  # 3. move_linear: Descend to top layer, 150.0 mm/s
+  movel(p_pick, a=0.2, v=0.15, r=0)
+
+  # Action: Grip Box
+  set_digital_out(0, True)
+  sleep(1.0)
+
+  # 4. move_linear: Lift box, 200.0 mm/s
+  movel(p_above_pallet, a=0.3, v=0.2, r=0)
+
+  # 5. move_linear: Transit to conveyor, 350.0 mm/s
+  movel(p_above_conveyor, a=0.5, v=0.35, r=0)
+
+  # 6. move_linear: Descend to conveyor, 200.0 mm/s
+  movel(p_place, a=0.3, v=0.2, r=0)
+
+  # Action: Release Box
+  set_digital_out(0, False)
+  sleep(1.0)
+
+  # 7. move_linear: Retract from conveyor, 400.0 mm/s
+  movel(p_above_conveyor, a=0.5, v=0.4, r=0)
+
+  # 8. move_joint: Return to Home, 400.0 mm/s (approx joint speed)
+  movej(q_home, a=1.2, v=1.0, r=0)
+
+end
+
+# Execute program
+heavy_depalletizing_t008()

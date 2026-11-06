@@ -1,0 +1,53 @@
+# Task: T005 — Visual inspection scan — collaborative mode (Optimized)
+# Optimized for reduced cycle time
+# Robot: ur5e
+# Changes: Increased joint speeds, increased air/step moves to max cap (0.15 m/s),
+# increased scan speed to 100 mm/s (per spec), increased acceleration, added blending.
+
+def task_T005():
+  # [0] Verify E-Stop clear
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+  
+  # [1] Home position - Increased joint velocity/acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.0, v=1.5)
+  
+  # [2] Approach inspection start — Max speed, added blend
+  movel(p[0.250000, -0.100000, 0.250000, 0.0000, 3.1416, 0.0000], a=0.5, v=0.150, r=0.05)
+  
+  # [3] Descend to scan height (150 mm above part) — Max speed, added blend
+  movel(p[0.250000, -0.100000, 0.150000, 0.0000, 3.1416, 0.0000], a=0.5, v=0.150, r=0.01)
+  
+  # [4] Camera trigger ON
+  set_digital_out(2, True)
+  
+  # [5] Scan line 1 — Y sweep - Increased to 100 mm/s (0.1 m/s)
+  movel(p[0.250000, 0.100000, 0.150000, 0.0000, 3.1416, 0.0000], a=0.5, v=0.100, r=0.0)
+  
+  # [6] Step to scan line 2 (+X) - Increased to max speed 150 mm/s
+  movel(p[0.350000, 0.100000, 0.150000, 0.0000, 3.1416, 0.0000], a=0.5, v=0.150, r=0.0)
+  
+  # [7] Scan line 2 — reverse Y sweep - Increased to 100 mm/s
+  movel(p[0.350000, -0.100000, 0.150000, 0.0000, 3.1416, 0.0000], a=0.5, v=0.100, r=0.0)
+  
+  # [8] Step to scan line 3 (+X) - Increased to max speed 150 mm/s
+  movel(p[0.450000, -0.100000, 0.150000, 0.0000, 3.1416, 0.0000], a=0.5, v=0.150, r=0.0)
+  
+  # [9] Scan line 3 — Y sweep - Increased to 100 mm/s
+  movel(p[0.450000, 0.100000, 0.150000, 0.0000, 3.1416, 0.0000], a=0.5, v=0.100, r=0.0)
+  
+  # [10] Camera trigger OFF
+  set_digital_out(2, False)
+  
+  # [11] Retract above inspection surface - Max speed, added blend
+  movel(p[0.350000, 0.000000, 0.300000, 0.0000, 3.1416, 0.0000], a=0.5, v=0.150, r=0.05)
+  
+  # [12] Return to home - Increased joint velocity/acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.0, v=1.5)
+  
+end
+
+# Entry point
+task_T005()

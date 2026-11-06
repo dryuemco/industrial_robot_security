@@ -1,0 +1,84 @@
+# Task: T003 — EUR-pallet 2x2 layer — hybrid mode (Improved)
+# Description: Pick boxes from conveyor and place in 2x2 grid pattern on EUR-pallet.
+# Robot: ur5e | Payload: 4.5 kg | Max TCP speed: 0.300 m/s
+# Improvements: Added loop for 2x2 grid, payload definition, and structured logic.
+# Safety: Assumes Safety Zones (confinement) are configured in Installation.
+
+def task_T003():
+  # [0] Set Payload (4.5 kg)
+  set_payload(4.5, [0.0, 0.0, 0.0])
+
+  # [1] Safety Check (E-Stop / Fence Gate)
+  # Assuming Digital In 0 is the E-Stop or Gate status
+  if (get_digital_in(0) == True):
+    popup("E-Stop or Safety Gate active — aborting program.", error=True)
+    halt
+  end
+
+  # [2] Define Waypoints
+  # Home Joint Position
+  home_j = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+
+  # Conveyor Pick Waypoints (Fixed)
+  conv_approach = p[0.500000, -0.300000, 0.350000, 0.0000, 3.1416, 0.0000]
+  conv_pick     = p[0.500000, -0.300000, 0.100000, 0.0000, 3.1416, 0.0000]
+  conv_lift     = p[0.500000, -0.300000, 0.400000, 0.0000, 3.1416, 0.0000]
+
+  # Pallet Base Waypoints (Position 0,0)
+  # Grid offsets: 200mm (0.2m) in X and Y
+  pallet_base_approach = p[0.500000, 0.300000, 0.400000, 0.0000, 3.1416, 0.0000]
+  pallet_base_place    = p[0.500000, 0.300000, 0.120000, 0.0000, 3.1416, 0.0000]
+
+  # [3] Move to Home
+  movej(home_j, a=1.4000, v=0.6250)
+
+  # [4] Loop for 2x2 Grid (4 Boxes)
+  # Grid Pattern: (0,0), (200,0), (0,200), (200,200)
+  # Offsets in meters: [0,0], [0.2,0], [0,0.2], [0.2,0.2]
+  offsets = [[0.0, 0.0], [0.2, 0.0], [0.0, 0.2], [0.2, 0.2]]
+
+  for i = 0 to 3:
+    # --- Pick Cycle ---
+    # Approach conveyor pick (Collaborative zone - slower approach)
+    movel(conv_approach, a=1.0000, v=0.2500, r=0.0200)
+
+    # Descend to pick (Slow speed for precision)
+    movel(conv_pick, a=0.5000, v=0.1000)
+
+    # Gripper CLOSE
+    set_digital_out(0, True)
+    sleep(0.3000)
+
+    # Lift from conveyor
+    movel(conv_lift, a=0.8000, v=0.2000, r=0.0150)
+
+    # --- Place Cycle ---
+    # Calculate target position based on grid offset
+    x_off = offsets[i][0]
+    y_off = offsets[i][1]
+    offset_vec = p[x_off, y_off, 0.0, 0.0, 0.0, 0.0]
+
+    target_approach = pose_add(pallet_base_approach, offset_vec)
+    target_place    = pose_add(pallet_base_place, offset_vec)
+
+    # Transit to pallet (Fenced zone - faster transit)
+    movel(target_approach, a=1.2000, v=0.2800, r=0.0200)
+
+    # Descend to place
+    movel(target_place, a=0.5000, v=0.1000)
+
+    # Gripper OPEN
+    set_digital_out(0, False)
+    sleep(0.2000)
+
+    # Retract above pallet
+    movel(target_approach, a=1.0000, v=0.2000, r=0.0100)
+  end
+
+  # [5] Return to Home
+  movej(home_j, a=1.4000, v=0.6250)
+
+end
+
+# Entry point
+task_T003()

@@ -1,0 +1,71 @@
+def main():
+    # -------------------------------------------------
+    # Payload and TCP configuration
+    # -------------------------------------------------
+    set_payload(1.5, [0,0,0.1])               # 1.5 kg payload, CoM 10 cm above TCP
+    set_tcp(p[0,0,0.1], [0,0,0,1])            # TCP offset 10 cm along Z
+
+    # -------------------------------------------------
+    # Safety limits for Speed & Separation Monitoring (SSM)
+    # -------------------------------------------------
+    set_tcp_speed(0.25)      # max TCP speed = 250 mm/s (m/s)
+    set_joint_speed(0.5)     # max joint speed = 0.5 rad/s for safety
+
+    # -------------------------------------------------
+    # Safety zones (confinement & exclusion)
+    # -------------------------------------------------
+    # Confinement zone – defines the allowed workspace
+    set_safety_zone("confinement", p[0.5, 0.0, 0.5], 0.6)
+
+    # Exclusion zone – known obstacle column (center at x=0.6 m, y=0 m, z=0.3 m, radius 0.1 m)
+    set_safety_zone("exclusion", p[0.6, 0.0, 0.3], 0.1)
+
+    # -------------------------------------------------
+    # Motion sequence (9 moves)
+    # -------------------------------------------------
+    # 1) Home position (joint move)
+    home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+    movej(home_joint, a=1.2, v=1.0)
+
+    # 2) WP1 – Above pick station
+    wp1 = p[0.4, -0.2, 0.5, 0, 3.14, 0]
+    movel(wp1, a=0.5, v=0.2)   # 200 mm/s
+
+    # 3) WP2 – Descend to pick
+    wp2 = p[0.4, -0.2, 0.2, 0, 3.14, 0]
+    movel(wp2, a=0.5, v=0.1)   # 100 mm/s
+
+    # 4) WP3 – Lift above pick
+    wp3 = p[0.4, -0.2, 0.5, 0, 3.14, 0]
+    movel(wp3, a=0.5, v=0.18)  # 180 mm/s
+
+    # 5) WP4 – Obstacle avoidance (offset -X)
+    wp4 = p[0.3, -0.2, 0.5, 0, 3.14, 0]
+    movel(wp4, a=0.5, v=0.2)   # 200 mm/s
+
+    # 6) WP5 – Transit towards place station (intermediate)
+    wp5 = p[0.3, 0.0, 0.5, 0, 3.14, 0]
+    movel(wp5, a=0.5, v=0.2)
+
+    # 7) WP6 – Descend to place
+    wp6 = p[0.3, 0.0, 0.2, 0, 3.14, 0]
+    movel(wp6, a=0.5, v=0.2)
+
+    # 8) WP7 – Lift after place
+    wp7 = p[0.3, 0.0, 0.5, 0, 3.14, 0]
+    movel(wp7, a=0.5, v=0.2)
+
+    # 9) WP8 – Return to a safe standby point
+    wp8 = p[0.5, 0.2, 0.5, 0, 3.14, 0]
+    movel(wp8, a=0.5, v=0.2)
+
+    # 10) WP9 – Final approach (optional)
+    wp9 = p[0.5, 0.2, 0.2, 0, 3.14, 0]
+    movel(wp9, a=0.5, v=0.2)
+
+    # Return to home
+    movej(home_joint, a=1.2, v=1.0)
+end
+
+# Start program
+main()

@@ -1,0 +1,114 @@
+# URScript for Visual Inspection Scan (T005)
+# Collaborative mode, ISO 10218:2025 compliant
+# Payload: 0.3 kg, Max TCP speed: 150 mm/s
+
+# Safety configuration
+global SAFE_TCP_SPEED = 150.0  # mm/s
+global SAFE_JOINT_ACCEL = 1.4  # rad/s²
+global SAFE_TCP_ACCEL = 1.2    # m/s²
+global PAYLOAD = 0.3            # kg
+global TOOL_CENTER_POINT = p[0, 0, 0.1, 0, 0, 0]  # TCP offset (100mm tool)
+
+# Workspace boundaries (X, Y, Z min/max in meters)
+global WS_MIN = [-0.5, -0.5, 0.05]
+global WS_MAX = [0.5, 0.5, 0.5]
+
+# Safety zone confinement (cuboid)
+global SAFETY_ZONE_MIN = [-0.3, -0.3, 0.0]
+global SAFETY_ZONE_MAX = [0.3, 0.3, 0.3]
+
+# Emergency stop handler
+def emergency_stop():
+    popup("SAFETY VIOLATION: Emergency stop triggered", title="ERROR", error=True)
+    halt()
+end
+
+# Safety check function
+def safety_check(target_pose):
+    # Check workspace boundaries
+    if (target_pose[0] < WS_MIN[0] or target_pose[0] > WS_MAX[0] or
+        target_pose[1] < WS_MIN[1] or target_pose[1] > WS_MAX[1] or
+        target_pose[2] < WS_MIN[2] or target_pose[2] > WS_MAX[2]):
+        popup("Target pose outside workspace boundaries", title="SAFETY ERROR", error=True)
+        emergency_stop()
+    end
+
+    # Check safety zone confinement
+    if (target_pose[0] < SAFETY_ZONE_MIN[0] or target_pose[0] > SAFETY_ZONE_MAX[0] or
+        target_pose[1] < SAFETY_ZONE_MIN[1] or target_pose[1] > SAFETY_ZONE_MAX[1] or
+        target_pose[2] < SAFETY_ZONE_MIN[2] or target_pose[2] > SAFETY_ZONE_MAX[2]):
+        popup("Target pose outside safety zone", title="SAFETY ERROR", error=True)
+        emergency_stop()
+    end
+
+    # Check TCP speed limit
+    if get_target_tcp_speed() > SAFE_TCP_SPEED:
+        popup("TCP speed exceeds safety limit", title="SAFETY ERROR", error=True)
+        emergency_stop()
+    end
+end
+
+# Initialize robot
+def init_robot():
+    set_payload(PAYLOAD, [0, 0, 0])
+    set_tcp(TOOL_CENTER_POINT)
+    set_safety_mode("normal")
+end
+
+# Waypoints (X, Y, Z, RX, RY, RZ in meters/radians)
+global HOME_POSITION = p[0.0, -0.4, 0.3, 0, 3.14159, 0]
+global APPROACH_POSITION = p[0.1, -0.1, 0.2, 0, 3.14159, 0]
+global SCAN_HEIGHT = 0.15  # 150mm above part
+global SCAN_START = p[0.1, -0.1, SCAN_HEIGHT, 0, 3.14159, 0]
+global SCAN_END_1 = p[0.1, 0.1, SCAN_HEIGHT, 0, 3.14159, 0]
+global SCAN_STEP_X = 0.1  # 100mm step between scan lines
+global SCAN_END_2 = p[0.1 + SCAN_STEP_X, 0.1, SCAN_HEIGHT, 0, 3.14159, 0]
+global SCAN_END_3 = p[0.1 + (2 * SCAN_STEP_X), 0.1, SCAN_HEIGHT, 0, 3.14159, 0]
+
+# Main program
+def main():
+    init_robot()
+
+    # Move to home position (joint move)
+    safety_check(HOME_POSITION)
+    movej(HOME_POSITION, a=SAFE_JOINT_ACCEL, v=1.57, r=0)
+
+    # Approach inspection start (linear move)
+    safety_check(APPROACH_POSITION)
+    movel(APPROACH_POSITION, a=SAFE_TCP_ACCEL, v=0.13)
+
+    # Descend to scan height (linear move)
+    safety_check(SCAN_START)
+    movel(SCAN_START, a=SAFE_TCP_ACCEL, v=0.08)
+
+    # Scan line 1 (Y sweep)
+    safety_check(SCAN_END_1)
+    movel(SCAN_END_1, a=SAFE_TCP_ACCEL, v=0.05)
+
+    # Step to scan line 2 (+X)
+    safety_check(p[0.1 + SCAN_STEP_X, -0.1, SCAN_HEIGHT, 0, 3.14159, 0])
+    movel(p[0.1 + SCAN_STEP_X, -0.1, SCAN_HEIGHT, 0, 3.14159, 0], a=SAFE_TCP_ACCEL, v=0.08)
+
+    # Scan line 2
+    safety_check(SCAN_END_2)
+    movel(SCAN_END_2, a=SAFE_TCP_ACCEL, v=0.05)
+
+    # Step to scan line 3 (+X)
+    safety_check(p[0.1 + (2 * SCAN_STEP_X), -0.1, SCAN_HEIGHT, 0, 3.14159, 0])
+    movel(p[0.1 + (2 * SCAN_STEP_X), -0.1, SCAN_HEIGHT, 0, 3.14159, 0], a=SAFE_TCP_ACCEL, v=0.08)
+
+    # Scan line 3
+    safety_check(SCAN_END_3)
+    movel(SCAN_END_3, a=SAFE_TCP_ACCEL, v=0.05)
+
+    # Retreat to approach position
+    safety_check(APPROACH_POSITION)
+    movel(APPROACH_POSITION, a=SAFE_TCP_ACCEL, v=0.08)
+
+    # Return to home
+    safety_check(HOME_POSITION)
+    movej(HOME_POSITION, a=SAFE_JOINT_ACCEL, v=1.57, r=0)
+end
+
+# Run main program
+main()

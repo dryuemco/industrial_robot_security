@@ -1,0 +1,106 @@
+# Set payload
+set_payload(4.5, [0,0,0.1])
+
+# Define safety zones
+def safety_zone_conveyor():
+    # Define the boundary for the conveyor area
+    # Example boundary coordinates (x_min, x_max, y_min, y_max, z_min, z_max)
+    x_min = 0.0
+    x_max = 0.5
+    y_min = -0.5
+    y_max = 0.5
+    z_min = 0.0
+    z_max = 0.5
+    
+    p = get_tcp_pose()
+    if not (x_min <= p[0] <= x_max and y_min <= p[1] <= y_max and z_min <= p[2] <= z_max):
+        popup("Safety violation: Outside conveyor zone!")
+        halt()
+
+def safety_zone_pallet():
+    # Define the boundary for the pallet area
+    # Example boundary coordinates (x_min, x_max, y_min, y_max, z_min, z_max)
+    x_min = 0.5
+    x_max = 1.0
+    y_min = -0.5
+    y_max = 0.5
+    z_min = 0.0
+    z_max = 0.5
+    
+    p = get_tcp_pose()
+    if not (x_min <= p[0] <= x_max and y_min <= p[1] <= y_max and z_min <= p[2] <= z_max):
+        popup("Safety violation: Outside pallet zone!")
+        halt()
+
+# Safety check function
+def safety_check():
+    safety_zone_conveyor()
+    safety_zone_pallet()
+
+# Home position
+safety_check()
+movej(p[0, -1.57, 1.57, -1.57, -1.57, 0], a=1.4, v=1.05)
+
+# Approach conveyor pick — above
+safety_check()
+movel(p[0.25, -0.25, 0.5, 3.14, 0, 0], a=1.4, v=1.25)
+
+# Descend to pick
+safety_check()
+movel(p[0.25, -0.25, 0.1, 3.14, 0, 0], a=1.4, v=0.5)
+
+# Lift from conveyor
+safety_check()
+movel(p[0.25, -0.25, 0.5, 3.14, 0, 0], a=1.4, v=1.0)
+
+# Transit to pallet position (0,0)
+safety_check()
+movel(p[0.75, -0.25, 0.5, 3.14, 0, 0], a=1.4, v=1.4)
+
+# Place on pallet (0,0)
+safety_check()
+movel(p[0.75, -0.25, 0.1, 3.14, 0, 0], a=1.4, v=0.5)
+
+# Lift from pallet (0,0)
+safety_check()
+movel(p[0.75, -0.25, 0.5, 3.14, 0, 0], a=1.4, v=1.0)
+
+# Transit to pallet position (1,0)
+safety_check()
+movel(p[0.75, 0.25, 0.5, 3.14, 0, 0], a=1.4, v=1.4)
+
+# Place on pallet (1,0)
+safety_check()
+movel(p[0.75, 0.25, 0.1, 3.14, 0, 0], a=1.4, v=0.5)
+
+# Lift from pallet (1,0)
+safety_check()
+movel(p[0.75, 0.25, 0.5, 3.14, 0, 0], a=1.4, v=1.0)
+
+# Transit to pallet position (0,1)
+safety_check()
+movel(p[0.75, -0.25, 0.5, 3.14, 0, 0], a=1.4, v=1.4)
+
+# Place on pallet (0,1)
+safety_check()
+movel(p[0.75, -0.25, 0.1, 3.14, 0, 0], a=1.4, v=0.5)
+
+# Lift from pallet (0,1)
+safety_check()
+movel(p[0.75, -0.25, 0.5, 3.14, 0, 0], a=1.4, v=1.0)
+
+# Transit to pallet position (1,1)
+safety_check()
+movel(p[0.75, 0.25, 0.5, 3.14, 0, 0], a=1.4, v=1.4)
+
+# Place on pallet (1,1)
+safety_check()
+movel(p[0.75, 0.25, 0.1, 3.14, 0, 0], a=1.4, v=0.5)
+
+# Lift from pallet (1,1)
+safety_check()
+movel(p[0.75, 0.25, 0.5, 3.14, 0, 0], a=1.4, v=1.0)
+
+# Return to home position
+safety_check()
+movej(p[0, -1.57, 1.57, -1.57, -1.57, 0], a=1.4, v=1.05)

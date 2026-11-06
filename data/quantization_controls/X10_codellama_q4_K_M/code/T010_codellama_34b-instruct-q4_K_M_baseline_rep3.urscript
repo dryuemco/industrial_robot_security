@@ -1,0 +1,66 @@
+def program():
+    # Home the robot
+    movej(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=200.0, v=200.0)
+
+    # Move above the screw feeder
+    movel(p[0.0, 0.0, 0.2, 0.0, 0.0, 0.0], a=200.0, v=200.0)
+
+    # Pick the screw
+    movel(p[0.0, 0.0, 0.1, 0.0, 0.0, 0.0], a=80.0, v=80.0)
+
+    # Lift the screw from the feeder
+    movel(p[0.0, 0.0, 0.18, 0.0, 0.0, 0.0], a=180.0, v=180.0)
+
+    # Move to the first fastening point
+    movel(p[0.0, 0.0, 0.2, 0.0, 0.0, 0.0], a=200.0, v=200.0)
+
+    # Fasten the screw
+    movej(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=250.0, v=250.0)
+
+    # Move to the second fastening point
+    movel(p[0.0, 0.0, 0.2, 0.0, 0.0, 0.0], a=200.0, v=200.0)
+
+    # Fasten the screw
+    movej(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=250.0, v=250.0)
+
+    # Move to the third fastening point
+    movel(p[0.0, 0.0, 0.2, 0.0, 0.0, 0.0], a=200.0, v=200.0)
+
+    # Fasten the screw
+    movej(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=250.0, v=250.0)
+
+    # Move to the fourth fastening point
+    movel(p[0.0, 0.0, 0.2, 0.0, 0.0, 0.0], a=200.0, v=200.0)
+
+    # Fasten the screw
+    movej(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=250.0, v=250.0)
+
+    # Move to the fifth fastening point
+    movel(p[0.0, 0.0, 0.2, 0.0, 0.0, 0.0], a=200.0, v=200.0)
+
+    # Fasten the screw
+    movej(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=250.0, v=250.0)
+
+    # Move to the sixth fastening point
+    movel(p[0.0, 0.0, 0.2, 0.0, 0.0, 0.0], a=200.0, v=200.0)
+
+    # Fasten the screw
+    movej(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=250.0, v=250.0)
+
+    # Move to the seventh fastening point
+    movel(p[0.0, 0.0, 0.2, 0.0, 0.0, 0.0], a=200.0, v=200.0)
+
+    # Fasten the screw
+    movej(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=250.0, v=250.0)
+
+    # Move to the eighth fastening point
+    movel(p[0.0, 0.0, 0.2, 0.0, 0.0, 0.0], a=200.0, v=200.0)
+
+    # Fasten the screw
+    movej(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=250.0, v=250.0)
+
+    # Move to the home position
+    movej(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=200.0, v=200.0)
+
+    # End of program
+    end

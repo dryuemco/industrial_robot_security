@@ -1,0 +1,102 @@
+# URScript for UR5e - EUR-pallet 2x2 layer (Hybrid mode)
+# Payload: 4.5 kg
+# Max TCP speed: 300 mm/s
+# Safety: confinement zone around pallet, collaborative near conveyor pick
+
+def main():
+    # -------------------------------------------------
+    # Safety and payload configuration
+    # -------------------------------------------------
+    set_payload(4.5, [0,0,0])               # payload mass and centre of gravity
+    set_tcp([0,0,0.1,0,0,0])                # TCP offset (example)
+    set_safety_limits(
+        max_tcp_speed = 300.0,             # mm/s
+        max_joint_speed = 180.0,           # deg/s (default)
+        max_payload = 5.0,                 # kg (safety margin)
+        max_force = 150.0,                 # N (default)
+        max_moment = 150.0)                # Nm (default)
+
+    # -------------------------------------------------
+    # Define positions (example coordinates, adjust as needed)
+    # -------------------------------------------------
+    # Joint positions (radians)
+    home_joint = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+    # Poses (x, y, z, Rx, Ry, Rz) in meters and radians
+    # Approach above conveyor pick
+    pose_approach = p[0.5, -0.3, 0.3, 0, 3.14, 0]
+
+    # Descend to pick (lower Z)
+    pose_pick = p[0.5, -0.3, 0.1, 0, 3.14, 0]
+
+    # Lift after pick
+    pose_lift = p[0.5, -0.3, 0.3, 0, 3.14, 0]
+
+    # Pallet grid positions (2x2)
+    # Origin (0,0) on pallet
+    pallet_origin = p[0.0, 0.0, 0.2, 0, 3.14, 0]
+
+    # Offsets for grid (0.2 m spacing)
+    offset_x = 0.2
+    offset_y = 0.2
+
+    # Compute grid positions
+    pos_00 = pose_transform(pallet_origin, p[0, 0, 0, 0,0,0])
+    pos_10 = pose_transform(pallet_origin, p[offset_x, 0, 0, 0,0,0])
+    pos_01 = pose_transform(pallet_origin, p[0, offset_y, 0, 0,0,0])
+    pos_11 = pose_transform(pallet_origin, p[offset_x, offset_y, 0, 0,0,0])
+
+    # -------------------------------------------------
+    # Motion sequence (8 moves)
+    # -------------------------------------------------
+    # 1) Move to Home position (joint space)
+    movej(home_joint, a=1.2, v=0.25)   # 250 mm/s = 0.25 m/s
+
+    # 2) Move linear to approach above conveyor (collaborative zone)
+    set_safety_mode("speed")          # collaborative mode near human
+    movel(pose_approach, a=1.2, v=0.25)
+
+    # 3) Descend to pick
+    movel(pose_pick, a=0.8, v=0.10)    # 100 mm/s = 0.10 m/s
+
+    # 4) Lift from conveyor
+    movel(pose_lift, a=1.0, v=0.20)    # 200 mm/s = 0.20 m/s
+
+    # 5) Transit to first pallet cell (0,0) - fenced zone
+    set_safety_mode("stop")           # fenced during transit
+    movel(pos_00, a=1.5, v=0.28)       # 280 mm/s = 0.28 m/s
+
+    # 6) Place first box (lower, release, lift)
+    movel(pose_transform(pos_00, p[0,0,-0.1,0,0,0]), a=0.8, v=0.10)  # descend 100 mm
+    # (release gripper here - placeholder)
+    # close_gripper() / open_gripper() would be added as needed
+    movel(pos_00, a=0.8, v=0.20)       # lift back
+
+    # 7) Transit to second pallet cell (0,1)
+    movel(pos_01, a=1.5, v=0.28)
+
+    # 8) Place second box
+    movel(pose_transform(pos_01, p[0,0,-0.1,0,0,0]), a=0.8, v=0.10)
+    # (release gripper)
+    movel(pos_01, a=0.8, v=0.20)
+
+    # -------------------------------------------------
+    # Return to Home
+    # -------------------------------------------------
+    set_safety_mode("speed")          # back to collaborative for final move
+    movej(home_joint, a=1.2, v=0.25)
+
+    # End of program
+    stopj(2.0)                         # ensure robot stops safely
+
+end
+
+# Helper function to apply a pose offset
+def pose_transform(base_pose, offset):
+    # Simple translation offset (ignores rotation for this example)
+    return p[base_pose[0]+offset[0],
+             base_pose[1]+offset[1],
+             base_pose[2]+offset[2],
+             base_pose[3],
+             base_pose[4],
+             base_pose[5]]

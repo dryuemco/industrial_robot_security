@@ -1,0 +1,59 @@
+def eur_pallet_2x2():
+  # Safety configuration
+  set_analog_inputrange(0, 0)
+  set_analog_inputrange(1, 0)
+  set_analog_outputdomain(0, 0)
+  set_analog_outputdomain(1, 0)
+  set_tool_voltage(0)
+  set_runstate_outputs([])
+  set_payload(4.5)
+  set_tcp(p[0,0,0,0,0,0])
+
+  # Zone confinement setup
+  confinement_zone = p[0.0, -0.5, 0.0, 0.0, 0.0, 0.0, 0.8, 1.2, 2.0]
+  enter_zone(confinement_zone)
+
+  # Home position
+  home_pos = p[0.0, -0.5, 0.5, 0, 3.14, 0]
+  movej(home_pos, a=1.2, v=1.05, r=0)
+
+  # Conveyor pick sequence
+  approach_conveyor = p[0.3, -0.4, 0.2, 0, 3.14, 0]
+  pick_pos = p[0.3, -0.4, 0.05, 0, 3.14, 0]
+  lift_pos = p[0.3, -0.4, 0.2, 0, 3.14, 0]
+
+  movej(approach_conveyor, a=1.2, v=1.05, r=0)
+  movel(pick_pos, a=0.5, v=0.4)
+  set_digital_out(0, True)
+  sleep(0.5)
+  movel(lift_pos, a=0.8, v=0.8)
+
+  # Transit to pallet (fenced mode)
+  transit_pos = p[0.0, -0.8, 0.4, 0, 3.14, 0]
+  movel(transit_pos, a=1.2, v=1.15)
+
+  # Pallet placement positions
+  pallet_positions = [
+    p[0.0, -0.8, 0.15, 0, 3.14, 0],
+    p[0.15, -0.8, 0.15, 0, 3.14, 0],
+    p[0.0, -0.65, 0.15, 0, 3.14, 0],
+    p[0.15, -0.65, 0.15, 0, 3.14, 0]
+  ]
+
+  # Place boxes in 2x2 pattern
+  for i in range(4):
+    approach_pos = pallet_positions[i] + p[0,0,0.1,0,0,0]
+    movel(approach_pos, a=0.8, v=0.8)
+    movel(pallet_positions[i], a=0.5, v=0.4)
+    set_digital_out(0, False)
+    sleep(0.5)
+    movel(approach_pos, a=0.8, v=0.8)
+
+    # Return to transit position between placements
+    if i < 3:
+      movel(transit_pos, a=1.2, v=1.15)
+
+  # Return to home
+  movej(home_pos, a=1.2, v=1.05, r=0)
+  exit_zone(confinement_zone)
+end

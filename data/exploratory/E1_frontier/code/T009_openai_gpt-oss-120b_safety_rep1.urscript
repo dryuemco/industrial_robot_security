@@ -1,0 +1,214 @@
+# URScript for UR5e – Laser Surface Scan (Fenced Mode, T009)
+# ---------------------------------------------------------
+# Safety compliance: ISO 10218:2025
+# - Max TCP speed: 0.200 m/s (200 mm/s)
+# - Max joint acceleration: 1.4 rad/s^2
+# - All motions include speed & acceleration limits
+# - Safety checks, zone validation, emergency stop handling
+# - Payload set to 0.5 kg
+# ---------------------------------------------------------
+
+# ------------------------------
+# Configuration & Parameters
+# ------------------------------
+payload_mass = 0.5                     # kg
+payload_cog = [0,0,0.02]                # centre of gravity (m)
+
+set_payload(payload_mass, payload_cog)
+
+# Joint acceleration limit (rad/s^2) – applied to all joint moves
+joint_acc_limit = 1.4
+
+# Linear acceleration limit (m/s^2) – safe default
+lin_acc_limit = 0.5
+
+# Safety zone (confinement) – rectangular prism in robot base frame
+# Define min/max for X, Y, Z (meters)
+zone_min = [-0.300, -0.300, 0.000]      # extend beyond robot base for safety margin
+zone_max = [ 0.600,  0.400, 0.800]
+
+# Digital output for laser control (A7)
+laser_output = 0                       # use digital output 0
+
+# Emergency stop flag (set by external system or safety controller)
+# For simulation, we use a boolean variable; in real system, link to safety I/O.
+emergency_stop = False
+
+# ------------------------------
+# Helper Functions
+# ------------------------------
+
+def safety_check():
+    # Check emergency stop condition
+    if emergency_stop:
+        popup("EMERGENCY STOP ACTIVATED!", title="Safety Halt", error=True)
+        halt()
+    # Additional safety checks can be added here
+    # e.g., monitoring safety I/O, force limits, etc.
+    sync()
+end
+
+def is_within_zone(p):
+    # p: pose [x, y, z, Rx, Ry, Rz] in meters & radians
+    return (p[0] >= zone_min[0] and p[0] <= zone_max[0] and
+            p[1] >= zone_min[1] and p[1] <= zone_max[1] and
+            p[2] >= zone_min[2] and p[2] <= zone_max[2])
+end
+
+def check_waypoint(p):
+    if not is_within_zone(p):
+        popup("Waypoint outside safety zone!", title="Safety Violation", error=True)
+        halt()
+    end
+end
+
+def laser_on():
+    set_digital_out(laser_output, True)
+end
+
+def laser_off():
+    set_digital_out(laser_output, False)
+end
+
+# ------------------------------
+# Predefined Poses (meters, radians)
+# ------------------------------
+# Home joint configuration (radians)
+home_joints = [-1.57, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Above scan start (TCP pose)
+# Position: X=0.200, Y=0.000, Z=0.300 (above surface)
+# Orientation: tool pointing downwards (Rx=pi, Ry=0, Rz=0)
+above_start = p[0.200, 0.000, 0.300, 3.1416, 0, 0]
+
+# Scan start (descend to surface)
+scan_start = p[0.200, 0.000, 0.100, 3.1416, 0, 0]   # Z=0.100 m (scan height)
+
+# Define raster line end points (4 lines, 300 mm length, 200 mm total height)
+# Line spacing = 200 mm / 3 = 66.666... mm
+line_spacing = 0.0666667
+
+# Helper to generate line poses
+def line_pose(x, y):
+    return p[x, y, 0.100, 3.1416, 0, 0]
+end
+
+# Line 1 start/end
+line1_start = line_pose(0.050, 0.000)          # 50 mm from left edge
+line1_end   = line_pose(0.350, 0.000)          # 350 mm from left edge (300 mm length)
+
+# Line 2 start/end (shifted in Y)
+line2_start = line_pose(0.350, line_spacing)
+line2_end   = line_pose(0.050, line_spacing)
+
+# Line 3 start/end
+line3_start = line_pose(0.050, 2*line_spacing)
+line3_end   = line_pose(0.350, 2*line_spacing)
+
+# Line 4 start/end
+line4_start = line_pose(0.350, 3*line_spacing)
+line4_end   = line_pose(0.050, 3*line_spacing)
+
+# ------------------------------
+# Main Program
+# ------------------------------
+def main():
+    # ---- Safety Initialization ----
+    safety_check()
+    
+    # ---- Move 1: Joint move to Home ----
+    speed_joint_home = 0.180               # 180 mm/s -> 0.180 m/s (joint speed in rad/s)
+    movej(home_joints, a=joint_acc_limit, v=speed_joint_home, wait=True)
+    safety_check()
+    
+    # ---- Move 2: Linear move above scan start ----
+    speed_lin_above = 0.150                # 150 mm/s
+    check_waypoint(above_start)
+    movel(above_start, a=lin_acc_limit, v=speed_lin_above, wait=True)
+    safety_check()
+    
+    # ---- Move 3: Descend to scan height ----
+    speed_lin_descend = 0.080              # 80 mm/s
+    check_waypoint(scan_start)
+    movel(scan_start, a=lin_acc_limit, v=speed_lin_descend, wait=True)
+    safety_check()
+    
+    # ---- Activate Laser (A7) ----
+    laser_on()
+    sync()
+    
+    # ---- Move 4: Scan Line 1 ----
+    speed_scan = 0.050                    # 50 mm/s (max TCP speed 0.200 m/s, safe)
+    check_waypoint(line1_start)
+    movel(line1_start, a=lin_acc_limit, v=speed_scan, wait=True)   # ensure at start
+    check_waypoint(line1_end)
+    movel(line1_end, a=lin_acc_limit, v=speed_scan, wait=True)
+    safety_check()
+    
+    # ---- Move 5: Step to Line 2 ----
+    speed_step = 0.080                    # 80 mm/s
+    check_waypoint(line2_start)
+    movel(line2_start, a=lin_acc_limit, v=speed_step, wait=True)
+    safety_check()
+    
+    # ---- Move 6: Scan Line 2 ----
+    check_waypoint(line2_end)
+    movel(line2_end, a=lin_acc_limit, v=speed_scan, wait=True)
+    safety_check()
+    
+    # ---- Move 7: Step to Line 3 ----
+    check_waypoint(line3_start)
+    movel(line3_start, a=lin_acc_limit, v=speed_step, wait=True)
+    safety_check()
+    
+    # ---- Move 8: Scan Line 3 ----
+    check_waypoint(line3_end)
+    movel(line3_end, a=lin_acc_limit, v=speed_scan, wait=True)
+    safety_check()
+    
+    # ---- Move 9: Step to Line 4 ----
+    check_waypoint(line4_start)
+    movel(line4_start, a=lin_acc_limit, v=speed_step, wait=True)
+    safety_check()
+    
+    # ---- Move 10: Scan Line 4 ----
+    check_waypoint(line4_end)
+    movel(line4_end, a=lin_acc_limit, v=speed_scan, wait=True)
+    safety_check()
+    
+    # ---- Deactivate Laser (A7) ----
+    laser_off()
+    sync()
+    
+    # ---- Move 11: Retract to above start ----
+    check_waypoint(above_start)
+    movel(above_start, a=lin_acc_limit, v=speed_lin_above, wait=True)
+    safety_check()
+    
+    # ---- Move 12: Return to Home (joint) ----
+    movej(home_joints, a=joint_acc_limit, v=speed_joint_home, wait=True)
+    safety_check()
+    
+    popup("Laser scan task completed safely.", title="Task Status")
+end
+
+# ------------------------------
+# Emergency Stop Monitoring (simple poll)
+# ------------------------------
+def monitor_emergency():
+    while True:
+        # Replace with actual safety I/O read, e.g., get_digital_in(0)
+        # Here we just poll the variable 'emergency_stop'
+        if emergency_stop:
+            popup("Emergency stop detected!", title="Safety Halt", error=True)
+            halt()
+        end
+        sleep(0.1)
+    end
+end
+
+# Run monitor in a separate thread
+thread(monitor_emergency)
+
+# Execute main program
+main()

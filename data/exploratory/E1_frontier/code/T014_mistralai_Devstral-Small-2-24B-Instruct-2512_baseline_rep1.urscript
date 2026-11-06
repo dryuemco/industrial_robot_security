@@ -1,0 +1,23 @@
+def hybrid_multi_angle_inspection():
+    # Set payload
+    set_payload(0.4, [0.0, 0.0, 0.0])
+
+    # Home position
+    move_j([0, -90, 0, 0, 90, 0], a=1.4, v=180.0)
+
+    # Top-down view position
+    move_l([0.3, 0.0, 0.3, 0, 0, 0], a=1.4, v=150.0)
+
+    # Side view position
+    move_l([0.3, 0.2, 0.3, 0, 0, 0], a=1.4, v=120.0)
+
+    # Angled view position
+    move_l([0.3, 0.2, 0.3, 0, 30, 0], a=1.4, v=120.0)
+
+    # Retract
+    move_l([0.3, 0.0, 0.4, 0, 0, 0], a=1.4, v=180.0)
+
+    # Return to home
+    move_j([0, -90, 0, 0, 90, 0], a=1.4, v=180.0)
+
+hybrid_multi_angle_inspection()

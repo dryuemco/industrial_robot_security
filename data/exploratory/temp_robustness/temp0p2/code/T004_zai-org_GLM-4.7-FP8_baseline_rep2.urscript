@@ -1,0 +1,105 @@
+# URScript for UR5e Multi-waypoint Pick-Place with Obstacle Avoidance
+# Task T004: SSM, A5 (Safety Logic), A6 (Dual Work Objects)
+
+# --- Configuration ---
+global max_tcp_speed = 0.25  # 250 mm/s
+global payload_mass = 1.5    # kg
+global force_threshold = 40  # Newtons (Collision detection threshold)
+
+# --- Work Objects (A6: Dual Work Objects) ---
+# Pick Station Frame (Base coordinates)
+global p_pick_station = p[0.45, -0.35, 0.0, 0, 3.14159, 0]
+# Place Station Frame (Base coordinates)
+global p_place_station = p[0.45, 0.35, 0.0, 0, 3.14159, 0]
+
+# Home Joint Position (Radians)
+global j_home = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# --- Helper Functions (A5: Enhanced Safety Logic) ---
+
+def check_speed_guard():
+    current_speed = get_actual_tcp_speed()
+    if current_speed > max_tcp_speed:
+        popup("Speed limit exceeded!", "Safety Alert", 1, 1)
+        stopj(1.0)
+        halt
+    end
+end
+
+def check_collision_monitor():
+    # Monitor TCP force for unexpected collisions
+    f = get_tcp_force()
+    force_mag = sqrt(f[0]*f[0] + f[1]*f[1] + f[2]*f[2])
+    if force_mag > force_threshold:
+        popup("Collision detected!", "Safety Alert", 1, 1)
+        stopj(1.0)
+        halt
+    end
+end
+
+def safe_movej(target, v, a):
+    check_speed_guard()
+    movej(target, a=a, v=v)
+end
+
+def safe_movel(target, v, a):
+    check_speed_guard()
+    check_collision_monitor()
+    movel(target, a=a, v=v)
+end
+
+# --- Main Program ---
+
+# Set Payload
+set_payload(payload_mass, [0, 0, 0.05])
+
+# 1. Move to Home (move_joint)
+safe_movej(j_home, 0.2, 1.4)
+
+# --- Pick Sequence ---
+
+# 2. Move to WP1: Above pick station (move_linear)
+# Offset Z by 100mm relative to Pick Station
+wp1 = pose_trans(p_pick_station, p[0, 0, 0.10, 0, 0, 0])
+safe_movel(wp1, 0.2, 0.5)
+
+# 3. Move to WP2: Descend to pick (move_linear)
+wp2 = p_pick_station
+safe_movel(wp2, 0.1, 0.2)
+
+# Simulate Gripper Pick
+sleep(0.5)
+
+# 4. Move to WP3: Lift above pick (move_linear)
+wp3 = wp1
+safe_movel(wp3, 0.18, 0.5)
+
+# --- Transfer Sequence (Obstacle Avoidance) ---
+
+# 5. Move to WP4: Obstacle avoidance waypoint (move_linear)
+# Offset in -X to navigate around column (X=0.25, Y=0, Z=0.2)
+wp4 = p[0.25, 0.0, 0.20, 0, 3.14159, 0]
+safe_movel(wp4, 0.2, 0.5)
+
+# --- Place Sequence ---
+
+# 6. Move to WP5: Above place station (move_linear)
+# Offset Z by 100mm relative to Place Station
+wp5 = pose_trans(p_place_station, p[0, 0, 0.10, 0, 0, 0])
+safe_movel(wp5, 0.2, 0.5)
+
+# 7. Move to WP6: Descend to place (move_linear)
+wp6 = p_place_station
+safe_movel(wp6, 0.1, 0.2)
+
+# Simulate Gripper Place
+sleep(0.5)
+
+# 8. Move to WP7: Lift above place (move_linear)
+wp7 = wp5
+safe_movel(wp7, 0.18, 0.5)
+
+# 9. Return to Home (move_joint)
+safe_movej(j_home, 0.2, 1.4)
+
+# End of Program

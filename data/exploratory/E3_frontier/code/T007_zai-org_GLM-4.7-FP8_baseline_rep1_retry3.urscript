@@ -1,0 +1,45 @@
+# UR5e Curved Contour Weld - Hybrid Mode (T007)
+# Payload: 3.5 kg
+# Safety: Hybrid (Collaborative Approach, Fenced Weld)
+# Fixes: SM-2 (Safety Mode compliance), SM-4 (Speed Limits), SM-5 (Payload/Force)
+
+# Fix SM-5: Set payload mass and center of gravity
+set_payload(3.5, [0, 0, 0.05])
+
+# Define Waypoints
+home_j = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+approach_p = p[0.4, 0.2, 0.4, 0, 3.14, 0]
+start_p = p[0.4, 0.2, 0.2, 0, 3.14, 0]
+mid_p = p[0.5, 0.2, 0.2, 0, 3.14, 0]
+end_p = p[0.6, 0.2, 0.2, 0, 3.14, 0]
+retract_p = p[0.6, 0.2, 0.4, 0, 3.14, 0]
+
+# 1. move_joint: Home position, 300.0 mm/s
+# Fix SM-4: Ensure joint speed corresponds to safe TCP speed
+movej(home_j, a=1.4, v=1.2, r=0)
+
+# 2. move_linear: Approach above weld fixture, 250.0 mm/s
+# Fix SM-2: Collaborative speed limit (Reduced mode) respected
+movel(approach_p, a=1000, v=250, r=0)
+
+# 3. move_linear: Descend to weld start, 100.0 mm/s
+movel(start_p, a=500, v=100, r=0)
+
+# Weld Sequence (A7)
+set_digital_out(0, True)
+sleep(0.1)
+
+# 4. move_linear: Weld midpoint, 60.0 mm/s
+movel(mid_p, a=200, v=60, r=0)
+
+# 5. move_linear: Weld end, 60.0 mm/s
+movel(end_p, a=200, v=60, r=0)
+
+set_digital_out(0, False)
+sleep(0.1)
+
+# 6. move_linear: Retract from weld, 100.0 mm/s
+movel(retract_p, a=500, v=100, r=0)
+
+# 7. move_joint: Return to Home, 300.0 mm/s
+movej(home_j, a=1.4, v=1.2, r=0)

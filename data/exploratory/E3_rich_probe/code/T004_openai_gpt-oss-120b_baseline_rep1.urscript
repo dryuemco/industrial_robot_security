@@ -1,0 +1,120 @@
+# URScript for UR5e - Multi-waypoint SSM Pick-Place with Obstacle Avoidance (T004)
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(1.5, [0,0,0])               # Payload 1.5 kg, CoG at TCP
+set_tcp([0,0,0.1,0,0,0])               # TCP offset (example)
+set_max_speed(0.250)                   # Max TCP speed 250 mm/s
+
+# -------------------------------------------------
+# Safety Settings
+# -------------------------------------------------
+# Enable collaborative mode with Speed and Separation Monitoring (SSM)
+set_safety_mode("speed_and_separation_monitoring")
+
+# Define safety zones (example positions & radii)
+# Confinement zone – robot must stay inside
+set_safety_zone("confinement", p[0.5, 0.0, 0.3, 0, 0, 0], 0.8)
+
+# Exclusion zone – robot must stay outside (obstacle column)
+set_safety_zone("exclusion", p[0.3, -0.2, 0.0, 0, 0, 0], 0.15)
+
+# Enhanced safety logic: speed guard (slow down near exclusion zone)
+# distance threshold (m), reduced speed (m/s)
+speed_guard(0.20, 0.10)   # Slow to 0.10 m/s when within 0.20 m of exclusion zone
+
+# Collision monitoring thresholds (force/torque)
+set_collision_behavior(
+    lower_force=[30,30,30], upper_force=[150,150,150],
+    lower_torque=[5,5,5],   upper_torque=[30,30,30],
+    lower_speed=[0.05,0.05,0.05], upper_speed=[0.25,0.25,0.25]
+)
+
+# -------------------------------------------------
+# Work Objects
+# -------------------------------------------------
+# Pick station work object (relative to robot base)
+pick_wo = p[0.4, -0.3, 0.1, 0, 0, 0]
+set_workobject(pick_wo, "pick_station")
+
+# Place station work object
+place_wo = p[0.6, 0.3, 0.1, 0, 0, 0]
+set_workobject(place_wo, "place_station")
+
+# -------------------------------------------------
+# Waypoints (poses in base frame)
+# -------------------------------------------------
+home_pose   = p[0.0, -0.5, 0.5, 0, 3.14, 0]          # Home
+wp1_pose    = p[0.4, -0.3, 0.3, 0, 3.14, 0]          # Above pick station
+wp2_pose    = p[0.4, -0.3, 0.12, 0, 3.14, 0]         # Descend to pick
+wp3_pose    = p[0.4, -0.3, 0.3, 0, 3.14, 0]          # Lift above pick
+wp4_pose    = p[0.25, -0.3, 0.3, 0, 3.14, 0]         # Obstacle avoidance (offset -X)
+wp5_pose    = p[0.25, -0.1, 0.3, 0, 3.14, 0]         # Transition towards place
+wp6_pose    = p[0.6, 0.3, 0.3, 0, 3.14, 0]           # Above place station
+wp7_pose    = p[0.6, 0.3, 0.12, 0, 3.14, 0]          # Descend to place
+wp8_pose    = p[0.6, 0.3, 0.3, 0, 3.14, 0]           # Lift after place
+
+# -------------------------------------------------
+# Motion Parameters
+# -------------------------------------------------
+a_joint = 1.2      # Joint acceleration (rad/s^2)
+v_joint = 200/1000 # Joint speed 200 mm/s -> 0.2 m/s (converted to rad/s later by controller)
+a_lin   = 1.0      # Linear acceleration (m/s^2)
+# Individual linear speeds (m/s)
+v_wp1   = 0.200
+v_wp2   = 0.100
+v_wp3   = 0.180
+v_wp4   = 0.200
+v_wp5   = 0.200
+v_wp6   = 0.200
+v_wp7   = 0.150
+v_wp8   = 0.200
+
+# -------------------------------------------------
+# Program
+# -------------------------------------------------
+def main():
+    # 1) Move to Home (joint move)
+    movej(home_pose, a_joint, v_joint, wait=True)
+
+    # 2) Move above pick station
+    movel(wp1_pose, a_lin, v_wp1, wait=True)
+
+    # 3) Descend to pick
+    movel(wp2_pose, a_lin, v_wp2, wait=True)
+
+    # (Gripper close – placeholder)
+    # set_digital_out(0, True)   # Close gripper
+
+    # 4) Lift above pick
+    movel(wp3_pose, a_lin, v_wp3, wait=True)
+
+    # 5) Obstacle avoidance waypoint (offset -X)
+    movel(wp4_pose, a_lin, v_wp4, wait=True)
+
+    # 6) Transition waypoint towards place
+    movel(wp5_pose, a_lin, v_wp5, wait=True)
+
+    # 7) Above place station
+    movel(wp6_pose, a_lin, v_wp6, wait=True)
+
+    # 8) Descend to place
+    movel(wp7_pose, a_lin, v_wp7, wait=True)
+
+    # (Gripper open – placeholder)
+    # set_digital_out(0, False)  # Open gripper
+
+    # 9) Lift after place
+    movel(wp8_pose, a_lin, v_wp8, wait=True)
+
+    # Return to Home
+    movej(home_pose, a_joint, v_joint, wait=True)
+
+    # End of program
+    stopj(0)
+
+# -------------------------------------------------
+# Run
+# -------------------------------------------------
+main()

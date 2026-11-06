@@ -1,0 +1,128 @@
+# URScript for UR5e Screw Fastening Assembly (Hybrid Mode)
+# Task: Pick screw, drive at 4 points
+# Safety: ISO 10218:2025 compliant limits applied
+
+# --- Configuration & Constants ---
+MAX_TCP_SPEED = 0.25          # 250 mm/s
+MAX_JOINT_ACCEL = 1.4         # 1.4 rad/s^2
+MAX_LINEAR_ACCEL = 0.5        # Conservative linear accel (m/s^2)
+PAYLOAD_MASS = 1.0            # 1.0 kg
+PAYLOAD_COG = [0.0, 0.0, 0.05] # Center of gravity offset (m)
+
+# Safety Zone Boundaries (Simple box check)
+ZONE_X_MIN = -0.8
+ZONE_X_MAX = 0.8
+ZONE_Y_MIN = -0.8
+ZONE_Y_MAX = 0.8
+ZONE_Z_MIN = 0.0
+ZONE_Z_MAX = 1.0
+
+# --- Waypoints (Pose [x, y, z, rx, ry, rz]) ---
+p_home = [0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
+p_feeder_above = [0.4, -0.5, 0.3, 0, 3.14, 0]
+p_feeder_pick = [0.4, -0.5, 0.05, 0, 3.14, 0]
+p_feeder_lift = [0.4, -0.5, 0.3, 0, 3.14, 0]
+
+# Workpiece Waypoints
+p_wp_above_1 = [0.5, 0.0, 0.25, 0, 3.14, 0]
+p_wp_fasten_1 = [0.5, 0.0, 0.1, 0, 3.14, 0]
+p_wp_fasten_2 = [0.5, 0.1, 0.1, 0, 3.14, 0]
+p_wp_fasten_3 = [0.5, 0.2, 0.1, 0, 3.14, 0]
+p_wp_fasten_4 = [0.5, 0.3, 0.1, 0, 3.14, 0]
+
+# --- Helper Functions ---
+
+def emergency_stop_handler(msg):
+    popup(msg, title="SAFETY VIOLATION", warning=False, error=True)
+    stopj(2.0)
+    halt
+
+def validate_workspace(pose):
+    # Check if pose is within defined safety zone
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    
+    if x < ZONE_X_MIN or x > ZONE_X_MAX:
+        return False
+    if y < ZONE_Y_MIN or y > ZONE_Y_MAX:
+        return False
+    if z < ZONE_Z_MIN or z > ZONE_Z_MAX:
+        return False
+    return True
+
+def safety_check():
+    # Check TCP Speed
+    current_tcp_speed = get_actual_tcp_speed()
+    if current_tcp_speed > (MAX_TCP_SPEED + 0.01): # Small tolerance
+        emergency_stop_handler("TCP Speed Limit Exceeded: " + current_tcp_speed)
+    
+    # Check Joint Speeds (Implicitly handled by speed commands, but good to monitor)
+    j_speeds = get_actual_joint_speeds()
+    for speed in j_speeds:
+        if speed > 2.0: # Arbitrary high limit for safety check
+            emergency_stop_handler("Joint Speed Anomaly Detected")
+
+def safe_movel(target_pose, speed, accel):
+    if not validate_workspace(target_pose):
+        emergency_stop_handler("Target outside Safety Zone")
+    
+    safety_check()
+    movel(target_pose, a=accel, v=speed)
+    sleep(0.1) # Allow settling
+
+def safe_movej(target_pose, speed, accel):
+    safety_check()
+    movej(target_pose, a=accel, v=speed)
+    sleep(0.1)
+
+# --- Main Program ---
+
+# 1. Setup
+set_payload(PAYLOAD_MASS, PAYLOAD_COG)
+set_gravity([0.0, 0.0, -9.82])
+
+# 2. Move to Home
+# Move 1: move_joint: Home, 200.0 mm/s (approx 1.0 rad/s)
+safe_movej(p_home, 1.0, MAX_JOINT_ACCEL)
+
+# 3. Pick Sequence
+# Move 2: move_linear: Above screw feeder, 200.0 mm/s
+safe_movel(p_feeder_above, 0.2, MAX_LINEAR_ACCEL)
+
+# Move 3: move_linear: Pick screw, 80.0 mm/s
+safe_movel(p_feeder_pick, 0.08, MAX_LINEAR_ACCEL)
+# Activate gripper (simulated)
+set_digital_out(0, True) 
+sleep(0.5)
+
+# Move 4: move_linear: Lift from feeder, 180.0 mm/s
+safe_movel(p_feeder_lift, 0.18, MAX_LINEAR_ACCEL)
+
+# 4. Fastening Sequence
+# Move 5: move_linear: Above fastening point 1, 200.0 mm/s
+safe_movel(p_wp_above_1, 0.2, MAX_LINEAR_ACCEL)
+
+# Move 6: Fasten Point 1 (Slow speed for precision/safety)
+safe_movel(p_wp_fasten_1, 0.05, MAX_LINEAR_ACCEL)
+# Simulate screw driving action
+sleep(1.0)
+
+# Move 7: Fasten Point 2
+safe_movel(p_wp_fasten_2, 0.05, MAX_LINEAR_ACCEL)
+sleep(1.0)
+
+# Move 8: Fasten Point 3
+safe_movel(p_wp_fasten_3, 0.05, MAX_LINEAR_ACCEL)
+sleep(1.0)
+
+# Additional Move for Point 4 (Completing task requirement)
+safe_movel(p_wp_fasten_4, 0.05, MAX_LINEAR_ACCEL)
+sleep(1.0)
+
+# 5. Return to Home
+safe_movel(p_wp_above_1, 0.2, MAX_LINEAR_ACCEL)
+safe_movej(p_home, 1.0, MAX_JOINT_ACCEL)
+
+# End of Program
+textmsg("Task Completed Successfully")

@@ -1,0 +1,33 @@
+def program():
+    # Define safety zones and check boundaries before moves
+    safety_check()
+
+    # Home the robot
+    move_joint(home, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move above screw feeder
+    move_linear(above_screw_feeder, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Pick screw
+    move_linear(pick_screw, 80.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Lift from feeder
+    move_linear(lift_from_feeder, 180.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move above fastening point 1
+    move_linear(above_fastening_point_1, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move above fastening point 2
+    move_linear(above_fastening_point_2, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move above fastening point 3
+    move_linear(above_fastening_point_3, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move above fastening point 4
+    move_linear(above_fastening_point_4, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move back to home position
+    move_joint(home, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # End of program
+    end

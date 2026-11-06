@@ -1,0 +1,78 @@
+def pick_place():
+    # -------------------------------------------------
+    # Safety preamble: define TCP and payload
+    # -------------------------------------------------
+    # TCP: default (no offset), orientation identity
+    set_tcp(p[0,0,0,0,0,0])
+    # Payload: 0.5 kg, CoG at (0,0,0) relative to TCP
+    set_payload(0.5, p[0,0,0,0,0,0])
+
+    # -------------------------------------------------
+    # Define key poses (in meters)
+    # -------------------------------------------------
+    # Home position (joint configuration)
+    home_joints = [-1.57, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+    # Approach above pick point
+    pick_approach = p[0.4, -0.2, 0.3, 0, 3.14, 0]   # 300 mm height
+    # Pick point (descend 100 mm)
+    pick_point    = p[0.4, -0.2, 0.2, 0, 3.14, 0]   # 200 mm height
+    # Lift after pick (raise to 300 mm)
+    lift_after_pick = p[0.4, -0.2, 0.3, 0, 3.14, 0]
+
+    # Approach above place point
+    place_approach = p[0.6, 0.2, 0.3, 0, 3.14, 0]   # 300 mm height
+    # Place point (descend 100 mm)
+    place_point    = p[0.6, 0.2, 0.2, 0, 3.14, 0]   # 200 mm height
+    # Lift after place (raise to 300 mm)
+    lift_after_place = p[0.6, 0.2, 0.3, 0, 3.14, 0]
+
+    # -------------------------------------------------
+    # Motion parameters (converted to m/s and m/s^2)
+    # -------------------------------------------------
+    v_fast   = 0.2   # 200 mm/s
+    v_slow   = 0.1   # 100 mm/s
+    v_mid    = 0.15  # 150 mm/s
+    a_default = 1.0  # 1000 mm/s^2 (within collaborative limits)
+
+    # -------------------------------------------------
+    # 1) Move to home joint configuration
+    # -------------------------------------------------
+    movej(home_joints, a=a_default, v=v_fast)
+
+    # -------------------------------------------------
+    # 2) Linear move: approach pick point
+    # -------------------------------------------------
+    movel(pick_approach, a=a_default, v=v_fast)
+
+    # -------------------------------------------------
+    # 3) Linear move: descend to pick
+    # -------------------------------------------------
+    movel(pick_point, a=a_default, v=v_slow)
+
+    # -------------------------------------------------
+    # 4) Linear move: lift from pick
+    # -------------------------------------------------
+    movel(lift_after_pick, a=a_default, v=v_mid)
+
+    # -------------------------------------------------
+    # 5) Linear move: transit to place approach
+    # -------------------------------------------------
+    movel(place_approach, a=a_default, v=v_fast)
+
+    # -------------------------------------------------
+    # 6) Linear move: descend to place
+    # -------------------------------------------------
+    movel(place_point, a=a_default, v=v_slow)
+
+    # -------------------------------------------------
+    # 7) Linear move: lift from place
+    # -------------------------------------------------
+    movel(lift_after_place, a=a_default, v=v_mid)
+
+    # -------------------------------------------------
+    # 8) Return to home position
+    # -------------------------------------------------
+    movej(home_joints, a=a_default, v=v_fast)
+
+end

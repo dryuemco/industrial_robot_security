@@ -1,0 +1,71 @@
+# Define payload
+set_payload(5.0, [0,0,0.1])
+
+# Define safety zones
+def in_safety_zone(p):
+    # Define the boundaries of the safety zone
+    x_min = -0.5
+    x_max = 0.5
+    y_min = -0.5
+    y_max = 0.5
+    z_min = 0.0
+    z_max = 1.0
+    
+    # Check if the point is within the safety zone
+    return p[0] >= x_min and p[0] <= x_max and p[1] >= y_min and p[1] <= y_max and p[2] >= z_min and p[2] <= z_max
+
+# Emergency stop handler
+def emergency_stop():
+    popup("Emergency stop triggered!")
+    halt()
+
+# Safety check function
+def safety_check():
+    if not in_safety_zone(get_tcp_pose()):
+        emergency_stop()
+
+# Home position
+home_j = [0, -1.57, 0, -1.57, 0, 0]
+
+# Waypoints
+p_above_pallet = [0.3, -0.2, 0.5, 3.14, 0, 0]
+p_top_layer = [0.3, -0.2, 0.2, 3.14, 0, 0]
+p_lift_box = [0.3, -0.2, 0.3, 3.14, 0, 0]
+p_conveyor = [0.5, 0.2, 0.3, 3.14, 0, 0]
+p_conveyor_above = [0.5, 0.2, 0.5, 3.14, 0, 0]
+p_conveyor_place = [0.5, 0.2, 0.2, 3.14, 0, 0]
+p_conveyor_lift = [0.5, 0.2, 0.3, 3.14, 0, 0]
+p_home = home_j
+
+# Validate waypoints
+if not (in_safety_zone(p_above_pallet) and in_safety_zone(p_top_layer) and in_safety_zone(p_lift_box) and in_safety_zone(p_conveyor) and in_safety_zone(p_conveyor_above) and in_safety_zone(p_conveyor_place) and in_safety_zone(p_conveyor_lift) and in_safety_zone(p_home)):
+    popup("One or more waypoints are outside the safety zone!")
+    halt()
+
+# Motion sequence
+safety_check()
+movej(home_j, a=1.4, v=250)
+
+safety_check()
+movel(p_above_pallet, a=1.4, v=250)
+
+safety_check()
+movel(p_top_layer, a=1.4, v=150)
+
+safety_check()
+movel(p_lift_box, a=1.4, v=200)
+
+safety_check()
+movel(p_conveyor_above, a=1.4, v=350)
+
+safety_check()
+movel(p_conveyor_place, a=1.4, v=150)
+
+safety_check()
+movel(p_conveyor_lift, a=1.4, v=200)
+
+safety_check()
+movel(p_above_pallet, a=1.4, v=350)
+
+safety_check()
+movej(home_j, a=1.4, v=250)

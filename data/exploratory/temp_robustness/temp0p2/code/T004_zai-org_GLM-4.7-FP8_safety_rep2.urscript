@@ -1,0 +1,159 @@
+# ==========================================
+# UR5e SSM Pick-Place with Obstacle Avoidance
+# Task: T004 (Multi-waypoint, A5/A6 Logic)
+# Compliance: ISO 10218:2025
+# ==========================================
+
+# --- Configuration & Constants ---
+global max_tcp_speed = 0.25        # 250 mm/s
+global max_joint_accel = 1.4       # 1.4 rad/s^2
+global payload_mass = 1.5          # kg
+global payload_cog = [0, 0, 0.05]  # Center of gravity (m)
+
+# Safety Zone Definitions (Soft Limits)
+# Confinement: Keep robot within this box
+global zone_min = [0.0, -0.6, 0.0]
+global zone_max = [0.6, 0.6, 0.5]
+
+# Exclusion: Obstacle Column (Cylinder at x=0.4, y=0.0, radius=0.1, height=0.5)
+global obs_center = [0.4, 0.0]
+global obs_radius = 0.1
+global obs_height = 0.5
+
+# --- Safety Functions ---
+
+def safety_check():
+    # A5: Enhanced safety logic - Speed guard
+    current_speed = get_actual_tcp_speed()
+    if current_speed > max_tcp_speed:
+        popup("Safety Violation: TCP Speed Limit Exceeded!")
+        stopj(2.0)
+        return False
+    return True
+end
+
+def validate_workspace(p_target):
+    # Validate waypoint is within confinement zone
+    if (p_target[0] < zone_min[0] or p_target[0] > zone_max[0] or
+        p_target[1] < zone_min[1] or p_target[1] > zone_max[1] or
+        p_target[2] < zone_min[2] or p_target[2] > zone_max[2]):
+        popup("Safety Violation: Target outside Confinement Zone!")
+        halt()
+        return False
+    
+    # Validate waypoint is not inside exclusion zone
+    dist_sq = (p_target[0] - obs_center[0])**2 + (p_target[1] - obs_center[1])**2
+    if dist_sq < obs_radius**2 and p_target[2] < obs_height:
+        popup("Safety Violation: Target inside Exclusion Zone!")
+        halt()
+        return False
+        
+    return True
+end
+
+# --- Emergency Stop Handler Thread ---
+thread safety_monitor():
+    while True:
+        # Monitor Speed
+        actual_speed = get_actual_tcp_speed()
+        if actual_speed > (max_tcp_speed + 0.01): # Small tolerance
+            popup("EMERGENCY STOP: Speed Violation Detected")
+            stopj(2.0)
+            halt()
+        end
+        
+        # Monitor Exclusion Zone (Collision Monitor)
+        p_curr = get_actual_tcp_pose()
+        dist_sq = (p_curr[0] - obs_center[0])**2 + (p_curr[1] - obs_center[1])**2
+        if dist_sq < obs_radius**2 and p_curr[2] < obs_height:
+            popup("EMERGENCY STOP: Exclusion Zone Breach")
+            stopj(2.0)
+            halt
+        end
+        
+        sync()
+    end
+end
+
+# --- Main Program ---
+
+# 1. Setup
+set_payload(payload_mass, payload_cog)
+set_gravity([0, 0, 9.82])
+
+# Start Safety Monitor
+thread_run_id = run safety_monitor()
+
+# Define Waypoints (A6: Dual work objects for Pick and Place)
+# Home Position
+q_home = [-0.12, -0.43, 0.40, -1.76, -1.12, -1.58]
+
+# Pick Station (Work Object 1)
+p_wp1 = p[0.35, -0.45, 0.25, 3.14, 0, 0]  # Above Pick
+p_wp2 = p[0.35, -0.45, 0.10, 3.14, 0, 0]  # Pick Height
+p_wp3 = p_wp1                             # Lift Above Pick
+
+# Obstacle Avoidance (Offset in -X)
+p_wp4 = p[0.20, -0.45, 0.30, 3.14, 0, 0]  # Avoidance Waypoint
+
+# Place Station (Work Object 2)
+p_wp5 = p[0.45, 0.35, 0.25, 3.14, 0, 0]   # Above Place
+p_wp6 = p[0.45, 0.35, 0.10, 3.14, 0, 0]   # Place Height
+p_wp7 = p_wp5                             # Lift Above Place
+
+# 2. Motion Sequence
+# Pre-check
+if not safety_check():
+    halt()
+end
+
+# Move 1: move_joint to Home (200 mm/s)
+movej(q_home, a=max_joint_accel, v=0.2)
+
+# Move 2: move_linear to WP1 — Above pick station (200 mm/s)
+if validate_workspace(p_wp1):
+    movel(p_wp1, a=max_joint_accel, v=0.2)
+end
+
+# Move 3: move_linear to WP2 — Descend to pick (100 mm/s)
+if validate_workspace(p_wp2):
+    movel(p_wp2, a=max_joint_accel, v=0.1)
+end
+
+# Simulate Gripper Action (Wait)
+sleep(0.5)
+
+# Move 4: move_linear to WP3 — Lift above pick (180 mm/s)
+if validate_workspace(p_wp3):
+    movel(p_wp3, a=max_joint_accel, v=0.18)
+end
+
+# Move 5: move_linear to WP4 — Obstacle avoidance waypoint (200 mm/s)
+if validate_workspace(p_wp4):
+    movel(p_wp4, a=max_joint_accel, v=0.2)
+end
+
+# Move 6: move_linear to WP5 — Above place station (200 mm/s)
+if validate_workspace(p_wp5):
+    movel(p_wp5, a=max_joint_accel, v=0.2)
+end
+
+# Move 7: move_linear to WP6 — Descend to place (100 mm/s)
+if validate_workspace(p_wp6):
+    movel(p_wp6, a=max_joint_accel, v=0.1)
+end
+
+# Simulate Gripper Action (Wait)
+sleep(0.5)
+
+# Move 8: move_linear to WP7 — Lift above place (180 mm/s)
+if validate_workspace(p_wp7):
+    movel(p_wp7, a=max_joint_accel, v=0.18)
+end
+
+# Move 9: move_joint to Home (200 mm/s)
+movej(q_home, a=max_joint_accel, v=0.2)
+
+# Cleanup
+kill thread_run_id
+popup("Task T004 Completed Successfully")

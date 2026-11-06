@@ -1,0 +1,79 @@
+# URScript for UR5e bin picking with suction (fenced mode)
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(2.0, [0,0,0])               # Payload 2.0 kg, CoG at TCP
+set_tcp(p[0,0,0.1,0,0,0])               # TCP offset (placeholder)
+
+# -------------------------------------------------
+# Speed & Acceleration Settings (m/s, m/s^2)
+# -------------------------------------------------
+speed_home      = 0.35   # 350 mm/s
+speed_above_bin = 0.35   # 350 mm/s
+speed_descend   = 0.15   # 150 mm/s
+speed_lift      = 0.30   # 300 mm/s
+speed_transit   = 0.38   # 380 mm/s
+speed_max_tcp   = 0.40   # 400 mm/s (global limit)
+
+acc_joint = 1.2   # joint acceleration (m/s^2)
+acc_lin   = 1.2   # linear acceleration (m/s^2)
+
+# -------------------------------------------------
+# Positions (placeholders – replace with real values)
+# -------------------------------------------------
+# Joint target for Home position
+home_joint = [-1.57, -1.57, 0, -1.57, 0, 0]
+
+# Pose above the bin (safe approach height)
+above_bin_pose = p[0.5, -0.3, 0.4, 0, 3.14, 0]
+
+# Pose inside the bin (pick point)
+descend_pose = p[0.5, -0.3, 0.1, 0, 3.14, 0]
+
+# Pose after lifting the part from the bin
+lift_pose = p[0.5, -0.3, 0.4, 0, 3.14, 0]
+
+# Pose above the conveyor (drop point)
+conveyor_pose = p[0.8, 0.0, 0.3, 0, 3.14, 0]
+
+# -------------------------------------------------
+# Safety Fence (confinement) – optional
+# -------------------------------------------------
+# set_fence(0, speed_max_tcp)   # Uncomment if fence ID 0 is defined in the safety system
+
+# -------------------------------------------------
+# Main Program
+# -------------------------------------------------
+def main():
+    # 1) Move to Home joint configuration
+    movej(home_joint, a=acc_joint, v=speed_home)
+
+    # 2) Linear move to a safe point above the bin
+    movel(above_bin_pose, a=acc_lin, v=speed_above_bin)
+
+    # 3) Linear descent into the bin
+    movel(descend_pose, a=acc_lin, v=speed_descend)
+
+    # 4) Activate suction gripper
+    set_digital_out(0, True)   # Digital output 0 controls suction valve
+    sync()                     # Ensure command is executed before next motion
+
+    # 5) Lift the part out of the bin
+    movel(lift_pose, a=acc_lin, v=speed_lift)
+
+    # 6) Transit to the conveyor
+    movel(conveyor_pose, a=acc_lin, v=speed_transit)
+
+    # 7) Release the part
+    set_digital_out(0, False)  # Turn off suction
+    sync()
+
+    # 8) Return to a safe pose (above bin) and then Home – completing 8 moves
+    movel(above_bin_pose, a=acc_lin, v=speed_above_bin)
+    movej(home_joint, a=acc_joint, v=speed_home)
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

@@ -1,0 +1,77 @@
+def bin_picking_suction():
+    # Safety configuration
+    set_standard_analog_input_domain(0, 1)
+    set_tool_voltage(24)
+    set_analog_inputrange(0, 0)
+    set_analog_inputrange(1, 0)
+    set_analog_outputdomain(0, 1)
+    set_analog_outputdomain(1, 1)
+    set_tool_analog_input_domain(0, 1)
+    set_tool_analog_input_domain(1, 1)
+    set_payload(2.0)
+    set_tcp(p[0.0, 0.0, 0.1, 0.0, 0.0, 0.0])
+
+    # Watchdog setup
+    watchdog_min_limit = 0.05
+    watchdog_max_limit = 0.2
+    watchdog_input = 0
+
+    # Home position
+    home_pose = p[0.0, -0.6, 0.4, 0.0, 3.14159, 0.0]
+    movej(home_pose, a=1.39626, v=3.5, t=0, r=0)
+
+    # Enable suction
+    set_standard_digital_out(0, True)
+    sleep(0.5)
+
+    # Above bin
+    above_bin_pose = p[0.3, -0.5, 0.3, 0.0, 3.14159, 0.0]
+    movel(above_bin_pose, a=1.2, v=3.5, t=0, r=0)
+
+    # Descend into bin
+    descend_pose = p[0.3, -0.5, 0.15, 0.0, 3.14159, 0.0]
+    movel(descend_pose, a=0.5, v=1.5, t=0, r=0)
+
+    # Watchdog feed
+    watchdog_input = read_input_boolean_register(0)
+    if not watchdog_input:
+        popup("Watchdog safety violation: SM-2", title="Safety Error", error=True)
+        halt
+
+    # Lift from bin
+    lift_pose = p[0.3, -0.5, 0.3, 0.0, 3.14159, 0.0]
+    movel(lift_pose, a=1.0, v=3.0, t=0, r=0)
+
+    # Transit to conveyor
+    conveyor_approach_pose = p[0.6, -0.2, 0.3, 0.0, 3.14159, 0.0]
+    movel(conveyor_approach_pose, a=1.2, v=3.8, t=0, r=0)
+
+    # Descend to conveyor
+    conveyor_pose = p[0.6, -0.2, 0.18, 0.0, 3.14159, 0.0]
+    movel(conveyor_pose, a=0.5, v=1.5, t=0, r=0)
+
+    # Release suction
+    set_standard_digital_out(0, False)
+    sleep(0.5)
+
+    # Lift from conveyor
+    lift_conveyor_pose = p[0.6, -0.2, 0.3, 0.0, 3.14159, 0.0]
+    movel(lift_conveyor_pose, a=1.0, v=3.0, t=0, r=0)
+
+    # Return to home
+    movej(home_pose, a=1.39626, v=3.5, t=0, r=0)
+
+    # Watchdog feed
+    watchdog_input = read_input_boolean_register(0)
+    if not watchdog_input:
+        popup("Watchdog safety violation: SM-2", title="Safety Error", error=True)
+        halt
+
+    # Safety check before next cycle
+    if get_actual_tcp_speed() > 4.0:
+        popup("Speed limit violation: SM-5", title="Safety Error", error=True)
+        halt
+    if not is_within_safety_limits():
+        popup("Confinement violation: SM-6", title="Safety Error", error=True)
+        halt
+end

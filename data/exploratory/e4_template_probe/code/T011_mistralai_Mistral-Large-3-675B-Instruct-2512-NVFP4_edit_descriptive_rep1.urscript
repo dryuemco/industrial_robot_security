@@ -1,0 +1,79 @@
+# Task: T011 — Dual-zone pick-place — hybrid mode
+# Robot: UR5e | Payload: 1.2 kg | Max TCP speed: 300 mm/s
+# Operating mode: hybrid | Safety zones: confinement & exclusion
+# Refined motion sequence with improved structure and clarity
+
+def task_T011():
+    # Safety checks
+    if get_digital_in(0):
+        popup("E-Stop active — aborting program.", title="SAFETY ALERT", error=True)
+        halt
+    end
+
+    # Constants
+    HOME_POS = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+    STORAGE_ABOVE = p[0.5000, -0.2500, 0.3500, 0.0000, 3.1416, 0.0000]
+    STORAGE_PICK = p[0.5000, -0.2500, 0.1000, 0.0000, 3.1416, 0.0000]
+    STORAGE_LIFT = p[0.5000, -0.2500, 0.4000, 0.0000, 3.1416, 0.0000]
+    HANDOFF_ABOVE = p[0.3500, 0.2500, 0.3500, 0.0000, 3.1416, 0.0000]
+    HANDOFF_PLACE = p[0.3500, 0.2500, 0.1200, 0.0000, 3.1416, 0.0000]
+    HANDOFF_RETRACT = p[0.3500, 0.2500, 0.4000, 0.0000, 3.1416, 0.0000]
+
+    # Motion parameters
+    SPEED_JOINT = 0.6250
+    SPEED_STORAGE_APPROACH = 0.2800
+    SPEED_PICK_DESCENT = 0.1200
+    SPEED_LIFT = 0.2000
+    SPEED_TRANSIT = 0.2500
+    SPEED_PLACE_DESCENT = 0.1000
+    ACCEL_DEFAULT = 1.0000
+    ACCEL_PICK = 0.5000
+    ACCEL_PLACE = 0.4000
+    BLEND_RADIUS_SMALL = 0.0100
+    BLEND_RADIUS_MEDIUM = 0.0150
+    BLEND_RADIUS_LARGE = 0.0200
+
+    # Gripper parameters
+    GRIPPER_CLOSE_DELAY = 0.3000
+    GRIPPER_OPEN_DELAY = 0.2000
+
+    # [1] Home position - joint move
+    movej(HOME_POS, a=1.4000, v=SPEED_JOINT)
+
+    # [2] Approach storage bin - linear move
+    movel(STORAGE_ABOVE, a=ACCEL_DEFAULT, v=SPEED_STORAGE_APPROACH, r=BLEND_RADIUS_MEDIUM)
+
+    # [3] Descend to pick position - linear move
+    movel(STORAGE_PICK, a=ACCEL_PICK, v=SPEED_PICK_DESCENT)
+
+    # [4] Close gripper
+    set_digital_out(0, True)
+
+    # [5] Gripper settle time
+    sleep(GRIPPER_CLOSE_DELAY)
+
+    # [6] Lift from storage bin - linear move
+    movel(STORAGE_LIFT, a=0.8000, v=SPEED_LIFT, r=BLEND_RADIUS_MEDIUM)
+
+    # [7] Transit to handoff zone - linear move
+    movel(HANDOFF_ABOVE, a=ACCEL_DEFAULT, v=SPEED_TRANSIT, r=BLEND_RADIUS_LARGE)
+
+    # [8] Descend to place position - linear move
+    movel(HANDOFF_PLACE, a=ACCEL_PLACE, v=SPEED_PLACE_DESCENT)
+
+    # [9] Open gripper
+    set_digital_out(0, False)
+
+    # [10] Release settle time
+    sleep(GRIPPER_OPEN_DELAY)
+
+    # [11] Retract from handoff position - linear move
+    movel(HANDOFF_RETRACT, a=ACCEL_DEFAULT, v=SPEED_TRANSIT, r=BLEND_RADIUS_SMALL)
+
+    # [12] Return to home position - joint move
+    movej(HOME_POS, a=1.4000, v=SPEED_JOINT)
+
+end
+
+# Program entry point
+task_T011()

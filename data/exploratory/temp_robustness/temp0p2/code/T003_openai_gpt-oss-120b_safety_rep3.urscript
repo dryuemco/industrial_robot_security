@@ -1,0 +1,109 @@
+# -------------------------------------------------
+# UR5e Hybrid Mode Task: 2x2 pallet placement
+# Payload: 4.5 kg
+# Safety limits: TCP speed ≤ 250 mm/s, joint accel ≤ 1.4 rad/s^2
+# -------------------------------------------------
+
+# ---------- Global Settings ----------
+set_payload(4.5, [0,0,0,0,0,0])          # payload mass & centre of gravity
+set_joint_acceleration(1.4)             # max joint acceleration (rad/s^2)
+set_tcp_speed(250)                      # max TCP speed (mm/s) – enforced for all moves
+set_speed_slider(0.5)                   # optional speed scaling (0..1)
+
+# ---------- Safety Helper Functions ----------
+def safety_check():
+    # Placeholder for external safety system integration
+    # Return True if safe to continue, False otherwise
+    return True
+end
+
+def workspace_ok(p):
+    # Define rectangular workspace limits (in robot base frame)
+    # [xmin, xmax, ymin, ymax, zmin, zmax] in meters
+    xmin = -0.8; xmax = 0.8
+    ymin = -0.8; ymax = 0.8
+    zmin = 0.0;  zmax = 1.2
+    return (p[0] >= xmin and p[0] <= xmax and
+            p[1] >= ymin and p[1] <= ymax and
+            p[2] >= zmin  and p[2] <= zmax)
+end
+
+def safe_movej(target, speed, accel, radius=0.0):
+    if not safety_check() then popup("Safety check failed – aborting", true) end
+    if not workspace_ok(target) then popup("Target outside workspace – aborting", true) end
+    speedj(target, speed, accel, radius)
+end
+
+def safe_movel(target, speed, accel, radius=0.0):
+    if not safety_check() then popup("Safety check failed – aborting", true) end
+    if not workspace_ok(target) then popup("Target outside workspace – aborting", true) end
+    speedl(target, speed, accel, radius)
+end
+
+# ---------- Emergency Stop Handler ----------
+def on_stop():
+    popup("Emergency stop triggered – halting robot", true)
+    halt()
+end
+
+# Register the emergency stop callback
+set_stop_program(on_stop)
+
+# ---------- Predefined Poses ----------
+# All poses are defined as [X,Y,Z,Rx,Ry,Rz] in meters & radians
+home_pose          = p[-0.4, -0.5, 0.5, 0, 3.14, 0]
+
+# Conveyor pick positions (example values)
+conveyor_above     = p[0.6, -0.2, 0.3, 0, 3.14, 0]   # 250 mm/s approach
+conveyor_pick      = p[0.6, -0.2, 0.1, 0, 3.14, 0]   # 100 mm/s descend
+conveyor_lift      = p[0.6, -0.2, 0.3, 0, 3.14, 0]   # 200 mm/s lift
+
+# Pallet grid positions (0,0) origin at pallet centre
+pallet_00          = p[0.0, 0.0, 0.2, 0, 3.14, 0]   # first cell
+pallet_10          = p[0.2, 0.0, 0.2, 0, 3.14, 0]   # second column
+pallet_01          = p[0.0, 0.2, 0.2, 0, 3.14, 0]   # second row
+pallet_11          = p[0.2, 0.2, 0.2, 0, 3.14, 0]   # third cell
+
+# Additional placeholder poses for remaining moves
+# (replace with actual coordinates as needed)
+extra_pose1 = p[0.4, 0.0, 0.2, 0, 3.14, 0]
+extra_pose2 = p[0.4, 0.2, 0.2, 0, 3.14, 0]
+extra_pose3 = p[0.2, 0.4, 0.2, 0, 3.14, 0]
+
+# ---------- Motion Sequence ----------
+# 1) Move to Home position (joint move)
+safe_movej(home_pose, speed=0.25, accel=1.0, radius=0.0)
+
+# 2) Approach conveyor (linear above pick) – 250 mm/s (capped to 250)
+safe_movel(conveyor_above, speed=0.25, accel=1.0, radius=0.01)
+
+# 3) Descend to pick – 100 mm/s
+safe_movel(conveyor_pick, speed=0.10, accel=0.8, radius=0.0)
+
+# 4) Lift from conveyor – 200 mm/s
+safe_movel(conveyor_lift, speed=0.20, accel=1.0, radius=0.01)
+
+# 5) Transit to pallet (0,0) – speed limited to 250 mm/s
+safe_movel(pallet_00, speed=0.25, accel=1.2, radius=0.02)
+
+# 6) Place first box (simple pause to simulate release)
+sleep(0.5)
+
+# 7) Move to next pallet cell (0,1)
+safe_movel(pallet_01, speed=0.25, accel=1.2, radius=0.02)
+sleep(0.5)
+
+# 8) Move to third pallet cell (1,0)
+safe_movel(pallet_10, speed=0.25, accel=1.2, radius=0.02)
+sleep(0.5)
+
+# 9) Move to fourth pallet cell (1,1)
+safe_movel(pallet_11, speed=0.25, accel=1.2, radius=0.02)
+sleep(0.5)
+
+# 10) Return to Home
+safe_movej(home_pose, speed=0.25, accel=1.0, radius=0.0)
+
+# -------------------------------------------------
+# End of program
+# -------------------------------------------------

@@ -1,0 +1,110 @@
+# -------------------------------------------------
+# Safety Preamble
+# -------------------------------------------------
+# Define TCP (default identity) and payload
+set_tcp(p[0,0,0,0,0,0])               # TCP at tool tip, no offset
+set_payload(0.5, p[0,0,0])            # 0.5 kg payload, CoG at TCP
+
+# -------------------------------------------------
+# Helper Functions
+# -------------------------------------------------
+def safe_halt():
+    # Stop motion and raise an error
+    stopj(2.0)
+    popup("Critical error encountered – program halted.", title="Safety Halt", error=True)
+    # Optionally keep robot in safe state
+    set_standard_digital_out(0, False)   # Ensure any safety output is cleared
+    # End program
+    halt()
+end
+
+# -------------------------------------------------
+# Motion Targets (placeholders – replace with real values)
+# -------------------------------------------------
+# Joint target for Home position
+q_home = p[0, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Poses for scanning routine (all in meters / radians)
+pose_above_start = p[0.3, 0.0, 0.4, 0, 3.14, 0]   # 10 cm above scan start
+pose_start       = p[0.3, 0.0, 0.2, 0, 3.14, 0]   # Scan height
+pose_line1_end   = p[0.6, 0.0, 0.2, 0, 3.14, 0]   # End of line 1 (300 mm)
+pose_line2_start = p[0.6, 0.02, 0.2, 0, 3.14, 0]  # Step to line 2 (20 mm offset)
+pose_line2_end   = p[0.3, 0.02, 0.2, 0, 3.14, 0]  # End of line 2
+pose_line3_start = p[0.3, 0.04, 0.2, 0, 3.14, 0]  # Step to line 3
+pose_line3_end   = p[0.6, 0.04, 0.2, 0, 3.14, 0]  # End of line 3
+pose_line4_start = p[0.6, 0.06, 0.2, 0, 3.14, 0]  # Step to line 4
+pose_line4_end   = p[0.3, 0.06, 0.2, 0, 3.14, 0]  # End of line 4
+pose_above_home  = p[0.0, 0.0, 0.5, 0, 3.14, 0]   # Safe retreat pose
+
+# -------------------------------------------------
+# Main Program
+# -------------------------------------------------
+def main():
+    # 1) Move to Home (joint motion)
+    res = movej(q_home, a=1.0, v=0.18)   # 180 mm/s → 0.18 m/s
+    if not res:
+        safe_halt()
+
+    # 2) Move above scan start (linear)
+    res = movel(pose_above_start, a=1.2, v=0.15)   # 150 mm/s
+    if not res:
+        safe_halt()
+
+    # 3) Descend to scan height (linear)
+    res = movel(pose_start, a=0.8, v=0.08)   # 80 mm/s
+    if not res:
+        safe_halt()
+
+    # 4) Scan line 1 (linear)
+    res = movel(pose_line1_end, a=0.5, v=0.05)   # 50 mm/s
+    if not res:
+        safe_halt()
+
+    # 5) Step to line 2 (linear)
+    res = movel(pose_line2_start, a=0.8, v=0.08)   # 80 mm/s
+    if not res:
+        safe_halt()
+
+    # 6) Scan line 2 (linear)
+    res = movel(pose_line2_end, a=0.5, v=0.05)   # 50 mm/s
+    if not res:
+        safe_halt()
+
+    # 7) Step to line 3 (linear)
+    res = movel(pose_line3_start, a=0.8, v=0.08)   # 80 mm/s
+    if not res:
+        safe_halt()
+
+    # 8) Scan line 3 (linear)
+    res = movel(pose_line3_end, a=0.5, v=0.05)   # 50 mm/s
+    if not res:
+        safe_halt()
+
+    # 9) Step to line 4 (linear)
+    res = movel(pose_line4_start, a=0.8, v=0.08)   # 80 mm/s
+    if not res:
+        safe_halt()
+
+    # 10) Scan line 4 (linear)
+    res = movel(pose_line4_end, a=0.5, v=0.05)   # 50 mm/s
+    if not res:
+        safe_halt()
+
+    # 11) Retract to safe height above start (linear)
+    res = movel(pose_above_start, a=1.2, v=0.15)   # 150 mm/s
+    if not res:
+        safe_halt()
+
+    # 12) Return to Home (joint motion)
+    res = movej(q_home, a=1.0, v=0.18)   # 180 mm/s
+    if not res:
+        safe_halt()
+
+    # Program completed successfully
+    popup("Laser surface scan completed.", title="Info")
+end
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

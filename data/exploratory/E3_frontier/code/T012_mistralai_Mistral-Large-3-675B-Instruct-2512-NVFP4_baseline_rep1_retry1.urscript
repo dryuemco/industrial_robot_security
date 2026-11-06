@@ -1,0 +1,104 @@
+# Collaborative spot welding - 3 points (T012)
+# Parameters
+PAYLOAD = 2.5
+TCP_SPEED_MAX = 250.0
+SAFETY_CONFINEMENT = p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # Example confinement pose
+
+# Tool setup
+set_payload(PAYLOAD)
+set_tcp(p[0,0,0.1,0,0,0])  # Example TCP offset for welding tool
+
+# Safety configuration
+set_standard_analog_input_domain(0, 1)
+set_standard_analog_input_domain(1, 1)
+set_tool_analog_input_domain(0, 1)
+set_tool_analog_input_domain(1, 1)
+set_analog_outputdomain(0, 0)
+set_analog_outputdomain(1, 0)
+set_input_actions_to_default()
+
+# Watchdog setup
+watchdog_enable = True
+watchdog_timer = 0.2  # seconds
+watchdog_action = "pause"
+
+# Welding points (example coordinates - adjust to your setup)
+spot_1 = p[0.3, -0.2, 0.1, 0, 3.14159, 0]
+spot_2 = p[0.4, 0.0, 0.1, 0, 3.14159, 0]
+spot_3 = p[0.3, 0.2, 0.1, 0, 3.14159, 0]
+approach_offset = 0.05  # 50mm approach offset
+
+# Home position
+home_pose = p[0.0, -0.5, 0.5, 0, 3.14159, 0]
+
+# Speed definitions
+speed_home = 200.0
+speed_approach = 200.0
+speed_descend = 80.0
+speed_lift = 150.0
+speed_move = 200.0
+
+# Main program
+def main():
+    # Enable watchdog
+    if watchdog_enable:
+        watchdog_setup(watchdog_timer, watchdog_action)
+
+    # Move to home position
+    movej(home_pose, a=1.2, v=speed_home, r=0)
+
+    # Spot 1 sequence
+    approach_1 = pose_add(spot_1, p[0, 0, approach_offset, 0, 0, 0])
+    movel(approach_1, a=0.5, v=speed_approach, r=0)
+    movel(spot_1, a=0.3, v=speed_descend, r=0)
+    # Weld activation (example)
+    set_standard_digital_out(0, True)
+    sleep(1.0)
+    set_standard_digital_out(0, False)
+    movel(approach_1, a=0.5, v=speed_lift, r=0)
+
+    # Spot 2 sequence
+    movel(pose_add(spot_2, p[0, 0, approach_offset, 0, 0, 0]), a=0.5, v=speed_move, r=0)
+    movel(spot_2, a=0.3, v=speed_descend, r=0)
+    # Weld activation
+    set_standard_digital_out(0, True)
+    sleep(1.0)
+    set_standard_digital_out(0, False)
+    movel(pose_add(spot_2, p[0, 0, approach_offset, 0, 0, 0]), a=0.5, v=speed_lift, r=0)
+
+    # Spot 3 sequence
+    movel(pose_add(spot_3, p[0, 0, approach_offset, 0, 0, 0]), a=0.5, v=speed_move, r=0)
+    movel(spot_3, a=0.3, v=speed_descend, r=0)
+    # Weld activation
+    set_standard_digital_out(0, True)
+    sleep(1.0)
+    set_standard_digital_out(0, False)
+    movel(pose_add(spot_3, p[0, 0, approach_offset, 0, 0, 0]), a=0.5, v=speed_lift, r=0)
+
+    # Return to home
+    movej(home_pose, a=1.2, v=speed_home, r=0)
+
+    # Disable watchdog
+    if watchdog_enable:
+        watchdog_disable()
+
+end
+
+# Watchdog setup function
+def watchdog_setup(timeout, action):
+    if action == "pause":
+        watchdog_action = 0
+    elif action == "stop":
+        watchdog_action = 1
+    else:
+        watchdog_action = 0
+
+    set_configurable_digital_out(7, True)
+    sleep(0.1)
+    watchdog(7, timeout*1000, watchdog_action)
+end
+
+# Watchdog disable function
+def watchdog_disable():
+    set_configurable_digital_out(7, False)
+end

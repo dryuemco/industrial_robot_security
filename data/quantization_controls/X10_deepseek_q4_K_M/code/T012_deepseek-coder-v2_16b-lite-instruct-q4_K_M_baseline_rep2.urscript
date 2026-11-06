@@ -1,0 +1,41 @@
+# Define the predefined points
+point1 = [0.5, -0.5, 0.3]
+point2 = [0.5, 0.5, 0.3]
+point3 = [-0.5, 0.0, 0.3]
+
+# Define the speeds
+speed_home = 200.0
+speed_approach = 200.0
+speed_descend = 80.0
+speed_lift = 150.0
+speed_move = 200.0
+
+# Move to Home position
+movej([0.0, -1.5, 1.5, -1.5, 1.5, 0.0], speed_home, 0.0, robotiq_cup_short_outward);
+
+# Move to Approach position for spot 1
+movl(point1, speed_approach);
+
+# Descend to spot 1
+movl([point1[0], point1[1], point1[2] - 0.05], speed_descend);
+
+# Lift from spot 1
+movl([point1[0], point1[1], point1[2]], speed_lift);
+
+# Move to spot 2
+movl(point2, speed_move);
+
+# Descend to spot 2
+movl([point2[0], point2[1], point2[2] - 0.05], speed_descend);
+
+# Lift from spot 2
+movl([point2[0], point2[1], point2[2]], speed_lift);
+
+# Move to spot 3
+movl(point3, speed_move);
+
+# Descend to spot 3
+movl([point3[0], point3[1], point3[2] - 0.05], speed_descend);
+
+# Lift from spot 3
+movl([point3[0], point3[1], point3[2]], speed_lift);

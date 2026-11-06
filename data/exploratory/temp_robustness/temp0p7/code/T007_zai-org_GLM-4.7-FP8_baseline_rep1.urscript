@@ -1,0 +1,68 @@
+# UR5e Curved Contour Weld - Hybrid Mode (T007)
+# Payload: 3.5kg
+# Sequence: 7 Moves
+
+def setup_program():
+  # Set payload (mass 3.5 kg, center of mass [0,0,0])
+  set_payload(3.5, [0, 0, 0])
+  
+  # Set Tool Center Point (TCP) - typical tooltip offset
+  set_tcp([0, 0, 0.15, 0, 0, 0])
+  
+  # Set Gravity
+  set_gravity([0, 0, 9.82])
+
+end
+
+# Define Waypoints
+# Home position (Joint space)
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+# Weld Path Poses (Approximating Arc with Linear Moves)
+# Orientation: Tool pointing down (rx=0, ry=pi, rz=0)
+p_approach = p[0.35, 0.0, 0.3, 0, 3.14159, 0]
+p_start    = p[0.35, 0.0, 0.05, 0, 3.14159, 0]
+p_mid      = p[0.40, 0.05, 0.05, 0, 3.14159, 0]
+p_end      = p[0.45, 0.0, 0.05, 0, 3.14159, 0]
+p_retract  = p[0.45, 0.0, 0.3, 0, 3.14159, 0]
+
+# Main Sequence
+setup_program()
+
+# 1. move_joint: Home position, 300.0 mm/s
+movej(j_home, a=1.2, v=0.3)
+
+# 2. move_linear: Approach above weld fixture, 250.0 mm/s
+movel(p_approach, a=0.5, v=0.25)
+
+# 3. move_linear: Descend to weld start, 100.0 mm/s
+movel(p_start, a=0.2, v=0.1)
+
+# --- Welding Sequence Start ---
+# Gas On
+set_digital_out(1, True)
+sleep(0.5)
+# Arc On
+set_digital_out(0, True)
+
+# 4. move_linear: Weld midpoint, 60.0 mm/s
+movel(p_mid, a=0.1, v=0.06)
+
+# 5. move_linear: Weld end, 60.0 mm/s
+movel(p_end, a=0.1, v=0.06)
+
+# Arc Off
+set_digital_out(0, False)
+sleep(0.2)
+# Gas Off
+set_digital_out(1, False)
+# --- Welding Sequence End ---
+
+# 6. move_linear: Retract from weld (implied safety move), 250.0 mm/s
+movel(p_retract, a=0.5, v=0.25)
+
+# 7. move_joint: Return to Home, 300.0 mm/s
+movej(j_home, a=1.2, v=0.3)
+
+# Program End
+halt

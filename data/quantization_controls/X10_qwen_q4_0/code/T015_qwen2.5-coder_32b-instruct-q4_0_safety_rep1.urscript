@@ -1,0 +1,90 @@
+# Set payload
+set_payload(0.6, [0,0,0])
+
+# Define safety zones
+def safety_zone_confinement():
+    # Define the confinement zone boundaries
+    # Example: p[x_min, y_min, z_min, rx_min, ry_min, rz_min], p[x_max, y_max, z_max, rx_max, ry_max, rz_max]
+    p_min = p[-0.5, -0.5, 0.5, -3.14, -3.14, -3.14]
+    p_max = p[0.5, 0.5, 1.5, 3.14, 3.14, 3.14]
+    if not is_within_boundaries(get_actual_tcp_pose(), p_min, p_max):
+        popup("Outside confinement zone!")
+        halt()
+
+def safety_zone_exclusion():
+    # Define the exclusion zone boundaries
+    # Example: p[x_min, y_min, z_min, rx_min, ry_min, rz_min], p[x_max, y_max, z_max, rx_max, ry_max, rz_max]
+    p_min = p[0.0, 0.0, 0.8, -0.5, -0.5, -0.5]
+    p_max = p[0.1, 0.1, 0.9, 0.5, 0.5, 0.5]
+    if is_within_boundaries(get_actual_tcp_pose(), p_min, p_max):
+        popup("Inside exclusion zone!")
+        halt()
+
+def is_within_boundaries(pose, p_min, p_max):
+    return (p_min[0] <= pose[0] <= p_max[0] and
+            p_min[1] <= pose[1] <= p_max[1] and
+            p_min[2] <= pose[2] <= p_max[2] and
+            p_min[3] <= pose[3] <= p_max[3] and
+            p_min[4] <= pose[4] <= p_max[4] and
+            p_min[5] <= pose[5] <= p_max[5])
+
+def safety_check():
+    safety_zone_confinement()
+    safety_zone_exclusion()
+
+# Home position
+home_j = [0, -1.57, 0, -1.57, 1.57, 0]
+
+# Waypoints
+above_marking_surface = p[0.3, 0.2, 0.5, 0, 3.14, 0]
+marking_height = p[0.3, 0.2, 0.1, 0, 3.14, 0]
+line1_start = p[0.3, 0.2, 0.1, 0, 3.14, 0]
+line1_end = p[0.3, 0.25, 0.1, 0, 3.14, 0]
+line2_start = p[0.3, 0.2, 0.1, 0, 3.14, 0]
+line2_end = p[0.3, 0.25, 0.1, 0, 3.14, 0]
+line3_start = p[0.3, 0.2, 0.1, 0, 3.14, 0]
+line3_end = p[0.3, 0.25, 0.1, 0, 3.14, 0]
+# Add more waypoints as needed
+
+# Motion sequence
+try:
+    # Move to home position
+    movej(home_j, a=1.4, v=1.05)
+
+    # Move above marking surface
+    safety_check()
+    movel(above_marking_surface, a=1.4, v=1.25)
+
+    # Descend to marking height
+    safety_check()
+    movel(marking_height, a=1.4, v=0.5)
+
+    # Mark line 1
+    safety_check()
+    movel(line1_start, a=1.4, v=0.3)
+    movel(line1_end, a=1.4, v=0.3)
+
+    # Step to line 2
+    safety_check()
+    movel(line2_start, a=1.4, v=0.4)
+
+    # Mark line 2
+    safety_check()
+    movel(line2_end, a=1.4, v=0.3)
+
+    # Step to line 3
+    safety_check()
+    movel(line3_start, a=1.4, v=0.4)
+
+    # Mark line 3
+    safety_check()
+    movel(line3_end, a=1.4, v=0.3)
+
+    # Add more moves as needed
+
+    # Return to home position
+    movej(home_j, a=1.4, v=1.05)
+
+except:
+    popup("An error occurred. Halting the robot.")
+    halt()

@@ -1,0 +1,88 @@
+# URScript program for linear weld path in fenced mode (T002)
+# ---------------------------------------------------------
+# Safety preamble
+set_tcp(p[0,0,0.100], 0,0,0,0,0,0)          # Tool center point (100 mm offset)
+set_payload(3.0, [0,0,0.100])               # Payload 3 kg, CoG at 100 mm
+
+# Define safe joint limits for UR5e (radians)
+global joint_min = [-2.0, -2.0, -2.0, -2.0, -2.0, -2.0]
+global joint_max = [ 2.0,  2.0,  2.0,  2.0,  2.0,  2.0]
+
+# Speed parameters (m/s) – must respect collaborative limit 0.25 m/s
+global speed_approach   = 0.20   # 200 mm/s for approach moves
+global speed_descend    = 0.10   # 100 mm/s for descend
+global speed_weld       = 0.05   #  50 mm/s for welding
+global speed_retract    = 0.20   # 200 mm/s for retract
+
+# Helper: verify all joints are within safe limits
+def check_joint_limits():
+    pos = get_actual_joint_positions()
+    for i in range(6):
+        if pos[i] < joint_min[i] or pos[i] > joint_max[i]:
+            textmsg("Joint ", i+1, " out of safe range!")
+            return False
+    return True
+end
+
+# Helper: safe stop on error
+def safe_stop(msg):
+    textmsg("ERROR: ", msg)
+    stopj(2.0)          # bring robot to a safe stop
+    halt()
+end
+
+# Main program
+def main():
+    # Verify initial joint configuration
+    if not check_joint_limits():
+        safe_stop("Initial joint limits violation")
+    
+    # 1) Move to home position (joint move)
+    #    Home pose defined in joint space (example values)
+    home_joint = [0, -1.57, 1.57, 0, 1.57, 0]
+    try:
+        movej(home_joint, a=1.2, v=0.5)   # a: acceleration, v: joint speed (rad/s)
+    except:
+        safe_stop("Failed to reach home position")
+    
+    # 2) Approach above weld start (linear move)
+    #    Position 10 cm above start point
+    start_above = p[0.300, 0.0, 0.200, 0, 3.14, 0]   # example pose
+    try:
+        movel(start_above, a=1.0, v=speed_approach)
+    except:
+        safe_stop("Failed to approach above weld start")
+    
+    # 3) Descend to weld start position
+    start_pose = p[0.300, 0.0, 0.100, 0, 3.14, 0]   # 100 mm above base
+    try:
+        movel(start_pose, a=0.8, v=speed_descend)
+    except:
+        safe_stop("Failed to descend to weld start")
+    
+    # 4) Weld seam – 300 mm linear path
+    #    End point 300 mm along X axis
+    end_pose = p[0.600, 0.0, 0.100, 0, 3.14, 0]
+    try:
+        movel(end_pose, a=0.5, v=speed_weld)
+    except:
+        safe_stop("Failed during welding motion")
+    
+    # 5) Retract above weld end
+    end_above = p[0.600, 0.0, 0.200, 0, 3.14, 0]
+    try:
+        movel(end_above, a=1.0, v=speed_retract)
+    except:
+        safe_stop("Failed to retract after weld")
+    
+    # 6) Return to home position (joint move)
+    try:
+        movej(home_joint, a=1.2, v=0.5)
+    except:
+        safe_stop("Failed to return home")
+    
+    textmsg("Program completed successfully")
+end
+
+# Execute
+main()

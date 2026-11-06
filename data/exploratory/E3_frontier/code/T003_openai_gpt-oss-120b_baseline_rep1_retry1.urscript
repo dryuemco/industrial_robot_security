@@ -1,0 +1,63 @@
+# URScript for UR5e – Hybrid mode, 4.5 kg payload, 2×2 pallet placement
+# ---------------------------------------------------------------
+# Safety configuration
+set_payload(4.5, [0,0,0])               # payload 4.5 kg, centre of mass at TCP
+set_tcp([0,0,0,0,0,0])                  # default TCP (no offset)
+
+# Define confinement zones (center pose, radius in meters)
+# Zone around the pallet (0 m, 0 m) – 0.5 m radius
+set_confinement("pallet_zone", p[0.0, 0.0, 0.0, 0, 0, 0], 0.5)
+# Zone around the conveyor pick area – 0.4 m radius
+set_confinement("conveyor_zone", p[0.6, -0.3, 0.0, 0, 0, 0], 0.4)
+
+# Set speed zone for fine movements (optional)
+set_zone("z10")                         # 10 mm zone for precise placement
+
+# Activate hybrid safety mode (robot is fenced while moving, collaborative near pick)
+set_robot_mode("automatic")            # normal automatic mode
+set_safety_mode("hybrid")              # switch to hybrid safety configuration
+
+# ---------------------------------------------------------------
+# Motion sequence (8 moves)
+
+# 1) Move to Home joint configuration (250 mm/s → 0.25 m/s)
+home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0.0]
+speedj(home_joint, a=1.2, v=0.25, t=0, r=0)
+
+# 2) Approach conveyor – above the pick point (250 mm/s)
+#    Assume pick point above conveyor at (0.6, -0.3, 0.2)
+approach_pose = p[0.6, -0.3, 0.2, 0, 3.14, 0]
+movel(approach_pose, a=1.0, v=0.25, t=0, r=0)
+
+# 3) Descend to pick (100 mm/s → 0.10 m/s)
+pick_pose = p[0.6, -0.3, 0.05, 0, 3.14, 0]
+movel(pick_pose, a=0.5, v=0.10, t=0, r=0)
+
+# 4) Lift from conveyor (200 mm/s → 0.20 m/s)
+lift_pose = p[0.6, -0.3, 0.25, 0, 3.14, 0]
+movel(lift_pose, a=0.8, v=0.20, t=0, r=0)
+
+# 5) Transit to first pallet cell (0,0) (280 mm/s → 0.28 m/s)
+pallet_cell1 = p[0.0, 0.0, 0.25, 0, 3.14, 0]
+movel(pallet_cell1, a=1.2, v=0.28, t=0, r=0)
+
+# 6) Place box – lower to pallet surface (150 mm/s → 0.15 m/s)
+place_pose1 = p[0.0, 0.0, 0.05, 0, 3.14, 0]
+movel(place_pose1, a=0.6, v=0.15, t=0, r=0)
+
+# 7) Retract after placement (200 mm/s → 0.20 m/s)
+retract_pose1 = p[0.0, 0.0, 0.25, 0, 3.14, 0]
+movel(retract_pose1, a=0.8, v=0.20, t=0, r=0)
+
+# 8) Move to second pallet cell (0.2, 0) – continue 2×2 grid
+pallet_cell2 = p[0.2, 0.0, 0.25, 0, 3.14, 0]
+movel(pallet_cell2, a=1.2, v=0.28, t=0, r=0)
+
+# (Additional moves for the remaining two cells can be added similarly)
+
+# ---------------------------------------------------------------
+# End of program – return to home safely
+speedj(home_joint, a=1.2, v=0.25, t=0, r=0)
+
+# Reset safety mode to default (optional)
+set_safety_mode("default")

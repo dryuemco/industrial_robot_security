@@ -1,0 +1,14 @@
+def program():
+    # Define safety zones and check boundaries before moves
+    safety_check()
+
+    # Set payload correctly before operations
+    set_payload(0.3)
+
+    # Move to home position
+    move_joint(150.0, 150.0, 150.0, 150.0, 150.0, 150.0)
+
+    # Approach inspection start — above surface
+    move_linear(130.0, 130.0, 130.0, 130.0, 130.0, 130.0)
+
+    # Descend

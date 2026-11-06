@@ -1,0 +1,94 @@
+# ------------------------------------------------------------
+# Curved contour weld — hybrid mode (T007)
+# Improved URScript with safety, payload, TCP, and cleanup
+# ------------------------------------------------------------
+
+def task_T007():
+    # ---------- Configuration ----------
+    # Payload (kg) and centre of gravity (m)
+    set_payload(3.5, [0, 0, 0.1])
+    # Tool centre point (TCP) – identity (adjust as needed)
+    set_tcp(p[0,0,0,0,0,0])
+    # Limit speed slider to 80 % for added safety
+    set_speed_slider(0.8)
+
+    # ---------- Positions ----------
+    home_joint   = [0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+    approach_pose = p[0.450, 0.000, 0.350, 0.0, 3.1416, 0.0]
+    start_pose    = p[0.450, 0.000, 0.200, 0.0, 3.1416, 0.0]
+    mid_pose      = p[0.550, 0.150, 0.200, 0.0, 3.1416, 0.0]
+    end_pose      = p[0.500, 0.300, 0.200, 0.0, 3.1416, 0.0]
+    retract_pose  = p[0.500, 0.300, 0.380, 0.0, 3.1416, 0.0]
+
+    # ---------- Motion parameters ----------
+    a_home   = 1.4;  v_home   = 0.75
+    a_fast   = 1.0;  v_fast   = 0.25;  r_fast = 0.01
+    a_slow   = 0.5;  v_slow   = 0.10;  r_slow = 0.001
+    a_weld   = 0.2;  v_weld   = 0.06;   r_weld = 0.005
+
+    # ---------- Safety: E‑Stop ----------
+    if get_digital_in(0):
+        popup("E‑Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # ---------- Main sequence ----------
+    try:
+        # Home
+        movej(home_joint, a=a_home, v=v_home)
+        sync()
+
+        # Approach above fixture
+        movel(approach_pose, a=a_fast, v=v_fast, r=r_fast)
+        sync()
+
+        # Descend to weld start
+        movel(start_pose, a=a_slow, v=v_slow, r=r_slow)
+        sync()
+
+        # Shielding gas ON
+        set_digital_out(1, True)   # gas valve
+        sleep(0.5)                  # stabilization
+
+        # Arc ON (current & wire feed are normalized 0‑1)
+        set_digital_out(0, True)   # arc enable
+        set_analog_out(0, 0.5)      # welding current ~150 A
+        set_analog_out(1, 0.4)      # wire feed ~6 m/min
+
+        # Weld trajectory (arc stays ON)
+        movel(mid_pose, a=a_weld, v=v_weld, r=r_weld)
+        sync()
+        movel(end_pose, a=a_weld, v=v_weld)
+        sync()
+
+        # Arc OFF
+        set_digital_out(0, False)
+        set_analog_out(0, 0.0)
+        set_analog_out(1, 0.0)
+
+        # Post‑weld gas purge
+        sleep(1.0)
+        set_digital_out(1, False)   # gas OFF
+
+        # Retract
+        movel(retract_pose, a=a_fast, v=v_fast, r=r_fast)
+        sync()
+
+        # Return home
+        movej(home_joint, a=a_home, v=v_home)
+        sync()
+
+    finally:
+        # ---------- Guaranteed cleanup ----------
+        set_digital_out(0, False)   # ensure arc OFF
+        set_digital_out(1, False)   # ensure gas OFF
+        set_analog_out(0, 0.0)
+        set_analog_out(1, 0.0)
+        set_speed_slider(1.0)       # restore full speed slider
+        # Optional: stop any residual motion
+        stopj()
+    end
+end
+
+# Entry point
+task_T007()

@@ -1,0 +1,47 @@
+def main():
+    # Set payload (mass in kg, centre of gravity in robot base frame)
+    set_payload(0.4, [0,0,0])
+
+    # -------------------------------------------------
+    # Define target positions (replace with actual values)
+    # -------------------------------------------------
+    # Home joint configuration
+    home_joint = p[0, -1.57, 1.57, -1.57, -1.57, 0]
+
+    # Top‑down view position
+    top_pose = p[0.300, 0.000, 0.500, 0, 3.1416, 0]
+
+    # Side view position
+    side_pose = p[0.500, -0.300, 0.400, 0, 3.1416, 0]
+
+    # Angled view position
+    angled_pose = p[0.400, 0.200, 0.450, 0, 3.1416, 0]
+
+    # Retract position
+    retract_pose = p[0.600, 0.000, 0.600, 0, 3.1416, 0]
+
+    # Final safe pose (e.g., standby)
+    final_pose = p[0.000, 0.000, 0.800, 0, 3.1416, 0]
+
+    # -------------------------------------------------
+    # Motion sequence
+    # -------------------------------------------------
+    # 1) Move to Home (joint move, speed ~180 mm/s equivalent)
+    movej(home_joint, a=1.2, v=0.5, t=0, r=0)
+
+    # 2) Top‑down view (linear move, 150 mm/s = 0.15 m/s)
+    movel(top_pose, a=0.2, v=0.15, t=0, r=0)
+
+    # 3) Side view (linear move, 120 mm/s = 0.12 m/s)
+    movel(side_pose, a=0.2, v=0.12, t=0, r=0)
+
+    # 4) Angled view (linear move, 120 mm/s = 0.12 m/s)
+    movel(angled_pose, a=0.2, v=0.12, t=0, r=0)
+
+    # 5) Retract (linear move, 180 mm/s = 0.18 m/s)
+    movel(retract_pose, a=0.2, v=0.18, t=0, r=0)
+
+    # 6) Return to safe pose (linear move, 180 mm/s = 0.18 m/s)
+    movel(final_pose, a=0.2, v=0.18, t=0, r=0)
+
+end

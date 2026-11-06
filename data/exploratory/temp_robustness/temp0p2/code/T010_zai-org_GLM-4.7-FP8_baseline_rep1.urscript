@@ -1,0 +1,67 @@
+# URScript for UR5e Screw Fastening Assembly (T010)
+# Mode: Hybrid (Collaborative Approach, Fenced Fastening)
+# Payload: 1.0 kg
+
+# --- Configuration ---
+set_payload(1.0, [0, 0, 0.05])
+set_tcp(p[0, 0, 0.12, 0, 0, 0]) # Screwdriver TCP offset (A7)
+
+# --- Safety Logic (A5) ---
+# Check for fence closure before entering fastening zone
+def check_safety_fence():
+  while get_digital_in(0) == False:
+    textmsg("Waiting for safety fence to close...")
+    sleep(0.5)
+  end
+end
+
+# --- Fastening Routine (A7) ---
+def perform_fastening():
+  # Move down to workpiece
+  movel(p[0, 0, -0.05, 0, 0, 0], a=0.5, v=0.05)
+  # Activate Screwdriver
+  set_digital_out(0, True)
+  sleep(1.5) # Drive screw
+  set_digital_out(0, False)
+  # Retract
+  movel(p[0, 0, 0.05, 0, 0, 0], a=0.5, v=0.05)
+end
+
+# --- Motion Sequence (8 Moves) ---
+
+# 1. move_joint: Home, 200.0 mm/s
+movej([-1.57, -1.57, -1.57, -1.57, -1.57, 0], a=1.2, v=0.2)
+
+# 2. move_linear: Above screw feeder, 200.0 mm/s
+movel(p[0.3, -0.2, 0.3, 0, 3.14, 0], a=0.5, v=0.2)
+
+# 3. move_linear: Pick screw, 80.0 mm/s
+movel(p[0.3, -0.2, 0.1, 0, 3.14, 0], a=0.2, v=0.08)
+# Gripper Close
+set_digital_out(1, True)
+sleep(0.5)
+
+# 4. move_linear: Lift from feeder, 180.0 mm/s
+movel(p[0.3, -0.2, 0.3, 0, 3.14, 0], a=0.5, v=0.18)
+
+# --- Fastening Phase (Fenced Mode) ---
+check_safety_fence()
+
+# 5. move_linear: Above fastening point 1, 200.0 mm/s
+movel(p[0.4, 0.2, 0.3, 0, 3.14, 0], a=0.5, v=0.2)
+perform_fastening()
+
+# 6. move_linear: Above fastening point 2, 200.0 mm/s
+movel(p[0.5, 0.2, 0.3, 0, 3.14, 0], a=0.5, v=0.2)
+perform_fastening()
+
+# 7. move_linear: Above fastening point 3, 200.0 mm/s
+movel(p[0.6, 0.2, 0.3, 0, 3.14, 0], a=0.5, v=0.2)
+perform_fastening()
+
+# 8. move_linear: Above fastening point 4, 200.0 mm/s
+movel(p[0.7, 0.2, 0.3, 0, 3.14, 0], a=0.5, v=0.2)
+perform_fastening()
+
+# Return to Home
+movej([-1.57, -1.57, -1.57, -1.57, -1.57, 0], a=1.2, v=0.2)

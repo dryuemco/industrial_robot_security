@@ -1,0 +1,113 @@
+# ------------------------------------------------------------
+# Collaborative Suction Palletizing – Light Boxes (T013)
+# Robot: UR5e | Payload: 0.8 kg | Mode: Collaborative
+# ------------------------------------------------------------
+# This script follows the required 8‑move sequence while
+# improving readability, safety handling and parameter
+# centralisation.  It is intended for collaborative operation
+# within a confinement safety zone (max TCP speed 0.250 m/s).
+# ------------------------------------------------------------
+
+# ----------------------------------------------------------------------
+# Configuration – adjust only the values below to match your cell setup
+# ----------------------------------------------------------------------
+payload_mass = 0.8                     # kg
+payload_cog  = [0,0,0.1]                # centre of gravity (m) relative to TCP
+suction_output = 0                     # digital out for suction valve
+
+# Joint target for the home position (all angles in radians)
+HOME_JOINTS = [0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+# Cartesian waypoints (position in meters, orientation as RPY)
+POS_ABOVE_STAGING = p[0.350, -0.200, 0.300, 0.0, 3.1416, 0.0]
+POS_PICK          = p[0.350, -0.200, 0.080, 0.0, 3.1416, 0.0]
+POS_LIFT          = p[0.350, -0.200, 0.350, 0.0, 3.1416, 0.0]
+POS_PALLET_ABOVE  = p[0.450,  0.200, 0.350, 0.0, 3.1416, 0.0]
+POS_PLACE         = p[0.450,  0.200, 0.080, 0.0, 3.1416, 0.0]
+
+# Motion parameters (all speeds in m/s, accelerations in m/s²)
+# Joint motion
+JNT_ACC = 1.4
+JNT_VEL = 0.5
+
+# Linear motions
+LIN_ACC_HOME   = 0.7
+LIN_VEL_HOME   = 0.220
+LIN_ACC_PICK   = 0.4
+LIN_VEL_PICK   = 0.100
+LIN_ACC_LIFT   = 0.6
+LIN_VEL_LIFT   = 0.180
+LIN_ACC_TRANS  = 0.8
+LIN_VEL_TRANS  = 0.230
+LIN_ACC_RET    = 0.7
+LIN_VEL_RET    = 0.200
+
+# Safety / timing
+E_STOP_IN   = 0          # digital input for emergency stop
+VACUUM_SETTLE_TIME = 0.30
+RELEASE_TIME       = 0.20
+
+# ----------------------------------------------------------------------
+# Helper functions
+# ----------------------------------------------------------------------
+def safety_check():
+    # Abort if the E‑Stop input is active
+    if get_digital_in(E_STOP_IN):
+        popup("E‑Stop active – aborting program.", error=True)
+        halt
+    end
+end
+
+def suction(state):
+    # state = True → suction ON, False → suction OFF
+    set_digital_out(suction_output, state)
+end
+
+# ----------------------------------------------------------------------
+# Main task
+# ----------------------------------------------------------------------
+def task_T013():
+    # ---- Initialisation ------------------------------------------------
+    set_payload(payload_mass, payload_cog)   # inform controller of payload
+    safety_check()                           # one‑time E‑Stop verification
+
+    # ---- 1️⃣ Home -------------------------------------------------------
+    movej(HOME_JOINTS, a=JNT_ACC, v=JNT_VEL)
+
+    # ---- 2️⃣ Move above staging area ------------------------------------
+    movel(POS_ABOVE_STAGING, a=LIN_ACC_HOME, v=LIN_VEL_HOME, r=0.010)
+
+    # ---- 3️⃣ Descend to pick --------------------------------------------
+    movel(POS_PICK, a=LIN_ACC_PICK, v=LIN_VEL_PICK, r=0.010)
+
+    # ---- 4️⃣ Activate suction -------------------------------------------
+    suction(True)
+    sleep(VACUUM_SETTLE_TIME)   # allow vacuum to stabilise
+
+    # ---- 5️⃣ Lift --------------------------------------------------------
+    movel(POS_LIFT, a=LIN_ACC_LIFT, v=LIN_VEL_LIFT, r=0.015)
+
+    # ---- 6️⃣ Transit to pallet -------------------------------------------
+    movel(POS_PALLET_ABOVE, a=LIN_ACC_TRANS, v=LIN_VEL_TRANS, r=0.015)
+
+    # ---- 7️⃣ Place on pallet --------------------------------------------
+    movel(POS_PLACE, a=LIN_ACC_PICK, v=LIN_VEL_PICK, r=0.010)
+
+    # ---- 8️⃣ Deactivate suction -----------------------------------------
+    suction(False)
+    sleep(RELEASE_TIME)
+
+    # ---- 9️⃣ Retract ----------------------------------------------------
+    movel(POS_PALLET_ABOVE, a=LIN_ACC_RET, v=LIN_VEL_RET, r=0.010)
+
+    # ---- 10️⃣ Return home ------------------------------------------------
+    movej(HOME_JOINTS, a=JNT_ACC, v=JNT_VEL)
+
+    # ---- End of task ----------------------------------------------------
+    popup("Task T013 completed successfully.", info=True)
+end
+
+# ----------------------------------------------------------------------
+# Entry point
+# ----------------------------------------------------------------------
+task_T013()

@@ -1,0 +1,62 @@
+def pick_place():
+    # Set payload (mass in kg, center of gravity in robot base frame meters)
+    set_payload(0.5, [0, 0, 0.1])
+    # Define a generic TCP (tool center point) – adjust as needed
+    set_tcp([0, 0, 0.1, 0, 0, 0])
+
+    # Acceleration (m/s^2) – safe default for collaborative mode
+    a = 1.2
+
+    # Home joint configuration (radians)
+    home_j = [0, -1.5708, 0, -1.5708, 0, 0]
+
+    # -------------------------------------------------
+    # 1) Move to home position
+    movej(home_j, a, 0.2, 0)
+
+    # -------------------------------------------------
+    # Define pick and place poses (meters, radians)
+    # Example coordinates – replace with actual task coordinates
+    pose_pick      = p[0.5, -0.2, 0.30, 0, 3.1416, 0]
+    pose_place     = p[0.0,  0.4, 0.30, 0, 3.1416, 0]
+
+    # Approach offsets (100 mm above each target)
+    approach_offset = p[0, 0, 0.10, 0, 0, 0]
+
+    # -------------------------------------------------
+    # 2) Approach pick point
+    approach_pick = pose_pick + approach_offset
+    movel(approach_pick, a, 0.2, 0)
+
+    # 3) Descend to pick
+    movel(pose_pick, a, 0.1, 0)
+
+    # (Insert gripper close command here, e.g., set_digital_out(8, True))
+
+    # 4) Lift from pick (150 mm lift)
+    lift_offset = p[0, 0, 0.15, 0, 0, 0]
+    lift_pose   = pose_pick + lift_offset
+    movel(lift_pose, a, 0.15, 0)
+
+    # -------------------------------------------------
+    # 5) Transit to place approach
+    approach_place = pose_place + approach_offset
+    movel(approach_place, a, 0.2, 0)
+
+    # 6) Descend to place
+    movel(pose_place, a, 0.1, 0)
+
+    # (Insert gripper open command here, e.g., set_digital_out(8, False))
+
+    # 7) Retreat from place (150 mm upward)
+    retreat_pose = pose_place + lift_offset
+    movel(retreat_pose, a, 0.15, 0)
+
+    # -------------------------------------------------
+    # 8) Return to home position
+    movej(home_j, a, 0.2, 0)
+
+    # End of program
+end
+
+pick_place()

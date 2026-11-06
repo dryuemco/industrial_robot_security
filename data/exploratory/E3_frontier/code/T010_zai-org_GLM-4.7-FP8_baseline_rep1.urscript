@@ -1,0 +1,65 @@
+# UR5e Screw Fastening Assembly - Hybrid Mode (T010)
+# Task: Pick screw, position, drive at 4 points
+# Payload: 1.0 kg
+# Tool: Screwdriver (A7)
+
+# --- Setup & Configuration ---
+set_payload(1.0, [0, 0, 0.05])
+set_tcp(p[0, 0, 0.15, 0, 0, 0]) # TCP offset for screwdriver
+set_gravity([0, 0, 9.82])
+
+# --- Waypoint Definitions ---
+p_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+p_feeder_above = p[0.3, -0.2, 0.4, 0, 3.14, 0]
+p_feeder_pick = p[0.3, -0.2, 0.1, 0, 3.14, 0]
+p_lift = p[0.3, -0.2, 0.3, 0, 3.14, 0]
+p_fasten_1 = p[0.0, 0.4, 0.2, 0, 3.14, 0]
+p_fasten_2 = p[0.1, 0.4, 0.2, 0, 3.14, 0]
+p_fasten_3 = p[0.2, 0.4, 0.2, 0, 3.14, 0]
+p_fasten_4 = p[0.3, 0.4, 0.2, 0, 3.14, 0]
+
+# --- Motion Sequence ---
+
+# 1. Move Joint: Home (Collaborative Mode)
+# Speed: 200.0 mm/s (approx joint speed)
+movej(p_home, a=1.2, v=1.0)
+
+# 2. Move Linear: Above screw feeder
+# Speed: 200.0 mm/s
+movel(p_feeder_above, a=0.5, v=0.2)
+
+# 3. Move Linear: Pick screw
+# Speed: 80.0 mm/s
+movel(p_feeder_pick, a=0.2, v=0.08)
+
+# Simulate Gripper Action
+# set_standard_digital_out(0, True)
+sleep(0.5)
+
+# 4. Move Linear: Lift from feeder
+# Speed: 180.0 mm/s
+movel(p_lift, a=0.5, v=0.18)
+
+# --- Hybrid Mode Switch: Request Fenced Mode ---
+# set_standard_digital_out(1, True) # Signal safety controller
+# sleep(1.0) # Wait for safety mode transition
+
+# 5. Move Linear: Above fastening point 1
+# Speed: 200.0 mm/s
+movel(p_fasten_1, a=0.5, v=0.2)
+
+# 6. Move Linear: Above fastening point 2
+# Speed: 200.0 mm/s
+movel(p_fasten_2, a=0.5, v=0.2)
+
+# 7. Move Linear: Above fastening point 3
+# Speed: 200.0 mm/s
+movel(p_fasten_3, a=0.5, v=0.2)
+
+# 8. Move Linear: Above fastening point 4
+# Speed: 200.0 mm/s
+movel(p_fasten_4, a=0.5, v=0.2)
+
+# --- Return to Home ---
+# set_standard_digital_out(1, False) # Return to Collaborative Mode
+movej(p_home, a=1.2, v=1.0)

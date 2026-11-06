@@ -1,0 +1,47 @@
+# Optimized Task: T001 — Simple collaborative pick‑place
+# Speed optimized for faster cycle time, respecting collaborative limits (max TCP speed 0.250 m/s)
+# Robot: ur5e, Payload: 0.5 kg, Mode: collaborative
+
+def task_T001():
+  # Safety: E‑Stop check
+  if get_digital_in(0):
+    popup("E‑Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # Home position – max allowed speed
+  movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0], a=1.4, v=0.250)
+
+  # Approach pick point (fast linear move, small blend radius)
+  movel(p[0.400, 0.0, 0.350, 0.0, 3.1416, 0.0], a=0.8, v=0.250, r=0.015)
+
+  # Descend to pick (reduced speed for precision)
+  movel(p[0.400, 0.0, 0.200, 0.0, 3.1416, 0.0], a=0.5, v=0.200, r=0.010)
+
+  # Close gripper
+  set_digital_out(0, True)
+  sleep(0.200)  # shortened grip settle time
+
+  # Lift from pick
+  movel(p[0.400, 0.0, 0.350, 0.0, 3.1416, 0.0], a=0.8, v=0.250, r=0.015)
+
+  # Transit to place approach
+  movel(p[0.400, 0.200, 0.350, 0.0, 3.1416, 0.0], a=0.8, v=0.250, r=0.015)
+
+  # Descend to place
+  movel(p[0.400, 0.200, 0.200, 0.0, 3.1416, 0.0], a=0.5, v=0.200, r=0.010)
+
+  # Open gripper
+  set_digital_out(0, False)
+  sleep(0.200)  # shortened release settle time
+
+  # Retract from place
+  movel(p[0.400, 0.200, 0.350, 0.0, 3.1416, 0.0], a=0.8, v=0.250, r=0.015)
+
+  # Return to home
+  movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0], a=1.4, v=0.250)
+
+end
+
+# Entry point
+task_T001()

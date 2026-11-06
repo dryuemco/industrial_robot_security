@@ -1,0 +1,100 @@
+# ==========================================
+# UR5e Bin Picking - Fenced Mode (T006)
+# ISO 10218:2025 Compliance
+# ==========================================
+
+# --- Configuration ---
+MAX_TCP_SPEED = 0.4       # 400 mm/s (System Limit)
+MAX_JOINT_ACCEL = 1.4     # 1.4 rad/s^2 (Joint Limit)
+TOOL_ACCEL = 0.5          # m/s^2 (Tool acceleration limit)
+PAYLOAD_MASS = 2.0        # kg
+PAYLOAD_COG = [0, 0, 0.05] # Center of gravity offset (m)
+
+# --- Safety Zone Definition (Confinement Box) ---
+# Limits in meters (x, y, z) relative to Base
+ZONE_MIN = [-0.8, -0.8, 0.0]
+ZONE_MAX = [0.8, 0.8, 0.6]
+
+# --- Emergency Stop Handler ---
+def emergency_stop_handler():
+    popup("EMERGENCY STOP TRIGGERED: Safety Violation", title="SAFETY ALERT", warning=False, error=True)
+    stopj(MAX_JOINT_ACCEL)
+    halt
+end
+
+# --- Safety Check Function ---
+def safety_check(pose):
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    
+    # Check boundaries
+    if x < ZONE_MIN[0] or x > ZONE_MAX[0] or y < ZONE_MIN[1] or y > ZONE_MAX[1] or z < ZONE_MIN[2] or z > ZONE_MAX[2]:
+        emergency_stop_handler()
+    end
+end
+
+# --- Initialization ---
+set_payload(PAYLOAD_MASS, PAYLOAD_COG)
+
+# --- Waypoint Definitions ---
+# Joint positions (radians)
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+# Cartesian poses (m, rad)
+p_above_bin = p[0.35, -0.25, 0.35, 0, 3.14, 0]
+p_pick = p[0.35, -0.25, 0.05, 0, 3.14, 0]
+p_lift = p[0.35, -0.25, 0.35, 0, 3.14, 0]
+p_transit = p[0.55, 0.35, 0.35, 0, 3.14, 0]
+p_above_conv = p[0.55, 0.35, 0.35, 0, 3.14, 0]
+p_place = p[0.55, 0.35, 0.05, 0, 3.14, 0]
+
+# --- Pre-Validation ---
+# Validate static waypoints against safety zone
+safety_check(p_above_bin)
+safety_check(p_pick)
+safety_check(p_transit)
+safety_check(p_place)
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home position, 350.0 mm/s
+movej(q_home, a=MAX_JOINT_ACCEL, v=0.35)
+
+# 2. move_linear: Above bin, 350.0 mm/s
+safety_check(get_forward_kinematics())
+movel(p_above_bin, a=TOOL_ACCEL, v=0.35)
+
+# 3. move_linear: Descend into bin, 150.0 mm/s
+safety_check(get_forward_kinematics())
+movel(p_pick, a=TOOL_ACCEL, v=0.15)
+
+# --- Action: Activate Suction ---
+set_tool_digital_out(0, True)
+sleep(0.5) # Wait for vacuum
+
+# 4. move_linear: Lift from bin, 300.0 mm/s
+safety_check(get_forward_kinematics())
+movel(p_lift, a=TOOL_ACCEL, v=0.30)
+
+# 5. move_linear: Transit to conveyor, 380.0 mm/s
+safety_check(get_forward_kinematics())
+movel(p_transit, a=TOOL_ACCEL, v=0.38)
+
+# 6. move_linear: Above conveyor (Approach), 350.0 mm/s
+safety_check(get_forward_kinematics())
+movel(p_above_conv, a=TOOL_ACCEL, v=0.35)
+
+# 7. move_linear: Descend to conveyor, 150.0 mm/s
+safety_check(get_forward_kinematics())
+movel(p_place, a=TOOL_ACCEL, v=0.15)
+
+# --- Action: Deactivate Suction ---
+set_tool_digital_out(0, False)
+sleep(0.5) # Wait for release
+
+# 8. move_joint: Return to Home, 350.0 mm/s
+safety_check(get_forward_kinematics())
+movej(q_home, a=MAX_JOINT_ACCEL, v=0.35)
+
+# End of Task

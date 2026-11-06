@@ -1,0 +1,101 @@
+# Hybrid multi-angle camera inspection (T014)
+# URScript for UR5e - ISO 10218:2025 compliant
+
+# Safety configuration
+global MAX_TCP_SPEED = 200.0          # mm/s
+global MAX_JOINT_ACCEL = 1.4          # rad/s²
+global SAFETY_ZONE_RADIUS = 850.0     # mm (confinement boundary)
+global SAFETY_ZONE_HEIGHT = 1000.0    # mm
+global PAYLOAD_MASS = 0.4             # kg
+global PAYLOAD_CENTER_OF_GRAVITY = [0.0, 0.0, 0.05]  # [x,y,z] in meters
+
+# Emergency stop handler
+def emergency_stop():
+    popup("SAFETY VIOLATION DETECTED - EMERGENCY STOP", title="SAFETY ALERT", error=True)
+    halt()
+end
+
+# Safety check function
+def safety_check(position, speed, acceleration):
+    # Check TCP speed
+    if speed > MAX_TCP_SPEED:
+        popup("TCP speed exceeds maximum allowed value", error=True)
+        emergency_stop()
+    end
+
+    # Check joint acceleration
+    if acceleration > MAX_JOINT_ACCEL:
+        popup("Joint acceleration exceeds maximum allowed value", error=True)
+        emergency_stop()
+    end
+
+    # Check workspace boundaries
+    if norm(position) > SAFETY_ZONE_RADIUS or position[2] > SAFETY_ZONE_HEIGHT or position[2] < 0:
+        popup("Position outside safety zone boundaries", error=True)
+        emergency_stop()
+    end
+
+    # Check joint limits (simplified - actual limits should be checked per joint)
+    joint_positions = get_inverse_kin(position)
+    if any(joint_positions < [-2*pi, -2*pi, -2*pi, -2*pi, -2*pi, -2*pi]) or any(joint_positions > [2*pi, 2*pi, 2*pi, 2*pi, 2*pi, 2*pi]):
+        popup("Joint position outside limits", error=True)
+        emergency_stop()
+    end
+end
+
+# Waypoint definitions (example positions - adjust to actual application)
+global HOME_POSITION = [0.0, -0.6, 0.5, 0.0, 3.1415, 0.0]  # Joint positions
+global TOP_VIEW_POSITION = p[0.0, -0.4, 0.3, 0.0, 3.1415, 0.0]  # Pose
+global SIDE_VIEW_POSITION = p[0.2, -0.4, 0.2, 1.5708, 0.0, 0.0]  # Pose
+global ANGLED_VIEW_POSITION = p[0.1, -0.35, 0.25, 0.7854, 0.7854, 0.0]  # Pose
+global RETRACT_POSITION = p[0.0, -0.5, 0.4, 0.0, 3.1415, 0.0]  # Pose
+
+# Main program
+def main():
+    # Set payload
+    set_payload(PAYLOAD_MASS, PAYLOAD_CENTER_OF_GRAVITY)
+
+    # Initial safety check
+    safety_check(get_forward_kin(), 0, 0)
+
+    # Move to home position
+    safety_check(get_forward_kin(HOME_POSITION), 180.0, MAX_JOINT_ACCEL)
+    movej(HOME_POSITION, a=MAX_JOINT_ACCEL, v=180.0/1000.0)
+
+    # Move to top-down view position
+    safety_check(TOP_VIEW_POSITION, 150.0, MAX_JOINT_ACCEL)
+    movel(TOP_VIEW_POSITION, a=MAX_JOINT_ACCEL, v=150.0/1000.0)
+
+    # Inspection at top view (simulated)
+    textmsg("Inspecting from top view")
+    sleep(1.0)
+
+    # Move to side view position
+    safety_check(SIDE_VIEW_POSITION, 120.0, MAX_JOINT_ACCEL)
+    movel(SIDE_VIEW_POSITION, a=MAX_JOINT_ACCEL, v=120.0/1000.0)
+
+    # Inspection at side view (simulated)
+    textmsg("Inspecting from side view")
+    sleep(1.0)
+
+    # Move to angled view position
+    safety_check(ANGLED_VIEW_POSITION, 120.0, MAX_JOINT_ACCEL)
+    movel(ANGLED_VIEW_POSITION, a=MAX_JOINT_ACCEL, v=120.0/1000.0)
+
+    # Inspection at angled view (simulated)
+    textmsg("Inspecting from angled view")
+    sleep(1.0)
+
+    # Retract to safe position
+    safety_check(RETRACT_POSITION, 180.0, MAX_JOINT_ACCEL)
+    movel(RETRACT_POSITION, a=MAX_JOINT_ACCEL, v=180.0/1000.0)
+
+    # Return to home
+    safety_check(get_forward_kin(HOME_POSITION), 180.0, MAX_JOINT_ACCEL)
+    movej(HOME_POSITION, a=MAX_JOINT_ACCEL, v=180.0/1000.0)
+
+    textmsg("Inspection sequence completed")
+end
+
+# Run program
+main()

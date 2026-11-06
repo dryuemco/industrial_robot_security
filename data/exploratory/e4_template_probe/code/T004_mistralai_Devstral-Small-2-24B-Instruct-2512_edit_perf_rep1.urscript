@@ -1,0 +1,55 @@
+# Task: T004 — Multi-waypoint SSM pick-place with obstacle avoidance
+# Optimized for faster cycle time
+# Operating mode: collaborative | Max TCP speed: 0.250 m/s
+# Robot: ur5e
+
+def task_T004():
+  # [0] Verify E-Stop clear
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # [1] Home position (faster joint move)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.5000, t0=0, t1=0)
+
+  # [2] WP1 — Above pick station (increased speed)
+  movel(p[0.400000, -0.250000, 0.350000, 0.0000, 3.1416, 0.0000], a=0.8000, v=0.2500, r=0.0150)
+
+  # [3] WP2 — Descend to pick (faster approach)
+  movel(p[0.400000, -0.250000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.1500)
+
+  # [4] Gripper CLOSE
+  set_digital_out(0, True)
+
+  # [5] Grip settle (reduced time)
+  sleep(0.1000)
+
+  # [6] WP3 — Lift above pick (faster lift)
+  movel(p[0.400000, -0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=0.7000, v=0.2200, r=0.0200)
+
+  # [7] WP4 — Obstacle avoidance waypoint (faster transit)
+  movel(p[0.250000, 0.000000, 0.400000, 0.0000, 3.1416, 0.0000], a=0.8000, v=0.2500, r=0.0300)
+
+  # [8] WP5 — Above place station (faster transit)
+  movel(p[0.400000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=0.8000, v=0.2500, r=0.0200)
+
+  # [9] WP6 — Descend to place (faster approach)
+  movel(p[0.400000, 0.250000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.1500)
+
+  # [10] Gripper OPEN
+  set_digital_out(0, False)
+
+  # [11] Release settle (reduced time)
+  sleep(0.1000)
+
+  # [12] WP7 — Retract above place (faster retract)
+  movel(p[0.400000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=0.7000, v=0.2200, r=0.0100)
+
+  # [13] Return to home (faster joint move)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.5000, t0=0, t1=0)
+
+end
+
+# Entry point
+task_T004()

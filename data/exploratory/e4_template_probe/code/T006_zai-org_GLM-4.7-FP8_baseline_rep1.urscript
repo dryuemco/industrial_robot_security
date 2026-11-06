@@ -1,0 +1,61 @@
+# Program: Bin Picking with Suction - Fenced Mode (T006)
+# Robot: UR5e
+# Payload: 2.0 kg
+
+# --- Configuration ---
+set_payload(2.0, [0, 0, 0.1])
+set_tcp(p[0, 0, 0.15, 0, 0, 0]) # Suction cup offset
+
+# --- Safety Setup (Fenced Mode) ---
+# Set higher speed/acceleration limits for fenced operation
+set_safety_limits(1.5, 1.5)
+
+# Define confinement polygon (Safety Zone)
+# Vertices defining the working area around bin and conveyor
+set_safety_polygon(0, [p[-0.6, -0.6, 0], p[0.8, -0.6, 0], p[0.8, 0.6, 0], p[-0.6, 0.6, 0]], [0, 0, 1])
+
+# --- Waypoints ---
+# Joint positions for Home
+j_home = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Cartesian poses
+p_above_bin = p[-0.4, 0.4, 0.35, 0, 3.14, 0]
+p_in_bin    = p[-0.4, 0.4, 0.05, 0, 3.14, 0]
+p_above_conv = p[0.6, 0.0, 0.35, 0, 3.14, 0]
+p_on_conv   = p[0.6, 0.0, 0.05, 0, 3.14, 0]
+
+# --- Motion Sequence ---
+
+# 1. Move to Home (Joint move, 350 mm/s)
+movej(j_home, a=1.4, v=0.35)
+
+# 2. Move to Above Bin (Linear, 350 mm/s)
+movel(p_above_bin, a=0.5, v=0.35)
+
+# 3. Descend into Bin (Linear, 150 mm/s)
+movel(p_in_bin, a=0.2, v=0.15)
+
+# Activate Suction
+set_tool_digital_out(0, True)
+sleep(0.2) # Wait for vacuum
+
+# 4. Lift from Bin (Linear, 300 mm/s)
+movel(p_above_bin, a=0.5, v=0.30)
+
+# 5. Transit to Conveyor (Linear, 380 mm/s)
+movel(p_above_conv, a=0.8, v=0.38)
+
+# 6. Descend to Conveyor (Linear, 300 mm/s)
+movel(p_on_conv, a=0.5, v=0.30)
+
+# Release Suction
+set_tool_digital_out(0, False)
+sleep(0.2) # Wait for release
+
+# 7. Lift from Conveyor (Linear, 300 mm/s)
+movel(p_above_conv, a=0.5, v=0.30)
+
+# 8. Return to Home (Joint move, 350 mm/s)
+movej(j_home, a=1.4, v=0.35)
+
+# End of program

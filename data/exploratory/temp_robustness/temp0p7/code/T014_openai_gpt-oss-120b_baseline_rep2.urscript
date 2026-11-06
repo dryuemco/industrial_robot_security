@@ -1,0 +1,70 @@
+# URScript for Hybrid Multi-Angle Camera Inspection (T014) on UR5e
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(0.4, [0,0,0])          # Payload: 0.4 kg, CoG at TCP
+set_tcp(p[0,0,0,0,0,0])           # Default TCP (no offset)
+
+# Speed and acceleration parameters (mm/s and rad/s)
+speed_joint = 0.5                 # Joint speed (rad/s) for movej (approx. 180 mm/s)
+acc_joint  = 1.2                  # Joint acceleration (rad/s^2)
+
+speed_linear_top   = 0.15         # 150 mm/s
+speed_linear_side  = 0.12         # 120 mm/s
+speed_linear_angle = 0.12         # 120 mm/s
+speed_linear_retract = 0.18       # 180 mm/s
+speed_linear_home   = 0.18        # 180 mm/s (return to home)
+
+acc_linear = 1.2                  # Linear acceleration (m/s^2)
+
+# -------------------------------------------------
+# Pose Definitions (position in meters, orientation as rotation vector)
+# -------------------------------------------------
+# Home joint configuration
+home_joint = [-1.5708, -1.5708, 1.5708, -1.5708, -1.5708, 0]
+
+# Top‑down view position (camera looking straight down)
+p_top   = p[0.400, 0.000, 0.300, 0, 3.14159, 0]
+
+# Side view position (camera looking from the side)
+p_side  = p[0.400, -0.300, 0.250, 0, 1.5708, 0]
+
+# Angled view position (camera at 45° angle)
+p_angle = p[0.350, 0.150, 0.260, 0.7854, 1.5708, 0]
+
+# Retract position (clear of the part)
+p_retract = p[0.500, 0.000, 0.400, 0, 3.14159, 0]
+
+# Safe home pose (TCP pose for returning after inspection)
+p_home = p[0.600, -0.200, 0.300, 0, 3.14159, 0]
+
+# -------------------------------------------------
+# Main Program
+# -------------------------------------------------
+def main():
+    # Move to joint home configuration
+    movej(home_joint, a=acc_joint, v=speed_joint, t=0, r=0)
+
+    # Move to Top‑down view (linear)
+    movel(p_top, a=acc_linear, v=speed_linear_top, t=0, r=0)
+
+    # Move to Side view (linear)
+    movel(p_side, a=acc_linear, v=speed_linear_side, t=0, r=0)
+
+    # Move to Angled view (linear)
+    movel(p_angle, a=acc_linear, v=speed_linear_angle, t=0, r=0)
+
+    # Retract from part (linear)
+    movel(p_retract, a=acc_linear, v=speed_linear_retract, t=0, r=0)
+
+    # Return to safe home pose (linear)
+    movel(p_home, a=acc_linear, v=speed_linear_home, t=0, r=0)
+
+    # Optional: stop program
+    stop()
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

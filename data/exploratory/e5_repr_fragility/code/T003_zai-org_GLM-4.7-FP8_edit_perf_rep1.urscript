@@ -1,0 +1,64 @@
+# Task: T003 — EUR-pallet 2x2 layer — hybrid mode (OPTIMIZED)
+# Optimized for reduced cycle time
+# Robot: ur5e | Payload: 4.5 kg
+# Max TCP speed: 0.300 m/s
+
+def task_T003():
+  # [0] Verify E-Stop clear
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+  
+  # [1] Home position
+  # Increased joint velocity and acceleration for faster transit
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.0000, v=1.8000)
+  
+  # [2] Begin pick cycle — position 1 of 4
+  
+  # [3] Approach conveyor pick — above
+  # Maximized TCP speed (0.3 m/s) and increased acceleration
+  movel(p[0.500000, -0.300000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.3000, r=0.0200)
+  
+  # [4] Descend to pick
+  # Increased speed to max cap for faster descent
+  movel(p[0.500000, -0.300000, 0.100000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.3000, r=0.0)
+  
+  # [5] Gripper CLOSE — grasp box
+  set_digital_out(0, True)
+  
+  # [6] Grip settle time
+  # Reduced sleep time to minimize cycle delay
+  sleep(0.1000)
+  
+  # [7] Lift from conveyor
+  # Increased speed and blend radius for smoother transition
+  movel(p[0.500000, -0.300000, 0.400000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.3000, r=0.0500)
+  
+  # [8] Transit to pallet position (0,0)
+  # Max speed and increased blend radius to maintain momentum
+  movel(p[0.500000, 0.300000, 0.400000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.3000, r=0.0500)
+  
+  # [9] Descend to pallet place position
+  # Max speed descent
+  movel(p[0.500000, 0.300000, 0.120000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.3000, r=0.0)
+  
+  # [10] Gripper OPEN — release box
+  set_digital_out(0, False)
+  
+  # [11] Release settle
+  # Reduced sleep time
+  sleep(0.1000)
+  
+  # [12] Retract above pallet
+  # Increased speed and blend
+  movel(p[0.500000, 0.300000, 0.400000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.3000, r=0.0500)
+  
+  # [13] Return to home
+  # Increased joint velocity and acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.0000, v=1.8000)
+  
+end
+
+# Entry point
+task_T003()

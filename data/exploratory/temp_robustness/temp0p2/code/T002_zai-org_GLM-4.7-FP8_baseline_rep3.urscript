@@ -1,0 +1,59 @@
+# Program: T002 Linear Weld Path (Fenced Mode)
+# Robot: UR5e
+# Payload: 3.0 kg
+# Task: 300mm linear weld with arc activation
+
+def main():
+  # --- Configuration ---
+  # Set Payload: 3.0 kg, Center of Mass [0,0,0] (approximated for tool)
+  set_payload(3.0, [0, 0, 0.05])
+  
+  # Set Max TCP Speed: 500 mm/s (0.5 m/s)
+  set_max_speed(0.5, 1.0)
+
+  # Safety Mode: Normal (Fenced)
+  set_safety_mode(1)
+
+  # --- Safety Zone Definitions (Conceptual) ---
+  # Confinement: Box defined by x[0.3, 0.9], y[-0.3, 0.3], z[0.0, 0.5]
+  # Exclusion: Zone behind robot (x < 0.2)
+  # Note: Actual safety limits are enforced by the Safety Configuration.
+  # This program ensures motion stays within the Confinement zone.
+
+  # --- Pose Definitions ---
+  # Joint Home Position
+  j_home = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+  # Weld Path Poses (A3: Orientation Cones - Torch pointing down)
+  # Orientation: Rx=0, Ry=3.14159 (180 deg), Rz=0
+  p_approach = p[0.5, 0.0, 0.25, 0, 3.14159, 0] # 50mm above start
+  p_start    = p[0.5, 0.0, 0.20, 0, 3.14159, 0] # Weld Start
+  p_end      = p[0.8, 0.0, 0.20, 0, 3.14159, 0] # Weld End (300mm length)
+  p_retract  = p[0.8, 0.0, 0.25, 0, 3.14159, 0] # 50mm above end
+
+  # --- Motion Sequence ---
+
+  # 1. Move Joint: Go to home position (300.0 mm/s)
+  movej(j_home, a=1.4, v=0.3)
+
+  # 2. Move Linear: Approach above weld start (250.0 mm/s)
+  movel(p_approach, a=0.5, v=0.25)
+
+  # 3. Move Linear: Descend to weld start position (100.0 mm/s)
+  movel(p_start, a=0.5, v=0.1)
+
+  # 4. Move Linear: Weld seam — 300mm linear path (50.0 mm/s)
+  # A7: Welding arc activation zone/speed/sequence
+  set_digital_out(0, True)  # Arc On
+  sleep(0.2)                # Arc stabilization
+  movel(p_end, a=0.1, v=0.05) # Welding speed
+  sleep(0.2)                # Burn-off / Crater fill
+  set_digital_out(0, False) # Arc Off
+
+  # 5. Move Linear: Retract above weld end (200.0 mm/s)
+  movel(p_retract, a=0.5, v=0.2)
+
+  # 6. Move Joint: Return to home position (300.0 mm/s)
+  movej(j_home, a=1.4, v=0.3)
+
+end

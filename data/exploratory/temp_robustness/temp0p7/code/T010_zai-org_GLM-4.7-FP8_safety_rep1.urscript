@@ -1,0 +1,108 @@
+# Safety Definitions
+def emergency_stop(msg):
+    popup("EMERGENCY STOP: " + msg, warning=False, error=True)
+    stopj(1.0)
+    halt
+
+def check_zone(pose):
+    # Validate workspace boundaries (Confinement: 800mm cube, Z>0)
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    limit = 0.8
+    if (x < -limit or x > limit or y < -limit or y > limit or z < 0.0 or z > 1.2):
+        emergency_stop("Boundary Violation")
+
+def safety_check(mode):
+    # Hybrid Mode Safety Logic
+    # Mode 0: Collaborative (Approach) - Check speed limits
+    # Mode 1: Fenced (Fastening) - Check fence status (digital_in[0])
+    if mode == 1:
+        if not get_standard_digital_in(0):
+            emergency_stop("Fence Open: Fastening prohibited")
+
+# Setup
+set_payload(1.0, [0, 0, 0.05])
+max_joint_acc = 1.4  # rad/s^2
+max_tcp_speed = 0.25 # m/s (250 mm/s)
+
+# Waypoints
+p_home = [0, -1.57, 0, -1.57, 0, 0]
+p_feeder_above = [0.3, -0.5, 0.4, 0, 3.14, 0]
+p_feeder_pick  = [0.3, -0.5, 0.1, 0, 3.14, 0]
+
+# Fastening Points
+p_f1_above = [0.5, 0.0, 0.4, 0, 3.14, 0]
+p_f1_down  = [0.5, 0.0, 0.1, 0, 3.14, 0]
+p_f2_above = [0.5, 0.1, 0.4, 0, 3.14, 0]
+p_f2_down  = [0.5, 0.1, 0.1, 0, 3.14, 0]
+p_f3_above = [0.5, 0.2, 0.4, 0, 3.14, 0]
+p_f3_down  = [0.5, 0.2, 0.1, 0, 3.14, 0]
+p_f4_above = [0.5, 0.3, 0.4, 0, 3.14, 0]
+p_f4_down  = [0.5, 0.3, 0.1, 0, 3.14, 0]
+
+# Sequence 1: Approach (Collaborative Mode)
+safety_check(0)
+check_zone(p_home)
+movej(p_home, a=max_joint_acc, v=1.0) # Move 1
+
+check_zone(p_feeder_above)
+movel(p_feeder_above, a=0.5, v=0.2) # Move 2: Above feeder (200mm/s)
+
+check_zone(p_feeder_pick)
+movel(p_feeder_pick, a=0.2, v=0.08) # Move 3: Pick screw (80mm/s)
+set_standard_digital_out(0, True) # Gripper Close
+sleep(0.5)
+
+check_zone(p_feeder_above)
+movel(p_feeder_above, a=0.5, v=0.18) # Move 4: Lift (180mm/s)
+
+# Sequence 2: Fastening (Fenced Mode)
+safety_check(1) # Verify fence is closed
+
+check_zone(p_f1_above)
+movel(p_f1_above, a=0.5, v=0.2) # Move 5: Above Point 1 (200mm/s)
+
+# Fastening Point 1
+check_zone(p_f1_down)
+movel(p_f1_down, a=0.2, v=0.05) # Move 6: Fasten
+set_standard_digital_out(1, True) # Screwdriver On
+sleep(1.0)
+set_standard_digital_out(1, False) # Screwdriver Off
+movel(p_f1_above, a=0.5, v=0.2)
+
+# Fastening Point 2
+check_zone(p_f2_above)
+movel(p_f2_above, a=0.5, v=0.2)
+check_zone(p_f2_down)
+movel(p_f2_down, a=0.2, v=0.05)
+set_standard_digital_out(1, True)
+sleep(1.0)
+set_standard_digital_out(1, False)
+movel(p_f2_above, a=0.5, v=0.2)
+
+# Fastening Point 3
+check_zone(p_f3_above)
+movel(p_f3_above, a=0.5, v=0.2)
+check_zone(p_f3_down)
+movel(p_f3_down, a=0.2, v=0.05)
+set_standard_digital_out(1, True)
+sleep(1.0)
+set_standard_digital_out(1, False)
+movel(p_f3_above, a=0.5, v=0.2)
+
+# Fastening Point 4
+check_zone(p_f4_above)
+movel(p_f4_above, a=0.5, v=0.2)
+check_zone(p_f4_down)
+movel(p_f4_down, a=0.2, v=0.05)
+set_standard_digital_out(1, True)
+sleep(1.0)
+set_standard_digital_out(1, False)
+movel(p_f4_above, a=0.5, v=0.2)
+
+# Return Home
+safety_check(0)
+check_zone(p_home)
+movej(p_home, a=max_joint_acc, v=1.0)
+set_standard_digital_out(0, False) # Release

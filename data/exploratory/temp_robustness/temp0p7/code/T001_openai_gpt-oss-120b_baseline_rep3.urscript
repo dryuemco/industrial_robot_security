@@ -1,0 +1,101 @@
+# URScript for UR5e collaborative pick‑place (Task T001)
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+payload_mass = 0.5                         # kg
+payload_cog  = [0,0,0.1]                    # m, approximate center of gravity
+set_payload(payload_mass, payload_cog)
+
+# Maximum TCP speed (250 mm/s = 0.25 m/s)
+set_tcp_speed(0.25)
+
+# -------------------------------------------------
+# Positions (in meters and radians)
+# -------------------------------------------------
+# Home joint configuration (all joints to 0 rad for simplicity)
+home_joint = [-0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Pick approach (above the object, 100 mm above)
+pick_approach_pose = p[0.5, -0.3, 0.3, 0, 3.1415, 0]
+
+# Pick pose (descend 100 mm to grasp)
+pick_pose = p[0.5, -0.3, 0.2, 0, 3.1415, 0]
+
+# Place approach (above target location, 100 mm above)
+place_approach_pose = p[0.0, 0.4, 0.3, 0, 3.1415, 0]
+
+# Place pose (descend 100 mm to release)
+place_pose = p[0.0, 0.4, 0.2, 0, 3.1415, 0]
+
+# Safe retreat pose after place (back to a safe height)
+retreat_pose = p[0.0, 0.4, 0.4, 0, 3.1415, 0]
+
+# -------------------------------------------------
+# Motion parameters (speed in m/s, accel in m/s^2)
+# -------------------------------------------------
+speed_fast   = 0.20   # 200 mm/s
+speed_medium = 0.15   # 150 mm/s
+speed_slow   = 0.10   # 100 mm/s
+accel        = 0.5    # reasonable acceleration for collaborative mode
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # 1. Move to home joint position
+    movej(home_joint, a=accel, v=speed_fast)
+
+    # 2. Linear move to pick approach pose
+    movel(pick_approach_pose, a=accel, v=speed_fast)
+
+    # 3. Descend to pick pose (slower for accuracy)
+    movel(pick_pose, a=accel, v=speed_slow)
+
+    # 4. Close gripper (placeholder - replace with actual I/O)
+    set_digital_out(0, True)   # assume digital output 0 controls the gripper
+    sleep(0.5)                  # wait for grip
+
+    # 5. Lift from pick (medium speed)
+    movel(pick_approach_pose, a=accel, v=speed_medium)
+
+    # 6. Transit to place approach (fast)
+    movel(place_approach_pose, a=accel, v=speed_fast)
+
+    # 7. Descend to place pose (slow)
+    movel(place_pose, a=accel, v=speed_slow)
+
+    # 8. Open gripper to release object
+    set_digital_out(0, False)
+    sleep(0.5)
+
+    # 9. Retreat to safe height above place location
+    movel(retreat_pose, a=accel, v=speed_medium)
+
+    # 10. Return to home joint position
+    movej(home_joint, a=accel, v=speed_fast)
+
+    # End of program
+    stopj(0)
+
+# -------------------------------------------------
+# Safety zone definition (exclusion zone)
+# -------------------------------------------------
+# Define a rectangular exclusion zone (example dimensions in meters)
+# The zone is centered at (0.25, 0.0, 0.2) with size 0.4 x 0.4 x 0.4 m
+# The robot will treat this area as forbidden for motion.
+# Note: Actual implementation depends on the safety controller; here we just
+# provide a placeholder function call.
+def define_exclusion_zone():
+    zone_center = p[0.25, 0.0, 0.2, 0, 0, 0]
+    zone_size   = [0.4, 0.4, 0.4]   # X, Y, Z dimensions
+    # Placeholder – replace with appropriate safety system API
+    # set_exclusion_zone(zone_center, zone_size)
+    # For UR safety controller, this would be configured in the safety
+    # configuration, not via URScript.
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+define_exclusion_zone()
+main()

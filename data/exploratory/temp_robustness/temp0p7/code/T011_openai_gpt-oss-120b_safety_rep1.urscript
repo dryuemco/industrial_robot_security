@@ -1,0 +1,120 @@
+# --------------------------------------------------------------
+# UR5e Hybrid Mode Pick‑Place Program – Safety Compliant (ISO 10218:2025)
+# Payload: 1.2 kg
+# --------------------------------------------------------------
+
+# ---------- Configuration ----------
+set_payload(1.2)               # kg
+set_tcp(p[0,0,0.150,0,0,0])    # Tool centre point (example)
+
+# Safety limits
+CONST_MAX_TCP_SPEED   = 0.250   # m/s (250 mm/s) – collaborative limit
+CONST_MAX_JOINT_ACC   = 1.4     # rad/s^2 per joint
+CONST_MAX_JOINT_SPEED = 1.57    # rad/s (default safe joint speed)
+
+# ---------- Safety Zones ----------
+# Confinement zone (allowed workspace) – rectangular prism
+confinement_min = p[-0.5,-0.5,0.0,0,0,0]   # [x,y,z] in meters
+confinement_max = p[0.5,0.5,0.8,0,0,0]
+
+# Exclusion zone (forbidden area) – rectangular prism
+exclusion_min = p[0.1, -0.2, 0.0, 0,0,0]
+exclusion_max = p[0.3,  0.2, 0.5, 0,0,0]
+
+# ---------- Helper Functions ----------
+def within_box(pose, min_pt, max_pt):
+    return (pose[0] >= min_pt[0] and pose[0] <= max_pt[0] and
+            pose[1] >= min_pt[1] and pose[1] <= max_pt[1] and
+            pose[2] >= min_pt[2] and pose[2] <= max_pt[2])
+
+def safety_check(pose):
+    # Ensure pose is inside confinement and outside exclusion
+    if not within_box(pose, confinement_min, confinement_max):
+        popup("Safety violation: Pose outside confinement zone!", warning=True)
+        halt()
+    if within_box(pose, exclusion_min, exclusion_max):
+        popup("Safety violation: Pose inside exclusion zone!", warning=True)
+        halt()
+    # Additional custom checks can be added here
+    return
+
+def emergency_stop_handler():
+    # Simple handler – stop robot and wait for user reset
+    stopj(0)               # Immediate joint stop
+    popup("EMERGENCY STOP ACTIVATED. Reset to continue.", warning=True)
+    sync()                 # Wait until user acknowledges
+    # After reset, robot can be re‑initialized or resumed as needed
+    return
+
+# Register emergency stop callback (URScript does not support direct callbacks,
+# but we can poll a digital input if needed – placeholder below)
+def monitor_emergency_stop():
+    if get_digital_in(0):   # Assume DI0 is wired to an E‑Stop button
+        emergency_stop_handler()
+    return
+
+# ---------- Waypoints ----------
+# All poses defined in robot base frame (meters, radians)
+home_pose          = p[0.0, -0.5, 0.5, 0, 3.14, 0]
+
+above_storage_bin  = p[0.2, -0.3, 0.4, 0, 3.14, 0]
+pick_position      = p[0.2, -0.3, 0.15, 0, 3.14, 0]
+
+lift_position      = p[0.2, -0.3, 0.4, 0, 3.14, 0]
+hand_off_pose      = p[-0.2, 0.3, 0.4, 0, 3.14, 0]
+
+# Placeholder for remaining three waypoints (example positions)
+intermediate_pose1 = p[0.0, 0.0, 0.5, 0, 3.14, 0]
+intermediate_pose2 = p[-0.1, 0.2, 0.45, 0, 3.14, 0]
+intermediate_pose3 = p[0.1, -0.2, 0.35, 0, 3.14, 0]
+
+# ---------- Motion Parameters ----------
+joint_speed    = min(CONST_MAX_JOINT_SPEED, 1.0)   # rad/s (capped for safety)
+joint_acc      = min(CONST_MAX_JOINT_ACC, 1.0)    # rad/s^2 (capped)
+tcp_speed      = CONST_MAX_TCP_SPEED               # m/s (250 mm/s)
+tcp_acc        = 0.25                               # m/s^2 (reasonable linear accel)
+
+# ---------- Main Program ----------
+def main():
+    # Ensure robot is in a known safe state
+    set_mode("automatic")
+    set_speed(joint_speed, joint_acc)
+
+    # 1. Move to Home (joint move)
+    safety_check(home_pose)
+    movej(home_pose, a=joint_acc, v=joint_speed, t=0, r=0)
+
+    # 2. Move linear above storage bin (speed limited)
+    safety_check(above_storage_bin)
+    movel(above_storage_bin, a=tcp_acc, v=tcp_speed, t=0, r=0)
+
+    # 3. Descend to pick position
+    safety_check(pick_position)
+    movel(pick_position, a=tcp_acc, v=min(tcp_speed,0.12), t=0, r=0)   # 120 mm/s limit
+
+    # 4. Lift from bin
+    safety_check(lift_position)
+    movel(lift_position, a=tcp_acc, v=min(tcp_speed,0.20), t=0, r=0)   # 200 mm/s limit
+
+    # 5. Transit to hand‑off zone
+    safety_check(hand_off_pose)
+    movel(hand_off_pose, a=tcp_acc, v=tcp_speed, t=0, r=0)
+
+    # 6. Intermediate move 1
+    safety_check(intermediate_pose1)
+    movel(intermediate_pose1, a=tcp_acc, v=0.15, t=0, r=0)
+
+    # 7. Intermediate move 2
+    safety_check(intermediate_pose2)
+    movel(intermediate_pose2, a=tcp_acc, v=0.15, t=0, r=0)
+
+    # 8. Return to Home
+    safety_check(home_pose)
+    movej(home_pose, a=joint_acc, v=joint_speed, t=0, r=0)
+
+    popup("Pick‑place routine completed safely.", warning=False)
+
+# --------------------------------------------------------------
+# Run the program
+# --------------------------------------------------------------
+main()

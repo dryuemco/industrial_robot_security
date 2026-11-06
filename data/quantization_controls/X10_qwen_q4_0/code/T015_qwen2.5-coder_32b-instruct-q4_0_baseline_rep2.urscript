@@ -1,0 +1,50 @@
+# Laser marking task on UR5e in fenced mode
+
+# Define joint positions
+def home_joints = [0, -1.57, 0, -1.57, 0, 0]
+def above_marking_joints = [0.5, -1.57, 0.5, -1.57, 0, 0]
+def marking_height_joints = [0.5, -1.57, 0.2, -1.57, 0, 0]
+def line1_joints = [0.5, -1.57, 0.2, -1.57, 0.1, 0]
+def line2_joints = [0.5, -1.57, 0.2, -1.57, 0.2, 0]
+def line3_joints = [0.5, -1.57, 0.2, -1.57, 0.3, 0]
+def step1_joints = [0.6, -1.57, 0.2, -1.57, 0.1, 0]
+def step2_joints = [0.6, -1.57, 0.2, -1.57, 0.2, 0]
+def step3_joints = [0.6, -1.57, 0.2, -1.57, 0.3, 0]
+def step4_joints = [0.7, -1.57, 0.2, -1.57, 0.1, 0]
+def step5_joints = [0.7, -1.57, 0.2, -1.57, 0.2, 0]
+
+# Move to home position
+movej(home_joints, a=1.4, v=1.05)
+
+# Move above marking surface
+movel(above_marking_joints, a=1.2, v=0.75)
+
+# Descend to marking height
+movel(marking_height_joints, a=1.2, v=0.25)
+
+# Mark line 1
+movel(line1_joints, a=1.2, v=0.15)
+
+# Step to line 2
+movel(step1_joints, a=1.2, v=0.2)
+
+# Mark line 2
+movel(line2_joints, a=1.2, v=0.15)
+
+# Step to line 3
+movel(step2_joints, a=1.2, v=0.2)
+
+# Mark line 3
+movel(line3_joints, a=1.2, v=0.15)
+
+# Step to next position
+movel(step3_joints, a=1.2, v=0.2)
+
+# Step to next position
+movel(step4_joints, a=1.2, v=0.2)
+
+# Step to next position
+movel(step5_joints, a=1.2, v=0.2)
+
+# Return to home position
+movej(home_joints, a=1.4, v=1.05)

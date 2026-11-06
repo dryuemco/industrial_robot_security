@@ -1,0 +1,67 @@
+# URScript for heavy depalletizing in fenced mode (T008)
+
+# Set safety mode to FENCED (mode 2)
+setSafetyMode(2)
+
+# Set payload to 5.0 kg, center of mass at (0,0,0.1) meters (example)
+set_payload(5.0, [0,0,0.1])
+
+# Define speed limits (m/s)
+speed_home          = 0.4   # 400 mm/s
+speed_above_pallet  = 0.4   # 400 mm/s
+speed_descend       = 0.15  # 150 mm/s
+speed_lift          = 0.2   # 200 mm/s
+speed_transit       = 0.35  # 350 mm/s
+speed_aux1          = 0.3   # 300 mm/s (placeholder)
+speed_aux2          = 0.25  # 250 mm/s (placeholder)
+speed_aux3          = 0.2   # 200 mm/s (placeholder)
+
+# Define poses (in meters and radians)
+# Note: Replace the placeholder coordinates with the actual calibrated values.
+home            = p[0.0, -0.5, 0.5, 0, 3.14, 0]          # Home position
+above_pallet    = p[0.3, -0.3, 0.4, 0, 3.14, 0]          # 10 cm above pallet
+top_layer       = p[0.3, -0.3, 0.2, 0, 3.14, 0]          # Top layer of boxes
+lift_box        = p[0.3, -0.3, 0.1, 0, 3.14, 0]          # Grasp height
+conveyor        = p[0.6, 0.0, 0.2, 0, 3.14, 0]           # Above conveyor
+aux_position1   = p[0.5, 0.2, 0.3, 0, 3.14, 0]           # Auxiliary position 1
+aux_position2   = p[0.2, 0.2, 0.3, 0, 3.14, 0]           # Auxiliary position 2
+aux_position3   = p[0.0, 0.0, 0.5, 0, 3.14, 0]           # Auxiliary position 3 (safe)
+
+# Begin task sequence
+def depalletize_heavy():
+    # 1. Move to Home (joint move)
+    movej(home, a=1.2, v=speed_home)
+
+    # 2. Move linear to Above pallet
+    movel(above_pallet, a=1.2, v=speed_above_pallet)
+
+    # 3. Descend to top layer
+    movel(top_layer, a=1.2, v=speed_descend)
+
+    # 4. Move linear to grasp height (lift box)
+    movel(lift_box, a=1.2, v=speed_lift)
+
+    # 5. Transit to conveyor
+    movel(conveyor, a=1.2, v=speed_transit)
+
+    # 6. Place box (lower slightly, release, then lift)
+    movel(p[conveyor[0], conveyor[1], conveyor[2]-0.05, conveyor[3], conveyor[4], conveyor[5]],
+          a=1.2, v=speed_lift)
+    # (Insert gripper release command here, e.g., set_digital_out(0, False))
+    movel(conveyor, a=1.2, v=speed_lift)
+
+    # 7. Move to auxiliary safe position 1
+    movel(aux_position1, a=1.2, v=speed_aux1)
+
+    # 8. Return to Home
+    movej(home, a=1.2, v=speed_aux2)
+
+    # Optional: additional auxiliary moves
+    # movel(aux_position2, a=1.2, v=speed_aux3)
+    # movel(aux_position3, a=1.2, v=speed_aux3)
+
+    # End of sequence
+    stopj(2.0)   # Smooth stop
+
+# Execute the routine
+depalletize_heavy()

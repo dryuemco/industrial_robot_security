@@ -1,0 +1,53 @@
+# Define payload
+set_payload(1.2, [0,0,0])
+
+# Define safety zones
+def safety_zone_confined():
+    # Define confined zone boundaries
+    p_min = p[0.2, -0.5, 0.5, 0, 3.14, 0]
+    p_max = p[0.8, 0.5, 1.0, 0, 3.14, 0]
+    return get_actual_tcp_pose() within_zone(p_min, p_max)
+
+def safety_zone_excluded():
+    # Define excluded zone boundaries
+    p_min = p[0.4, -0.3, 0.7, 0, 3.14, 0]
+    p_max = p[0.6, 0.3, 0.9, 0, 3.14, 0]
+    return not (get_actual_tcp_pose() within_zone(p_min, p_max))
+
+def safety_check():
+    if not safety_zone_confined():
+        popup("Outside confined safety zone!")
+        halt
+    if not safety_zone_excluded():
+        popup("Inside excluded safety zone!")
+        halt
+
+# Define waypoints
+pHome = p[0.4, -0.2, 0.5, 0, 3.14, 0]
+pAboveStorage = p[0.5, 0, 0.6, 0, 3.14, 0]
+pPick = p[0.5, 0, 0.3, 0, 3.14, 0]
+pLift = p[0.5, 0, 0.6, 0, 3.14, 0]
+pTransit = p[0.7, 0, 0.6, 0, 3.14, 0]
+pHandoffApproach = p[0.7, 0, 0.5, 0, 3.14, 0]
+pHandoff = p[0.7, 0, 0.3, 0, 3.14, 0]
+pHandoffLift = p[0.7, 0, 0.5, 0, 3.14, 0]
+
+# Motion sequence
+safety_check()
+movej(pHome, a=1.4, v=250.0)  # Home position
+safety_check()
+movel(pAboveStorage, a=1.4, v=280.0)  # Above storage bin
+safety_check()
+movel(pPick, a=1.4, v=120.0)  # Descend to pick
+safety_check()
+movel(pLift, a=1.4, v=200.0)  # Lift from bin
+safety_check()
+movel(pTransit, a=1.4, v=250.0)  # Transit to handoff zone
+safety_check()
+movel(pHandoffApproach, a=1.4, v=250.0)  # Approach handoff zone
+safety_check()
+movel(pHandoff, a=1.4, v=120.0)  # Place in handoff
+safety_check()
+movel(pHandoffLift, a=1.4, v=200.0)  # Lift from handoff
+safety_check()
+movej(pHome, a=1.4, v=250.0)  # Return to home

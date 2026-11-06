@@ -1,0 +1,119 @@
+# ==========================================
+# URScript: Laser Surface Scan (Fenced Mode)
+# Robot: UR5e | Task: T009
+# ==========================================
+
+# Safety Configuration
+def safety_check(pose):
+    # Define Safety Zone (Confinement Box)
+    # Limits: X[0.0, 0.6], Y[-0.2, 0.5], Z[0.0, 0.5]
+    min_x = 0.0
+    max_x = 0.6
+    min_y = -0.2
+    max_y = 0.5
+    min_z = 0.0
+    max_z = 0.5
+    
+    # Check boundaries
+    if (pose[0] < min_x or pose[0] > max_x or 
+        pose[1] < min_y or pose[1] > max_y or 
+        pose[2] < min_z or pose[2] > max_z):
+        
+        popup("Safety Zone Violation: Target out of bounds")
+        stopj(1.0)
+        halt
+    end
+end
+
+def emergency_stop_handler():
+    stopj(1.0)
+    set_digital_out(0, False) # Ensure laser is off
+    popup("Emergency Stop Triggered")
+    halt
+end
+
+# Initialization
+set_payload(0.5, [0, 0, 0.05]) # 0.5kg payload, CoM 50mm down
+set_gravity([0, 0, 9.82])
+set_acc(1.4, 1.4) # Max joint acceleration 1.4 rad/s^2
+
+# Waypoint Definitions
+# Home Position (Joint space)
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+# Scan Area Setup (300x200mm)
+# Start Corner: X=0.4, Y=0.1
+# Scan Height: 0.1m (100mm)
+# Approach Height: 0.2m (200mm)
+# Orientation: Pointing down (rx=0, ry=3.14159, rz=0)
+p_above_start = p[0.4, 0.1, 0.2, 0, 3.14159, 0]
+p_scan_start = p[0.4, 0.1, 0.1, 0, 3.14159, 0]
+
+# Raster Waypoints (Snake Pattern: 4 Lines)
+# Line 1: (0.4, 0.1) -> (0.1, 0.1) [Length 300mm]
+# Line 2: (0.1, 0.166) -> (0.4, 0.166) [Step 66mm]
+# Line 3: (0.4, 0.233) -> (0.1, 0.233) [Step 66mm]
+# Line 4: (0.1, 0.3) -> (0.4, 0.3) [Step 66mm, Total Width 200mm]
+
+p_l1_end = p[0.1, 0.1, 0.1, 0, 3.14159, 0]
+p_l2_start = p[0.1, 0.166, 0.1, 0, 3.14159, 0]
+p_l2_end = p[0.4, 0.166, 0.1, 0, 3.14159, 0]
+p_l3_start = p[0.4, 0.233, 0.1, 0, 3.14159, 0]
+p_l3_end = p[0.1, 0.233, 0.1, 0, 3.14159, 0]
+p_l4_start = p[0.1, 0.3, 0.1, 0, 3.14159, 0]
+p_l4_end = p[0.4, 0.3, 0.1, 0, 3.14159, 0]
+
+p_retract = p[0.4, 0.3, 0.2, 0, 3.14159, 0]
+
+# Motion Sequence
+# 1. move_joint: Home, 180.0 mm/s (approx via joint speed limit)
+safety_check(get_forward_kin(q_home))
+movej(q_home, a=1.4, v=1.0)
+
+# 2. move_linear: Above scan start, 150.0 mm/s
+safety_check(p_above_start)
+movel(p_above_start, a=1.4, v=0.15)
+
+# 3. move_linear: Descend to scan height, 80.0 mm/s
+safety_check(p_scan_start)
+movel(p_scan_start, a=1.4, v=0.08)
+
+# 4. move_linear: Scan line 1, 50.0 mm/s (Laser ON)
+set_digital_out(0, True)
+safety_check(p_l1_end)
+movel(p_l1_end, a=1.4, v=0.05)
+
+# 5. move_linear: Step to line 2, 80.0 mm/s
+safety_check(p_l2_start)
+movel(p_l2_start, a=1.4, v=0.08)
+
+# 6. move_linear: Scan line 2, 50.0 mm/s
+safety_check(p_l2_end)
+movel(p_l2_end, a=1.4, v=0.05)
+
+# 7. move_linear: Step to line 3, 80.0 mm/s
+safety_check(p_l3_start)
+movel(p_l3_start, a=1.4, v=0.08)
+
+# 8. move_linear: Scan line 3, 50.0 mm/s
+safety_check(p_l3_end)
+movel(p_l3_end, a=1.4, v=0.05)
+
+# 9. move_linear: Step to line 4, 80.0 mm/s
+safety_check(p_l4_start)
+movel(p_l4_start, a=1.4, v=0.08)
+
+# 10. move_linear: Scan line 4, 50.0 mm/s
+safety_check(p_l4_end)
+movel(p_l4_end, a=1.4, v=0.05)
+
+# 11. move_linear: Retract, 80.0 mm/s (Laser OFF)
+set_digital_out(0, False)
+safety_check(p_retract)
+movel(p_retract, a=1.4, v=0.08)
+
+# 12. move_joint: Home, 180.0 mm/s
+safety_check(get_forward_kin(q_home))
+movej(q_home, a=1.4, v=1.0)
+
+# End of Task

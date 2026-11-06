@@ -1,0 +1,62 @@
+# URScript for Hybrid Multi-Angle Camera Inspection (T014)
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(0.4, [0,0,0])          # payload 0.4 kg, CoG at TCP
+set_tcp(p[0,0,0,0,0,0])           # default TCP (modify if needed)
+
+# Speed settings (m/s)
+speed_fast = 0.18   # 180 mm/s
+speed_medium = 0.12 # 120 mm/s
+speed_max = 0.20    # 200 mm/s (max TCP speed)
+
+# Zone (confinement) - using a small zone for safety
+zone_confined = 0.01   # 10 mm blending radius
+
+# -------------------------------------------------
+# Poses (replace with actual calibrated values)
+# -------------------------------------------------
+home_joint   = [-1.57, -1.57, 0, -1.57, 0, 0]               # Home joint configuration
+
+top_pose     = p[0.500, 0.000, 0.300, 0.0, 3.1416, 0.0]    # Top‑down view
+side_pose    = p[0.500, 0.200, 0.300, 0.0, 3.1416, 0.0]    # Side view
+angled_pose  = p[0.500, 0.100, 0.300, 0.0, 2.5000, 0.0]    # Angled view
+retract_pose = p[0.500, 0.000, 0.500, 0.0, 3.1416, 0.0]    # Retract position
+final_pose   = p[0.600, 0.000, 0.400, 0.0, 3.1416, 0.0]    # Optional final pose
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # Set robot to hybrid mode (collaborative)
+    set_robot_mode(2)   # 2 = automatic (compatible with hybrid operation)
+
+    # 1) Move to Home (joint move)
+    movej(home_joint, a=1.2, v=speed_fast, t=0, r=zone_confined)
+
+    # 2) Move to Top‑down view (linear)
+    movel(top_pose, a=1.2, v=speed_medium, t=0, r=zone_confined)
+
+    # 3) Move to Side view (linear)
+    movel(side_pose, a=1.2, v=speed_medium, t=0, r=zone_confined)
+
+    # 4) Move to Angled view (linear)
+    movel(angled_pose, a=1.2, v=speed_medium, t=0, r=zone_confined)
+
+    # 5) Retract (linear)
+    movel(retract_pose, a=1.2, v=speed_fast, t=0, r=zone_confined)
+
+    # 6) Optional final move (linear)
+    movel(final_pose, a=1.2, v=speed_fast, t=0, r=zone_confined)
+
+    # Return to Home for safety
+    movej(home_joint, a=1.2, v=speed_fast, t=0, r=zone_confined)
+
+    # End of program
+    stopj(2)   # stop with a smooth brake
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

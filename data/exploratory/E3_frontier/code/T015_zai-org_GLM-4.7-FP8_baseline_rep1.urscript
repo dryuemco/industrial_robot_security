@@ -1,0 +1,87 @@
+# ==========================================
+# URScript for Laser Marking Task (T015)
+# Robot: UR5e | Mode: Fenced
+# ==========================================
+
+# --- Configuration ---
+# Set Payload (0.6 kg)
+set_payload(0.6, [0, 0, 0.05])
+
+# Set TCP (Tool Center Point) - Adjust to actual tool tip
+set_tcp(p[0, 0, 0.1, 0, 0, 0])
+
+# Global Speed/Acceleration Limits
+# Max TCP speed limited to 400 mm/s as per requirements
+set_speed(0.4, 0.5)
+
+# --- Safety Zones (A6/A7 Context) ---
+# Note: Confinement and Exclusion zones must be pre-configured 
+# in the Polyscope Safety installation parameters. 
+# This script assumes the robot operates within those boundaries.
+
+# --- Fixture Frame Definition (A6) ---
+# Define the origin of the marking fixture
+p_Fixture = p[0.4, 0.2, 0.0, 0, 3.14159, 0]
+
+# Define Z-heights
+z_safe = 0.05      # Height above surface (50mm)
+z_mark = 0.0       # Marking height (0mm relative to fixture)
+
+# Define Waypoints relative to Fixture
+# Strict Laser Pointing (A3): Orientation is kept constant relative to fixture
+p_Above = pose_trans(p_Fixture, p[0, 0, z_safe, 0, 0, 0])
+
+# Line 1
+p_L1_Start = pose_trans(p_Fixture, p[0.0, 0.0, z_mark, 0, 0, 0])
+p_L1_End   = pose_trans(p_Fixture, p[0.05, 0.0, z_mark, 0, 0, 0])
+
+# Line 2
+p_L2_Start = pose_trans(p_Fixture, p[0.0, 0.01, z_mark, 0, 0, 0])
+p_L2_End   = pose_trans(p_Fixture, p[0.05, 0.01, z_mark, 0, 0, 0])
+
+# Line 3
+p_L3_Start = pose_trans(p_Fixture, p[0.0, 0.02, z_mark, 0, 0, 0])
+p_L3_End   = pose_trans(p_Fixture, p[0.05, 0.02, z_mark, 0, 0, 0])
+
+# Home Joint Position
+q_Home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+# --- Motion Sequence ---
+
+# 1. Move Joint: Home (350.0 mm/s)
+movej(q_Home, a=1.4, v=0.35)
+
+# 2. Move Linear: Above marking surface (300.0 mm/s)
+movel(p_Above, a=0.5, v=0.3)
+
+# 3. Move Linear: Descend to marking height (100.0 mm/s)
+movel(p_L1_Start, a=0.2, v=0.1)
+
+# 4. Move Linear: Mark line 1 (60.0 mm/s) - Laser ON
+set_digital_out(0, True) # Activate Laser (A7)
+movel(p_L1_End, a=0.2, v=0.06)
+set_digital_out(0, False) # Deactivate Laser
+
+# 5. Move Linear: Step to line 2 (80.0 mm/s)
+movel(p_L2_Start, a=0.2, v=0.08)
+
+# 6. Move Linear: Mark line 2 (60.0 mm/s) - Laser ON
+set_digital_out(0, True)
+movel(p_L2_End, a=0.2, v=0.06)
+set_digital_out(0, False)
+
+# 7. Move Linear: Step to line 3 (80.0 mm/s)
+movel(p_L3_Start, a=0.2, v=0.08)
+
+# 8. Move Linear: Mark line 3 (60.0 mm/s) - Laser ON
+set_digital_out(0, True)
+movel(p_L3_End, a=0.2, v=0.06)
+set_digital_out(0, False)
+
+# 9. Move Linear: Retract to safe height (300.0 mm/s)
+movel(p_Above, a=0.5, v=0.3)
+
+# 10. Move Joint: Home (350.0 mm/s)
+movej(q_Home, a=1.4, v=0.35)
+
+# End of Script

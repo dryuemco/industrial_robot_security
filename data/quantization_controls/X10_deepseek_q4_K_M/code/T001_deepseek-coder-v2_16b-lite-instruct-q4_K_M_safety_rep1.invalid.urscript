@@ -1,0 +1,59 @@
+# Define safety parameters
+set_tool_payload payload 0.5;
+set_speed default 200.0;
+set_accel default 1.4;
+
+# Define safety zones
+def SAFE_ZONE_RADIUS = 0.1;
+
+# Define pick-place waypoints
+def HOME_POSITION = [0.0, -pi/4, pi/2, -pi/4, pi/2, 0.0];
+def PICK_POINT = [0.3, -pi/4, pi/2, -pi/4, pi/2, 0.0];
+def PLACE_POINT = [0.4, -pi/4, pi/2, -pi/4, pi/2, 0.0];
+
+# Define motion speeds
+def APPROACH_SPEED = 200.0;
+def DESCEND_SPEED = 100.0;
+def LIFT_SPEED = 150.0;
+def PLACE_APPROACH_SPEED = 200.0;
+
+# Define descent and lift distances
+def DESCEND_DISTANCE = -0.1;
+def LIFT_DISTANCE = 0.1;
+
+# Define safety_check() function
+def safety_check() {
+    if !is_valid_tool_pose(get_actual_tcp_pose()) {
+        popup "Invalid tool pose detected!";
+        stop;
+    }
+    if !is_valid_joint_pose(get_actual_joint_positions()) {
+        popup "Invalid joint pose detected!";
+        stop;
+    }
+    if !is_within_bounds(get_actual_tcp_pose(), SAFE_ZONE_RADIUS) {
+        popup "TCP pose out of bounds!";
+        stop;
+    }
+}
+
+# Move to home position
+move_joint HOME_POSITION;
+
+# Approach pick point
+move_linear PICK_POINT, speed:=APPROACH_SPEED;
+
+# Descend to pick
+move_linear PICK_POINT + [0, 0, DESCEND_DISTANCE, 0, 0, 0], speed:=DESCEND_SPEED;
+
+# Lift from pick
+move_linear PICK_POINT + [0, 0, LIFT_DISTANCE, 0, 0, 0], speed:=LIFT_SPEED;
+
+# Transit to place approach
+move_linear PLACE_POINT, speed:=PLACE_APPROACH_SPEED;
+
+# Place object (additional moves not included for brevity)
+# ...
+
+# Ensure safety before each move
+safety_check();

@@ -1,0 +1,141 @@
+# ------------------------------------------------------------
+# URScript for UR5e – Laser Marking (Fenced Mode, Task T015)
+# Safety compliant with ISO 10218:2025
+# ------------------------------------------------------------
+
+# ----- Global Settings -------------------------------------------------
+set_payload(0.6, [0,0,0.02])         # 0.6 kg payload, CoG 2 cm in front of TCP
+set_tcp(p[0,0,0.15,0,0,0])          # Tool center point 150 mm from flange
+set_analog_input_domain(0,0)       # Ensure analog inputs are in safe range
+
+# ----- Safety Parameters ------------------------------------------------
+MAX_TCP_SPEED      = 0.25          # m/s  (250 mm/s max in collaborative mode)
+MAX_JOINT_ACCEL    = 1.4           # rad/s^2 per joint
+SAFE_JOINT_SPEED   = 1.0           # rad/s (approx 57°/s, well below limits)
+SAFE_JOINT_ACCEL   = 1.0           # rad/s^2 (≤ MAX_JOINT_ACCEL)
+
+# ----- Safety Zones ----------------------------------------------------
+# Confinement zone (example cuboid around workcell)
+confine_zone_center = p[0.5, 0.0, 0.3]
+confine_zone_size   = [0.6, 0.6, 0.6]   # X, Y, Z extents (meters)
+
+# Exclusion zone (example safety barrier)
+exclusion_zone_center = p[0.0, 0.0, 0.0]
+exclusion_zone_size   = [0.2, 0.2, 0.2]
+
+# ----- Helper Functions -------------------------------------------------
+def inside_zone(pose, zone_center, zone_size):
+    # Returns true if pose is inside the axis‑aligned box defined by center & size
+    diff = pose[0:3] - zone_center[0:3]
+    return (abs(diff[0]) <= zone_size[0]/2) and \
+           (abs(diff[1]) <= zone_size[1]/2) and \
+           (abs(diff[2]) <= zone_size[2]/2)
+
+def safety_check():
+    # Verify robot is inside confinement and outside exclusion zones
+    cur_pose = get_actual_tcp_pose()
+    if not inside_zone(cur_pose, confine_zone_center, confine_zone_size):
+        popup("Safety violation: Outside confinement zone!", title="Error", error=True)
+        halt()
+    if inside_zone(cur_pose, exclusion_zone_center, exclusion_zone_size):
+        popup("Safety violation: Inside exclusion zone!", title="Error", error=True)
+        halt()
+    # Additional laser‑specific checks could be added here
+    return
+
+def e_stop_handler():
+    # Emergency stop routine – halts program and keeps robot in safe state
+    popup("EMERGENCY STOP ACTIVATED!", title="E‑Stop", error=True)
+    stopj(1.0)          # Stop all joints smoothly
+    set_standard_digital_out(0, False)   # Turn off laser (digital out 0 assumed)
+    halt()
+
+# Register e‑stop handler (called when digital input 1 goes high)
+set_standard_digital_in(1, True)   # Ensure input is configured
+def monitor_e_stop():
+    while(True):
+        if get_standard_digital_in(1):
+            e_stop_handler()
+        sleep(0.01)
+end
+
+# Start e‑stop monitor in background
+thread(monitor_e_stop)
+
+# ----- Waypoints ---------------------------------------------------------
+# All positions are defined in robot base frame (meters)
+home_pose           = p[0.0, -0.5, 0.5, 0, 3.14, 0]          # Joint 0 position (approx)
+above_surface_pose  = p[0.3, 0.0, 0.25, 0, 3.14, 0]         # 250 mm above workpiece
+marking_height_pose = p[0.3, 0.0, 0.10, 0, 3.14, 0]         # 100 mm above workpiece
+line1_start_pose    = p[0.3, -0.05, 0.10, 0, 3.14, 0]        # Start of line 1
+line1_end_pose      = p[0.3, 0.05, 0.10, 0, 3.14, 0]         # End of line 1
+line2_start_pose    = p[0.3, -0.05, 0.10, 0, 3.14, 0]        # Start of line 2 (offset in Y)
+line2_end_pose      = p[0.3, 0.05, 0.10, 0, 3.14, 0]         # End of line 2
+# Additional 5 moves (place‑holders)
+aux_pose1 = p[0.35, 0.0, 0.12, 0, 3.14, 0]
+aux_pose2 = p[0.35, 0.0, 0.08, 0, 3.14, 0]
+aux_pose3 = p[0.25, 0.0, 0.10, 0, 3.14, 0]
+aux_pose4 = p[0.25, 0.0, 0.12, 0, 3.14, 0]
+aux_pose5 = p[0.30, 0.0, 0.10, 0, 3.14, 0]
+
+# ----- Main Program -------------------------------------------------------
+def main():
+    # Ensure all waypoints are inside the allowed workspace
+    for wp in [home_pose, above_surface_pose, marking_height_pose,
+               line1_start_pose, line1_end_pose,
+               line2_start_pose, line2_end_pose,
+               aux_pose1, aux_pose2, aux_pose3, aux_pose4, aux_pose5]:
+        if not inside_zone(wp, confine_zone_center, confine_zone_size):
+            popup("Waypoint outside confinement zone!", title="Error", error=True)
+            halt()
+    
+    # 1) Move to Home (joint motion)
+    safety_check()
+    movej(home_pose, a=SAFE_JOINT_ACCEL, v=SAFE_JOINT_SPEED)
+
+    # 2) Move above marking surface (linear)
+    safety_check()
+    movel(above_surface_pose, a=MAX_JOINT_ACCEL, v=MAX_TCP_SPEED)
+
+    # 3) Descend to marking height
+    safety_check()
+    movel(marking_height_pose, a=MAX_JOINT_ACCEL, v=MAX_TCP_SPEED)
+
+    # 4) Mark line 1 (slow linear)
+    safety_check()
+    set_standard_digital_out(0, True)   # Laser ON
+    movel(line1_end_pose, a=MAX_JOINT_ACCEL, v=0.06)   # 60 mm/s → 0.06 m/s
+
+    # 5) Step to line 2 start (fast reposition, laser OFF)
+    set_standard_digital_out(0, False)  # Laser OFF
+    safety_check()
+    movel(line2_start_pose, a=MAX_JOINT_ACCEL, v=0.08) # 80 mm/s → 0.08 m/s
+
+    # 6) Mark line 2
+    safety_check()
+    set_standard_digital_out(0, True)   # Laser ON
+    movel(line2_end_pose, a=MAX_JOINT_ACCEL, v=0.06)
+
+    # 7) Auxiliary move 1
+    set_standard_digital_out(0, False)
+    safety_check()
+    movel(aux_pose1, a=MAX_JOINT_ACCEL, v=MAX_TCP_SPEED)
+
+    # 8) Auxiliary move 2
+    safety_check()
+    movel(aux_pose2, a=MAX_JOINT_ACCEL, v=MAX_TCP_SPEED)
+
+    # 9) Auxiliary move 3
+    safety_check()
+    movel(aux_pose3, a=MAX_JOINT_ACCEL, v=MAX_TCP_SPEED)
+
+    # 10) Return to Home
+    set_standard_digital_out(0, False)  # Ensure laser OFF
+    safety_check()
+    movej(home_pose, a=SAFE_JOINT_ACCEL, v=SAFE_JOINT_SPEED)
+
+    popup("Program completed safely.", title="Info")
+end
+
+# Execute main
+main()

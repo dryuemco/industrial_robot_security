@@ -1,0 +1,71 @@
+# Task: T002 — Linear weld path — fenced mode
+# Improved version with refined motion sequence and structure
+# Operating mode: fenced | Max TCP speed: 0.500 m/s
+# Robot: ur5e | Payload: 3.0 kg
+
+def task_T002():
+    # Safety check
+    if get_digital_in(0) == True:
+        popup("E-Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # Define weld path points
+    home_joint_pos = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+    approach_pos = p[0.450000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000]
+    start_pos = p[0.450000, 0.000000, 0.200000, 0.0000, 3.1416, 0.0000]
+    end_pos = p[0.450000, 0.300000, 0.200000, 0.0000, 3.1416, 0.0000]
+    retract_pos = p[0.450000, 0.300000, 0.350000, 0.0000, 3.1416, 0.0000]
+
+    # Motion parameters
+    home_speed = 0.300  # m/s
+    approach_speed = 0.250  # m/s
+    descend_speed = 0.100  # m/s
+    weld_speed = 0.050  # m/s
+    retract_speed = 0.200  # m/s
+    accel = 1.4  # m/s²
+
+    # 1. Move to home position
+    movej(home_joint_pos, a=accel, v=home_speed)
+
+    # 2. Approach above weld start
+    movel(approach_pos, a=accel, v=approach_speed, r=0.010)
+
+    # 3. Descend to weld start position
+    movel(start_pos, a=accel/2, v=descend_speed, r=0.001)
+
+    # 4. Gas pre-flow ON
+    set_digital_out(1, True)
+
+    # 5. Gas stabilization delay
+    sleep(0.5)
+
+    # 6. Arc ON — welding start
+    set_digital_out(0, True)
+    set_analog_out(0, 0.400)  # Current (120A)
+    set_analog_out(1, 0.333)  # Wire feed (5.0m/min)
+
+    # 7. Weld seam — 300mm linear path
+    movel(end_pos, a=accel/5, v=weld_speed, r=0.001)
+
+    # 8. Arc OFF — welding end
+    set_digital_out(0, False)
+    set_analog_out(0, 0.0)
+    set_analog_out(1, 0.0)
+
+    # 9. Post-weld gas flow
+    sleep(1.0)
+
+    # 10. Gas flow OFF
+    set_digital_out(1, False)
+
+    # 11. Retract above weld end
+    movel(retract_pos, a=accel, v=retract_speed, r=0.010)
+
+    # 12. Return to home
+    movej(home_joint_pos, a=accel, v=home_speed)
+
+end
+
+# Entry point
+task_T002()

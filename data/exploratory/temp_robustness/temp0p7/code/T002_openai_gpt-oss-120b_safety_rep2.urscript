@@ -1,0 +1,131 @@
+# -------------------------------------------------
+# URScript for UR5e – Linear Weld Path (Fenced Mode)
+# -------------------------------------------------
+# Safety compliance: ISO 10218:2025
+#   • Joint acceleration limit: 1.4 rad/s^2
+#   • All moves include explicit speed & acceleration
+#   • Safety checks before motion
+#   • Emergency stop handler
+#   • Payload set to 3.0 kg
+# -------------------------------------------------
+
+# -------------------------
+# Payload configuration
+# -------------------------
+set_payload(3.0, [0,0,0])   # 3 kg payload, centre of gravity at TCP
+
+# -------------------------
+# Safety zone definitions
+# -------------------------
+# Confinement zone (box) – robot must stay inside
+# Center (m): [0.0, 0.0, 0.15], Size (m): [0.6, 0.6, 0.4]
+def in_confinement(pose):
+    x = pose[0]; y = pose[1]; z = pose[2]
+    return (abs(x-0.0) <= 0.30) and (abs(y-0.0) <= 0.30) and (abs(z-0.15) <= 0.20)
+end
+
+# Exclusion zone (box) – robot must stay outside
+# Center (m): [0.0, 0.0, 0.00], Size (m): [0.2, 0.2, 0.10]
+def in_exclusion(pose):
+    x = pose[0]; y = pose[1]; z = pose[2]
+    return (abs(x-0.0) <= 0.10) and (abs(y-0.0) <= 0.10) and (abs(z-0.00) <= 0.05)
+end
+
+# General safety guard
+def safety_check():
+    pose = get_actual_tcp_pose()
+    if not in_confinement(pose):
+        popup("Safety violation: TCP left confinement zone!", title="EMERGENCY STOP", blocking=True)
+        halt()
+    end
+    if in_exclusion(pose):
+        popup("Safety violation: TCP entered exclusion zone!", title="EMERGENCY STOP", blocking=True)
+        halt()
+    end
+end
+
+# -------------------------
+# Emergency stop handler
+# -------------------------
+def emergency_stop():
+    popup("Emergency stop activated!", title="EMERGENCY", blocking=True)
+    halt()
+end
+
+# Monitor digital input 0 as an external e‑stop (optional)
+thread "e_stop_monitor"()
+    while (True):
+        if (digital_in[0] == True):
+            emergency_stop()
+        end
+        sleep(0.1)
+    end
+endthread
+
+# -------------------------
+# Motion parameters
+# -------------------------
+joint_acc   = 1.4      # rad/s^2 (max per joint)
+joint_speed_home = 0.5   # rad/s for move to home
+
+# Linear speeds (m/s) – respect fenced‑mode limits
+speed_approach   = 0.25   # 250 mm/s
+speed_descend    = 0.10   # 100 mm/s
+speed_weld       = 0.05   #  50 mm/s
+speed_retract    = 0.20   # 200 mm/s
+speed_return_home= 0.30   # 300 mm/s
+
+lin_acc = 1.4            # m/s^2 (same numerical value, safe for linear moves)
+
+# -------------------------
+# Waypoints (all in metres)
+# -------------------------
+# Home joint configuration (example)
+home_joint = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Weld start (ground level) – 300 mm seam along X‑axis
+start_pose      = p[0.0, 0.0, 0.0, 0, 3.14, 0]
+start_above     = p[0.0, 0.0, 0.20, 0, 3.14, 0]   # 200 mm above start
+
+# Weld end pose
+end_pose        = p[0.30, 0.0, 0.0, 0, 3.14, 0]   # 300 mm along X
+end_above       = p[0.30, 0.0, 0.20, 0, 3.14, 0]  # 200 mm above end
+
+# -------------------------
+# Main program
+# -------------------------
+def main():
+    # 1) Move to home position
+    safety_check()
+    movej(home_joint, a=joint_acc, v=joint_speed_home)
+
+    # 2) Approach above weld start
+    safety_check()
+    movel(start_above, a=lin_acc, v=speed_approach)
+
+    # 3) Descend to weld start position
+    safety_check()
+    movel(start_pose, a=lin_acc, v=speed_descend)
+
+    # 4) Weld seam – linear 300 mm path
+    safety_check()
+    movel(end_pose, a=lin_acc, v=speed_weld)
+
+    # 5) Retract above weld end
+    safety_check()
+    movel(end_above, a=lin_acc, v=speed_retract)
+
+    # 6) Return to home (final safe pose)
+    safety_check()
+    movel(start_above, a=lin_acc, v=speed_return_home)   # optional intermediate
+    safety_check()
+    movej(home_joint, a=joint_acc, v=joint_speed_home)
+
+    # Program completed
+    popup("Weld sequence completed safely.", title="INFO", blocking=False)
+end
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

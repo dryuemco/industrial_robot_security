@@ -1,0 +1,100 @@
+# -------------------------------------------------
+# URScript for UR5e collaborative pick‑place (T001)
+# Payload: 0.5 kg, collaborative mode, ISO 10218:2025 compliant
+# -------------------------------------------------
+
+# ---------- Configuration ----------
+payload_mass = 0.5                           # kg
+payload_cog = [0,0,0.1]                       # m, approximate centre of gravity
+set_payload(payload_mass, payload_cog)
+
+# Speed & acceleration limits (must respect max TCP speed 0.25 m/s and joint accel 1.4 rad/s²)
+speed_tcp      = 0.20                         # m/s  (200 mm/s)
+accel_tcp      = 0.50                         # m/s²
+speed_joint    = 0.5                          # rad/s
+accel_joint    = 1.0                          # rad/s²  (< 1.4)
+
+# Workspace boundaries (metres)
+workspace_min = [-0.80, -0.80, 0.00]
+workspace_max = [ 0.80,  0.80, 1.20]
+
+# Exclusion safety zone (example box) – robot must not enter
+excl_min = [0.50, -0.10, 0.00]
+excl_max = [0.60,  0.10, 0.20]
+
+# ---------- Helper Functions ----------
+def in_range(val, min_val, max_val):
+    return (val >= min_val) and (val <= max_val)
+
+def pose_within_workspace(p):
+    return (in_range(p[0], workspace_min[0], workspace_max[0]) and
+            in_range(p[1], workspace_min[1], workspace_max[1]) and
+            in_range(p[2], workspace_min[2], workspace_max[2]))
+
+def pose_in_exclusion_zone(p):
+    return (in_range(p[0], excl_min[0], excl_max[0]) and
+            in_range(p[1], excl_min[1], excl_max[1]) and
+            in_range(p[2], excl_min[2], excl_max[2]))
+
+def safety_check(p):
+    if not pose_within_workspace(p):
+        popup("Safety violation: Pose outside workspace!", title="Error", error=True)
+        halt()
+    if pose_in_exclusion_zone(p):
+        popup("Safety violation: Pose inside exclusion zone!", title="Error", error=True)
+        halt()
+
+def e_stop():
+    popup("Emergency stop triggered!", title="E‑STOP", error=True)
+    halt()
+
+# ---------- Waypoints ----------
+home_joint      = [0, -1.57, 0, -1.57, 0, 0]                     # rad
+pick_approach   = p[0.40, -0.20, 0.30, 0, 3.14, 0]                # m
+pick_point      = p[0.40, -0.20, 0.10, 0, 3.14, 0]                # m
+lift_point      = p[0.40, -0.20, 0.30, 0, 3.14, 0]                # m
+place_approach  = p[0.60,  0.20, 0.30, 0, 3.14, 0]                # m
+place_point     = p[0.60,  0.20, 0.10, 0, 3.14, 0]                # m
+place_lift      = p[0.60,  0.20, 0.30, 0, 3.14, 0]                # m
+
+# ---------- Main Program ----------
+def main():
+    # 1) Move to home position (joint move)
+    safety_check(p[0,0,0,0,0,0])   # dummy pose for joint safety (always safe)
+    movej(home_joint, a=accel_joint, v=speed_joint, t=0, r=0)
+
+    # 2) Approach pick point (linear)
+    safety_check(pick_approach)
+    movel(pick_approach, a=accel_tcp, v=speed_tcp, t=0, r=0)
+
+    # 3) Descend to pick (slower)
+    safety_check(pick_point)
+    movel(pick_point, a=accel_tcp, v=0.10, t=0, r=0)   # 100 mm/s
+
+    # 4) Lift from pick
+    safety_check(lift_point)
+    movel(lift_point, a=accel_tcp, v=0.15, t=0, r=0)   # 150 mm/s
+
+    # 5) Transit to place approach
+    safety_check(place_approach)
+    movel(place_approach, a=accel_tcp, v=speed_tcp, t=0, r=0)
+
+    # 6) Descend to place
+    safety_check(place_point)
+    movel(place_point, a=accel_tcp, v=0.10, t=0, r=0)  # 100 mm/s
+
+    # 7) Release (placeholder for gripper command)
+    # set_digital_out(0, False)   # open gripper – adapt to actual I/O
+
+    # 8) Lift from place
+    safety_check(place_lift)
+    movel(place_lift, a=accel_tcp, v=0.15, t=0, r=0)   # 150 mm/s
+
+    # Return to home
+    safety_check(p[0,0,0,0,0,0])   # dummy safety check
+    movej(home_joint, a=accel_joint, v=speed_joint, t=0, r=0)
+
+# -------------------------------------------------
+# Run the program
+# -------------------------------------------------
+main()

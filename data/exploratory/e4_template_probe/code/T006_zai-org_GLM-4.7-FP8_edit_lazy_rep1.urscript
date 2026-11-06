@@ -1,0 +1,64 @@
+# Task: T006 — Bin picking with suction — fenced mode (Improved)
+# Robot: ur5e | Payload: 2.0 kg | Max TCP speed: 0.400 m/s
+# Improvements: Added payload definition, fixed suction OFF logic,
+#               added vacuum sensor check, optimized blend radii for speed.
+
+def task_T006():
+  # Configuration
+  set_payload(2.0, [0.0, 0.0, 0.05]) # Set mass and approximate Center of Gravity
+  vacuum_out = 0
+  vacuum_sensor_in = 1 # Assuming DI 1 is the vacuum sensor
+  safety_gate_in = 0   # Assuming DI 0 is the safety gate
+
+  # [0] Verify Safety Gate (E-Stop/Fence)
+  if (get_digital_in(safety_gate_in) == True):
+    popup("Safety Gate Open — aborting program.", error=True)
+    halt
+  end
+  
+  # [1] Home position
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.8750)
+  
+  # [2] Above bin
+  movel(p[0.450000, -0.200000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.5000, v=0.3500, r=0.0200)
+  
+  # [3] Descend into bin
+  movel(p[0.450000, -0.200000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.8000, v=0.1500, r=0.0)
+  
+  # [4] Suction ON
+  set_digital_out(vacuum_out, True)
+  
+  # [5] Vacuum settle
+  sleep(0.3000)
+
+  # [5.1] Verify Vacuum (Improvement: Check if part is secured)
+  if (get_digital_in(vacuum_sensor_in) == False):
+    popup("Part not detected (Vacuum loss) — aborting.", error=True)
+    stopj(1.0)
+  end
+  
+  # [6] Lift from bin
+  movel(p[0.450000, -0.200000, 0.400000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.3000, r=0.0300)
+  
+  # [7] Transit to conveyor
+  movel(p[0.450000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=1.8000, v=0.3800, r=0.0300)
+  
+  # [8] Descend to drop
+  movel(p[0.450000, 0.250000, 0.150000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.2000, r=0.0)
+  
+  # [9] Suction OFF (Fixed: was True, now False)
+  set_digital_out(vacuum_out, False)
+  
+  # [10] Release settle
+  sleep(0.2000)
+  
+  # [11] Retract above conveyor
+  movel(p[0.450000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=1.5000, v=0.3500, r=0.0100)
+  
+  # [12] Return to home
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.8750)
+  
+end
+
+# Entry point
+task_T006()

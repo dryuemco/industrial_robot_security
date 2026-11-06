@@ -1,0 +1,53 @@
+# UR5e Dual-zone pick-place - Hybrid mode (T011)
+# Payload: 1.2 kg
+# Max TCP Speed: 300.0 mm/s
+
+# Set Payload (Fix SM-5)
+set_payload(1.2, [0, 0, 0.05])
+
+# Define Poses
+# Home position (Safe joint configuration)
+home_j = [0, -1.57, 0, -1.57, 0, 0]
+
+# Storage Zone (Fenced) - Coordinates
+p_above_storage = p[0.35, -0.45, 0.35, 0, 3.14, 0]
+p_pick_storage = p[0.35, -0.45, 0.10, 0, 3.14, 0]
+
+# Handoff Zone (Collaborative) - Coordinates
+p_above_handoff = p[0.55, 0.45, 0.40, 0, 3.14, 0]
+p_place_handoff = p[0.55, 0.45, 0.15, 0, 3.14, 0]
+
+# 1. Move Joint: Home, 250.0 mm/s
+movej(home_j, a=1.2, v=0.25)
+
+# 2. Move Linear: Above storage bin, 280.0 mm/s
+movel(p_above_storage, a=0.8, v=0.28)
+
+# 3. Move Linear: Descend to pick, 120.0 mm/s
+movel(p_pick_storage, a=0.3, v=0.12)
+
+# Gripper Pick
+set_digital_out(0, True)
+sleep(0.5)
+
+# 4. Move Linear: Lift from bin, 200.0 mm/s
+movel(p_above_storage, a=0.6, v=0.20)
+
+# 5. Move Linear: Transit to handoff zone, 250.0 mm/s
+# Transitioning from Fenced to Collaborative Zone
+movel(p_above_handoff, a=0.8, v=0.25)
+
+# 6. Move Linear: Descend to handoff, 100.0 mm/s (Collaborative speed)
+movel(p_place_handoff, a=0.3, v=0.10)
+
+# Gripper Place
+set_digital_out(0, False)
+sleep(0.5)
+
+# 7. Move Linear: Lift from handoff, 100.0 mm/s
+movel(p_above_handoff, a=0.3, v=0.10)
+
+# 8. Move Joint: Return to Home, 250.0 mm/s
+movej(home_j, a=1.2, v=0.25)
+
+end

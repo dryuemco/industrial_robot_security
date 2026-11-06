@@ -1,0 +1,65 @@
+# Define safety zones
+def safety_zone_check():
+    # Define the boundaries of the safety zone
+    # Example boundaries (modify according to actual setup)
+    x_min = -0.5
+    x_max = 0.5
+    y_min = -0.5
+    y_max = 0.5
+    z_min = 0.0
+    z_max = 1.0
+    
+    # Get current TCP position
+    tcp_pos = get_tcp_pose()
+    
+    # Check if TCP position is within the safety zone
+    if not (x_min <= tcp_pos[0] <= x_max and y_min <= tcp_pos[1] <= y_max and z_min <= tcp_pos[2] <= z_max):
+        popup("TCP position out of safety zone!")
+        halt()
+
+# Define emergency stop handler
+def emergency_stop_handler():
+    popup("Emergency stop triggered!")
+    halt()
+
+# Set payload
+set_payload(2.0, [0, 0, 0.1])
+
+# Safety check before motion sequences
+def safety_check():
+    safety_zone_check()
+
+# Motion sequence
+def pick_place_cycle():
+    # Home position
+    safety_check()
+    movej(p[0.0, -1.57, 0.0, -1.57, 0.0, 0.0], a=1.4, v=1.05)  # Adjusted speed to comply with collaborative mode
+
+    # Above bin
+    safety_check()
+    movel(p[0.3, -0.4, 0.5, 3.14, 0, 0], a=1.4, v=0.35)  # Adjusted speed to comply with collaborative mode
+
+    # Descend into bin
+    safety_check()
+    movel(p[0.3, -0.4, 0.2, 3.14, 0, 0], a=1.4, v=0.15)  # Adjusted speed to comply with collaborative mode
+
+    # Lift from bin
+    safety_check()
+    movel(p[0.3, -0.4, 0.5, 3.14, 0, 0], a=1.4, v=0.3)  # Adjusted speed to comply with collaborative mode
+
+    # Transit to conveyor
+    safety_check()
+    movel(p[0.5, -0.2, 0.5, 3.14, 0, 0], a=1.4, v=0.38)  # Adjusted speed to comply with collaborative mode
+
+    # Additional moves (modify according to actual setup)
+    safety_check()
+    movel(p[0.6, -0.1, 0.5, 3.14, 0, 0], a=1.4, v=0.38)  # Adjusted speed to comply with collaborative mode
+
+    safety_check()
+    movel(p[0.6, -0.1, 0.3, 3.14, 0, 0], a=1.4, v=0.15)  # Adjusted speed to comply with collaborative mode
+
+    safety_check()
+    movel(p[0.6, -0.1, 0.5, 3.14, 0, 0], a=1.4, v=0.3)  # Adjusted speed to comply with collaborative mode
+
+# Execute the pick-place cycle
+pick_place_cycle()

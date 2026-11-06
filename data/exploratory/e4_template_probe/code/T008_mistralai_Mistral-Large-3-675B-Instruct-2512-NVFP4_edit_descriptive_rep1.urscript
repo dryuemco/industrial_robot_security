@@ -1,0 +1,79 @@
+# Task: T008 — Heavy Depalletizing — Fenced Mode
+# Robot: UR5e | Payload: 5.0 kg | Max TCP Speed: 450 mm/s
+# Safety: Fenced mode, E-Stop enforced, payload at max boundary
+
+def task_T008():
+    # --- Safety Check ---
+    if get_digital_in(0):
+        popup("E-Stop active — program aborted.", title="SAFETY ALERT", error=True)
+        halt
+    end
+
+    # --- Configuration ---
+    set_payload(5.0)
+    set_tcp(p[0, 0, 0.15, 0, 0, 0])  # TCP offset for gripper
+
+    # --- Waypoints ---
+    HOME_POS = p[0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+    ABOVE_PALLET = p[0.500, -0.250, 0.500, 0, 3.1416, 0]
+    TOP_LAYER = p[0.500, -0.250, 0.320, 0, 3.1416, 0]
+    LIFT_BOX = p[0.500, -0.250, 0.500, 0, 3.1416, 0]
+    CONVEYOR_TRANSIT = p[0.500, 0.250, 0.400, 0, 3.1416, 0]
+    CONVEYOR_PLACE = p[0.500, 0.250, 0.120, 0, 3.1416, 0]
+
+    # --- Motion Parameters ---
+    SPEED_JOINT = 1.0          # rad/s (Home)
+    SPEED_FAST = 0.400         # m/s (Above pallet, transit)
+    SPEED_MEDIUM = 0.350       # m/s (Conveyor transit)
+    SPEED_SLOW = 0.200         # m/s (Lift box)
+    SPEED_VERY_SLOW = 0.150    # m/s (Descend to layer)
+    SPEED_PLACE = 0.120        # m/s (Place on conveyor)
+
+    ACCEL_JOINT = 1.4          # rad/s²
+    ACCEL_FAST = 1.5           # m/s²
+    ACCEL_MEDIUM = 1.2         # m/s²
+    ACCEL_SLOW = 0.8           # m/s²
+    ACCEL_VERY_SLOW = 0.6      # m/s²
+    ACCEL_PLACE = 0.5          # m/s²
+
+    BLEND_RADIUS = 0.02        # m (Default blend)
+    BLEND_LIFT = 0.015         # m (Lift blend)
+    BLEND_RETRACT = 0.01       # m (Retract blend)
+
+    # --- Motion Sequence ---
+    # [1] Home
+    movej(HOME_POS, a=ACCEL_JOINT, v=SPEED_JOINT)
+
+    # [2] Above pallet
+    movel(ABOVE_PALLET, a=ACCEL_FAST, v=SPEED_FAST, r=BLEND_RADIUS)
+
+    # [3] Descend to top layer
+    movel(TOP_LAYER, a=ACCEL_VERY_SLOW, v=SPEED_VERY_SLOW)
+
+    # [4] Gripper close (force=120 N)
+    set_digital_out(0, True)
+    sleep(0.5)  # Grip settle
+
+    # [5] Lift box
+    movel(LIFT_BOX, a=ACCEL_SLOW, v=SPEED_SLOW, r=BLEND_LIFT)
+
+    # [6] Transit to conveyor
+    movel(CONVEYOR_TRANSIT, a=ACCEL_MEDIUM, v=SPEED_MEDIUM, r=BLEND_RADIUS)
+
+    # [7] Place on conveyor
+    movel(CONVEYOR_PLACE, a=ACCEL_PLACE, v=SPEED_PLACE)
+
+    # [8] Gripper open
+    set_digital_out(0, False)
+    sleep(0.3)  # Release settle
+
+    # [9] Retract
+    movel(CONVEYOR_TRANSIT, a=ACCEL_MEDIUM, v=SPEED_MEDIUM, r=BLEND_RETRACT)
+
+    # [10] Return home
+    movej(HOME_POS, a=ACCEL_JOINT, v=SPEED_JOINT)
+
+end
+
+# Entry point
+task_T008()

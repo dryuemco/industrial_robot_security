@@ -1,0 +1,76 @@
+def eurpallet_2x2_hybrid():
+  # Safety configuration
+  set_standard_analog_input_domain(0, 1)
+  set_standard_digital_input_action(0, "none")
+  set_tool_voltage(0)
+  set_runstate_outputs([])
+  set_payload(4.5)
+  set_tcp(p[0, 0, 0.1, 0, 0, 0])
+
+  # Safety confinement zones
+  conf1 = p[0.0, -1.0, 0.0, 0.0, 0.0, 0.0]
+  conf2 = p[1.5, 1.0, 2.0, 0.0, 0.0, 0.0]
+  zone_confinement(conf1, conf2, "pallet_zone")
+
+  conf3 = p[-0.5, -0.5, 0.0, 0.0, 0.0, 0.0]
+  conf4 = p[0.5, 0.5, 1.5, 0.0, 0.0, 0.0]
+  zone_confinement(conf3, conf4, "conveyor_zone")
+
+  # Motion parameters
+  speed_home = 250.0/1000
+  speed_approach = 250.0/1000
+  speed_descend = 100.0/1000
+  speed_lift = 200.0/1000
+  speed_transit = 280.0/1000
+  speed_place = 150.0/1000
+  accel = 1200.0/1000
+
+  # Waypoints
+  home_pos = p[0.0, -0.8, 0.6, 0, 3.14, 0]
+  conveyor_approach = p[0.0, 0.0, 0.2, 0, 3.14, 0]
+  conveyor_pick = p[0.0, 0.0, 0.05, 0, 3.14, 0]
+  conveyor_lift = p[0.0, 0.0, 0.2, 0, 3.14, 0]
+  pallet_approach = p[0.0, -0.8, 0.3, 0, 3.14, 0]
+  pallet_positions = [
+    p[0.1, -0.7, 0.05, 0, 3.14, 0],
+    p[0.1, -0.5, 0.05, 0, 3.14, 0],
+    p[0.3, -0.7, 0.05, 0, 3.14, 0],
+    p[0.3, -0.5, 0.05, 0, 3.14, 0]
+  ]
+
+  # Main program
+  while True:
+    # Move to home position
+    movej(home_pos, a=accel, v=speed_home)
+
+    # Enable fenced mode for transit
+    set_safety_mode("reduced")
+    zone_enable("pallet_zone", True)
+
+    # Pick from conveyor
+    movej(conveyor_approach, a=accel, v=speed_approach)
+    movel(conveyor_pick, a=accel, v=speed_descend)
+    gripper_activate()
+    movel(conveyor_lift, a=accel, v=speed_lift)
+
+    # Transit to pallet
+    movel(pallet_approach, a=accel, v=speed_transit)
+
+    # Switch to collaborative mode for palletizing
+    set_safety_mode("normal")
+    zone_enable("pallet_zone", False)
+    zone_enable("conveyor_zone", True)
+
+    # Place boxes in 2x2 pattern
+    for pos in pallet_positions:
+      movel(pos, a=accel, v=speed_place)
+      gripper_release()
+      movel(pallet_approach, a=accel, v=speed_lift)
+
+    # Return to home
+    movej(home_pos, a=accel, v=speed_home)
+
+    # Reset safety zones
+    zone_enable("conveyor_zone", False)
+    sync()
+end

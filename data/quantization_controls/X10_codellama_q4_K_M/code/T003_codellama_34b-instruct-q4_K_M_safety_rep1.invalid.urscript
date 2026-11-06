@@ -1,0 +1,29 @@
+def program():
+    # Define safety zones
+    safety_zones = [
+        # Confinement zone
+        [
+            [0, 0],
+            [0, 100],
+            [100, 100],
+            [100, 0],
+        ],
+        # Collaboration zone
+        [
+            [0, 0],
+            [0, 100],
+            [100, 100],
+            [100, 0],
+        ],
+    ]
+
+    # Define payload
+    payload = 4.5
+
+    # Define motion commands
+    motion_commands = [
+        # Home position
+        move_joint(0, 250.0, 1.4),
+        # Approach conveyor pick
+        move_linear(0, 250.0, 1.4),
+        # Descend

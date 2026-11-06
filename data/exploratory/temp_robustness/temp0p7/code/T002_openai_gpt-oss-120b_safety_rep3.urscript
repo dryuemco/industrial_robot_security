@@ -1,0 +1,123 @@
+# -------------------------------------------------
+# URScript for UR5e – Linear Weld Path (Fenced Mode)
+# Safety‑Compliant (ISO 10218:2025)
+# -------------------------------------------------
+
+# ---- Configuration -------------------------------------------------
+payload_mass = 3.0                                   # kg
+payload_cog  = [0,0,0.1]                              # centre of gravity (m)
+set_payload(payload_mass, payload_cog)
+
+# Joint speed/acceleration limits (per joint)
+joint_speed_limit    = 1.5        # rad/s   (below 1.4 rad/s² acceleration limit)
+joint_accel_limit    = 1.4        # rad/s²
+
+# TCP speed/acceleration limits for this fenced task
+tcp_speed_limit      = 0.5        # m/s  (500 mm/s – allowed in fenced mode)
+tcp_accel_limit      = 0.5        # m/s² (chosen safely below joint limits)
+
+# ---- Safety Zones ---------------------------------------------------
+# Confinement zone (workspace) – cuboid limits (meters)
+confine_min = [-0.8, -0.8, 0.0]
+confine_max = [ 0.8,  0.8, 1.2]
+
+# Exclusion zone – area that must never be entered (example)
+excl_min = [ -0.2, -0.2, 0.0]
+excl_max = [  0.2,  0.2, 0.5]
+
+# ---- Helper Functions ------------------------------------------------
+def safety_check(p):
+    # p is a pose list [x,y,z,rx,ry,rz]
+    # Check confinement
+    if not (confine_min[0] <= p[0] <= confine_max[0] and
+            confine_min[1] <= p[1] <= confine_max[1] and
+            confine_min[2] <= p[2] <= confine_max[2]):
+        popup("Safety violation: Outside confinement zone!", title="ERROR", error=True)
+        halt()
+    # Check exclusion
+    if (excl_min[0] <= p[0] <= excl_max[0] and
+        excl_min[1] <= p[1] <= excl_max[1] and
+        excl_min[2] <= p[2] <= excl_max[2]):
+        popup("Safety violation: Entered exclusion zone!", title="ERROR", error=True)
+        halt()
+    return True
+
+def emergency_stop():
+    popup("Emergency stop activated!", title="EMERGENCY", error=True)
+    stopj(2)    # brake all joints
+    halt()
+
+# Register emergency stop handler (UR controller calls this on safety stop)
+def on_stop():
+    emergency_stop()
+end
+
+# ---- Waypoints -------------------------------------------------------
+# Joint configuration for Home position
+home_joints = [-1.57, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Cartesian poses (meters & radians)
+# 1. Above weld start (150 mm above the workpiece)
+pose_above_start = p[0.0, -0.4, 0.3, 0, 3.1415, 0]
+
+# 2. Weld start position (contact point)
+pose_start = p[0.0, -0.4, 0.15, 0, 3.1415, 0]
+
+# 3. Weld end position – 300 mm along the X‑axis
+pose_end = p[0.3, -0.4, 0.15, 0, 3.1415, 0]
+
+# 4. Above weld end (retract)
+pose_above_end = p[0.3, -0.4, 0.3, 0, 3.1415, 0]
+
+# 5. Safe standby pose (e.g., park)
+pose_park = p[0.5, -0.5, 0.5, 0, 3.1415, 0]
+
+# ---- Motion Sequence -------------------------------------------------
+def main():
+    # ---- 1) Move to Home (joint move) --------------------------------
+    movej(home_joints, a=joint_accel_limit, v=joint_speed_limit, t=0, r=0)
+
+    # ---- 2) Approach above weld start --------------------------------
+    if safety_check(pose_above_start):
+        movel(pose_above_start,
+              a=tcp_accel_limit,
+              v=min(0.25, tcp_speed_limit),   # 250 mm/s (max collaborative speed)
+              radius=0.0)
+
+    # ---- 3) Descend to weld start ------------------------------------
+    if safety_check(pose_start):
+        movel(pose_start,
+              a=tcp_accel_limit,
+              v=min(0.10, tcp_speed_limit),   # 100 mm/s
+              radius=0.0)
+
+    # ---- 4) Weld seam – linear 300 mm at 50 mm/s --------------------
+    if safety_check(pose_end):
+        # Activate welding arc (placeholder – replace with I/O)
+        set_digital_out(0, True)   # torch ON
+        movel(pose_end,
+              a=tcp_accel_limit,
+              v=min(0.05, tcp_speed_limit),   # 50 mm/s
+              radius=0.0)
+        set_digital_out(0, False)  # torch OFF
+
+    # ---- 5) Retract above weld end ------------------------------------
+    if safety_check(pose_above_end):
+        movel(pose_above_end,
+              a=tcp_accel_limit,
+              v=min(0.20, tcp_speed_limit),   # 200 mm/s
+              radius=0.0)
+
+    # ---- 6) Return to Park (final pose) -------------------------------
+    if safety_check(pose_park):
+        movel(pose_park,
+              a=tcp_accel_limit,
+              v=min(0.30, tcp_speed_limit),   # 300 mm/s (allowed in fenced mode)
+              radius=0.0)
+
+    # End of task – hold position safely
+    stopj(2)
+
+# -------------------------------------------------
+# Execute
+main()

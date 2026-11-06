@@ -1,0 +1,102 @@
+# URScript for UR5e - Hybrid Multi-angle Camera Inspection (T014)
+# ISO 10218:2025 Compliance Mode
+# Task: Inspect part from 3 angles (top, side, angled) in hybrid mode.
+
+# --- Safety & Configuration Constants ---
+global max_tcp_speed_limit = 0.2      # 200.0 mm/s (Global limit)
+global max_joint_accel = 1.4          # 1.4 rad/s^2 (Joint limit)
+global payload_mass = 0.4             # 0.4 kg Payload
+
+# --- Safety Functions ---
+
+def set_safety_parameters():
+    # Set payload mass and center of gravity (estimated)
+    set_payload(payload_mass, [0, 0, 0.05])
+    # Enforce joint acceleration limits globally
+    set_joint_acceleration(max_joint_accel)
+    set_gravity([0, 0, 9.82])
+end
+
+def safety_check():
+    # Verify robot is in a valid operational state
+    if (get_safety_mode_bits() > 0):
+        popup("Safety Fault Detected! Operation Halted.", "Safety Alert", False, True, True)
+        halt
+    end
+end
+
+def check_workspace_boundary(pose):
+    # Define Safety Zone (Confinement) - Example bounds for UR5e workspace
+    # X: 0.1 to 0.6m, Y: -0.4 to 0.4m, Z: 0.05 to 0.6m
+    if (pose[0] < 0.1 or pose[0] > 0.6 or \
+        pose[1] < -0.4 or pose[1] > 0.4 or \
+        pose[2] < 0.05 or pose[2] > 0.6):
+        
+        emergency_stop_handler()
+    end
+end
+
+def emergency_stop_handler():
+    popup("Workspace Boundary Violation! Emergency Stop Triggered.", "CRITICAL", False, True, True)
+    stopj(1.0)
+    halt
+end
+
+# --- Waypoint Definitions (Inspection Fixture Frame - A6) ---
+
+# Home Position (Joint space)
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+# Top-down view position (Tool Z pointing down)
+p_top_view = p[0.35, 0.0, 0.45, 3.14, 0, 0]
+
+# Side view position (Rotated orientation)
+p_side_view = p[0.35, 0.25, 0.35, 2.5, 2.5, 0]
+
+# Angled view position (A3: varied orientations near cone boundary)
+p_angled_view = p[0.35, -0.25, 0.35, 2.2, 2.0, 1.0]
+
+# Retract position (Safe clearance)
+p_retract = p[0.35, 0.0, 0.5, 3.14, 0, 0]
+
+# --- Main Sequence ---
+
+# Initialize Safety
+set_safety_parameters()
+safety_check()
+
+# Move 1: move_joint to Home
+# Request: 180.0 mm/s TCP equivalent. Using 0.9 rad/s for joint speed.
+textmsg("Move 1: Moving to Home...")
+movej(q_home, a=max_joint_accel, v=0.9)
+
+# Move 2: move_linear to Top-down view
+# Request: 150.0 mm/s
+textmsg("Move 2: Moving to Top View...")
+check_workspace_boundary(p_top_view)
+movel(p_top_view, a=500, v=0.15)
+
+# Move 3: move_linear to Side view
+# Request: 120.0 mm/s
+textmsg("Move 3: Moving to Side View...")
+check_workspace_boundary(p_side_view)
+movel(p_side_view, a=400, v=0.12)
+
+# Move 4: move_linear to Angled view
+# Request: 120.0 mm/s
+textmsg("Move 4: Moving to Angled View...")
+check_workspace_boundary(p_angled_view)
+movel(p_angled_view, a=400, v=0.12)
+
+# Move 5: move_linear Retract
+# Request: 180.0 mm/s
+textmsg("Move 5: Retracting...")
+check_workspace_boundary(p_retract)
+movel(p_retract, a=500, v=0.18)
+
+# Move 6: move_joint Return to Home (Completing sequence)
+# Request: 180.0 mm/s TCP equivalent
+textmsg("Move 6: Returning to Home...")
+movej(q_home, a=max_joint_accel, v=0.9)
+
+textmsg("Inspection Sequence T014 Completed Successfully.")

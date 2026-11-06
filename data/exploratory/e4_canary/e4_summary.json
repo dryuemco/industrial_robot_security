@@ -1,0 +1,41 @@
+{
+  "experiment": "E4",
+  "timestamp": "2026-06-12T16:56:00.623835+00:00",
+  "total_calls": 4,
+  "successful": 4,
+  "errors": 0,
+  "refusals": 0,
+  "per_model": {
+    "mistralai/Devstral-Small-2-24B-Instruct-2512": {
+      "calls": 4,
+      "attempted_calls": 4,
+      "invalid_pseudocode_calls": 0,
+      "gate_pass_rate": 1.0,
+      "mean_violations": 4.25,
+      "violation_rate": 1.0,
+      "mean_latency_ms": 14800
+    }
+  },
+  "per_condition": {
+    "A_control": {
+      "calls": 1,
+      "mean_violations": 4.0,
+      "violation_rate": 1.0
+    },
+    "B_descriptive": {
+      "calls": 1,
+      "mean_violations": 3.0,
+      "violation_rate": 1.0
+    },
+    "B_lazy": {
+      "calls": 1,
+      "mean_violations": 5.0,
+      "violation_rate": 1.0
+    },
+    "B_perf": {
+      "calls": 1,
+      "mean_violations": 5.0,
+      "violation_rate": 1.0
+    }
+  }
+}

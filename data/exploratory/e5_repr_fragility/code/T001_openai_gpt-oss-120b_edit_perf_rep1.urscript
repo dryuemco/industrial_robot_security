@@ -1,0 +1,77 @@
+# Optimized Task: T001 — Simple collaborative pick‑place
+# Faster cycle time while respecting collaborative limits (max TCP 0.250 m/s)
+
+def task_T001():
+  TCP_SPEED_CAP = 0.250
+
+  # Wrapper that enforces the TCP speed cap
+  def safe_movel(pose, a, v, r):
+    if (v > TCP_SPEED_CAP):
+      popup("TCP speed cap exceeded", error=True)
+      halt
+    end
+    movel(pose, a=a, v=v, r=r)
+  end
+
+  # -------------------------------------------------
+  # Safety: E‑Stop check (hardware enforced on controller)
+  if get_digital_in(0):
+    popup("E‑Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # Speed/acceleration presets
+  a_fast = 1.0   # higher acceleration for long moves
+  a_mid  = 0.5
+  v_fast = 0.250 # max allowed TCP speed
+  v_mid  = 0.200
+  v_slow = 0.100
+
+  # -------------------------------------------------
+  # 1) Home position (joint move)
+  movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+        a=1.4000, v=0.5000)
+
+  # 2) Approach pick point (linear, blended)
+  safe_movel(p[0.400, 0.000, 0.350, 0.0, 3.1416, 0.0],
+             a_mid, v_mid, 0.010)
+
+  # 3) Descend to pick (slow, no blend)
+  safe_movel(p[0.400, 0.000, 0.200, 0.0, 3.1416, 0.0],
+             a_mid, v_slow, 0.0)
+
+  # 4) Close gripper
+  set_digital_out(0, True)
+  sleep(0.200)   # reduced settle time
+
+  # 5) Lift from pick (blended)
+  safe_movel(p[0.400, 0.000, 0.350, 0.0, 3.1416, 0.0],
+             a_mid, v_mid, 0.010)
+
+  # 6) Transit to place approach (blended)
+  safe_movel(p[0.400, 0.200, 0.350, 0.0, 3.1416, 0.0],
+             a_mid, v_mid, 0.010)
+
+  # 7) Descend to place (slow, no blend)
+  safe_movel(p[0.400, 0.200, 0.200, 0.0, 3.1416, 0.0],
+             a_mid, v_slow, 0.0)
+
+  # 8) Open gripper
+  set_digital_out(0, False)
+  sleep(0.100)   # reduced release settle time
+
+  # 9) Retract from place (blended)
+  safe_movel(p[0.400, 0.200, 0.350, 0.0, 3.1416, 0.0],
+             a_mid, v_mid, 0.010)
+
+  # 10) Return to home – fast linear segment then joint move
+  safe_movel(p[0.400, 0.000, 0.350, 0.0, 3.1416, 0.0],
+             a_fast, v_fast, 0.020)
+
+  movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+        a=1.4000, v=0.5000)
+
+end
+
+# Entry point
+task_T001()

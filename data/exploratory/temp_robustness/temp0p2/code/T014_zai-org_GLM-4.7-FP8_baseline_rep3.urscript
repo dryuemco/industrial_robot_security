@@ -1,0 +1,46 @@
+# Program: Hybrid multi-angle camera inspection (T014)
+# Robot: UR5e
+# Payload: 0.4 kg
+# Max TCP Speed: 200.0 mm/s
+
+# Set payload (mass in kg, center of gravity in meters)
+set_payload(0.4, [0.0, 0.0, 0.05])
+
+# Define Waypoints
+# Home position (Joint space)
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Inspection Waypoints (Pose vectors: x, y, z, rx, ry, rz)
+# Top-down view (Camera pointing down)
+p_top = p[0.35, 0.0, 0.45, 3.14, 0.0, 0.0]
+
+# Side view (Camera rotated to look from side)
+p_side = p[0.35, 0.2, 0.25, 0.0, 3.14, 0.0]
+
+# Angled view (Tilted orientation near cone boundary)
+p_angled = p[0.35, -0.2, 0.3, 2.5, 0.0, 0.0]
+
+# Retract position (Safe distance from part)
+p_retract = p[0.35, -0.2, 0.4, 2.5, 0.0, 0.0]
+
+# Motion Sequence
+# 1. Move to Home (Joint move, 180.0 mm/s)
+movej(j_home, a=1.2, v=0.18)
+
+# 2. Move to Top-down view position (Linear, 150.0 mm/s)
+movel(p_top, a=0.5, v=0.15)
+
+# 3. Move to Side view position (Linear, 120.0 mm/s)
+movel(p_side, a=0.5, v=0.12)
+
+# 4. Move to Angled view position (Linear, 120.0 mm/s)
+movel(p_angled, a=0.5, v=0.12)
+
+# 5. Retract (Linear, 180.0 mm/s)
+movel(p_retract, a=0.5, v=0.18)
+
+# 6. Return to Home (Joint move, 180.0 mm/s)
+movej(j_home, a=1.2, v=0.18)
+
+# End of program
+halt

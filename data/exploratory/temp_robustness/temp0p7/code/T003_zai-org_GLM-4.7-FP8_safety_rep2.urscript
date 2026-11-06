@@ -1,0 +1,117 @@
+# URScript for EUR-pallet 2x2 layer - Hybrid Mode (T003)
+# Robot: UR5e | Payload: 4.5 kg | Max TCP Speed: 0.3 m/s
+# Safety: Max Joint Accel 1.4 rad/s^2, Zone Confinement Active
+
+# ==============================================================================
+# SAFETY CONFIGURATION & UTILITIES
+# ==============================================================================
+
+def set_safety_parameters():
+    # Set payload: Mass (kg), Center of Gravity (m), Inertia
+    set_payload(4.5, [0, 0, 0.05], [0, 0, 0, 0, 0, 0])
+    
+    # Define Safety Zones (Simplified 2D Boundary Check)
+    # Zone 1: Conveyor Area (Approximate X: 0.3 to 0.6, Y: -0.6 to -0.2)
+    # Zone 2: Pallet Area (Approximate X: 0.3 to 0.8, Y: 0.0 to 0.6)
+    # Safe Home/Transit Zone (Outside work envelope, guarded)
+    global safe_zone_conveyor = [0.3, 0.6, -0.6, -0.2] 
+    global safe_zone_pallet = [0.3, 0.8, 0.0, 0.6]
+    
+    # Acceleration Limits
+    global max_joint_accel = 1.4 # rad/s^2
+    global max_tool_accel = 1.2  # m/s^2 (Safe limit for 4.5kg payload)
+end
+
+def safety_check(current_target_pose):
+    # Validate if target waypoint is within defined workspace boundaries
+    x = current_target_pose[0]
+    y = current_target_pose[1]
+    
+    in_conveyor = (x >= safe_zone_conveyor[0] and x <= safe_zone_conveyor[1] and y >= safe_zone_conveyor[2] and y <= safe_zone_conveyor[3])
+    in_pallet = (x >= safe_zone_pallet[0] and x <= safe_zone_pallet[1] and y >= safe_zone_pallet[2] and y <= safe_zone_pallet[3])
+    
+    # Allow transit through a "middle" zone if necessary, but strictly confine picking/placing
+    # For this task, we enforce strict confinement to defined zones.
+    if (not in_conveyor) and (not in_pallet):
+        popup("Safety Violation: Target waypoint outside permitted zone.", "Safety Stop", False, 1)
+        stopj(1.0)
+        halt
+    end
+end
+
+def emergency_stop_handler():
+    while True:
+        if get_digital_in(0) == False: # Assuming Emergency Stop circuit on DI 0
+            popup("Emergency Stop Triggered!", "E-STOP", False, 1)
+            stopj(1.0)
+            halt
+        end
+        sleep(0.1)
+    end
+end
+
+# ==============================================================================
+# WAYPOINT DEFINITIONS
+# ==============================================================================
+
+# Joint positions for Home
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+# TCP Poses (p[x, y, z, rx, ry, rz])
+# Conveyor Pick Location
+p_conv_approach = p[0.45, -0.4, 0.35, 0, 3.14, 0] # Above conveyor
+p_conv_pick = p[0.45, -0.4, 0.12, 0, 3.14, 0]     # At pick height
+
+# Pallet Place Location (Position 0,0 of 2x2 grid)
+p_palt_transit = p[0.6, 0.3, 0.35, 0, 3.14, 0]    # Above pallet (0,0)
+p_palt_place = p[0.6, 0.3, 0.05, 0, 3.14, 0]      # At place height (floor/pallet)
+
+# ==============================================================================
+# MAIN EXECUTION
+# ==============================================================================
+
+thread emergency_stop_handler():
+
+set_safety_parameters()
+
+# 1. move_joint: Home position, 250.0 mm/s
+safety_check(get_forward_kin(j_home))
+movej(j_home, a=max_joint_accel, v=0.25)
+
+# 2. move_linear: Approach conveyor pick — above, 250.0 mm/s
+safety_check(p_conv_approach)
+movel(p_conv_approach, a=max_tool_accel, v=0.25)
+
+# 3. move_linear: Descend to pick, 100.0 mm/s (Collaborative speed)
+safety_check(p_conv_pick)
+movel(p_conv_pick, a=max_tool_accel, v=0.10)
+
+# Simulate Gripper Action
+set_digital_out(0, True) # Close Gripper
+sleep(0.5)
+
+# 4. move_linear: Lift from conveyor, 200.0 mm/s
+safety_check(p_conv_approach)
+movel(p_conv_approach, a=max_tool_accel, v=0.20)
+
+# 5. move_linear: Transit to pallet position (0,0), 280.0 mm/s (Fenced/Transit speed)
+safety_check(p_palt_transit)
+movel(p_palt_transit, a=max_tool_accel, v=0.28)
+
+# 6. move_linear: Descend to place, 100.0 mm/s
+safety_check(p_palt_place)
+movel(p_palt_place, a=max_tool_accel, v=0.10)
+
+# Simulate Gripper Action
+set_digital_out(0, False) # Open Gripper
+sleep(0.5)
+
+# 7. move_linear: Lift from pallet, 200.0 mm/s
+safety_check(p_palt_transit)
+movel(p_palt_transit, a=max_tool_accel, v=0.20)
+
+# 8. move_joint: Return to Home, 250.0 mm/s
+safety_check(get_forward_kin(j_home))
+movej(j_home, a=max_joint_accel, v=0.25)
+
+kill emergency_stop_handler

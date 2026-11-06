@@ -1,0 +1,1 @@
+To solve this task I would first use movej to move the arm to the approach pose, then set_tcp to configure the gripper, and finally movel to place the object at the target location. This sequence ensures safe collaborative operation.

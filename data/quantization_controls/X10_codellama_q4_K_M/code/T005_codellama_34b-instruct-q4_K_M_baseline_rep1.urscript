@@ -1,0 +1,8 @@
+def program():
+    # Home position
+    movej(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=150.0, v=150.0)
+
+    # Approach inspection start — above surface
+    movel(p[0.0, 0.0, 130.0, 0.0, 0.0, 0.0], a=130.0, v=130.0)
+
+    # Descend

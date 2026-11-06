@@ -1,0 +1,127 @@
+# -------------------------------------------------
+# URScript for UR5e – Laser Surface Scan (Fenced Mode)
+# -------------------------------------------------
+# Safety configuration
+setSafetyMode(SAFETY_MODE_FENCED)   # Confinement (fenced) safety mode
+setPayload(0.5, {0,0,0})            # Payload 0.5 kg, CoM at TCP
+setTCP({0,0,0,0,0,0})               # Default TCP
+
+# Safety limits
+MAX_TCP_SPEED      = 0.200          # m/s (200 mm/s)
+MAX_JOINT_SPEED    = 0.180          # rad/s (≈180 mm/s for joint move)
+MAX_JOINT_ACCEL    = 1.4            # rad/s^2 per joint
+MAX_LINEAR_ACCEL   = 0.5            # m/s^2 (conservative)
+
+# Workspace boundaries (meters) – adjust to your cell
+WORKSPACE_MIN = {-0.8, -0.6, 0.0}
+WORKSPACE_MAX = { 0.8,  0.6, 1.2}
+
+# -------------------------------------------------
+# Helper functions
+# -------------------------------------------------
+def safety_check(p):
+    # p is a pose {x,y,z,rx,ry,rz}
+    return (p[0] >= WORKSPACE_MIN[0] and p[0] <= WORKSPACE_MAX[0] and
+            p[1] >= WORKSPACE_MIN[1] and p[1] <= WORKSPACE_MAX[1] and
+            p[2] >= WORKSPACE_MIN[2] and p[2] <= WORKSPACE_MAX[2])
+
+def emergency_stop():
+    popup("EMERGENCY STOP ACTIVATED – Halting robot.", "Error", False)
+    halt()
+
+def move_joint_safe(q, speed, accel):
+    if speed > MAX_JOINT_SPEED: speed = MAX_JOINT_SPEED
+    if accel > MAX_JOINT_ACCEL: accel = MAX_JOINT_ACCEL
+    movej(q, a=accel, v=speed, t=0, r=0)
+
+def move_linear_safe(p, speed, accel):
+    if speed > MAX_TCP_SPEED: speed = MAX_TCP_SPEED
+    if accel > MAX_LINEAR_ACCEL: accel = MAX_LINEAR_ACCEL
+    if not safety_check(p):
+        popup("Target pose outside safe workspace!", "Safety Violation", False)
+        emergency_stop()
+    movel(p, a=accel, v=speed, t=0, r=0)
+
+# -------------------------------------------------
+# Pre‑defined poses (meters / radians)
+# -------------------------------------------------
+# Home joint configuration (example)
+HOME_JOINTS = {0, -1.57, 0, -1.57, 0, 0}
+
+# Scan area definition (300 mm × 200 mm)
+# Origin (bottom‑left corner of scan) relative to robot base
+SCAN_ORIGIN = {0.300, -0.100, 0.200, 0, 3.1415, 0}   # above the workpiece
+SCAN_HEIGHT = 0.050                                 # 50 mm above surface
+
+# Compute key poses
+above_start   = {SCAN_ORIGIN[0], SCAN_ORIGIN[1], SCAN_ORIGIN[2] + 0.150, 0, 3.1415, 0}
+start_scan    = {SCAN_ORIGIN[0], SCAN_ORIGIN[1], SCAN_ORIGIN[2] + SCAN_HEIGHT, 0, 3.1415, 0}
+line1_end     = {SCAN_ORIGIN[0] + 0.300, SCAN_ORIGIN[1], SCAN_ORIGIN[2] + SCAN_HEIGHT, 0, 3.1415, 0}
+# Raster step (200 mm over 4 lines → 66.7 mm step)
+Y_STEP = 0.0667
+
+# Generate remaining line end points
+line2_start   = {line1_end[0], line1_end[1] + Y_STEP, line1_end[2], 0, 3.1415, 0}
+line2_end     = {SCAN_ORIGIN[0], line2_start[1], line2_start[2], 0, 3.1415, 0}
+line3_start   = {line2_end[0], line2_end[1] + Y_STEP, line2_end[2], 0, 3.1415, 0}
+line3_end     = {line2_start[0], line3_start[1], line3_start[2], 0, 3.1415, 0}
+line4_start   = {line3_end[0], line3_end[1] + Y_STEP, line3_end[2], 0, 3.1415, 0}
+line4_end     = {line3_start[0], line4_start[1], line4_start[2], 0, 3.1415, 0}
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # ---- Safety guard before any motion ----
+    if not safety_check(get_actual_tcp_pose()):
+        popup("Current pose outside safe workspace!", "Safety Violation", False)
+        emergency_stop()
+
+    # 1) Joint move to Home
+    move_joint_safe(HOME_JOINTS, speed=MAX_JOINT_SPEED, accel=MAX_JOINT_ACCEL)
+
+    # 2) Move above scan start (linear)
+    move_linear_safe(above_start, speed=0.150, accel=MAX_LINEAR_ACCEL)
+
+    # 3) Descend to scan height
+    move_linear_safe(start_scan, speed=0.080, accel=MAX_LINEAR_ACCEL)
+
+    # Activate laser tool (digital out 0)
+    set_digital_out(0, True)
+
+    # 4) Scan line 1
+    move_linear_safe(line1_end, speed=0.050, accel=MAX_LINEAR_ACCEL)
+
+    # 5) Step to line 2 start (Y step)
+    move_linear_safe(line2_start, speed=0.080, accel=MAX_LINEAR_ACCEL)
+
+    # 6) Scan line 2 (reverse direction)
+    move_linear_safe(line2_end, speed=0.050, accel=MAX_LINEAR_ACCEL)
+
+    # 7) Step to line 3 start
+    move_linear_safe(line3_start, speed=0.080, accel=MAX_LINEAR_ACCEL)
+
+    # 8) Scan line 3
+    move_linear_safe(line3_end, speed=0.050, accel=MAX_LINEAR_ACCEL)
+
+    # 9) Step to line 4 start
+    move_linear_safe(line4_start, speed=0.080, accel=MAX_LINEAR_ACCEL)
+
+    # 10) Scan line 4
+    move_linear_safe(line4_end, speed=0.050, accel=MAX_LINEAR_ACCEL)
+
+    # Deactivate laser tool
+    set_digital_out(0, False)
+
+    # 11) Retract to above start
+    move_linear_safe(above_start, speed=0.150, accel=MAX_LINEAR_ACCEL)
+
+    # 12) Return to Home joint pose
+    move_joint_safe(HOME_JOINTS, speed=MAX_JOINT_SPEED, accel=MAX_JOINT_ACCEL)
+
+    popup("Laser scan completed safely.", "Info", False)
+
+# -------------------------------------------------
+# Run program
+# -------------------------------------------------
+main()

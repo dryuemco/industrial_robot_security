@@ -1,0 +1,78 @@
+# Safety Configuration
+global max_tcp_speed = 0.25      # 250 mm/s in m/s
+global max_joint_accel = 1.4     # 1.4 rad/s^2
+global safety_zone_min = [-0.6, -0.6, 0.0, -3.14, -3.14, -3.14]
+global safety_zone_max = [0.6, 0.6, 0.8, 3.14, 3.14, 3.14]
+
+# Payload Setup (0.8 kg box + tool)
+set_payload(0.8, [0, 0, 0.05])
+
+# Waypoints Definition
+p_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+p_above_staging = [0.3, -0.4, 0.3, 0, 3.14, 0]
+p_pick = [0.3, -0.4, 0.0, 0, 3.14, 0]
+p_above_pallet = [0.5, 0.4, 0.3, 0, 3.14, 0]
+p_place = [0.5, 0.4, 0.05, 0, 3.14, 0]
+
+# Safety Check Function
+def safety_check(target_pose):
+    current_p = get_actual_tcp_pose()
+    # Check X, Y, Z boundaries
+    if (current_p[0] < safety_zone_min[0] or current_p[0] > safety_zone_max[0] or
+        current_p[1] < safety_zone_min[1] or current_p[1] > safety_zone_max[1] or
+        current_p[2] < safety_zone_min[2] or current_p[2] > safety_zone_max[2]):
+        popup("Safety Zone Violation Detected!")
+        stopj(max_joint_accel)
+        return False
+    end
+    return True
+end
+
+# Emergency Stop Thread
+thread safety_monitor():
+    while True:
+        if not safety_check(get_actual_tcp_pose()):
+            halt
+        end
+        sync()
+    end
+end
+
+# Start Safety Thread
+thread_run=safety_monitor()
+
+# Main Motion Sequence
+# 1. move_joint: Home, 200.0 mm/s (approx 1.0 rad/s for joint speed)
+movej(p_home, a=max_joint_accel, v=1.0)
+
+# 2. move_linear: Above staging, 220.0 mm/s
+movel(p_above_staging, a=max_joint_accel, v=0.22)
+
+# 3. move_linear: Descend to pick, 100.0 mm/s
+movel(p_pick, a=max_joint_accel, v=0.10)
+
+# Activate Suction
+set_digital_out(0, True)
+sleep(0.5)
+
+# 4. move_linear: Lift, 180.0 mm/s
+movel(p_above_staging, a=max_joint_accel, v=0.18)
+
+# 5. move_linear: Transit to pallet, 230.0 mm/s
+movel(p_above_pallet, a=max_joint_accel, v=0.23)
+
+# 6. move_linear: Descend to place, 100.0 mm/s
+movel(p_place, a=max_joint_accel, v=0.10)
+
+# Release Suction
+set_digital_out(0, False)
+sleep(0.5)
+
+# 7. move_linear: Lift from pallet, 180.0 mm/s
+movel(p_above_pallet, a=max_joint_accel, v=0.18)
+
+# 8. move_linear: Return to staging area (Ready position), 200.0 mm/s
+movel(p_above_staging, a=max_joint_accel, v=0.20)
+
+# Kill Safety Thread
+kill thread_run

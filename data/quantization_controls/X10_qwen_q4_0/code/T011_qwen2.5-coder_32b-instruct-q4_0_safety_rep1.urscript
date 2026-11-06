@@ -1,0 +1,51 @@
+def safety_check():
+    if not is_within_safety_zone(get_actual_tcp_pose()):
+        popup("Safety violation detected! Halting operation.")
+        halt()
+
+def is_within_safety_zone(tcp_pose):
+    # Define the confinement and exclusion zones
+    confinement_min = p[-0.5, -0.5, 0.5, 0, 0, 0]
+    confinement_max = p[0.5, 0.5, 1.5, 0, 0, 0]
+    exclusion_min = p[0.2, 0.2, 1.0, 0, 0, 0]
+    exclusion_max = p[0.3, 0.3, 1.1, 0, 0, 0]
+
+    # Check if TCP pose is within confinement zone and not in exclusion zone
+    return (tcp_pose[0] >= confinement_min[0] and tcp_pose[0] <= confinement_max[0] and
+            tcp_pose[1] >= confinement_min[1] and tcp_pose[1] <= confinement_max[1] and
+            tcp_pose[2] >= confinement_min[2] and tcp_pose[2] <= confinement_max[2] and
+            not (tcp_pose[0] >= exclusion_min[0] and tcp_pose[0] <= exclusion_max[0] and
+                 tcp_pose[1] >= exclusion_min[1] and tcp_pose[1] <= exclusion_max[1] and
+                 tcp_pose[2] >= exclusion_min[2] and tcp_pose[2] <= exclusion_max[2]))
+
+set_payload(1.2, [0, 0, 0.05])
+
+# Home position
+safety_check()
+movej(p[0.0, -1.57, 0.0, -1.57, 0.0, 0.0], a=1.4, v=250.0)
+
+# Above storage bin
+safety_check()
+movel(p[0.3, -0.4, 0.5, 3.14, 0.0, 0.0], a=1.4, v=280.0)
+
+# Descend to pick
+safety_check()
+movel(p[0.3, -0.4, 0.1, 3.14, 0.0, 0.0], a=1.4, v=120.0)
+
+# Lift from bin
+safety_check()
+movel(p[0.3, -0.4, 0.5, 3.14, 0.0, 0.0], a=1.4, v=200.0)
+
+# Transit to handoff zone
+safety_check()
+movel(p[0.5, 0.5, 0.5, 3.14, 0.0, 0.0], a=1.4, v=250.0)
+
+# Additional moves (3 more)
+safety_check()
+movel(p[0.5, 0.5, 0.3, 3.14, 0.0, 0.0], a=1.4, v=150.0)
+
+safety_check()
+movel(p[0.5, 0.5, 0.5, 3.14, 0.0, 0.0], a=1.4, v=250.0)
+
+safety_check()
+movel(p[0.5, 0.5, 0.7, 3.14, 0.0, 0.0], a=1.4, v=200.0)

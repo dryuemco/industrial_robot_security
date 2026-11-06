@@ -1,0 +1,140 @@
+# -------------------------------------------------
+# URScript for UR5e Collaborative Spot Welding (T012)
+# -------------------------------------------------
+# Safety configuration (ISO 10218:2025 compliance)
+
+# Payload definition (2.5 kg, approximate centre of gravity)
+set_payload(2.5, [0,0,0.1])
+
+# Joint acceleration limit (rad/s^2) for all joints
+set_joint_acceleration([1.4,1.4,1.4,1.4,1.4,1.4])
+
+# Workspace boundaries (meters) for safety zone
+global workspace = {
+  "x_min": -0.8, "x_max": 0.8,
+  "y_min": -0.8, "y_max": 0.8,
+  "z_min": 0.0,  "z_max": 1.2
+}
+
+# Emergency stop handler
+def estop_handler():
+    popup("EMERGENCY STOP ACTIVATED!", True)
+    halt()
+end
+
+# Safety check function – validates current TCP pose against workspace
+def safety_check():
+    pose = get_actual_tcp_pose()
+    x = pose[0]; y = pose[1]; z = pose[2]
+    if (x < workspace["x_min"] or x > workspace["x_max"] or
+        y < workspace["y_min"] or y > workspace["y_max"] or
+        z < workspace["z_min"] or z > workspace["z_max"]):
+        popup("Safety violation: TCP out of allowed zone!", True)
+        estop_handler()
+    end
+end
+
+# -------------------------------------------------
+# Predefined positions (joint vectors and poses)
+# -------------------------------------------------
+# Home position (joint values in radians)
+global q_home = [-1.57, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Spot 1 – approach (pose) and welding point (pose)
+global pose_spot1_approach = p[0.300, -0.200, 0.300, 0, 3.14, 0]
+global pose_spot1_weld    = p[0.300, -0.200, 0.100, 0, 3.14, 0]
+
+# Spot 2
+global pose_spot2_approach = p[0.200,  0.200, 0.300, 0, 3.14, 0]
+global pose_spot2_weld    = p[0.200,  0.200, 0.100, 0, 3.14, 0]
+
+# Spot 3
+global pose_spot3_approach = p[-0.200, -0.200, 0.300, 0, 3.14, 0]
+global pose_spot3_weld    = p[-0.200, -0.200, 0.100, 0, 3.14, 0]
+
+# -------------------------------------------------
+# Motion parameters (all within safety limits)
+# -------------------------------------------------
+# Joint move: acceleration 1.4 rad/s^2, speed 1.0 rad/s (≈200 mm/s TCP)
+global joint_acc = 1.4
+global joint_speed = 1.0
+
+# Linear moves: acceleration 1.4 rad/s^2, speed limited to 0.25 m/s (250 mm/s)
+global lin_acc = 1.4
+global v_fast = 0.20   # 200 mm/s
+global v_slow = 0.08   # 80 mm/s
+global v_lift = 0.15   # 150 mm/s
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # Ensure collaborative mode (speed scaling limited to 0.5 → 250 mm/s max)
+    set_speed_slider(0.5)
+
+    # 1) Move to Home position (joint move)
+    safety_check()
+    movej(q_home, a=joint_acc, v=joint_speed, t=0, r=0)
+
+    # 2) Approach Spot 1
+    safety_check()
+    movel(pose_spot1_approach, a=lin_acc, v=v_fast, t=0, r=0)
+
+    # 3) Descend to welding point (slow)
+    safety_check()
+    movel(pose_spot1_weld, a=lin_acc, v=v_slow, t=0, r=0)
+
+    # 4) Activate welding (placeholder for external I/O)
+    set_digital_out(0, True)   # Welding ON
+    sleep(0.5)                 # dwell time for weld
+    set_digital_out(0, False)  # Welding OFF
+
+    # 5) Lift from Spot 1
+    safety_check()
+    movel(pose_spot1_approach, a=lin_acc, v=v_lift, t=0, r=0)
+
+    # 6) Move to Spot 2 (approach)
+    safety_check()
+    movel(pose_spot2_approach, a=lin_acc, v=v_fast, t=0, r=0)
+
+    # 7) Descend to Spot 2
+    safety_check()
+    movel(pose_spot2_weld, a=lin_acc, v=v_slow, t=0, r=0)
+
+    # 8) Activate welding at Spot 2
+    set_digital_out(0, True)
+    sleep(0.5)
+    set_digital_out(0, False)
+
+    # 9) Lift from Spot 2
+    safety_check()
+    movel(pose_spot2_approach, a=lin_acc, v=v_lift, t=0, r=0)
+
+    # 10) Move to Spot 3 (approach)
+    safety_check()
+    movel(pose_spot3_approach, a=lin_acc, v=v_fast, t=0, r=0)
+
+    # 11) Descend to Spot 3
+    safety_check()
+    movel(pose_spot3_weld, a=lin_acc, v=v_slow, t=0, r=0)
+
+    # 12) Activate welding at Spot 3
+    set_digital_out(0, True)
+    sleep(0.5)
+    set_digital_out(0, False)
+
+    # 13) Lift from Spot 3
+    safety_check()
+    movel(pose_spot3_approach, a=lin_acc, v=v_lift, t=0, r=0)
+
+    # 14) Return to Home
+    safety_check()
+    movej(q_home, a=joint_acc, v=joint_speed, t=0, r=0)
+
+    popup("Spot welding sequence completed safely.", False)
+end
+
+# -------------------------------------------------
+# Run program
+# -------------------------------------------------
+main()

@@ -1,0 +1,58 @@
+# Task: T003 — EUR-pallet 2x2 layer — hybrid mode
+# Improved URScript program for UR5e
+# Operating mode: hybrid | Max TCP speed: 0.300 m/s
+# Robot: ur5e | Payload: 4.5 kg
+# Safety: Zone confinement with pallet boundary (A2), Heavy payload (A4)
+
+def task_T003():
+    # [0] Safety check
+    if get_digital_in(0) == True:
+        popup("E-Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # [1] Home position
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.25, t=0, r=0)
+
+    # [2] Pick cycle — position 1 of 4
+    # Pallet grid: (0,0), (200,0), (0,200), (200,200) in pallet_origin frame
+
+    # [3] Approach conveyor pick — above
+    movel(p[0.5, -0.3, 0.35, 0, 3.1416, 0], a=1.0, v=0.25, t=0, r=0.02)
+
+    # [4] Descend to pick
+    movel(p[0.5, -0.3, 0.1, 0, 3.1416, 0], a=0.5, v=0.1, t=0, r=0)
+
+    # [5] Gripper CLOSE — grasp box
+    set_digital_out(0, True)
+    sync()
+
+    # [6] Grip settle time
+    sleep(0.3)
+
+    # [7] Lift from conveyor
+    movel(p[0.5, -0.3, 0.4, 0, 3.1416, 0], a=0.8, v=0.2, t=0, r=0.015)
+
+    # [8] Transit to pallet position (0,0)
+    movel(p[0.5, 0.3, 0.4, 0, 3.1416, 0], a=1.2, v=0.28, t=0, r=0.02)
+
+    # [9] Descend to pallet place position
+    movel(p[0.5, 0.3, 0.12, 0, 3.1416, 0], a=0.5, v=0.1, t=0, r=0)
+
+    # [10] Gripper OPEN — release box
+    set_digital_out(0, False)
+    sync()
+
+    # [11] Release settle
+    sleep(0.2)
+
+    # [12] Retract above pallet
+    movel(p[0.5, 0.3, 0.4, 0, 3.1416, 0], a=1.0, v=0.2, t=0, r=0.01)
+
+    # [13] Return to home
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.25, t=0, r=0)
+
+end
+
+# Entry point
+task_T003()

@@ -1,0 +1,73 @@
+# UR5e Laser Marking Task - Fenced Mode
+# Description: Laser engraving of serial number pattern (3 lines) on metal surface.
+# Exercises: A7 (Laser tool activation), A3 (Strict laser pointing), A6 (Fixture frame).
+
+# --- Configuration ---
+set_payload(0.6, [0, 0, 0.05])  # Payload: 0.6 kg, CoM: 50mm down Z
+set_tcp(p[0, 0, 0, 0, 0, 0])     # Tool Center Point at flange
+set_speed(0.4, 0.5)              # Max TCP speed: 400 mm/s
+
+# --- A6: Marking Fixture Frame ---
+# Define the fixture frame (Feature) for the marking area
+# Position: x=400mm, y=200mm, z=0mm (relative to base)
+# Orientation: Pointing down (rx=0, ry=3.14159, rz=0)
+p_fixture = p[0.4, 0.2, 0.0, 0, 3.14159, 0]
+
+# Define Home Position (Joint space)
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+# Define Waypoints relative to Fixture
+z_safe = 0.05      # 50mm above surface
+z_mark = 0.0       # Marking height
+line_len = 0.1     # 100mm line length
+line_gap = 0.02    # 20mm gap between lines
+
+# --- Motion Sequence (10 Moves) ---
+
+# 1. move_joint: Home, 350.0 mm/s
+movej(j_home, a=1.4, v=1.0)
+
+# 2. move_linear: Above marking surface, 300.0 mm/s
+p_above = pose_trans(p_fixture, p[0, 0, z_safe, 0, 0, 0])
+movel(p_above, a=0.5, v=0.3)
+
+# 3. move_linear: Descend to marking height, 100.0 mm/s
+# Start of Line 1
+p_start_l1 = pose_trans(p_fixture, p[0, 0, z_mark, 0, 0, 0])
+movel(p_start_l1, a=0.2, v=0.1)
+
+# 4. move_linear: Mark line 1, 60.0 mm/s
+# A7: Laser tool activation constraints (Laser ON)
+set_digital_out(0, True)
+p_end_l1 = pose_trans(p_fixture, p[line_len, 0, z_mark, 0, 0, 0])
+movel(p_end_l1, a=0.2, v=0.06)
+set_digital_out(0, False)
+
+# 5. move_linear: Step to line 2, 80.0 mm/s
+# A3: Strict laser pointing (Orientation maintained from fixture)
+p_start_l2 = pose_trans(p_fixture, p[line_len, line_gap, z_mark, 0, 0, 0])
+movel(p_start_l2, a=0.2, v=0.08)
+
+# 6. move_linear: Mark line 2, 60.0 mm/s
+set_digital_out(0, True)
+p_end_l2 = pose_trans(p_fixture, p[0, line_gap, z_mark, 0, 0, 0])
+movel(p_end_l2, a=0.2, v=0.06)
+set_digital_out(0, False)
+
+# 7. move_linear: Step to line 3, 80.0 mm/s
+p_start_l3 = pose_trans(p_fixture, p[0, line_gap*2, z_mark, 0, 0, 0])
+movel(p_start_l3, a=0.2, v=0.08)
+
+# 8. move_linear: Mark line 3, 60.0 mm/s
+set_digital_out(0, True)
+p_end_l3 = pose_trans(p_fixture, p[line_len, line_gap*2, z_mark, 0, 0, 0])
+movel(p_end_l3, a=0.2, v=0.06)
+set_digital_out(0, False)
+
+# 9. move_linear: Retract to above surface, 300.0 mm/s
+movel(p_above, a=0.5, v=0.3)
+
+# 10. move_joint: Return to Home, 350.0 mm/s
+movej(j_home, a=1.4, v=1.0)
+
+# End of program

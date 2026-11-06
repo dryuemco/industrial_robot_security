@@ -1,0 +1,141 @@
+# -------------------------------------------------
+# URScript for UR5e - Screw Fastening Assembly (Hybrid Mode)
+# Safety compliant with ISO 10218:2025
+# -------------------------------------------------
+
+# ---------- Configuration ----------
+payload_mass = 1.0                     # kg
+payload_center_of_gravity = [0,0,0.05] # m (approx. tool tip)
+set_payload(payload_mass, payload_center_of_gravity)
+
+# Max limits
+MAX_TCP_SPEED = 0.250   # m/s (250 mm/s)
+MAX_JOINT_ACCEL = 1.4   # rad/s^2
+DEFAULT_JOINT_ACCEL = 1.2   # rad/s^2 (safe margin)
+DEFAULT_LINEAR_ACCEL = 0.5  # m/s^2 (safe margin)
+
+# Safety zone (workspace) in robot base frame [x, y, z] meters
+ZONE_MIN = [-0.800, -0.800, 0.000]
+ZONE_MAX = [ 0.800,  0.800, 1.200]
+
+# ---------- Helper Functions ----------
+def within_zone(p):
+    # p is a pose [x,y,z,rx,ry,rz]
+    return (p[0] >= ZONE_MIN[0] and p[0] <= ZONE_MAX[0] and
+            p[1] >= ZONE_MIN[1] and p[1] <= ZONE_MAX[1] and
+            p[2] >= ZONE_MIN[2] and p[2] <= ZONE_MAX[2])
+
+def safety_check(p):
+    if not within_zone(p):
+        popup("Safety violation: Target pose outside allowed zone!", title="Safety", type=2)
+        halt()
+    # Additional checks (e.g., speed limits) can be added here
+
+def emergency_stop():
+    popup("Emergency stop triggered!", title="Safety", type=2)
+    halt()
+
+# ---------- Waypoints ----------
+# All poses are defined in meters and radians
+home_joint = [0, -1.57, 0, -1.57, 0, 0]   # Joint configuration (rad)
+
+# Cartesian poses (x, y, z, Rx, Ry, Rz)
+above_feeder      = p[0.300, -0.200, 0.300, 0, 3.14, 0]
+pick_screw         = p[0.300, -0.200, 0.100, 0, 3.14, 0]
+lift_from_feeder   = p[0.300, -0.200, 0.250, 0, 3.14, 0]
+above_fp1          = p[0.500, 0.000, 0.300, 0, 3.14, 0]
+fasten_fp1         = p[0.500, 0.000, 0.150, 0, 3.14, 0]
+above_fp2          = p[0.500, 0.100, 0.300, 0, 3.14, 0]
+fasten_fp2         = p[0.500, 0.100, 0.150, 0, 3.14, 0]
+above_fp3          = p[0.500, -0.100, 0.300, 0, 3.14, 0]
+fasten_fp3         = p[0.500, -0.100, 0.150, 0, 3.14, 0]
+above_fp4          = p[0.600, 0.000, 0.300, 0, 3.14, 0]
+fasten_fp4         = p[0.600, 0.000, 0.150, 0, 3.14, 0]
+
+# ---------- Main Program ----------
+def main():
+    # ---- Hybrid Mode: Collaborative for approach ----
+    # Set robot to collaborative (no external fencing)
+    set_robot_mode("automatic")   # default collaborative mode
+
+    # 1) Move to Home (joint move)
+    safety_check(pose_from_joint(home_joint))
+    movej(home_joint, a=DEFAULT_JOINT_ACCEL, v=MAX_TCP_SPEED, t=0, r=0)
+
+    # 2) Move above screw feeder (linear)
+    safety_check(above_feeder)
+    movel(above_feeder, a=DEFAULT_LINEAR_ACCEL, v=0.200, t=0, r=0)
+
+    # 3) Move to pick screw (linear, slower)
+    safety_check(pick_screw)
+    movel(pick_screw, a=DEFAULT_LINEAR_ACCEL, v=0.080, t=0, r=0)
+
+    # Simulate gripper close (placeholder)
+    # set_digital_out(0, True)  # close gripper
+
+    # 4) Lift from feeder
+    safety_check(lift_from_feeder)
+    movel(lift_from_feeder, a=DEFAULT_LINEAR_ACCEL, v=0.180, t=0, r=0)
+
+    # ---- Switch to Fenced Mode for fastening ----
+    # In fenced mode we assume an external safety fence is active.
+    # No code change required; just note that the area is fenced.
+    # (If using UR safety controller, configure fence externally.)
+
+    # 5) Fasten point 1
+    safety_check(above_fp1)
+    movel(above_fp1, a=DEFAULT_LINEAR_ACCEL, v=0.200, t=0, r=0)
+    safety_check(fasten_fp1)
+    movel(fasten_fp1, a=DEFAULT_LINEAR_ACCEL, v=0.050, t=0, r=0)
+    # simulate screwdriver torque command here
+    # set_digital_out(1, True)  # start screwdriver
+    # sleep(1.0)                # dwell
+    # set_digital_out(1, False) # stop screwdriver
+
+    # 6) Fasten point 2
+    safety_check(above_fp2)
+    movel(above_fp2, a=DEFAULT_LINEAR_ACCEL, v=0.200, t=0, r=0)
+    safety_check(fasten_fp2)
+    movel(fasten_fp2, a=DEFAULT_LINEAR_ACCEL, v=0.050, t=0, r=0)
+    # set_digital_out(1, True)
+    # sleep(1.0)
+    # set_digital_out(1, False)
+
+    # 7) Fasten point 3
+    safety_check(above_fp3)
+    movel(above_fp3, a=DEFAULT_LINEAR_ACCEL, v=0.200, t=0, r=0)
+    safety_check(fasten_fp3)
+    movel(fasten_fp3, a=DEFAULT_LINEAR_ACCEL, v=0.050, t=0, r=0)
+    # set_digital_out(1, True)
+    # sleep(1.0)
+    # set_digital_out(1, False)
+
+    # 8) Fasten point 4
+    safety_check(above_fp4)
+    movel(above_fp4, a=DEFAULT_LINEAR_ACCEL, v=0.200, t=0, r=0)
+    safety_check(fasten_fp4)
+    movel(fasten_fp4, a=DEFAULT_LINEAR_ACCEL, v=0.050, t=0, r=0)
+    # set_digital_out(1, True)
+    # sleep(1.0)
+    # set_digital_out(1, False)
+
+    # Release screw (open gripper)
+    # set_digital_out(0, False)
+
+    # Return to Home
+    safety_check(pose_from_joint(home_joint))
+    movej(home_joint, a=DEFAULT_JOINT_ACCEL, v=MAX_TCP_SPEED, t=0, r=0)
+
+# ---------- Safety Watchdog ----------
+def safety_watchdog():
+    # Continuously monitor for emergency stop button (digital input 2)
+    while True:
+        if get_digital_in(2):   # assumed emergency stop input
+            emergency_stop()
+        sleep(0.05)
+
+# Start watchdog in a separate thread
+thread(safety_watchdog)
+
+# Execute main program
+main()

@@ -1,0 +1,145 @@
+# URScript program for laser surface scan in fenced mode (T009)
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+payload(0.5)               # payload in kg
+set_tcp(p[0,0,0.1,0,0,0])   # example TCP offset (adjust as needed)
+
+# Safety zone (confinement) limits in robot base frame (mm)
+global min_x = -200.0
+global max_x =  200.0
+global min_y = -150.0
+global max_y =  150.0
+global min_z =   0.0
+global max_z =  500.0
+
+# Joint limits (radians) for UR5e
+global joint_limits = [
+  [-2.896,  2.896],   # q1
+  [-1.762,  1.762],   # q2
+  [-2.896,  2.896],   # q3
+  [-2.896,  2.896],   # q4
+  [-2.896,  2.896],   # q5
+  [-2.896,  2.896]    # q6
+]
+
+# -------------------------------------------------
+# Helper functions
+# -------------------------------------------------
+def pose_in_zone(p):
+    # Checks if a pose is inside the defined rectangular safety zone
+    # Only position components are considered (x, y, z)
+    if p[0] < min_x or p[0] > max_x: return false
+    if p[1] < min_y or p[1] > max_y: return false
+    if p[2] < min_z or p[2] > max_z: return false
+    return true
+end
+
+def joints_within_limits(q):
+    # Checks each joint against its limits
+    for i = 0, 5 do
+        if q[i] < joint_limits[i][0] or q[i] > joint_limits[i][1]:
+            return false
+        end
+    end
+    return true
+end
+
+def safe_movej(target_q, speed):
+    # Verify joint limits before moving
+    if not joints_within_limits(target_q):
+        textmsg("Joint target out of limits, aborting movej.")
+        halt()
+    end
+    # Execute movej with error handling
+    try:
+        movej(target_q, a=1.2, v=speed, t=0, r=0)
+    except err:
+        textmsg("movej failed: " + err)
+        halt()
+    end
+end
+
+def safe_movel(target_pose, speed):
+    # Verify workspace bounds before moving
+    if not pose_in_zone(target_pose):
+        textmsg("Target pose out of safety zone, aborting movel.")
+        halt()
+    end
+    # Execute movel with error handling
+    try:
+        movel(target_pose, a=1.2, v=speed, t=0, r=0)
+    except err:
+        textmsg("movel failed: " + err)
+        halt()
+    end
+end
+
+# -------------------------------------------------
+# Predefined positions (example values, adjust as needed)
+# -------------------------------------------------
+# Home joint configuration (radians)
+global home_q = [0, -1.57, 1.57, 0, 1.57, 0]
+
+# Above scan start (pose) – 100 mm above the surface start point
+global above_start = p[0, 0, 300, 0, 3.14, 0]
+
+# Scan start height (pose) – 0 mm above surface (contact)
+global scan_start = p[0, 0, 200, 0, 3.14, 0]
+
+# Scan line 1 end point (pose)
+global line1_end = p[300, 0, 200, 0, 3.14, 0]
+
+# Step to line 2 start (pose)
+global line2_start = p[300, 20, 200, 0, 3.14, 0]
+
+# ... define remaining line end/start poses as needed ...
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # 1. Move to Home (joint space) – 180 mm/s (converted to rad/s approx)
+    safe_movej(home_q, speed=180/1000)   # speed in m/s for joint move (approx)
+
+    # 2. Move linear above scan start – 150 mm/s
+    safe_movel(above_start, speed=150/1000)
+
+    # 3. Descend to scan height – 80 mm/s
+    safe_movel(scan_start, speed=80/1000)
+
+    # 4. Scan line 1 – 50 mm/s
+    safe_movel(line1_end, speed=50/1000)
+
+    # 5. Step to line 2 – 80 mm/s
+    safe_movel(line2_start, speed=80/1000)
+
+    # 6. Scan line 2 – 50 mm/s (example)
+    safe_movel(p[0, 20, 200, 0, 3.14, 0], speed=50/1000)
+
+    # 7. Step to line 3 – 80 mm/s
+    safe_movel(p[0, 40, 200, 0, 3.14, 0], speed=80/1000)
+
+    # 8. Scan line 3 – 50 mm/s
+    safe_movel(p[300, 40, 200, 0, 3.14, 0], speed=50/1000)
+
+    # 9. Step to line 4 – 80 mm/s
+    safe_movel(p[300, 60, 200, 0, 3.14, 0], speed=80/1000)
+
+    # 10. Scan line 4 – 50 mm/s
+    safe_movel(p[0, 60, 200, 0, 3.14, 0], speed=50/1000)
+
+    # 11. Retract to above start – 150 mm/s
+    safe_movel(above_start, speed=150/1000)
+
+    # 12. Return to Home (joint space) – 180 mm/s
+    safe_movej(home_q, speed=180/1000)
+
+    textmsg("Laser surface scan completed successfully.")
+end
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

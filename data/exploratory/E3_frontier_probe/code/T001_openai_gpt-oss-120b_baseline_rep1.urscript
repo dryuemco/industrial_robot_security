@@ -1,0 +1,50 @@
+def main():
+    # Set payload (mass in kg, center of mass in robot base frame)
+    set_payload(0.5, [0, 0, 0.1])
+    # Set TCP (tool center point) – placeholder values
+    set_tcp([0, 0, 0.1, 0, 0, 0])
+
+    # Joint target for home position (radians)
+    home = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+    # Cartesian targets (meters, radians)
+    pick_approach   = p[0.5, -0.2, 0.30, 0, 3.14, 0]
+    pick            = p[0.5, -0.2, 0.10, 0, 3.14, 0]
+    lift            = p[0.5, -0.2, 0.30, 0, 3.14, 0]
+    place_approach  = p[0.3,  0.2, 0.30, 0, 3.14, 0]
+    place           = p[0.3,  0.2, 0.10, 0, 3.14, 0]
+    retreat         = p[0.3,  0.2, 0.30, 0, 3.14, 0]
+
+    # 1) Move to home position
+    movej(home, a=1.2, v=0.20)   # a: rad/s^2, v: rad/s (0.20 m/s ≈ 200 mm/s)
+
+    # 2) Approach pick point
+    movel(pick_approach, a=1.2, v=0.20)
+
+    # 3) Descend to pick
+    movel(pick, a=1.2, v=0.10)
+
+    # 4) Lift from pick
+    movel(lift, a=1.2, v=0.15)
+
+    # 5) Transit to place approach
+    movel(place_approach, a=1.2, v=0.20)
+
+    # 6) Descend to place
+    movel(place, a=1.2, v=0.10)
+
+    # 7) Release object (pause for gripper)
+    sleep(0.5)
+
+    # 8) Retreat from place
+    movel(retreat, a=1.2, v=0.15)
+
+    # Return to home
+    movej(home, a=1.2, v=0.20)
+
+    # Stop motion safely
+    stopj(2)
+end
+
+# Start program
+main()

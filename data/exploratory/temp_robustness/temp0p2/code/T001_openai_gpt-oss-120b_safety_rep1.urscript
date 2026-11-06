@@ -1,0 +1,108 @@
+# ------------------------------------------------------------
+# URScript for UR5e collaborative pick‑place (Task T001)
+# ISO 10218:2025 compliant safety implementation
+# ------------------------------------------------------------
+
+# ---------- Safety Parameters ----------
+max_tcp_speed = 0.250          # m/s (250 mm/s)
+max_joint_accel = 1.4          # rad/s^2 per joint
+default_joint_accel = 1.0      # rad/s^2 (safe margin)
+default_lin_accel = 0.5        # m/s^2 (safe margin)
+
+# ---------- Payload ----------
+set_payload(0.5, [0,0,0.02])    # 0.5 kg, CoM 20 mm above TCP
+
+# ---------- Workspace (allowed zone) ----------
+# Define a rectangular safe workspace (in robot base frame)
+workspace_min = [-0.6, -0.6, 0.0]   # [x, y, z] in meters
+workspace_max = [ 0.6,  0.6, 0.8]   # [x, y, z] in meters
+
+# ---------- Safety Helper Functions ----------
+def is_within_workspace(p):
+    # p is a pose list [x,y,z,rx,ry,rz]
+    return (p[0] >= workspace_min[0] and p[0] <= workspace_max[0] and
+            p[1] >= workspace_min[1] and p[1] <= workspace_max[1] and
+            p[2] >= workspace_min[2] and p[2] <= workspace_max[2])
+
+def safety_check(pose, lin_speed):
+    # Verify linear speed limit
+    if lin_speed > max_tcp_speed:
+        textmsg("Safety violation: TCP speed %.3f > %.3f m/s" % (lin_speed, max_tcp_speed))
+        halt()
+    # Verify pose inside workspace
+    if not is_within_workspace(pose):
+        textmsg("Safety violation: Pose out of allowed workspace")
+        halt()
+    end
+end
+
+def check_emergency_stop():
+    # Example: digital input 0 is wired to an E‑Stop button
+    if get_digital_in(0) == 1 then
+        textmsg("Emergency stop activated!")
+        halt()
+    end
+end
+
+# ---------- Motion Waypoints ----------
+# Home joint configuration (rad)
+home_joints = [0, -1.5708, 0, -1.5708, 0, 0]
+
+# Poses (meters, radians)
+pick_approach = p[0.4, -0.2, 0.3, 0, 3.1415, 0]   # 200 mm above pick
+pick_pose     = p[0.4, -0.2, 0.1, 0, 3.1415, 0]   # pick point
+lift_pose     = p[0.4, -0.2, 0.35, 0, 3.1415, 0]  # lift after pick
+place_approach= p[-0.3, 0.2, 0.35, 0, 3.1415, 0]   # above place
+place_pose    = p[-0.3, 0.2, 0.15, 0, 3.1415, 0]   # place point
+retreat_pose  = p[-0.3, 0.2, 0.4, 0, 3.1415, 0]   # safe retreat
+
+# ---------- Main Program ----------
+def main():
+    # ---- Home Position (Joint Move) ----
+    check_emergency_stop()
+    movej(home_joints, a=default_joint_accel, v=0.2)   # 0.2 m/s ≈ 200 mm/s TCP equivalent
+
+    # ---- Approach Pick (Linear) ----
+    check_emergency_stop()
+    safety_check(pick_approach, 0.2)
+    movel(pick_approach, a=default_lin_accel, v=0.2)
+
+    # ---- Descend to Pick ----
+    check_emergency_stop()
+    safety_check(pick_pose, 0.1)
+    movel(pick_pose, a=default_lin_accel, v=0.1)
+
+    # ---- Lift from Pick ----
+    check_emergency_stop()
+    safety_check(lift_pose, 0.15)
+    movel(lift_pose, a=default_lin_accel, v=0.15)
+
+    # ---- Transit to Place Approach ----
+    check_emergency_stop()
+    safety_check(place_approach, 0.2)
+    movel(place_approach, a=default_lin_accel, v=0.2)
+
+    # ---- Descend to Place ----
+    check_emergency_stop()
+    safety_check(place_pose, 0.1)
+    movel(place_pose, a=default_lin_accel, v=0.1)
+
+    # ---- Release (hold for 0.5 s) ----
+    check_emergency_stop()
+    sleep(0.5)
+
+    # ---- Retreat ----
+    check_emergency_stop()
+    safety_check(retreat_pose, 0.2)
+    movel(retreat_pose, a=default_lin_accel, v=0.2)
+
+    # ---- Return Home ----
+    check_emergency_stop()
+    movej(home_joints, a=default_joint_accel, v=0.2)
+
+    textmsg("Task T001 completed safely.")
+end
+
+# ------------------------------------------------------------
+# Run the program
+main()

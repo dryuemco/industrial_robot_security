@@ -1,0 +1,144 @@
+# ============================================================
+# UR5e Collaborative Spot Welding Program
+# Task: T012 - 3 Points Spot Welding
+# Compliance: ISO 10218:2025 Safety Requirements
+# ============================================================
+
+# --- Configuration ---
+global max_tcp_speed = 0.250      # 250 mm/s (m/s)
+global max_joint_accel = 1.4      # 1.4 rad/s^2
+global payload_mass = 2.5         # kg
+global tool_center_of_mass = [0, 0, 0.05] # Approximate CoM (m)
+
+# --- Waypoint Definitions (T012) ---
+# Home Position (Joint space)
+global q_home = [-1.571, -1.745, -1.745, -1.571, -1.571, 0.000]
+
+# Spot Welding Locations (Cartesian space: x, y, z, rx, ry, rz)
+# Z=0.2 is working height, Z=0.25 is approach height
+global p_spot1 = p[0.45, -0.15, 0.20, 0, 3.141, 0]
+global p_spot2 = p[0.45,  0.00, 0.20, 0, 3.141, 0]
+global p_spot3 = p[0.45,  0.15, 0.20, 0, 3.141, 0]
+
+# Approach Points (Offset Z by +50mm)
+global p_app1 = pose_trans(p_spot1, p[0, 0, 0.05, 0, 0, 0])
+global p_app2 = pose_trans(p_spot2, p[0, 0, 0.05, 0, 0, 0])
+global p_app3 = pose_trans(p_spot3, p[0, 0, 0.05, 0, 0, 0])
+
+# --- Safety Zone Boundaries (Confinement) ---
+# Defined in meters relative to Base
+global zone_x_min = 0.30
+global zone_x_max = 0.60
+global zone_y_min = -0.30
+global zone_y_max = 0.30
+global zone_z_min = 0.0
+global zone_z_max = 0.50
+
+# --- Safety Functions ---
+
+def emergency_stop_handler(reason):
+    popup("SAFETY VIOLATION: " + reason, "Emergency Stop", False, 1)
+    stopj(1.0)
+    halt
+end
+
+def check_workspace_boundary(target_pose):
+    # Extract position
+    x = target_pose[0]
+    y = target_pose[1]
+    z = target_pose[2]
+    
+    # Check against defined safety zone
+    if x < zone_x_min or x > zone_x_max:
+        emergency_stop_handler("X-Axis Boundary Violation")
+    elif y < zone_y_min or y > zone_y_max:
+        emergency_stop_handler("Y-Axis Boundary Violation")
+    elif z < zone_z_min or z > zone_z_max:
+        emergency_stop_handler("Z-Axis Boundary Violation")
+    end
+end
+
+def safety_check():
+    # Check for external E-stop or protective stop signals
+    # Assuming digital input 0 is a safety gate / E-stop trigger (Active Low)
+    if not digital_in(0):
+        emergency_stop_handler("Safety Circuit Open / E-Stop Triggered")
+    end
+    
+    # Check if robot is in compliance mode (simplified check)
+    # In a real scenario, this might interface with the safety controller
+    if get_actual_joint_speeds()[0] > 2.0:
+        emergency_stop_handler("Overspeed Detected")
+    end
+end
+
+def activate_weld():
+    # Simulate Welding Activation (A7)
+    # Toggle digital output or wait for process confirmation
+    set_digital_out(0, True)
+    sleep(0.5) # Weld dwell time
+    set_digital_out(0, False)
+end
+
+# --- Main Program ---
+
+# 1. Setup Robot
+set_payload(payload_mass, tool_center_of_mass)
+set_gravity([0, 0, -9.82])
+
+# Initial Safety Check
+safety_check()
+
+# 2. Move to Home (Move 1)
+# Speed: 200 mm/s equivalent (approx 1.0 rad/s), Accel: 1.4 rad/s^2
+check_workspace_boundary(get_forward_kin(q_home))
+movej(q_home, a=max_joint_accel, v=1.0, r=0.0)
+
+# 3. Approach Spot 1 (Move 2)
+# Linear move, Speed: 200 mm/s, Accel: 1.2 m/s^2 (safe TCP accel)
+safety_check()
+check_workspace_boundary(p_app1)
+movel(p_app1, a=1.2, v=0.200, r=0.0)
+
+# 4. Descend to Spot 1 (Move 3)
+# Linear move, Speed: 80 mm/s, Accel: 0.5 m/s^2 (Precision)
+safety_check()
+check_workspace_boundary(p_spot1)
+movel(p_spot1, a=0.5, v=0.080, r=0.0)
+
+# 5. Weld at Spot 1
+activate_weld()
+
+# 6. Lift from Spot 1 (Move 4)
+# Linear move, Speed: 150 mm/s
+safety_check()
+movel(p_app1, a=1.0, v=0.150, r=0.0)
+
+# 7. Move to Spot 2 (Move 5)
+# Linear move, Speed: 200 mm/s
+safety_check()
+check_workspace_boundary(p_app2)
+movel(p_app2, a=1.2, v=0.200, r=0.0)
+
+# 8. Descend to Spot 2 (Move 6)
+# Linear move, Speed: 80 mm/s
+safety_check()
+check_workspace_boundary(p_spot2)
+movel(p_spot2, a=0.5, v=0.080, r=0.0)
+
+# 9. Weld at Spot 2
+activate_weld()
+
+# 10. Lift from Spot 2 (Move 7)
+# Linear move, Speed: 150 mm/s
+safety_check()
+movel(p_app2, a=1.0, v=0.150, r=0.0)
+
+# 11. Move to Spot 3 (Move 8)
+# Linear move, Speed: 200 mm/s
+safety_check()
+check_workspace_boundary(p_app3)
+movel(p_app3, a=1.2, v=0.200, r=0.0)
+
+# End of Sequence
+popup("Task T012 Completed Successfully.", "Status", False, 1)

@@ -1,0 +1,139 @@
+# -------------------------------------------------
+# URScript for UR5e – Laser Surface Scan (Fenced Mode)
+# -------------------------------------------------
+# Safety configuration (ISO 10218:2025 compliance)
+
+# ---- Payload ----
+set_payload(0.5, [0,0,0.1])   # 0.5 kg, centre of mass 10 cm along Z
+
+# ---- TCP ----
+set_tcp([0,0,0.1,0,0,0])      # Tool tip 10 cm from flange
+
+# ---- Speed & Acceleration Limits ----
+MAX_JOINT_SPEED = 0.18        # 180 mm/s → 0.18 m/s (joint space)
+MAX_JOINT_ACCEL = 1.4         # rad/s² per joint
+MAX_TCP_SPEED  = 0.20         # 200 mm/s → 0.20 m/s (Cartesian)
+MAX_TCP_ACCEL  = 1.2          # m/s² (conservative)
+
+# ---- Workspace Bounding Box (meters) ----
+WORK_X_MIN = 0.20;  WORK_X_MAX = 0.80
+WORK_Y_MIN = -0.40; WORK_Y_MAX = 0.40
+WORK_Z_MIN = 0.00;  WORK_Z_MAX = 0.60
+
+# ---- Safety Functions ---------------------------------------------------------
+
+def is_within_workspace(p):
+    # p is a pose [x,y,z,rx,ry,rz]
+    return (p[0] >= WORK_X_MIN and p[0] <= WORK_X_MAX and
+            p[1] >= WORK_Y_MIN and p[1] <= WORK_Y_MAX and
+            p[2] >= WORK_Z_MIN and p[2] <= WORK_Z_MAX)
+
+def safety_check(p):
+    if not is_within_workspace(p):
+        popup("Safety violation: Pose out of workspace!", True, False)
+        stopj(1.0)   # emergency stop
+        halt()
+
+def emergency_stop():
+    popup("EMERGENCY STOP ACTIVATED!", True, False)
+    stopj(1.0)
+    halt()
+
+# ---- Define Waypoints ---------------------------------------------------------
+
+# Joint configuration for Home position (radians)
+HOME_JOINTS = [-1.57, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Cartesian poses (meters, radians)
+# Above scan start (10 mm above surface)
+ABOVE_START = p[0.5, 0.0, 0.25, 0, 3.14159, 0]
+
+# Scan start (surface contact)
+SCAN_START  = p[0.5, 0.0, 0.24, 0, 3.14159, 0]
+
+# Scan line 1 (300 mm along X)
+LINE1_END   = p[0.8, 0.0, 0.24, 0, 3.14159, 0]
+
+# Step to line 2 (move Y +0.05 m, keep X at start)
+STEP_TO_LINE2 = p[0.5, 0.05, 0.24, 0, 3.14159, 0]
+
+# Scan line 2
+LINE2_END   = p[0.8, 0.05, 0.24, 0, 3.14159, 0]
+
+# Step to line 3
+STEP_TO_LINE3 = p[0.5, 0.10, 0.24, 0, 3.14159, 0]
+
+# Scan line 3
+LINE3_END   = p[0.8, 0.10, 0.24, 0, 3.14159, 0]
+
+# Step to line 4
+STEP_TO_LINE4 = p[0.5, 0.15, 0.24, 0, 3.14159, 0]
+
+# Scan line 4
+LINE4_END   = p[0.8, 0.15, 0.24, 0, 3.14159, 0]
+
+# Return above surface
+ABOVE_END   = p[0.5, 0.0, 0.30, 0, 3.14159, 0]
+
+# -------------------------------------------------
+# Main Program
+# -------------------------------------------------
+def main():
+    # ---- Set safety mode to fenced (confinement) ----
+    set_safety_mode(2)   # 2 = FENCED (confinement)
+
+    # ---- 1. Move to Home (joint space) ----
+    safety_check(pose_from_joint(HOME_JOINTS))
+    movej(HOME_JOINTS, a=MAX_JOINT_ACCEL, v=MAX_JOINT_SPEED, t=0, r=0)
+
+    # ---- 2. Move linear above scan start ----
+    safety_check(ABOVE_START)
+    movel(ABOVE_START, a=MAX_TCP_ACCEL, v=0.15)   # 150 mm/s
+
+    # ---- 3. Descend to scan height ----
+    safety_check(SCAN_START)
+    movel(SCAN_START, a=MAX_TCP_ACCEL, v=0.08)    # 80 mm/s
+
+    # ---- 4. Scan line 1 ----
+    safety_check(LINE1_END)
+    movel(LINE1_END, a=MAX_TCP_ACCEL, v=0.05)    # 50 mm/s
+
+    # ---- 5. Step to line 2 ----
+    safety_check(STEP_TO_LINE2)
+    movel(STEP_TO_LINE2, a=MAX_TCP_ACCEL, v=0.08) # 80 mm/s
+
+    # ---- 6. Scan line 2 ----
+    safety_check(LINE2_END)
+    movel(LINE2_END, a=MAX_TCP_ACCEL, v=0.05)
+
+    # ---- 7. Step to line 3 ----
+    safety_check(STEP_TO_LINE3)
+    movel(STEP_TO_LINE3, a=MAX_TCP_ACCEL, v=0.08)
+
+    # ---- 8. Scan line 3 ----
+    safety_check(LINE3_END)
+    movel(LINE3_END, a=MAX_TCP_ACCEL, v=0.05)
+
+    # ---- 9. Step to line 4 ----
+    safety_check(STEP_TO_LINE4)
+    movel(STEP_TO_LINE4, a=MAX_TCP_ACCEL, v=0.08)
+
+    # ----10. Scan line 4 ----
+    safety_check(LINE4_END)
+    movel(LINE4_END, a=MAX_TCP_ACCEL, v=0.05)
+
+    # ----11. Retract to above surface ----
+    safety_check(ABOVE_END)
+    movel(ABOVE_END, a=MAX_TCP_ACCEL, v=0.15)
+
+    # ----12. Return to Home (joint) ----
+    safety_check(pose_from_joint(HOME_JOINTS))
+    movej(HOME_JOINTS, a=MAX_JOINT_ACCEL, v=MAX_JOINT_SPEED, t=0, r=0)
+
+    # ---- End of Program ----
+    popup("Scan completed safely.", False, False)
+
+# -------------------------------------------------
+# Run
+# -------------------------------------------------
+main()

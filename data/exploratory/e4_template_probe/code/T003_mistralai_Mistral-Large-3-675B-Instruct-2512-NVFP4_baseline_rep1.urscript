@@ -1,0 +1,67 @@
+# URScript for EUR-pallet 2x2 layer - hybrid mode (T003)
+  # Payload: 4.5 kg
+  # Safety: Zone confinement with pallet boundary
+
+  # Set payload
+  set_payload(4.5)
+
+  # Safety configuration
+  conf = p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+  conf[2] = 1  # Enable zone confinement
+  conf[3] = 1  # Enable pallet boundary check
+  set_config(conf)
+
+  # Define positions
+  home_pose = p[0.0, -1.5708, 0.0, -1.5708, 0.0, 0.0]  # Home position (joint angles)
+  conveyor_approach = p[0.5, 0.2, 0.3, 0.0, 3.1416, 0.0]  # Above conveyor
+  conveyor_pick = p[0.5, 0.2, 0.1, 0.0, 3.1416, 0.0]  # Pick position
+  lift_pose = p[0.5, 0.2, 0.3, 0.0, 3.1416, 0.0]  # Lift after pick
+  pallet_approach = p[0.0, 0.6, 0.4, 0.0, 3.1416, 0.0]  # Above pallet center
+  pallet_positions = [
+    p[0.0, 0.6, 0.1, 0.0, 3.1416, 0.0],  # Position 0 (bottom-left)
+    p[0.2, 0.6, 0.1, 0.0, 3.1416, 0.0],  # Position 1 (bottom-right)
+    p[0.0, 0.8, 0.1, 0.0, 3.1416, 0.0],  # Position 2 (top-left)
+    p[0.2, 0.8, 0.1, 0.0, 3.1416, 0.0]   # Position 3 (top-right)
+  ]
+
+  # Main program
+  def main():
+    # Move 1: Home position
+    movej(home_pose, a=1.2, v=2.5)
+
+    # Pick and place loop for 2x2 grid
+    for i in range(4):
+      # Move 2: Approach conveyor pick
+      movel(conveyor_approach, a=1.2, v=2.5)
+
+      # Move 3: Descend to pick
+      movel(conveyor_pick, a=0.5, v=1.0)
+
+      # Gripper close (assuming gripper is controlled via digital output)
+      set_digital_out(0, True)
+      sleep(0.5)
+
+      # Move 4: Lift from conveyor
+      movel(lift_pose, a=1.2, v=2.0)
+
+      # Move 5: Transit to pallet position
+      movel(pallet_approach, a=1.4, v=2.8)
+
+      # Move 6: Descend to place position
+      movel(pallet_positions[i], a=0.5, v=1.0)
+
+      # Gripper open
+      set_digital_out(0, False)
+      sleep(0.5)
+
+      # Move 7: Lift after place
+      movel(pallet_approach, a=1.2, v=2.0)
+
+      # Move 8: Return to home (only after last placement)
+      if i == 3:
+        movej(home_pose, a=1.2, v=2.5)
+      else:
+        # Return to conveyor approach for next pick
+        movel(conveyor_approach, a=1.2, v=2.5)
+
+  end

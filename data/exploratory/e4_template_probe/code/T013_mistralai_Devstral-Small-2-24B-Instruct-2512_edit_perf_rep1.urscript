@@ -1,0 +1,52 @@
+# Task: T013 — Collaborative suction palletizing — light boxes
+# Optimized for faster cycle time
+# Operating mode: collaborative | Max TCP speed: 0.250 m/s
+# Robot: ur5e
+
+def task_T013():
+  # [0] E-Stop verify
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # [1] Home (faster joint move)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.5000)
+
+  # [2] Above staging (faster linear move)
+  movel(p[0.350000, -0.200000, 0.300000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.2500, r=0.0100)
+
+  # [3] Descend to pick (optimized acceleration)
+  movel(p[0.350000, -0.200000, 0.080000, 0.0000, 3.1416, 0.0000], a=0.3000, v=0.1200)
+
+  # [4] Suction ON
+  set_digital_out(0, True)
+
+  # [5] Vacuum settle (reduced time)
+  sleep(0.2000)
+
+  # [6] Lift (faster linear move)
+  movel(p[0.350000, -0.200000, 0.350000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.2000, r=0.0150)
+
+  # [7] Transit to pallet (faster linear move)
+  movel(p[0.450000, 0.200000, 0.350000, 0.0000, 3.1416, 0.0000], a=0.6000, v=0.2500, r=0.0150)
+
+  # [8] Place on pallet (optimized acceleration)
+  movel(p[0.450000, 0.200000, 0.080000, 0.0000, 3.1416, 0.0000], a=0.3000, v=0.1200)
+
+  # [9] Suction OFF
+  set_digital_out(0, False)
+
+  # [10] Release (reduced time)
+  sleep(0.1500)
+
+  # [11] Retract (faster linear move)
+  movel(p[0.450000, 0.200000, 0.350000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.2200, r=0.0100)
+
+  # [12] Return home (faster joint move)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.5000)
+
+end
+
+# Entry point
+task_T013()

@@ -1,0 +1,52 @@
+# Task: T011 — Dual-zone pick-place — hybrid mode
+# Optimized for faster cycle time
+# Operating mode: hybrid | Max TCP speed: 0.300 m/s
+# Robot: ur5e
+
+def task_T011():
+  # [0] E-Stop verify
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # [1] Home (increased speed)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.6250)
+
+  # [2] Above storage bin (increased speed)
+  movel(p[0.500000, -0.250000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.2800, r=0.0150)
+
+  # [3] Descend to pick (increased speed)
+  movel(p[0.500000, -0.250000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.1200)
+
+  # [4] Gripper CLOSE
+  set_digital_out(0, True)
+
+  # [5] Grip settle (reduced sleep time)
+  sleep(0.1500)
+
+  # [6] Lift from bin (increased speed)
+  movel(p[0.500000, -0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=0.8000, v=0.2000, r=0.0150)
+
+  # [7] Transit to handoff zone (increased speed)
+  movel(p[0.350000, 0.250000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.2500, r=0.0200)
+
+  # [8] Place at handoff (increased speed)
+  movel(p[0.350000, 0.250000, 0.120000, 0.0000, 3.1416, 0.0000], a=0.4000, v=0.1000)
+
+  # [9] Gripper OPEN
+  set_digital_out(0, False)
+
+  # [10] Release (reduced sleep time)
+  sleep(0.1000)
+
+  # [11] Retract (increased speed)
+  movel(p[0.350000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.2500, r=0.0100)
+
+  # [12] Return home (increased speed)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.6250)
+
+end
+
+# Entry point
+task_T011()

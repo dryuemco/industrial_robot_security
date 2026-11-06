@@ -1,0 +1,69 @@
+# -------------------------------------------------
+# URScript program: Linear weld path — fenced mode (T002)
+# -------------------------------------------------
+# Safety preamble (SM-6)
+set_tcp(p[0,0,0.1,0,0,0])          # Tool center point offset (example)
+set_payload(3.0, p[0,0,0.1,0,0,0]) # Payload 3.0 kg with same CoG
+
+# Joint limits for UR5e (radians)
+joint_min = [-2.0*math.pi, -2.0*math.pi, -2.0*math.pi, -2.0*math.pi, -2.0*math.pi, -2.0*math.pi]
+joint_max = [ 2.0*math.pi,  2.0*math.pi,  2.0*math.pi,  2.0*math.pi,  2.0*math.pi,  2.0*math.pi]
+
+def check_joint_limits(target):
+    for i in range(6):
+        if target[i] < joint_min[i] or target[i] > joint_max[i]:
+            textmsg("Joint limit violation on joint %d: %f" % (i+1, target[i]))
+            stop()
+    end
+end
+
+def safe_movej(target, speed):
+    check_joint_limits(target)
+    try:
+        movej(target, a=1.2, v=speed/1000.0)   # speed converted to m/s
+    except err:
+        textmsg("movej failed: " + err)
+        stop()
+    end
+end
+
+def safe_movel(target, speed):
+    # No direct joint limit check for linear moves; rely on current pose safety
+    try:
+        movel(target, a=1.2, v=speed/1000.0)   # speed converted to m/s
+    except err:
+        textmsg("movel failed: " + err)
+        stop()
+    end
+end
+
+# -------------------------------------------------
+# Motion sequence (6 moves)
+# -------------------------------------------------
+
+# 1) Move to home position (joint space) – 300 mm/s
+home_joint = [0, -1.57, 1.57, 0, 1.57, 0]
+safe_movej(home_joint, 300.0)
+
+# 2) Approach above weld start – 250 mm/s
+# Pose: 300 mm above start point, orientation pointing downwards (rx=pi)
+approach_pose = p[0.5, 0.0, 0.3, 0, 3.14159, 0]   # example coordinates
+safe_movel(approach_pose, 250.0)
+
+# 3) Descend to weld start position – 100 mm/s
+start_pose = p[0.5, 0.0, 0.0, 0, 3.14159, 0]      # 0 mm Z (weld start)
+safe_movel(start_pose, 100.0)
+
+# 4) Weld seam – 300 mm linear path along X – 50 mm/s
+# End pose 300 mm ahead in X direction
+end_pose = p[0.8, 0.0, 0.0, 0, 3.14159, 0]        # 300 mm forward
+safe_movel(end_pose, 50.0)
+
+# 5) Retract above weld end – 200 mm/s
+retract_pose = p[0.8, 0.0, 0.3, 0, 3.14159, 0]   # lift 300 mm up
+safe_movel(retract_pose, 200.0)
+
+# 6) Return to home position – 300 mm/s
+safe_movej(home_joint, 300.0)
+
+# End of program

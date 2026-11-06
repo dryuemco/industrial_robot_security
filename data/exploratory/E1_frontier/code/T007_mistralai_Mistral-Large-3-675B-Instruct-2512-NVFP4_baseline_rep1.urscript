@@ -1,0 +1,39 @@
+# URScript for Curved Contour Weld - Hybrid Mode (T007)
+# Robot: UR5e, Payload: 3.5 kg
+
+# Set payload
+set_payload(3.5)
+
+# Safety configuration
+set_confinement("confinement")
+
+# Define waypoints (example values - adjust to actual task coordinates)
+global home_pose = p[0.0, -0.5, 0.5, 0, 0, 0]
+global approach_pose = p[0.2, -0.3, 0.15, 0, 3.14159, 0]
+global weld_start_pose = p[0.2, -0.3, 0.05, 0, 3.14159, 0]
+global weld_mid_pose = p[0.25, -0.25, 0.05, 0, 3.14159, 0]
+global weld_end_pose = p[0.3, -0.2, 0.05, 0, 3.14159, 0]
+global retract_pose = p[0.3, -0.2, 0.15, 0, 3.14159, 0]
+global depart_pose = p[0.0, -0.5, 0.3, 0, 0, 0]
+
+# Set tool center point (TCP) and speed limits
+set_tcp(p[0, 0, 0.1, 0, 0, 0])
+set_max_tcp_speed(300.0)
+
+# Motion sequence
+movej(home_pose, a=1.2, v=3.0)  # Home position at 300 mm/s
+movel(approach_pose, a=0.8, v=2.5)  # Approach above weld fixture at 250 mm/s
+
+# Enter fenced mode for welding
+set_confinement("fenced")
+movel(weld_start_pose, a=0.3, v=1.0)  # Descend to weld start at 100 mm/s
+
+# Welding sequence
+movel(weld_mid_pose, a=0.2, v=0.6)  # Weld midpoint at 60 mm/s
+movel(weld_end_pose, a=0.2, v=0.6)  # Weld end at 60 mm/s
+
+# Retract and depart
+movel(retract_pose, a=0.3, v=1.0)  # Retract from weld
+set_confinement("confinement")
+movel(depart_pose, a=0.8, v=2.5)  # Depart from weld area
+movej(home_pose, a=1.2, v=3.0)  # Return to home position

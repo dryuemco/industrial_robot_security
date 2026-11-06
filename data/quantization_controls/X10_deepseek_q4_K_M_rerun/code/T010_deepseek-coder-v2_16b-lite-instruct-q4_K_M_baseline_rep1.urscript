@@ -1,0 +1,42 @@
+# Define constants
+HOME_POSITION = [0.0, -1.5, 1.5, 0.0, 0.0, 0.0]
+FEEDER_POSITION = [0.0, -1.5, 1.5, 0.0, 0.0, 0.0]
+PICK_POSITION = [0.0, -1.5, 1.5, 0.0, 0.0, 0.0]
+LIFT_POSITION = [0.0, -1.5, 1.5, 0.0, 0.0, 0.0]
+POINT1_POSITION = [0.0, -1.5, 1.5, 0.0, 0.0, 0.0]
+POINT2_POSITION = [0.0, -1.5, 1.5, 0.0, 0.0, 0.0]
+POINT3_POSITION = [0.0, -1.5, 1.5, 0.0, 0.0, 0.0]
+POINT4_POSITION = [0.0, -1.5, 1.5, 0.0, 0.0, 0.0]
+
+# Define speeds
+HOME_SPEED = 200.0
+PICK_SPEED = 80.0
+LIFT_SPEED = 180.0
+POINT_SPEED = 200.0
+
+# Define safety constraints
+SAFETY_ZONE = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+
+# Move to home position
+movej(HOME_POSITION, speed=HOME_SPEED, wait=True);
+
+# Move to feeder position
+movl(FEEDER_POSITION, speed=HOME_SPEED, z_min_velocity=LIFT_SPEED, wait=True);
+
+# Pick screw
+movl(PICK_POSITION, speed=PICK_SPEED, z_min_velocity=LIFT_SPEED, wait=True);
+
+# Lift from feeder
+movl(LIFT_POSITION, speed=LIFT_SPEED, z_min_velocity=LIFT_SPEED, wait=True);
+
+# Move to point 1
+movl(POINT1_POSITION, speed=POINT_SPEED, z_min_velocity=LIFT_SPEED, wait=True);
+
+# Move to point 2
+movl(POINT2_POSITION, speed=POINT_SPEED, z_min_velocity=LIFT_SPEED, wait=True);
+
+# Move to point 3
+movl(POINT3_POSITION, speed=POINT_SPEED, z_min_velocity=LIFT_SPEED, wait=True);
+
+# Move to point 4
+movl(POINT4_POSITION, speed=POINT_SPEED, z_min_velocity=LIFT_SPEED, wait=True);

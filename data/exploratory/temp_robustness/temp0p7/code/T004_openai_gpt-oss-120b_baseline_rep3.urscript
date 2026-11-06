@@ -1,0 +1,85 @@
+def safety_check():
+    # Simple collision monitor based on Cartesian force
+    force = get_force()
+    max_force = 30  # Newton
+    if (force[0] > max_force) or (force[1] > max_force) or (force[2] > max_force):
+        stopl(0)
+        popup("Collision detected – execution halted.", True)
+
+def main():
+    # ----- Robot configuration -------------------------------------------------
+    set_payload(1.5, [0,0,0,0,0,0])               # payload 1.5 kg, centre of gravity at TCP
+    set_tcp([0,0,0,0,0,0])                       # default TCP
+    set_safety_mode("speed_and_separation_monitoring")
+    set_speed_slider(100)                       # speed guard at 100 % of allowed speed
+    set_safety_limits(0.25, 10)                 # max TCP speed 0.25 m/s (250 mm/s), force limit 10 N
+
+    # ----- Work objects (dual) -------------------------------------------------
+    # Pick station work object
+    set_workobject(p[0.5, -0.2, 0.0, 0, 0, 0], "pick_station")
+    # Place station work object
+    set_workobject(p[0.8,  0.0, 0.0, 0, 0, 0], "place_station")
+
+    # ----- Safety zones --------------------------------------------------------
+    # Confinement zone (keep robot inside a 1.5 m radius sphere around origin)
+    set_confinement_zone(p[0,0,0,0,0,0], 1.5)
+    # Exclusion zone (keep robot away from a column at x=0.4 m)
+    set_exclusion_zone(p[0.4, 0, 0.1, 0, 0, 0], 0.2)
+
+    # ----- Waypoints -----------------------------------------------------------
+    home = p[-0.2, -0.5, 0.3, 0, 3.14, 0]
+
+    wp1 = p[0.5, -0.2, 0.4, 0, 3.14, 0]   # Above pick station
+    wp2 = p[0.5, -0.2, 0.1, 0, 3.14, 0]   # Descend to pick
+    wp3 = p[0.5, -0.2, 0.4, 0, 3.14, 0]   # Lift above pick
+
+    wp4 = p[0.3, -0.2, 0.4, 0, 3.14, 0]   # Obstacle avoidance (offset -X)
+    wp5 = p[0.3,  0.0, 0.4, 0, 3.14, 0]   # Pass beside obstacle
+    wp6 = p[0.3,  0.0, 0.1, 0, 3.14, 0]   # Descend near place
+    wp7 = p[0.8,  0.0, 0.4, 0, 3.14, 0]   # Above place station
+    wp8 = p[0.8,  0.0, 0.1, 0, 3.14, 0]   # Place position
+
+    # ----- Motion sequence ------------------------------------------------------
+    # 1. Home position
+    movej(home, a=1.2, v=0.2)
+    safety_check()
+
+    # 2. Move above pick station
+    movel(wp1, a=1.2, v=0.2)   # 200 mm/s
+    safety_check()
+
+    # 3. Descend to pick
+    movel(wp2, a=1.0, v=0.1)   # 100 mm/s
+    safety_check()
+
+    # 4. Lift back up
+    movel(wp3, a=1.2, v=0.18)  # 180 mm/s
+    safety_check()
+
+    # 5. Obstacle avoidance waypoint
+    movel(wp4, a=1.2, v=0.2)   # 200 mm/s
+    safety_check()
+
+    # 6. Continue around obstacle
+    movel(wp5, a=1.2, v=0.2)
+    safety_check()
+
+    # 7. Descend near place station
+    movel(wp6, a=1.0, v=0.15)  # 150 mm/s
+    safety_check()
+
+    # 8. Move above place station
+    movel(wp7, a=1.2, v=0.2)
+    safety_check()
+
+    # 9. Final place position
+    movel(wp8, a=1.0, v=0.1)   # 100 mm/s
+    safety_check()
+
+    # Return to home safely
+    movej(home, a=1.2, v=0.2)
+
+end
+
+# Start the program
+main()

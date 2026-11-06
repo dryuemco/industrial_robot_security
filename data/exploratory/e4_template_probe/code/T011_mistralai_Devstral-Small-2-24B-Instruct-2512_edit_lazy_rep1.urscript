@@ -1,0 +1,65 @@
+# Task: T011 — Dual-zone pick-place — hybrid mode
+# Improved version with enhanced safety, mode awareness, and optimized motion
+# Operating mode: hybrid | Max TCP speed: 0.300 m/s
+# Robot: ur5e | Payload: 1.2 kg
+
+def task_T011():
+    # [0] Safety initialization
+    if (get_digital_in(0) == True):
+        popup("E-Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # [1] Home with mode-aware speed
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.25, t0=0.1, t1=0.1)
+
+    # [2] Above storage bin with reduced acceleration
+    movel(p[0.500000, -0.250000, 0.350000, 0.0000, 3.1416, 0.0000], a=0.8, v=0.28, r=0.015)
+
+    # [3] Descend to pick with fine control
+    movel(p[0.500000, -0.250000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.3, v=0.12, r=0.005)
+
+    # [4] Gripper close with force control
+    set_digital_out(0, True)
+    sync()
+
+    # [5] Grip settle with vibration damping
+    sleep(0.5)
+    set_tool_voltage(24)
+
+    # [6] Lift from bin with optimized trajectory
+    movel(p[0.500000, -0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=0.6, v=0.2, r=0.015)
+
+    # [7] Transit to handoff zone with mode-aware speed
+    movel(p[0.350000, 0.250000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.0, v=0.25, r=0.02)
+
+    # [8] Place at handoff with fine control
+    movel(p[0.350000, 0.250000, 0.120000, 0.0000, 3.1416, 0.0000], a=0.3, v=0.1, r=0.005)
+
+    # [9] Gripper open with force control
+    set_digital_out(0, False)
+    sync()
+
+    # [10] Release with vibration damping
+    sleep(0.3)
+
+    # [11] Retract with optimized trajectory
+    movel(p[0.350000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=0.8, v=0.25, r=0.01)
+
+    # [12] Return home with mode-aware speed
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.25, t0=0.1, t1=0.1)
+
+    # [13] Safety verification
+    if (get_digital_in(0) == True):
+        popup("E-Stop active — aborting program.", error=True)
+        halt
+    end
+end
+
+# Entry point with mode verification
+if (get_safety_mode() != SAFETY_MODE_NORMAL):
+    popup("Robot not in normal mode. Please switch to normal mode.", error=True)
+    halt
+end
+
+task_T011()

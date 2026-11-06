@@ -1,0 +1,62 @@
+# -------------------------------------------------
+# Curved contour weld — hybrid mode (T007)
+# UR5e, payload 3.5 kg, hybrid operation
+# -------------------------------------------------
+
+# ---- Payload and tool centre point ----
+set_payload(3.5, [0,0,0])          # 3.5 kg payload, CoG at TCP
+set_tcp(p[0,0,0,0,0,0])           # Default TCP (adjust if needed)
+
+# ---- Safety limits (confinement zone) ----
+# Max joint speed (rad/s), joint acceleration (rad/s²), cartesian speed (m/s), cartesian accel (m/s²)
+set_safety_limits(2.0, 1.5, 0.3, 0.5)   # 300 mm/s = 0.3 m/s cartesian speed
+
+# ---- Hybrid mode activation (UR5e specific) ----
+# The following call switches the robot to hybrid (collaborative + fenced) mode.
+# Adjust according to your controller version if needed.
+set_hybrid_mode(True)
+
+# ---- Speed settings (mm/s → m/s) ----
+speed_home      = 0.300   # 300 mm/s
+speed_approach  = 0.250   # 250 mm/s
+speed_descend   = 0.100   # 100 mm/s
+speed_weld      = 0.060   # 60 mm/s
+speed_retract   = 0.200   # 200 mm/s
+speed_return    = 0.300   # 300 mm/s
+
+# ---- Position definitions (meters) ----
+# Joint space home position (example values)
+home_joint = p[0, -1.5708, 1.5708, -1.5708, -1.5708, 0]
+
+# Cartesian poses (x, y, z, Rx, Ry, Rz) – replace with real fixture coordinates
+approach_pose = p[0.500, 0.000, 0.300, 0, 3.14159, 0]   # 300 mm above weld fixture
+start_pose    = p[0.500, 0.000, 0.150, 0, 3.14159, 0]   # weld start (descended)
+mid_pose      = p[0.600, 0.050, 0.150, 0, 3.14159, 0]   # weld midpoint (arc)
+end_pose      = p[0.700, 0.000, 0.150, 0, 3.14159, 0]   # weld end
+retract_pose  = p[0.700, 0.000, 0.300, 0, 3.14159, 0]   # lift after weld
+safe_home     = p[0.400, -0.400, 0.400, 0, 3.14159, 0]  # safe standby pose
+
+# ---- Motion sequence ----
+# 1) Joint move to home
+movej(home_joint, a=1.4, v=speed_home, t=0, r=0)
+
+# 2) Linear approach above weld fixture
+movel(approach_pose, a=1.2, v=speed_approach, t=0, r=0)
+
+# 3) Descend to weld start
+movel(start_pose, a=0.8, v=speed_descend, t=0, r=0)
+
+# 4) Weld arc – midpoint
+movel(mid_pose, a=0.5, v=speed_weld, t=0, r=0)
+
+# 5) Weld arc – end
+movel(end_pose, a=0.5, v=speed_weld, t=0, r=0)
+
+# 6) Retract after weld
+movel(retract_pose, a=0.8, v=speed_retract, t=0, r=0)
+
+# 7) Return to safe home position
+movel(safe_home, a=1.2, v=speed_return, t=0, r=0)
+
+# ---- End of program ----
+stopj(0)   # ensure robot is stopped before program exit

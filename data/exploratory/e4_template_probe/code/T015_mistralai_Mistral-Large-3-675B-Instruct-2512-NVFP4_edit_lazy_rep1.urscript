@@ -1,0 +1,81 @@
+# Task: T015 — Laser marking — fenced mode
+# Robot: ur5e | Payload: 0.6 kg | Max TCP speed: 0.400 m/s
+# Safety: Fenced mode with confinement and exclusion zones
+# Laser tool constraints: A7 (activation), A3 (strict pointing), A6 (fixture frame)
+
+def task_T015():
+  # Safety checks
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", title="SAFETY ALERT", error=True)
+    halt
+  end
+
+  if (get_analog_in(0) < 2.0):  # Safety fence signal check
+    popup("Safety fence not secured — aborting program.", title="SAFETY ALERT", error=True)
+    halt
+  end
+
+  # Configure payload
+  set_payload(0.6, [0.0, 0.0, 0.03])
+
+  # Define waypoints with improved precision
+  home_pose = p[0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+  above_surface = p[0.400000, -0.080000, 0.200000, 0.0000, 3.1416, 0.0000]
+  marking_height = p[0.400000, -0.080000, 0.100000, 0.0000, 3.1416, 0.0000]
+  line1_start = p[0.400000, -0.080000, 0.100000, 0.0000, 3.1416, 0.0000]
+  line1_end = p[0.500000, -0.080000, 0.100000, 0.0000, 3.1416, 0.0000]
+  line2_start = p[0.500000, 0.000000, 0.100000, 0.0000, 3.1416, 0.0000]
+  line2_end = p[0.400000, 0.000000, 0.100000, 0.0000, 3.1416, 0.0000]
+  line3_start = p[0.400000, 0.080000, 0.100000, 0.0000, 3.1416, 0.0000]
+  line3_end = p[0.500000, 0.080000, 0.100000, 0.0000, 3.1416, 0.0000]
+  retract_pose = p[0.450000, 0.000000, 0.300000, 0.0000, 3.1416, 0.0000]
+
+  # Motion sequence with optimized blending and safety checks
+  movej(home_pose, a=1.4000, v=0.8750)
+
+  # Approach marking area
+  movel(above_surface, a=1.2000, v=0.3000, r=0.0100)
+
+  # Verify laser pointing direction before descent
+  if (norm(get_actual_tcp_pose() - marking_height) > 0.05):
+    popup("Laser pointing verification failed — aborting.", title="SAFETY ALERT", error=True)
+    halt
+  end
+
+  # Descend to marking height
+  movel(marking_height, a=0.4000, v=0.1000, r=0.0030)
+
+  # Laser activation with safety interlock
+  if (get_digital_in(1) == True):  # Laser ready signal
+    set_digital_out(3, True)
+    sync()
+    sleep(0.1)  # Laser stabilization time
+  else:
+    popup("Laser not ready — aborting program.", title="LASER ALERT", error=True)
+    movel(retract_pose, a=1.2000, v=0.3000, r=0.0100)
+    halt
+  end
+
+  # Marking sequence
+  movel(line1_end, a=0.2000, v=0.0600, r=0.0030)
+  movel(line2_start, a=0.3000, v=0.0800, r=0.0030)
+  movel(line2_end, a=0.2000, v=0.0600, r=0.0030)
+  movel(line3_start, a=0.3000, v=0.0800, r=0.0030)
+  movel(line3_end, a=0.2000, v=0.0600)
+
+  # Laser deactivation
+  set_digital_out(3, False)
+  sync()
+
+  # Retract and return
+  movel(retract_pose, a=1.2000, v=0.3000, r=0.0100)
+  movej(home_pose, a=1.4000, v=0.8750)
+
+end
+
+# Entry point with safety wrapper
+if (get_analog_in(0) >= 2.0):  # Verify safety fence is secured
+  task_T015()
+else:
+  popup("Safety fence not secured — program not started.", title="SAFETY ALERT", error=True)
+end

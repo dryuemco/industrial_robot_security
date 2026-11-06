@@ -1,0 +1,88 @@
+# URScript for UR5e collaborative palletizing task (light boxes)
+# ------------------------------------------------------------
+# Payload and TCP
+set_payload(0.8, {0,0,0.02})      # 0.8 kg payload, CoM 2 cm along Z
+set_tcp({0,0,0.1,0,0,0})          # Simple TCP 10 cm offset along Z (suction cup)
+
+# Safety / collaborative mode
+# (Assumes robot is already in collaborative mode via the UI/URCaps)
+# If needed, you can enforce it via:
+# set_robot_mode(mode = "collaborative")   # Placeholder, actual call depends on controller version
+
+# Speed limits (max TCP speed 250 mm/s = 0.25 m/s)
+max_tcp_speed = 0.25
+
+# Define key poses (in meters and radians)
+pose_home          = p[0.0, -0.5, 0.5, 0, 3.14159, 0]          # Home position
+pose_above_staging = p[0.4, -0.3, 0.35, 0, 3.14159, 0]         # 10 cm above staging area
+pose_pick          = p[0.4, -0.3, 0.10, 0, 3.14159, 0]         # Descend to pick
+pose_lift          = p[0.4, -0.3, 0.35, 0, 3.14159, 0]         # Lift after pick
+pose_pallet        = p[0.6, 0.0, 0.35, 0, 3.14159, 0]          # Above pallet location
+# Additional placeholder poses for the remaining steps
+pose_place         = p[0.6, 0.0, 0.10, 0, 3.14159, 0]          # Descend to place
+pose_retreat       = p[0.6, 0.0, 0.35, 0, 3.14159, 0]          # Retreat after place
+pose_home2         = pose_home                                 # Return home (reuse)
+
+# Motion parameters (convert mm/s to m/s)
+speed_joint_home   = 0.2      # 200 mm/s => 0.2 m/s (joint speed approximation)
+acc_joint_home     = 1.2      # default joint acceleration
+
+speed_lin_above    = 0.22     # 220 mm/s
+acc_lin_above      = 1.2
+speed_lin_descend  = 0.10     # 100 mm/s
+acc_lin_descend    = 0.8
+speed_lin_lift     = 0.18     # 180 mm/s
+acc_lin_lift       = 1.0
+speed_lin_transit  = 0.23     # 230 mm/s
+acc_lin_transit    = 1.2
+speed_lin_place    = 0.15     # example speed for placing
+acc_lin_place      = 0.8
+speed_lin_retreat  = 0.20     # example retreat speed
+acc_lin_retreat    = 1.0
+
+# ------------------------------------------------------------------
+# Sequence start
+def main():
+    # 1) Move to Home (joint move)
+    movej(pose_home, a=acc_joint_home, v=speed_joint_home, t=0, r=0)
+
+    # 2) Move linearly above the staging area
+    movel(pose_above_staging, a=acc_lin_above, v=speed_lin_above, t=0, r=0)
+
+    # 3) Descend to pick the box
+    movel(pose_pick, a=acc_lin_descend, v=speed_lin_descend, t=0, r=0)
+
+    # Activate suction (placeholder function)
+    set_digital_out(0, True)   # Assume DO0 controls suction valve
+    sleep(0.2)                 # Short delay for suction to engage
+
+    # 4) Lift the box
+    movel(pose_lift, a=acc_lin_lift, v=speed_lin_lift, t=0, r=0)
+
+    # 5) Transit to pallet location
+    movel(pose_pallet, a=acc_lin_transit, v=speed_lin_transit, t=0, r=0)
+
+    # 6) Descend to place the box on the pallet
+    movel(pose_place, a=acc_lin_place, v=speed_lin_place, t=0, r=0)
+
+    # Release suction
+    set_digital_out(0, False)
+    sleep(0.2)
+
+    # 7) Retreat to safe height above pallet
+    movel(pose_retreat, a=acc_lin_retreat, v=speed_lin_retreat, t=0, r=0)
+
+    # 8) Return to Home position
+    movej(pose_home2, a=acc_joint_home, v=speed_joint_home, t=0, r=0)
+
+    # End of program
+    stopj(2)   # Ensure robot stops smoothly
+
+# ------------------------------------------------------------------
+# Safety confinement zone (example: a rectangular prism around the workcell)
+# Note: This is a placeholder; actual confinement zones are defined in the
+#       Safety Configuration UI or via a safety URCap.
+# set_confinement_zone({{0.0, 0.8}, {-0.6, 0.2}, {0.0, 0.7}})   # X, Y, Z limits in meters
+
+# Run the program
+main()

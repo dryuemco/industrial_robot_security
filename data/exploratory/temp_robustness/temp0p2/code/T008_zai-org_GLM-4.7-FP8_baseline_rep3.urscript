@@ -1,0 +1,56 @@
+# UR5e Heavy Depalletizing Task (T008)
+# Mode: Fenced
+# Payload: 5.0 kg
+
+# Configuration
+set_payload(5.0, [0.0, 0.0, 0.05])
+set_tcp(p[0.0, 0.0, 0.15, 0.0, 0.0, 0.0])
+
+# Define Waypoints
+# Home position (Joint space)
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Pallet Area
+p_above_pallet = p[0.35, -0.35, 0.45, 0.0, 3.14, 0.0]
+p_pick = p[0.35, -0.35, 0.10, 0.0, 3.14, 0.0]
+p_lift = p[0.35, -0.35, 0.25, 0.0, 3.14, 0.0]
+
+# Conveyor Area
+p_above_conveyor = p[0.65, 0.35, 0.45, 0.0, 3.14, 0.0]
+p_place = p[0.65, 0.35, 0.10, 0.0, 3.14, 0.0]
+p_retract = p[0.65, 0.35, 0.25, 0.0, 3.14, 0.0]
+
+# Motion Sequence
+# 1. Move Joint: Home (400 mm/s equivalent)
+movej(j_home, a=1.0, v=1.0)
+
+# 2. Move Linear: Above pallet (400.0 mm/s)
+movel(p_above_pallet, a=0.8, v=0.4)
+
+# 3. Move Linear: Descend to top layer (150.0 mm/s)
+movel(p_pick, a=0.3, v=0.15)
+
+# Gripper Close
+set_digital_out(0, True)
+sleep(1.0)
+
+# 4. Move Linear: Lift box (200.0 mm/s)
+movel(p_lift, a=0.4, v=0.2)
+
+# 5. Move Linear: Transit to conveyor (350.0 mm/s)
+movel(p_above_conveyor, a=0.8, v=0.35)
+
+# 6. Move Linear: Descend to conveyor (150.0 mm/s)
+movel(p_place, a=0.3, v=0.15)
+
+# Gripper Open
+set_digital_out(0, False)
+sleep(1.0)
+
+# 7. Move Linear: Lift from conveyor (200.0 mm/s)
+movel(p_retract, a=0.4, v=0.2)
+
+# 8. Move Joint: Return to Home (400 mm/s equivalent)
+movej(j_home, a=1.0, v=1.0)
+
+# End of Task

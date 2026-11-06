@@ -1,0 +1,98 @@
+# URScript for UR5e - Hybrid mode palletizing (2x2 grid) with heavy payload
+# ---------------------------------------------------------------
+# Payload
+set_payload(4.5, [0,0,0.1])   # 4.5 kg, CoG 10 cm above TCP
+
+# TCP speed limit (m/s)
+set_tcp_speed(0.30)          # 300 mm/s max
+
+# Safety confinement zone around pallet (meters)
+# Define min/max Cartesian limits for the pallet area
+pallet_min = p[0.0, 0.0, 0.0, 0, 0, 0]
+pallet_max = p[0.5, 0.5, 0.3, 0, 0, 0]   # 0.5 m × 0.5 m × 0.3 m volume
+set_safety_limits(pallet_min, pallet_max)
+
+# Helper function to switch safety mode
+def set_hybrid_mode(collaborative):
+    if collaborative:
+        # Collaborative near conveyor (protective stop disabled)
+        set_safety_mode(0)   # Normal mode, collaborative
+    else:
+        # Fenced during transit (restricted workspace)
+        set_safety_mode(1)   # Reduced speed / restricted
+    end
+end
+
+# ---------------------------------------------------------------
+# Poses (meters)
+# Home joint configuration (example)
+home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Conveyor pick positions
+pick_above   = p[0.6, -0.2, 0.3, 0, 3.14, 0]   # 30 cm above conveyor
+pick_down    = p[0.6, -0.2, 0.1, 0, 3.14, 0]   # 10 cm above conveyor (pick)
+
+# Pallet grid positions (relative to pallet origin)
+pallet_origin = p[0.0, 0.0, 0.1, 0, 3.14, 0]   # 10 cm above pallet surface
+grid_offset  = 0.2                           # 20 cm spacing
+
+pallet_00 = pose_add(pallet_origin, p[0.0, 0.0, 0, 0, 0, 0])
+pallet_10 = pose_add(pallet_origin, p[grid_offset, 0.0, 0, 0, 0, 0])
+pallet_01 = pose_add(pallet_origin, p[0.0, grid_offset, 0, 0, 0, 0])
+pallet_11 = pose_add(pallet_origin, p[grid_offset, grid_offset, 0, 0, 0, 0])
+
+# ---------------------------------------------------------------
+# Motion sequence
+def main():
+    # 1) Move to Home (joint space) – safe speed
+    set_joint_max_velocity(0.25)   # 250 mm/s equivalent
+    movej(home_joint, a=1.2, v=0.25)
+
+    # 2) Approach conveyor – collaborative zone
+    set_hybrid_mode(True)
+    movel(pick_above, a=1.2, v=0.25)
+
+    # 3) Descend to pick – slower for precision
+    movel(pick_down, a=0.8, v=0.10)
+
+    # 4) Lift from conveyor
+    movel(pick_above, a=1.0, v=0.20)
+
+    # 5) Transit to first pallet cell (0,0) – fenced mode
+    set_hybrid_mode(False)
+    movel(pallet_00, a=1.5, v=0.28)
+
+    # 6) Place first box (simple open/close placeholder)
+    # (Insert gripper command here, e.g., set_digital_out(8, False))
+    sleep(0.5)
+
+    # 7) Move to second pallet cell (1,0)
+    movel(pallet_10, a=1.5, v=0.28)
+
+    # 8) Place second box
+    # (Insert gripper command here)
+    sleep(0.5)
+
+    # 9) Move to third pallet cell (0,1)
+    movel(pallet_01, a=1.5, v=0.28)
+
+    # 10) Place third box
+    sleep(0.5)
+
+    # 11) Move to fourth pallet cell (1,1)
+    movel(pallet_11, a=1.5, v=0.28)
+
+    # 12) Place fourth box
+    sleep(0.5)
+
+    # 13) Return to Home
+    set_hybrid_mode(False)
+    movej(home_joint, a=1.2, v=0.25)
+
+    # End of program
+    stopj(2.0)
+end
+
+# ---------------------------------------------------------------
+# Run the program
+main()

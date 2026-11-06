@@ -1,0 +1,105 @@
+# -------------------------------------------------
+# URScript for UR5e – Visual Inspection Scan (T005)
+# Collaborative mode, ISO 10218:2025 compliant
+# -------------------------------------------------
+
+# ---- Safety Configuration ----------------------------------------------------
+setSafetyLimits(0.25, 1.4)          # max TCP speed 0.25 m/s, max joint accel 1.4 rad/s²
+setSafetyMode(2)                   # 2 = collaborative mode (force limited)
+
+# Payload
+set_payload(0.3, [0,0,0])           # 0.3 kg payload, centre of gravity at TCP
+
+# Workspace limits (meters)
+global min_x = -0.5
+global max_x =  0.5
+global min_y = -0.5
+global max_y =  0.5
+global min_z =  0.0
+global max_z =  0.8
+
+# ---- Helper Functions ---------------------------------------------------------
+def safety_check(pose):
+    # pose is a 6‑DOF vector [x,y,z,rx,ry,rz]
+    if pose[0] < min_x or pose[0] > max_x or \
+       pose[1] < min_y or pose[1] > max_y or \
+       pose[2] < min_z or pose[2] > max_z then
+        popup("Safety violation: target pose out of workspace bounds", True)
+        halt()
+    end
+end
+
+def emergency_stop():
+    popup("EMERGENCY STOP ACTIVATED", True)
+    halt()
+end
+
+# ---- Motion Parameters ---------------------------------------------------------
+global amax_joint = 1.4      # rad/s² (joint acceleration limit)
+global amax_linear = 1.0     # m/s² (TCP acceleration limit)
+
+# ---- Waypoints ---------------------------------------------------------------
+# Home joint configuration
+global home_j = [0, -1.5708, 1.5708, 0, 1.5708, 0]
+
+# Approach pose – 300 mm above part centre, camera pointing straight down
+global pose_approach = p[0.0, 0.0, 0.300, 3.14159, 0, 0]
+
+# Scan height – 150 mm above part surface
+global pose_scan_height = p[0.0, 0.0, 0.150, 3.14159, 0, 0]
+
+# Scan line start/end positions (200 mm sweep in Y)
+global line1_start = p[-0.100, -0.100, 0.150, 3.14159, 0, 0]   # X=-0.10 m, Y=-0.10 m
+global line1_end   = p[-0.100,  0.100, 0.150, 3.14159, 0, 0]   # X=-0.10 m, Y=+0.10 m
+
+global line2_start = p[ 0.000, -0.100, 0.150, 3.14159, 0, 0]   # X= 0.00 m
+global line2_end   = p[ 0.000,  0.100, 0.150, 3.14159, 0, 0]
+
+global line3_start = p[ 0.100, -0.100, 0.150, 3.14159, 0, 0]   # X=+0.10 m
+global line3_end   = p[ 0.100,  0.100, 0.150, 3.14159, 0, 0]
+
+# Retreat pose – back to approach height
+global pose_retreat = pose_approach
+
+# ---- Execution ---------------------------------------------------------------
+# 1) Move to Home (joint space)
+safety_check(p[0,0,0,0,0,0])   # dummy check – home is always safe
+movej(home_j, a=amax_joint, v=1.5)   # 150 mm/s ≈ 1.5 rad/s (joint speed)
+
+# 2) Approach start – linear move, 130 mm/s
+safety_check(pose_approach)
+movel(pose_approach, a=amax_linear, v=0.130)
+
+# 3) Descend to scan height – 80 mm/s
+safety_check(pose_scan_height)
+movel(pose_scan_height, a=amax_linear, v=0.080)
+
+# 4) Scan line 1 – Y sweep, 50 mm/s
+safety_check(line1_end)
+movel(line1_end, a=amax_linear, v=0.050)
+
+# 5) Step to line 2 start (+X), 80 mm/s
+safety_check(line2_start)
+movel(line2_start, a=amax_linear, v=0.080)
+
+# 6) Scan line 2 – Y sweep, 50 mm/s
+safety_check(line2_end)
+movel(line2_end, a=amax_linear, v=0.050)
+
+# 7) Step to line 3 start (+X), 80 mm/s
+safety_check(line3_start)
+movel(line3_start, a=amax_linear, v=0.080)
+
+# 8) Scan line 3 – Y sweep, 50 mm/s
+safety_check(line3_end)
+movel(line3_end, a=amax_linear, v=0.050)
+
+# 9) Retreat to approach height, 80 mm/s
+safety_check(pose_retreat)
+movel(pose_retreat, a=amax_linear, v=0.080)
+
+# 10) Return to Home position, joint speed 150 mm/s equivalent
+safety_check(p[0,0,0,0,0,0])   # dummy check
+movej(home_j, a=amax_joint, v=1.5)
+
+# End of program

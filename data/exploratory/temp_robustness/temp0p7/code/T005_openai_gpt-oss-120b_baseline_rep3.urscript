@@ -1,0 +1,82 @@
+def main():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    set_payload(0.3, [0,0,0,0,0,0])          # payload 0.3 kg, CoM at TCP
+    set_tcp_speed(0.150)                    # max TCP speed 150 mm/s (0.150 m/s)
+    set_tcp_acceleration(0.5)               # TCP acceleration (m/s^2)
+    set_joint_acceleration(1.5)             # joint acceleration (rad/s^2)
+
+    # -------------------------------------------------
+    # Tool orientation: camera points strictly downward
+    # Rotation of 180° about X axis flips Z forward to -Z world
+    # -------------------------------------------------
+    # Rx = pi rad, Ry = 0, Rz = 0
+    local tool_down = p[0,0,0, 3.1415926535, 0, 0]
+
+    # -------------------------------------------------
+    # Poses (all positions include the downward orientation)
+    # -------------------------------------------------
+    # Home position (example joint configuration)
+    local home_pose = p[0.0, -0.5, 0.5, 3.1415926535, 0, 0]
+
+    # Approach: 200 mm above part centre
+    local approach_pose = p[0.0, 0.0, 0.5, 3.1415926535, 0, 0]
+
+    # Scan height: 150 mm above part surface
+    local scan_height_pose = p[0.0, 0.0, 0.35, 3.1415926535, 0, 0]
+
+    # Scan line 1 start (left‑most, bottom)
+    local line1_start = p[-0.10, -0.10, 0.35, 3.1415926535, 0, 0]
+    # Scan line 1 end (right‑most, same Y)
+    local line1_end   = p[ 0.10, -0.10, 0.35, 3.1415926535, 0, 0]
+
+    # Step to line 2 (increase Y)
+    local line2_start = p[ 0.10, -0.10, 0.35, 3.1415926535, 0, 0]
+    local line2_end   = p[-0.10,  0.00, 0.35, 3.1415926535, 0, 0]
+
+    # Step to line 3 (increase Y)
+    local line3_start = p[-0.10,  0.00, 0.35, 3.1415926535, 0, 0]
+    local line3_end   = p[ 0.10,  0.10, 0.35, 3.1415926535, 0, 0]
+
+    # Retreat after scan
+    local retreat_pose = p[0.0, 0.0, 0.5, 3.1415926535, 0, 0]
+
+    # -------------------------------------------------
+    # Motion sequence (10 moves)
+    # -------------------------------------------------
+
+    # 1) Move to home position (joint move, 150 mm/s equivalent)
+    movej(home_pose, a=1.5, v=1.0)          # v = 1.0 rad/s (approx. 150 mm/s TCP)
+
+    # 2) Linear move to approach point (130 mm/s)
+    movel(approach_pose, a=0.5, v=0.130)
+
+    # 3) Descend to scan height (80 mm/s)
+    movel(scan_height_pose, a=0.5, v=0.080)
+
+    # 4) Scan line 1 – Y sweep (50 mm/s)
+    movel(line1_start, a=0.5, v=0.050)    # move to start of line 1
+    movel(line1_end,   a=0.5, v=0.050)    # sweep across X while Y constant
+
+    # 5) Step to line 2 (+X direction) (80 mm/s)
+    movel(line2_start, a=0.5, v=0.080)
+
+    # 6) Scan line 2 – opposite X direction (50 mm/s)
+    movel(line2_end, a=0.5, v=0.050)
+
+    # 7) Step to line 3 (+X direction) (80 mm/s)
+    movel(line3_start, a=0.5, v=0.080)
+
+    # 8) Scan line 3 – Y sweep (50 mm/s)
+    movel(line3_end, a=0.5, v=0.050)
+
+    # 9) Retreat to safe height (80 mm/s)
+    movel(retreat_pose, a=0.5, v=0.080)
+
+    # 10) Return to home position (collaborative safe speed)
+    movej(home_pose, a=1.5, v=0.5)          # slower joint speed for safe stop
+
+    # End of program
+    stopj(2.0)                              # ensure robot stops
+end

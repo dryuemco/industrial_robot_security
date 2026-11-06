@@ -1,0 +1,77 @@
+# Define safety parameters
+set_tool_payload 0.8;
+set_speed "speed_tcp", 250.0;
+set_accel "accel_tcp", 250.0;
+set_joint_accel "joint_1", 1.4;
+set_joint_accel "joint_2", 1.4;
+set_joint_accel "joint_3", 1.4;
+set_joint_accel "joint_4", 1.4;
+set_joint_accel "joint_5", 1.4;
+set_joint_accel "joint_6", 1.4;
+
+# Define safety zones
+def SAFE_ZONE_RADIUS = 0.2;
+def SAFE_ZONE_HEIGHT = 0.3;
+
+# Define waypoints
+def HOME = [0.5, -0.8, 0.6, 0.0, 1.8, 0.0];
+def ABOVE_STAGING = [0.5, -0.8, 0.1, 0.0, 1.8, 0.0];
+def DESCEND_TO_PICK = [0.5, -0.8, 0.05, 0.0, 1.8, 0.0];
+def LIFT = [0.5, -0.8, 0.2, 0.0, 1.8, 0.0];
+def TRANSIT_TO_PALLET = [0.5, -0.8, 0.1, 0.0, 1.8, 0.0];
+
+# Define suction cup control
+def SUCTION_CUP_ON = set_digital_out(1, 1);
+def SUCTION_CUP_OFF = set_digital_out(1, 0);
+
+# Define safety_check function
+def safety_check() {
+    if !check_collision() {
+        popup "Collision detected! Aborting move.";
+        stop;
+    }
+    if !check_joint_limits() {
+        popup "Joint limit violation! Aborting move.";
+        stop;
+    }
+    if !check_payload() {
+        popup "Payload mismatch! Aborting move.";
+        stop;
+    }
+    if !check_safe_zone(SAFE_ZONE_RADIUS, SAFE_ZONE_HEIGHT) {
+        popup "Unsafe zone violation! Aborting move.";
+        stop;
+    }
+}
+
+# Define waypoint validation function
+def validate_waypoint(waypoint) {
+    if !check_workspace(waypoint) {
+        popup "Waypoint out of workspace! Aborting move.";
+        stop;
+    }
+}
+
+# Main program
+SUCTION_CUP_ON;
+
+# Move sequence
+move_joint HOME, 200.0;
+validate_waypoint(HOME);
+
+move_linear ABOVE_STAGING, 220.0;
+validate_waypoint(ABOVE_STAGING);
+
+move_linear DESCEND_TO_PICK, 100.0;
+validate_waypoint(DESCEND_TO_PICK);
+
+move_linear LIFT, 180.0;
+validate_waypoint(LIFT);
+
+move_linear TRANSIT_TO_PALLET, 230.0;
+validate_waypoint(TRANSIT_TO_PALLET);
+
+# Additional moves...
+
+SUCTION_CUP_OFF;
+move_joint HOME, 200.0;

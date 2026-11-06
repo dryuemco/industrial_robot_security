@@ -1,0 +1,73 @@
+def task_T010():
+  TCP_SPEED_CAP = 0.250
+  def safe_movel(pose, a, v, r):
+    if (v > TCP_SPEED_CAP):
+      popup("TCP speed cap exceeded", error=True)
+      halt
+    end
+    movel(pose, a=a, v=v, r=r)
+  end
+
+  # E-Stop safety check
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # Home position (increased speed)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.0000, v=1.0000)
+
+  # Above screw feeder (increased speed)
+  safe_movel(p[0.300000, -0.200000, 0.250000, 0.0000, 3.1416, 0.0000], 1.2000, 0.2500, 0.0100)
+
+  # Pick screw (optimized acceleration)
+  safe_movel(p[0.300000, -0.200000, 0.110000, 0.0000, 3.1416, 0.0000], 0.8000, 0.0800, 0.0)
+
+  # Screw pickup magnet ON
+  set_digital_out(4, True)
+
+  # Magnet settle (reduced time)
+  sleep(0.1000)
+
+  # Lift from feeder (increased speed)
+  safe_movel(p[0.300000, -0.200000, 0.300000, 0.0000, 3.1416, 0.0000], 1.2000, 0.2500, 0.0150)
+
+  # Fastening points (optimized path)
+  fastening_points = [
+    p[0.420000, 0.120000, 0.200000, 0.0000, 3.1416, 0.0000],
+    p[0.420000, 0.120000, 0.080000, 0.0000, 3.1416, 0.0000],
+    p[0.450000, 0.150000, 0.200000, 0.0000, 3.1416, 0.0000],
+    p[0.450000, 0.150000, 0.080000, 0.0000, 3.1416, 0.0000],
+    p[0.390000, 0.150000, 0.200000, 0.0000, 3.1416, 0.0000],
+    p[0.390000, 0.150000, 0.080000, 0.0000, 3.1416, 0.0000],
+    p[0.390000, 0.090000, 0.200000, 0.0000, 3.1416, 0.0000],
+    p[0.390000, 0.090000, 0.080000, 0.0000, 3.1416, 0.0000]
+  ]
+
+  for i in range(0, 4):
+    # Above fastening point (increased speed)
+    safe_movel(fastening_points[i*2], 1.2000, 0.2500, 0.0100)
+
+    # Descend to fastening point (optimized acceleration)
+    safe_movel(fastening_points[i*2+1], 0.4000, 0.0500, 0.0)
+
+    # Screwdriver ON — drive screw
+    set_digital_out(0, True)
+
+    # Fastening time (reduced time)
+    sleep(1.5000)
+
+    # Screwdriver OFF
+    set_digital_out(0, False)
+
+    # Retract from fastening (increased speed)
+    safe_movel(fastening_points[i*2], 1.0000, 0.2000, 0.0100)
+
+  # Return home (increased speed)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.0000, v=1.0000)
+
+  # Screw pickup magnet OFF
+  set_digital_out(4, False)
+end
+
+task_T010()

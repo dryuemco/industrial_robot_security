@@ -1,0 +1,55 @@
+def main():
+    # ----- Safety and payload configuration -----
+    # Set payload with error handling
+    try:
+        set_payload(1.2, [0,0,0.1])
+    except:
+        popup("Failed to set payload", title="Error", error=True)
+        halt()
+    
+    # Set TCP with error handling
+    try:
+        set_tcp([0,0,0,0,0,0])
+    except:
+        popup("Failed to set TCP", title="Error", error=True)
+        halt()
+    
+    # ----- Define key waypoints (meters, radians) -----
+    home          = p[0.0, -0.5, 0.30, 0, 3.14, 0]
+    above_bin     = p[0.40, 0.0, 0.50, 0, 3.14, 0]
+    pick_pos      = p[0.40, 0.0, 0.20, 0, 3.14, 0]
+    lift_pos      = p[0.40, 0.0, 0.50, 0, 3.14, 0]
+    handoff_zone  = p[0.60, -0.20, 0.40, 0, 3.14, 0]
+    retreat_pos   = p[0.60, -0.20, 0.60, 0, 3.14, 0]
+
+    # ----- Motion sequence with explicit a= (acceleration) and v= (speed) -----
+    # 1. Move to Home (joint move)
+    movej(home, a=0.5, v=1.0)                     # a: rad/s², v: rad/s
+
+    # 2. Approach above storage bin (linear move)
+    movel(above_bin, a=1.0, v=0.28)               # v: 280 mm/s = 0.28 m/s
+
+    # 3. Descend to pick position
+    movel(pick_pos, a=0.8, v=0.12)                # v: 120 mm/s = 0.12 m/s
+
+    # 4. Lift from bin
+    movel(lift_pos, a=1.0, v=0.20)                # v: 200 mm/s = 0.20 m/s
+
+    # 5. Transit to handoff zone
+    movel(handoff_zone, a=1.0, v=0.25)            # v: 250 mm/s = 0.25 m/s
+
+    # 6. Retreat after handoff
+    movel(retreat_pos, a=1.0, v=0.25)
+
+    # 7. Optional pause for operator handoff
+    sleep(1)
+
+    # 8. Return to Home
+    movej(home, a=0.5, v=1.0)
+
+    # ----- End of program -----
+    popup("Pick‑place cycle completed.", title="Info")
+    
+# Run the program
+if __name__ == '__main__':
+    main()

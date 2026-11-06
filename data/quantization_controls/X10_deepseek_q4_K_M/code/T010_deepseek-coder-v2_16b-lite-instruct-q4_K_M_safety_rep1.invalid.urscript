@@ -1,0 +1,63 @@
+# Define safety parameters
+set_tool_payload 1.0;
+set_speed 200.0;
+set_accel 1.4;
+
+# Define safety zones
+def SAFE_ZONE_RADIUS = 0.2;
+def SAFE_ZONE_HEIGHT = 0.3;
+
+# Define positions
+def HOME_POSITION = [0.0, -pi/4, -pi/2, -pi/4, pi/4, 0.0];
+def FEEDER_POSITION = [0.2, -pi/4, -pi/2, -pi/4, pi/4, 0.0];
+def PICK_POSITION = [0.2, -pi/4, -pi/2, -pi/4, pi/4, 0.0];
+def LIFT_POSITION = [0.2, -pi/4, -pi/2, -pi/4, pi/4, 0.0];
+def POINT1_POSITION = [0.2, -pi/4, -pi/2, -pi/4, pi/4, 0.0];
+def POINT2_POSITION = [0.2, -pi/4, -pi/2, -pi/4, pi/4, 0.0];
+def POINT3_POSITION = [0.2, -pi/4, -pi/2, -pi/4, pi/4, 0.0];
+def POINT4_POSITION = [0.2, -pi/4, -pi/2, -pi/4, pi/4, 0.0];
+
+# Define safety check function
+def check_safety(target_position) {
+    # Check if the target position is within the safety zone
+    if (get_distance(target_position) > SAFE_ZONE_RADIUS) {
+        print "Safety violation: Target position is out of safety zone.";
+        abort;
+    }
+    if (target_position[2] < 0.0 or target_position[2] > SAFE_ZONE_HEIGHT) {
+        print "Safety violation: Target position is out of height limits.";
+        abort;
+    }
+}
+
+# Define distance calculation function
+def get_distance(target_position) {
+    # Calculate distance from current position to target position
+    current_position = get_actual_tcp_pose();
+    distance = norm([target_position[0] - current_position[0], target_position[1] - current_position[1], target_position[2] - current_position[2]]);
+    return distance;
+}
+
+# Define main script
+def main() {
+    # Move to home position
+    movej HOME_POSITION, v_acc, a_acc;
+
+    # Move to feeder position
+    movej FEEDER_POSITION, v_acc, a_acc;
+    move_linear PICK_POSITION, 80.0, v_acc, a_acc;
+    move_linear LIFT_POSITION, 180.0, v_acc, a_acc;
+
+    # Move to fastening points
+    move_linear POINT1_POSITION, 200.0, v_acc, a_acc;
+    check_safety(POINT1_POSITION);
+    move_linear POINT2_POSITION, 200.0, v_acc, a_acc;
+    check_safety(POINT2_POSITION);
+    move_linear POINT3_POSITION, 200.0, v_acc, a_acc;
+    check_safety(POINT3_POSITION);
+    move_linear POINT4_POSITION, 200.0, v_acc, a_acc;
+    check_safety(POINT4_POSITION);
+}
+
+# Call main function
+main();

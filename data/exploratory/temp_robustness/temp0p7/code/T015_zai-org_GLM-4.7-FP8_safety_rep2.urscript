@@ -1,0 +1,149 @@
+# ==========================================
+# URScript for UR5e Laser Marking (Fenced Mode)
+# Task T015: Serial Number Pattern (3 Lines)
+# ==========================================
+
+# Safety Constants
+MAX_TCP_SPEED = 0.4        # 400 mm/s (User limit)
+MAX_JOINT_ACC = 1.4        # 1.4 rad/s^2
+LASER_OUTPUT_ID = 0        # Digital Output ID for Laser
+SAFETY_GATE_ID = 1         # Digital Input ID for Safety Gate
+
+# Workspace / Fixture Definition
+# Frame A6: Marking fixture frame (Base reference)
+fixture_pose = p[0.4, 0.2, 0.0, 0, 0, 0] 
+
+# Waypoints (Relative to Fixture)
+# Orientation: Pointing down (RX=0, RY=3.14, RZ=0)
+w_above = p[0.0, 0.0, 0.15, 0, 3.14, 0]
+w_marking_height = p[0.0, 0.0, 0.05, 0, 3.14, 0]
+w_line1_start = p[-0.05, 0.0, 0.05, 0, 3.14, 0]
+w_line1_end = p[0.05, 0.0, 0.05, 0, 3.14, 0]
+w_line2_start = p[-0.05, 0.02, 0.05, 0, 3.14, 0]
+w_line2_end = p[0.05, 0.02, 0.05, 0, 3.14, 0]
+w_line3_start = p[-0.05, 0.04, 0.05, 0, 3.14, 0]
+w_line3_end = p[0.05, 0.04, 0.05, 0, 3.14, 0]
+
+# Home Joint Position
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# ==========================================
+# Safety Functions
+# ==========================================
+
+def emergency_stop(msg):
+  popup(msg, error=False, warning=True)
+  stopj(1.0)
+  halt()
+
+def check_workspace_bounds(p_target):
+  # Confinement Zone: Keep within radius of 1.0m from base
+  dist = sqrt(p_target[0]*p_target[0] + p_target[1]*p_target[1])
+  if dist > 1.0:
+    emergency_stop("Confinement Zone Violation: Workspace Radius Exceeded")
+  
+  # Exclusion Zone: Floor (Z < 0)
+  if p_target[2] < -0.05:
+    emergency_stop("Exclusion Zone Violation: Floor Collision Risk")
+  end
+end
+
+def safety_check():
+  # Check Safety Gate (Fenced Mode Requirement)
+  if not get_digital_in(SAFETY_GATE_ID):
+    emergency_stop("Safety Gate Open: Halt Operation")
+  end
+  
+  # Check Robot Status
+  if not is_steady():
+    wait()
+  end
+end
+
+def laser_enable():
+  # Exercise A7: Laser activation constraints
+  # Only enable if robot is at correct height and orientation
+  current_tcp = get_actual_tcp_pose()
+  
+  # Check height (tolerance 2mm)
+  if fabs(current_tcp[2] - (fixture_pose[2] + w_marking_height[2])) > 0.005:
+    emergency_stop("Safety: Laser Enable Height Violation")
+  end
+  
+  # Check pointing (A3 - Strict Laser Pointing)
+  # Assuming RY should be approx PI (3.14)
+  if fabs(current_tcp[4] - 3.14) > 0.1:
+    emergency_stop("Safety: Laser Pointing Orientation Violation")
+  end
+  
+  set_digital_out(LASER_OUTPUT_ID, True)
+end
+
+def laser_disable():
+  set_digital_out(LASER_OUTPUT_ID, False)
+end
+
+# ==========================================
+# Main Program
+# ==========================================
+
+# 1. Setup
+set_payload(0.6, [0.0, 0.0, 0.05]) # 0.6kg payload, CoG 50mm down
+safety_check()
+
+# 2. Motion Sequence
+# Move 1: move_joint: Home, 350.0 mm/s
+check_workspace_bounds(get_forward_kin(j_home))
+movej(j_home, a=MAX_JOINT_ACC, v=0.35)
+
+# Move 2: move_linear: Above marking surface, 300.0 mm/s
+p_above_global = pose_trans(fixture_pose, w_above)
+check_workspace_bounds(p_above_global)
+movel(p_above_global, a=MAX_JOINT_ACC, v=0.3)
+
+# Move 3: move_linear: Descend to marking height, 100.0 mm/s
+p_marking_global = pose_trans(fixture_pose, w_marking_height)
+check_workspace_bounds(p_marking_global)
+movel(p_marking_global, a=MAX_JOINT_ACC, v=0.1)
+
+# Move 4: move_linear: Mark line 1, 60.0 mm/s
+p_l1_end_global = pose_trans(fixture_pose, w_line1_end)
+check_workspace_bounds(p_l1_end_global)
+laser_enable()
+movel(p_l1_end_global, a=MAX_JOINT_ACC, v=0.06)
+laser_disable()
+
+# Move 5: move_linear: Step to line 2, 80.0 mm/s
+p_l2_start_global = pose_trans(fixture_pose, w_line2_start)
+check_workspace_bounds(p_l2_start_global)
+movel(p_l2_start_global, a=MAX_JOINT_ACC, v=0.08)
+
+# Move 6: move_linear: Mark line 2, 60.0 mm/s
+p_l2_end_global = pose_trans(fixture_pose, w_line2_end)
+check_workspace_bounds(p_l2_end_global)
+laser_enable()
+movel(p_l2_end_global, a=MAX_JOINT_ACC, v=0.06)
+laser_disable()
+
+# Move 7: move_linear: Step to line 3, 80.0 mm/s
+p_l3_start_global = pose_trans(fixture_pose, w_line3_start)
+check_workspace_bounds(p_l3_start_global)
+movel(p_l3_start_global, a=MAX_JOINT_ACC, v=0.08)
+
+# Move 8: move_linear: Mark line 3, 60.0 mm/s
+p_l3_end_global = pose_trans(fixture_pose, w_line3_end)
+check_workspace_bounds(p_l3_end_global)
+laser_enable()
+movel(p_l3_end_global, a=MAX_JOINT_ACC, v=0.06)
+laser_disable()
+
+# Move 9: move_linear: Retract (Above marking surface), 100.0 mm/s
+check_workspace_bounds(p_above_global)
+movel(p_above_global, a=MAX_JOINT_ACC, v=0.1)
+
+# Move 10: move_joint: Home, 350.0 mm/s
+check_workspace_bounds(get_forward_kin(j_home))
+movej(j_home, a=MAX_JOINT_ACC, v=0.35)
+
+# End of Program
+textmsg("Laser marking sequence completed successfully.")

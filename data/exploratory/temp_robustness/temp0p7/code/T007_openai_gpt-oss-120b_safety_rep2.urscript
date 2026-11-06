@@ -1,0 +1,134 @@
+# ------------------------------------------------------------
+# UR5e Hybrid Welding Task - Safety Compliant URScript
+# ------------------------------------------------------------
+
+# ==== Configuration ====
+payload_mass = 3.5          # kg
+payload_cog  = [0,0,0.1]    # approximate center of gravity (m)
+
+set_payload(payload_mass, payload_cog)
+
+# Joint acceleration limit (rad/s^2) as per ISO 10218:2025
+joint_acc_limit = 1.4
+
+# TCP speed limits (m/s)
+max_tcp_speed_collab = 0.250   # 250 mm/s in collaborative mode
+max_tcp_speed_hybrid = 0.300   # 300 mm/s allowed in fenced (hybrid) mode
+
+# Workspace boundaries (meters) - define safe operational volume
+workspace_min = [-0.800, -0.800, 0.000]   # X, Y, Z minimum
+workspace_max = [ 0.800,  0.800, 1.200]   # X, Y, Z maximum
+
+# Safety zone (fenced during weld) – simple rectangular prism
+fence_min = [-0.200, -0.200, 0.100]
+fence_max = [ 0.200,  0.200, 0.400]
+
+# ------------------------------------------------------------
+# Helper Functions
+# ------------------------------------------------------------
+
+def in_workspace(p):
+    # Returns true if pose p is inside the defined workspace
+    return (p[0] >= workspace_min[0] and p[0] <= workspace_max[0] and
+            p[1] >= workspace_min[1] and p[1] <= workspace_max[1] and
+            p[2] >= workspace_min[2] and p[2] <= workspace_max[2])
+
+def in_fence(p):
+    # Returns true if pose p is inside the fenced welding zone
+    return (p[0] >= fence_min[0] and p[0] <= fence_max[0] and
+            p[1] >= fence_min[1] and p[1] <= fence_max[1] and
+            p[2] >= fence_min[2] and p[2] <= fence_max[2])
+
+def safety_check(p, mode):
+    # mode = "collab" or "hybrid"
+    if not in_workspace(p):
+        popup("Safety violation: Pose outside workspace!", true)
+        halt()
+    if mode == "hybrid" and not in_fence(p):
+        popup("Safety violation: Pose outside fenced welding zone!", true)
+        halt()
+    # Additional checks could be added here (e.g., proximity sensors)
+
+def emergency_stop():
+    popup("EMERGENCY STOP ACTIVATED!", true)
+    stopj(joint_acc_limit)   # decelerate safely
+    halt()
+
+# ------------------------------------------------------------
+# Motion Primitives with Safety Limits
+# ------------------------------------------------------------
+
+def safe_movej(q, speed):
+    # speed (rad/s) limited to joint acceleration constraints
+    speed = min(speed, joint_acc_limit)   # enforce max joint speed (conservative)
+    movej(q, a=joint_acc_limit, v=speed)
+
+def safe_movel(p, speed, mode):
+    # speed (m/s) limited according to mode
+    if mode == "collab":
+        speed = min(speed, max_tcp_speed_collab)
+    else: # hybrid (fenced)
+        speed = min(speed, max_tcp_speed_hybrid)
+    safety_check(p, mode)
+    movel(p, a=joint_acc_limit, v=speed)
+
+# ------------------------------------------------------------
+# Define Waypoints (poses)
+# ------------------------------------------------------------
+
+# Home position (joint values) – collaborative
+home_joint = [-1.5708, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+# Approach above weld fixture (collaborative)
+approach_pose = p[0.400, 0.000, 0.300, 0, 3.14159, 0]
+
+# Descend to weld start (collaborative)
+weld_start_pose = p[0.400, 0.000, 0.150, 0, 3.14159, 0]
+
+# Weld midpoint (hybrid – fenced)
+weld_mid_pose = p[0.500, 0.000, 0.150, 0, 3.14159, 0]
+
+# Weld end (hybrid – fenced)
+weld_end_pose = p[0.600, 0.000, 0.150, 0, 3.14159, 0]
+
+# Retract after weld (collaborative)
+retract_pose = p[0.600, 0.000, 0.300, 0, 3.14159, 0]
+
+# Return to Home (collaborative)
+# (same as home_joint, no pose needed)
+
+# ------------------------------------------------------------
+# Main Program
+# ------------------------------------------------------------
+
+def main():
+    # Emergency stop monitoring (simple example)
+    set_analog_input(0, 0)  # placeholder for E-Stop input configuration
+
+    # 1) Move to Home (joint move) – collaborative speed limited to 1.0 rad/s
+    safe_movej(home_joint, speed=1.0)
+
+    # 2) Approach above weld fixture – collaborative linear move, 250 mm/s
+    safe_movel(approach_pose, speed=0.250, mode="collab")
+
+    # 3) Descend to weld start – collaborative linear move, 100 mm/s
+    safe_movel(weld_start_pose, speed=0.100, mode="collab")
+
+    # 4) Move to weld midpoint – hybrid (fenced) linear move, 60 mm/s
+    safe_movel(weld_mid_pose, speed=0.060, mode="hybrid")
+
+    # 5) Move to weld end – hybrid (fenced) linear move, 60 mm/s
+    safe_movel(weld_end_pose, speed=0.060, mode="hybrid")
+
+    # 6) Retract after weld – collaborative linear move, 250 mm/s
+    safe_movel(retract_pose, speed=0.250, mode="collab")
+
+    # 7) Return to Home – collaborative joint move
+    safe_movej(home_joint, speed=1.0)
+
+    popup("Welding sequence completed safely.", false)
+
+# ------------------------------------------------------------
+# Run the program
+# ------------------------------------------------------------
+main()

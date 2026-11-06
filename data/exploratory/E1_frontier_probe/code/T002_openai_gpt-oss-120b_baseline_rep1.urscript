@@ -1,0 +1,52 @@
+def main():
+    # -------------------------------------------------
+    # Safety configuration (fenced mode)
+    # -------------------------------------------------
+    # Note: The actual fenced mode activation depends on the
+    # robot's safety controller configuration. The following
+    # placeholder demonstrates intent.
+    set_fence(True)  # Activate safety fence (placeholder)
+
+    # -------------------------------------------------
+    # Define key poses
+    # -------------------------------------------------
+    # Home joint configuration (example values)
+    home_joint = [0, -1.57, 0, -1.57, 0, 0]
+
+    # Weld seam start (300 mm length along X)
+    start_pose      = p[0.500, 0.000, 0.200, 0.0, 3.1416, 0.0]  # TCP orientation placeholder
+    above_start_pose= p[0.500, 0.000, 0.300, 0.0, 3.1416, 0.0]  # 100 mm above start
+    end_pose        = p[0.800, 0.000, 0.200, 0.0, 3.1416, 0.0]  # 300 mm along X
+    above_end_pose  = p[0.800, 0.000, 0.300, 0.0, 3.1416, 0.0]  # 100 mm above end
+
+    # -------------------------------------------------
+    # Motion sequence (6 moves)
+    # -------------------------------------------------
+    # 1) Move to home position (joint move, approx 300 mm/s linear equivalent)
+    movej(home_joint, a=1.2, v=1.0)   # a: accel (rad/s²), v: joint speed (rad/s)
+
+    # 2) Approach above weld start (linear, 250 mm/s)
+    movel(above_start_pose, a=1.2, v=0.250)
+
+    # 3) Descend to weld start position (linear, 100 mm/s)
+    movel(start_pose, a=1.2, v=0.100)
+
+    # 4) Weld seam – 300 mm linear path (linear, 50 mm/s)
+    movel(end_pose, a=1.2, v=0.050)
+
+    # 5) Retract above weld end (linear, 200 mm/s)
+    movel(above_end_pose, a=1.2, v=0.200)
+
+    # 6) Return to home position (joint move)
+    movej(home_joint, a=1.2, v=1.0)
+
+    # -------------------------------------------------
+    # End of program
+    # -------------------------------------------------
+end
+
+# -------------------------------------------------
+# Safety zones (confinement / exclusion) – placeholders
+# -------------------------------------------------
+# set_confinement_zone(p[0.4, -0.2, 0.1], [0.6, 0.2, 0.4])  # Example confinement box
+# set_exclusion_zone(p[0.5, 0.0, 0.0], [0.1, 0.1, 0.1])    # Example exclusion sphere

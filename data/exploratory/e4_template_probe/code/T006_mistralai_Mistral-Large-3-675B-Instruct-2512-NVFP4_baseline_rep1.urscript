@@ -1,0 +1,68 @@
+# URScript for Bin Picking with Suction - Fenced Mode (T006)
+  # Robot: UR5e, Payload: 2.0 kg, Max TCP Speed: 400.0 mm/s
+
+  # Set payload
+  set_payload(2.0)
+
+  # Safety configuration for fenced mode
+  set_safety_mode("reduced")
+  set_tool_voltage(24)
+  set_analog_inputrange(0, 0)
+  set_analog_inputrange(1, 0)
+  set_analog_outputdomain(0, 0)
+  set_analog_outputdomain(1, 0)
+  set_tool_output_mode(1)
+  set_tool_digital_output_mode(0, 1)
+  set_tool_digital_output_mode(1, 1)
+
+  # Define waypoints
+  global home_pose = p[0.0, -0.6, 0.4, 0.0, 1.57, 0.0]
+  global above_bin_pose = p[-0.3, -0.5, 0.2, 0.0, 1.57, 0.0]
+  global pick_pose = p[-0.3, -0.5, 0.05, 0.0, 1.57, 0.0]
+  global lift_pose = p[-0.3, -0.5, 0.2, 0.0, 1.57, 0.0]
+  global transit_pose = p[0.0, -0.3, 0.3, 0.0, 1.57, 0.0]
+  global above_conveyor_pose = p[0.3, -0.3, 0.2, 0.0, 1.57, 0.0]
+  global place_pose = p[0.3, -0.3, 0.08, 0.0, 1.57, 0.0]
+  global retreat_pose = p[0.3, -0.3, 0.2, 0.0, 1.57, 0.0]
+
+  # Main program
+  def main():
+      # Move to home position
+      movej(home_pose, a=1.2, v=3.5)
+
+      # Move above bin
+      movel(above_bin_pose, a=1.2, v=3.5)
+
+      # Descend into bin
+      movel(pick_pose, a=0.5, v=1.5)
+
+      # Activate suction gripper
+      set_tool_digital_out(0, True)
+      sleep(0.5)
+
+      # Lift from bin
+      movel(lift_pose, a=1.0, v=3.0)
+
+      # Transit to conveyor
+      movel(transit_pose, a=1.2, v=3.8)
+
+      # Move above conveyor
+      movel(above_conveyor_pose, a=1.2, v=3.5)
+
+      # Descend to place position
+      movel(place_pose, a=0.5, v=1.5)
+
+      # Release part
+      set_tool_digital_out(0, False)
+      sleep(0.5)
+
+      # Retreat from conveyor
+      movel(retreat_pose, a=1.0, v=3.0)
+
+      # Return to home
+      movej(home_pose, a=1.2, v=3.5)
+
+  end
+
+  # Run main program
+  main()

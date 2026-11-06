@@ -1,0 +1,87 @@
+# URScript program for collaborative spot welding at 3 points (T012)
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(2.5, [0,0,0])                # Payload 2.5 kg, CoM at TCP
+set_tcp(p[0,0,0.1,0,0,0])                # Example TCP offset (10 cm along Z)
+set_speed_slider(0.2)                    # Collaborative speed scaling (20% of max)
+
+# -------------------------------------------------
+# Joint and Pose Definitions
+# -------------------------------------------------
+# Home joint configuration
+home_joint = [-0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+
+# Spot 1
+spot1_approach = p[0.500, 0.000, 0.200, 0.0, 3.14, 0.0]   # 200 mm above spot
+spot1_descend  = p[0.500, 0.000, 0.120, 0.0, 3.14, 0.0]   # Welding point (120 mm height)
+spot1_lift     = p[0.500, 0.000, 0.200, 0.0, 3.14, 0.0]   # Back to approach height
+
+# Spot 2
+spot2_approach = p[0.300, -0.200, 0.200, 0.0, 3.14, 0.0]
+spot2_descend  = p[0.300, -0.200, 0.120, 0.0, 3.14, 0.0]
+spot2_lift     = p[0.300, -0.200, 0.200, 0.0, 3.14, 0.0]
+
+# Spot 3
+spot3_approach = p[0.600, 0.200, 0.200, 0.0, 3.14, 0.0]
+spot3_descend  = p[0.600, 0.200, 0.120, 0.0, 3.14, 0.0]
+spot3_lift     = p[0.600, 0.200, 0.200, 0.0, 3.14, 0.0]
+
+# -------------------------------------------------
+# Helper Functions
+# -------------------------------------------------
+def weld_point():
+    # Activate welding (digital output 0)
+    set_digital_output(0, True)
+    sleep(0.5)                     # Welding dwell time
+    set_digital_output(0, False)
+end
+
+# -------------------------------------------------
+# Main Program
+# -------------------------------------------------
+def main():
+    # 1) Move to Home (joint move, 200 mm/s -> 0.2 m/s)
+    movej(home_joint, a=1.2, v=0.2, t=0, r=0)
+
+    # 2) Approach Spot 1
+    movel(spot1_approach, a=1.2, v=0.2, t=0, r=0)
+
+    # 3) Descend to Spot 1 (slow for welding)
+    movel(spot1_descend, a=0.8, v=0.08, t=0, r=0)
+    weld_point()
+
+    # 4) Lift from Spot 1
+    movel(spot1_lift, a=1.0, v=0.15, t=0, r=0)
+
+    # 5) Move to Spot 2 (approach)
+    movel(spot2_approach, a=1.2, v=0.2, t=0, r=0)
+
+    # 6) Descend to Spot 2
+    movel(spot2_descend, a=0.8, v=0.08, t=0, r=0)
+    weld_point()
+
+    # 7) Lift from Spot 2
+    movel(spot2_lift, a=1.0, v=0.15, t=0, r=0)
+
+    # 8) Move to Spot 3 (approach)
+    movel(spot3_approach, a=1.2, v=0.2, t=0, r=0)
+
+    # 9) Descend to Spot 3
+    movel(spot3_descend, a=0.8, v=0.08, t=0, r=0)
+    weld_point()
+
+    # 10) Lift from Spot 3
+    movel(spot3_lift, a=1.0, v=0.15, t=0, r=0)
+
+    # 11) Return to Home
+    movej(home_joint, a=1.2, v=0.2, t=0, r=0)
+
+    # End of program
+end
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

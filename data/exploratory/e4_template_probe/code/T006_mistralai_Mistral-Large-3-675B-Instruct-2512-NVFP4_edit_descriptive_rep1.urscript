@@ -1,0 +1,82 @@
+# Task: T006 — Bin picking with suction — fenced mode
+# Robot: UR5e | Payload: 2.0 kg | Max TCP speed: 400 mm/s
+# Safety: Fenced mode with confinement zone
+# Tool: Suction gripper (digital_out[0] = vacuum control)
+
+def task_T006():
+    # Safety check: Verify E-Stop is clear
+    if get_digital_in(0):
+        popup("E-Stop active — program aborted.", error=True)
+        halt
+    end
+
+    # Constants for motion parameters
+    HOME_POS = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+    ABOVE_BIN = p[0.4500, -0.2000, 0.3500, 0.0000, 3.1416, 0.0000]
+    IN_BIN = p[0.4500, -0.2000, 0.1000, 0.0000, 3.1416, 0.0000]
+    ABOVE_BIN_LIFT = p[0.4500, -0.2000, 0.4000, 0.0000, 3.1416, 0.0000]
+    ABOVE_CONVEYOR = p[0.4500, 0.2500, 0.4000, 0.0000, 3.1416, 0.0000]
+    ON_CONVEYOR = p[0.4500, 0.2500, 0.1500, 0.0000, 3.1416, 0.0000]
+
+    # Motion parameters
+    SPEED_HOME = 0.8750
+    SPEED_TRANSIT = 0.3800
+    SPEED_APPROACH = 0.3500
+    SPEED_DESCENT = 0.1500
+    SPEED_LIFT = 0.3000
+    SPEED_DROP = 0.2000
+
+    ACCEL_HOME = 1.4000
+    ACCEL_TRANSIT = 1.8000
+    ACCEL_APPROACH = 1.5000
+    ACCEL_DESCENT = 0.8000
+    ACCEL_LIFT = 1.2000
+    ACCEL_DROP = 1.0000
+
+    BLEND_RADIUS_APPROACH = 0.015
+    BLEND_RADIUS_TRANSIT = 0.020
+    BLEND_RADIUS_RETRACT = 0.010
+
+    # Vacuum parameters
+    VACUUM_SETTLE_TIME = 0.300
+    RELEASE_SETTLE_TIME = 0.200
+
+    # [1] Move to home position
+    movej(HOME_POS, a=ACCEL_HOME, v=SPEED_HOME)
+
+    # [2] Approach above bin
+    movel(ABOVE_BIN, a=ACCEL_APPROACH, v=SPEED_APPROACH, r=BLEND_RADIUS_APPROACH)
+
+    # [3] Descend into bin for pick
+    movel(IN_BIN, a=ACCEL_DESCENT, v=SPEED_DESCENT)
+
+    # [4] Activate suction
+    set_digital_out(0, True)
+
+    # [5] Allow vacuum to settle
+    sleep(VACUUM_SETTLE_TIME)
+
+    # [6] Lift part from bin
+    movel(ABOVE_BIN_LIFT, a=ACCEL_LIFT, v=SPEED_LIFT, r=BLEND_RADIUS_APPROACH)
+
+    # [7] Transit to conveyor
+    movel(ABOVE_CONVEYOR, a=ACCEL_TRANSIT, v=SPEED_TRANSIT, r=BLEND_RADIUS_TRANSIT)
+
+    # [8] Descend to conveyor for place
+    movel(ON_CONVEYOR, a=ACCEL_DROP, v=SPEED_DROP)
+
+    # [9] Release part
+    set_digital_out(0, False)
+
+    # [10] Allow part to settle
+    sleep(RELEASE_SETTLE_TIME)
+
+    # [11] Retract above conveyor
+    movel(ABOVE_CONVEYOR, a=ACCEL_APPROACH, v=SPEED_APPROACH, r=BLEND_RADIUS_RETRACT)
+
+    # [12] Return to home position
+    movej(HOME_POS, a=ACCEL_HOME, v=SPEED_HOME)
+end
+
+# Program entry point
+task_T006()

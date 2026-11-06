@@ -1,0 +1,68 @@
+def main():
+    # ---- Safety and tool configuration ----
+    set_payload(2.0, [0,0,0])               # payload 2 kg, CoG at TCP
+    set_tcp(p[0,0,0,0,0,0])                 # default TCP (no offset)
+
+    # ---- Define key poses (in meters) ----
+    # Home joint configuration (used with movej)
+    home_joints = [-1.57, -1.57, -1.57, -1.57, 1.57, 0]
+
+    # Poses for linear moves (position + orientation as a pose)
+    p_above_bin      = p[0.5, -0.3, 0.4, 0, 3.14, 0]   # above bin
+    p_bin            = p[0.5, -0.3, 0.1, 0, 3.14, 0]   # descend into bin
+    p_above_conveyor = p[0.2, 0.4, 0.5, 0, 3.14, 0]   # above conveyor
+    p_place          = p[0.2, 0.4, 0.2, 0, 3.14, 0]   # place position
+
+    # ---- Motion parameters ----
+    joint_speed      = 1.0      # rad/s (within safe limits)
+    joint_accel      = 1.0      # rad/s^2
+    lin_speed_fast   = 0.35     # m/s (350 mm/s)
+    lin_speed_med    = 0.15     # m/s (150 mm/s)
+    lin_speed_lift   = 0.30     # m/s (300 mm/s)
+    lin_speed_trans  = 0.38     # m/s (380 mm/s)
+    lin_accel        = 1.2      # m/s^2 (common for all linear moves)
+
+    # ---- Start of pick‑place cycle ----
+    # 1) Move to home joint configuration
+    movej(home_joints, a=joint_accel, v=joint_speed)
+    sync()
+
+    # 2) Move linearly above the bin
+    movel(p_above_bin, a=lin_accel, v=lin_speed_fast)
+    sync()
+
+    # 3) Descend into the bin
+    movel(p_bin, a=lin_accel, v=lin_speed_med)
+    sync()
+
+    # 4) Activate suction to pick the part
+    set_digital_output(0, True)   # assume DO0 controls suction
+    sleep(0.2)                     # short delay for suction to engage
+
+    # 5) Lift the part from the bin
+    movel(p_above_bin, a=lin_accel, v=lin_speed_lift)
+    sync()
+
+    # 6) Transit to the conveyor
+    movel(p_above_conveyor, a=lin_accel, v=lin_speed_trans)
+    sync()
+
+    # 7) Move down to place the part
+    movel(p_place, a=lin_accel, v=lin_speed_med)
+    sync()
+
+    # 8) Release suction
+    set_digital_output(0, False)  # turn off suction
+    sleep(0.1)
+
+    # 9) Retract from the conveyor
+    movel(p_above_conveyor, a=lin_accel, v=lin_speed_lift)
+    sync()
+
+    # 10) Return to home position
+    movej(home_joints, a=joint_accel, v=joint_speed)
+    sync()
+
+    # ---- End of program ----
+    stopj(2)   # ensure robot stops safely
+end

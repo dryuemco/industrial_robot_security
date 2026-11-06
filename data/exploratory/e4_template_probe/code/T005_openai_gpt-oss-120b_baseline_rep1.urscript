@@ -1,0 +1,83 @@
+# URScript for visual inspection scan (collaborative mode)
+# Robot: UR5e
+# Payload: 0.3 kg
+# Max TCP speed: 0.15 m/s (150 mm/s)
+
+def main():
+    # Set collaborative mode (2 = collaborative)
+    set_robot_mode(2)
+
+    # Set payload (mass, center of gravity)
+    set_payload(0.3, [0, 0, 0.1])
+
+    # Limit TCP speed
+    set_tcp_speed(0.15)
+
+    # Define poses (meters, radians)
+    # Home position
+    home = p[0.0, -0.5, 0.3, 0, 3.14159, 0]
+
+    # Approach point: 0.5 m above part centre
+    approach = p[0.0, 0.0, 0.5, 0, 3.14159, 0]
+
+    # Scan height: 0.15 m above part surface
+    scan_height = p[0.0, 0.0, 0.15, 0, 3.14159, 0]
+
+    # Raster start (corner of 200x200 mm area)
+    start = p[-0.1, -0.1, 0.15, 0, 3.14159, 0]
+
+    # End of line 1 (Y sweep)
+    line1_end = p[-0.1, 0.1, 0.15, 0, 3.14159, 0]
+
+    # Step to line 2 (+X 0.1 m)
+    line2_start = p[0.0, 0.1, 0.15, 0, 3.14159, 0]
+
+    # End of line 2 (Y sweep back)
+    line2_end = p[0.0, -0.1, 0.15, 0, 3.14159, 0]
+
+    # Step to line 3 (+X 0.1 m)
+    line3_start = p[0.1, -0.1, 0.15, 0, 3.14159, 0]
+
+    # End of line 3 (Y sweep)
+    line3_end = p[0.1, 0.1, 0.15, 0, 3.14159, 0]
+
+    # Retract point (back to safe height)
+    retract = p[0.0, 0.0, 0.5, 0, 3.14159, 0]
+
+    # 1) Move to Home (joint move, 150 mm/s)
+    movej(home, a=1.4, v=0.15)
+
+    # 2) Move linear to approach point (130 mm/s)
+    movel(approach, a=1.2, v=0.13)
+
+    # 3) Descend to scan height (80 mm/s)
+    movel(scan_height, a=0.8, v=0.08)
+
+    # 4) Move to raster start
+    movel(start, a=0.8, v=0.08)
+
+    # 5) Scan line 1 – Y sweep (50 mm/s)
+    movel(line1_end, a=0.5, v=0.05)
+
+    # 6) Step to scan line 2 (+X) (80 mm/s)
+    movel(line2_start, a=0.8, v=0.08)
+
+    # 7) Scan line 2 – Y sweep back (50 mm/s)
+    movel(line2_end, a=0.5, v=0.05)
+
+    # 8) Step to scan line 3 (+X) (80 mm/s)
+    movel(line3_start, a=0.8, v=0.08)
+
+    # 9) Scan line 3 – Y sweep (50 mm/s)
+    movel(line3_end, a=0.5, v=0.05)
+
+    # 10) Retract to safe height (100 mm/s)
+    movel(retract, a=1.0, v=0.10)
+
+    # Return to Home
+    movej(home, a=1.4, v=0.15)
+
+end
+
+# Start program
+main()

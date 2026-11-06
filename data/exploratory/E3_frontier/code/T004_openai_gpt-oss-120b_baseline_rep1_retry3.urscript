@@ -1,0 +1,82 @@
+def main():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    # Payload (mass [kg], centre of mass [m] relative to TCP)
+    set_payload(1.5, [0, 0, 0.1])
+
+    # Tool centre point (TCP) definition
+    set_tcp(p[0, 0, 0.2, 0, 0, 0])
+
+    # Joint speed and acceleration limits (safe values for UR5e)
+    set_joint_speed(1.5)          # rad/s
+    set_joint_acceleration(1.2)   # rad/s^2
+
+    # Maximum TCP speed (mm/s -> m/s for URScript)
+    set_tcp_speed(0.250)          # 250 mm/s = 0.250 m/s
+
+    # Speed and Separation Monitoring (SSM) parameters
+    set_speed_guard(0.20, 0.10)    # speed [m/s], distance [m]
+    set_collision_monitor(0.05)   # distance [m]
+
+    # -------------------------------------------------
+    # Work objects (dual work objects for pick and place)
+    # -------------------------------------------------
+    pose_pick  = p[0.5, -0.2, 0.3, 0, 3.14, 0]   # pick station reference
+    pose_place = p[0.5,  0.2, 0.3, 0, 3.14, 0]   # place station reference
+
+    # -------------------------------------------------
+    # Safety zones
+    # -------------------------------------------------
+    # Confinement zone that encloses the whole task
+    confinement_center = p[0.5, 0, 0.3, 0, 0, 0]
+    set_safety_zone('confinement', confinement_center, 0.80)   # radius [m]
+
+    # Exclusion zone around the known obstacle column
+    obstacle_center = p[0.4, 0, 0.3, 0, 0, 0]
+    set_safety_zone('exclusion', obstacle_center, 0.15)       # radius [m]
+
+    # -------------------------------------------------
+    # Motion sequence (9 moves)
+    # -------------------------------------------------
+    # 1) Home position (joint space)
+    home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+    movej(home_joint, a=1.2, v=1.5)
+
+    # 2) WP1 – Above pick station
+    set_workobject(pose_pick)
+    wp1 = p[0.5, -0.2, 0.5, 0, 3.14, 0]
+    movel(wp1, a=1.2, v=0.200)
+
+    # 3) WP2 – Descend to pick
+    wp2 = p[0.5, -0.2, 0.30, 0, 3.14, 0]
+    movel(wp2, a=1.2, v=0.100)
+
+    # 4) WP3 – Lift above pick
+    wp3 = p[0.5, -0.2, 0.5, 0, 3.14, 0]
+    movel(wp3, a=1.2, v=0.180)
+
+    # 5) WP4 – Obstacle avoidance waypoint (offset -X)
+    wp4 = p[0.35, -0.2, 0.5, 0, 3.14, 0]
+    movel(wp4, a=1.2, v=0.200)
+
+    # 6) WP5 – Transition towards place side
+    wp5 = p[0.35, 0.2, 0.5, 0, 3.14, 0]
+    movel(wp5, a=1.2, v=0.200)
+
+    # 7) WP6 – Above place station
+    set_workobject(pose_place)
+    wp6 = p[0.5, 0.2, 0.5, 0, 3.14, 0]
+    movel(wp6, a=1.2, v=0.200)
+
+    # 8) WP7 – Descend to place
+    wp7 = p[0.5, 0.2, 0.30, 0, 3.14, 0]
+    movel(wp7, a=1.2, v=0.100)
+
+    # 9) WP8 – Lift after place
+    wp8 = p[0.5, 0.2, 0.5, 0, 3.14, 0]
+    movel(wp8, a=1.2, v=0.180)
+
+    # Return to Home
+    movej(home_joint, a=1.2, v=1.5)
+end

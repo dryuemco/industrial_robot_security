@@ -1,0 +1,78 @@
+# Optimized Task: T003 — EUR-pallet 2x2 layer — hybrid mode
+# Goal: Reduce cycle time while respecting safety constraints.
+# Robot: UR5e, Payload: 4.5 kg, Max TCP speed: 0.300 m/s, Hybrid mode
+
+def task_T003():
+  # -----------------------------------------------------------------
+  # Configuration
+  # -----------------------------------------------------------------
+  TCP_SPEED_CAP = 0.300
+  
+  # Safe linear move with speed cap enforcement
+  def safe_movel(pose, a, v, r):
+    if v > TCP_SPEED_CAP:
+      popup("TCP speed cap exceeded", error=True)
+      halt
+    end
+    movel(pose, a=a, v=v, r=r)
+  end
+  
+  # -----------------------------------------------------------------
+  # Safety check
+  # -----------------------------------------------------------------
+  if get_digital_in(0):
+    popup("E‑Stop active — aborting program.", error=True)
+    halt
+  end
+  
+  # -----------------------------------------------------------------
+  # Poses (pre‑computed for readability)
+  # -----------------------------------------------------------------
+  home_pose          = p[0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+  above_conveyor    = p[0.5000, -0.3000, 0.3500, 0.0000, 3.1416, 0.0000]
+  pick_pose          = p[0.5000, -0.3000, 0.1000, 0.0000, 3.1416, 0.0000]
+  lift_pose          = p[0.5000, -0.3000, 0.4000, 0.0000, 3.1416, 0.0000]
+  pallet_00_above    = p[0.5000,  0.3000, 0.4000, 0.0000, 3.1416, 0.0000]
+  pallet_00_place    = p[0.5000,  0.3000, 0.1200, 0.0000, 3.1416, 0.0000]
+  
+  # -----------------------------------------------------------------
+  # Motion sequence
+  # -----------------------------------------------------------------
+  # 1) Home
+  movej(home_pose, a=1.4000, v=0.6250)
+  
+  # 2) Approach conveyor (max allowed TCP speed)
+  safe_movel(above_conveyor, a=1.0000, v=0.3000, r=0.0200)
+  
+  # 3) Descend to pick
+  safe_movel(pick_pose, a=0.5000, v=0.1000, r=0.0000)
+  
+  # 4) Gripper close
+  set_digital_out(0, True)
+  sleep(0.150)   # reduced settle time
+  
+  # 5) Lift from conveyor
+  safe_movel(lift_pose, a=0.8000, v=0.3000, r=0.0150)
+  
+  # 6) Transit to pallet cell (0,0)
+  safe_movel(pallet_00_above, a=1.2000, v=0.3000, r=0.0200)
+  
+  # 7) Descend to place
+  safe_movel(pallet_00_place, a=0.5000, v=0.1000, r=0.0000)
+  
+  # 8) Gripper open
+  set_digital_out(0, False)
+  sleep(0.100)   # reduced release settle
+  
+  # 9) Retract above pallet
+  safe_movel(pallet_00_above, a=1.0000, v=0.3000, r=0.0100)
+  
+  # 10) Return home
+  movej(home_pose, a=1.4000, v=0.6250)
+  
+end
+
+# -----------------------------------------------------------------
+# Entry point
+# -----------------------------------------------------------------
+task_T003()

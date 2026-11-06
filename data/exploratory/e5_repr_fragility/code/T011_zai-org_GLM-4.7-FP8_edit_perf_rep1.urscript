@@ -1,0 +1,51 @@
+# Task: T011 — Dual-zone pick-place — hybrid mode (Optimized)
+# Robot: ur5e | Payload: 1.2 kg
+# Optimizations: Increased accelerations, maxed TCP speeds, reduced sleep times, optimized blending.
+
+def task_T011():
+  # [0] E-Stop verify
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+  
+  # [1] Home - Increased joint velocity and acceleration for faster repositioning
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.5000, v=2.0000)
+  
+  # [2] Above storage bin - Max TCP speed, increased acceleration, added blend
+  movel(p[0.500000, -0.250000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.5000, v=0.3000, r=0.0200)
+  
+  # [3] Descend to pick - Max TCP speed, increased acceleration
+  movel(p[0.500000, -0.250000, 0.100000, 0.0000, 3.1416, 0.0000], a=1.5000, v=0.3000, r=0.0)
+  
+  # [4] Gripper CLOSE
+  set_digital_out(0, True)
+  
+  # [5] Grip settle - Reduced sleep time
+  sleep(0.1000)
+  
+  # [6] Lift from bin - Max TCP speed, increased acceleration, larger blend radius
+  movel(p[0.500000, -0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=1.5000, v=0.3000, r=0.0500)
+  
+  # [7] Transit to handoff zone - Max TCP speed, increased acceleration, larger blend radius
+  movel(p[0.350000, 0.250000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.5000, v=0.3000, r=0.0500)
+  
+  # [8] Place at handoff - Max TCP speed, increased acceleration
+  movel(p[0.350000, 0.250000, 0.120000, 0.0000, 3.1416, 0.0000], a=1.5000, v=0.3000, r=0.0)
+  
+  # [9] Gripper OPEN
+  set_digital_out(0, False)
+  
+  # [10] Release - Reduced sleep time
+  sleep(0.1000)
+  
+  # [11] Retract - Max TCP speed, increased acceleration
+  movel(p[0.350000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=1.5000, v=0.3000, r=0.0)
+  
+  # [12] Return home - Increased joint velocity and acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.5000, v=2.0000)
+  
+end
+
+# Entry point
+task_T011()

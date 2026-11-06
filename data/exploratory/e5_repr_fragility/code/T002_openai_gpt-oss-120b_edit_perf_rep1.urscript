@@ -1,0 +1,76 @@
+# Optimized Task: T002 — Linear weld path — fenced mode
+# Optimizations: increased non‑weld speeds, reduced gas delays.
+# Operating mode: fenced | Max TCP speed: 0.500 m/s
+# Robot: ur5e
+#
+# NOTE: Verify safety parameters (gas stabilization, post‑weld cooling) before deployment.
+
+def task_T002():
+  TCP_SPEED_CAP = 0.500
+  
+  # Wrapper that enforces the TCP speed limit for linear moves
+  def safe_movel(pose, a, v, r):
+    if (v > TCP_SPEED_CAP):
+      popup("TCP speed cap exceeded", error=True)
+      halt
+    end
+    movel(pose, a=a, v=v, r=r)
+  end
+  
+  # ---------------------------------------------------------------------------
+  # Safety: ensure E‑Stop is not active
+  if (get_digital_in(0) == True):
+    popup("E‑Stop active — aborting program.", error=True)
+    halt
+  end
+  
+  # ---------------------------------------------------------------------------
+  # 1) Move to home position (joint move, speed not limited by TCP cap)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000],
+        a=1.4000, v=0.7500)
+  
+  # 2) Rapid approach above weld start
+  safe_movel(p[0.450000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000],
+             a=1.2000, v=0.5000, r=0.0100)
+  
+  # 3) Faster descent to weld start (still safe for vertical approach)
+  safe_movel(p[0.450000, 0.000000, 0.200000, 0.0000, 3.1416, 0.0000],
+             a=0.8000, v=0.2000, r=0.0010)
+  
+  # 4) Activate shielding gas
+  set_digital_out(1, True)
+  
+  # 5) Shortened gas stabilization delay (validated for this process)
+  sleep(0.2000)
+  
+  # 6) Turn welding arc ON
+  set_digital_out(0, True)          # arc enable
+  set_analog_out(0, 0.400)           # current (normalized)
+  set_analog_out(1, 0.333)           # wire feed (normalized)
+  
+  # 7) Weld seam – keep conservative speed for weld quality
+  safe_movel(p[0.450000, 0.300000, 0.200000, 0.0000, 3.1416, 0.0000],
+             a=0.2000, v=0.0500, r=0.0)
+  
+  # 8) Turn welding arc OFF
+  set_digital_out(0, False)
+  set_analog_out(0, 0.0)
+  set_analog_out(1, 0.0)
+  
+  # 9) Shortened post‑weld gas flow
+  sleep(0.5000)
+  
+  # 10) Shut off shielding gas
+  set_digital_out(1, False)
+  
+  # 11) Rapid retract above weld end
+  safe_movel(p[0.450000, 0.300000, 0.350000, 0.0000, 3.1416, 0.0000],
+             a=1.2000, v=0.5000, r=0.0100)
+  
+  # 12) Return to home
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000],
+        a=1.4000, v=0.7500)
+end
+
+# Entry point
+task_T002()

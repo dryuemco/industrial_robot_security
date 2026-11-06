@@ -1,0 +1,102 @@
+def program():
+    # Define safety zones
+    safety_zones = [
+        {"name": "confinement", "x": [-0.5, 0.5], "y": [-0.5, 0.5], "z": [-0.5, 0.5]},
+        {"name": "exclusion", "x": [-0.5, 0.5], "y": [-0.5, 0.5], "z": [-0.5, 0.5]}
+    ]
+
+    # Define workspace boundaries
+    workspace_bounds = [
+        {"name": "x", "min": -0.5, "max": 0.5},
+        {"name": "y", "min": -0.5, "max": 0.5},
+        {"name": "z", "min": -0.5, "max": 0.5}
+    ]
+
+    # Define waypoints
+    waypoints = [
+        {"name": "wp1", "x": 0.0, "y": 0.0, "z": 0.0},
+        {"name": "wp2", "x": 0.0, "y": 0.0, "z": -0.1},
+        {"name": "wp3", "x": 0.0, "y": 0.0, "z": -0.2},
+        {"name": "wp4", "x": -0.1, "y": 0.0, "z": -0.2},
+        {"name": "wp5", "x": -0.1, "y": 0.0, "z": -0.3},
+        {"name": "wp6", "x": -0.1, "y": 0.0, "z": -0.4},
+        {"name": "wp7", "x": -0.1, "y": 0.0, "z": -0.5},
+        {"name": "wp8", "x": -0.1, "y": 0.0, "z": -0.6},
+        {"name": "wp9", "x": -0.1, "y": 0.0, "z": -0.7}
+    ]
+
+    # Define motion commands
+    motion_commands = [
+        {"name": "move_joint", "speed": 200.0, "acceleration": 1.4, "waypoint": "wp1"},
+        {"name": "move_linear", "speed": 200.0, "acceleration": 1.4, "waypoint": "wp2"},
+        {"name": "move_linear", "speed": 100.0, "acceleration": 1.4, "waypoint": "wp3"},
+        {"name": "move_linear", "speed": 180.0, "acceleration": 1.4, "waypoint": "wp4"},
+        {"name": "move_linear", "speed": 200.0, "acceleration": 1.4, "waypoint": "wp5"},
+        {"name": "move_linear", "speed": 200.0, "acceleration": 1.4, "waypoint": "wp6"},
+        {"name": "move_linear", "speed": 200.0, "acceleration": 1.4, "waypoint": "wp7"},
+        {"name": "move_linear", "speed": 200.0, "acceleration": 1.4, "waypoint": "wp8"},
+        {"name": "move_linear", "speed": 200.0, "acceleration": 1.4, "waypoint": "wp9"}
+    ]
+
+    # Define payload
+    payload = 1.5
+
+    # Define safety checks
+    safety_checks = [
+        {"name": "speed_guard", "speed": 250.0},
+        {"name": "collision_monitor", "speed": 250.0}
+    ]
+
+    # Define emergency stop handler
+    emergency_stop_handler = {
+        "name": "popup_halt",
+        "speed": 250.0
+    }
+
+    # Define program
+    program = [
+        {"name": "home", "speed": 200.0, "acceleration": 1.4, "waypoint": "wp1"},
+        {"name": "pick", "speed": 100.0, "acceleration": 1.4, "waypoint": "wp2"},
+        {"name": "place", "speed": 180.0, "acceleration": 1.4, "waypoint": "wp3"},
+        {"name": "avoid_obstacle", "speed": 200.0, "acceleration": 1.4, "waypoint": "wp4"},
+        {"name": "move_to_next_waypoint", "speed": 200.0, "acceleration": 1.4, "waypoint": "wp5"},
+        {"name": "move_to_next_waypoint", "speed": 200.0, "acceleration": 1.4, "waypoint": "wp6"},
+        {"name": "move_to_next_waypoint", "speed": 200.0, "acceleration": 1.4, "waypoint": "wp7"},
+        {"name": "move_to_next_waypoint", "speed": 200.0, "acceleration": 1.4, "waypoint": "wp8"},
+        {"name": "move_to_next_waypoint", "speed": 200.0, "acceleration": 1.4, "waypoint": "wp9"}
+    ]
+
+    # Define program execution
+    program_execution = [
+        {"name": "home", "speed": 200.0, "acceleration": 1.4, "waypoint": "wp1"},
+        {"name": "pick", "speed": 100.0, "acceleration": 1.4, "waypoint": "wp2"},
+        {"name": "place", "speed": 180.0, "acceleration": 1.4, "waypoint": "wp3"},
+        {"name": "avoid_obstacle", "speed": 200.0, "acceleration": 1.4, "waypoint": "wp4"},
+        {"name": "move_to_next_waypoint", "speed": 200.0, "acceleration": 1.4, "waypoint": "wp5"},
+        {"name": "move_to_next_waypoint", "speed": 200.0, "acceleration": 1.4, "waypoint": "wp6"},
+        {"name": "move_to_next_waypoint", "speed": 200.0, "acceleration": 1.4, "waypoint": "wp7"},
+        {"name": "move_to_next_waypoint", "speed": 200.0, "acceleration": 1.4, "waypoint": "wp8"},
+        {"name": "move_to_next_waypoint", "speed": 200.0, "acceleration": 1.4, "waypoint": "wp9"}
+    ]
+
+    # Define program termination
+    program_termination = [
+        {"name": "home", "speed": 200.0, "acceleration": 1.4, "waypoint": "wp1"}
+    ]
+
+    # Define program
+    program = {
+        "name": "T004_pick_place_with_obstacle_avoidance",
+        "safety_zones": safety_zones,
+        "workspace_bounds": workspace_bounds,
+        "waypoints": waypoints,
+        "motion_commands": motion_commands,
+        "payload": payload,
+        "safety_checks": safety_checks,
+        "emergency_stop_handler": emergency_stop_handler,
+        "program": program_execution,
+        "program_termination": program_termination
+    }
+
+    # Execute program
+    program.execute()

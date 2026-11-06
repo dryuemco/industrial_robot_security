@@ -1,0 +1,122 @@
+# -------------------------------------------------
+# URScript for UR5e – Dual‑zone Pick‑Place (Hybrid)
+# Payload: 1.2 kg
+# Safety limits (ISO 10218:2025)
+#   Max TCP speed (collaborative) : 0.250 m/s
+#   Max joint acceleration        : 1.4 rad/s^2
+# -------------------------------------------------
+
+# ------------------- Global Settings -------------------
+payload_mass = 1.2                                 # kg
+payload_cog  = [0,0,0.1]                            # m (approx. centre of gravity)
+set_payload(payload_mass, payload_cog)
+
+max_tcp_speed_collab = 0.250                        # m/s
+max_joint_acc       = 1.4                          # rad/s^2
+default_joint_acc   = 1.0                          # rad/s^2 (used when lower than limit)
+
+# ------------------- Safety Zones -------------------
+# Confinement zone (allowed workspace) – rectangular prism
+# Format: [xmin, xmax, ymin, ymax, zmin, zmax] (meters)
+confinement_zone = [-0.8, 0.8, -0.8, 0.8, 0.0, 1.2]
+
+# Exclusion zone (forbidden area) – rectangular prism
+exclusion_zone = [0.2, 0.5, -0.3, 0.0, 0.0, 0.8]
+
+# ------------------- Helper Functions -------------------
+def in_confinement(pose):
+    x = pose[0]; y = pose[1]; z = pose[2]
+    return (confinement_zone[0] <= x <= confinement_zone[1]) and
+           (confinement_zone[2] <= y <= confinement_zone[3]) and
+           (confinement_zone[4] <= z <= confinement_zone[5])
+
+def in_exclusion(pose):
+    x = pose[0]; y = pose[1]; z = pose[2]
+    return (exclusion_zone[0] <= x <= exclusion_zone[1]) and
+           (exclusion_zone[2] <= y <= exclusion_zone[3]) and
+           (exclusion_zone[4] <= z <= exclusion_zone[5])
+
+def safety_check(pose, speed):
+    # speed in m/s, pose is a 6‑DOF pose list
+    if speed > max_tcp_speed_collab:
+        popup("Speed limit exceeded! Reducing to safe value.", warning=True)
+        speed = max_tcp_speed_collab
+    if not in_confinement(pose):
+        popup("Target pose outside confinement zone!", error=True)
+        halt()
+    if in_exclusion(pose):
+        popup("Target pose inside exclusion zone!", error=True)
+        halt()
+    return speed
+
+def emergency_stop_handler():
+    # Assume digital input 0 is the E‑Stop (True = pressed)
+    if get_digital_in(0):
+        popup("Emergency stop activated!", error=True)
+        stopj(0)          # immediate stop
+        halt()
+
+# ------------------- Waypoints -------------------
+# Joint positions (radians)
+home_joint          = [0, -1.57, 0, -1.57, 0, 0]
+
+# Cartesian poses (meters, radians)
+above_storage_bin   = p[0.4, -0.3, 0.5, 0, 3.14, 0]
+pick_pose           = p[0.4, -0.3, 0.25, 0, 3.14, 0]
+lift_pose           = p[0.4, -0.3, 0.5, 0, 3.14, 0]
+transit_to_handoff  = p[0.0, 0.5, 0.5, 0, 3.14, 0]
+handoff_approach    = p[0.0, 0.5, 0.3, 0, 3.14, 0]
+handoff_release     = p[0.0, 0.5, 0.2, 0, 3.14, 0]
+final_home_joint    = home_joint
+
+# ------------------- Motion Sequence -------------------
+def main():
+    # Emergency stop monitor (run in background)
+    set_watchdog(0.01, "emergency_stop_handler()")
+    
+    # 1) Move to Home (joint move)
+    a = min(1.0, max_joint_acc)          # joint acceleration (rad/s^2)
+    v = 0.25                             # joint speed (rad/s) – safe default
+    movej(home_joint, a, v, fine_point=True, wait=True)
+    safety_check(p[0,0,0,0,0,0], 0)      # dummy check to enforce safety before start
+    
+    # 2) Linear move – Above storage bin
+    v_req = 0.280                        # m/s (requested)
+    v_safe = safety_check(above_storage_bin, v_req)
+    a_lin = min(1.0, max_joint_acc)      # linear acceleration (m/s^2)
+    movel(above_storage_bin, a_lin, v_safe, wait=True)
+    
+    # 3) Linear move – Descend to pick
+    v_req = 0.120
+    v_safe = safety_check(pick_pose, v_req)
+    movel(pick_pose, a_lin, v_safe, wait=True)
+    
+    # 4) Linear move – Lift from bin
+    v_req = 0.200
+    v_safe = safety_check(lift_pose, v_req)
+    movel(lift_pose, a_lin, v_safe, wait=True)
+    
+    # 5) Linear move – Transit to handoff zone
+    v_req = 0.250
+    v_safe = safety_check(transit_to_handoff, v_req)
+    movel(transit_to_handoff, a_lin, v_safe, wait=True)
+    
+    # 6) Linear move – Approach handoff (slow for hand‑over)
+    v_req = 0.150
+    v_safe = safety_check(handoff_approach, v_req)
+    movel(handoff_approach, a_lin, v_safe, wait=True)
+    
+    # 7) Linear move – Release position
+    v_req = 0.120
+    v_safe = safety_check(handoff_release, v_req)
+    movel(handoff_release, a_lin, v_safe, wait=True)
+    
+    # 8) Return to Home (joint move)
+    movej(final_home_joint, a, v, fine_point=True, wait=True)
+    
+    popup("Pick‑place sequence completed safely.", info=True)
+
+# -------------------------------------------------
+# Run the program
+# -------------------------------------------------
+main()

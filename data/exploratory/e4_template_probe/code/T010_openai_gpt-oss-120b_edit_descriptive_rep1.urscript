@@ -1,0 +1,122 @@
+# ------------------------------------------------------------
+# Task: T010 – Screw fastening assembly (Hybrid mode)
+# Robot: UR5e | Payload: 1.0 kg | Max TCP speed: 0.250 m/s
+# ------------------------------------------------------------
+# Safety:   - E‑Stop check (digital in 0)
+#           - Hybrid operation: collaborative approach,
+#             fenced during fastening (tool activation)
+# ------------------------------------------------------------
+
+# ----------------------------------------------------------------------
+# Configuration
+# ----------------------------------------------------------------------
+payload_mass = 1.0                     # kg
+payload_cog  = [0,0,0,0,0,0]            # centre of gravity (default)
+set_payload(payload_mass, payload_cog)
+
+# Tool (screwdriver) – digital out 0 controls power
+# Magnet for screw pickup – digital out 4
+magnet_out   = 4
+driver_out   = 0
+
+# Motion parameters (all in SI units)
+a_fast   = 1.4      # joint acceleration
+v_fast   = 0.5      # joint speed
+a_approach = 0.8    # linear acceleration (approach)
+v_approach = 0.2    # linear speed (approach)
+a_lift   = 0.7
+v_lift   = 0.18
+a_fasten = 0.2
+v_fasten = 0.05
+blend_radius = 0.01
+
+# ----------------------------------------------------------------------
+# Poses (position + orientation in radians)
+# ----------------------------------------------------------------------
+home_joint = [0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+feeder_above = p[0.300, -0.200, 0.250, 0.0, 3.1416, 0.0]
+feeder_pick  = p[0.300, -0.200, 0.110, 0.0, 3.1416, 0.0]
+feeder_lift  = p[0.300, -0.200, 0.300, 0.0, 3.1416, 0.0]
+
+# Fastening points (above & target)
+fasten_points = [
+    [p[0.420, 0.120, 0.200, 0.0, 3.1416, 0.0], p[0.420, 0.120, 0.080, 0.0, 3.1416, 0.0]],
+    [p[0.420, -0.120, 0.200, 0.0, 3.1416, 0.0], p[0.420, -0.120, 0.080, 0.0, 3.1416, 0.0]],
+    [p[-0.420, 0.120, 0.200, 0.0, 3.1416, 0.0], p[-0.420, 0.120, 0.080, 0.0, 3.1416, 0.0]],
+    [p[-0.420, -0.120, 0.200, 0.0, 3.1416, 0.0], p[-0.420, -0.120, 0.080, 0.0, 3.1416, 0.0]]
+]
+
+# ----------------------------------------------------------------------
+# Helper functions
+# ----------------------------------------------------------------------
+def check_estop():
+    # Digital input 0 is wired to the E‑Stop button
+    if get_digital_in(0):
+        popup("E‑Stop active – aborting program.", error=True)
+        halt
+    end
+end
+
+def magnet(state):
+    # state: True → ON, False → OFF
+    set_digital_out(magnet_out, state)
+    sync()
+end
+
+def driver(state):
+    # state: True → ON, False → OFF
+    set_digital_out(driver_out, state)
+    sync()
+end
+
+def fasten(at_above, at_target):
+    # Move above point (collaborative)
+    movel(at_above, a=a_approach, v=v_approach, r=blend_radius)
+    # Descend into workpiece (fenced)
+    movel(at_target, a=a_fasten, v=v_fasten)
+    # Activate screwdriver
+    driver(True)
+    sleep(2.0)               # fastening duration
+    driver(False)
+    # Retract to safe height
+    movel(at_above, a=a_lift, v=v_lift, r=blend_radius)
+end
+
+# ----------------------------------------------------------------------
+# Main program
+# ----------------------------------------------------------------------
+def task_T010():
+    check_estop()
+
+    # 1) Home position (joint move, collaborative)
+    movej(home_joint, a=a_fast, v=v_fast)
+
+    # 2) Approach screw feeder
+    movel(feeder_above, a=a_approach, v=v_approach, r=blend_radius)
+
+    # 3) Pick screw
+    movel(feeder_pick, a=a_fasten, v=v_fasten)
+    magnet(True)               # engage magnetic pickup
+    sleep(0.2)                 # allow magnetic field to stabilise
+
+    # 4) Lift screw away from feeder
+    movel(feeder_lift, a=a_lift, v=v_lift, r=blend_radius)
+
+    # 5) Perform fastening at all four points
+    for point in fasten_points:
+        fasten(point[0], point[1])
+    end
+
+    # 6) Release screw (magnet off) and safe retract
+    magnet(False)
+    sleep(0.1)
+
+    # 7) Return home
+    movej(home_joint, a=a_fast, v=v_fast)
+end
+
+# ----------------------------------------------------------------------
+# Entry point
+# ----------------------------------------------------------------------
+task_T010()

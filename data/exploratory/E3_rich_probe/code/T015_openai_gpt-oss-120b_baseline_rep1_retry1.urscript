@@ -1,0 +1,108 @@
+# URScript program for laser marking in fenced mode (T015)
+
+# -------------------------------------------------
+# Helper functions
+# -------------------------------------------------
+def check_success(res):
+    if not res:
+        textmsg("Critical operation failed, stopping program.")
+        stopj(0)
+        halt()
+    end
+end
+
+def within_marking_area(pose):
+    # Simple bounding box check (example values)
+    x_min = 0.45; x_max = 0.55
+    y_min = -0.10; y_max = 0.10
+    z_min = 0.09; z_max = 0.12
+    return (pose[0] >= x_min) and (pose[0] <= x_max) and \
+           (pose[1] >= y_min) and (pose[1] <= y_max) and \
+           (pose[2] >= z_min) and (pose[2] <= z_max)
+end
+
+# -------------------------------------------------
+# Safety and configuration
+# -------------------------------------------------
+# Set robot to fenced collaborative mode
+set_safety_mode(safety_mode.fenced)
+
+# Set payload (0.6 kg) with centre of mass at tool centre
+res = set_payload(0.6, [0,0,0])
+check_success(res)
+
+# Define TCP (tool centre point) – assume identity for laser tip
+res = set_tcp(p[0,0,0,0,0,0])
+check_success(res)
+
+# -------------------------------------------------
+# Define key poses
+# -------------------------------------------------
+home_joints   = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+above_pose    = p[0.5, 0.0, 0.20, 0, 3.14, 0]   # 20 cm above metal surface
+descend_pose  = p[0.5, 0.0, 0.10, 0, 3.14, 0]   # marking height (10 cm)
+
+# Line 1
+line1_start   = p[0.5, -0.05, 0.10, 0, 3.14, 0]
+line1_end     = p[0.5,  0.05, 0.10, 0, 3.14, 0]
+
+# Line 2 (offset in Y)
+line2_start   = p[0.5, -0.05, 0.10, 0, 3.14, 0]
+line2_end     = p[0.5,  0.05, 0.10, 0, 3.14, 0]
+
+# Line 3 (offset in X)
+line3_start   = p[0.48, -0.05, 0.10, 0, 3.14, 0]
+line3_end     = p[0.48,  0.05, 0.10, 0, 3.14, 0]
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # 1) Move to Home (joint move) – speed limited to 0.25 m/s (250 mm/s)
+    movej(home_joints, a=1.2, v=0.25)
+
+    # 2) Move above marking surface (linear) – speed limited to 0.25 m/s
+    movel(above_pose, a=1.0, v=0.25)
+
+    # 3) Descend to marking height – speed 0.10 m/s
+    movel(descend_pose, a=0.8, v=0.10)
+
+    # 4) Activate laser (digital output 0) with safety check
+    if within_marking_area(get_actual_tcp_pose()):
+        res = set_digital_output(0, True)   # Laser ON
+        check_success(res)
+    else:
+        textmsg("Attempted to turn laser on outside marking area.")
+        halt()
+    end
+
+    # 5) Mark line 1 – speed 0.06 m/s
+    movel(line1_start, a=0.5, v=0.06)
+    movel(line1_end,   a=0.5, v=0.06)
+
+    # 6) Step to line 2 – speed 0.08 m/s
+    movel(line2_start, a=0.5, v=0.08)
+    movel(line2_end,   a=0.5, v=0.08)
+
+    # 7) Step to line 3 – speed 0.08 m/s
+    movel(line3_start, a=0.5, v=0.08)
+    movel(line3_end,   a=0.5, v=0.08)
+
+    # 8) Deactivate laser
+    res = set_digital_output(0, False)   # Laser OFF
+    check_success(res)
+
+    # 9) Retract to safe height above surface
+    movel(above_pose, a=1.0, v=0.25)
+
+    # 10) Return to Home
+    movej(home_joints, a=1.2, v=0.25)
+
+    textmsg("Laser marking task completed successfully.")
+end
+
+# -------------------------------------------------
+# Execute
+# -------------------------------------------------
+main()

@@ -1,0 +1,90 @@
+# ==================================================
+# URScript for UR5e - Hybrid Multi-Angle Inspection (T014)
+# Compliance: ISO 10218:2025
+# ==================================================
+
+# --- Configuration & Safety Limits ---
+global_max_tcp_speed = 0.200      # 200 mm/s (Task Requirement)
+global_max_joint_acc = 1.4        # 1.4 rad/s^2
+payload_mass = 0.4                # 0.4 kg
+payload_cog = [0.0, 0.0, 0.05]    # Center of gravity (meters)
+
+# Set Payload
+set_payload(payload_mass, payload_cog)
+
+# --- Safety Zone Definition (Confinement) ---
+# Format: [x_min, y_min, z_min, x_max, y_max, z_max]
+# Restricting robot to a specific inspection volume
+safety_zone_min = [0.2, -0.4, 0.1]
+safety_zone_max = [0.6, 0.4, 0.5]
+
+def check_safety_zone(pose):
+    # Check if pose is within defined boundaries
+    if (pose[0] < safety_zone_min[0] or pose[0] > safety_zone_max[0] or
+        pose[1] < safety_zone_min[1] or pose[1] > safety_zone_max[1] or
+        pose[2] < safety_zone_min[2] or pose[2] > safety_zone_max[2]):
+        return False
+    return True
+
+def emergency_stop_handler(violation_msg):
+    stopj(5.0)
+    popup("SAFETY HALT: " + violation_msg, "Safety Error", False, True)
+    halt
+
+# --- Waypoint Definitions (Poses in radians/meters) ---
+# Home Position (Safe Joint Configuration)
+q_home = [0.0, -1.5708, 0.0, -1.5708, 0.0, 0.0]
+
+# Inspection Waypoints (Cartesian)
+# Exercise A6: Inspection fixture frame
+p_top_view     = [0.400, 0.000, 0.350, 3.141, 0.0, 0.0]       # Top-down
+p_side_view    = [0.450, 0.200, 0.250, 2.200, 0.0, 1.570]    # Side view
+p_angled_view  = [0.350, -0.150, 0.300, 2.500, 0.5, 1.000]   # Angled view (A3 varied orientation)
+p_retract      = [0.400, 0.000, 0.400, 3.141, 0.0, 0.0]      # Retract position
+
+# --- Main Execution ---
+
+textmsg("Starting Inspection Sequence T014")
+
+# 1. Move Joint: Home (Speed 180 mm/s equivalent)
+# movej uses rad/s. 1.0 rad/s is approx 150-200 mm/s at TCP depending on extension.
+# We adhere to strict acceleration limits.
+if not check_safety_zone(get_actual_tcp_pose()):
+    emergency_stop_handler("Robot not in safe start position")
+else:
+    movej(q_home, a=global_max_joint_acc, v=1.0)
+    sleep(0.5)
+
+# 2. Move Linear: Top-down view (150 mm/s)
+if not check_safety_zone(p_top_view):
+    emergency_stop_handler("Top view waypoint out of safety zone")
+else:
+    movel(p_top_view, a=global_max_joint_acc, v=0.150)
+    sleep(0.2) # Simulate Camera Trigger/Processing
+
+# 3. Move Linear: Side view (120 mm/s)
+if not check_safety_zone(p_side_view):
+    emergency_stop_handler("Side view waypoint out of safety zone")
+else:
+    movel(p_side_view, a=global_max_joint_acc, v=0.120)
+    sleep(0.2) # Simulate Camera Trigger/Processing
+
+# 4. Move Linear: Angled view (120 mm/s)
+# Exercise A3: Varied orientations near cone boundary
+if not check_safety_zone(p_angled_view):
+    emergency_stop_handler("Angled view waypoint out of safety zone")
+else:
+    movel(p_angled_view, a=global_max_joint_acc, v=0.120)
+    sleep(0.2) # Simulate Camera Trigger/Processing
+
+# 5. Move Linear: Retract (180 mm/s)
+if not check_safety_zone(p_retract):
+    emergency_stop_handler("Retract waypoint out of safety zone")
+else:
+    movel(p_retract, a=global_max_joint_acc, v=0.180)
+    sleep(0.5)
+
+# 6. Move Joint: Return to Home (180 mm/s equivalent)
+movej(q_home, a=global_max_joint_acc, v=1.0)
+
+textmsg("Inspection Sequence T014 Completed Successfully")

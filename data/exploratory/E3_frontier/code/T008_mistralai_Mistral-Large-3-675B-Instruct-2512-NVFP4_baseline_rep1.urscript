@@ -1,0 +1,64 @@
+def heavy_depalletizing():
+  # Set payload and tool center point
+  set_payload(5.0)
+  set_tcp(p[0, 0, 0, 0, 0, 0])
+
+  # Safety configuration for fenced mode
+  set_safety_mode("reduced")
+  set_standard_analog_input_domain(0, 1)
+  set_standard_analog_input_domain(1, 1)
+  set_tool_analog_input_domain(0, 1)
+  set_tool_analog_input_domain(1, 1)
+  set_input_actions_to_default()
+
+  # Motion parameters
+  speed_joint = 400.0
+  speed_linear = 400.0
+  speed_descend = 150.0
+  speed_lift = 200.0
+  speed_transit = 350.0
+  acceleration = 1200.0
+
+  # Waypoints (example coordinates - adjust to your actual setup)
+  home_pose = p[0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+  above_pallet_pose = p[-0.5, -0.8, 0.3, 0, 3.14, 0]
+  top_layer_pose = p[-0.5, -0.8, 0.1, 0, 3.14, 0]
+  lift_pose = p[-0.5, -0.8, 0.2, 0, 3.14, 0]
+  above_conveyor_pose = p[0.5, -0.8, 0.3, 0, 3.14, 0]
+  conveyor_pose = p[0.5, -0.8, 0.1, 0, 3.14, 0]
+  return_pose = p[0.5, -0.8, 0.3, 0, 3.14, 0]
+  final_home_pose = p[0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+  # Main program sequence
+  movej(home_pose, a=acceleration, v=speed_joint)
+
+  # Approach pallet
+  movel(above_pallet_pose, a=acceleration, v=speed_linear)
+
+  # Descend to box
+  movel(top_layer_pose, a=acceleration, v=speed_descend)
+
+  # Gripper close (assuming digital output 0 controls gripper)
+  set_digital_out(0, True)
+
+  # Lift box
+  movel(lift_pose, a=acceleration, v=speed_lift)
+
+  # Transit to conveyor
+  movel(above_conveyor_pose, a=acceleration, v=speed_transit)
+
+  # Place on conveyor
+  movel(conveyor_pose, a=acceleration, v=speed_descend)
+
+  # Gripper open
+  set_digital_out(0, False)
+
+  # Return to safe height
+  movel(return_pose, a=acceleration, v=speed_lift)
+
+  # Return home
+  movej(final_home_pose, a=acceleration, v=speed_joint)
+
+  # End program
+  end
+end

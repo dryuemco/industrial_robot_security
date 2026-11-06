@@ -1,0 +1,83 @@
+def main():
+    # --- Configuration ---
+    set_payload(0.3, [0,0,0])          # Payload 0.3 kg, CoG at TCP
+    set_tcp([0,0,0,0,0,0])            # Default TCP
+    set_robot_mode(2)                 # Collaborative mode
+    # Safety limits
+    set_max_tcp_speed(0.15)           # 150 mm/s maximum TCP speed
+    
+    # --- Speed settings (m/s) ---
+    v_home      = 0.15   # 150 mm/s for joint move
+    v_approach  = 0.13   # 130 mm/s
+    v_descend   = 0.08   # 80 mm/s
+    v_scan      = 0.05   # 50 mm/s
+    v_step      = 0.08   # 80 mm/s
+    
+    a_joint = 1.2      # Joint acceleration (rad/s²)
+    a_linear = 1.2     # Linear acceleration (m/s²)
+    
+    # --- Poses ---
+    # Home joint configuration
+    home_joint = [-0.0, -1.5708, 0.0, -1.5708, 0.0, 0.0]
+    
+    # Approach pose: 200 mm above part centre
+    approach_pose = p[0.0, 0.0, 0.35, 0.0, 3.1416, 0.0]
+    
+    # Scan start: 150 mm above part surface, corner (-100 mm, -100 mm)
+    scan_start = p[-0.10, -0.10, 0.15, 0.0, 3.1416, 0.0]
+    
+    # Scan line 1 (Y sweep)
+    line1_end = p[-0.10,  0.10, 0.15, 0.0, 3.1416, 0.0]
+    
+    # Step to line 2 (+X 0.10 m)
+    step_to_line2 = p[0.0, 0.10, 0.15, 0.0, 3.1416, 0.0]
+    
+    # Scan line 2 (Y sweep back)
+    line2_end = p[0.0, -0.10, 0.15, 0.0, 3.1416, 0.0]
+    
+    # Step to line 3 (+X 0.10 m)
+    step_to_line3 = p[0.10, -0.10, 0.15, 0.0, 3.1416, 0.0]
+    
+    # Scan line 3 (Y sweep)
+    line3_end = p[0.10,  0.10, 0.15, 0.0, 3.1416, 0.0]
+    
+    # Retract pose: lift back to safe height
+    retract_pose = p[0.0, 0.0, 0.35, 0.0, 3.1416, 0.0]
+    
+    # --- Motion sequence (10 moves) ---
+    # 1. Move to home joint position
+    movej(home_joint, a=a_joint, v=v_home)
+    
+    # 2. Approach inspection start (above part)
+    movel(approach_pose, a=a_linear, v=v_approach)
+    
+    # 3. Descend to scan height (150 mm above part surface)
+    movel(scan_start, a=a_linear, v=v_descend)
+    
+    # 4. Scan line 1 – Y sweep
+    movel(line1_end, a=a_linear, v=v_scan)
+    
+    # 5. Step to scan line 2 (+X)
+    movel(step_to_line2, a=a_linear, v=v_step)
+    
+    # 6. Scan line 2 – Y sweep back
+    movel(line2_end, a=a_linear, v=v_scan)
+    
+    # 7. Step to scan line 3 (+X)
+    movel(step_to_line3, a=a_linear, v=v_step)
+    
+    # 8. Scan line 3 – Y sweep
+    movel(line3_end, a=a_linear, v=v_scan)
+    
+    # 9. Retract to safe height
+    movel(retract_pose, a=a_linear, v=v_approach)
+    
+    #10. Return to home joint position
+    movej(home_joint, a=a_joint, v=v_home)
+    
+    # End of program
+    stopj()
+end
+
+# Start execution
+main()

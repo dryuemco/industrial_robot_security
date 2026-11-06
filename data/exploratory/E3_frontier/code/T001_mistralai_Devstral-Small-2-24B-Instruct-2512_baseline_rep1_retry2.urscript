@@ -1,0 +1,42 @@
+def pick_place_task():
+    # Define tool and base frames (assuming default for simplicity)
+    tool0 = p[0, 0, 0, 0, 0, 0]
+    base = p[0, 0, 0, 0, 0, 0]
+
+    # Home position (example joint angles)
+    home_joints = [0, -1.57, 0, -1.57, 0, 0]
+
+    # Pick and place positions (example Cartesian coordinates)
+    pick_approach = p[0.5, 0.2, 0.3, 0, 0, 0]
+    pick_position = p[0.5, 0.2, 0.1, 0, 0, 0]
+    place_approach = p[0.5, -0.2, 0.3, 0, 0, 0]
+    place_position = p[0.5, -0.2, 0.1, 0, 0, 0]
+
+    # Set payload (0.5 kg)
+    set_payload(0.5, p[0, 0, 0.1])  # CG at 100mm from flange
+
+    # Move to home position
+    movej(home_joints, a=1.4, v=200.0, t=0, r=0)
+
+    # Approach pick point
+    movel(pick_approach, a=1.4, v=200.0, t=0, r=0)
+
+    # Descend to pick (slower speed)
+    movel(pick_position, a=1.4, v=100.0, t=0, r=0)
+
+    # Lift from pick
+    movel(p[0.5, 0.2, 0.2, 0, 0, 0], a=1.4, v=150.0, t=0, r=0)
+
+    # Transit to place approach
+    movel(place_approach, a=1.4, v=200.0, t=0, r=0)
+
+    # Descend to place
+    movel(place_position, a=1.4, v=100.0, t=0, r=0)
+
+    # Lift from place
+    movel(p[0.5, -0.2, 0.2, 0, 0, 0], a=1.4, v=150.0, t=0, r=0)
+
+    # Return to home
+    movej(home_joints, a=1.4, v=200.0, t=0, r=0)
+
+pick_place_task()

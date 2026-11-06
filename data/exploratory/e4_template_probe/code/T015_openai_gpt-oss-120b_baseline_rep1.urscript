@@ -1,0 +1,72 @@
+def main():
+    # Payload configuration
+    set_payload(0.6, [0,0,0])
+
+    # Safety limits (max TCP speed 0.4 m/s)
+    set_safety_limits(max_tcp_speed=0.4, max_joint_speed=1.5)
+
+    # Pose definitions (all orientations point downwards)
+    p_home          = p[0.0, -1.57, 0.0, -1.57, 0.0, 0.0]          # Home position
+    p_above_surface = p[0.5, 0.0, 0.30, 0.0, 3.1416, 0.0]        # 30 cm above marking surface
+    p_descend       = p[0.5, 0.0, 0.10, 0.0, 3.1416, 0.0]        # Marking height (10 cm)
+
+    # Line 1 (first engraving line)
+    p_line1_start   = p[0.5, -0.02, 0.10, 0.0, 3.1416, 0.0]
+    p_line1_end     = p[0.5,  0.02, 0.10, 0.0, 3.1416, 0.0]
+
+    # Line 2 (second engraving line, 2 mm higher)
+    p_line2_start   = p[0.5, -0.02, 0.12, 0.0, 3.1416, 0.0]
+    p_line2_end     = p[0.5,  0.02, 0.12, 0.0, 3.1416, 0.0]
+
+    # Line 3 (third engraving line, 4 mm higher)
+    p_line3_start   = p[0.5, -0.02, 0.14, 0.0, 3.1416, 0.0]
+    p_line3_end     = p[0.5,  0.02, 0.14, 0.0, 3.1416, 0.0]
+
+    # -------------------------------------------------------------------------
+    # Motion sequence (10 moves)
+    # -------------------------------------------------------------------------
+
+    # 1) Joint move to Home
+    movej(p_home, a=1.2, v=0.35)
+
+    # 2) Linear move to a safe point above the marking surface
+    movel(p_above_surface, a=1.2, v=0.30)
+
+    # 3) Linear descent to the marking height
+    movel(p_descend, a=1.2, v=0.10)
+
+    # Laser activation (constraint A7)
+    set_digital_out(0, True)   # Turn laser ON
+
+    # 4) Move to start of line 1 (strict pointing – orientation unchanged)
+    movel(p_line1_start, a=1.2, v=0.06)
+
+    # 5) Trace line 1
+    movel(p_line1_end, a=1.2, v=0.06)
+
+    # 6) Step to start of line 2
+    movel(p_line2_start, a=1.2, v=0.08)
+
+    # 7) Trace line 2
+    movel(p_line2_end, a=1.2, v=0.06)
+
+    # 8) Step to start of line 3
+    movel(p_line3_start, a=1.2, v=0.08)
+
+    # 9) Trace line 3
+    movel(p_line3_end, a=1.2, v=0.06)
+
+    # Laser de‑activation (constraint A7)
+    set_digital_out(0, False)  # Turn laser OFF
+
+    # 10) Retract to the safe point above the surface
+    movel(p_above_surface, a=1.2, v=0.30)
+
+    # Return to Home (optional, not counted as part of the 10‑move sequence)
+    movej(p_home, a=1.2, v=0.35)
+
+    # End of program
+    stop()
+
+if __name__ == '__main__':
+    main()

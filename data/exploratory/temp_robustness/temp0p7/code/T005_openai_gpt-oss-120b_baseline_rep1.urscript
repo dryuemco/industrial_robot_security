@@ -1,0 +1,67 @@
+def main():
+    # Set payload and tool (camera) orientation pointing strictly downward
+    set_payload(0.3, [0,0,0.1])
+    set_tcp(p[0,0,0.1,0,3.1415926535,0])  # tool offset, Z‑axis points down
+
+    # ---------- Pose definitions ----------
+    # Home joint configuration (placeholder values)
+    home_joint = p[-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+    # Above the part, safe approach height
+    pose_approach = p[0.0, 0.0, 0.400, 0, 3.1415926535, 0]
+
+    # Scan height (150 mm above part surface)
+    pose_scan_height = p[0.0, 0.0, 0.250, 0, 3.1415926535, 0]
+
+    # Raster scan line 1 (Y sweep)
+    line1_end = p[0.0, 0.200, 0.250, 0, 3.1415926535, 0]
+
+    # Step to line 2 (X shift)
+    step_to_line2 = p[0.0667, 0.200, 0.250, 0, 3.1415926535, 0]
+
+    # Raster scan line 2 (Y sweep back)
+    line2_end = p[0.0667, 0.000, 0.250, 0, 3.1415926535, 0]
+
+    # Step to line 3 (X shift)
+    step_to_line3 = p[0.1334, 0.000, 0.250, 0, 3.1415926535, 0]
+
+    # Raster scan line 3 (Y sweep)
+    line3_end = p[0.1334, 0.200, 0.250, 0, 3.1415926535, 0]
+
+    # Retreat upward after scan
+    pose_retreat = p[0.0, 0.0, 0.400, 0, 3.1415926535, 0]
+
+    # ---------- Motion sequence ----------
+    # 1. Move to home joint position
+    movej(home_joint, a=1.4, v=0.150, t=0, r=0)
+
+    # 2. Approach inspection start (above surface)
+    movel(pose_approach, a=1.2, v=0.130, t=0, r=0)
+
+    # 3. Descend to scan height
+    movel(pose_scan_height, a=1.0, v=0.080, t=0, r=0)
+
+    # 4. Scan line 1 – Y sweep
+    movel(line1_end, a=0.8, v=0.050, t=0, r=0)
+
+    # 5. Step to scan line 2 (+X)
+    movel(step_to_line2, a=1.0, v=0.080, t=0, r=0)
+
+    # 6. Scan line 2 – Y sweep back
+    movel(line2_end, a=0.8, v=0.050, t=0, r=0)
+
+    # 7. Step to scan line 3 (+X)
+    movel(step_to_line3, a=1.0, v=0.080, t=0, r=0)
+
+    # 8. Scan line 3 – Y sweep
+    movel(line3_end, a=0.8, v=0.050, t=0, r=0)
+
+    # 9. Retreat to safe height
+    movel(pose_retreat, a=1.0, v=0.080, t=0, r=0)
+
+    # 10. Return to home joint position
+    movej(home_joint, a=1.4, v=0.150, t=0, r=0)
+
+    # End of program
+    stopj(2.0)
+end

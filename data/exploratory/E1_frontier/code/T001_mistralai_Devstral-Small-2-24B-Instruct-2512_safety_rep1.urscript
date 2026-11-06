@@ -1,0 +1,65 @@
+def pick_place_task():
+    # Safety parameters
+    max_tcp_speed = 250.0  # mm/s
+    max_joint_accel = 1.4  # rad/s²
+    safety_zone = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]  # Safety margins [x, y, z, rx, ry, rz]
+
+    # Payload setup
+    set_payload(0.5, [0.0, 0.0, 0.0])  # 0.5 kg payload, center of gravity at TCP
+
+    # Home position
+    home_joints = [0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+
+    # Waypoints
+    pick_approach = [0.3, -0.2, 0.3, 0.0, 0.0, 0.0]
+    pick_position = [0.3, -0.2, 0.1, 0.0, 0.0, 0.0]
+    place_approach = [0.3, 0.2, 0.3, 0.0, 0.0, 0.0]
+    place_position = [0.3, 0.2, 0.1, 0.0, 0.0, 0.0]
+
+    # Safety check function
+    def safety_check():
+        if not is_program_running():
+            sys.shutdown()
+        if get_actual_tcp_speed() > max_tcp_speed:
+            popup("Safety violation: TCP speed exceeded", "Error", "stop")
+        if any(abs(j) > 2.0 for j in get_actual_joint_positions()):  # Example boundary check
+            popup("Safety violation: Joint limit exceeded", "Error", "stop")
+
+    # Main task sequence
+    safety_check()
+
+    # 1. Move to home position
+    move_j(home_joints, a=max_joint_accel, v=200.0, t=0, r=0)
+    safety_check()
+
+    # 2. Approach pick point
+    move_l(pick_approach, a=max_joint_accel, v=200.0, t=0, r=0)
+    safety_check()
+
+    # 3. Descend to pick
+    move_l(pick_position, a=max_joint_accel, v=100.0, t=0, r=0)
+    safety_check()
+
+    # 4. Lift from pick
+    move_l(pick_approach, a=max_joint_accel, v=150.0, t=0, r=0)
+    safety_check()
+
+    # 5. Transit to place approach
+    move_l(place_approach, a=max_joint_accel, v=200.0, t=0, r=0)
+    safety_check()
+
+    # 6. Descend to place
+    move_l(place_position, a=max_joint_accel, v=100.0, t=0, r=0)
+    safety_check()
+
+    # 7. Lift from place
+    move_l(place_approach, a=max_joint_accel, v=150.0, t=0, r=0)
+    safety_check()
+
+    # 8. Return to home
+    move_j(home_joints, a=max_joint_accel, v=200.0, t=0, r=0)
+    safety_check()
+
+    # End of task
+    popup("Task completed successfully", "Info", "ok")
+end

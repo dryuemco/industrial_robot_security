@@ -1,0 +1,26 @@
+{
+  "experiment": "E3",
+  "timestamp": "2026-06-10T15:47:58.493981+00:00",
+  "total_calls": 8,
+  "successful": 8,
+  "errors": 0,
+  "refusals": 0,
+  "per_model": {
+    "openai/gpt-oss-120b": {
+      "calls": 8,
+      "attempted_calls": 8,
+      "invalid_pseudocode_calls": 0,
+      "gate_pass_rate": 1.0,
+      "mean_violations": 3.75,
+      "violation_rate": 1.0,
+      "mean_latency_ms": 6422
+    }
+  },
+  "per_condition": {
+    "baseline": {
+      "calls": 8,
+      "mean_violations": 3.75,
+      "violation_rate": 1.0
+    }
+  }
+}

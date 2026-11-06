@@ -1,0 +1,123 @@
+# -------------------------------------------------
+# URScript for UR5e – Linear Weld Path (Fenced Mode)
+# -------------------------------------------------
+# Safety compliance: ISO 10218:2025
+# - Max TCP speed in collaborative mode: 250 mm/s (not used here, fenced mode allows up to 500 mm/s)
+# - Max joint acceleration: 1.4 rad/s^2 (set to 1.2 rad/s^2 for margin)
+# - All motions include explicit speed (v) and acceleration (a) limits
+# - Safety checks, zone validation, payload definition, and emergency‑stop handling
+# -------------------------------------------------
+
+# ---------- Configuration ----------
+set_payload(3.0, [0,0,0.1])          # 3 kg payload, CoM 10 cm along Z of the tool
+set_tcp([0,0,0.1,0,0,0])            # Tool centre point 10 cm from flange
+
+# Joint acceleration limit (rad/s^2) – below the 1.4 rad/s^2 max
+set_joint_acceleration(1.2)
+
+# Workspace boundaries (mm) – conservative limits for UR5e
+global min_x = -800.0
+global max_x =  800.0
+global min_y = -800.0
+global max_y =  800.0
+global min_z =   0.0
+global max_z = 1300.0
+
+# ---------- Safety Helper Functions ----------
+def safety_check(p):
+    # p is a pose list [x,y,z,rx,ry,rz] in meters & radians
+    # Convert meters to mm for comparison
+    x = p[0]*1000
+    y = p[1]*1000
+    z = p[2]*1000
+    if x < min_x or x > max_x: return false
+    if y < min_y or y > max_y: return false
+    if z < min_z or z > max_z: return false
+    return true
+end
+
+def emergency_stop_check():
+    # Digital input 0 is wired to the e‑stop button
+    if get_digital_in(0):
+        popup("EMERGENCY STOP ACTIVATED – Program halted", true, "Error")
+        halt()
+    end
+end
+
+# ---------- Waypoints ----------
+# All positions are defined in meters (URScript default)
+# Home joint configuration (rad)
+global q_home = [-1.57, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Approach above weld start (150 mm above the seam)
+global p_approach = p[0.500, 0.000, 0.350, 0, 3.14159, 0]   # x=500 mm, y=0, z=350 mm
+
+# Weld start position (directly on the seam)
+global p_start = p[0.500, 0.000, 0.200, 0, 3.14159, 0]      # z=200 mm
+
+# Weld end position (300 mm along X)
+global p_end = p[0.800, 0.000, 0.200, 0, 3.14159, 0]        # x=800 mm
+
+# Retract above weld end (150 mm above)
+global p_retract = p[0.800, 0.000, 0.350, 0, 3.14159, 0]
+
+# Safe standby pose (away from the workpiece)
+global p_safe = p[0.300, -0.500, 0.500, 0, 3.14159, 0]
+
+# ---------- Main Program ----------
+def main():
+    # ----- 1. Move to Home (Joint Move) -----
+    emergency_stop_check()
+    movej(q_home, a=1.2, v=0.5)   # v≈0.5 rad/s → ~300 mm/s end‑effector speed
+
+    # ----- 2. Approach Above Weld Start (Linear) -----
+    emergency_stop_check()
+    if not safety_check(p_approach):
+        popup("Waypoint out of workspace: p_approach", true, "Error")
+        halt()
+    end
+    movel(p_approach, a=0.5, v=0.25)   # 250 mm/s, a=0.5 m/s²
+
+    # ----- 3. Descend to Weld Start -----
+    emergency_stop_check()
+    if not safety_check(p_start):
+        popup("Waypoint out of workspace: p_start", true, "Error")
+        halt()
+    end
+    movel(p_start, a=0.3, v=0.10)      # 100 mm/s, a=0.3 m/s²
+
+    # ----- 4. Weld Seam (Linear) -----
+    emergency_stop_check()
+    if not safety_check(p_end):
+        popup("Waypoint out of workspace: p_end", true, "Error")
+        halt()
+    end
+    # Activate welding torch (placeholder for I/O)
+    set_digital_out(2, True)   # Torch ON
+    movel(p_end, a=0.2, v=0.05) # 50 mm/s, a=0.2 m/s²
+    set_digital_out(2, False)  # Torch OFF
+
+    # ----- 5. Retract Above Weld End -----
+    emergency_stop_check()
+    if not safety_check(p_retract):
+        popup("Waypoint out of workspace: p_retract", true, "Error")
+        halt()
+    end
+    movel(p_retract, a=0.4, v=0.20)   # 200 mm/s, a=0.4 m/s²
+
+    # ----- 6. Move to Safe Standby Position -----
+    emergency_stop_check()
+    if not safety_check(p_safe):
+        popup("Waypoint out of workspace: p_safe", true, "Error")
+        halt()
+    end
+    movel(p_safe, a=0.5, v=0.30)      # 300 mm/s, a=0.5 m/s²
+
+    # Program complete
+    popup("Weld sequence completed safely.", false, "Info")
+end
+
+# -------------------------------------------------
+# Run the main routine
+# -------------------------------------------------
+main()

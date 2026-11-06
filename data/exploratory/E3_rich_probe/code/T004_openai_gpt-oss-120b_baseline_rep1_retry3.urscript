@@ -1,0 +1,91 @@
+# URScript program for UR5e collaborative pick‑place with obstacle avoidance
+# Implements SSM, speed guard, dual work objects, and explicit error handling
+
+def check_success(res):
+    if not res:
+        textmsg("Critical operation failed – halting program")
+        stopj(2)
+        halt()
+    end
+end
+
+# ----------------------------------------------------------------------
+# 1. Safety and robot configuration
+# ----------------------------------------------------------------------
+# Set payload (1.5 kg) and TCP (default)
+payload_res = set_payload(1.5, [0,0,0,0,0,0])
+check_success(payload_res)
+
+tcp_res = set_tcp([0,0,0,0,0,0])
+check_success(tcp_res)
+
+# Enable collaborative mode with Speed and Separation Monitoring (SSM)
+# (Assumes the robot is already in collaborative mode; otherwise use set_robot_mode)
+# Set speed guard (example values)
+speed_guard_res = set_speed_guard(0.2, 0.1, 0.1)   # max speed, min distance, max distance
+check_success(speed_guard_res)
+
+# Set collision behavior (example values)
+collision_res = set_collision_behavior(
+    [0.5,0.5,0.5,0.5,0.5,0.5],   # lower torque thresholds
+    [0.5,0.5,0.5,0.5,0.5,0.5],   # upper torque thresholds
+    [0.5,0.5,0.5,0.5,0.5,0.5],   # lower speed thresholds
+    [0.5,0.5,0.5,0.5,0.5,0.5])   # upper speed thresholds
+check_success(collision_res)
+
+# Define safety zones (confinement and exclusion) – placeholders
+# In practice these would be defined via the Polyscope UI or using set_safety_zone()
+# set_safety_zone_confinement(...)
+# set_safety_zone_exclusion(...)
+
+# ----------------------------------------------------------------------
+# 2. Work objects for pick and place stations
+# ----------------------------------------------------------------------
+# Work object 1 – Pick station (example pose)
+pick_wo = pose_trans([0.5, -0.2, 0.3, 0, 3.14, 0], p[0,0,0,0,0,0])
+wo1_res = set_workobject(pick_wo, 0, 0)   # id=0, tcp_offset=0
+check_success(wo1_res)
+
+# Work object 2 – Place station (example pose)
+place_wo = pose_trans([0.8, 0.2, 0.3, 0, 3.14, 0], p[0,0,0,0,0,0])
+wo2_res = set_workobject(place_wo, 1, 0)   # id=1, tcp_offset=0
+check_success(wo2_res)
+
+# ----------------------------------------------------------------------
+# 3. Joint and Cartesian waypoints
+# ----------------------------------------------------------------------
+# Home joint configuration (radians)
+home_q = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Waypoint poses (example positions, all expressed in the base frame)
+wp1 = p[0.5, -0.2, 0.5, 0, 3.14, 0]          # Above pick station
+wp2 = p[0.5, -0.2, 0.3, 0, 3.14, 0]          # Descend to pick
+wp3 = p[0.5, -0.2, 0.5, 0, 3.14, 0]          # Lift above pick
+wp4 = p[0.6, -0.2, 0.5, 0, 3.14, 0]          # Obstacle avoidance (offset -X)
+wp5 = p[0.6, -0.2, 0.3, 0, 3.14, 0]          # Approach place (example)
+wp6 = p[0.8, 0.2, 0.3, 0, 3.14, 0]           # Place position
+wp7 = p[0.8, 0.2, 0.5, 0, 3.14, 0]           # Lift after place
+wp8 = p[0.7, 0.0, 0.5, 0, 3.14, 0]           # Return corridor waypoint
+wp9 = p[0.0, 0.0, 0.5, 0, 3.14, 0]           # Safe standby position
+
+# ----------------------------------------------------------------------
+# 4. Motion sequence with explicit acceleration and speed parameters
+# ----------------------------------------------------------------------
+# Joint move to home
+movej(home_q, a=1.2, v=0.5)
+
+# Linear moves (max TCP speed 0.25 m/s → use v=0.2 m/s)
+movel(wp1, a=1.2, v=0.2)   # Above pick station
+movel(wp2, a=0.8, v=0.1)   # Descend to pick (slower)
+movel(wp3, a=1.0, v=0.2)   # Lift above pick
+movel(wp4, a=1.2, v=0.2)   # Obstacle avoidance waypoint
+movel(wp5, a=1.0, v=0.2)   # Approach place corridor
+movel(wp6, a=0.8, v=0.1)   # Place position (slow for safety)
+movel(wp7, a=1.0, v=0.2)   # Lift after place
+movel(wp8, a=1.2, v=0.2)   # Return corridor waypoint
+movel(wp9, a=1.2, v=0.2)   # Safe standby
+
+# ----------------------------------------------------------------------
+# 5. End of program
+# ----------------------------------------------------------------------
+textmsg("Pick‑place task completed safely.")

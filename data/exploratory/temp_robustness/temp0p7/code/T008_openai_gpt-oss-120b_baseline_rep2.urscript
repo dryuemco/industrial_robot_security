@@ -1,0 +1,73 @@
+def main():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    set_payload(5.0, [0, 0, 0.1])          # 5 kg payload, CoM 100 mm above TCP
+    set_tcp(p[0,0,0.15,0,0,0])            # Tool centre point 150 mm from flange
+    set_max_tcp_speed(0.45)               # 450 mm/s max TCP speed (m/s)
+
+    # -------------------------------------------------
+    # Poses (position in metres, orientation in radians)
+    # -------------------------------------------------
+    # Home position (joint target)
+    home_joint = [-0.0, -1.57, 0.0, -2.0, 0.0, 0.0]
+
+    # Above pallet (safe approach height)
+    above_pallet = p[0.5, -0.4, 0.30, 0, 3.14, 0]
+
+    # Top‑layer pick height (box top)
+    pick_top = p[0.5, -0.4, 0.12, 0, 3.14, 0]
+
+    # Lift after grasp
+    lift_box = p[0.5, -0.4, 0.30, 0, 3.14, 0]
+
+    # Conveyor drop‑off position
+    above_conveyor = p[0.2, 0.4, 0.30, 0, 3.14, 0]
+
+    # Release height over conveyor
+    drop_off = p[0.2, 0.4, 0.10, 0, 3.14, 0]
+
+    # Safe retreat after release
+    retreat = p[0.2, 0.4, 0.30, 0, 3.14, 0]
+
+    # -------------------------------------------------
+    # Motion sequence (8 moves)
+    # -------------------------------------------------
+
+    # 1) Joint move to Home (400 mm/s equivalent)
+    speedj(home_joint, a=1.2, v=1.0, t=0, r=0)
+
+    # 2) Linear move to above pallet (400 mm/s)
+    speedl(above_pallet, a=1.2, v=0.40, t=0, r=0)
+
+    # 3) Linear descend to top layer (150 mm/s)
+    speedl(pick_top, a=0.8, v=0.15, t=0, r=0)
+
+    # 4) Close gripper (placeholder – replace with actual I/O)
+    set_digital_output(8, True)          # Gripper close
+    sleep(0.5)
+
+    # 5) Linear lift with box (200 mm/s)
+    speedl(lift_box, a=1.0, v=0.20, t=0, r=0)
+
+    # 6) Linear transit to conveyor (350 mm/s)
+    speedl(above_conveyor, a=1.2, v=0.35, t=0, r=0)
+
+    # 7) Linear move down to release height (300 mm/s)
+    speedl(drop_off, a=0.9, v=0.30, t=0, r=0)
+
+    # Open gripper to release box
+    set_digital_output(8, False)         # Gripper open
+    sleep(0.5)
+
+    # 8) Linear retreat to safe height (400 mm/s)
+    speedl(retreat, a=1.2, v=0.40, t=0, r=0)
+
+    # Return to Home
+    speedj(home_joint, a=1.2, v=1.0, t=0, r=0)
+
+    # -------------------------------------------------
+    # End of program
+    # -------------------------------------------------
+    stopj(2)                              # Ensure robot stops safely
+end

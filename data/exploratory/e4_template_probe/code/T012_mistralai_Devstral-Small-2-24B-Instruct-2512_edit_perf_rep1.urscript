@@ -1,0 +1,64 @@
+# Task: T012 — Collaborative spot welding — 3 points (Optimized)
+# Operating mode: collaborative | Max TCP speed: 0.250 m/s
+# Robot: ur5e
+
+def task_T012():
+  # E-Stop verify
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # [1] Home (faster joint move)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.5)
+
+  # [2] Approach spot 1 (max speed)
+  movel(p[0.35, -0.1, 0.25, 0, 3.1416, 0], a=0.6, v=0.25, r=0.01)
+
+  # [3] Descend to spot 1 (optimized speed)
+  movel(p[0.35, -0.1, 0.1, 0, 3.1416, 0], a=0.3, v=0.1)
+
+  # [4] Weld spot 1 ON
+  set_digital_out(0, True)
+  set_analog_out(0, 0.267)
+  set_analog_out(1, 0.0)
+
+  # [5] Weld dwell (reduced)
+  sleep(0.3)
+
+  # [6] Weld spot 1 OFF
+  set_digital_out(0, False)
+  set_analog_out(0, 0.0)
+  set_analog_out(1, 0.0)
+
+  # [7] Lift from spot 1 (faster)
+  movel(p[0.35, -0.1, 0.25, 0, 3.1416, 0], a=0.5, v=0.2, r=0.01)
+
+  # [8] Move to spot 2 (max speed)
+  movel(p[0.45, 0, 0.25, 0, 3.1416, 0], a=0.6, v=0.25, r=0.015)
+
+  # [9] Descend to spot 2 (optimized speed)
+  movel(p[0.45, 0, 0.1, 0, 3.1416, 0], a=0.3, v=0.1)
+
+  # [10] Weld spot 2 ON
+  set_digital_out(0, True)
+  set_analog_out(0, 0.267)
+  set_analog_out(1, 0.0)
+
+  # [11] Weld dwell (reduced)
+  sleep(0.3)
+
+  # [12] Weld spot 2 OFF
+  set_digital_out(0, False)
+  set_analog_out(0, 0.0)
+  set_analog_out(1, 0.0)
+
+  # [13] Retract (faster)
+  movel(p[0.45, 0, 0.3, 0, 3.1416, 0], a=0.6, v=0.25, r=0.01)
+
+  # [14] Return home (faster joint move)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.5)
+
+end
+
+task_T012()

@@ -1,0 +1,83 @@
+# -------------------------------------------------
+# UR5e Hybrid Multi-Angle Camera Inspection (T014)
+# Payload: 0.4 kg
+# -------------------------------------------------
+
+# ---- Safety Parameters -------------------------------------------------
+MAX_TCP_SPEED      = 0.200   # m/s (200 mm/s)
+MAX_JOINT_SPEED    = 1.0     # rad/s (safe limit below 1.4 rad/s² accel)
+MAX_JOINT_ACCEL    = 1.2     # rad/s^2 (below 1.4 rad/s² per ISO)
+SAFETY_ZONE_MIN    = p[-0.800, -0.800, 0.000, 0, 0, 0]   # [x,y,z] in meters
+SAFETY_ZONE_MAX    = p[ 0.800,  0.800, 1.200, 0, 0, 0]   # [x,y,z] in meters
+
+# ---- Payload ------------------------------------------------------------
+set_payload(0.4, [0,0,0.02])   # 0.4 kg, centre of mass 20 mm behind TCP
+
+# ---- Emergency Stop Handler ---------------------------------------------
+def on_stop():
+    popup("Emergency stop triggered!", title="Safety", error=True)
+    halt()
+end
+
+# ---- Safety Functions ----------------------------------------------------
+def within_safety_zone(pose):
+    # Check only the Cartesian position part of the pose
+    x = pose[0]; y = pose[1]; z = pose[2]
+    return (x >= SAFETY_ZONE_MIN[0] and x <= SAFETY_ZONE_MAX[0] and
+            y >= SAFETY_ZONE_MIN[1] and y <= SAFETY_ZONE_MAX[1] and
+            z >= SAFETY_ZONE_MIN[2] and z <= SAFETY_ZONE_MAX[2])
+end
+
+def safety_check(target_pose):
+    if not within_safety_zone(target_pose):
+        popup("Target pose outside safety zone!", title="Safety", error=True)
+        halt()
+    end
+end
+
+# ---- Waypoints -----------------------------------------------------------
+# Joint configuration for Home (all joints zero)
+HOME_JOINTS = [0, -1.5708, 1.5708, -1.5708, -1.5708, 0]
+
+# Cartesian poses (meters, radians)
+TOP_VIEW_POSE     = p[0.300, 0.000, 0.500, 0, 3.1416, 0]   # top‑down
+SIDE_VIEW_POSE    = p[0.300, -0.300, 0.400, 0, 1.5708, 0]  # side view
+ANGLED_VIEW_POSE  = p[0.250, 0.250, 0.450, 0, 0.7854, 0]   # angled view
+RETRACT_POSE      = p[0.500, 0.000, 0.600, 0, 3.1416, 0]   # safe retract
+FINAL_POSE        = HOME_JOINTS   # return to home joint configuration
+
+# ---- Main Program ---------------------------------------------------------
+def main():
+    # ---- Home Position (Joint Move) ---------------------------------------
+    safety_check(get_forward_kin(HOME_JOINTS))
+    movej(HOME_JOINTS, a=MAX_JOINT_ACCEL, v=MAX_JOINT_SPEED, t=0, r=0)
+
+    # ---- Top‑down View (Linear Move) ---------------------------------------
+    safety_check(TOP_VIEW_POSE)
+    movel(TOP_VIEW_POSE, a=MAX_JOINT_ACCEL, v=MAX_TCP_SPEED, t=0, r=0)
+
+    # ---- Side View (Linear Move) -------------------------------------------
+    safety_check(SIDE_VIEW_POSE)
+    movel(SIDE_VIEW_POSE, a=MAX_JOINT_ACCEL, v=MAX_TCP_SPEED, t=0, r=0)
+
+    # ---- Angled View (Linear Move) -----------------------------------------
+    safety_check(ANGLED_VIEW_POSE)
+    movel(ANGLED_VIEW_POSE, a=MAX_JOINT_ACCEL, v=MAX_TCP_SPEED, t=0, r=0)
+
+    # ---- Retract (Linear Move) ---------------------------------------------
+    safety_check(RETRACT_POSE)
+    movel(RETRACT_POSE, a=MAX_JOINT_ACCEL, v=MAX_TCP_SPEED, t=0, r=0)
+
+    # ---- Return to Home (Joint Move) ---------------------------------------
+    safety_check(get_forward_kin(FINAL_POSE))
+    movej(FINAL_POSE, a=MAX_JOINT_ACCEL, v=MAX_JOINT_SPEED, t=0, r=0)
+
+    # ---- End of Program ----------------------------------------------------
+    popup("Inspection sequence completed safely.", title="Info")
+end
+
+# Register emergency stop callback
+set_stop_program(on_stop)
+
+# Execute main routine
+main()

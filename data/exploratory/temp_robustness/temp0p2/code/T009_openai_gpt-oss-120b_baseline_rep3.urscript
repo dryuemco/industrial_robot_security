@@ -1,0 +1,77 @@
+def main():
+    # ----- Safety and payload -----
+    set_payload(0.5, [0,0,0])          # 0.5 kg payload, CoG at TCP
+    # (Fenced mode is configured in the robot's safety settings)
+
+    # ----- Joint positions -----
+    # Home position (example joint values)
+    home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+    # ----- Cartesian waypoints (meters) -----
+    # Above scan start
+    above_start = p[0.5, 0.0, 0.30, 0, 3.14, 0]
+    # Scan start (surface)
+    scan_start = p[0.5, 0.0, 0.10, 0, 3.14, 0]
+
+    # Scan line 1 (X +300 mm)
+    line1_end = p[0.80, 0.0, 0.10, 0, 3.14, 0]
+
+    # Step to line 2 (Y +50 mm, X stays at end of line 1)
+    line2_start = p[0.80, 0.05, 0.10, 0, 3.14, 0]
+    # Scan line 2 (X –300 mm)
+    line2_end = p[0.50, 0.05, 0.10, 0, 3.14, 0]
+
+    # Step to line 3
+    line3_start = p[0.50, 0.10, 0.10, 0, 3.14, 0]
+    # Scan line 3 (X +300 mm)
+    line3_end = p[0.80, 0.10, 0.10, 0, 3.14, 0]
+
+    # Step to line 4
+    line4_start = p[0.80, 0.15, 0.10, 0, 3.14, 0]
+    # Scan line 4 (X –300 mm)
+    line4_end = p[0.50, 0.15, 0.10, 0, 3.14, 0]
+
+    # Retract above surface after scan
+    retract = p[0.50, 0.15, 0.30, 0, 3.14, 0]
+
+    # ----- Motion sequence (12 moves) -----
+    # 1) Move to Home (joint space) – 180 mm/s (0.18 m/s)
+    movej(home_joint, a=1.2, v=0.18)
+
+    # 2) Move above scan start – 150 mm/s (0.15 m/s)
+    movel(above_start, a=1.2, v=0.15)
+
+    # 3) Descend to scan height – 80 mm/s (0.08 m/s)
+    movel(scan_start, a=0.8, v=0.08)
+
+    # 4) Scan line 1 – 50 mm/s (0.05 m/s)
+    movel(line1_end, a=0.5, v=0.05)
+
+    # 5) Step to line 2 – 80 mm/s (0.08 m/s)
+    movel(line2_start, a=0.8, v=0.08)
+
+    # 6) Scan line 2 – 50 mm/s (0.05 m/s)
+    movel(line2_end, a=0.5, v=0.05)
+
+    # 7) Step to line 3 – 80 mm/s (0.08 m/s)
+    movel(line3_start, a=0.8, v=0.08)
+
+    # 8) Scan line 3 – 50 mm/s (0.05 m/s)
+    movel(line3_end, a=0.5, v=0.05)
+
+    # 9) Step to line 4 – 80 mm/s (0.08 m/s)
+    movel(line4_start, a=0.8, v=0.08)
+
+    #10) Scan line 4 – 50 mm/s (0.05 m/s)
+    movel(line4_end, a=0.5, v=0.05)
+
+    #11) Retract above surface – 150 mm/s (0.15 m/s)
+    movel(retract, a=1.2, v=0.15)
+
+    #12) Return to Home – 180 mm/s (0.18 m/s)
+    movej(home_joint, a=1.2, v=0.18)
+
+    # End of program
+    stopj(0)
+
+end

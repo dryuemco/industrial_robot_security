@@ -1,0 +1,173 @@
+# ==============================================================================
+# URScript for UR5e - Laser Surface Scan (T009)
+# Mode: Fenced
+# Payload: 0.5 kg
+# Description: Raster scan 300x200mm, 4 lines.
+# ==============================================================================
+
+# -----------------------------------------------------------------------------
+# Safety Configuration & Constants
+# -----------------------------------------------------------------------------
+MAX_TCP_SPEED = 0.2          # 200 mm/s in m/s
+MAX_JOINT_ACCEL = 1.4        # 1.4 rad/s^2
+LASER_OUTPUT_ID = 0          # Digital output for laser
+
+# Safety Zone Boundaries (Confinement)
+# Defined around the 300x200mm scan area + clearance
+ZONE_X_MIN = 0.35
+ZONE_X_MAX = 0.75
+ZONE_Y_MIN = 0.15
+ZONE_Y_MAX = 0.45
+ZONE_Z_MIN = 0.15
+ZONE_Z_MAX = 0.35
+
+# -----------------------------------------------------------------------------
+# Safety Functions
+# -----------------------------------------------------------------------------
+
+def emergency_stop_handler():
+    popup("EMERGENCY STOP: Safety Boundary Violation or Fault Detected")
+    stopl(1.0)
+    halt
+
+def check_pose_safety(target_pose):
+    # Validate waypoint is within workspace boundaries
+    x = target_pose[0]
+    y = target_pose[1]
+    z = target_pose[2]
+    
+    if (x < ZONE_X_MIN or x > ZONE_X_MAX or 
+        y < ZONE_Y_MIN or y > ZONE_Y_MAX or 
+        z < ZONE_Z_MIN or z > ZONE_Z_MAX):
+        emergency_stop_handler()
+        return False
+    return True
+
+def safety_check():
+    # Check current TCP speed
+    current_speed = get_actual_tcp_speed()
+    if current_speed > MAX_TCP_SPEED:
+        popup("Safety Violation: TCP Speed Limit Exceeded")
+        stopj(1.0)
+        halt
+    
+    # Check joint positions (Basic limit check)
+    q = get_actual_joint_positions()
+    for i in range(6):
+        if q[i] < -6.28 or q[i] > 6.28:
+            popup("Safety Violation: Joint Limit")
+            stopj(1.0)
+            halt
+
+# -----------------------------------------------------------------------------
+# Initialization
+# -----------------------------------------------------------------------------
+
+# Set Payload (0.5 kg, Center of Mass at tool flange)
+set_payload(0.5, [0, 0, 0])
+
+# Ensure Laser is OFF
+set_digital_out(LASER_OUTPUT_ID, False)
+
+# Define Waypoints (Pose [x, y, z, rx, ry, rz])
+# Home Position (Joint space)
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+# Scan Area Setup
+# Start position (Line 1 Start)
+p_scan_start = [0.4, 0.2, 0.2, 3.14, 0, 0]
+# Safe height above start
+p_above_start = [0.4, 0.2, 0.3, 3.14, 0, 0]
+
+# Line 1 End (X + 300mm)
+p_line1_end = [0.7, 0.2, 0.2, 3.14, 0, 0]
+
+# Line 2 Start (Y + 66.6mm)
+p_line2_start = [0.7, 0.266, 0.2, 3.14, 0, 0]
+# Line 2 End
+p_line2_end = [0.4, 0.266, 0.2, 3.14, 0, 0]
+
+# Line 3 Start (Y + 66.6mm)
+p_line3_start = [0.4, 0.333, 0.2, 3.14, 0, 0]
+# Line 3 End
+p_line3_end = [0.7, 0.333, 0.2, 3.14, 0, 0]
+
+# Line 4 Start (Y + 66.6mm)
+p_line4_start = [0.7, 0.4, 0.2, 3.14, 0, 0]
+# Line 4 End
+p_line4_end = [0.4, 0.4, 0.2, 3.14, 0, 0]
+
+# Safe height above end
+p_above_end = [0.4, 0.4, 0.3, 3.14, 0, 0]
+
+# -----------------------------------------------------------------------------
+# Motion Sequence
+# -----------------------------------------------------------------------------
+
+# 1. move_joint: Home, 180.0 mm/s (approx joint speed)
+# Using conservative joint speed to ensure TCP safety
+movej(q_home, a=MAX_JOINT_ACCEL, v=0.8)
+safety_check()
+
+# 2. move_linear: Above scan start, 150.0 mm/s
+check_pose_safety(p_above_start)
+movel(p_above_start, a=MAX_JOINT_ACCEL, v=0.15)
+safety_check()
+
+# 3. move_linear: Descend to scan height, 80.0 mm/s
+check_pose_safety(p_scan_start)
+movel(p_scan_start, a=MAX_JOINT_ACCEL, v=0.08)
+safety_check()
+
+# Activate Laser (A7)
+set_digital_out(LASER_OUTPUT_ID, True)
+
+# 4. move_linear: Scan line 1, 50.0 mm/s
+check_pose_safety(p_line1_end)
+movel(p_line1_end, a=MAX_JOINT_ACCEL, v=0.05)
+safety_check()
+
+# 5. move_linear: Step to line 2, 80.0 mm/s
+check_pose_safety(p_line2_start)
+movel(p_line2_start, a=MAX_JOINT_ACCEL, v=0.08)
+safety_check()
+
+# 6. move_linear: Scan line 2, 50.0 mm/s
+check_pose_safety(p_line2_end)
+movel(p_line2_end, a=MAX_JOINT_ACCEL, v=0.05)
+safety_check()
+
+# 7. move_linear: Step to line 3, 80.0 mm/s
+check_pose_safety(p_line3_start)
+movel(p_line3_start, a=MAX_JOINT_ACCEL, v=0.08)
+safety_check()
+
+# 8. move_linear: Scan line 3, 50.0 mm/s
+check_pose_safety(p_line3_end)
+movel(p_line3_end, a=MAX_JOINT_ACCEL, v=0.05)
+safety_check()
+
+# 9. move_linear: Step to line 4, 80.0 mm/s
+check_pose_safety(p_line4_start)
+movel(p_line4_start, a=MAX_JOINT_ACCEL, v=0.08)
+safety_check()
+
+# 10. move_linear: Scan line 4, 50.0 mm/s
+check_pose_safety(p_line4_end)
+movel(p_line4_end, a=MAX_JOINT_ACCEL, v=0.05)
+safety_check()
+
+# Deactivate Laser
+set_digital_out(LASER_OUTPUT_ID, False)
+
+# 11. move_linear: Ascend, 80.0 mm/s
+check_pose_safety(p_above_end)
+movel(p_above_end, a=MAX_JOINT_ACCEL, v=0.08)
+safety_check()
+
+# 12. move_joint: Home, 180.0 mm/s
+movej(q_home, a=MAX_JOINT_ACCEL, v=0.8)
+safety_check()
+
+# Task Complete
+popup("Task T009 Completed Successfully")

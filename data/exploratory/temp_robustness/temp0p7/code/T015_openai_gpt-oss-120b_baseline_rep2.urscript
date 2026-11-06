@@ -1,0 +1,104 @@
+# URScript for laser marking task (fenced mode) on UR5e
+
+def laser_marking():
+    # -------------------------------------------------
+    # Safety and robot configuration
+    # -------------------------------------------------
+    setSafetyMode("fenced")               # Enable fenced safety mode
+    set_payload(0.6, [0,0,0.1])            # Payload: 0.6 kg, CoG approx 10 cm along Z
+    set_tcp([-0.01,0,0.15,0,0,0])         # Tool: laser head offset (example)
+    
+    # Define safety zones (placeholders, adjust coordinates as needed)
+    # Confinement zone (keep robot within this box)
+    set_confined_zone([[0.0,0.0,0.0], [0.8,0.8,0.5]])   # min and max XYZ (meters)
+    # Exclusion zone (keep robot away from this area)
+    set_exclusion_zone([[0.3,0.3,0.0], [0.5,0.5,0.4]])  # min and max XYZ (meters)
+
+    # -------------------------------------------------
+    # Laser control (digital output 0)
+    # -------------------------------------------------
+    def laser_on():
+        set_digital_out(0, True)          # Turn laser ON
+    end
+
+    def laser_off():
+        set_digital_out(0, False)         # Turn laser OFF
+    end
+
+    # -------------------------------------------------
+    # Poses (all positions in meters, orientations as quaternions)
+    # -------------------------------------------------
+    # Home position (joint configuration)
+    home_joint = [0, -1.57, 1.57, -1.57, -1.57, 0]
+
+    # Above marking surface (10 mm above surface, normal pointing down)
+    above_surface = pose([0.5, 0.0, 0.2, 0, 1, 0, 0])   # Example pose, adjust XYZ
+
+    # Marking height (0 mm above surface)
+    marking_height = pose([0.5, 0.0, 0.19, 0, 1, 0, 0]) # 10 mm descend
+
+    # Line 1 start and end points (relative to marking_height)
+    line1_start = pose_transform(marking_height, p[0, -0.02, 0])
+    line1_end   = pose_transform(marking_height, p[0,  0.02, 0])
+
+    # Step to line 2 (offset in Y)
+    line2_start = pose_transform(line1_start, p[0, 0.015, 0])
+    line2_end   = pose_transform(line1_end,   p[0, 0.015, 0])
+
+    # Additional lines (placeholders)
+    line3_start = pose_transform(line2_start, p[0, 0.015, 0])
+    line3_end   = pose_transform(line2_end,   p[0, 0.015, 0])
+
+    # -------------------------------------------------
+    # Motion sequence (10 moves)
+    # -------------------------------------------------
+    # 1) Move to Home (joint)
+    speed_joint = 350.0/1000.0   # m/s -> convert mm/s to m/s
+    speedj(home_joint, a=1.2, v=speed_joint, t=0, r=0)
+
+    # 2) Move linear to above marking surface
+    speed_linear = 300.0/1000.0
+    movel(above_surface, a=1.0, v=speed_linear, t=0, r=0)
+
+    # 3) Descend to marking height
+    speed_descend = 100.0/1000.0
+    movel(marking_height, a=0.5, v=speed_descend, t=0, r=0)
+
+    # 4) Turn laser ON (strict pointing enforced by orientation)
+    laser_on()
+    sync()
+
+    # 5) Mark line 1
+    speed_mark = 60.0/1000.0
+    movel(line1_end, a=0.2, v=speed_mark, t=0, r=0)
+
+    # 6) Retract slightly (back to start of line 1)
+    movel(line1_start, a=0.2, v=speed_mark, t=0, r=0)
+
+    # 7) Step to line 2 start
+    speed_step = 80.0/1000.0
+    movel(line2_start, a=0.3, v=speed_step, t=0, r=0)
+
+    # 8) Mark line 2
+    movel(line2_end, a=0.2, v=speed_mark, t=0, r=0)
+
+    # 9) Step to line 3 start (example of remaining moves)
+    movel(line3_start, a=0.3, v=speed_step, t=0, r=0)
+
+    # 10) Mark line 3
+    movel(line3_end, a=0.2, v=speed_mark, t=0, r=0)
+
+    # End of marking – turn laser off and move to safe position
+    laser_off()
+    sync()
+    # Move back to above surface
+    movel(above_surface, a=1.0, v=speed_linear, t=0, r=0)
+
+    # Return to Home
+    speedj_return = 350.0/1000.0
+    speedj(home_joint, a=1.2, v=speedj_return, t=0, r=0)
+
+end
+
+# Execute the program
+laser_marking()

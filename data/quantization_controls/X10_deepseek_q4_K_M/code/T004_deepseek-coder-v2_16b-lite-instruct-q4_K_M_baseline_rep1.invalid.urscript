@@ -1,0 +1,32 @@
+# Define the waypoints
+waypoint1 := [0.3, -0.4, 0.2, 0.0, 1.8, 0.0];
+waypoint2 := [0.3, -0.4, 0.1, 0.0, 1.8, 0.0];
+waypoint3 := [0.3, -0.4, 0.05, 0.0, 1.8, 0.0];
+waypoint4 := [0.2, -0.4, 0.05, 0.0, 1.8, 0.0];
+waypoint5 := [0.1, -0.4, 0.05, 0.0, 1.8, 0.0];
+
+# Define the speeds
+speed1 := 200.0;
+speed2 := 100.0;
+speed3 := 180.0;
+speed4 := 200.0;
+
+# Move to Home position
+movej waypoint1, speed1, 0.2, 0.0;
+
+# Move to WP1 - Above pick station
+movej waypoint2, speed1, 0.2, 0.0;
+
+# Move to WP2 - Descend to pick
+movel waypoint3, speed2, 0.2, 0.0;
+
+# Move to WP3 - Lift above pick
+movel waypoint4, speed3, 0.2, 0.0;
+
+# Move to WP4 - Obstacle avoidance waypoint (offset in -X)
+movel waypoint4, speed4, 0.2, 0.0;
+
+# Continue with the rest of the waypoints and movements...
+
+# Example for the next waypoint
+# movel waypoint5, speed4, 0.2, 0.0;

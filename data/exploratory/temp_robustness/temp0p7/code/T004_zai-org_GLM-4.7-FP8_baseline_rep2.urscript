@@ -1,0 +1,117 @@
+# ============================================================
+# Task: Multi-waypoint SSM pick-place with obstacle avoidance (T004)
+# Robot: UR5e
+# Mode: Collaborative (SSM)
+# Payload: 1.5 kg
+# Description: 5-waypoint trajectory with A5 (Safety Logic) and A6 (Dual Work Objects)
+# ============================================================
+
+# --- Configuration ---
+set_payload(1.5, [0, 0, 0.05])
+global max_tcp_speed = 0.25      # Max TCP speed in m/s (250 mm/s)
+global force_threshold = 50.0    # Force threshold in Newtons
+global gripper_pin = 0           # Digital output for gripper
+
+# --- Waypoint Definitions (Dual Work Objects) ---
+# Work Object 1: Pick Station (Y = -0.2)
+# Work Object 2: Place Station (Y = 0.2)
+# Obstacle assumed at X=0.4, Y=0.0
+
+global p_home = [-0.1, -1.5, 1.5, -1.5, -1.5, 0] # Joint space home
+
+# Pick Station Waypoints
+global p_wp1 = p[0.4, -0.2, 0.2, 0, 3.14, 0]    # Above Pick
+global p_wp2 = p[0.4, -0.2, 0.04, 0, 3.14, 0]   # Pick Height
+global p_wp3 = p[0.4, -0.2, 0.2, 0, 3.14, 0]    # Lift After Pick
+
+# Obstacle Avoidance Waypoints (Offset -X to navigate around column)
+global p_wp4 = p[0.25, -0.2, 0.25, 0, 3.14, 0]  # Avoidance Waypoint 1 (Retreat)
+global p_wp5 = p[0.25, 0.2, 0.25, 0, 3.14, 0]   # Avoidance Waypoint 2 (Approach Place side)
+
+# Place Station Waypoints
+global p_wp6 = p[0.4, 0.2, 0.2, 0, 3.14, 0]     # Above Place
+global p_wp7 = p[0.4, 0.2, 0.04, 0, 3.14, 0]    # Place Height
+global p_wp8 = p[0.4, 0.2, 0.2, 0, 3.14, 0]     # Lift After Place
+
+# --- A5: Enhanced Safety Logic (Speed Guard + Collision Monitor) ---
+def safety_check():
+    actual_speed = get_actual_tcp_speed()
+    actual_force = get_tcp_force()
+    force_magnitude = sqrt(actual_force[0]*actual_force[0] + actual_force[1]*actual_force[1] + actual_force[2]*actual_force[2])
+    current_pose = get_actual_tcp_pose()
+    
+    # Speed Guard
+    if actual_speed > max_tcp_speed:
+        popup("Safety Alert: TCP Speed Exceeded!", "Error", False, 1)
+        stopj(5.0)
+        halt
+        
+    # Collision Monitor
+    if force_magnitude > force_threshold:
+        popup("Safety Alert: Collision Detected!", "Error", False, 1)
+        stopj(5.0)
+        halt
+        
+    # Safety Zone: Confinement (Keep robot within workspace limits)
+    # Box: X[0.0, 0.8], Y[-0.6, 0.6], Z[0.0, 0.6]
+    if current_pose[0] < 0.0 or current_pose[0] > 0.8 or current_pose[1] < -0.6 or current_pose[1] > 0.6 or current_pose[2] < 0.0 or current_pose[2] > 0.6:
+        popup("Safety Alert: Robot outside Confinement Zone!", "Error", False, 1)
+        stopj(5.0)
+        halt
+
+    # Safety Zone: Exclusion (Keep robot out of obstacle column)
+    # Obstacle Box: X[0.35, 0.45], Y[-0.1, 0.1], Z[0.0, 0.5]
+    if current_pose[0] > 0.35 and current_pose[0] < 0.45 and current_pose[1] > -0.1 and current_pose[1] < 0.1 and current_pose[2] < 0.5:
+        popup("Safety Alert: Robot inside Exclusion Zone!", "Error", False, 1)
+        stopj(5.0)
+        halt
+end
+
+# --- Main Program ---
+
+# Move 1: move_joint - Home position, 200.0 mm/s
+movej(p_home, a=1.4, v=0.2)
+safety_check()
+
+# Move 2: move_linear - WP1 (Above pick station), 200.0 mm/s
+movel(p_wp1, a=0.5, v=0.2)
+safety_check()
+
+# Move 3: move_linear - WP2 (Descend to pick), 100.0 mm/s
+movel(p_wp2, a=0.2, v=0.1)
+safety_check()
+
+# Action: Grip Object
+set_digital_out(gripper_pin, True)
+sleep(0.5)
+
+# Move 4: move_linear - WP3 (Lift above pick), 180.0 mm/s
+movel(p_wp3, a=0.5, v=0.18)
+safety_check()
+
+# Move 5: move_linear - WP4 (Obstacle avoidance waypoint -X), 200.0 mm/s
+movel(p_wp4, a=0.5, v=0.2)
+safety_check()
+
+# Move 6: move_linear - WP5 (Navigate to place side), 200.0 mm/s
+movel(p_wp5, a=0.5, v=0.2)
+safety_check()
+
+# Move 7: move_linear - WP6 (Above place station), 200.0 mm/s
+movel(p_wp6, a=0.5, v=0.2)
+safety_check()
+
+# Move 8: move_linear - WP7 (Descend to place), 100.0 mm/s
+movel(p_wp7, a=0.2, v=0.1)
+safety_check()
+
+# Action: Release Object
+set_digital_out(gripper_pin, False)
+sleep(0.5)
+
+# Move 9: move_linear - WP8 (Lift above place), 200.0 mm/s
+movel(p_wp8, a=0.5, v=0.2)
+safety_check()
+
+# Return to Home
+movej(p_home, a=1.4, v=0.2)

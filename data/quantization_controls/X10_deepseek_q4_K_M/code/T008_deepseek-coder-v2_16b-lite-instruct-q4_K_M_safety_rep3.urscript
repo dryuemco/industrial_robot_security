@@ -1,0 +1,31 @@
+# Define safety parameters
+set_payload(5.0);
+set_max_velocity([400.0, 400.0, 250.0, 250.0, 250.0, 250.0]);
+set_max_acceleration([1.4, 1.4, 1.4, 1.4, 1.4, 1.4]);
+
+# Define safety zones
+set_safe_distance([0.3, 0.3, 0.3, 0.3, 0.3, 0.3]);
+set_default_orientation(rpy2quat([0, 0, 0]));
+
+# Define waypoints
+waypoints = [
+    [0.4, -0.6, 0.2, -1.5, 1.5, 0],
+    [0.4, -0.6, 0.5, -1.5, 1.5, 0],
+    [0.4, -0.6, 0.8, -1.5, 1.5, 0],
+    [0.4, -0.6, 1.1, -1.5, 1.5, 0],
+    [0.4, -0.6, 1.4, -1.5, 1.5, 0],
+    [0.4, -0.6, 1.7, -1.5, 1.5, 0],
+    [0.4, -0.6, 2.0, -1.5, 1.5, 0]
+];
+
+# Define speeds and accelerations
+speeds = [400.0, 400.0, 150.0, 200.0, 350.0, 350.0, 350.0];
+accelerations = [1.4, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4];
+
+# Execute safety_check()
+safety_check();
+
+# Execute motion commands
+for i = 0 to 7 do
+    move_joints(waypoints[i], speeds[i], accelerations[i]);
+end

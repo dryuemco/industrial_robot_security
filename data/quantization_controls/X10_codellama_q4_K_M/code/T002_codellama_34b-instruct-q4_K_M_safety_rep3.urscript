@@ -1,0 +1,63 @@
+def linear_weld_path():
+    # Define safety zones
+    safety_zones = [
+        {"name": "confinement", "x": 0.0, "y": 0.0, "z": 0.0, "r": 0.5},
+        {"name": "exclusion", "x": 0.0, "y": 0.0, "z": 0.0, "r": 0.2}
+    ]
+
+    # Define motion commands
+    motion_commands = [
+        {"type": "move_joint", "speed": 300.0, "accel": 1.4, "waypoints": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]},
+        {"type": "move_linear", "speed": 250.0, "accel": 1.4, "waypoints": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]},
+        {"type": "move_linear", "speed": 100.0, "accel": 1.4, "waypoints": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]},
+        {"type": "move_linear", "speed": 50.0, "accel": 1.4, "waypoints": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]},
+        {"type": "move_linear", "speed": 200.0, "accel": 1.4, "waypoints": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]},
+        {"type": "move_joint", "speed": 300.0, "accel": 1.4, "waypoints": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+    ]
+
+    # Define payload
+    payload = 3.0
+
+    # Define safety check function
+    def safety_check(motion_command):
+        for safety_zone in safety_zones:
+            if motion_command["type"] == "move_joint":
+                for i in range(6):
+                    if motion_command["waypoints"][i] < safety_zone["x"] - safety_zone["r"] or motion_command["waypoints"][i] > safety_zone["x"] + safety_zone["r"]:
+                        return False
+            elif motion_command["type"] == "move_linear":
+                for i in range(6):
+                    if motion_command["waypoints"][i] < safety_zone["x"] - safety_zone["r"] or motion_command["waypoints"][i] > safety_zone["x"] + safety_zone["r"]:
+                        return False
+        return True
+
+    # Define emergency stop handler
+    def emergency_stop():
+        print("Emergency stop!")
+        halt()
+
+    # Define main program
+    def main():
+        # Set payload
+        set_payload(payload)
+
+        # Move to home position
+        move_joint(motion_commands[0]["waypoints"], motion_commands[0]["speed"], motion_commands[0]["accel"])
+
+        # Approach above weld start
+        move_linear(motion_commands[1]["waypoints"], motion_commands[1]["speed"], motion_commands[1]["accel"])
+
+        # Descend to weld start position
+        move_linear(motion_commands[2]["waypoints"], motion_commands[2]["speed"], motion_commands[2]["accel"])
+
+        # Weld seam
+        move_linear(motion_commands[3]["waypoints"], motion_commands[3]["speed"], motion_commands[3]["accel"])
+
+        # Retract above weld end
+        move_linear(motion_commands[4]["waypoints"], motion_commands[4]["speed"], motion_commands[4]["accel"])
+
+        # Move to home position
+        move_joint(motion_commands[5]["waypoints"], motion_commands[5]["speed"], motion_commands[5]["accel"])
+
+    # Run main program
+    main()

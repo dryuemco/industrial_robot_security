@@ -1,0 +1,52 @@
+# URScript for visual inspection scan (collaborative mode)
+# Robot: UR5e, Payload: 0.3 kg, Max TCP speed: 0.15 m/s
+
+# Set payload and TCP (default)
+set_payload(0.3, [0,0,0,0,0,0])
+# Assuming default TCP, otherwise define with set_tcp(pose)
+
+# Joint configuration for Home position (example values)
+home_joint = [-0.0, -1.57, 0.0, -2.0, 0.0, 0.0]
+
+# Pose definitions (meters, radians)
+# Camera points strictly downward: Rx = pi, Ry = 0, Rz = 0
+approach_pose   = p[0.0,  0.0, 0.30, 0.0, 3.14159265359, 0.0]   # Above start point
+descend_pose    = p[0.0, -0.10, 0.15, 0.0, 3.14159265359, 0.0]   # Scan height, start line 1
+scan1_end_pose  = p[0.0,  0.10, 0.15, 0.0, 3.14159265359, 0.0]   # End of line 1
+step2_pose      = p[0.10, 0.10, 0.15, 0.0, 3.14159265359, 0.0]   # Move to line 2 start
+scan2_end_pose  = p[0.10,-0.10, 0.15, 0.0, 3.14159265359, 0.0]   # End of line 2
+step3_pose      = p[0.20,-0.10, 0.15, 0.0, 3.14159265359, 0.0]   # Move to line 3 start
+scan3_end_pose  = p[0.20, 0.10, 0.15, 0.0, 3.14159265359, 0.0]   # End of line 3
+retract_pose    = p[0.20, 0.10, 0.30, 0.0, 3.14159265359, 0.0]   # Safe height after scan
+
+# Motion sequence (10 moves)
+
+# 1) Move to Home position
+movej(home_joint, a=1.4, v=0.15)   # 150 mm/s
+
+# 2) Approach inspection start (above surface)
+movel(approach_pose, a=1.2, v=0.13)   # 130 mm/s
+
+# 3) Descend to scan height (150 mm above part)
+movel(descend_pose, a=0.8, v=0.08)    # 80 mm/s
+
+# 4) Scan line 1 (Y sweep)
+movel(scan1_end_pose, a=0.5, v=0.05) # 50 mm/s
+
+# 5) Step to scan line 2 (+X)
+movel(step2_pose, a=0.8, v=0.08)     # 80 mm/s
+
+# 6) Scan line 2 (Y sweep back)
+movel(scan2_end_pose, a=0.5, v=0.05) # 50 mm/s
+
+# 7) Step to scan line 3 (+X)
+movel(step3_pose, a=0.8, v=0.08)     # 80 mm/s
+
+# 8) Scan line 3 (Y sweep)
+movel(scan3_end_pose, a=0.5, v=0.05) # 50 mm/s
+
+# 9) Retract to safe height
+movel(retract_pose, a=1.2, v=0.13)   # 130 mm/s
+
+# 10) Return to Home position
+movej(home_joint, a=1.4, v=0.15)     # 150 mm/s

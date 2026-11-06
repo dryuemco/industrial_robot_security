@@ -1,0 +1,39 @@
+def safety_check():
+    if not is_within_safety_zone():
+        popup("Safety violation detected! Halting operation.")
+        halt()
+
+def is_within_safety_zone():
+    # Define safety zones here
+    # Placeholder for confinement and exclusion zone checks
+    # Example: return confine(p[0.5, 0.5, 0.5, 0, 0, 0], 0.1, 0.1, 0.1) and not exclude(p[0.5, 0.5, 0.5, 0, 0, 0], 0.05, 0.05, 0.05)
+    return True
+
+def main():
+    set_payload(3.0, [0, 0, 0.05])  # Set payload to 3.0 kg with center of mass at 50 mm above the tool mount
+
+    # Home position
+    safety_check()
+    movej(p[0.0, -1.57, 1.57, -1.57, -1.57, 0.0], a=1.4, v=3.0)  # Home position
+
+    # Approach above weld start
+    safety_check()
+    movel(p[0.5, -0.5, 0.5, 0, 0, 0], a=1.4, v=2.5)  # Approach position
+
+    # Descend to weld start position
+    safety_check()
+    movel(p[0.5, -0.5, 0.1, 0, 0, 0], a=1.4, v=1.0)  # Weld start position
+
+    # Weld seam — 300mm linear path
+    safety_check()
+    movel(p[0.8, -0.5, 0.1, 0, 0, 0], a=1.4, v=0.05)  # Weld path
+
+    # Retract above weld end
+    safety_check()
+    movel(p[0.8, -0.5, 0.5, 0, 0, 0], a=1.4, v=2.0)  # Retract position
+
+    # Return to home position
+    safety_check()
+    movej(p[0.0, -1.57, 1.57, -1.57, -1.57, 0.0], a=1.4, v=3.0)  # Home position
+
+end

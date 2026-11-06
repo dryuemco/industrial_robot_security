@@ -1,0 +1,73 @@
+# URScript for collaborative spot welding (3 points) on UR5e
+# Payload: 2.5 kg, Collaborative mode, max TCP speed 250 mm/s
+
+# -------------------------------------------------
+# Configuration
+set_payload(2.5, [0,0,0])               # payload in kg and centre of gravity
+set_tcp(p[0,0,0,0,0,0])                 # default TCP (no offset)
+
+# Speed limits (m/s) – all below 0.25 m/s (250 mm/s)
+speed_approach = 0.2    # 200 mm/s
+speed_descend  = 0.08   # 80 mm/s
+speed_lift     = 0.15   # 150 mm/s
+
+# Joint speed for collaborative mode (rad/s) – safe low speed
+joint_speed = 0.5      # approx 30 deg/s
+
+# -------------------------------------------------
+# Predefined positions (in meters)
+# These should be calibrated for the actual cell
+home_pose          = p[0.0, -0.5, 0.3, 0, 3.14, 0]   # Home position
+approach_spot1     = p[0.3, -0.2, 0.2, 0, 3.14, 0]   # 200 mm above spot 1
+spot1              = p[0.3, -0.2, 0.1, 0, 3.14, 0]   # Welding point 1
+lift_spot1         = p[0.3, -0.2, 0.2, 0, 3.14, 0]   # Same as approach_spot1
+
+approach_spot2     = p[0.4, -0.1, 0.2, 0, 3.14, 0]   # 200 mm above spot 2
+spot2              = p[0.4, -0.1, 0.1, 0, 3.14, 0]   # Welding point 2
+lift_spot2         = p[0.4, -0.1, 0.2, 0, 3.14, 0]   # Same as approach_spot2
+
+approach_spot3     = p[0.5,  0.0, 0.2, 0, 3.14, 0]   # 200 mm above spot 3
+# (Further moves such as descend/lift for spot 3 can be added similarly)
+
+# -------------------------------------------------
+# Main program
+def main():
+    # Move to Home (joint move, collaborative safe speed)
+    movej(home_pose, a=1.2, v=joint_speed, t=0, r=0)
+
+    # ---- Spot 1 ----
+    # Approach
+    movel(approach_spot1, a=1.2, v=speed_approach, t=0, r=0)
+    # Descend to welding point
+    movel(spot1, a=1.2, v=speed_descend, t=0, r=0)
+    # Activate welding (placeholder for external I/O)
+    set_digital_out(0, True)   # Welding ON
+    sleep(0.2)                  # dwell time for weld
+    set_digital_out(0, False)  # Welding OFF
+    # Lift
+    movel(lift_spot1, a=1.2, v=speed_lift, t=0, r=0)
+
+    # ---- Spot 2 ----
+    # Move to approach position of spot 2
+    movel(approach_spot2, a=1.2, v=speed_approach, t=0, r=0)
+    # Descend to welding point
+    movel(spot2, a=1.2, v=speed_descend, t=0, r=0)
+    # Activate welding
+    set_digital_out(0, True)
+    sleep(0.2)
+    set_digital_out(0, False)
+    # Lift
+    movel(lift_spot2, a=1.2, v=speed_lift, t=0, r=0)
+
+    # ---- Spot 3 ----
+    # Move to approach position of spot 3
+    movel(approach_spot3, a=1.2, v=speed_approach, t=0, r=0)
+    # (Further descend/lift for spot 3 can be added here)
+
+    # Return to Home
+    movej(home_pose, a=1.2, v=joint_speed, t=0, r=0)
+
+# -------------------------------------------------
+# Execute
+if __name__ == "main":
+    main()

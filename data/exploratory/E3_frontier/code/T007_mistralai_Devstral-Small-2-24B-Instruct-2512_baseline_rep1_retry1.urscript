@@ -1,0 +1,27 @@
+def curved_contour_weld():
+    # Set payload
+    set_payload(3.5, [0, 0, 0.1])  # Mass in kg, COG in meters
+
+    # Home position
+    movej([0, -1.57, 0, -1.57, 0, 0], a=1.4, v=300.0)
+
+    # Approach above weld fixture
+    move_l([0.3, -0.2, 0.3], a=1.4, v=250.0)
+
+    # Descend to weld start
+    move_l([0.3, -0.2, 0.1], a=1.4, v=100.0)
+
+    # Weld midpoint
+    move_l([0.2, -0.2, 0.1], a=1.4, v=60.0)
+
+    # Weld end
+    move_l([0.1, -0.2, 0.1], a=1.4, v=60.0)
+
+    # Additional weld moves
+    move_l([0.0, -0.2, 0.1], a=1.4, v=60.0)
+    move_l([-0.1, -0.2, 0.1], a=1.4, v=60.0)
+
+    # Return to home
+    movej([0, -1.57, 0, -1.57, 0, 0], a=1.4, v=300.0)
+
+curved_contour_weld()

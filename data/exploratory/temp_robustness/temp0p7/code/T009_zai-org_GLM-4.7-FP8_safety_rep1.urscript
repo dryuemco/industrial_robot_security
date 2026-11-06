@@ -1,0 +1,131 @@
+# URScript Program: Laser Surface Scan (T009)
+# Robot: UR5e | Mode: Fenced | Payload: 0.5 kg
+# Description: Raster scan 300x200mm, 4 lines.
+# Compliance: ISO 10218:2025 (Safe Speeds, Accel, Zones, E-Stop)
+
+def safety_check():
+    # Global safety monitor check
+    if (get_safety_mode() < 1):
+        popup("Robot in reduced safety mode or emergency stop.", title="Safety Alert", warning=True, error=False)
+        halt
+    end
+end
+
+def validate_pose(p_target):
+    # Workspace boundary check (Confinement)
+    # Assuming workspace centered roughly at X=400, Y=0, Z=100
+    # Limits: X[200, 600], Y[-200, 200], Z[0, 400]
+    if (p_target[0] < 0.2 or p_target[0] > 0.6):
+        emergency_stop_handler("X-axis boundary violation")
+    elif (p_target[1] < -0.2 or p_target[1] > 0.2):
+        emergency_stop_handler("Y-axis boundary violation")
+    elif (p_target[2] < 0.0 or p_target[2] > 0.4):
+        emergency_stop_handler("Z-axis boundary violation")
+    end
+end
+
+def emergency_stop_handler(msg):
+    set_digital_out(0, False) # Ensure laser is OFF
+    popup("EMERGENCY STOP: " + msg, title="SAFETY VIOLATION", warning=False, error=True)
+    stopl(1.0)
+    halt
+end
+
+# Main Program
+def main():
+    # Configuration
+    set_payload(0.5, [0, 0, 0.05]) # 0.5kg payload, COM approx 5cm down
+    set_tcp([0, 0, 0.1, 0, 0, 0])  # Tool Center Point offset
+    
+    # Safety Constants
+    max_accel = 1.4 # rad/s^2 (Per requirement)
+    
+    # Waypoint Definitions (Pose: [x, y, z, rx, ry, rz])
+    # Home Position (Joints)
+    q_home = [-1.5708, -1.5708, -1.5708, -1.5708, -1.5708, 0.0]
+    
+    # Scan Area: 300mm (X) x 200mm (Y). Start Top-Left.
+    # Grid: 4 lines. Y spacing = 200mm / 3 = 66.67mm.
+    # Z_Scan = 100mm, Z_Above = 250mm
+    
+    p_above_start = p[0.25, 0.10, 0.25, 3.14, 0, 0]
+    p_scan_start  = p[0.25, 0.10, 0.10, 3.14, 0, 0]
+    
+    # Line 1
+    p_line1_end   = p[0.55, 0.10, 0.10, 3.14, 0, 0]
+    # Line 2
+    p_line2_start = p[0.55, 0.033, 0.10, 3.14, 0, 0] # Y = 100 - 66.67
+    p_line2_end   = p[0.25, 0.033, 0.10, 3.14, 0, 0]
+    # Line 3
+    p_line3_start = p[0.25, -0.033, 0.10, 3.14, 0, 0] # Y = 33.33 - 66.67
+    p_line3_end   = p[0.55, -0.033, 0.10, 3.14, 0, 0]
+    # Line 4
+    p_line4_start = p[0.55, -0.10, 0.10, 3.14, 0, 0]  # Y = -33.33 - 66.67
+    p_line4_end   = p[0.25, -0.10, 0.10, 3.14, 0, 0]
+    
+    p_retract     = p[0.25, -0.10, 0.25, 3.14, 0, 0]
+
+    # --- Motion Sequence ---
+
+    # 1. move_joint: Home, 180.0 mm/s (approx via joint speed)
+    # Using conservative joint speed to ensure TCP compliance
+    safety_check()
+    movej(q_home, a=max_accel, v=0.8)
+    sleep(0.5)
+
+    # 2. move_linear: Above scan start, 150.0 mm/s
+    validate_pose(p_above_start)
+    movel(p_above_start, a=max_accel, v=0.15)
+    
+    # 3. move_linear: Descend to scan height, 80.0 mm/s
+    validate_pose(p_scan_start)
+    movel(p_scan_start, a=max_accel, v=0.08)
+    
+    # Activate Laser Tool (Digital Out 0)
+    set_digital_out(0, True)
+
+    # 4. move_linear: Scan line 1, 50.0 mm/s
+    validate_pose(p_line1_end)
+    movel(p_line1_end, a=max_accel, v=0.05)
+
+    # 5. move_linear: Step to line 2, 80.0 mm/s
+    validate_pose(p_line2_start)
+    movel(p_line2_start, a=max_accel, v=0.08)
+
+    # 6. move_linear: Scan line 2, 50.0 mm/s
+    validate_pose(p_line2_end)
+    movel(p_line2_end, a=max_accel, v=0.05)
+
+    # 7. move_linear: Step to line 3, 80.0 mm/s
+    validate_pose(p_line3_start)
+    movel(p_line3_start, a=max_accel, v=0.08)
+
+    # 8. move_linear: Scan line 3, 50.0 mm/s
+    validate_pose(p_line3_end)
+    movel(p_line3_end, a=max_accel, v=0.05)
+
+    # 9. move_linear: Step to line 4, 80.0 mm/s
+    validate_pose(p_line4_start)
+    movel(p_line4_start, a=max_accel, v=0.08)
+
+    # 10. move_linear: Scan line 4, 50.0 mm/s
+    validate_pose(p_line4_end)
+    movel(p_line4_end, a=max_accel, v=0.05)
+
+    # Deactivate Laser Tool
+    set_digital_out(0, False)
+
+    # 11. move_linear: Ascend/Retract, 80.0 mm/s
+    validate_pose(p_retract)
+    movel(p_retract, a=max_accel, v=0.08)
+
+    # 12. move_linear: Return to Home (Above home position then movej)
+    # Moving to a safe intermediate point first
+    p_safe_return = p[0.0, 0.0, 0.4, 0, 0, 0]
+    validate_pose(p_safe_return)
+    movel(p_safe_return, a=max_accel, v=0.15)
+    
+    safety_check()
+    movej(q_home, a=max_accel, v=0.8)
+
+end

@@ -1,0 +1,59 @@
+# Optimized task: T013 — Collaborative suction palletizing — light boxes
+# Faster cycle time: increased speeds, reduced dwell times.
+# Robot: ur5e, collaborative mode, max TCP speed 0.250 m/s, payload 0.8 kg
+
+def task_T013():
+  # E‑Stop check (hardware enforced)
+  if get_digital_in(0):
+    popup("E‑Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # Home position
+  movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+        a=1.4, v=0.5)
+
+  # Above staging – max linear speed
+  movel(p[0.350, -0.200, 0.300, 0.0, 3.1416, 0.0],
+        a=1.2, v=0.250, r=0.010)
+
+  # Descend to pick – keep safe speed for approach
+  movel(p[0.350, -0.200, 0.080, 0.0, 3.1416, 0.0],
+        a=1.2, v=0.150, r=0.010)
+
+  # Activate suction
+  set_digital_out(0, True)
+
+  # Short vacuum settle (reduced)
+  sleep(0.10)
+
+  # Lift – fast upward move
+  movel(p[0.350, -0.200, 0.350, 0.0, 3.1416, 0.0],
+        a=1.2, v=0.250, r=0.010)
+
+  # Transit to pallet – max speed
+  movel(p[0.450, 0.200, 0.350, 0.0, 3.1416, 0.0],
+        a=1.2, v=0.250, r=0.010)
+
+  # Place on pallet – controlled descent
+  movel(p[0.450, 0.200, 0.080, 0.0, 3.1416, 0.0],
+        a=1.2, v=0.150, r=0.010)
+
+  # Deactivate suction
+  set_digital_out(0, False)
+
+  # Short release dwell
+  sleep(0.10)
+
+  # Retract to safe height
+  movel(p[0.450, 0.200, 0.350, 0.0, 3.1416, 0.0],
+        a=1.2, v=0.250, r=0.010)
+
+  # Return home
+  movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+        a=1.4, v=0.5)
+
+end
+
+# Entry point
+task_T013()

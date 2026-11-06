@@ -1,0 +1,95 @@
+# -------------------------------------------------
+# URScript program: Curved contour weld — hybrid mode (T007)
+# Robot: UR5e, Payload: 3.5 kg
+# -------------------------------------------------
+
+# ---- Safety preamble -------------------------------------------------
+# Define the tool center point (TCP) relative to the robot flange.
+# Adjust the TCP offset as required for the welding torch.
+set_tcp(p[0, 0, 0.150, 0, 0, 0])   # 150 mm along Z axis (example)
+
+# Define the payload (mass in kg) and its centre of gravity (CoG) in TCP frame.
+set_payload(3.5, p[0, 0, 0.075])   # CoG 75 mm from TCP (example)
+
+# ----------------------------------------------------------------------
+# Helper functions with error handling (SM‑2 compliance)
+
+def safe_movej(target, a, v):
+    # Executes a joint move and returns True on success, False on failure.
+    try:
+        movej(target, a=a, v=v)
+        return True
+    except:
+        popup("Joint move failed!", title="Error", error=True)
+        return False
+
+def safe_movel(target, a, v):
+    # Executes a linear move and returns True on success, False on failure.
+    try:
+        movel(target, a=a, v=v)
+        return True
+    except:
+        popup("Linear move failed!", title="Error", error=True)
+        return False
+
+# ----------------------------------------------------------------------
+# Pose / joint definitions (example values – replace with real data)
+
+# Home joint configuration (rad)
+home_joint = p[0, -1.5708, 1.5708, 0, 1.5708, 0]
+
+# Approach pose – 100 mm above the weld fixture
+approach_pose = p[0.5, 0.0, 0.4, 0, 3.1416, 0]
+
+# Start of weld – 10 mm above the fixture surface
+start_weld_pose = p[0.5, 0.0, 0.3, 0, 3.1416, 0]
+
+# Weld midpoint (arc centre)
+mid_weld_pose = p[0.55, 0.0, 0.3, 0, 3.1416, 0]
+
+# Weld end pose
+end_weld_pose = p[0.6, 0.0, 0.3, 0, 3.1416, 0]
+
+# Retract pose – 150 mm above the end point
+retract_pose = p[0.6, 0.0, 0.45, 0, 3.1416, 0]
+
+# Safe standby pose (e.g., robot home but with torch cleared)
+standby_pose = p[0, -1.5708, 1.5708, 0, 1.5708, 0]
+
+# ----------------------------------------------------------------------
+# Main program sequence
+
+def main():
+    # 1) Move to Home position (300 mm/s → 0.3 m/s)
+    if not safe_movej(home_joint, a=1.2, v=0.3):
+        halt()
+
+    # 2) Linear approach above weld fixture (250 mm/s → 0.25 m/s)
+    if not safe_movel(approach_pose, a=1.0, v=0.25):
+        halt()
+
+    # 3) Descend to weld start (100 mm/s → 0.1 m/s)
+    if not safe_movel(start_weld_pose, a=0.8, v=0.1):
+        halt()
+
+    # 4) Weld midpoint (60 mm/s → 0.06 m/s)
+    if not safe_movel(mid_weld_pose, a=0.5, v=0.06):
+        halt()
+
+    # 5) Weld end (60 mm/s → 0.06 m/s)
+    if not safe_movel(end_weld_pose, a=0.5, v=0.06):
+        halt()
+
+    # 6) Retract after weld (maintain safe speed)
+    if not safe_movel(retract_pose, a=0.8, v=0.2):
+        halt()
+
+    # 7) Return to standby / safe pose
+    if not safe_movej(standby_pose, a=1.2, v=0.3):
+        halt()
+
+    popup("Weld program completed successfully.", title="Info")
+
+# ----------------------------------------------------------------------
+# Execute the program
+main()

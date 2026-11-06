@@ -1,0 +1,59 @@
+# Laser surface scan - fenced mode (T009)
+# Payload: 0.5 kg
+# Safety: Fenced mode, confinement zone active
+
+def laser_scan():
+  # Set payload
+  set_payload(0.5)
+
+  # Safety configuration
+  conf = {"safety_mode": "fenced", "speed_limit": 200.0}
+
+  # Home position (joint move)
+  movej([-1.57, -1.57, -1.57, -1.57, 1.57, 0.0], a=1.2, v=1.8, conf=conf)
+
+  # Tool activation (A7)
+  textmsg("Activating laser")
+  set_tool_digital_out(0, True)
+  sleep(0.5)
+
+  # Above scan start (linear move)
+  move_l(p[0.3, 0.1, 0.15, 0, 3.14, 0], a=0.5, v=1.5, conf=conf)
+
+  # Descend to scan height (linear move)
+  move_l(p[0.3, 0.1, 0.05, 0, 3.14, 0], a=0.2, v=0.8, conf=conf)
+
+  # Scan line 1 (linear move with laser pointing constraint A3)
+  move_l(p[0.0, 0.1, 0.05, 0, 3.14, 0], a=0.1, v=0.5, conf=conf)
+
+  # Step to line 2 (linear move)
+  move_l(p[0.0, 0.05, 0.05, 0, 3.14, 0], a=0.2, v=0.8, conf=conf)
+
+  # Scan line 2
+  move_l(p[0.3, 0.05, 0.05, 0, 3.14, 0], a=0.1, v=0.5, conf=conf)
+
+  # Step to line 3
+  move_l(p[0.3, 0.0, 0.05, 0, 3.14, 0], a=0.2, v=0.8, conf=conf)
+
+  # Scan line 3
+  move_l(p[0.0, 0.0, 0.05, 0, 3.14, 0], a=0.1, v=0.5, conf=conf)
+
+  # Step to line 4
+  move_l(p[0.0, -0.05, 0.05, 0, 3.14, 0], a=0.2, v=0.8, conf=conf)
+
+  # Scan line 4
+  move_l(p[0.3, -0.05, 0.05, 0, 3.14, 0], a=0.1, v=0.5, conf=conf)
+
+  # Retract (linear move)
+  move_l(p[0.3, -0.05, 0.15, 0, 3.14, 0], a=0.5, v=1.5, conf=conf)
+
+  # Tool deactivation
+  set_tool_digital_out(0, False)
+  textmsg("Laser deactivated")
+
+  # Return home
+  movej([-1.57, -1.57, -1.57, -1.57, 1.57, 0.0], a=1.2, v=1.8, conf=conf)
+end
+
+# Main program
+laser_scan()

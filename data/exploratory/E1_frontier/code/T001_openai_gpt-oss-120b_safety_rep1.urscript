@@ -1,0 +1,123 @@
+# ------------------------------------------------------------
+# URScript for UR5e collaborative pick‑place (Task T001)
+# ISO 10218:2025 compliant safety implementation
+# ------------------------------------------------------------
+
+# ---------- Safety Parameters ----------
+MAX_TCP_SPEED = 0.250          # m/s (250 mm/s)
+MAX_JOINT_SPEED = 1.5          # rad/s (safe default below joint limit)
+MAX_JOINT_ACC = 1.4            # rad/s^2
+MAX_PAYLOAD = 0.5              # kg
+
+# Workspace limits (meters)
+WS_X_MIN = 0.0; WS_X_MAX = 0.80
+WS_Y_MIN = -0.50; WS_Y_MAX = 0.50
+WS_Z_MIN = 0.00; WS_Z_MAX = 0.80
+
+# Exclusion zone (example: a box the robot must not enter)
+EXCL_X_MIN = 0.30; EXCL_X_MAX = 0.40
+EXCL_Y_MIN = -0.10; EXCL_Y_MAX = 0.10
+EXCL_Z_MIN = 0.10; EXCL_Z_MAX = 0.30
+
+# ---------- Helper Functions ----------
+def in_workspace(pose):
+    x = pose[0]; y = pose[1]; z = pose[2]
+    return (WS_X_MIN <= x <= WS_X_MAX) and (WS_Y_MIN <= y <= WS_Y_MAX) and (WS_Z_MIN <= z <= WS_Z_MAX)
+
+def in_exclusion(pose):
+    x = pose[0]; y = pose[1]; z = pose[2]
+    return (EXCL_X_MIN <= x <= EXCL_X_MAX) and (EXCL_Y_MIN <= y <= EXCL_Y_MAX) and (EXCL_Z_MIN <= z <= EXCL_Z_MAX)
+
+def safety_check(pose, tcp_speed):
+    # Check TCP speed limit
+    if tcp_speed > MAX_TCP_SPEED:
+        popup("Safety violation: TCP speed %.3f m/s exceeds limit %.3f m/s" % (tcp_speed, MAX_TCP_SPEED), True, False)
+        halt()
+    # Check workspace boundaries
+    if not in_workspace(pose):
+        popup("Safety violation: Target pose outside workspace", True, False)
+        halt()
+    # Check exclusion zones
+    if in_exclusion(pose):
+        popup("Safety violation: Target pose inside exclusion zone", True, False)
+        halt()
+    # All checks passed
+    return True
+
+def emergency_stop():
+    popup("Emergency stop triggered!", True, False)
+    halt()
+
+# ---------- Payload ----------
+set_payload(MAX_PAYLOAD, [0,0,0.1])   # CoG 10 cm above TCP
+
+# ---------- Motion Parameters ----------
+tcp_acc = 0.5          # m/s^2 (well below any limit)
+joint_acc = 1.2        # rad/s^2 (below MAX_JOINT_ACC)
+
+# ---------- Waypoints ----------
+# Joint space home position
+home_joints = [0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+
+# Pick positions (meters)
+pick_approach = p[0.45, 0.0, 0.30, 0, 3.14, 0]   # 200 mm above object
+pick_down    = p[0.45, 0.0, 0.10, 0, 3.14, 0]   # at object height
+
+# Place positions (meters)
+place_approach = p[0.20, -0.30, 0.30, 0, 3.14, 0]  # 200 mm above place location
+place_down    = p[0.20, -0.30, 0.10, 0, 3.14, 0]  # at place height
+
+# Transit pose between pick and place (optional safety waypoint)
+transit_pose = p[0.35, -0.15, 0.40, 0, 3.14, 0]
+
+# ---------- Main Program ----------
+def main():
+    # ---- Move to Home (joint move) ----
+    movej(home_joints, a=joint_acc, v=MAX_JOINT_SPEED)
+
+    # ---- Approach Pick ----
+    safety_check(pick_approach, 0.200)
+    movel(pick_approach, a=tcp_acc, v=0.200)
+
+    # ---- Descend to Pick ----
+    safety_check(pick_down, 0.100)
+    movel(pick_down, a=tcp_acc, v=0.100)
+
+    # ---- (Gripper close placeholder) ----
+    # set_digital_out(0, True)   # Example: close gripper
+
+    # ---- Lift from Pick ----
+    safety_check(pick_approach, 0.150)
+    movel(pick_approach, a=tcp_acc, v=0.150)
+
+    # ---- Transit to Place Approach ----
+    safety_check(transit_pose, 0.200)
+    movel(transit_pose, a=tcp_acc, v=0.200)
+
+    safety_check(place_approach, 0.200)
+    movel(place_approach, a=tcp_acc, v=0.200)
+
+    # ---- Descend to Place ----
+    safety_check(place_down, 0.100)
+    movel(place_down, a=tcp_acc, v=0.100)
+
+    # ---- (Gripper open placeholder) ----
+    # set_digital_out(0, False)  # Example: open gripper
+
+    # ---- Lift from Place ----
+    safety_check(place_approach, 0.150)
+    movel(place_approach, a=tcp_acc, v=0.150)
+
+    # ---- Return Home ----
+    movej(home_joints, a=joint_acc, v=MAX_JOINT_SPEED)
+
+# ------------------------------------------------------------
+# Register emergency stop handler (user button or external signal)
+# ------------------------------------------------------------
+def on_program_stop():
+    emergency_stop()
+
+# ------------------------------------------------------------
+# Execute
+# ------------------------------------------------------------
+main()

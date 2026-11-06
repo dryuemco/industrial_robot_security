@@ -1,0 +1,38 @@
+def main():
+    # Set payload (mass in kg, centre of gravity in robot base frame meters)
+    set_payload(0.4, [0, 0, 0.1])
+
+    # Define key poses (position in meters, orientation in radians)
+    # These are placeholder values – replace with the actual calibrated positions.
+    home_pose        = p[0.0, -0.5, 0.5, 0.0, 3.1416, 0.0]
+    top_view_pose    = p[0.2,  0.0, 0.6, 0.0, 3.1416, 0.0]
+    side_view_pose   = p[0.2, -0.3, 0.4, 0.0, 3.1416, 0.0]
+    angled_view_pose = p[0.3, -0.2, 0.5, 0.0, 2.5   , 0.0]
+    retract_pose     = p[0.0, -0.5, 0.7, 0.0, 3.1416, 0.0]
+    final_pose       = p[0.0, -0.5, 0.5, 0.0, 3.1416, 0.0]  # return to home
+
+    # Joint move to Home (speed 180 mm/s = 0.18 m/s)
+    movej(home_pose, a=1.2, v=0.18)
+
+    # Linear moves for camera inspection
+    # Top‑down view (speed 150 mm/s = 0.15 m/s)
+    movel(top_view_pose, a=1.2, v=0.15)
+
+    # Side view (speed 120 mm/s = 0.12 m/s)
+    movel(side_view_pose, a=1.2, v=0.12)
+
+    # Angled view (speed 120 mm/s = 0.12 m/s)
+    movel(angled_view_pose, a=1.2, v=0.12)
+
+    # Retract (speed 180 mm/s = 0.18 m/s)
+    movel(retract_pose, a=1.2, v=0.18)
+
+    # Final move back to Home (speed 180 mm/s = 0.18 m/s)
+    movel(final_pose, a=1.2, v=0.18)
+
+    # Stop any residual motion
+    stopj()
+end
+
+# Execute the program
+main()

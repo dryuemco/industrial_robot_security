@@ -1,0 +1,110 @@
+def within_workspace(pose):
+    # Simple cubic confinement (example values, adjust to actual zone)
+    # Pose format: [X, Y, Z, Rx, Ry, Rz]
+    min_x = -0.5; max_x = 0.5
+    min_y = -0.5; max_y = 0.5
+    min_z = 0.0;  max_z = 0.8
+    if pose[0] < min_x or pose[0] > max_x: return false
+    if pose[1] < min_y or pose[1] > max_y: return false
+    if pose[2] < min_z or pose[2] > max_z: return false
+    return true
+end
+
+def safe_movej(target, speed):
+    if not within_workspace(target):
+        textmsg("Target joint pose outside workspace, aborting.")
+        stop()
+    try:
+        movej(target, a=1.2, v=speed/1000.0)  # URScript expects m/s
+    except:
+        textmsg("movej failed, stopping program.")
+        stop()
+    end
+end
+
+def safe_movel(target, speed):
+    if not within_workspace(target):
+        textmsg("Target Cartesian pose outside workspace, aborting.")
+        stop()
+    try:
+        movel(target, a=1.2, v=speed/1000.0)
+    except:
+        textmsg("movel failed, stopping program.")
+        stop()
+    end
+end
+
+def main():
+    # ----- Setup -------------------------------------------------
+    set_payload(2.5, [0,0,0.1])          # payload 2.5 kg, CoG offset
+    set_tcp([0,0,0.1,0,0,0])            # example TCP offset
+    set_speed_slider(0.0)               # ensure collaborative speed mode
+    set_joint_impedance([2000,2000,2000,2000,2000,2000])
+    set_cartesian_impedance([2000,2000,2000,200,200,200])
+
+    # ----- Poses -------------------------------------------------
+    home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]   # example home
+    approach1 = p[0.3, 0.0, 0.2, 0, 3.14, 0]            # above spot 1
+    descend1  = p[0.3, 0.0, 0.05, 0, 3.14, 0]           # welding point 1
+    lift1     = p[0.3, 0.0, 0.2, 0, 3.14, 0]            # lift after spot 1
+
+    approach2 = p[0.0, 0.3, 0.2, 0, 3.14, 0]
+    descend2  = p[0.0, 0.3, 0.05, 0, 3.14, 0]
+    lift2     = p[0.0, 0.3, 0.2, 0, 3.14, 0]
+
+    approach3 = p[-0.3, 0.0, 0.2, 0, 3.14, 0]
+    descend3  = p[-0.3, 0.0, 0.05, 0, 3.14, 0]
+    lift3     = p[-0.3, 0.0, 0.2, 0, 3.14, 0]
+
+    # ----- Motion Sequence ---------------------------------------
+    # 1. Home
+    safe_movej(home_joint, 200.0)
+
+    # 2. Approach spot 1
+    safe_movel(approach1, 200.0)
+
+    # 3. Descend to spot 1 (slow for welding)
+    safe_movel(descend1, 80.0)
+
+    # 4. Activate welding (placeholder)
+    textmsg("Weld activation spot 1")
+    sleep(0.5)   # simulate welding time
+
+    # 5. Lift from spot 1
+    safe_movel(lift1, 150.0)
+
+    # 6. Move to spot 2 (approach)
+    safe_movel(approach2, 200.0)
+
+    # 7. Descend to spot 2
+    safe_movel(descend2, 80.0)
+
+    # 8. Activate welding spot 2
+    textmsg("Weld activation spot 2")
+    sleep(0.5)
+
+    # 9. Lift from spot 2
+    safe_movel(lift2, 150.0)
+
+    # 10. Move to spot 3 (approach)
+    safe_movel(approach3, 200.0)
+
+    # 11. Descend to spot 3
+    safe_movel(descend3, 80.0)
+
+    # 12. Activate welding spot 3
+    textmsg("Weld activation spot 3")
+    sleep(0.5)
+
+    # 13. Lift from spot 3
+    safe_movel(lift3, 150.0)
+
+    # 14. Return home
+    safe_movej(home_joint, 200.0)
+
+    textmsg("Spot welding routine completed.")
+end
+
+# -----------------------------------------------------------------
+# Run the program
+main()

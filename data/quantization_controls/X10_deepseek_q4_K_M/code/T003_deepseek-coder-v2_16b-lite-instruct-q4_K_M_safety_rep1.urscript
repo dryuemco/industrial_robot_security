@@ -1,0 +1,45 @@
+# Define safety parameters
+set_tool_payload payload 4.5
+set_speed tcp_speed 250.0
+set_acceleration_scaling factor 1.0
+
+# Define safety zones
+safety_zone(0, 0, 0, 0, 0, 0)
+
+# Define payload
+set_payload payload 4.5
+
+# Define safety parameters
+set_speed tcp_speed 250.0
+set_acceleration_scaling factor 1.0
+
+# Define safety zones
+safety_zone(0, 0, 0, 0, 0, 0)
+
+# Home position
+move_joints([0, -pi/2, pi/2, -pi/2, pi/2, 0], speed=250.0, acceleration=1.4)
+
+# Approach conveyor pick above
+move_linear([0.5, -0.3, 0.3], speed=250.0, acceleration=1.4)
+
+# Descend to pick
+move_linear([0.5, -0.3, 0.0], speed=100.0, acceleration=1.4)
+
+# Lift from conveyor
+move_linear([0.5, -0.3, 0.3], speed=200.0, acceleration=1.4)
+
+# Transit to pallet position (0,0)
+move_linear([0.0, 0.0, 0.3], speed=280.0, acceleration=1.4)
+
+# Repeat for remaining moves...
+
+# Ensure safety_check() is included before each motion command
+# Example for move_linear
+def move_linear(pose, speed, acceleration):
+    safety_check()
+    moveL([pose], speed, acceleration)
+
+# Example for move_joints
+def move_joints(joints, speed, acceleration):
+    safety_check()
+    moveJ(joints, speed, acceleration)

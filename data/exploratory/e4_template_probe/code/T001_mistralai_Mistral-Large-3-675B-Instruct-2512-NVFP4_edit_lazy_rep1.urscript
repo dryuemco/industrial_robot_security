@@ -1,0 +1,87 @@
+# Task: T001 — Simple collaborative pick-place (Improved)
+# Operating mode: collaborative | Max TCP speed: 0.250 m/s
+# Robot: ur5e | Payload: 0.5 kg
+# Compliance: ISO 10218:2025 collaborative mode limits
+
+def task_T001():
+  # [0] Safety checks before start
+  if get_operational_mode() != OPERATIONAL_MODE_COLLABORATIVE:
+    popup("Robot not in collaborative mode — aborting program.", error=True)
+    halt
+  end
+
+  if get_digital_in(0) == True:
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # [1] Set payload and tool center point
+  set_payload(0.5, [0, 0, 0.05])
+  set_tcp(p[0, 0, 0.15, 0, 0, 0])
+
+  # [2] Go to home position with reduced acceleration for smoother start
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.2000, v=0.2000)
+
+  # [3] Approach pick point with blending for smooth transition
+  movel(p[0.400000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.2000, r=0.0200)
+
+  # [4] Descend to pick with reduced speed for precision
+  movel(p[0.400000, 0.000000, 0.200000, 0.0000, 3.1416, 0.0000], a=0.3000, v=0.1000)
+
+  # [5] Close gripper with force monitoring
+  set_digital_out(0, True)
+  sleep(0.1)
+  if not get_digital_in(1):
+    popup("Gripper failed to close — check object presence", error=True)
+    halt
+  end
+
+  # [6] Grip settle time with force monitoring
+  force_mode(p[0, 0, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0], [0, 0, 40, 0, 0, 0], 2, [0.1, 0.1, 0.15, 0.17, 0.17, 0.17])
+  sleep(0.5)
+  end_force_mode()
+
+  # [7] Lift from pick with controlled acceleration
+  movel(p[0.400000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000], a=0.4000, v=0.1500, r=0.0100)
+
+  # [8] Transit to place approach with optimized path
+  movel(p[0.400000, 0.200000, 0.350000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.2000, r=0.0200)
+
+  # [9] Descend to place with reduced speed
+  movel(p[0.400000, 0.200000, 0.200000, 0.0000, 3.1416, 0.0000], a=0.3000, v=0.1000)
+
+  # [10] Open gripper with confirmation
+  set_digital_out(0, False)
+  sleep(0.1)
+  if get_digital_in(1):
+    popup("Gripper failed to open — check mechanism", error=True)
+    halt
+  end
+
+  # [11] Release settle time
+  sleep(0.3000)
+
+  # [12] Retract from place with controlled acceleration
+  movel(p[0.400000, 0.200000, 0.350000, 0.0000, 3.1416, 0.0000], a=0.4000, v=0.2000, r=0.0100)
+
+  # [13] Return to home with reduced acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.2000, v=0.2000)
+
+  # [14] Reset payload to default
+  set_payload(0.0)
+end
+
+# Entry point with safety wrapper
+thread safety_monitor():
+  while True:
+    if get_digital_in(0) == True:
+      popup("E-Stop activated during operation — stopping robot.", error=True)
+      halt
+    end
+    sleep(0.1)
+  end
+end
+
+thread_1 = run safety_monitor()
+task_T001()
+kill thread_1

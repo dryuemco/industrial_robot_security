@@ -1,0 +1,165 @@
+# -------------------------------------------------
+# UR5e Hybrid Mode Screw Fastening Assembly Program
+# -------------------------------------------------
+# Safety preamble (required before any motion)
+set_tcp(p[0,0,0,0,0,0])               # Default TCP (no offset)
+set_payload(1.0, p[0,0,0])            # Payload 1.0 kg, CoG at TCP
+
+# Workspace limits (confinement zone) in meters
+def min_x = -0.8
+def max_x =  0.8
+def min_y = -0.8
+def max_y =  0.8
+def min_z =  0.0
+def max_z =  1.2
+
+# Helper: check if a pose is inside the allowed workspace
+def in_workspace(pose):
+    return (pose[0] >= min_x and pose[0] <= max_x and
+            pose[1] >= min_y and pose[1] <= max_y and
+            pose[2] >= min_z and pose[2] <= max_z)
+
+# Helper: safe stop routine
+def safe_halt():
+    # Turn on a safety indicator (e.g., digital out 0) before halting
+    set_standard_digital_out(0, True)
+    halt()
+
+# -------------------------------------------------
+# Target poses (all positions are defined in meters)
+# -------------------------------------------------
+# Home position (joint configuration)
+def home_joint = p[0, -1.57, 1.57, -1.57, -1.57, 0]
+
+# Above screw feeder (TCP pose)
+def above_feeder = p[0.3, -0.2, 0.4, 0, 3.14, 0]
+
+# Pick screw (TCP pose)
+def pick_screw = p[0.3, -0.2, 0.1, 0, 3.14, 0]
+
+# Lift from feeder (TCP pose)
+def lift_feeder = p[0.3, -0.2, 0.35, 0, 3.14, 0]
+
+# Above fastening points (TCP poses)
+def above_fp1 = p[0.5, 0.0, 0.45, 0, 3.14, 0]
+def above_fp2 = p[0.5, 0.1, 0.45, 0, 3.14, 0]
+def above_fp3 = p[0.5, -0.1, 0.45, 0, 3.14, 0]
+def above_fp4 = p[0.5, 0.0, 0.55, 0, 3.14, 0]
+
+# Fastening point poses (TCP pose, lower Z for screw driving)
+def fp1 = p[0.5, 0.0, 0.30, 0, 3.14, 0]
+def fp2 = p[0.5, 0.1, 0.30, 0, 3.14, 0]
+def fp3 = p[0.5, -0.1, 0.30, 0, 3.14, 0]
+def fp4 = p[0.5, 0.0, 0.40, 0, 3.14, 0]
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # -----------------------------------------------------------------
+    # 1) Move to Home (collaborative zone, speed 200 mm/s)
+    # -----------------------------------------------------------------
+    if not in_workspace(p[0,0,0,0,0,0]): safe_halt()
+    try:
+        movej(home_joint, a=1.2, v=0.2)   # 200 mm/s = 0.2 m/s
+    except:
+        safe_halt()
+
+    # -----------------------------------------------------------------
+    # 2) Approach above screw feeder (linear, 200 mm/s)
+    # -----------------------------------------------------------------
+    if not in_workspace(above_feeder): safe_halt()
+    try:
+        movel(above_feeder, a=1.2, v=0.2)
+    except:
+        safe_halt()
+
+    # -----------------------------------------------------------------
+    # 3) Move down to pick the screw (linear, 80 mm/s)
+    # -----------------------------------------------------------------
+    if not in_workspace(pick_screw): safe_halt()
+    try:
+        movel(pick_screw, a=0.8, v=0.08)
+    except:
+        safe_halt()
+
+    # Simulate gripper close (digital out 1)
+    set_standard_digital_out(1, True)
+    sync()
+
+    # -----------------------------------------------------------------
+    # 4) Lift the screw from feeder (linear, 180 mm/s)
+    # -----------------------------------------------------------------
+    if not in_workspace(lift_feeder): safe_halt()
+    try:
+        movel(lift_feeder, a=1.0, v=0.18)
+    except:
+        safe_halt()
+
+    # -----------------------------------------------------------------
+    # 5) Move above fastening point 1 (linear, 200 mm/s)
+    # -----------------------------------------------------------------
+    if not in_workspace(above_fp1): safe_halt()
+    try:
+        movel(above_fp1, a=1.2, v=0.2)
+    except:
+        safe_halt()
+
+    # -----------------------------------------------------------------
+    # 6) Fasten screw at point 1 (linear down, then dwell, then retract)
+    # -----------------------------------------------------------------
+    if not in_workspace(fp1): safe_halt()
+    try:
+        movel(fp1, a=0.6, v=0.05)          # approach slowly for fastening
+        # Activate screwdriver (digital out 2)
+        set_standard_digital_out(2, True)
+        sync()
+        sleep(1.5)                         # dwell while screw is driven
+        set_standard_digital_out(2, False) # stop screwdriver
+        # Retract
+        movel(above_fp1, a=0.6, v=0.2)
+    except:
+        safe_halt()
+
+    # -----------------------------------------------------------------
+    # 7) Repeat for fastening points 2, 3 and 4
+    # -----------------------------------------------------------------
+    for pose_above, pose_fp in [(above_fp2, fp2), (above_fp3, fp3), (above_fp4, fp4)]:
+        if not in_workspace(pose_above): safe_halt()
+        try:
+            movel(pose_above, a=1.2, v=0.2)
+        except:
+            safe_halt()
+
+        if not in_workspace(pose_fp): safe_halt()
+        try:
+            movel(pose_fp, a=0.6, v=0.05)
+            set_standard_digital_out(2, True)
+            sync()
+            sleep(1.5)
+            set_standard_digital_out(2, False)
+            movel(pose_above, a=0.6, v=0.2)
+        except:
+            safe_halt()
+
+    # -----------------------------------------------------------------
+    # 8) Return to Home (collaborative zone, speed 200 mm/s)
+    # -----------------------------------------------------------------
+    if not in_workspace(p[0,0,0,0,0,0]): safe_halt()
+    try:
+        movej(home_joint, a=1.2, v=0.2)
+    except:
+        safe_halt()
+
+    # Release gripper
+    set_standard_digital_out(1, False)
+    sync()
+
+    # Program finished
+    set_standard_digital_out(0, False)   # turn off safety indicator
+    stopj(0)                              # ensure robot is stopped
+
+# -------------------------------------------------
+# Execute main
+# -------------------------------------------------
+main()

@@ -1,0 +1,124 @@
+# ==============================================================================
+# URScript Program: Curved Contour Weld (Hybrid Mode)
+# Robot: UR5e
+# Task: T007 - Curved weld seam along an arc path
+# Compliance: ISO 10218:2025
+# ==============================================================================
+
+# -----------------------------------------------------------------------------
+# Configuration and Safety Parameters
+# -----------------------------------------------------------------------------
+global max_tcp_speed_collab = 0.250  # 250 mm/s collaborative limit
+global max_joint_accel = 1.4         # 1.4 rad/s^2 per joint
+global payload_mass = 3.5            # kg
+global payload_cog = [0.0, 0.0, 0.05] # Center of gravity (m)
+
+# Safety Zone Boundaries (Confinement)
+global zone_x_min = -0.8
+global zone_x_max = 0.8
+global zone_y_min = -0.8
+global zone_y_max = 0.8
+global zone_z_min = 0.0
+global zone_z_max = 1.0
+
+# -----------------------------------------------------------------------------
+# Safety Functions
+# -----------------------------------------------------------------------------
+
+def emergency_stop(msg):
+    popup(msg, "Safety Violation", False, True)
+    stopj(1.0)
+    halt
+
+def check_workspace(pose):
+    # Extract position from pose vector [x, y, z, rx, ry, rz]
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    
+    if x < zone_x_min or x > zone_x_max:
+        return False
+    if y < zone_y_min or y > zone_y_max:
+        return False
+    if z < zone_z_min or z > zone_z_max:
+        return False
+    return True
+
+def check_torch_orientation(pose):
+    # A3: Strict torch-down cones
+    # Check if tool Z-axis is pointing down (rx approx 0, ry approx pi)
+    rx = pose[3]
+    ry = pose[4]
+    rz = pose[5]
+    
+    # Tolerance for orientation (radians)
+    tol = 0.1
+    
+    # Expecting orientation roughly [0, 3.14159, 0] for downward pointing
+    if (rx < -tol or rx > tol) or (ry < 3.04 or ry > 3.24):
+        return False
+    return True
+
+def safety_check(pose):
+    if not check_workspace(pose):
+        emergency_stop("Workspace Boundary Violation")
+    
+    # Only check torch orientation for linear moves involving the weld
+    if not check_torch_orientation(pose):
+        emergency_stop("Torch Orientation Violation (A3)")
+
+# -----------------------------------------------------------------------------
+# Main Program
+# -----------------------------------------------------------------------------
+
+# 1. Set Payload
+set_payload(payload_mass, payload_cog)
+
+# 2. Define Waypoints
+# Home Position (Joint space)
+q_home = [-1.571, -1.571, -1.571, -1.571, -1.571, 0.0]
+
+# Weld Path Waypoints (Pose space)
+# p[x, y, z, rx, ry, rz]
+p_approach = p[0.45, 0.0, 0.4, 0.0, 3.1415, 0.0]
+p_start    = p[0.45, -0.1, 0.2, 0.0, 3.1415, 0.0]
+p_mid      = p[0.45, 0.0, 0.2, 0.0, 3.1415, 0.0]
+p_end      = p[0.45, 0.1, 0.2, 0.0, 3.1415, 0.0]
+p_retract  = p[0.45, 0.1, 0.4, 0.0, 3.1415, 0.0]
+
+# 3. Motion Sequence
+
+# Move 1: move_joint - Home position, 300.0 mm/s
+# Note: 300 mm/s is allowed in hybrid mode (fenced/transition)
+safety_check(get_forward_kinematics(q_home))
+movej(q_home, a=max_joint_accel, v=0.3)
+
+# Move 2: move_linear - Approach above weld fixture, 250.0 mm/s (Collaborative)
+safety_check(p_approach)
+movel(p_approach, a=0.5, v=0.25)
+
+# Move 3: move_linear - Descend to weld start, 100.0 mm/s
+safety_check(p_start)
+movel(p_start, a=0.5, v=0.1)
+
+# Move 4: move_linear - Weld midpoint, 60.0 mm/s
+# A7: Weld arc sequence - Start Arc
+set_digital_out(0, True) # Weld ON
+safety_check(p_mid)
+movel(p_mid, a=0.5, v=0.06)
+
+# Move 5: move_linear - Weld end, 60.0 mm/s
+safety_check(p_end)
+movel(p_end, a=0.5, v=0.06)
+# A7: Weld arc sequence - End Arc
+set_digital_out(0, False) # Weld OFF
+
+# Move 6: move_linear - Retract from weld, 100.0 mm/s
+safety_check(p_retract)
+movel(p_retract, a=0.5, v=0.1)
+
+# Move 7: move_joint - Return to Home, 300.0 mm/s
+safety_check(get_forward_kinematics(q_home))
+movej(q_home, a=max_joint_accel, v=0.3)
+
+# End of Program

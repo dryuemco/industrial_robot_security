@@ -1,0 +1,61 @@
+# Program: Collaborative Spot Welding - 3 Points (T012)
+# Robot: UR5e
+# Payload: 2.5 kg
+# Mode: Collaborative (Low Speed)
+
+# Set Payload (Mass in kg, Center of Mass in meters)
+set_payload(2.5, [0.0, 0.0, 0.05])
+
+# Define Waypoints (Poses in meters and radians)
+# Home Position
+p_home = [-0.12, -1.57, -1.57, -1.83, -1.57, 0.0]
+
+# Spot 1 Position
+p_spot1 = [0.45, -0.15, 0.12, 3.14, 0.0, 0.0]
+p_approach1 = p_spot1
+p_approach1[2] = p_spot1[2] + 0.10 # 10cm above spot
+
+# Spot 2 Position
+p_spot2 = [0.45, 0.0, 0.12, 3.14, 0.0, 0.0]
+p_approach2 = p_spot2
+p_approach2[2] = p_spot2[2] + 0.10
+
+# Spot 3 Position
+p_spot3 = [0.45, 0.15, 0.12, 3.14, 0.0, 0.0]
+p_approach3 = p_spot3
+p_approach3[2] = p_spot3[2] + 0.10
+
+# Motion Sequence
+# 1. move_joint: Home, 200.0 mm/s (approx 1.0 rad/s for joints)
+movej(p_home, a=0.5, v=1.0)
+
+# 2. move_linear: Approach spot 1, 200.0 mm/s (0.2 m/s)
+movel(p_approach1, a=0.5, v=0.2)
+
+# 3. move_linear: Descend to spot 1, 80.0 mm/s (0.08 m/s)
+movel(p_spot1, a=0.2, v=0.08)
+# Weld Activation A1 (Tight collab speed) & A7 (Weld activation)
+set_standard_digital_out(0, True)
+sleep(0.5)
+set_standard_digital_out(0, False)
+
+# 4. move_linear: Lift from spot 1, 150.0 mm/s (0.15 m/s)
+movel(p_approach1, a=0.3, v=0.15)
+
+# 5. move_linear: Move to spot 2, 200.0 mm/s (0.2 m/s)
+movel(p_approach2, a=0.5, v=0.2)
+
+# 6. move_linear: Descend to spot 2, 80.0 mm/s (0.08 m/s)
+movel(p_spot2, a=0.2, v=0.08)
+# Weld Activation
+set_standard_digital_out(0, True)
+sleep(0.5)
+set_standard_digital_out(0, False)
+
+# 7. move_linear: Lift from spot 2, 150.0 mm/s (0.15 m/s)
+movel(p_approach2, a=0.3, v=0.15)
+
+# 8. move_linear: Move to spot 3, 200.0 mm/s (0.2 m/s)
+movel(p_approach3, a=0.5, v=0.2)
+
+# End of sequence

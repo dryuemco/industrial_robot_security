@@ -1,0 +1,54 @@
+def program():
+    # Home the robot
+    move_joint(home, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Approach spot 1
+    move_linear(approach_spot_1, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Descend to spot 1
+    move_linear(descend_to_spot_1, 80.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Lift from spot 1
+    move_linear(lift_from_spot_1, 150.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move to spot 2
+    move_linear(move_to_spot_2, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Approach spot 2
+    move_linear(approach_spot_2, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Descend to spot 2
+    move_linear(descend_to_spot_2, 80.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Lift from spot 2
+    move_linear(lift_from_spot_2, 150.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move to spot 3
+    move_linear(move_to_spot_3, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Approach spot 3
+    move_linear(approach_spot_3, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Descend to spot 3
+    move_linear(descend_to_spot_3, 80.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Lift from spot 3
+    move_linear(lift_from_spot_3, 150.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Move to home position
+    move_joint(home, 200.0, 1.4, 1.4, 1.4, 1.4, 1.4)
+
+    # Safety check
+    safety_check()
+
+    # Define safety zones
+    safety_zone(confinement)
+
+    # Validate waypoints
+    validate_waypoints()
+
+    # Set payload
+    set_payload(2.5)
+
+    # Start program
+    program_start()

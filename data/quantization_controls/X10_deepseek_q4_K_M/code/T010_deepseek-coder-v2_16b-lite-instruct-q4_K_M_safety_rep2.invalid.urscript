@@ -1,0 +1,34 @@
+# Define safety parameters
+set_tool_payload 1.0;
+set_speed 200.0;  # Default speed for all movements
+set_accel 1.4;    # Default acceleration for all movements
+
+# Define safety zones
+def SAFE_ZONE = [ [-0.6, -0.6, 0, -180, -180, -180], [0.6, 0.6, 1.8, 180, 180, 180] ];
+
+# Define waypoints
+waypoints = [
+    [2.0, -0.5, 0.5, 0.0, 1.57, 0.0],  # Home position
+    [2.1, -0.4, 0.6, 0.0, 1.57, 0.0],  # Above screw feeder
+    [2.2, -0.3, 0.7, 0.0, 1.57, 0.0],  # Above screw feeder
+    [2.3, -0.2, 0.8, 0.0, 1.57, 0.0],  # Above screw feeder
+    [2.4, -0.1, 0.9, 0.0, 1.57, 0.0],  # Above screw feeder
+    [2.5, 0.0, 1.0, 0.0, 1.57, 0.0],   # Pick screw
+    [2.6, 0.1, 1.1, 0.0, 1.57, 0.0],   # Lift from feeder
+    [2.7, 0.2, 1.2, 0.0, 1.57, 0.0],   # Above fastening point 1
+    [2.8, 0.3, 1.3, 0.0, 1.57, 0.0],   # Above fastening point 2
+    [2.9, 0.4, 1.4, 0.0, 1.57, 0.0],   # Above fastening point 3
+    [3.0, 0.5, 1.5, 0.0, 1.57, 0.0],   # Above fastening point 4
+];
+
+# Safety check and motion sequence
+safety_check();
+for i from 0 to 9 {
+    move_joints(waypoints[i], speed, acceleration);
+}
+
+# Define specific speeds and accelerations for each move
+def speed = [200.0, 200.0, 80.0, 180.0, 200.0, 200.0, 200.0, 200.0, 200.0, 200.0];
+def acceleration = [1.4, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4];
+
+# End of script

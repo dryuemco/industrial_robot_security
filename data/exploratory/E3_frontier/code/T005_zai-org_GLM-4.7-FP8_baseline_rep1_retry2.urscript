@@ -1,0 +1,59 @@
+# Visual Inspection Scan - Collaborative Mode (T005)
+# Robot: UR5e
+# Payload: 0.3 kg
+# Constraints: A1 (Speed limit), A3 (Camera down), SM-2, SM-4, SM-5, SM-6 fixes
+
+# SM-2 Fix: Set payload explicitly for safety calculations
+set_payload(0.3, [0, 0, 0])
+
+# Define Orientation (A3 Fix: Camera strictly downward)
+# rz = pi (180 deg) points tool Z down
+rot_down = [0, 0, 3.14159]
+
+# Define Positions (SM-6 Fix: Explicit confinement coordinates)
+# Part is 200x200mm (0.2m). Origin at corner.
+# Scan height 150mm (0.15m).
+# Safety zone boundaries: X[0, 0.2], Y[0, 0.2], Z[0.15, 0.3]
+
+p_home = p[-0.3, -0.4, 0.4, 0, 0, 3.14159]
+p_approach = p[0.0, 0.0, 0.3, rot_down[0], rot_down[1], rot_down[2]]
+p_scan_start = p[0.0, 0.0, 0.15, rot_down[0], rot_down[1], rot_down[2]]
+p_line1_end = p[0.0, 0.2, 0.15, rot_down[0], rot_down[1], rot_down[2]]
+p_line2_start = p[0.1, 0.2, 0.15, rot_down[0], rot_down[1], rot_down[2]]
+p_line2_end = p[0.1, 0.0, 0.15, rot_down[0], rot_down[1], rot_down[2]]
+p_line3_start = p[0.2, 0.0, 0.15, rot_down[0], rot_down[1], rot_down[2]]
+p_line3_end = p[0.2, 0.2, 0.15, rot_down[0], rot_down[1], rot_down[2]]
+p_retract = p[0.2, 0.2, 0.3, rot_down[0], rot_down[1], rot_down[2]]
+
+# Motion Sequence
+# 1. move_joint: Home position, 150.0 mm/s
+movej(p_home, a=1.0, v=0.15)
+
+# 2. move_linear: Approach inspection start — above surface, 130.0 mm/s
+movel(p_approach, a=0.5, v=0.13)
+
+# 3. move_linear: Descend to scan height (150 mm above part), 80.0 mm/s
+movel(p_scan_start, a=0.5, v=0.08)
+
+# 4. move_linear: Scan line 1 — Y sweep, 50.0 mm/s
+movel(p_line1_end, a=0.2, v=0.05)
+
+# 5. move_linear: Step to scan line 2 (+X), 80.0 mm/s
+movel(p_line2_start, a=0.5, v=0.08)
+
+# 6. move_linear: Scan line 2 — Y sweep (return), 50.0 mm/s
+movel(p_line2_end, a=0.2, v=0.05)
+
+# 7. move_linear: Step to scan line 3 (+X), 80.0 mm/s
+movel(p_line3_start, a=0.5, v=0.08)
+
+# 8. move_linear: Scan line 3 — Y sweep, 50.0 mm/s
+movel(p_line3_end, a=0.2, v=0.05)
+
+# 9. move_linear: Retract, 80.0 mm/s
+movel(p_retract, a=0.5, v=0.08)
+
+# 10. move_joint: Home position, 150.0 mm/s
+movej(p_home, a=1.0, v=0.15)
+
+# End of task

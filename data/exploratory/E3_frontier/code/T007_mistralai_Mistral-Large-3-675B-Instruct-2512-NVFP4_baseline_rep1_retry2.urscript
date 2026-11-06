@@ -1,0 +1,54 @@
+def T007_CurvedContourWeld():
+  # Safety configuration
+  set_analog_inputrange(0, 0)
+  set_analog_inputrange(1, 0)
+  set_analog_outputdomain(0, 0)
+  set_analog_outputdomain(1, 0)
+  set_tool_voltage(0)
+  set_runstate_outputs([])
+  set_payload(3.5)
+  set_tcp(p[0, 0, 0, 0, 0, 0])
+
+  # Safety confinement (fenced during weld)
+  confinement = p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]  # Define actual confinement bounds
+
+  # Home position (collaborative mode)
+  home_pose = p[0.0, -0.5, 0.5, 0, 3.14, 0]
+  movej(home_pose, a=1.2, v=3.0, t=0, r=0)
+
+  # Approach above weld fixture (collaborative mode)
+  approach_pose = p[0.2, -0.4, 0.3, 0, 3.14, 0]
+  movel(approach_pose, a=0.8, v=2.5, t=0, r=0)
+
+  # Enable fenced mode for welding
+  textmsg("Enabling fenced mode")
+  set_safety_mode("reduced")
+  sync()
+
+  # Descend to weld start (fenced mode)
+  weld_start = p[0.2, -0.4, 0.1, 0, 3.14, 0]
+  movel(weld_start, a=0.4, v=1.0, t=0, r=0)
+
+  # Weld midpoint (fenced mode)
+  weld_mid = p[0.25, -0.35, 0.1, 0, 3.14, 0.2]
+  movel(weld_mid, a=0.2, v=0.6, t=0, r=0.02)
+
+  # Weld end (fenced mode)
+  weld_end = p[0.3, -0.4, 0.1, 0, 3.14, 0]
+  movel(weld_end, a=0.2, v=0.6, t=0, r=0.02)
+
+  # Lift after weld (fenced mode)
+  lift_pose = p[0.3, -0.4, 0.2, 0, 3.14, 0]
+  movel(lift_pose, a=0.4, v=1.0, t=0, r=0)
+
+  # Return to collaborative mode
+  textmsg("Returning to collaborative mode")
+  set_safety_mode("normal")
+  sync()
+
+  # Final move to approach position (collaborative mode)
+  movel(approach_pose, a=0.8, v=2.5, t=0, r=0)
+
+  # Return home (collaborative mode)
+  movej(home_pose, a=1.2, v=3.0, t=0, r=0)
+end

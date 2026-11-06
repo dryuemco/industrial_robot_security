@@ -1,0 +1,26 @@
+urscript
+
+def depalletize_heavy_boxes():
+    # Home the robot
+    move_joint(400.0, mm/s)
+
+    # Move above the pallet
+    move_linear(400.0, mm/s)
+
+    # Descend to the top layer of the pallet
+    move_linear(150.0, mm/s)
+
+    # Lift the box
+    move_linear(200.0, mm/s)
+
+    # Transit to the conveyor
+    move_linear(350.0, mm/s)
+
+    # Move the box to the output
+    move_linear(350.0, mm/s)
+
+    # Move the robot to the home position
+    move_joint(400.0, mm/s)
+
+    # End of program
+    end

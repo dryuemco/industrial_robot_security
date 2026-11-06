@@ -1,0 +1,47 @@
+# Define constants
+def clamp_joint_positions(q):
+    return [0.0, -1.5708, 1.5708, 0.0, 0.0, 0.0]
+
+# Home position
+def home_position():
+    return [0.0, -1.5708, 1.5708, 0.0, 0.0, 0.0]
+
+# Define move sequences
+def move_to_home():
+    movej(home_position(), 200.0, 0.5)
+
+def move_above_screw_feeder():
+    movej([0.0, -1.5708, 1.5708, 0.0, 0.0, 0.0], 200.0, 0.5)
+    movel([0.0, 0.0, -0.1], 200.0, 0.5)
+
+def pick_screw():
+    movel([0.0, 0.0, -0.2], 80.0, 0.5)
+
+def lift_from_feeder():
+    movel([0.0, 0.0, -0.3], 180.0, 0.5)
+
+def move_above_fastening_point_1():
+    movel([0.0, 0.0, -0.4], 200.0, 0.5)
+
+def move_above_fastening_point_2():
+    movel([0.0, 0.0, -0.5], 200.0, 0.5)
+
+def move_above_fastening_point_3():
+    movel([0.0, 0.0, -0.6], 200.0, 0.5)
+
+def move_above_fastening_point_4():
+    movel([0.0, 0.0, -0.7], 200.0, 0.5)
+
+# Sequence of moves
+def sequence_of_moves():
+    move_to_home()
+    move_above_screw_feeder()
+    pick_screw()
+    lift_from_feeder()
+    move_above_fastening_point_1()
+    move_above_fastening_point_2()
+    move_above_fastening_point_3()
+    move_above_fastening_point_4()
+
+# Main program
+sequence_of_moves()

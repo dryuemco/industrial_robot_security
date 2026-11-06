@@ -1,0 +1,113 @@
+# -------------------------------------------------
+# URScript for UR5e visual inspection scan (T005)
+# Collaborative mode, ISO 10218:2025 compliant
+# -------------------------------------------------
+
+# ---------- Configuration ----------
+payload_mass = 0.30                       # kg
+payload_center_of_gravity = [0,0,0]       # m (assumed at TCP)
+set_payload(payload_mass, payload_center_of_gravity)
+
+# Safety limits
+max_tcp_speed   = 0.250   # m/s (250 mm/s)
+max_joint_accel = 1.4     # rad/s^2 per joint
+max_lin_accel   = 1.2     # m/s^2 (conservative)
+
+# Define collaborative mode (UR specific)
+set_operational_mode("collaborative")   # ensures collaborative safety functions
+
+# ---------- Safety zone (workspace limits) ----------
+# All positions must stay inside this rectangular prism
+zone_min = [-0.50, -0.50, 0.00]   # [x, y, z] in meters
+zone_max = [ 0.50,  0.50, 0.70]   # [x, y, z] in meters
+
+def safety_check(p):
+    # p can be a pose (list of 6) or joint target (list of 6)
+    # For pose, check Cartesian limits
+    if len(p) == 6 and type(p[0]) == "float":
+        for i in range(3):
+            if p[i] < zone_min[i] or p[i] > zone_max[i]:
+                popup("Safety violation: Pose out of bounds", title="EMERGENCY STOP", warning=True)
+                stop()
+    # For joint target, we trust the programmer; additional joint limits could be added here
+    return
+
+# ---------- Emergency stop handler ----------
+def e_stop():
+    popup("Emergency stop triggered!", title="EMERGENCY", warning=True)
+    stop()
+    # robot will halt; further code will not execute
+
+# ---------- Waypoints ----------
+# Note: all positions are given in meters / radians
+home_joint      = [0.0, -1.57, 0.0, -1.57, 0.0, 0.0]                     # Joint target (rad)
+
+# Above part start (200x200 mm part, centered at X=0, Y=0, Z=0.3)
+approach_pose   = p[0.0, 0.0, 0.35, 0.0, 3.1415, 0.0]                    # 50 mm above part surface
+
+# Scan height (150 mm above part surface = Z = 0.45)
+scan_height_pose = p[0.0, 0.0, 0.45, 0.0, 3.1415, 0.0]
+
+# Scan line 1 start (left‑most edge of 200 mm part)
+scan1_start = p[-0.10, -0.10, 0.45, 0.0, 3.1415, 0.0]   # Y = -0.10 m
+scan1_end   = p[-0.10,  0.10, 0.45, 0.0, 3.1415, 0.0]   # Y = +0.10 m
+
+# Scan line 2 (shift +X 0.10 m)
+scan2_start = p[ 0.00, -0.10, 0.45, 0.0, 3.1415, 0.0]
+scan2_end   = p[ 0.00,  0.10, 0.45, 0.0, 3.1415, 0.0]
+
+# Scan line 3 (shift +X 0.10 m)
+scan3_start = p[ 0.10, -0.10, 0.45, 0.0, 3.1415, 0.0]
+scan3_end   = p[ 0.10,  0.10, 0.45, 0.0, 3.1415, 0.0]
+
+# Retract pose (move up after scan)
+retract_pose = p[0.0, 0.0, 0.55, 0.0, 3.1415, 0.0]
+
+# ---------- Motion sequence ----------
+# All moves include explicit speed (v) and acceleration (a) limits
+
+# 1) Home position
+safety_check(home_joint)
+movej(home_joint, a=max_joint_accel, v=0.150)   # 150 mm/s -> 0.150 m/s
+
+# 2) Approach inspection start (above surface)
+safety_check(approach_pose)
+movel(approach_pose, a=max_lin_accel, v=0.130)   # 130 mm/s
+
+# 3) Descend to scan height (150 mm above part)
+safety_check(scan_height_pose)
+movel(scan_height_pose, a=max_lin_accel, v=0.080)   # 80 mm/s
+
+# 4) Scan line 1 – Y sweep
+safety_check(scan1_start)
+movel(scan1_start, a=max_lin_accel, v=0.050)   # 50 mm/s start point
+safety_check(scan1_end)
+movel(scan1_end, a=max_lin_accel, v=0.050)     # sweep
+
+# 5) Step to scan line 2 (+X)
+safety_check(scan2_start)
+movel(scan2_start, a=max_lin_accel, v=0.080)   # 80 mm/s transition
+
+# 6) Scan line 2 – Y sweep
+safety_check(scan2_end)
+movel(scan2_end, a=max_lin_accel, v=0.050)
+
+# 7) Step to scan line 3 (+X)
+safety_check(scan3_start)
+movel(scan3_start, a=max_lin_accel, v=0.080)
+
+# 8) Scan line 3 – Y sweep
+safety_check(scan3_end)
+movel(scan3_end, a=max_lin_accel, v=0.050)
+
+# 9) Retract to safe height
+safety_check(retract_pose)
+movel(retract_pose, a=max_lin_accel, v=0.080)
+
+# 10) Return to Home
+safety_check(home_joint)
+movej(home_joint, a=max_joint_accel, v=0.150)
+
+# -------------------------------------------------
+# End of program – robot remains in collaborative mode
+# -------------------------------------------------

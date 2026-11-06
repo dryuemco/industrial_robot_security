@@ -1,0 +1,49 @@
+def program():
+    # Home position
+    movej(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=200.0, v=200.0)
+
+    # Waypoint 1: Above pick station
+    movel(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=200.0, v=200.0)
+
+    # Waypoint 2: Descend to pick
+    movel(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=100.0, v=100.0)
+
+    # Waypoint 3: Lift above pick
+    movel(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=180.0, v=180.0)
+
+    # Waypoint 4: Obstacle avoidance waypoint (offset in -X)
+    movel(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=200.0, v=200.0)
+
+    # Waypoint 5: Above place station
+    movel(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=200.0, v=200.0)
+
+    # Waypoint 6: Descend to place
+    movel(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=100.0, v=100.0)
+
+    # Waypoint 7: Lift above place
+    movel(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=180.0, v=180.0)
+
+    # Waypoint 8: Obstacle avoidance waypoint (offset in -X)
+    movel(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=200.0, v=200.0)
+
+    # Waypoint 9: Home position
+    movej(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], a=200.0, v=200.0)
+
+    # Safety zones
+    safety_zone(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 0.05)
+    safety_zone(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 0.05)
+
+    # Collision monitor
+    collision_monitor(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 0.05)
+
+    # Speed guard
+    speed_guard(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 250.0)
+
+    # Dual work objects for pick and place stations
+    dual_work_objects(p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
+
+    # Baseline safe task
+    baseline_safe_task()
+
+    # End of program
+    end()

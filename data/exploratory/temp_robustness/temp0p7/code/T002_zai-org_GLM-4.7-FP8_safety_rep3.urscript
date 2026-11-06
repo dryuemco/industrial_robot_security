@@ -1,0 +1,127 @@
+# ==========================================
+# UR5e Linear Weld Path - Fenced Mode (T002)
+# ISO 10218:2025 Compliance
+# ==========================================
+
+# --- GLOBAL CONFIGURATION ---
+MAX_JOINT_ACCEL = 1.4          # rad/s^2
+MAX_LINEAR_ACCEL = 1.0         # m/s^2 (Safe limit for linear moves)
+PAYLOAD_MASS = 3.0             # kg
+PAYLOAD_COG = [0.0, 0.0, 0.0]  # Center of Gravity (x,y,z) in meters
+
+# --- SAFETY ZONE DEFINITIONS ---
+# Confined Zone (Workspace Limits - Box)
+ZONE_X_MIN = -0.8
+ZONE_X_MAX = 0.8
+ZONE_Y_MIN = -0.8
+ZONE_Y_MAX = 0.8
+ZONE_Z_MIN = 0.0
+ZONE_Z_MAX = 1.2
+
+# Exclusion Zone (Hazard/Obstacle - Sphere)
+EXCLUDE_CENTER = p[0.45, 0.2, 0.1, 0, 0, 0]
+EXCLUDE_RADIUS = 0.15
+
+# --- HELPER FUNCTIONS ---
+
+def euclidean_dist(p1, p2):
+    # Calculate Euclidean distance between two poses (ignoring rotation)
+    dx = p1[0] - p2[0]
+    dy = p1[1] - p2[1]
+    dz = p1[2] - p2[2]
+    return sqrt(dx*dx + dy*dy + dz*dz)
+
+def validate_waypoint(p_target):
+    # Check against Confined Zone
+    if (p_target[0] < ZONE_X_MIN or p_target[0] > ZONE_X_MAX or
+        p_target[1] < ZONE_Y_MIN or p_target[1] > ZONE_Y_MAX or
+        p_target[2] < ZONE_Z_MIN or p_target[2] > ZONE_Z_MAX):
+        return False, "Target outside confined workspace"
+    
+    # Check against Exclusion Zone
+    dist = euclidean_dist(p_target, EXCLUDE_CENTER)
+    if dist < EXCLUDE_RADIUS:
+        return False, "Target inside exclusion zone"
+        
+    return True, "OK"
+
+def safety_check():
+    # Monitor current state
+    actual_pose = get_actual_tcp_pose()
+    is_safe, msg = validate_waypoint(actual_pose)
+    
+    if not is_safe:
+        emergency_stop_handler(msg)
+    
+    return True
+
+def emergency_stop_handler(error_msg):
+    # Immediate Halt
+    stopj(2.0)
+    set_digital_out(0, False) # Ensure torch is off
+    popup("SAFETY STOP: " + error_msg, title="EMERGENCY", error=True)
+    halt
+
+# --- MAIN PROGRAM ---
+def main():
+    # 1. Setup Payload
+    set_payload(PAYLOAD_MASS, PAYLOAD_COG)
+    
+    # Define Waypoints
+    # Home: Safe upright position
+    q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+    
+    # Weld Path (300mm length along X axis)
+    # Orientation: Flange Z-axis pointing down (A3 Orientation Cone)
+    # Start Position
+    p_weld_start = p[0.3, 0.2, 0.2, 3.14159, 0, 0]
+    # End Position (300mm displacement)
+    p_weld_end   = p[0.6, 0.2, 0.2, 3.14159, 0, 0]
+    
+    # Approach/Retract (50mm offset in Z)
+    p_approach   = p[0.3, 0.2, 0.25, 3.14159, 0, 0]
+    p_retract    = p[0.6, 0.2, 0.25, 3.14159, 0, 0]
+
+    # Verify all waypoints before execution
+    waypoints = [p_weld_start, p_weld_end, p_approach, p_retract]
+    for wp in waypoints:
+        valid, msg = validate_waypoint(wp)
+        if not valid:
+            popup("Waypoint Validation Failed: " + msg, error=True)
+            halt
+
+    # --- MOTION SEQUENCE ---
+    
+    # Move 1: move_joint - Go to home position (300 mm/s equivalent)
+    # Using conservative joint speed for safety
+    safety_check()
+    movej(q_home, a=MAX_JOINT_ACCEL, v=0.5, r=0)
+
+    # Move 2: move_linear - Approach above weld start (250.0 mm/s)
+    safety_check()
+    movel(p_approach, a=MAX_LINEAR_ACCEL, v=0.25, r=0)
+
+    # Move 3: move_linear - Descend to weld start position (100.0 mm/s)
+    safety_check()
+    movel(p_weld_start, a=MAX_LINEAR_ACCEL, v=0.10, r=0)
+
+    # Move 4: move_linear - Weld seam (300mm path, 50.0 mm/s)
+    # A7: Welding arc activation
+    safety_check()
+    set_digital_out(0, True)  # Torch ON
+    movel(p_weld_end, a=MAX_LINEAR_ACCEL, v=0.05, r=0)
+    set_digital_out(0, False) # Torch OFF
+
+    # Move 5: move_linear - Retract above weld end (200.0 mm/s)
+    safety_check()
+    movel(p_retract, a=MAX_LINEAR_ACCEL, v=0.20, r=0)
+
+    # Move 6: move_joint - Return to home (Safe completion)
+    safety_check()
+    movej(q_home, a=MAX_JOINT_ACCEL, v=0.5, r=0)
+    
+    # End of Task
+    textmsg("Task T002 Completed Successfully")
+
+# Execute Main
+main()

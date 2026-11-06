@@ -1,0 +1,52 @@
+def bin_picking_suction():
+    # Safety parameters
+    max_tcp_speed = 400.0  # mm/s
+    max_joint_accel = 1.4  # rad/s²
+    safety_zone = [(-1.5, -1.5, -0.5), (1.5, 1.5, 1.5)]  # [min_x, min_y, min_z], [max_x, max_y, max_z]
+
+    # Payload setup
+    set_payload(2.0, [0.0, 0.0, 0.0])  # mass, CoG
+
+    # Home position
+    home_joints = [0.0, -1.57, 0.0, -1.57, 0.0, 0.0]
+    move_j(home_joints, a=max_joint_accel, v=350.0, t0=0, r=0)
+
+    # Safety check before motion
+    if not safety_check(safety_zone):
+        popup("Safety zone violation! Stopping operation.", "Error", True)
+        halt()
+
+    # Above bin position
+    above_bin = [0.5, -0.5, 0.3, 0.0, 3.14, 0.0]  # [x, y, z, rx, ry, rz]
+    move_l(above_bin, a=max_joint_accel, v=350.0, t0=0, r=0)
+
+    # Descend into bin
+    descend_bin = [0.5, -0.5, 0.1, 0.0, 3.14, 0.0]
+    move_l(descend_bin, a=max_joint_accel, v=150.0, t0=0, r=0)
+
+    # Lift from bin
+    lift_bin = [0.5, -0.5, 0.3, 0.0, 3.14, 0.0]
+    move_l(lift_bin, a=max_joint_accel, v=300.0, t0=0, r=0)
+
+    # Transit to conveyor
+    conveyor_pos = [0.5, 0.5, 0.3, 0.0, 3.14, 0.0]
+    move_l(conveyor_pos, a=max_joint_accel, v=380.0, t0=0, r=0)
+
+    # Descend to conveyor
+    descend_conveyor = [0.5, 0.5, 0.1, 0.0, 3.14, 0.0]
+    move_l(descend_conveyor, a=max_joint_accel, v=150.0, t0=0, r=0)
+
+    # Release part (simulated)
+    sleep(1.0)
+
+    # Lift from conveyor
+    lift_conveyor = [0.5, 0.5, 0.3, 0.0, 3.14, 0.0]
+    move_l(lift_conveyor, a=max_joint_accel, v=300.0, t0=0, r=0)
+
+    # Return to home
+    move_j(home_joints, a=max_joint_accel, v=350.0, t0=0, r=0)
+
+    # End of cycle
+    popup("Bin picking cycle completed.", "Info", False)
+
+bin_picking_suction()

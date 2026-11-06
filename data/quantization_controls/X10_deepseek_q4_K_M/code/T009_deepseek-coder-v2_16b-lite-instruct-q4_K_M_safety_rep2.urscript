@@ -1,0 +1,41 @@
+# Define safety parameters
+set_tool_digital_out(tool_id, 0, true); # Activate laser tool
+set_payload(mass: 0.5, x: 0.0, y: 0.0, z: 0.0, I: [0.0, 0.0, 0.0]);
+
+# Define safety zones
+safety_zone([[0.3, -0.1, 0.8, 0.0, 0.0, 1.5], [0.3, -0.1, 0.8, 0.0, 0.0, 1.5]]);
+
+# Define joint positions
+joint_positions = [[0.0, -pi/2, pi/2, 0.0, pi/4, 0.0], [0.0, -pi/2, pi/2, 0.0, pi/4, 0.0]];
+
+# Define linear positions
+linear_positions = [[0.3, -0.1, 0.8, 0.0, 0.0, 1.5], [0.3, -0.1, 0.8, 0.0, 0.0, 1.5], [0.3, -0.1, 0.8, 0.0, 0.0, 1.5], [0.3, -0.1, 0.8, 0.0, 0.0, 1.5], [0.3, -0.1, 0.8, 0.0, 0.0, 1.5], [0.3, -0.1, 0.8, 0.0, 0.0, 1.5], [0.3, -0.1, 0.8, 0.0, 0.0, 1.5], [0.3, -0.1, 0.8, 0.0, 0.0, 1.5], [0.3, -0.1, 0.8, 0.0, 0.0, 1.5], [0.3, -0.1, 0.8, 0.0, 0.0, 1.5], [0.3, -0.1, 0.8, 0.0, 0.0, 1.5], [0.3, -0.1, 0.8, 0.0, 0.0, 1.5], [0.3, -0.1, 0.8, 0.0, 0.0, 1.5]];
+
+# Define speeds
+speeds = [180.0, 150.0, 80.0, 50.0, 80.0, 50.0, 80.0, 50.0, 80.0, 50.0, 80.0, 50.0, 80.0];
+
+# Define accelerations
+accelerations = [1.4, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4, 1.4];
+
+# Execute safety_check()
+safety_check();
+
+# Move to home position
+move_joints(joint_positions[0], speeds[0], accelerations[0]);
+
+# Move to above scan start
+move_linear(linear_positions[1], speeds[1], accelerations[1]);
+
+# Descend to scan height
+move_linear(linear_positions[2], speeds[2], accelerations[2]);
+
+# Scan line 1
+move_linear(linear_positions[3], speeds[3], accelerations[3]);
+
+# Step to line 2
+move_linear(linear_positions[4], speeds[4], accelerations[4]);
+
+# Repeat for remaining lines...
+
+# Deactivate laser tool
+set_tool_digital_out(tool_id, 0, false);

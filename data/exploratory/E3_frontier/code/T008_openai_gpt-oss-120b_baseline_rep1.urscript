@@ -1,0 +1,67 @@
+# UR5e Heavy Depalletizing - Fenced Mode (T008)
+
+# ---- Safety and Payload Configuration ----
+set_payload(5.0, [0,0,0.1])          # 5 kg payload, CoM 100mm along Z
+set_tcp_speed(450)                  # Max TCP speed 450 mm/s
+set_fence_mode(True)                # Enable fenced (confined) mode
+
+# ---- Define Positions (in meters) ----
+# Home position (joint configuration)
+p_home = [-1.57, -1.57, -1.57, -1.57, 1.57, 0]
+
+# Above pallet (approach point)
+p_above_pallet = p[0.5, -0.3, 0.5, 0, 3.14, 0]
+
+# Top layer of pallet (descend point)
+p_top_layer = p[0.5, -0.3, 0.2, 0, 3.14, 0]
+
+# Lift box (after grasp)
+p_lift_box = p[0.5, -0.3, 0.5, 0, 3.14, 0]
+
+# Transit to conveyor (mid‑point)
+p_conveyor_mid = p[0.2, 0.4, 0.5, 0, 3.14, 0]
+
+# Place box on conveyor (release point)
+p_conveyor_place = p[0.2, 0.4, 0.2, 0, 3.14, 0]
+
+# Return to above pallet for next box
+p_return = p[0.5, -0.3, 0.5, 0, 3.14, 0]
+
+# Idle / safe position after task
+p_idle = [-1.57, -1.57, -1.57, -1.57, 1.57, 0]
+
+# ---- Motion Parameters ----
+a_joint = 1.2        # rad/s^2
+a_linear = 1.2       # m/s^2
+
+# ---- Main Program ----
+def main():
+    # 1. Move to Home
+    movej(p_home, a=a_joint, v=400/1000, t=0, r=0)
+
+    # 2. Move above pallet
+    movel(p_above_pallet, a=a_linear, v=400/1000, t=0, r=0)
+
+    # 3. Descend to top layer
+    movel(p_top_layer, a=a_linear, v=150/1000, t=0, r=0)
+
+    # 4. Lift box
+    movel(p_lift_box, a=a_linear, v=200/1000, t=0, r=0)
+
+    # 5. Transit to conveyor
+    movel(p_conveyor_mid, a=a_linear, v=350/1000, t=0, r=0)
+
+    # 6. Place box on conveyor
+    movel(p_conveyor_place, a=a_linear, v=200/1000, t=0, r=0)
+
+    # 7. Return to above pallet
+    movel(p_return, a=a_linear, v=350/1000, t=0, r=0)
+
+    # 8. Move to Idle / Safe position
+    movej(p_idle, a=a_joint, v=400/1000, t=0, r=0)
+
+    # End of task – keep robot in safe state
+    stopj(2)   # optional: stop motion smoothly
+
+# Execute
+main()

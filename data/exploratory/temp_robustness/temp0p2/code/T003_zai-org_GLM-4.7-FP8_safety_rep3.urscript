@@ -1,0 +1,147 @@
+# URScript for UR5e EUR-pallet 2x2 layer Task (T003)
+# Safety Compliance: ISO 10218:2025
+# Mode: Hybrid (Fenced Transit, Collaborative Pick)
+# Payload: 4.5 kg
+
+# ==========================================
+# Configuration & Constants
+# ==========================================
+MAX_JOINT_ACCEL = 1.4          # rad/s^2 (Safety Limit)
+MAX_TCP_SPEED_COLLAB = 0.25    # m/s (250 mm/s)
+MAX_TCP_SPEED_TRANSIT = 0.28   # m/s (280 mm/s - Fenced Zone)
+PAYLOAD_MASS = 4.5             # kg
+PAYLOAD_COG = [0.0, 0.0, 0.05] # Center of Gravity (m)
+
+# Safety Zone Boundaries (Approximate for UR5e workspace)
+# Zone 1: Conveyor (Collaborative) - x < 0.4, y < -0.2
+# Zone 2: Pallet (Fenced) - x > 0.4, y > -0.2
+# Safe Transit Height: z > 0.3
+SAFE_HEIGHT = 0.3
+
+# ==========================================
+# Safety Functions
+# ==========================================
+
+def emergency_stop_handler():
+    popup("EMERGENCY STOP TRIGGERED: Safety Violation Detected", warning=False, error=True)
+    stopj(1.0)
+    halt
+end
+
+def validate_waypoint(pose):
+    # Check workspace boundaries (Basic Cube Check)
+    # X: -0.8 to 0.8, Y: -0.8 to 0.8, Z: 0.0 to 1.2
+    if pose[0] < -0.8 or pose[0] > 0.8 or pose[1] < -0.8 or pose[1] > 0.8 or pose[2] < 0.0 or pose[2] > 1.2:
+        popup("Waypoint Validation Failed: Out of Workspace", error=True)
+        emergency_stop_handler()
+    end
+end
+
+def safety_check():
+    current_pose = get_actual_tcp_pose()
+    x = current_pose[0]
+    y = current_pose[1]
+    z = current_pose[2]
+    
+    # Check Zone Confinement
+    # Allow if in Safe Transit Height
+    if z > SAFE_HEIGHT:
+        return True
+    end
+    
+    # Allow if in Conveyor Zone (Collaborative)
+    if x < 0.4 and y < -0.2:
+        return True
+    end
+    
+    # Allow if in Pallet Zone (Fenced)
+    if x > 0.4 and y > -0.2:
+        return True
+    end
+    
+    # Violation
+    emergency_stop_handler()
+    return False
+end
+
+# ==========================================
+# Main Program
+# ==========================================
+
+# 1. Setup Payload
+set_payload(PAYLOAD_MASS, PAYLOAD_COG)
+
+# 2. Define Waypoints
+p_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Conveyor Area (Collaborative)
+p_conv_approach = p[0.3, -0.5, 0.3, 0, 3.14, 0]
+p_conv_pick     = p[0.3, -0.5, 0.1, 0, 3.14, 0]
+p_conv_lift     = p[0.3, -0.5, 0.3, 0, 3.14, 0]
+
+# Pallet Area (Fenced) - Target (0,0) on grid
+p_pallet_transit = p[0.5, 0.0, 0.3, 0, 3.14, 0] # Transit point
+p_pallet_approach = p[0.6, 0.1, 0.3, 0, 3.14, 0] # Above slot
+p_pallet_place    = p[0.6, 0.1, 0.1, 0, 3.14, 0] # In slot
+p_pallet_lift     = p[0.6, 0.1, 0.3, 0, 3.14, 0] # Retreat
+
+# 3. Execute Motion Sequence
+
+# Move 1: Home position (Joint move)
+# Speed: 250 mm/s equivalent (approx 1.0 rad/s for joints), Accel: 1.4 rad/s^2
+validate_waypoint(p_home)
+safety_check()
+movej(p_home, a=MAX_JOINT_ACCEL, v=1.0)
+
+# Move 2: Approach conveyor pick (Linear)
+# Speed: 250 mm/s, Accel: 1.4 rad/s^2
+validate_waypoint(p_conv_approach)
+safety_check()
+movel(p_conv_approach, a=MAX_JOINT_ACCEL, v=MAX_TCP_SPEED_COLLAB)
+
+# Move 3: Descend to pick (Linear)
+# Speed: 100 mm/s, Accel: 1.4 rad/s^2
+validate_waypoint(p_conv_pick)
+safety_check()
+movel(p_conv_pick, a=MAX_JOINT_ACCEL, v=0.1)
+
+# --- Gripper Action (Simulated) ---
+# set_digital_out(0, True) 
+# sleep(1.0)
+
+# Move 4: Lift from conveyor (Linear)
+# Speed: 200 mm/s, Accel: 1.4 rad/s^2
+validate_waypoint(p_conv_lift)
+safety_check()
+movel(p_conv_lift, a=MAX_JOINT_ACCEL, v=0.2)
+
+# Move 5: Transit to pallet position (Linear)
+# Speed: 280 mm/s (Fenced Mode), Accel: 1.4 rad/s^2
+validate_waypoint(p_pallet_transit)
+safety_check()
+movel(p_pallet_transit, a=MAX_JOINT_ACCEL, v=MAX_TCP_SPEED_TRANSIT)
+
+# Move 6: Approach Pallet Slot (Linear)
+# Speed: 250 mm/s, Accel: 1.4 rad/s^2
+validate_waypoint(p_pallet_approach)
+safety_check()
+movel(p_pallet_approach, a=MAX_JOINT_ACCEL, v=MAX_TCP_SPEED_COLLAB)
+
+# Move 7: Descend to Place (Linear)
+# Speed: 100 mm/s, Accel: 1.4 rad/s^2
+validate_waypoint(p_pallet_place)
+safety_check()
+movel(p_pallet_place, a=MAX_JOINT_ACCEL, v=0.1)
+
+# --- Gripper Action (Simulated) ---
+# set_digital_out(0, False)
+# sleep(1.0)
+
+# Move 8: Lift from Pallet (Linear)
+# Speed: 200 mm/s, Accel: 1.4 rad/s^2
+validate_waypoint(p_pallet_lift)
+safety_check()
+movel(p_pallet_lift, a=MAX_JOINT_ACCEL, v=0.2)
+
+# End of Task
+popup("Task T003 Completed Successfully")

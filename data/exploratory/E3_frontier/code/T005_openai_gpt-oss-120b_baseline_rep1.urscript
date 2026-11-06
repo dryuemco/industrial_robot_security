@@ -1,0 +1,71 @@
+# URScript for visual inspection scan (collaborative mode)
+
+# ---- Configuration ----
+set_payload(0.3, [0,0,0.05])   # payload 0.3 kg, CoM 5 cm along Z of TCP
+set_tcp(p[0,0,0.1,0,0,0])      # optional TCP offset if needed
+set_robot_mode(2)             # collaborative mode (if supported)
+
+# ---- Speed limits (m/s) ----
+# Max joint speed: 0.15 m/s (150 mm/s)
+# Max linear speed: 0.15 m/s (150 mm/s)
+
+# ---- Poses (meters, radians) ----
+# Home joint configuration
+home_joints = [-1.57, -1.57, -1.57, -1.57, 1.57, 0]
+
+# Above part, 300 mm over surface, camera pointing straight down
+pose_approach = p[0.0, 0.0, 0.30, 0, 3.14159, 0]
+
+# Scan start height: 150 mm above part surface
+pose_scan_start = p[0.0, -0.10, 0.15, 0, 3.14159, 0]
+
+# End of line 1 (Y sweep)
+pose_line1_end = p[0.0, 0.10, 0.15, 0, 3.14159, 0]
+
+# Step to line 2 (+X 100 mm)
+pose_step_line2 = p[0.10, -0.10, 0.15, 0, 3.14159, 0]
+
+# End of line 2
+pose_line2_end = p[0.10, 0.10, 0.15, 0, 3.14159, 0]
+
+# Step to line 3 (+X another 100 mm)
+pose_step_line3 = p[0.20, -0.10, 0.15, 0, 3.14159, 0]
+
+# End of line 3
+pose_line3_end = p[0.20, 0.10, 0.15, 0, 3.14159, 0]
+
+# Retract to safe height above part
+pose_retract = p[0.20, 0.10, 0.30, 0, 3.14159, 0]
+
+# ---- Motion sequence (10 moves) ----
+# 1. Move to home joint position (150 mm/s)
+movej(home_joints, a=1.2, v=0.15)
+
+# 2. Approach inspection start (130 mm/s)
+movel(pose_approach, a=1.2, v=0.13)
+
+# 3. Descend to scan height (80 mm/s)
+movel(pose_scan_start, a=1.2, v=0.08)
+
+# 4. Scan line 1 – Y sweep (50 mm/s)
+movel(pose_line1_end, a=1.2, v=0.05)
+
+# 5. Step to scan line 2 (+X) (80 mm/s)
+movel(pose_step_line2, a=1.2, v=0.08)
+
+# 6. Scan line 2 – Y sweep (50 mm/s)
+movel(pose_line2_end, a=1.2, v=0.05)
+
+# 7. Step to scan line 3 (+X) (80 mm/s)
+movel(pose_step_line3, a=1.2, v=0.08)
+
+# 8. Scan line 3 – Y sweep (50 mm/s)
+movel(pose_line3_end, a=1.2, v=0.05)
+
+# 9. Retract to safe height (130 mm/s)
+movel(pose_retract, a=1.2, v=0.13)
+
+# 10. Return to home joint position (150 mm/s)
+movej(home_joints, a=1.2, v=0.15)
+
+# ---- End of program ----

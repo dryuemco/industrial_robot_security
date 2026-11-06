@@ -1,0 +1,62 @@
+def dual_zone_pick_place():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    set_payload(1.2, [0,0,0])          # payload 1.2 kg, CoM at TCP
+    set_tcp_speed(0.3)                # global TCP speed limit 300 mm/s (0.3 m/s)
+
+    # Safety zones (place‑holder definitions)
+    # Confinement around storage area
+    set_confinement_zone(p[0.6, -0.2, 0.2, 0, 0, 0], [0.5, 0.5, 0.5])
+    # Exclusion around operator hand‑off area
+    set_exclusion_zone(p[0.0, 0.6, 0.2, 0, 0, 0], [0.5, 0.5, 0.5])
+
+    # -------------------------------------------------
+    # Switch to Hybrid mode for coordinated linear moves
+    # -------------------------------------------------
+    set_robot_mode(3)                 # 3 = hybrid mode
+    sleep(0.2)
+
+    # -------------------------------------------------
+    # Pose definitions (base frame)
+    # -------------------------------------------------
+    home           = p[0.0, -0.4, 0.5, 0, 3.14, 0]
+    above_storage  = p[0.6, -0.2, 0.35, 0, 3.14, 0]
+    pick_pose      = p[0.6, -0.2, 0.15, 0, 3.14, 0]
+    lift_pose      = p[0.6, -0.2, 0.35, 0, 3.14, 0]
+    above_handoff  = p[0.0, 0.6, 0.35, 0, 3.14, 0]
+    handoff_pose   = p[0.0, 0.6, 0.15, 0, 3.14, 0]
+
+    # -------------------------------------------------
+    # Motion sequence (8 moves)
+    # -------------------------------------------------
+    # 1) Move to Home (joint space)
+    movej(home, a=1.4, v=0.5)          # joint accel 1.4 rad/s², speed 50 % of max
+
+    # 2) Linear move above storage bin
+    movel(above_storage, a=1.2, v=0.28)   # 280 mm/s
+
+    # 3) Descend to pick
+    movel(pick_pose, a=1.2, v=0.12)       # 120 mm/s
+
+    # 4) Close gripper (digital output placeholder)
+    set_digital_out(0, True)             # activate gripper
+
+    # 5) Lift from bin
+    movel(lift_pose, a=1.2, v=0.20)       # 200 mm/s
+
+    # 6) Transit to hand‑off zone
+    movel(above_handoff, a=1.2, v=0.25)   # 250 mm/s
+
+    # 7) Descend to hand‑off position
+    movel(handoff_pose, a=1.2, v=0.15)    # 150 mm/s (within allowed 300 mm/s)
+
+    # 8) Release object and return home in one joint move
+    set_digital_out(0, False)            # open gripper
+    movej(home, a=1.4, v=0.5)             # back to home
+
+    # -------------------------------------------------
+    # Return to normal automatic mode
+    # -------------------------------------------------
+    set_robot_mode(1)                     # 1 = automatic mode
+end

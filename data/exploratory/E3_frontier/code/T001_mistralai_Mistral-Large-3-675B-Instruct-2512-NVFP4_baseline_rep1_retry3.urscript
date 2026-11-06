@@ -1,0 +1,57 @@
+def T001_pick_place():
+  # Safety configuration
+  set_payload(0.5)
+  set_tcp(p[0,0,0,0,0,0])
+  set_safety_mode("reduced")
+  set_speed(250.0)
+
+  # Home position (joint angles in radians)
+  home_j = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+  # Pick approach position (pose)
+  pick_approach = p[0.3, 0.2, 0.2, 0, 3.14, 0]
+
+  # Pick position (pose)
+  pick_pose = p[0.3, 0.2, 0.1, 0, 3.14, 0]
+
+  # Place approach position (pose)
+  place_approach = p[0.3, -0.2, 0.2, 0, 3.14, 0]
+
+  # Place position (pose)
+  place_pose = p[0.3, -0.2, 0.1, 0, 3.14, 0]
+
+  # Motion sequence
+  movej(home_j, a=1.2, v=1.047)  # 200 mm/s equivalent joint speed
+
+  # Approach pick
+  movel(pick_approach, a=0.5, v=0.2)  # 200 mm/s
+
+  # Descend to pick
+  movel(pick_pose, a=0.3, v=0.1)  # 100 mm/s
+
+  # Gripper close (simulated)
+  textmsg("Gripper: Close")
+  sleep(0.5)
+
+  # Lift from pick
+  movel(pick_approach, a=0.4, v=0.15)  # 150 mm/s
+
+  # Transit to place approach
+  movel(place_approach, a=0.5, v=0.2)  # 200 mm/s
+
+  # Descend to place
+  movel(place_pose, a=0.3, v=0.1)  # 100 mm/s
+
+  # Gripper open (simulated)
+  textmsg("Gripper: Open")
+  sleep(0.5)
+
+  # Lift from place
+  movel(place_approach, a=0.4, v=0.15)  # 150 mm/s
+
+  # Return home
+  movej(home_j, a=1.2, v=1.047)  # 200 mm/s equivalent joint speed
+
+  # Safety reset
+  set_safety_mode("normal")
+end

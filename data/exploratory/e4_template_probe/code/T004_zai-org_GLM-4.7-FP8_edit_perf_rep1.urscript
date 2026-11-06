@@ -1,0 +1,67 @@
+# Task: T004 — Multi-waypoint SSM pick-place with obstacle avoidance (Optimized)
+# Optimizations: Maximized TCP speed to limit (0.25 m/s), increased accelerations,
+# increased blend radii for smoother transitions, reduced settle times.
+# Operating mode: collaborative | Max TCP speed: 0.250 m/s
+# Robot: ur5e
+
+def task_T004():
+  # [0] Verify E-Stop clear
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+  
+  # [1] Home position
+  # Increased joint velocity for faster large movements
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=1.2000)
+  
+  # [2] WP1 — Above pick station
+  # Max TCP speed, increased acceleration, increased blend radius
+  movel(p[0.400000, -0.250000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.2500, r=0.0500)
+  
+  # [3] WP2 — Descend to pick
+  # Precision move: kept slow, no blend
+  movel(p[0.400000, -0.250000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.1000)
+  
+  # [4] Gripper CLOSE
+  set_digital_out(0, True)
+  
+  # [5] Grip settle
+  # Reduced sleep time for faster cycle
+  sleep(0.1000)
+  
+  # [6] WP3 — Lift above pick
+  # Max TCP speed, increased acceleration, increased blend radius
+  movel(p[0.400000, -0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.2500, r=0.0500)
+  
+  # [7] WP4 — Obstacle avoidance waypoint (offset in -X)
+  # Max TCP speed, increased acceleration, increased blend radius
+  movel(p[0.250000, 0.000000, 0.400000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.2500, r=0.0500)
+  
+  # [8] WP5 — Above place station
+  # Max TCP speed, increased acceleration, moderate blend radius
+  movel(p[0.400000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.2500, r=0.0200)
+  
+  # [9] WP6 — Descend to place
+  # Precision move: kept slow, no blend
+  movel(p[0.400000, 0.250000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.1000)
+  
+  # [10] Gripper OPEN
+  set_digital_out(0, False)
+  
+  # [11] Release settle
+  # Reduced sleep time for faster cycle
+  sleep(0.1000)
+  
+  # [12] WP7 — Retract above place
+  # Max TCP speed, increased acceleration
+  movel(p[0.400000, 0.250000, 0.400000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.2500, r=0.0100)
+  
+  # [13] Return to home
+  # Increased joint velocity for faster return
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=1.2000)
+  
+end
+
+# Entry point
+task_T004()

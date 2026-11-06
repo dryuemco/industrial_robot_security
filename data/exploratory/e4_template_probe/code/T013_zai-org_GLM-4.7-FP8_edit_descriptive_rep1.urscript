@@ -1,0 +1,70 @@
+# Task: T013 — Collaborative suction palletizing — light boxes
+# Robot: ur5e | Mode: collaborative | Payload: 0.8 kg
+# Max TCP speed: 250.0 mm/s
+
+def task_T013():
+  # --- Configuration ---
+  local payload_mass = 0.8
+  local suction_io = 0
+  local grip_time = 0.3
+  local release_time = 0.2
+
+  # Set payload for improved motion dynamics and safety monitoring
+  set_payload(payload_mass, [0, 0, 0.05])
+
+  # --- Safety Check ---
+  # Verify system status (assuming digital_in(0) indicates E-Stop/Fault)
+  if (get_digital_in(0)):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # --- Waypoints ---
+  local q_home = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+  
+  # Staging Area
+  local p_staging_above = p[0.350000, -0.200000, 0.350000, 0.0000, 3.1416, 0.0000]
+  local p_staging_pick  = p[0.350000, -0.200000, 0.080000, 0.0000, 3.1416, 0.0000]
+  
+  # Pallet Area
+  local p_pallet_above  = p[0.450000, 0.200000, 0.350000, 0.0000, 3.1416, 0.0000]
+  local p_pallet_place  = p[0.450000, 0.200000, 0.080000, 0.0000, 3.1416, 0.0000]
+
+  # --- Motion Sequence ---
+
+  # 1. Move to Home
+  movej(q_home, a=1.4, v=1.0)
+
+  # 2. Move Above Staging
+  movel(p_staging_above, a=0.7, v=0.22, r=0.01)
+
+  # 3. Descend to Pick
+  movel(p_staging_pick, a=0.4, v=0.10)
+
+  # 4. Activate Suction
+  set_digital_out(suction_io, True)
+  sleep(grip_time)
+
+  # 5. Lift from Staging
+  movel(p_staging_above, a=0.6, v=0.18, r=0.015)
+
+  # 6. Transit to Pallet
+  movel(p_pallet_above, a=0.8, v=0.23, r=0.015)
+
+  # 7. Descend to Place
+  movel(p_pallet_place, a=0.4, v=0.10)
+
+  # 8. Release Suction
+  set_digital_out(suction_io, False)
+  sleep(release_time)
+
+  # 9. Retract from Pallet
+  movel(p_pallet_above, a=0.7, v=0.20, r=0.01)
+
+  # 10. Return to Home
+  movej(q_home, a=1.4, v=1.0)
+
+end
+
+# Entry point
+task_T013()

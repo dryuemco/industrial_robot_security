@@ -1,0 +1,91 @@
+# Task: T002 — Linear weld path — fenced mode
+# Robot: ur5e | Payload: 3.0 kg | Max TCP speed: 500.0 mm/s
+# Safety: Fenced mode with confinement and exclusion zones
+# Weld sequence: Linear seam (300 mm) with orientation control
+
+def task_T002():
+  # Safety checks
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True, title="SAFETY ALERT")
+    halt
+  end
+
+  # Configure payload and tool center point
+  set_payload(3.0, [0, 0, 0.1])
+  set_tcp(p[0, 0, 0.15, 0, 0, 0])
+
+  # [1] Go to home position (joint move)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.7500, r=0.0)
+
+  # [2] Approach above weld start (linear move)
+  movel(p[0.450000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.2500, r=0.0100)
+
+  # [3] Descend to weld start position (linear move)
+  movel(p[0.450000, 0.000000, 0.200000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.1000, r=0.0010)
+
+  # Welding preparation
+  set_digital_out(1, True)  # Gas pre-flow ON
+  sleep(0.500)              # Gas stabilization delay
+
+  # [4] Arc ON — welding start
+  set_digital_out(0, True)   # Arc enable
+  set_analog_out(0, 0.400)   # Current (120A normalized)
+  set_analog_out(1, 0.333)   # Wire feed (5.0m/min normalized)
+  sleep(0.1)                 # Arc stabilization delay
+
+  # [5] Weld seam — 300mm linear path
+  movel(p[0.450000, 0.300000, 0.200000, 0.0000, 3.1416, 0.0000], a=0.2000, v=0.0500)
+
+  # [6] Arc OFF — welding end
+  set_digital_out(0, False)
+  set_analog_out(0, 0.0)
+  set_analog_out(1, 0.0)
+
+  # Post-weld sequence
+  sleep(1.000)               # Post-weld gas flow
+  set_digital_out(1, False)  # Gas flow OFF
+
+  # [7] Retract above weld end
+  movel(p[0.450000, 0.300000, 0.350000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.2000, r=0.0100)
+
+  # [8] Return to home
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=0.7500, r=0.0)
+
+  # Safety confirmation
+  textmsg("Weld sequence completed successfully")
+end
+
+# Entry point with safety wrapper
+thread safety_monitor():
+  while (True):
+    if (get_digital_in(0) == True):
+      popup("E-Stop triggered during operation", error=True, title="SAFETY ALERT")
+      halt
+    end
+    sleep(0.1)
+  end
+end
+
+thread weld_monitor():
+  while (True):
+    if (get_digital_in(1) == False and get_digital_out(0) == True):
+      popup("Welding fault detected - gas flow interrupted", error=True)
+      set_digital_out(0, False)
+      set_analog_out(0, 0.0)
+      set_analog_out(1, 0.0)
+      halt
+    end
+    sleep(0.05)
+  end
+end
+
+# Start monitoring threads
+thrd_safety = run safety_monitor()
+thrd_weld = run weld_monitor()
+
+# Execute main task
+task_T002()
+
+# Cleanup
+kill thrd_safety
+kill thrd_weld

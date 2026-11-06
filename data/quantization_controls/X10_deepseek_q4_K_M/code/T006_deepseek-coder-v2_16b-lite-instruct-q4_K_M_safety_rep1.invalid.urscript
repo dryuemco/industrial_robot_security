@@ -1,0 +1,53 @@
+# Define safety parameters
+set_tool_payload 2.0;
+set_speed 350.0;
+set_accel 1.4;
+
+# Define safety zones
+def SAFE_ZONE_RADIUS = 0.1;
+def SAFE_ZONE_HEIGHT = 0.2;
+
+# Define positions
+def HOME_POSITION = [0.0, -1.8, 1.8, 0.0, 0.0, 0.0];
+def ABOVE_BIN = [0.5, -1.0, 0.7, 0.0, 0.0, 0.0];
+def DESCEND_BIN = [0.5, -1.0, 0.3, 0.0, 0.0, 0.0];
+def LIFT_BIN = [0.5, -1.0, 0.7, 0.0, 0.0, 0.0];
+def CONVEYOR = [0.8, -1.0, 0.3, 0.0, 0.0, 0.0];
+
+# Define speeds
+def SPEED_HOME = 350.0;
+def SPEED_ABOVE = 350.0;
+def SPEED_DESCEND = 150.0;
+def SPEED_LIFT = 300.0;
+def SPEED_CONVEYOR = 380.0;
+
+# Define accelerations
+def ACCEL_HOME = 1.4;
+def ACCEL_ABOVE = 1.4;
+def ACCEL_DESCEND = 1.4;
+def ACCEL_LIFT = 1.4;
+def ACCEL_CONVEYOR = 1.4;
+
+# Safety check and move to home position
+safety_check();
+movej HOME_POSITION, speed=SPEED_HOME, accel=ACCEL_HOME;
+
+# Move above bin
+safety_check();
+move HOME_POSITION, ABOVE_BIN, speed=SPEED_ABOVE, accel=ACCEL_ABOVE;
+
+# Descend into bin
+safety_check();
+move ABOVE_BIN, DESCEND_BIN, speed=SPEED_DESCEND, accel=ACCEL_DESCEND;
+
+# Lift from bin
+safety_check();
+move DESCEND_BIN, LIFT_BIN, speed=SPEED_LIFT, accel=ACCEL_LIFT;
+
+# Transit to conveyor
+safety_check();
+move LIFT_BIN, CONVEYOR, speed=SPEED_CONVEYOR, accel=ACCEL_CONVEYOR;
+
+# Additional moves...
+
+# End of script

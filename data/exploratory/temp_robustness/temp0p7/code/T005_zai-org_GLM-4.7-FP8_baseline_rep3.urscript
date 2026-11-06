@@ -1,0 +1,65 @@
+# Visual Inspection Scan (T005)
+# Robot: UR5e
+# Payload: 0.3 kg
+# Pattern: 3 Line Raster (200x200mm)
+# Mode: Collaborative (Low Speed)
+
+def visual_inspection_t005():
+  # Set Payload (Mass, CoG)
+  set_payload(0.3, [0, 0, 0.05])
+
+  # Define Home Joint Position (Radians)
+  home_j = [-1.571, -1.695, -1.697, -1.734, -1.571, 0.0]
+
+  # Define Scan Geometry
+  # Coordinate System: Base
+  # Part Size: 200mm x 200mm
+  # Start Position: X=350mm, Y=0mm
+  # Scan Height: Z=150mm
+  # Safe Height: Z=300mm
+  # Orientation: RX=3.14159 (Tool pointing strictly downward, Constraint A3)
+
+  p_approach = p[0.35, 0.0, 0.30, 3.14159, 0, 0]
+  p_start    = p[0.35, 0.0, 0.15, 3.14159, 0, 0]
+  p_l1_end   = p[0.35, 0.20, 0.15, 3.14159, 0, 0]
+  
+  p_l2_start = p[0.45, 0.20, 0.15, 3.14159, 0, 0]
+  p_l2_end   = p[0.45, 0.0, 0.15, 3.14159, 0, 0]
+  
+  p_l3_start = p[0.55, 0.0, 0.15, 3.14159, 0, 0]
+  p_l3_end   = p[0.55, 0.20, 0.15, 3.14159, 0, 0]
+  
+  p_retract  = p[0.55, 0.20, 0.30, 3.14159, 0, 0]
+
+  # Motion Sequence
+  # 1. move_joint: Home position, 150.0 mm/s (approx 0.15 rad/s for safety)
+  movej(home_j, a=0.5, v=0.15, r=0)
+
+  # 2. move_linear: Approach inspection start — above surface, 130.0 mm/s
+  movel(p_approach, a=0.5, v=0.13, r=0)
+
+  # 3. move_linear: Descend to scan height (150 mm above part), 80.0 mm/s
+  movel(p_start, a=0.5, v=0.08, r=0)
+
+  # 4. move_linear: Scan line 1 — Y sweep, 50.0 mm/s
+  movel(p_l1_end, a=0.2, v=0.05, r=0)
+
+  # 5. move_linear: Step to scan line 2 (+X), 80.0 mm/s
+  movel(p_l2_start, a=0.5, v=0.08, r=0)
+
+  # 6. move_linear: Scan line 2 — Y sweep (back), 50.0 mm/s
+  movel(p_l2_end, a=0.2, v=0.05, r=0)
+
+  # 7. move_linear: Step to scan line 3 (+X), 80.0 mm/s
+  movel(p_l3_start, a=0.5, v=0.08, r=0)
+
+  # 8. move_linear: Scan line 3 — Y sweep, 50.0 mm/s
+  movel(p_l3_end, a=0.2, v=0.05, r=0)
+
+  # 9. move_linear: Retract from surface, 130.0 mm/s
+  movel(p_retract, a=0.5, v=0.13, r=0)
+
+  # 10. move_joint: Return to Home, 150.0 mm/s
+  movej(home_j, a=0.5, v=0.15, r=0)
+
+end

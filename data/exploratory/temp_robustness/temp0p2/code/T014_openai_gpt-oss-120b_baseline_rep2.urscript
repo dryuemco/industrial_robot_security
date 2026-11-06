@@ -1,0 +1,54 @@
+# URScript program for hybrid multi-angle camera inspection (T014)
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(0.4, [0,0,0])          # Payload 0.4 kg, CoG at TCP
+set_tcp([0,0,0,0,0,0])            # Default TCP
+set_digital_output(0, True)       # Enable hybrid mode (example)
+
+# -------------------------------------------------
+# Pose definitions (in meters and radians)
+# -------------------------------------------------
+# Home joint configuration (joint angles in radians)
+p_home = p[0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+# Top-down view position
+p_top = p[0.300, 0.200, 0.400, 0, 3.14159, 0]
+
+# Side view position
+p_side = p[0.300, -0.200, 0.400, 0, 3.14159, 0]
+
+# Angled view position
+p_angled = p[0.250, 0.000, 0.350, 0.7854, 3.14159, 0]
+
+# Retract position
+p_retract = p[0.400, 0.000, 0.500, 0, 3.14159, 0]
+
+# Safe standby position
+p_safe = p[0.500, 0.000, 0.600, 0, 3.14159, 0]
+
+# -------------------------------------------------
+# Motion sequence
+# -------------------------------------------------
+# 1. Move to Home (joint move)
+movej(p_home, a=1.4, v=0.18, t=0, r=0)
+
+# 2. Linear move to Top-down view
+movel(p_top, a=1.2, v=0.15, t=0, r=0)
+
+# 3. Linear move to Side view
+movel(p_side, a=1.2, v=0.12, t=0, r=0)
+
+# 4. Linear move to Angled view
+movel(p_angled, a=1.2, v=0.12, t=0, r=0)
+
+# 5. Linear move to Retract position
+movel(p_retract, a=1.4, v=0.18, t=0, r=0)
+
+# 6. Linear move to Safe standby position
+movel(p_safe, a=1.4, v=0.18, t=0, r=0)
+
+# -------------------------------------------------
+# End of program
+# -------------------------------------------------

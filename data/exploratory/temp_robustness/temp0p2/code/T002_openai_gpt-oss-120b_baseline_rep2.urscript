@@ -1,0 +1,66 @@
+# URScript for UR5e – Linear weld path (fenced mode)
+
+# ---- Configuration ----
+set_payload(3.0, [0,0,0])          # Payload 3 kg, CoM at TCP
+set_tcp_speed(0.5)                # Max TCP speed 500 mm/s (0.5 m/s)
+
+# Optional: set safety mode to fenced if supported
+# setSafetyMode("fenced")        # Uncomment if controller API provides this
+
+# ---- Positions ----
+# Home joint configuration (rad)
+home_joint = [-1.57, -1.57, -1.57, -1.57, 1.57, 0]
+
+# Weld start point (meters)
+weld_start = p[0.500, 0.000, 0.200, 0, 3.14159, 0]   # Orientation: torch pointing down
+
+# Approach point above start (100 mm above)
+approach_start = p[0.500, 0.000, 0.300, 0, 3.14159, 0]
+
+# End point of weld seam (300 mm along X)
+weld_end = p[0.800, 0.000, 0.200, 0, 3.14159, 0]
+
+# Retract point above end (100 mm above)
+retract_end = p[0.800, 0.000, 0.300, 0, 3.14159, 0]
+
+# Safe pose after welding (could be same as home or a standby pose)
+safe_joint = [-1.57, -1.57, -1.57, -1.57, 1.57, 0]
+
+# ---- Motion Parameters ----
+# Joint move: velocity 300 mm/s -> convert to rad/s approx 1.5 rad/s (typical)
+joint_vel = 1.5
+joint_acc = 1.2
+
+# Linear moves: velocities in m/s
+vel_approach = 0.250   # 250 mm/s
+vel_descend  = 0.100   # 100 mm/s
+vel_weld     = 0.050   # 50 mm/s
+vel_retract  = 0.200   # 200 mm/s
+
+lin_acc = 1.2          # Linear acceleration (m/s^2)
+
+# ---- Program ----
+def main():
+    # 1. Move to home position
+    movej(home_joint, a=joint_acc, v=joint_vel)
+
+    # 2. Approach above weld start
+    movel(approach_start, a=lin_acc, v=vel_approach)
+
+    # 3. Descend to weld start position
+    movel(weld_start, a=lin_acc, v=vel_descend)
+
+    # 4. Weld seam – 300 mm linear path
+    movel(weld_end, a=lin_acc, v=vel_weld)
+
+    # 5. Retract above weld end
+    movel(retract_end, a=lin_acc, v=vel_retract)
+
+    # 6. Return to safe joint pose (home)
+    movej(safe_joint, a=joint_acc, v=joint_vel)
+
+    # End of program
+    stopj(2)   # Ensure robot stops safely
+
+# Run the program
+main()

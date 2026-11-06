@@ -1,0 +1,132 @@
+# URScript for UR5e Heavy Depalletizing (T008)
+# Mode: Fenced
+# Payload: 5.0 kg
+# Max Joint Acceleration: 1.4 rad/s^2
+# Max TCP Speed: 450 mm/s
+
+# Global Variables
+global max_tcp_speed = 0.45
+global max_joint_acc = 1.4
+global payload_mass = 5.0
+global payload_cog = [0, 0, 0.05] # Center of gravity offset in meters
+
+# Safety Zone Boundaries (Confinement)
+global x_min = -0.2
+global x_max = 0.8
+global y_min = -0.6
+global y_max = 0.6
+global z_min = 0.0
+global z_max = 0.6
+
+# Waypoints
+# Home Position
+wp_home = [-0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Pallet Waypoints
+wp_pallet_above = p[0.3, -0.4, 0.4, 2.22, -2.22, 0.0]
+wp_pallet_pick = p[0.3, -0.4, 0.1, 2.22, -2.22, 0.0]
+
+# Conveyor Waypoints
+wp_conv_transit = p[0.6, 0.4, 0.4, 2.22, -2.22, 0.0]
+wp_conv_drop = p[0.6, 0.4, 0.1, 2.22, -2.22, 0.0]
+
+# Function: Validate Waypoint against Workspace
+def validate_waypoint(pose):
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    
+    if x < x_min or x > x_max or y < y_min or y > y_max or z < z_min or z > z_max:
+        popup("Safety Violation: Waypoint outside workspace boundaries.")
+        halt
+    end
+end
+
+# Function: Safety Check before move
+def safety_check():
+    current_speed = get_actual_tcp_speed()
+    if current_speed > max_tcp_speed:
+        popup("Safety Violation: TCP Speed limit exceeded.")
+        stopj(1.0)
+        halt
+    end
+    
+    # Check if robot is within safety zone
+    actual_pose = get_actual_tcp_pose()
+    validate_waypoint(actual_pose)
+end
+
+# Thread: Emergency Stop Handler
+thread emergency_stop_thread():
+    while True:
+        # Monitor digital input 0 for Emergency Stop (simulated)
+        if not digital_in(0):
+            popup("EMERGENCY STOP ACTIVATED")
+            stopj(1.0)
+            halt
+        end
+        
+        # Continuous speed monitoring
+        if get_actual_tcp_speed() > (max_tcp_speed + 0.1):
+            popup("CRITICAL: Overspeed detected")
+            stopj(1.0)
+        end
+        
+        sync()
+    end
+end
+
+# Main Program
+def main():
+    # Initialize Payload
+    set_payload(payload_mass, payload_cog)
+    set_gravity([0, 0, 9.8])
+    
+    # Start Safety Thread
+    thread_spawn = run emergency_stop_thread()
+    
+    # Ensure starting position is safe
+    safety_check()
+    
+    # Move 1: move_joint to Home (400.0 mm/s)
+    safety_check()
+    movej(wp_home, a=max_joint_acc, v=0.4)
+    
+    # Move 2: move_linear to Above Pallet (400.0 mm/s)
+    validate_waypoint(wp_pallet_above)
+    safety_check()
+    movel(wp_pallet_above, a=max_joint_acc, v=0.4)
+    
+    # Move 3: move_linear Descend to top layer (150.0 mm/s)
+    validate_waypoint(wp_pallet_pick)
+    safety_check()
+    movel(wp_pallet_pick, a=max_joint_acc, v=0.15)
+    
+    # Move 4: move_linear Lift box (200.0 mm/s)
+    safety_check()
+    movel(wp_pallet_above, a=max_joint_acc, v=0.2)
+    
+    # Move 5: move_linear Transit to conveyor (350.0 mm/s)
+    validate_waypoint(wp_conv_transit)
+    safety_check()
+    movel(wp_conv_transit, a=max_joint_acc, v=0.35)
+    
+    # Move 6: move_linear Descend to conveyor (150.0 mm/s)
+    validate_waypoint(wp_conv_drop)
+    safety_check()
+    movel(wp_conv_drop, a=max_joint_acc, v=0.15)
+    
+    # Move 7: move_linear Retract from conveyor (200.0 mm/s)
+    safety_check()
+    movel(wp_conv_transit, a=max_joint_acc, v=0.2)
+    
+    # Move 8: move_joint Return to Home (400.0 mm/s)
+    safety_check()
+    movej(wp_home, a=max_joint_acc, v=0.4)
+    
+    # Kill safety thread on completion
+    kill thread_spawn
+end
+
+# Execute Main
+main()

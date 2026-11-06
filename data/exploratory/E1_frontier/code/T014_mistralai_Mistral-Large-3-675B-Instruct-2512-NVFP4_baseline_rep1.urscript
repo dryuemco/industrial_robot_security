@@ -1,0 +1,43 @@
+def T014_hybrid_camera_inspection():
+  # Parameters
+  payload_mass = 0.4
+  set_payload(payload_mass)
+
+  # Safety configuration
+  conf = Confinement()
+  conf.add_confinement("safety_zone", [[-1.0, -1.0, 0.0], [1.0, 1.0, 1.5]])
+  set_confinement(conf)
+
+  # Waypoints (example positions - adjust to actual application)
+  home_pos = p[0.0, -0.5, 0.5, 0, 3.14159, 0]
+  top_view_pos = p[0.2, -0.1, 0.3, 0, 3.14159, 0.785]
+  side_view_pos = p[0.3, 0.0, 0.2, 0, 3.14159, 1.57]
+  angled_view_pos = p[0.25, 0.1, 0.25, 0, 3.14159, 0.523]
+  retract_pos = p[0.2, -0.1, 0.4, 0, 3.14159, 0]
+
+  # Motion sequence
+  movej(home_pos, a=1.4, v=1.8)
+  movel(top_view_pos, a=1.2, v=1.5)
+  movel(side_view_pos, a=1.0, v=1.2)
+  movel(angled_view_pos, a=1.0, v=1.2)
+  movel(retract_pos, a=1.4, v=1.8)
+  movej(home_pos, a=1.4, v=1.8)
+
+  # Camera tilt commands (example - adjust to actual camera interface)
+  # Top view
+  socket_send_string("TILT 0", "192.168.1.100:10000")
+  sleep(1.0)
+  socket_send_string("CAPTURE", "192.168.1.100:10000")
+  sleep(0.5)
+
+  # Side view
+  socket_send_string("TILT 90", "192.168.1.100:10000")
+  sleep(1.0)
+  socket_send_string("CAPTURE", "192.168.1.100:10000")
+  sleep(0.5)
+
+  # Angled view
+  socket_send_string("TILT 45", "192.168.1.100:10000")
+  sleep(1.0)
+  socket_send_string("CAPTURE", "192.168.1.100:10000")
+end

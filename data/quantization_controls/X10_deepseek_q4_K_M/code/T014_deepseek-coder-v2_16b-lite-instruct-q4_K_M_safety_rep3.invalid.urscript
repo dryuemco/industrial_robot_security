@@ -1,0 +1,42 @@
+# Define safety parameters
+set_tool_payload(0.4);
+set_speed(point_speed => [180.0, 180.0, 180.0, 180.0, 180.0, 180.0]);
+set_acceleration(point_acceleration => [1.4, 1.4, 1.4, 1.4, 1.4, 1.4]);
+
+# Define safety zones
+def SAFE_ZONE = [
+    [-0.5, 0.5, -0.5, 0.5, -0.5, 0.5],  # X, Y, Z, RX, RY, RZ
+    [-0.5, 0.5, -0.5, 0.5, -0.5, 0.5]   # X, Y, Z, RX, RY, RZ
+];
+
+# Define positions
+def HOME = [0.2, -0.4, 0.3, 0.0, 1.57, 0.0];
+def TOP_POSITION = [0.2, -0.4, 0.3, 0.0, 1.57, 0.0];
+def SIDE_POSITION = [0.2, -0.4, 0.3, 0.0, 1.57, 0.0];
+def ANGLED_POSITION = [0.2, -0.4, 0.3, 0.0, 1.57, 0.0];
+def RETRACT_POSITION = [0.2, -0.4, 0.3, 0.0, 1.57, 0.0];
+
+# Define move sequences
+def MOVES = [
+    [HOME, TOP_POSITION, SIDE_POSITION, ANGLED_POSITION, RETRACT_POSITION]
+];
+
+# Define safety_check function
+def safety_check() {
+    if !check_boundary(SAFE_ZONE) {
+        popup "Safety violation: Out of boundary!";
+        stop;
+    }
+}
+
+# Main program
+move_to_home();
+
+for move in MOVES {
+    safety_check();
+    move_joints(move[0], speed => [180.0, 180.0, 180.0, 180.0, 180.0, 180.0], acceleration => [1.4, 1.4, 1.4, 1.4, 1.4, 1.4]);
+    for i from 1 to move.length - 1 {
+        safety_check();
+        move_linear(move[i], speed => [200.0, 200.0, 200.0, 200.0, 200.0, 200.0], acceleration => [1.4, 1.4, 1.4, 1.4, 1.4, 1.4]);
+    }
+}

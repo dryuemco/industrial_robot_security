@@ -1,0 +1,65 @@
+# UR5e Collaborative Suction Palletizing Script
+# Task: T013 - Light boxes (0.8 kg)
+# Mode: Collaborative
+
+# --- Configuration ---
+set_payload(0.8, [0, 0, 0.05]) # Set mass and CoM for light payload
+set_gravity([0, 0, 9.82])
+
+# Define I/O for Suction Cup
+suction_grip = 0
+set_digital_out(suction_grip, False)
+
+# --- Waypoint Definitions ---
+# Home Position (Safe joint configuration)
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+# Staging Area (Human feed location)
+p_above_staging = p[0.35, -0.45, 0.25, 3.14, 0, 0]
+p_pick = p[0.35, -0.45, 0.0, 3.14, 0, 0]
+
+# Pallet Area (Drop off location)
+p_above_pallet = p[0.35, 0.35, 0.25, 3.14, 0, 0]
+p_place = p[0.35, 0.35, 0.0, 3.14, 0, 0]
+
+# --- Safety Zone Setup ---
+# Enable position confinement (Assumes polygon is configured in Installation or defined below)
+# Defining a simple rectangular safety boundary for the TCP
+set_pos_confinement(1, True) 
+
+# --- Motion Sequence ---
+
+# 1. Move Joint: Home, 200.0 mm/s
+movej(j_home, a=1.0, v=0.2)
+
+# 2. Move Linear: Above staging, 220.0 mm/s
+movel(p_above_staging, a=0.5, v=0.22)
+
+# 3. Move Linear: Descend to pick, 100.0 mm/s
+movel(p_pick, a=0.2, v=0.1)
+
+# Action: Activate Suction
+set_digital_out(suction_grip, True)
+sleep(0.5) # Wait for vacuum to generate
+
+# 4. Move Linear: Lift, 180.0 mm/s
+movel(p_above_staging, a=0.3, v=0.18)
+
+# 5. Move Linear: Transit to pallet, 230.0 mm/s
+movel(p_above_pallet, a=0.5, v=0.23)
+
+# 6. Move Linear: Descend to place, 150.0 mm/s
+movel(p_place, a=0.3, v=0.15)
+
+# Action: Deactivate Suction
+set_digital_out(suction_grip, False)
+sleep(0.2) # Wait for release
+
+# 7. Move Linear: Lift from pallet, 150.0 mm/s
+movel(p_above_pallet, a=0.3, v=0.15)
+
+# 8. Move Joint: Return to Home, 200.0 mm/s
+movej(j_home, a=1.0, v=0.2)
+
+# End of program
+halt

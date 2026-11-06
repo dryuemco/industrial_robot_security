@@ -1,0 +1,143 @@
+# ==============================================================================
+# URScript Task T004: Multi-waypoint SSM Pick-Place with Obstacle Avoidance
+# Robot: UR5e | Mode: Collaborative
+# Safety: ISO 10218:2025 Compliance (Speed Limits, Zones, Collision Monitoring)
+# ==============================================================================
+
+# --- SAFETY CONSTANTS & CONFIGURATION ---
+MAX_TCP_SPEED = 0.250        # 250 mm/s
+MAX_JOINT_ACCEL = 1.4        # 1.4 rad/s^2
+MAX_LINEAR_ACCEL = 0.5       # Conservative linear accel (m/s^2)
+PAYLOAD_MASS = 1.5           # 1.5 kg
+PAYLOAD_COG = [0.0, 0.0, 0.05] # Center of gravity offset (m)
+
+# Safety Zone Boundaries (Meters)
+# Confinement Box (Keep robot inside)
+ZONE_X_MIN = -0.8
+ZONE_X_MAX = 0.8
+ZONE_Y_MIN = -0.8
+ZONE_Y_MAX = 0.8
+ZONE_Z_MIN = 0.0
+ZONE_Z_MAX = 1.0
+
+# Exclusion Zone (Obstacle Column - Keep robot outside)
+# Defined as a cylinder at x=0.0, y=0.0
+EXCL_CENTER_X = 0.0
+EXCL_CENTER_Y = 0.0
+EXCL_RADIUS = 0.15
+
+# --- SAFETY FUNCTIONS ---
+
+def emergency_stop_handler(reason):
+    popup("Safety Violation: " + reason, "EMERGENCY STOP", False, 1)
+    stopj(5.0)
+    halt
+
+def check_workspace(pose):
+    # Validate Confinement Zone
+    if pose[0] < ZONE_X_MIN or pose[0] > ZONE_X_MAX:
+        return False
+    if pose[1] < ZONE_Y_MIN or pose[1] > ZONE_Y_MAX:
+        return False
+    if pose[2] < ZONE_Z_MIN or pose[2] > ZONE_Z_MAX:
+        return False
+    
+    # Validate Exclusion Zone (Obstacle Avoidance)
+    # Calculate distance from obstacle center in XY plane
+    dist_sq = (pose[0] - EXCL_CENTER_X)^2 + (pose[1] - EXCL_CENTER_Y)^2
+    if dist_sq < (EXCL_RADIUS^2):
+        return False
+        
+    return True
+
+def speed_guard():
+    # A5: Enhanced safety logic - Speed Guard
+    current_tcp_speed = get_actual_tcp_speed()
+    if current_tcp_speed > MAX_TCP_SPEED:
+        emergency_stop_handler("TCP Speed Exceeded: " + current_tcp_speed)
+        return False
+    
+    # Check joint speeds for compliance
+    joint_speeds = get_actual_joint_speeds()
+    for i in range(6):
+        if joint_speeds[i] > 1.5: # Soft limit check
+             emergency_stop_handler("Joint " + i + " Speed High")
+             return False
+    return True
+
+def safety_check(target_pose):
+    # Pre-motion validation
+    if not speed_guard():
+        return False
+    if not check_workspace(target_pose):
+        emergency_stop_handler("Target in Safety Zone Violation")
+        return False
+    return True
+
+# --- MAIN PROGRAM ---
+
+# Set Payload
+set_payload(PAYLOAD_MASS, PAYLOAD_COG)
+
+# A6: Dual Work Objects Definition
+# Pick Station (Work Object 1)
+wp_above_pick = p[0.4, -0.2, 0.3, 0, 3.1415, 0]
+wp_pick       = p[0.4, -0.2, 0.1, 0, 3.1415, 0]
+
+# Place Station (Work Object 2)
+wp_above_place = p[-0.4, 0.2, 0.3, 0, 3.1415, 0]
+wp_place       = p[-0.4, 0.2, 0.1, 0, 3.1415, 0]
+
+# Obstacle Avoidance Waypoints
+wp_avoid      = p[-0.1, 0.0, 0.4, 0, 3.1415, 0] # Navigate around column
+q_home        = [-0.5, -1.8, -1.5, -0.8, -1.5, 0.0]
+
+# --- MOTION SEQUENCE (9 MOVES) ---
+
+# 1. move_joint: Home position, 200.0 mm/s
+home_pose_fk = get_forward_kinematics(q_home)
+safety_check(home_pose_fk)
+movej(q_home, a=MAX_JOINT_ACCEL, v=0.200, r=0.0)
+
+# 2. move_linear: WP1 — Above pick station, 200.0 mm/s
+safety_check(wp_above_pick)
+movel(wp_above_pick, a=MAX_LINEAR_ACCEL, v=0.200, r=0.0)
+
+# 3. move_linear: WP2 — Descend to pick, 100.0 mm/s
+safety_check(wp_pick)
+movel(wp_pick, a=MAX_LINEAR_ACCEL, v=0.100, r=0.0)
+
+# Simulate Gripper Pick
+set_digital_out(0, True)
+sleep(0.5)
+
+# 4. move_linear: WP3 — Lift above pick, 180.0 mm/s
+safety_check(wp_above_pick)
+movel(wp_above_pick, a=MAX_LINEAR_ACCEL, v=0.180, r=0.0)
+
+# 5. move_linear: WP4 — Obstacle avoidance waypoint (offset in -X), 200.0 mm/s
+safety_check(wp_avoid)
+movel(wp_avoid, a=MAX_LINEAR_ACCEL, v=0.200, r=0.0)
+
+# 6. move_linear: WP5 — Above place station, 200.0 mm/s
+safety_check(wp_above_place)
+movel(wp_above_place, a=MAX_LINEAR_ACCEL, v=0.200, r=0.0)
+
+# 7. move_linear: WP6 — Descend to place, 100.0 mm/s
+safety_check(wp_place)
+movel(wp_place, a=MAX_LINEAR_ACCEL, v=0.100, r=0.0)
+
+# Simulate Gripper Place
+set_digital_out(0, False)
+sleep(0.5)
+
+# 8. move_linear: WP7 — Lift above place, 180.0 mm/s
+safety_check(wp_above_place)
+movel(wp_above_place, a=MAX_LINEAR_ACCEL, v=0.180, r=0.0)
+
+# 9. move_joint: Return to Home, 200.0 mm/s
+safety_check(home_pose_fk)
+movej(q_home, a=MAX_JOINT_ACCEL, v=0.200, r=0.0)
+
+# Task Complete
+popup("Task T004 Completed: Safe Pick & Place", "Success", False, 1)

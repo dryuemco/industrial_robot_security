@@ -1,0 +1,108 @@
+# ------------------------------------------------------------
+# Task: T003 — EUR‑pallet 2×2 layer (Hybrid mode)
+# Robot: UR5e | Payload: 4.5 kg | Max TCP speed: 0.300 m/s
+# ------------------------------------------------------------
+# This script is structured for clarity and maintainability.
+# It performs one pick‑and‑place cycle for each of the four
+# pallet grid positions (0,0), (200,0), (0,200), (200,200) mm.
+# ------------------------------------------------------------
+
+# ----------------------------------------------------------------------
+# Configuration
+# ----------------------------------------------------------------------
+# Joint target for the robot home position
+global const home_joint = [0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+# TCP pose above the conveyor (safe approach height)
+global const pose_approach = p[0.500, -0.300, 0.350, 0.0, 3.1416, 0.0]
+
+# Pose at the pick height (conveyor surface)
+global const pose_pick    = p[0.500, -0.300, 0.100, 0.0, 3.1416, 0.0]
+
+# Pose after lifting the box from the conveyor
+global const pose_lift    = p[0.500, -0.300, 0.400, 0.0, 3.1416, 0.0]
+
+# Grid offsets (mm) relative to the pallet origin
+global const grid_offsets = [
+  [0.0,   0.0],
+  [0.200, 0.0],
+  [0.0,   0.200],
+  [0.200, 0.200]
+]
+
+# ----------------------------------------------------------------------
+# Helper functions
+# ----------------------------------------------------------------------
+def safety_check():
+  # Abort if the E‑Stop digital input (DI0) is active
+  if get_digital_in(0):
+    popup("E‑Stop active — aborting program.", error=True)
+    halt
+  end
+end
+
+def set_robot_parameters():
+  # Payload and centre of mass (approx. 100 mm above TCP)
+  set_payload(4.5, [0, 0, 0.1])
+  # TCP speed limit (m/s) – enforced by the controller
+  set_tcp_speed(0.300)
+end
+
+def move_home():
+  movej(home_joint, a=1.4, v=0.625)
+end
+
+def pick_box():
+  # Approach above conveyor
+  movel(pose_approach, a=1.0, v=0.250, r=0.020)
+  # Descend to pick
+  movel(pose_pick, a=0.5, v=0.100)
+  # Close gripper (digital out 0 = close)
+  set_digital_out(0, True)
+  sleep(0.300)  # allow grip to settle
+  # Lift the box
+  movel(pose_lift, a=0.8, v=0.200, r=0.015)
+end
+
+def place_box(pallet_offset):
+  # Compute target pose above the pallet cell
+  # Base pallet origin is at X=0.500 m, Y=0.300 m, Z=0.400 m
+  # Offsets are added in metres
+  local x = 0.500 + pallet_offset[0]
+  local y = 0.300 + pallet_offset[1]
+  local pose_above = p[x, y, 0.400, 0.0, 3.1416, 0.0]
+  local pose_place = p[x, y, 0.120, 0.0, 3.1416, 0.0]
+
+  # Transit to above pallet cell
+  movel(pose_above, a=1.2, v=0.280, r=0.020)
+  # Descend to place height
+  movel(pose_place, a=0.5, v=0.100)
+  # Open gripper (digital out 0 = open)
+  set_digital_out(0, False)
+  sleep(0.200)  # allow box to settle
+  # Retract to safe height
+  movel(pose_above, a=1.0, v=0.200, r=0.010)
+end
+
+# ----------------------------------------------------------------------
+# Main program
+# ----------------------------------------------------------------------
+def task_T003():
+  safety_check()
+  set_robot_parameters()
+  move_home()
+
+  # Loop over the four pallet cells
+  for offset in grid_offsets:
+    pick_box()
+    place_box(offset)
+  end
+
+  # Return to home after completing the 2×2 layer
+  move_home()
+end
+
+# ----------------------------------------------------------------------
+# Entry point
+# ----------------------------------------------------------------------
+task_T003()

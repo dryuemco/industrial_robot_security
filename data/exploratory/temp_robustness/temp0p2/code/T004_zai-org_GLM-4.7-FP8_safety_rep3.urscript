@@ -1,0 +1,163 @@
+# ==============================================================================
+# URScript for UR5e: Multi-waypoint SSM Pick-Place with Obstacle Avoidance
+# Task: T004
+# Compliance: ISO 10218:2025
+# ==============================================================================
+
+# -----------------------------------------------------------------------------
+# Configuration & Constants
+# -----------------------------------------------------------------------------
+MAX_TCP_SPEED = 0.25          # 250 mm/s in m/s
+MAX_JOINT_ACCEL = 1.4         # rad/s^2
+MAX_LINEAR_ACCEL = 0.5        # m/s^2 (Conservative collaborative limit)
+PAYLOAD_MASS = 1.5            # kg
+PAYLOAD_COG = [0.0, 0.0, 0.05] # Center of gravity offset (m)
+
+# Safety Zones Definition
+# Exclusion Zone (Obstacle Column at center)
+EXCLUSION_CENTER = p[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+EXCLUSION_RADIUS = 0.15       # meters
+
+# Confinement Zone (Workspace Boundaries)
+WS_X_MIN = -0.65
+WS_X_MAX = 0.65
+WS_Y_MIN = -0.65
+WS_Y_MAX = 0.65
+WS_Z_MIN = 0.02
+WS_Z_MAX = 0.85
+
+# -----------------------------------------------------------------------------
+# Waypoint Definitions
+# -----------------------------------------------------------------------------
+# Home Position
+wp_home = p[0.0, -0.4, 0.4, 3.14, 0.0, 0.0]
+
+# Pick Station (Work Object 1)
+wp_above_pick = p[0.3, -0.4, 0.3, 3.14, 0.0, 0.0]
+wp_pick = p[0.3, -0.4, 0.1, 3.14, 0.0, 0.0]
+wp_lift_pick = p[0.3, -0.4, 0.3, 3.14, 0.0, 0.0]
+
+# Obstacle Avoidance (Offset in -X relative to direct path to clear obstacle)
+wp_avoid = p[0.0, -0.1, 0.45, 2.8, 0.0, 0.0]
+
+# Place Station (Work Object 2)
+wp_above_place = p[-0.3, 0.4, 0.3, 3.14, 0.0, 0.0]
+wp_place = p[-0.3, 0.4, 0.1, 3.14, 0.0, 0.0]
+wp_lift_place = p[-0.3, 0.4, 0.3, 3.14, 0.0, 0.0]
+
+# -----------------------------------------------------------------------------
+# Safety Functions
+# -----------------------------------------------------------------------------
+
+def check_workspace_limits(pose):
+    # Validates if a pose is within the confinement zone
+    if pose[0] < WS_X_MIN or pose[0] > WS_X_MAX or \
+       pose[1] < WS_Y_MIN or pose[1] > WS_Y_MAX or \
+       pose[2] < WS_Z_MIN or pose[2] > WS_Z_MAX:
+        return False
+    return True
+
+def check_exclusion_zone(pose):
+    # Validates if a pose is outside the exclusion zone
+    dist = norm(pose - EXCLUSION_CENTER)
+    if dist < EXCLUSION_RADIUS:
+        return False
+    return True
+
+def validate_waypoint(pose, name):
+    # Pre-motion validation
+    if not check_workspace_limits(pose):
+        popup("Safety Error: " + name + " out of workspace boundaries.")
+        halt
+    if not check_exclusion_zone(pose):
+        popup("Safety Error: " + name + " inside exclusion zone.")
+        halt
+
+def safety_monitor():
+    # Continuous background thread for Speed and Separation Monitoring (SSM)
+    while True:
+        actual_pose = get_actual_tcp_pose()
+        actual_speed = get_actual_tcp_speed()
+        
+        # 1. Speed Guard
+        if norm(actual_speed) > MAX_TCP_SPEED:
+            popup("EMERGENCY STOP: TCP Speed Limit Exceeded!")
+            stopj(5.0)
+            halt
+            
+        # 2. Collision/Exclusion Monitor
+        if not check_exclusion_zone(actual_pose):
+            popup("EMERGENCY STOP: Exclusion Zone Breach!")
+            stopj(5.0)
+            halt
+            
+        # 3. Workspace Boundary Monitor
+        if not check_workspace_limits(actual_pose):
+            popup("EMERGENCY STOP: Workspace Boundary Breach!")
+            stopj(5.0)
+            halt
+            
+        sync()
+    end
+
+# -----------------------------------------------------------------------------
+# Main Program
+# -----------------------------------------------------------------------------
+
+# 1. Setup
+set_payload(PAYLOAD_MASS, PAYLOAD_COG)
+set_standard_analog_input_domain(0, 0) # Placeholder for sensor config if needed
+
+# 2. Start Safety Monitor Thread
+thread safety_monitor_thread_1 = run safety_monitor
+
+# 3. Validate All Waypoints before execution
+validate_waypoint(wp_home, "Home")
+validate_waypoint(wp_above_pick, "WP1 Above Pick")
+validate_waypoint(wp_pick, "WP2 Pick")
+validate_waypoint(wp_lift_pick, "WP3 Lift Pick")
+validate_waypoint(wp_avoid, "WP4 Avoidance")
+validate_waypoint(wp_above_place, "WP5 Above Place")
+validate_waypoint(wp_place, "WP6 Place")
+validate_waypoint(wp_lift_place, "WP7 Lift Place")
+
+# 4. Motion Sequence
+
+# Move 1: move_joint: Home position, 200.0 mm/s (approx 0.8 rad/s joint speed)
+movej(wp_home, a=MAX_JOINT_ACCEL, v=0.8, r=0.0)
+
+# Move 2: move_linear: WP1 — Above pick station, 200.0 mm/s
+movel(wp_above_pick, a=MAX_LINEAR_ACCEL, v=0.2, r=0.0)
+
+# Move 3: move_linear: WP2 — Descend to pick, 100.0 mm/s
+movel(wp_pick, a=MAX_LINEAR_ACCEL, v=0.1, r=0.0)
+
+# Pick Action (Simulated)
+set_digital_out(0, True) # Close Gripper
+sleep(0.5)
+
+# Move 4: move_linear: WP3 — Lift above pick, 180.0 mm/s
+movel(wp_lift_pick, a=MAX_LINEAR_ACCEL, v=0.18, r=0.0)
+
+# Move 5: move_linear: WP4 — Obstacle avoidance waypoint (offset in -X), 200.0 mm/s
+movel(wp_avoid, a=MAX_LINEAR_ACCEL, v=0.2, r=0.0)
+
+# Move 6: move_linear: WP5 — Above place station, 200.0 mm/s
+movel(wp_above_place, a=MAX_LINEAR_ACCEL, v=0.2, r=0.0)
+
+# Move 7: move_linear: WP6 — Descend to place, 100.0 mm/s
+movel(wp_place, a=MAX_LINEAR_ACCEL, v=0.1, r=0.0)
+
+# Place Action (Simulated)
+set_digital_out(0, False) # Open Gripper
+sleep(0.5)
+
+# Move 8: move_linear: WP7 — Lift above place, 180.0 mm/s
+movel(wp_lift_place, a=MAX_LINEAR_ACCEL, v=0.18, r=0.0)
+
+# Move 9: move_joint: Return to Home, 200.0 mm/s
+movej(wp_home, a=MAX_JOINT_ACCEL, v=0.8, r=0.0)
+
+# 5. Cleanup
+kill safety_monitor_thread_1
+popup("Task T004 Completed Successfully.")

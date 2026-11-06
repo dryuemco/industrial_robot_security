@@ -1,0 +1,103 @@
+# URScript program for high‑speed bin picking with suction in fenced mode
+# Robot: UR5e, Payload: 2.0 kg, Max TCP speed: 400 mm/s
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(2.0, [0,0,0.1])          # payload (kg) and centre of mass (m)
+set_tcp([0,0,0.1,0,0,0])            # tool centre point offset
+set_speed_slider(0.5)               # safety speed factor (0..1)
+
+# -------------------------------------------------
+# Safety workspace bounds (meters)
+# -------------------------------------------------
+# Define a rectangular prism that encloses the bin and conveyor
+min_x = -0.5;  max_x = 0.5
+min_y = -0.6;  max_y = 0.6
+min_z = 0.0;   max_z = 0.8
+
+def within_bounds(p):
+    # p is a pose [x,y,z,rx,ry,rz]
+    return (p[0] >= min_x) and (p[0] <= max_x) and \
+           (p[1] >= min_y) and (p[1] <= max_y) and \
+           (p[2] >= min_z) and (p[2] <= max_z)
+end
+
+# -------------------------------------------------
+# Poses (meters, radians)
+# -------------------------------------------------
+home_q      = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]               # joint target
+above_bin_p = p[0.3, -0.4, 0.5, 0, 3.14, 0]                       # above bin
+bin_p       = p[0.3, -0.4, 0.15, 0, 3.14, 0]                      # descend into bin
+conveyor_p  = p[0.6, 0.0, 0.4, 0, 3.14, 0]                        # above conveyor
+
+# -------------------------------------------------
+# Helper: safe motion wrapper
+# -------------------------------------------------
+def safe_movej(q, a, v):
+    try
+        movej(q, a, v)
+    except err
+        textmsg("movej failed: " .. err)
+        stopj(0)
+        halt()
+    end
+end
+
+def safe_movel(p, a, v):
+    if not within_bounds(p) then
+        textmsg("Target pose out of safety bounds: " .. str(p))
+        halt()
+    end
+    try
+        movel(p, a, v)
+    except err
+        textmsg("movel failed: " .. err)
+        stopl(0)
+        halt()
+    end
+end
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # 1) Move to Home position
+    safe_movej(home_q, a=1.4, v=350/1000)   # speed 350 mm/s (converted to m/s)
+
+    # 2) Move above the bin
+    safe_movel(above_bin_p, a=1.2, v=350/1000)
+
+    # 3) Descend into the bin
+    safe_movel(bin_p, a=1.0, v=150/1000)
+
+    # 4) Activate suction (digital output 0)
+    set_digital_out(0, True)
+    # Optional: verify suction via a sensor on digital input 1
+    sleep(0.2)
+    if not get_digital_in(1) then
+        textmsg("Suction failed – no part detected")
+        set_digital_out(0, False)
+        halt()
+    end
+
+    # 5) Lift from bin
+    safe_movel(above_bin_p, a=1.2, v=300/1000)
+
+    # 6) Transit to conveyor
+    safe_movel(conveyor_p, a=1.5, v=380/1000)
+
+    # 7) Release part
+    set_digital_out(0, False)
+    sleep(0.1)
+
+    # 8) Return to Home
+    safe_movej(home_q, a=1.4, v=350/1000)
+
+    textmsg("Pick‑place cycle completed successfully")
+end
+
+# -------------------------------------------------
+# Run program
+# -------------------------------------------------
+main()

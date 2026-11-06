@@ -1,0 +1,110 @@
+# ==============================================================================
+# URScript Program: T014 - Hybrid Multi-Angle Camera Inspection
+# Robot: UR5e | Payload: 0.4 kg | Mode: Hybrid
+# Compliance: ISO 10218:2025
+# ==============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. Safety Configuration & Constants
+# -----------------------------------------------------------------------------
+# Safety Limits
+MAX_TCP_SPEED = 0.25          # 250 mm/s (ISO Limit)
+TASK_MAX_TCP = 0.20           # 200 mm/s (Task Limit)
+MAX_JOINT_ACC = 1.4           # rad/s^2 (ISO Limit)
+TOOL_ACCEL = 0.5              # m/s^2 (Conservative tool acceleration)
+
+# Safety Zone Definition (Confinement Box in meters)
+ZONE_X_MIN = -0.65
+ZONE_X_MAX = 0.65
+ZONE_Y_MIN = -0.65
+ZONE_Y_MAX = 0.65
+ZONE_Z_MIN = 0.05
+ZONE_Z_MAX = 0.80
+
+# Payload Setup (Mass, Center of Mass)
+set_payload(0.4, [0.0, 0.0, 0.05])
+
+# -----------------------------------------------------------------------------
+# 2. Safety Functions
+# -----------------------------------------------------------------------------
+
+def emergency_stop_handler():
+    stopj(1.0)
+    popup("Safety Violation", "Motion boundary violated or Emergency Stop Triggered.", False, True)
+    halt
+end
+
+def safety_zone_check(pose):
+    # Validate pose is within defined cubic safety zone
+    if (pose[0] < ZONE_X_MIN or pose[0] > ZONE_X_MAX or 
+        pose[1] < ZONE_Y_MIN or pose[1] > ZONE_Y_MAX or 
+        pose[2] < ZONE_Z_MIN or pose[2] > ZONE_Z_MAX):
+        
+        emergency_stop_handler()
+    end
+end
+
+def safety_check_joints(joints):
+    # Convert joint angles to pose for boundary validation
+    pose = forward_kinematics(joints)
+    safety_zone_check(pose)
+end
+
+# -----------------------------------------------------------------------------
+# 3. Waypoints Definition
+# -----------------------------------------------------------------------------
+
+# Home Position (Joint space - radians)
+q_home = [0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+
+# Inspection Waypoints (Pose space - meters, radians)
+# Top-down view (Camera facing Z-)
+p_top = p[0.3, 0.0, 0.4, 0.0, 3.14159, 0.0]
+
+# Side view (Rotated Y approx 90 deg)
+p_side = p[0.4, 0.2, 0.3, 0.0, 1.5708, 0.0]
+
+# Angled view (Varied orientation near cone boundary - Exercise A3)
+p_angled = p[0.35, -0.1, 0.35, 0.5, 2.5, 0.5]
+
+# Retract Position (Safe intermediate point)
+p_retract = p[0.3, 0.0, 0.5, 0.0, 3.14159, 0.0]
+
+# -----------------------------------------------------------------------------
+# 4. Motion Sequence
+# -----------------------------------------------------------------------------
+
+# Initial Safety Check
+safety_check_joints(get_actual_joint_positions())
+
+# Move 1: move_joint - Home (180 mm/s equivalent approx 1.2 rad/s)
+# Accel: 1.4 rad/s^2
+safety_check_joints(q_home)
+movej(q_home, a=MAX_JOINT_ACC, v=1.2)
+
+# Move 2: move_linear - Top-down view (150.0 mm/s)
+# Accel: 0.5 m/s^2 | Speed: 0.15 m/s
+safety_zone_check(p_top)
+movel(p_top, a=TOOL_ACCEL, v=0.15)
+
+# Move 3: move_linear - Side view (120.0 mm/s)
+# Accel: 0.5 m/s^2 | Speed: 0.12 m/s
+safety_zone_check(p_side)
+movel(p_side, a=TOOL_ACCEL, v=0.12)
+
+# Move 4: move_linear - Angled view (120.0 mm/s)
+# Accel: 0.5 m/s^2 | Speed: 0.12 m/s
+safety_zone_check(p_angled)
+movel(p_angled, a=TOOL_ACCEL, v=0.12)
+
+# Move 5: move_linear - Retract (180.0 mm/s)
+# Accel: 0.5 m/s^2 | Speed: 0.18 m/s
+safety_zone_check(p_retract)
+movel(p_retract, a=TOOL_ACCEL, v=0.18)
+
+# Move 6: move_joint - Return to Home
+# Accel: 1.4 rad/s^2 | Speed: 1.2 rad/s
+safety_check_joints(q_home)
+movej(q_home, a=MAX_JOINT_ACC, v=1.2)
+
+# End of Program

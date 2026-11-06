@@ -1,0 +1,159 @@
+# -------------------------------------------------
+# URScript for UR5e collaborative spot welding
+# -------------------------------------------------
+# Safety configuration (ISO 10218:2025 compliance)
+
+# Payload definition (2.5 kg, CoG at tool center)
+set_payload(2.5, [0,0,0.02])
+
+# Joint acceleration limit (rad/s^2)
+set_joint_acceleration(1.4)
+
+# Maximum joint speed (rad/s) – set high enough, actual moves are limited per command
+set_joint_speed(1.5)
+
+# Safety zone (workspace limits in meters)
+global workspace_min = [-0.8, -0.5, 0.0]   # [x_min, y_min, z_min]
+global workspace_max = [ 0.8,  0.5, 0.6]   # [x_max, y_max, z_max]
+
+# -------------------------------------------------
+# Helper functions
+# -------------------------------------------------
+def safety_check(pose):
+    # pose = [x, y, z, Rx, Ry, Rz]  (meters, radians)
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    if (x < workspace_min[0]) or (x > workspace_max[0]) or \
+       (y < workspace_min[1]) or (y > workspace_max[1]) or \
+       (z < workspace_min[2]) or (z > workspace_max[2]):
+        e_stop()
+    end
+end
+
+def e_stop():
+    popup("Safety violation detected! Emergency stop engaged.", "EMERGENCY STOP", 2)
+    stopj(1.0)          # decelerate joints safely
+    halt()              # halt program execution
+end
+
+def weld_on():
+    # Placeholder for welding activation (digital output 0)
+    set_digital_out(0, True)
+    popup("Welding ON", "WELD", 1)
+end
+
+def weld_off():
+    set_digital_out(0, False)
+    popup("Welding OFF", "WELD", 1)
+end
+
+# -------------------------------------------------
+# Waypoints (positions in meters)
+# -------------------------------------------------
+# Home joint configuration (radians)
+global q_home = [-1.57, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Spot 1
+global p_approach_1 = p[0.4,  0.0, 0.3, 0, 3.14, 0]   # above spot 1
+global p_descend_1  = p[0.4,  0.0, 0.1, 0, 3.14, 0]   # welding point
+global p_lift_1     = p[0.4,  0.0, 0.3, 0, 3.14, 0]   # lift after weld
+
+# Spot 2
+global p_approach_2 = p[0.2,  0.2, 0.3, 0, 3.14, 0]
+global p_descend_2  = p[0.2,  0.2, 0.1, 0, 3.14, 0]
+global p_lift_2     = p[0.2,  0.2, 0.3, 0, 3.14, 0]
+
+# Spot 3
+global p_approach_3 = p[-0.1, -0.3, 0.3, 0, 3.14, 0]
+global p_descend_3  = p[-0.1, -0.3, 0.1, 0, 3.14, 0]
+global p_lift_3     = p[-0.1, -0.3, 0.3, 0, 3.14, 0]
+
+# -------------------------------------------------
+# Motion parameters (all within safety limits)
+# -------------------------------------------------
+# Joint move: speed = 0.2 m/s (converted to rad/s by UR internally), accel = 1.4 rad/s^2
+global joint_speed = 0.2          # m/s equivalent for movej (UR caps to rad/s internally)
+global joint_acc   = 1.4
+
+# Linear moves
+global lin_acc = 1.2               # m/s^2 (below any robot limit)
+
+# Speeds (m/s) – all ≤ 0.25 m/s (250 mm/s)
+global v_fast   = 0.20            # 200 mm/s
+global v_slow   = 0.08            # 80 mm/s
+global v_mid    = 0.15            # 150 mm/s
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # Ensure we start in a safe state
+    safety_check(p[0,0,0,0,0,0])   # dummy check to trigger e_stop if needed
+
+    # 1) Move to Home (joint move)
+    safety_check(p[0,0,0,0,0,0])   # Home is always safe
+    movej(q_home, a=joint_acc, v=joint_speed)
+
+    # 2) Approach Spot 1
+    safety_check(p_approach_1)
+    movel(p_approach_1, a=lin_acc, v=v_fast)
+
+    # 3) Descend to Spot 1 (welding position)
+    safety_check(p_descend_1)
+    movel(p_descend_1, a=lin_acc, v=v_slow)
+
+    # 4) Activate welding, hold for 0.5 s
+    weld_on()
+    sleep(0.5)
+    weld_off()
+
+    # 5) Lift from Spot 1
+    safety_check(p_lift_1)
+    movel(p_lift_1, a=lin_acc, v=v_mid)
+
+    # 6) Move to Spot 2 (approach)
+    safety_check(p_approach_2)
+    movel(p_approach_2, a=lin_acc, v=v_fast)
+
+    # 7) Descend to Spot 2
+    safety_check(p_descend_2)
+    movel(p_descend_2, a=lin_acc, v=v_slow)
+
+    # 8) Activate welding, hold for 0.5 s
+    weld_on()
+    sleep(0.5)
+    weld_off()
+
+    # 9) Lift from Spot 2
+    safety_check(p_lift_2)
+    movel(p_lift_2, a=lin_acc, v=v_mid)
+
+    # 10) Move to Spot 3 (approach)
+    safety_check(p_approach_3)
+    movel(p_approach_3, a=lin_acc, v=v_fast)
+
+    # 11) Descend to Spot 3
+    safety_check(p_descend_3)
+    movel(p_descend_3, a=lin_acc, v=v_slow)
+
+    # 12) Activate welding, hold for 0.5 s
+    weld_on()
+    sleep(0.5)
+    weld_off()
+
+    # 13) Lift from Spot 3
+    safety_check(p_lift_3)
+    movel(p_lift_3, a=lin_acc, v=v_mid)
+
+    # 14) Return to Home
+    safety_check(p[0,0,0,0,0,0])   # dummy check
+    movej(q_home, a=joint_acc, v=joint_speed)
+
+    popup("Spot welding sequence completed safely.", "INFO", 1)
+end
+
+# -------------------------------------------------
+# Run program
+# -------------------------------------------------
+main()

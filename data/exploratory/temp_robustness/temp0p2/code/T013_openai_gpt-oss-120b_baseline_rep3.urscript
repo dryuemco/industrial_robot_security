@@ -1,0 +1,57 @@
+def palletizing():
+    # -------------------------------------------------
+    # Configuration
+    # -------------------------------------------------
+    set_payload(0.8, [0,0,0])          # payload 0.8 kg, CoG at TCP
+    set_tcp(p[0,0,0,0,0,0])           # default TCP
+    set_speed_slider(1.0)             # full speed
+
+    # -------------------------------------------------
+    # Pose definitions (meters, radians)
+    # -------------------------------------------------
+    home_joint   = p[0.0, -1.5708, 1.5708, 0.0, 1.5708, 0.0]
+
+    above_staging = p[0.300, -0.200, 0.400, 0.0, 3.1416, 0.0]
+    pick_pose     = p[0.300, -0.200, 0.100, 0.0, 3.1416, 0.0]
+    lift_pose     = p[0.300, -0.200, 0.400, 0.0, 3.1416, 0.0]
+
+    above_pallet  = p[0.600,  0.000, 0.500, 0.0, 3.1416, 0.0]
+    place_pose    = p[0.600,  0.000, 0.200, 0.0, 3.1416, 0.0]
+    retreat_pose  = p[0.600,  0.000, 0.500, 0.0, 3.1416, 0.0]
+
+    # -------------------------------------------------
+    # Motion sequence (speeds converted to m/s)
+    # -------------------------------------------------
+    # 1) Home position (joint move, 200 mm/s → 0.20 m/s)
+    movej(home_joint, a=1.2, v=0.20)
+
+    # 2) Above staging area (linear, 220 mm/s → 0.22 m/s)
+    movel(above_staging, a=1.2, v=0.22)
+
+    # 3) Descend to pick (linear, 100 mm/s → 0.10 m/s)
+    movel(pick_pose, a=1.2, v=0.10)
+
+    # Activate suction
+    set_digital_out(0, True)
+    sleep(0.2)
+
+    # 4) Lift box (linear, 180 mm/s → 0.18 m/s)
+    movel(lift_pose, a=1.2, v=0.18)
+
+    # 5) Transit to pallet (linear, 230 mm/s → 0.23 m/s)
+    movel(above_pallet, a=1.2, v=0.23)
+
+    # 6) Place box (linear, 150 mm/s → 0.15 m/s)
+    movel(place_pose, a=1.2, v=0.15)
+
+    # Deactivate suction
+    set_digital_out(0, False)
+    sleep(0.2)
+
+    # 7) Retreat from pallet (linear, 200 mm/s → 0.20 m/s)
+    movel(retreat_pose, a=1.2, v=0.20)
+
+    # 8) Return to Home (joint move, 200 mm/s → 0.20 m/s)
+    movej(home_joint, a=1.2, v=0.20)
+
+end

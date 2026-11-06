@@ -1,0 +1,149 @@
+# URScript for UR5e - Screw fastening assembly (T010)
+# Hybrid mode: collaborative during approach, fenced during fastening
+# Payload: 1.0 kg
+# Safety compliance: ISO 10218:2025
+
+# ===== SAFETY CONFIGURATION =====
+def safety_check():
+    # Check TCP speed and acceleration limits
+    if get_tcp_speed() > 250.0:
+        popup("SAFETY VIOLATION: TCP speed exceeds 250 mm/s", title="EMERGENCY STOP", error=True)
+        halt()
+    end
+    if get_joint_acceleration() > 1.4:
+        popup("SAFETY VIOLATION: Joint acceleration exceeds 1.4 rad/s²", title="EMERGENCY STOP", error=True)
+        halt()
+    end
+
+    # Check workspace boundaries (UR5e workspace: ±360° joints, 850mm reach)
+    current_pose = get_forward_kin()
+    if (current_pose[0] < -0.85 or current_pose[0] > 0.85 or
+        current_pose[1] < -0.85 or current_pose[1] > 0.85 or
+        current_pose[2] < 0.0 or current_pose[2] > 1.2):
+        popup("SAFETY VIOLATION: TCP outside workspace boundaries", title="EMERGENCY STOP", error=True)
+        halt()
+    end
+
+    # Check safety zone confinement (example: cylindrical zone around robot base)
+    if sqrt(current_pose[0]**2 + current_pose[1]**2) > 0.7 and not is_in_fenced_mode():
+        popup("SAFETY VIOLATION: TCP outside collaborative safety zone", title="EMERGENCY STOP", error=True)
+        halt()
+    end
+end
+
+def is_in_fenced_mode():
+    # Placeholder for actual fenced mode detection (e.g., safety PLC signal)
+    return False
+end
+
+# ===== TOOL AND PAYLOAD SETUP =====
+set_payload(1.0)
+set_tcp(p[0, 0, 0.1, 0, 0, 0])  # Screwdriver tool TCP (adjust as needed)
+
+# ===== WAYPOINTS DEFINITION =====
+global home_pose = p[0, -0.5, 0.5, 0, 3.14, 0]  # Home position
+global above_feeder = p[0.3, -0.2, 0.15, 0, 3.14, 0]  # Above screw feeder
+global pick_screw = p[0.3, -0.2, 0.02, 0, 3.14, 0]  # Pick screw position
+global lift_feeder = p[0.3, -0.2, 0.15, 0, 3.14, 0]  # Lift from feeder
+
+# Fastening points (adjust coordinates as needed)
+global above_fastening1 = p[0.1, 0.1, 0.1, 0, 3.14, 0]
+global fastening1 = p[0.1, 0.1, 0.02, 0, 3.14, 0]
+global above_fastening2 = p[0.1, 0.2, 0.1, 0, 3.14, 0]
+global fastening2 = p[0.1, 0.2, 0.02, 0, 3.14, 0]
+global above_fastening3 = p[0.2, 0.1, 0.1, 0, 3.14, 0]
+global fastening3 = p[0.2, 0.1, 0.02, 0, 3.14, 0]
+global above_fastening4 = p[0.2, 0.2, 0.1, 0, 3.14, 0]
+global fastening4 = p[0.2, 0.2, 0.02, 0, 3.14, 0]
+
+# ===== MAIN PROGRAM =====
+def main():
+    # Initial safety check
+    safety_check()
+
+    # Move to home position (joint move)
+    movej(home_pose, a=1.2, v=2.0, r=0.05)
+    safety_check()
+
+    # Approach screw feeder (collaborative mode)
+    movel(above_feeder, a=1.2, v=0.2)
+    safety_check()
+
+    # Pick screw (slow approach)
+    movel(pick_screw, a=0.8, v=0.08)
+    safety_check()
+
+    # Activate screwdriver (placeholder)
+    set_digital_out(0, True)
+    sleep(0.5)
+
+    # Lift from feeder
+    movel(lift_feeder, a=1.2, v=0.18)
+    safety_check()
+
+    # Approach fastening point 1 (collaborative mode)
+    movel(above_fastening1, a=1.2, v=0.2)
+    safety_check()
+
+    # Switch to fenced mode for fastening (placeholder)
+    # In real implementation, this would trigger safety PLC to enable fenced mode
+    # For simulation, we'll just reduce speed
+    popup("Switching to fenced mode for fastening", title="Mode Change", warning=True)
+    sleep(2)
+
+    # Fasten screw 1 (slow, controlled motion)
+    movel(fastening1, a=0.5, v=0.05)
+    safety_check()
+
+    # Drive screw (placeholder)
+    set_digital_out(1, True)
+    sleep(2)
+    set_digital_out(1, False)
+
+    # Retract from fastening point 1
+    movel(above_fastening1, a=1.2, v=0.1)
+    safety_check()
+
+    # Repeat for remaining fastening points
+    movel(above_fastening2, a=1.2, v=0.2)
+    safety_check()
+    movel(fastening2, a=0.5, v=0.05)
+    safety_check()
+    set_digital_out(1, True)
+    sleep(2)
+    set_digital_out(1, False)
+    movel(above_fastening2, a=1.2, v=0.1)
+    safety_check()
+
+    movel(above_fastening3, a=1.2, v=0.2)
+    safety_check()
+    movel(fastening3, a=0.5, v=0.05)
+    safety_check()
+    set_digital_out(1, True)
+    sleep(2)
+    set_digital_out(1, False)
+    movel(above_fastening3, a=1.2, v=0.1)
+    safety_check()
+
+    movel(above_fastening4, a=1.2, v=0.2)
+    safety_check()
+    movel(fastening4, a=0.5, v=0.05)
+    safety_check()
+    set_digital_out(1, True)
+    sleep(2)
+    set_digital_out(1, False)
+    movel(above_fastening4, a=1.2, v=0.1)
+    safety_check()
+
+    # Return to home position
+    movel(lift_feeder, a=1.2, v=0.18)
+    safety_check()
+    movej(home_pose, a=1.2, v=2.0, r=0.05)
+    safety_check()
+
+    # Deactivate screwdriver
+    set_digital_out(0, False)
+end
+
+# Start program
+main()

@@ -16,12 +16,12 @@ non-violating; all 15 tasks enter), gate-passing (a cell is violating when any
 gate-passing repetition violates; a task enters only when every model has a gate-passing
 output, and Tasks is the number that do) and the gate-pass indicator (a cell is 1 when any
 repetition passes the validity gate; all 15 tasks enter). A test in which no task is
-discordant is undefined. The $p$ values are asymptotic chi-square $p$ values with two degrees of freedom, the registered statistic, uncorrected; exact permutation $p$ values are given beside them because several tests rest on few discordant tasks, where the chi-square approximation is poor. Naive rates are the per-task violation rates of
+discordant is undefined. All $p$ values are uncorrected. On the naive basis, the registered test, $p$ is the asymptotic chi-square $p$ of the statistic with two degrees of freedom and exact $p$ the permutation $p$ beside it. The gate-passing and gate-pass bases are post hoc and rest on few discordant tasks, where the chi-square approximation is poor, so on them the exact permutation $p$ comes first and the asymptotic $p$ (asym.) beside it. Naive rates are the per-task violation rates of
 Qwen2.5-Coder-32B, DeepSeek-Coder-V2-16B and CodeLlama-34B in percent.}
 \label{tab:quant}
 \centering
 \footnotesize
-\setlength{\tabcolsep}{3pt}
+\setlength{\tabcolsep}{2.7pt}
 \begin{tabular}{@{}llrrrrrrrrrrr@{}}
 \toprule
  & & \multicolumn{3}{c}{Q4\_K\_M} & \multicolumn{3}{c}{Q4\_0} & & & & & \\
@@ -41,14 +41,14 @@ CodeLlama-34B & Baseline & 24 & 100 & 22.00 & 18 & 100 & 10.00 & 7/15 & 0.73 & 0
 \multicolumn{13}{@{}l}{\textit{Cross-model Cochran $Q$ over the 15 task cells}} \\
  & & \multicolumn{3}{c}{Naive} & \multicolumn{4}{c}{Gate-passing} & \multicolumn{3}{c}{Gate-pass indicator} & \\
 \cmidrule(lr){3-5}\cmidrule(lr){6-9}\cmidrule(lr){10-12}
-Levels & Condition & $Q$ & $p$ & exact $p$ & Tasks & $Q$ & $p$ & exact $p$ & $Q$ & $p$ & exact $p$ & Naive rates \\
+Levels & Condition & $Q$ & $p$ & exact $p$ & Tasks & $Q$ & exact $p$ & asym.\ $p$ & $Q$ & exact $p$ & asym.\ $p$ & Naive rates \\
 \midrule
-As served & Baseline & 12.60 & 0.002 & 0.001 & 5 & \multicolumn{3}{c}{undefined} & 12.20 & 0.002 & 0.001 & 100/60/40 \\
- & Safety-prompted & 20.00 & <0.001 & <0.001 & 8 & 6.00 & 0.050 & 0.111 & 14.00 & <0.001 & 0.001 & 100/100/33 \\
-All Q4\_K\_M & Baseline & 8.67 & 0.013 & 0.014 & 6 & \multicolumn{3}{c}{undefined} & 8.67 & 0.013 & 0.014 & 100/87/53 \\
- & Safety-prompted & 7.82 & 0.020 & 0.019 & 6 & 4.00 & 0.135 & 0.333 & 6.22 & 0.045 & 0.059 & 100/60/53 \\
-All Q4\_0 & Baseline & 12.60 & 0.002 & 0.001 & 5 & \multicolumn{3}{c}{undefined} & 12.20 & 0.002 & 0.001 & 100/60/40 \\
- & Safety-prompted & 20.00 & <0.001 & <0.001 & 8 & 6.00 & 0.050 & 0.111 & 14.00 & <0.001 & 0.001 & 100/100/33 \\
+As served & Baseline & 12.60 & 0.002 & 0.001 & 5 & \multicolumn{3}{c}{undefined} & 12.20 & 0.001 & 0.002 & 100/60/40 \\
+ & Safety-prompted & 20.00 & <0.001 & <0.001 & 8 & 6.00 & 0.111 & 0.050 & 14.00 & 0.001 & <0.001 & 100/100/33 \\
+All Q4\_K\_M & Baseline & 8.67 & 0.013 & 0.014 & 6 & \multicolumn{3}{c}{undefined} & 8.67 & 0.014 & 0.013 & 100/87/53 \\
+ & Safety-prompted & 7.82 & 0.020 & 0.019 & 6 & 4.00 & 0.333 & 0.135 & 6.22 & 0.059 & 0.045 & 100/60/53 \\
+All Q4\_0 & Baseline & 12.60 & 0.002 & 0.001 & 5 & \multicolumn{3}{c}{undefined} & 12.20 & 0.001 & 0.002 & 100/60/40 \\
+ & Safety-prompted & 20.00 & <0.001 & <0.001 & 8 & 6.00 & 0.111 & 0.050 & 14.00 & 0.001 & <0.001 & 100/100/33 \\
 \bottomrule
 \end{tabular}
 \end{table*}

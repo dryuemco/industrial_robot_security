@@ -1,0 +1,56 @@
+# UR5e EUR-pallet 2x2 layer - Hybrid Mode (T003)
+# Task: Pick boxes from conveyor and place in 2x2 grid pattern on EUR-pallet
+# Payload: 4.5 kg
+# Safety: Zone confinement logic (A2), Hybrid mode (Fenced transit, Collab pick)
+
+# --- Setup ---
+# Set Payload: Mass 4.5 kg, Center of Mass [0, 0, 0.05] m
+set_payload(4.5, [0, 0, 0.05])
+
+# Define Waypoints
+# Home Position (Joint space)
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Conveyor Pick Area (Collaborative Zone)
+p_pick_approach = p[0.4, -0.4, 0.3, 0, 3.14, 0]  # Above conveyor
+p_pick = p[0.4, -0.4, 0.1, 0, 3.14, 0]          # At conveyor
+
+# Pallet Area (Fenced Transit / Placement Zone)
+# Pallet Slot (0,0) Approach and Place
+p_place_approach = p[0.5, 0.0, 0.3, 0, 3.14, 0] # Above pallet (0,0)
+p_place = p[0.5, 0.0, 0.1, 0, 3.14, 0]          # At pallet (0,0)
+
+# --- Motion Sequence ---
+
+# 1. Move Joint: Home position, 250.0 mm/s
+movej(j_home, a=1.4, v=0.25)
+
+# 2. Move Linear: Approach conveyor pick — above, 250.0 mm/s
+movel(p_pick_approach, a=0.5, v=0.25)
+
+# 3. Move Linear: Descend to pick, 100.0 mm/s
+movel(p_pick, a=0.2, v=0.10)
+
+# Action: Gripper Close (Assuming digital output 0)
+set_digital_out(0, True)
+
+# 4. Move Linear: Lift from conveyor, 200.0 mm/s
+movel(p_pick_approach, a=0.5, v=0.20)
+
+# 5. Move Linear: Transit to pallet position (0,0), 280.0 mm/s
+movel(p_place_approach, a=0.8, v=0.28)
+
+# 6. Move Linear: Descend to place, 100.0 mm/s
+movel(p_place, a=0.2, v=0.10)
+
+# Action: Gripper Open
+set_digital_out(0, False)
+
+# 7. Move Linear: Lift from pallet, 200.0 mm/s
+movel(p_place_approach, a=0.5, v=0.20)
+
+# 8. Move Joint: Return to Home, 250.0 mm/s
+movej(j_home, a=1.4, v=0.25)
+
+# End of Program
+halt

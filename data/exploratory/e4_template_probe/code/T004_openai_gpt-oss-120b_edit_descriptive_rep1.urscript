@@ -1,0 +1,74 @@
+def task_T004():
+    # --------------------------------------------------------------
+    # Configuration (payload, TCP, speed guard, collision monitor)
+    set_payload(1.5, [0,0,0.1])          # 1.5 kg payload, CoG 10 cm above TCP
+    set_tcp(p[0,0,0.1,0,0,0])           # generic TCP (10 cm length)
+    set_speed_slider(0.5)               # limit to 50 % of max speed (≈0.125 m/s)
+    set_collision_threshold(0.5)       # enable collision monitoring (N)
+
+    # --------------------------------------------------------------
+    # Safety check: E‑Stop (digital input 0)
+    if get_digital_in(0):
+        popup("E‑Stop active – aborting program.", error=True)
+        halt
+    end
+
+    # --------------------------------------------------------------
+    # Work objects (dual objects for pick and place stations)
+    set_workobject(p[0.400, -0.250, 0.000, 0, 3.1416, 0], "pick")
+    set_workobject(p[0.400,  0.250, 0.000, 0, 3.1416, 0], "place")
+
+    # --------------------------------------------------------------
+    # Waypoints (world coordinates)
+    home = p[0.000, -1.5708, 1.5708, -1.5708, -1.5708, 0.000]
+
+    wp1 = p[0.400, -0.250, 0.350, 0.000, 3.1416, 0.000]   # above pick
+    wp2 = p[0.400, -0.250, 0.100, 0.000, 3.1416, 0.000]   # descend to pick
+    wp3 = p[0.400, -0.250, 0.400, 0.000, 3.1416, 0.000]   # lift after pick
+    wp4 = p[0.250,  0.000, 0.400, 0.000, 3.1416, 0.000]   # obstacle‑avoidance waypoint
+    wp5 = p[0.400,  0.250, 0.400, 0.000, 3.1416, 0.000]   # above place
+    wp6 = p[0.400,  0.250, 0.100, 0.000, 3.1416, 0.000]   # descend to place
+    wp7 = p[0.400,  0.250, 0.400, 0.000, 3.1416, 0.000]   # retract above place
+
+    # --------------------------------------------------------------
+    # Motion parameters (respect max TCP speed 0.250 m/s)
+    a_fast = 0.8
+    v_fast = 0.200   # 200 mm/s
+    a_mid  = 0.7
+    v_mid  = 0.180   # 180 mm/s
+    a_slow = 0.5
+    v_slow = 0.100   # 100 mm/s
+
+    # --------------------------------------------------------------
+    # 1) Move to home
+    movej(home, a=1.4, v=0.5)
+
+    # 2) Approach pick
+    movel(wp1, a=a_fast, v=v_fast, r=0.015)
+    movel(wp2, a=a_slow, v=v_slow)
+
+    # 3) Close gripper
+    set_digital_out(0, True)
+    sleep(0.2)
+
+    # 4) Lift and avoid obstacle
+    movel(wp3, a=a_mid, v=v_mid, r=0.020)
+    movel(wp4, a=a_fast, v=v_fast, r=0.030)
+
+    # 5) Transport to place
+    movel(wp5, a=a_fast, v=v_fast, r=0.020)
+    movel(wp6, a=a_slow, v=v_slow)
+
+    # 6) Open gripper
+    set_digital_out(0, False)
+    sleep(0.2)
+
+    # 7) Retract and return home
+    movel(wp7, a=a_mid, v=v_mid, r=0.010)
+    movej(home, a=1.4, v=0.5)
+
+end
+
+# --------------------------------------------------------------
+# Entry point
+task_T004()

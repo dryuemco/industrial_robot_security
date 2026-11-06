@@ -1,0 +1,91 @@
+# Palletizing program for UR5e - collaborative suction cup operation
+# Payload: 0.8 kg, Max TCP speed: 250 mm/s
+
+# Set payload and tool center point
+set_payload(0.8)
+set_tcp(p[0.0, 0.0, 0.1, 0.0, 0.0, 0.0])
+
+# Safety configuration
+set_standard_analog_input_domain(0, 1)
+set_standard_analog_input_domain(1, 1)
+set_tool_analog_input_domain(0, 1)
+set_tool_analog_input_domain(1, 1)
+set_analog_outputdomain(0, 0)
+set_analog_outputdomain(1, 0)
+set_input_actions_to_default()
+
+# Speed and acceleration limits
+$ 6 set_speed_minimum(20.0)
+speedj_lim = 2.0
+speedl_lim = 0.25
+accel_joint = 1.2
+accel_linear = 0.5
+
+# Define waypoints
+global home_pose = p[0.0, -1.5708, 0.0, -1.5708, 0.0, 0.0]
+global above_staging = p[0.3, -0.5, 0.2, 0.0, 3.14, 0.0]
+global pick_pose = p[0.3, -0.5, 0.05, 0.0, 3.14, 0.0]
+global lift_pose = p[0.3, -0.5, 0.2, 0.0, 3.14, 0.0]
+global above_pallet = p[0.6, -0.5, 0.2, 0.0, 3.14, 0.0]
+global place_pose = p[0.6, -0.5, 0.05, 0.0, 3.14, 0.0]
+global retreat_pose = p[0.6, -0.5, 0.2, 0.0, 3.14, 0.0]
+
+# Main program
+def main():
+    # Enable watchdog for safety
+    watchdog = 0
+    watchdog_input = 0
+    watchdog_min_frequency = 5.0
+    watchdog_max_frequency = 10.0
+
+    while True:
+        # Move to home position
+        movej(home_pose, a=accel_joint, v=speedj_lim, r=0.0)
+
+        # Wait for box to be staged (simulated with digital input)
+        while not get_digital_in(0):
+            sync()
+            # Watchdog feedback
+            watchdog = watchdog + 1
+            if watchdog > 120:
+                popup("Watchdog timeout - no box detected", error=True)
+                halt
+            end
+        end
+
+        # Reset watchdog counter
+        watchdog = 0
+
+        # Pick sequence
+        movel(above_staging, a=accel_linear, v=0.22, r=0.0)
+        movel(pick_pose, a=accel_linear, v=0.1, r=0.0)
+
+        # Activate suction
+        set_digital_out(0, True)
+        sleep(0.5)
+
+        # Lift box
+        movel(lift_pose, a=accel_linear, v=0.18, r=0.0)
+
+        # Transit to pallet
+        movel(above_pallet, a=accel_linear, v=0.23, r=0.0)
+
+        # Place sequence
+        movel(place_pose, a=accel_linear, v=0.1, r=0.0)
+
+        # Release suction
+        set_digital_out(0, False)
+        sleep(0.5)
+
+        # Retreat
+        movel(retreat_pose, a=accel_linear, v=0.18, r=0.0)
+
+        # Signal completion
+        set_digital_out(1, True)
+        sleep(0.2)
+        set_digital_out(1, False)
+    end
+end
+
+# Start program
+main()

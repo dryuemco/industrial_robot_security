@@ -1,0 +1,125 @@
+# URScript for UR5e - Linear weld path in fenced mode (T002)
+# ISO 10218:2025 compliant safety measures included
+
+# ===== SAFETY CONFIGURATION =====
+global max_tcp_speed = 500.0          # mm/s (fenced mode)
+global max_collab_tcp_speed = 250.0   # mm/s (collaborative limit)
+global max_joint_accel = 1.4          # rad/s²
+global payload_mass = 3.0             # kg
+global payload_cog = [0.0, 0.0, 0.1]  # meters from tool flange
+
+# Safety zones (confinement and exclusion)
+global confinement_zone = [[-0.8, -0.8, 0.0], [0.8, 0.8, 1.2]]  # min/max XYZ
+global exclusion_zone = [[-0.3, -0.3, 0.0], [0.3, 0.3, 0.3]]    # min/max XYZ
+
+# ===== SAFETY FUNCTIONS =====
+def safety_check():
+    if not is_within_safety_limits():
+        popup("SAFETY VIOLATION: Robot outside safety limits!", error=True)
+        halt()
+    end
+    if get_tcp_speed() > max_collab_tcp_speed:
+        popup("SAFETY VIOLATION: TCP speed exceeds collaborative limit!", error=True)
+        halt()
+    end
+    if any(get_joint_accelerations() > max_joint_accel):
+        popup("SAFETY VIOLATION: Joint acceleration exceeds limit!", error=True)
+        halt()
+    end
+end
+
+def is_within_safety_limits():
+    current_pos = get_forward_kin()
+    # Check confinement zone
+    if (current_pos[0] < confinement_zone[0][0] or current_pos[0] > confinement_zone[1][0] or
+        current_pos[1] < confinement_zone[0][1] or current_pos[1] > confinement_zone[1][1] or
+        current_pos[2] < confinement_zone[0][2] or current_pos[2] > confinement_zone[1][2]):
+        return False
+    end
+    # Check exclusion zone
+    if (current_pos[0] > exclusion_zone[0][0] and current_pos[0] < exclusion_zone[1][0] and
+        current_pos[1] > exclusion_zone[0][1] and current_pos[1] < exclusion_zone[1][1] and
+        current_pos[2] > exclusion_zone[0][2] and current_pos[2] < exclusion_zone[1][2]):
+        return False
+    end
+    return True
+end
+
+def validate_waypoint(pose):
+    if not is_pose_within_workspace(pose):
+        popup("ERROR: Waypoint outside workspace boundaries!", error=True)
+        halt()
+    end
+    if not is_within_safety_limits():
+        popup("ERROR: Waypoint violates safety zones!", error=True)
+        halt()
+    end
+end
+
+def is_pose_within_workspace(pose):
+    # UR5e workspace limits (simplified)
+    workspace_limits = [[-0.85, -0.85, 0.0], [0.85, 0.85, 1.0]]
+    if (pose[0] < workspace_limits[0][0] or pose[0] > workspace_limits[1][0] or
+        pose[1] < workspace_limits[0][1] or pose[1] > workspace_limits[1][1] or
+        pose[2] < workspace_limits[0][2] or pose[2] > workspace_limits[1][2]):
+        return False
+    end
+    return True
+end
+
+# ===== EMERGENCY STOP HANDLER =====
+def emergency_stop():
+    popup("EMERGENCY STOP ACTIVATED!", error=True)
+    halt()
+end
+
+# ===== INITIALIZATION =====
+def init_robot():
+    set_payload(payload_mass, payload_cog)
+    set_tcp([0.0, 0.0, 0.15, 0.0, 0.0, 0.0])  # Example TCP for welding torch
+    set_safety_mode("reduced")
+    safety_check()
+end
+
+# ===== WELDING SEQUENCE =====
+def welding_sequence():
+    # Waypoints (example values - adjust for actual application)
+    home_pose = p[0.0, -0.5, 0.5, 0.0, 3.14, 0.0]
+    approach_pose = p[0.2, 0.0, 0.2, 0.0, 3.14, 0.0]
+    weld_start_pose = p[0.2, 0.0, 0.05, 0.0, 3.14, 0.0]
+    weld_end_pose = p[0.5, 0.0, 0.05, 0.0, 3.14, 0.0]
+    retract_pose = p[0.5, 0.0, 0.2, 0.0, 3.14, 0.0]
+
+    # Validate all waypoints
+    validate_waypoint(home_pose)
+    validate_waypoint(approach_pose)
+    validate_waypoint(weld_start_pose)
+    validate_waypoint(weld_end_pose)
+    validate_waypoint(retract_pose)
+
+    # Motion sequence
+    safety_check()
+    movej(home_pose, a=max_joint_accel, v=3.0)  # 300 mm/s ≈ 3.0 rad/s
+
+    safety_check()
+    movel(approach_pose, a=max_joint_accel, v=0.25)  # 250 mm/s
+
+    safety_check()
+    movel(weld_start_pose, a=max_joint_accel, v=0.1)  # 100 mm/s
+
+    # Welding arc activation zone
+    safety_check()
+    set_analog_out(0, 1)  # Activate welding arc
+    movel(weld_end_pose, a=max_joint_accel, v=0.05)  # 50 mm/s (welding speed)
+    set_analog_out(0, 0)  # Deactivate welding arc
+
+    safety_check()
+    movel(retract_pose, a=max_joint_accel, v=0.2)  # 200 mm/s
+
+    safety_check()
+    movej(home_pose, a=max_joint_accel, v=3.0)  # Return to home
+end
+
+# ===== MAIN PROGRAM =====
+init_robot()
+welding_sequence()

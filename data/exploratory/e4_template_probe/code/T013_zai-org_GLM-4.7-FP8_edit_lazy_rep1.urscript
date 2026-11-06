@@ -1,0 +1,59 @@
+# Task: T013 — Collaborative suction palletizing — light boxes
+# Improved: Added payload definition, fixed suction OFF logic, optimized blending.
+# Robot: ur5e | Payload: 0.8 kg | Max TCP Speed: 0.25 m/s
+
+def task_T013():
+  # Set payload (Mass 0.8 kg, CoM approx 50mm from flange)
+  set_payload(0.8, [0, 0, 0.05])
+
+  # [0] Safety Check (External E-Stop)
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # [1] Home Position
+  # Joint speed adjusted to approximate 200 mm/s TCP
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=1.0)
+
+  # [2] Above Staging
+  movel(p[0.350000, -0.200000, 0.300000, 0.0000, 3.1416, 0.0000], a=0.7000, v=0.2200, r=0.0100)
+
+  # [3] Descend to Pick
+  # r=0 ensures precise positioning
+  movel(p[0.350000, -0.200000, 0.080000, 0.0000, 3.1416, 0.0000], a=0.4000, v=0.1000, r=0)
+
+  # [4] Suction ON
+  set_digital_out(0, True)
+
+  # [5] Vacuum Settle
+  sleep(0.3000)
+
+  # [6] Lift
+  # r=0 ensures secure grip before transit
+  movel(p[0.350000, -0.200000, 0.350000, 0.0000, 3.1416, 0.0000], a=0.6000, v=0.1800, r=0)
+
+  # [7] Transit to Pallet
+  movel(p[0.450000, 0.200000, 0.350000, 0.0000, 3.1416, 0.0000], a=0.8000, v=0.2300, r=0.0150)
+
+  # [8] Place on Pallet
+  # r=0 ensures precise placement
+  movel(p[0.450000, 0.200000, 0.080000, 0.0000, 3.1416, 0.0000], a=0.4000, v=0.1000, r=0)
+
+  # [9] Suction OFF
+  # Fixed: Changed True to False to release object
+  set_digital_out(0, False)
+
+  # [10] Release Delay
+  sleep(0.2000)
+
+  # [11] Retract
+  movel(p[0.450000, 0.200000, 0.350000, 0.0000, 3.1416, 0.0000], a=0.7000, v=0.2000, r=0)
+
+  # [12] Return Home
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=1.0)
+
+end
+
+# Entry point
+task_T013()

@@ -1,0 +1,120 @@
+# Task: T015 — Laser marking — fenced mode (Improved)
+# Robot: ur5e | Payload: 0.6 kg
+# Improvements: 
+# - Added set_payload for accurate dynamics (0.6 kg).
+# - Implemented A7 (Laser tool activation constraints): Checks speed and height before firing.
+# - Implemented A3 (Strict laser pointing): Validates tool orientation before firing.
+# - Fixed Laser Logic: Toggles laser OFF during step-over moves to prevent unwanted engraving.
+# - Improved structure with helper functions for safety and I/O.
+# - Updated motion speeds to match task requirements precisely.
+
+# --- Configuration ---
+global laser_dout = 3
+global safety_din = 0
+global payload_mass = 0.6
+global payload_cog = [0, 0, 0.05] # Approximate CoG for laser tool
+global marking_height = 0.100
+
+# --- Helper Functions ---
+
+def check_safety_interlock():
+  # Verify E-Stop / Safety Gate status
+  # Assuming Input 0 is HIGH when unsafe (based on original code logic)
+  if (get_digital_in(safety_din) == True):
+    popup("Safety Interlock Triggered (Input 0) — Aborting.", error=True)
+    halt
+  end
+end
+
+def check_laser_constraints():
+  # A3: Strict laser pointing
+  # Verify tool is pointing down (Rotation vector approx [0, pi, 0])
+  pose = get_actual_tcp_pose()
+  rx = pose[3]
+  ry = pose[4]
+  rz = pose[5]
+  
+  # Check orientation deviation (Tolerance 0.15 radians)
+  if (norm([rx, rz]) > 0.15 or norm([ry - 3.1416]) > 0.15):
+    popup("Laser Safety: Orientation incorrect. Aborting.", error=True)
+    halt
+  end
+  
+  # A7: Laser tool activation constraints & Safety Zone Check
+  # Verify robot is at correct marking height (Z-axis constraint)
+  z = pose[2]
+  if (z < marking_height - 0.005 or z > marking_height + 0.005):
+    popup("Laser Safety: Height incorrect for firing. Aborting.", error=True)
+    halt
+  end
+  
+  # Verify speed is low before firing
+  speed = get_actual_tcp_speed()
+  if (speed > 0.1): # 100 mm/s threshold
+    popup("Laser Safety: Speed too high to enable laser. Aborting.", error=True)
+    halt
+  end
+end
+
+def laser_on():
+  check_laser_constraints()
+  set_digital_out(laser_dout, True)
+end
+
+def laser_off():
+  set_digital_out(laser_dout, False)
+end
+
+# --- Main Task ---
+
+def task_T015():
+  # Initialize Payload
+  set_payload(payload_mass, payload_cog)
+  
+  # [0] Safety Check
+  check_safety_interlock()
+  
+  # [1] Home (Joint move)
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=1.0)
+  
+  # [2] Above marking surface (Linear move, 300 mm/s)
+  movel(p[0.400000, -0.080000, 0.200000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.3000, r=0.0100)
+  
+  # [3] Descend to marking height (Linear move, 100 mm/s)
+  movel(p[0.400000, -0.080000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.4000, v=0.1000, r=0.0)
+  
+  # --- Marking Sequence (A6: Marking fixture frame) ---
+  
+  # [5] Mark Line 1 (60 mm/s)
+  laser_on()
+  movel(p[0.500000, -0.080000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.2000, v=0.0600, r=0.0)
+  laser_off()
+  
+  # [6] Step to Line 2 (80 mm/s) - Laser OFF to prevent connecting mark
+  movel(p[0.500000, 0.000000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.3000, v=0.0800, r=0.0030)
+  
+  # [7] Mark Line 2 Reverse (60 mm/s)
+  laser_on()
+  movel(p[0.400000, 0.000000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.2000, v=0.0600, r=0.0)
+  laser_off()
+  
+  # [8] Step to Line 3 (80 mm/s) - Laser OFF to prevent connecting mark
+  movel(p[0.400000, 0.080000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.3000, v=0.0800, r=0.0030)
+  
+  # [9] Mark Line 3 (60 mm/s)
+  laser_on()
+  movel(p[0.500000, 0.080000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.2000, v=0.0600, r=0.0)
+  laser_off()
+  
+  # --- End Marking ---
+  
+  # [11] Retract (Linear move, 300 mm/s)
+  movel(p[0.450000, 0.000000, 0.300000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.3000, r=0.0100)
+  
+  # [12] Return home
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4000, v=1.0)
+  
+end
+
+# Entry point
+task_T015()

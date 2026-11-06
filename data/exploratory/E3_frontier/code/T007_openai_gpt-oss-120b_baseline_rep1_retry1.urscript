@@ -1,0 +1,65 @@
+# URScript for UR5e curved contour weld in hybrid mode
+# Safety: payload 3.5 kg, max TCP speed 0.3 m/s, safety limits enforced
+
+# ---- Safety Configuration ----
+set_payload(3.5, [0,0,0])               # payload in kg and centre of mass
+set_tcp([0,0,0,0,0,0])                  # default TCP
+set_safety_limits(0.3, 0.3, 2.0, 2.0)   # max TCP speed (m/s), max TCP accel (m/s^2), max joint speed (rad/s), max joint accel (rad/s^2)
+
+# ---- Positions (meters, radians) ----
+# Home joint configuration
+home_joint = [-0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
+
+# Approach pose above weld fixture (10 cm above start point)
+approach_pose = p[0.5, 0.0, 0.3, 0, 3.14, 0]   # replace with actual coordinates
+
+# Weld start pose (directly above start point)
+start_pose = p[0.5, 0.0, 0.2, 0, 3.14, 0]      # replace with actual coordinates
+
+# Weld midpoint pose
+mid_pose = p[0.55, 0.05, 0.2, 0, 3.14, 0]     # replace with actual coordinates
+
+# Weld end pose
+end_pose = p[0.6, 0.0, 0.2, 0, 3.14, 0]       # replace with actual coordinates
+
+# Additional poses (placeholders)
+pose_extra1 = p[0.6, -0.05, 0.2, 0, 3.14, 0]  # replace as needed
+pose_extra2 = p[0.5, -0.1, 0.2, 0, 3.14, 0]   # replace as needed
+
+# ---- Motion Parameters ----
+# Joint move: acceleration 1.2 rad/s^2, velocity 1.0 rad/s
+joint_a = 1.2
+joint_v = 1.0
+
+# Linear moves: acceleration 0.5 m/s^2, velocities as required
+lin_a = 0.5
+v_approach = 0.25   # 250 mm/s
+v_descend  = 0.10   # 100 mm/s
+v_weld     = 0.06   # 60 mm/s
+
+# ---- Program ----
+def main():
+    # Move to home position (joint move)
+    movej(home_joint, a=joint_a, v=joint_v, r=0.0)
+
+    # Approach above weld fixture
+    movel(approach_pose, a=lin_a, v=v_approach, r=0.0)
+
+    # Descend to weld start
+    movel(start_pose, a=lin_a, v=v_descend, r=0.0)
+
+    # Weld midpoint (slow linear move)
+    movel(mid_pose, a=lin_a, v=v_weld, r=0.0)
+
+    # Weld end
+    movel(end_pose, a=lin_a, v=v_weld, r=0.0)
+
+    # Additional linear moves (placeholders)
+    movel(pose_extra1, a=lin_a, v=v_weld, r=0.0)
+    movel(pose_extra2, a=lin_a, v=v_weld, r=0.0)
+
+    # Return to home safely
+    movej(home_joint, a=joint_a, v=joint_v, r=0.0)
+
+# Execute
+main()

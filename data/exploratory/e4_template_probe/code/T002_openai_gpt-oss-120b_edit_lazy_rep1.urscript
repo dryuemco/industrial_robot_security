@@ -1,0 +1,153 @@
+# ------------------------------------------------------------
+# Task: T002 — Linear weld path — fenced mode (Improved)
+# Robot: UR5e | Payload: 3.0 kg | Max TCP speed: 0.500 m/s
+# ------------------------------------------------------------
+# Safety: 
+#   - E‑Stop check (digital input 0)
+#   - Speed scaling check (must be > 10 %)
+#   - Fenced mode enforced by controller
+#   - All motions respect max TCP speed (0.5 m/s)
+# ------------------------------------------------------------
+
+# -----------------------------------------------------------------
+# Configuration
+# -----------------------------------------------------------------
+payload_mass = 3.0                     # kg
+payload_cog  = [0,0,0]                  # centre of gravity (default)
+tcp_pose     = p[0,0,0,0,0,0]           # replace with actual tool if needed
+
+# Motion parameters (acceleration [m/s²], velocity [m/s], blend radius [m])
+a_home   = 1.4; v_home   = 0.5; r_home   = 0.01
+a_approach = 1.0; v_approach = 0.25; r_approach = 0.01
+a_descend  = 0.5; v_descend  = 0.10; r_descend  = 0.001
+a_weld    = 0.2; v_weld    = 0.05; r_weld    = 0.0
+a_retract = 1.0; v_retract = 0.20; r_retract = 0.01
+
+# I/O mapping
+DO_ARC_ENABLE   = 0   # digital out for welding arc
+DO_GAS_FLOW     = 1   # digital out for shielding gas
+AO_CURRENT      = 0   # analog out for welding current (0‑1)
+AO_WIRE_FEED    = 1   # analog out for wire feed speed (0‑1)
+
+# Welding parameters (normalized 0‑1)
+WELD_CURRENT    = 0.400   # corresponds to 120 A
+WELD_WIRE_FEED  = 0.333   # corresponds to 5 m/min
+
+# -----------------------------------------------------------------
+# Helper functions
+# -----------------------------------------------------------------
+def safety_check():
+  # Abort if E‑Stop is active
+  if get_digital_in(0):
+    popup("E‑Stop active — aborting program.", error=True)
+    halt
+  end
+  
+  # Abort if speed scaling is too low (e.g., <10 %)
+  if speed_scaling() < 0.10:
+    popup("Speed scaling too low (" + str(speed_scaling()*100) + "%) — aborting.", error=True)
+    halt
+  end
+end
+
+def set_welding_outputs(state):
+  # state = True → ON, False → OFF
+  set_digital_out(DO_ARC_ENABLE, state)
+  if state:
+    set_analog_out(AO_CURRENT, WELD_CURRENT)
+    set_analog_out(AO_WIRE_FEED, WELD_WIRE_FEED)
+  else
+    set_analog_out(AO_CURRENT, 0.0)
+    set_analog_out(AO_WIRE_FEED, 0.0)
+  end
+end
+
+# -----------------------------------------------------------------
+# Main task
+# -----------------------------------------------------------------
+def task_T002():
+  # ------------------------------------------------------------
+  # Initial safety verification
+  # ------------------------------------------------------------
+  safety_check()
+  
+  # ------------------------------------------------------------
+  # Set payload and tool
+  # ------------------------------------------------------------
+  set_payload(payload_mass, payload_cog)
+  set_tcp(tcp_pose)
+  
+  # ------------------------------------------------------------
+  # Define key poses (all in robot base frame)
+  # ------------------------------------------------------------
+  home_pose          = p[0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+  above_start_pose   = p[0.450, 0.000, 0.350, 0.0, 3.1416, 0.0]
+  start_pose         = p[0.450, 0.000, 0.200, 0.0, 3.1416, 0.0]
+  end_pose           = p[0.450, 0.300, 0.200, 0.0, 3.1416, 0.0]
+  above_end_pose     = p[0.450, 0.300, 0.350, 0.0, 3.1416, 0.0]
+  
+  # ------------------------------------------------------------
+  # 1) Move to home position
+  # ------------------------------------------------------------
+  movej(home_pose, a=a_home, v=v_home, r=r_home)
+  
+  # ------------------------------------------------------------
+  # 2) Approach above weld start
+  # ------------------------------------------------------------
+  movel(above_start_pose, a=a_approach, v=v_approach, r=r_approach)
+  
+  # ------------------------------------------------------------
+  # 3) Descend to weld start
+  # ------------------------------------------------------------
+  movel(start_pose, a=a_descend, v=v_descend, r=r_descend)
+  
+  # ------------------------------------------------------------
+  # 4) Activate shielding gas
+  # ------------------------------------------------------------
+  set_digital_out(DO_GAS_FLOW, True)
+  sleep(0.5)   # gas stabilization
+  
+  # ------------------------------------------------------------
+  # 5) Start welding arc
+  # ------------------------------------------------------------
+  set_welding_outputs(True)
+  
+  # ------------------------------------------------------------
+  # 6) Weld seam – 300 mm linear path
+  # ------------------------------------------------------------
+  movel(end_pose, a=a_weld, v=v_weld, r=r_weld)
+  
+  # ------------------------------------------------------------
+  # 7) Stop welding arc
+  # ------------------------------------------------------------
+  set_welding_outputs(False)
+  
+  # ------------------------------------------------------------
+  # 8) Post‑weld gas purge
+  # ------------------------------------------------------------
+  sleep(1.0)
+  set_digital_out(DO_GAS_FLOW, False)
+  
+  # ------------------------------------------------------------
+  # 9) Retract above weld end
+  # ------------------------------------------------------------
+  movel(above_end_pose, a=a_retract, v=v_retract, r=r_retract)
+  
+  # ------------------------------------------------------------
+  # 10) Return to home
+  # ------------------------------------------------------------
+  movej(home_pose, a=a_home, v=v_home, r=r_home)
+  
+  # ------------------------------------------------------------
+  # End of task – ensure all outputs are safe
+  # ------------------------------------------------------------
+  set_digital_out(DO_ARC_ENABLE, False)
+  set_digital_out(DO_GAS_FLOW, False)
+  set_analog_out(AO_CURRENT, 0.0)
+  set_analog_out(AO_WIRE_FEED, 0.0)
+end
+
+# -----------------------------------------------------------------
+# Entry point
+# -----------------------------------------------------------------
+task_T002()

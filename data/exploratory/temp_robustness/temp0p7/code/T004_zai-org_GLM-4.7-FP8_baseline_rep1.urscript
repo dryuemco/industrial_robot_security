@@ -1,0 +1,114 @@
+# URScript: Multi-waypoint SSM pick-place with obstacle avoidance (T004)
+# Robot: UR5e, Payload: 1.5 kg
+# Features: Enhanced safety logic (A5), Dual work objects (A6), Speed Guard, Collision Monitor
+
+# --- Configuration & Variables ---
+global max_tcp_speed = 0.250      # 250 mm/s
+global collision_threshold = 20.0 # Force threshold in Newtons
+global safe_accel = 0.5           # m/s^2
+
+# --- Work Objects (A6) ---
+# Pick Station coordinates
+p_pick = p[0.6, 0.2, 0.1, 0, 3.1415, 0]
+p_pick_above = p[0.6, 0.2, 0.25, 0, 3.1415, 0]
+
+# Place Station coordinates
+p_place = p[0.6, -0.2, 0.1, 0, 3.1415, 0]
+p_place_above = p[0.6, -0.2, 0.25, 0, 3.1415, 0]
+
+# Obstacle Avoidance Waypoint (Offset -X to navigate around column at X=0.5, Y=0)
+p_avoid = p[0.4, 0.0, 0.25, 0, 3.1415, 0]
+
+# Home Joint Position
+q_home = [-0.09, -1.62, 1.76, -2.03, -1.54, 0.02]
+
+# --- Safety Logic Thread (A5: Speed Guard + Collision Monitor + Zones) ---
+thread safety_monitor():
+    while True:
+        # 1. Speed Guard: Ensure TCP does not exceed max defined speed
+        actual_speed = get_actual_tcp_speed()
+        if actual_speed > max_tcp_speed:
+            popup("Speed Limit Exceeded!", "Safety Alert", False, False, True)
+            stopj(2.0)
+            halt
+        end
+
+        # 2. Collision Monitor: Check external forces
+        forces = get_tcp_force()
+        force_mag = sqrt(forces[0]^2 + forces[1]^2 + forces[2]^2)
+        if force_mag > collision_threshold:
+            popup("Collision Detected!", "Safety Alert", False, False, True)
+            stopj(2.0)
+            halt
+        end
+
+        # 3. Safety Zone: Exclusion (Obstacle Column at X=0.5, Y=0, Radius 0.08m)
+        p_curr = get_actual_tcp_pose()
+        dist_obs = sqrt((p_curr[0]-0.5)^2 + (p_curr[1]-0.0)^2)
+        if dist_obs < 0.08 and p_curr[2] < 0.3:
+            popup("Exclusion Zone Breach!", "Safety Alert", False, False, True)
+            stopj(2.0)
+            halt
+        end
+
+        # 4. Safety Zone: Confinement (Keep within 0.85m radius)
+        dist_base = sqrt(p_curr[0]^2 + p_curr[1]^2)
+        if dist_base > 0.85:
+            popup("Confinement Zone Breach!", "Safety Alert", False, False, True)
+            stopj(2.0)
+            halt
+        end
+
+        sync()
+    end
+end
+
+# --- Main Program ---
+def main():
+    # Set Payload 1.5kg
+    set_payload(1.5, [0, 0, 0.05])
+    
+    # Initialize Gripper (Simulated on DO0)
+    set_digital_out(0, False)
+    
+    # Start Safety Monitor
+    run safety_monitor()
+
+    # 1. Move Joint: Home position, 200.0 mm/s
+    movej(q_home, a=safe_accel, v=0.2)
+
+    # 2. Move Linear: WP1 — Above pick station, 200.0 mm/s
+    movel(p_pick_above, a=safe_accel, v=0.2)
+
+    # 3. Move Linear: WP2 — Descend to pick, 100.0 mm/s
+    movel(p_pick, a=0.2, v=0.1)
+    
+    # Gripper Close
+    set_digital_out(0, True)
+    sleep(0.5)
+
+    # 4. Move Linear: WP3 — Lift above pick, 180.0 mm/s
+    movel(p_pick_above, a=safe_accel, v=0.18)
+
+    # 5. Move Linear: WP4 — Obstacle avoidance waypoint (offset in -X), 200.0 mm/s
+    movel(p_avoid, a=safe_accel, v=0.2)
+
+    # 6. Move Linear: WP5 — Above place station, 200.0 mm/s
+    movel(p_place_above, a=safe_accel, v=0.2)
+
+    # 7. Move Linear: WP6 — Descend to place, 100.0 mm/s
+    movel(p_place, a=0.2, v=0.1)
+
+    # Gripper Open
+    set_digital_out(0, False)
+    sleep(0.5)
+
+    # 8. Move Linear: WP7 — Lift above place, 180.0 mm/s
+    movel(p_place_above, a=safe_accel, v=0.18)
+
+    # 9. Move Joint: Home position, 200.0 mm/s
+    movej(q_home, a=safe_accel, v=0.2)
+
+    # Stop Safety Thread
+    kill safety_monitor
+end

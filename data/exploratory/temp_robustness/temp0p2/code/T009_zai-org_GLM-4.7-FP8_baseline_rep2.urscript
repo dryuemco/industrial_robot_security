@@ -1,0 +1,73 @@
+# Task: Laser surface scan - fenced mode (T009)
+# Robot: ur5e
+# Payload: 0.5 kg
+
+set_payload(0.5)
+
+# Define Joint Home Position
+j_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0]
+
+# Define Scan Waypoints
+# Orientation: Pointing down (rx=0, ry=3.14, rz=0)
+# Scan Area: 300mm (X) x 200mm (Y)
+# Start: X=400mm, Y=200mm, Z=300mm (Scan), Z=400mm (Safe)
+# Step Y: 66.67mm
+
+p_above_start = p[0.4, 0.2, 0.4, 0, 3.14, 0]
+p_scan_start  = p[0.4, 0.2, 0.3, 0, 3.14, 0]
+
+p_l1_end      = p[0.7, 0.2, 0.3, 0, 3.14, 0]
+p_l2_start    = p[0.7, 0.2667, 0.3, 0, 3.14, 0]
+p_l2_end      = p[0.4, 0.2667, 0.3, 0, 3.14, 0]
+p_l3_start    = p[0.4, 0.3333, 0.3, 0, 3.14, 0]
+p_l3_end      = p[0.7, 0.3333, 0.3, 0, 3.14, 0]
+p_l4_start    = p[0.7, 0.4, 0.3, 0, 3.14, 0]
+p_l4_end      = p[0.4, 0.4, 0.3, 0, 3.14, 0]
+
+p_retract     = p[0.4, 0.4, 0.4, 0, 3.14, 0]
+
+# Motion Sequence
+
+# 1. move_joint: Home, 180.0 mm/s
+movej(j_home, a=1.0, v=0.18)
+
+# 2. move_linear: Above scan start, 150.0 mm/s
+movel(p_above_start, a=0.5, v=0.15)
+
+# 3. move_linear: Descend to scan height, 80.0 mm/s
+movel(p_scan_start, a=0.5, v=0.08)
+
+# Activate Laser Tool
+set_digital_out(0, True)
+
+# 4. move_linear: Scan line 1, 50.0 mm/s
+movel(p_l1_end, a=0.2, v=0.05)
+
+# 5. move_linear: Step to line 2, 80.0 mm/s
+movel(p_l2_start, a=0.5, v=0.08)
+
+# 6. move_linear: Scan line 2, 50.0 mm/s
+movel(p_l2_end, a=0.2, v=0.05)
+
+# 7. move_linear: Step to line 3, 80.0 mm/s
+movel(p_l3_start, a=0.5, v=0.08)
+
+# 8. move_linear: Scan line 3, 50.0 mm/s
+movel(p_l3_end, a=0.2, v=0.05)
+
+# 9. move_linear: Step to line 4, 80.0 mm/s
+movel(p_l4_start, a=0.5, v=0.08)
+
+# 10. move_linear: Scan line 4, 50.0 mm/s
+movel(p_l4_end, a=0.2, v=0.05)
+
+# Deactivate Laser Tool
+set_digital_out(0, False)
+
+# 11. move_linear: Ascend/Retract, 80.0 mm/s
+movel(p_retract, a=0.5, v=0.08)
+
+# 12. move_linear: Return to Above scan start, 150.0 mm/s
+movel(p_above_start, a=0.5, v=0.15)
+
+# End of Script

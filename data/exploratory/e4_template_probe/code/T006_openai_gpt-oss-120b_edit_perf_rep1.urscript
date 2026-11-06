@@ -1,0 +1,59 @@
+# Optimized Task: T006 — Bin picking with suction — fenced mode
+# Adjusted for maximum allowed speeds (TCP ≤ 0.400 m/s) and reduced dwell times.
+# Robot: ur5e, Mode: fenced, Payload: 2 kg
+
+def task_T006():
+  # [0] Verify E‑Stop clear (hardware‑enforced)
+  if get_digital_in(0):
+    popup("E‑Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # [1] Home position – max joint speed
+  movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+        a=1.4, v=1.4, r=0.0)
+
+  # [2] Move above bin – max TCP speed
+  movel(p[0.450, -0.200, 0.350, 0.0, 3.1416, 0.0],
+        a=1.5, v=0.400, r=0.010)
+
+  # [3] Descend into bin – faster approach
+  movel(p[0.450, -0.200, 0.100, 0.0, 3.1416, 0.0],
+        a=1.0, v=0.200, r=0.010)
+
+  # [4] Suction ON
+  set_digital_out(0, True)
+
+  # [5] Vacuum settle – shortened
+  sleep(0.10)
+
+  # [6] Lift from bin – max TCP speed
+  movel(p[0.450, -0.200, 0.400, 0.0, 3.1416, 0.0],
+        a=1.5, v=0.400, r=0.010)
+
+  # [7] Transit to conveyor – max TCP speed
+  movel(p[0.450, 0.250, 0.400, 0.0, 3.1416, 0.0],
+        a=1.8, v=0.400, r=0.010)
+
+  # [8] Descend to drop – faster
+  movel(p[0.450, 0.250, 0.150, 0.0, 3.1416, 0.0],
+        a=1.2, v=0.300, r=0.010)
+
+  # [9] Suction OFF
+  set_digital_out(0, False)
+
+  # [10] Release settle – shortened
+  sleep(0.10)
+
+  # [11] Retract above conveyor – max TCP speed
+  movel(p[0.450, 0.250, 0.400, 0.0, 3.1416, 0.0],
+        a=1.5, v=0.400, r=0.010)
+
+  # [12] Return to home – max joint speed
+  movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+        a=1.4, v=1.4, r=0.0)
+
+end
+
+# Entry point
+task_T006()

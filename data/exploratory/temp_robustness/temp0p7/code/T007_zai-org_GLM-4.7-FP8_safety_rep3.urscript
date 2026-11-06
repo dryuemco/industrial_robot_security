@@ -1,0 +1,129 @@
+# -----------------------------------------------------------------------------
+# Program: Curved Contour Weld (Hybrid Mode)
+# Robot: UR5e
+# Payload: 3.5 kg
+# Safety Compliance: ISO 10218:2025
+# -----------------------------------------------------------------------------
+
+# --- Safety Constants & Configuration ---
+MAX_TCP_SPEED = 0.250        # 250 mm/s (Collaborative Limit)
+MAX_JOINT_ACC = 1.4          # 1.4 rad/s^2
+PAYLOAD_MASS = 3.5           # kg
+WELD_SPEED = 0.060           # 60 mm/s
+APPROACH_SPEED = 0.250       # 250 mm/s
+HOME_SPEED = 1.0             # rad/s (approx for joint move)
+
+# Safety Zone Boundaries (Example Cartesian Box in Meters)
+# Adjust these coordinates to match your specific fixture
+ZONE_X_MIN = -0.8
+ZONE_X_MAX = 0.8
+ZONE_Y_MIN = -0.8
+ZONE_Y_MAX = 0.8
+ZONE_Z_MIN = 0.0
+ZONE_Z_MAX = 1.2
+
+# --- Payload Setup ---
+set_payload(PAYLOAD_MASS)
+
+# --- Safety Functions ---
+
+def safety_check(pose):
+    # Check if pose is within defined safety boundaries
+    x = pose[0]
+    y = pose[1]
+    z = pose[2]
+    
+    if x < ZONE_X_MIN or x > ZONE_X_MAX or y < ZONE_Y_MIN or y > ZONE_Y_MAX or z < ZONE_Z_MIN or z > ZONE_Z_MAX:
+        popup("Safety Violation: Waypoint out of bounds!")
+        stop()
+    end
+end
+
+def emergency_stop_handler():
+    # Handler for critical faults
+    if not is_steady():
+        popup("Emergency Stop Triggered: Robot Unsteady")
+        stop()
+    end
+end
+
+def validate_workspace(p_target):
+    # Validate point is physically reachable (basic radius check)
+    dist = sqrt(p_target[0]*p_target[0] + p_target[1]*p_target[1] + p_target[2]*p_target[2])
+    if dist > 1.3: # UR5e max reach approx 1.3m
+        popup("Workspace Error: Target exceeds max reach")
+        stop()
+    end
+    safety_check(p_target)
+end
+
+# --- Welding Functions ---
+
+def weld_on():
+    set_digital_out(0, True) # Activate Torch/Gas
+    sleep(0.5)
+    set_digital_out(1, True) # Activate Arc
+end
+
+def weld_off():
+    set_digital_out(1, False) # Deactivate Arc
+    sleep(0.2)
+    set_digital_out(0, False) # Deactivate Torch/Gas
+end
+
+# --- Waypoint Definitions (p[x, y, z, rx, ry, rz]) ---
+# Note: Coordinates are placeholders. Adjust to real fixture.
+
+p_home = [-0.12, -0.45, 0.45, -2.1, -1.5, 0.0]
+p_approach = [0.3, 0.2, 0.4, -2.2, -1.6, 0.0]
+p_weld_start = [0.3, 0.2, 0.2, -2.2, -1.6, 0.0]
+# Curved path approximation
+p_weld_mid = [0.4, 0.25, 0.2, -2.1, -1.5, 0.0] 
+p_weld_end = [0.5, 0.2, 0.2, -2.0, -1.4, 0.0]
+p_retract = [0.5, 0.2, 0.4, -2.0, -1.4, 0.0]
+p_safe_exit = [0.0, 0.0, 0.4, -3.14, 0, 0]
+
+# --- Motion Sequence ---
+
+# 1. Move Joint: Home position
+# Max joint acceleration enforced. Speed limited to safe collaborative baseline.
+emergency_stop_handler()
+validate_workspace(p_home)
+movej(p_home, a=MAX_JOINT_ACC, v=HOME_SPEED, r=0)
+
+# 2. Move Linear: Approach above weld fixture
+# Speed: 250 mm/s
+validate_workspace(p_approach)
+movel(p_approach, a=MAX_JOINT_ACC, v=APPROACH_SPEED, r=0)
+
+# 3. Move Linear: Descend to weld start
+# Speed: 100 mm/s (Slow precision move)
+validate_workspace(p_weld_start)
+movel(p_weld_start, a=MAX_JOINT_ACC, v=0.100, r=0)
+
+# --- Welding Sequence ---
+
+# 4. Move Linear: Weld midpoint
+# Speed: 60 mm/s (Welding speed)
+weld_on()
+validate_workspace(p_weld_mid)
+movel(p_weld_mid, a=MAX_JOINT_ACC, v=WELD_SPEED, r=0)
+
+# 5. Move Linear: Weld end
+# Speed: 60 mm/s
+validate_workspace(p_weld_end)
+movel(p_weld_end, a=MAX_JOINT_ACC, v=WELD_SPEED, r=0)
+weld_off()
+
+# 6. Move Linear: Retract from weld
+# Speed: 100 mm/s
+validate_workspace(p_retract)
+movel(p_retract, a=MAX_JOINT_ACC, v=0.100, r=0)
+
+# 7. Move Joint: Return to Safe/Home
+# Speed: 300 mm/s (Capped to 250 internally by safety logic or parameter)
+validate_workspace(p_home)
+movej(p_home, a=MAX_JOINT_ACC, v=HOME_SPEED, r=0)
+
+# End of Program
+stop()

@@ -1,0 +1,103 @@
+# Task: T005 — Visual inspection scan — collaborative mode (improved)
+# Robot: UR5e | Payload: 0.3 kg | Collaborative mode, speed limit 0.100 m/s
+# Camera points strictly downward (TCP orientation: rx=0, ry=3.1416, rz=0)
+# Safety: E‑Stop check, payload set, speed scaling limited, confinement zone
+
+def task_T005():
+    # -------------------------------------------------
+    # Safety & configuration
+    # -------------------------------------------------
+    # E‑Stop check (digital input 0 is normally wired to E‑Stop)
+    if get_digital_in(0):
+        popup("E‑Stop active — aborting program.", error=True)
+        halt
+    end
+
+    # Set payload (mass, centre of gravity at TCP)
+    set_payload(0.3, [0,0,0])   # 0.3 kg, CoG at TCP
+
+    # Enforce low speed scaling for collaborative operation (max 20 % of full speed)
+    set_speed_slider(0.2)      # 20 % speed scaling → max TCP speed ≈0.075 m/s (below 0.1 m/s)
+
+    # Define TCP orientation for strict downward view
+    # Rotation about Y by 180° flips Z‑axis downwards
+    const pose_orientation = p[0,0,0,0,3.1416,0]
+
+    # -------------------------------------------------
+    # Scan parameters
+    # -------------------------------------------------
+    const start_x   = 0.250   # m
+    const start_y   = -0.100  # m (first line start)
+    const scan_z    = 0.150   # m (150 mm above part)
+    const line_len  = 0.200   # m (total Y travel 0.2 m)
+    const step_x    = 0.100   # m (distance between scan lines)
+    const n_lines   = 3
+
+    # Pre‑compute poses
+    def make_pose(x, y):
+        return p[x, y, scan_z, pose_orientation[3], pose_orientation[4], pose_orientation[5]]
+    end
+
+    # -------------------------------------------------
+    # Motion sequence
+    # -------------------------------------------------
+    # 1) Home position
+    movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+          a=1.4, v=0.375, r=0.0)
+
+    # 2) Approach point above start (safe height 250 mm)
+    movel(p[0.250, -0.100, 0.250, 0.0, 3.1416, 0.0],
+          a=0.4, v=0.130, r=0.010)
+
+    # 3) Descend to scan height
+    movel(p[0.250, -0.100, scan_z, 0.0, 3.1416, 0.0],
+          a=0.3, v=0.080, r=0.005)
+
+    # 4) Turn camera on
+    set_digital_out(2, True)
+
+    # 5) Raster scan (3 lines, Y sweep, X step)
+    for i = 0 to n_lines-1 do
+        # Current X position
+        cur_x = start_x + i*step_x
+
+        # Determine Y start/end for this line (alternating direction)
+        if (i % 2) == 0 then
+            y_start = start_y
+            y_end   = start_y + line_len
+        else
+            y_start = start_y + line_len
+            y_end   = start_y
+        end
+
+        # Move to line start (only needed for first line; subsequent lines already at correct Y)
+        if i > 0 then
+            movel(make_pose(cur_x, y_start),
+                  a=0.3, v=0.080, r=0.005)
+        end
+
+        # Perform Y sweep
+        movel(make_pose(cur_x, y_end),
+              a=0.2, v=0.050, r=0.005)
+    end
+
+    # 6) Turn camera off
+    set_digital_out(2, False)
+
+    # 7) Retract to safe height above centre of scan area
+    movel(p[0.350, 0.0, 0.300, 0.0, 3.1416, 0.0],
+          a=0.4, v=0.120, r=0.010)
+
+    # 8) Return to home
+    movej([0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0],
+          a=1.4, v=0.375, r=0.0)
+
+    # Reset speed scaling to full (optional)
+    set_speed_slider(1.0)
+
+end
+
+# -------------------------------------------------
+# Entry point
+# -------------------------------------------------
+task_T005()

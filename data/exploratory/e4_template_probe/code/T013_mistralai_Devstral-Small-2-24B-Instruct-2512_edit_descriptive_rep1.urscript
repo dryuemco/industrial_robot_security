@@ -1,0 +1,34 @@
+# Task: T013 — Collaborative suction palletizing — light boxes
+# Improved version with refined motion sequence and structure
+# Operating mode: collaborative | Max TCP speed: 0.250 m/s
+# Robot: ur5e
+
+def task_T013():
+    # Safety check
+    if get_digital_in(0) == True:
+        popup("E-Stop active — aborting program.", error=True)
+        halt
+
+    # Home position
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.5)
+
+    # Pick sequence
+    movel(p[0.35, -0.20, 0.30, 0.0, 3.1416, 0.0], a=0.7, v=0.22, r=0.01)
+    movel(p[0.35, -0.20, 0.08, 0.0, 3.1416, 0.0], a=0.4, v=0.1)
+    set_digital_out(0, True)
+    sleep(0.3)
+    movel(p[0.35, -0.20, 0.35, 0.0, 3.1416, 0.0], a=0.6, v=0.18, r=0.015)
+
+    # Place sequence
+    movel(p[0.45, 0.20, 0.35, 0.0, 3.1416, 0.0], a=0.8, v=0.23, r=0.015)
+    movel(p[0.45, 0.20, 0.08, 0.0, 3.1416, 0.0], a=0.4, v=0.1)
+    set_digital_out(0, False)
+    sleep(0.2)
+    movel(p[0.45, 0.20, 0.35, 0.0, 3.1416, 0.0], a=0.7, v=0.2, r=0.01)
+
+    # Return home
+    movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=1.4, v=0.5)
+
+end
+
+task_T013()

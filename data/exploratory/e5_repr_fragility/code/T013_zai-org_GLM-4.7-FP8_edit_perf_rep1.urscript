@@ -1,0 +1,57 @@
+# Task: T013 — Collaborative suction palletizing — light boxes (Optimized)
+# Robot: ur5e | Mode: collaborative | Payload: 0.8 kg
+# Optimizations: Increased accelerations, added blend radii, reduced sleep times, fixed suction logic.
+
+def task_T013():
+  # Constants
+  TCP_SPEED_CAP = 0.250
+  ACCEL_TRANSIT = 1.2   # Increased acceleration for faster transitions
+  ACCEL_PRECISE = 0.8   # Moderate acceleration for precise pick/place
+  BLEND_RADIUS = 0.05   # 50mm blend radius to maintain momentum through waypoints
+  
+  # [0] E-Stop verify
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+  
+  # [1] Home - Increased joint velocity and acceleration significantly
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.0, v=1.5)
+  
+  # [2] Above staging - Max speed, high acceleration, blend enabled
+  movel(p[0.350000, -0.200000, 0.300000, 0.0000, 3.1416, 0.0000], a=ACCEL_TRANSIT, v=TCP_SPEED_CAP, r=BLEND_RADIUS)
+  
+  # [3] Descend to pick - Max speed, no blend (precision required)
+  movel(p[0.350000, -0.200000, 0.080000, 0.0000, 3.1416, 0.0000], a=ACCEL_PRECISE, v=TCP_SPEED_CAP, r=0.0)
+  
+  # [4] Suction ON
+  set_digital_out(0, True)
+  
+  # [5] Vacuum settle - Reduced sleep time for faster cycle
+  sleep(0.15)
+  
+  # [6] Lift - Max speed, high acceleration, blend enabled
+  movel(p[0.350000, -0.200000, 0.350000, 0.0000, 3.1416, 0.0000], a=ACCEL_TRANSIT, v=TCP_SPEED_CAP, r=BLEND_RADIUS)
+  
+  # [7] Transit to pallet - Max speed, high acceleration, blend enabled
+  movel(p[0.450000, 0.200000, 0.350000, 0.0000, 3.1416, 0.0000], a=ACCEL_TRANSIT, v=TCP_SPEED_CAP, r=BLEND_RADIUS)
+  
+  # [8] Place on pallet - Max speed, no blend (precision required)
+  movel(p[0.450000, 0.200000, 0.080000, 0.0000, 3.1416, 0.0000], a=ACCEL_PRECISE, v=TCP_SPEED_CAP, r=0.0)
+  
+  # [9] Suction OFF - Fixed logic (set to False to turn off)
+  set_digital_out(0, False)
+  
+  # [10] Release - Reduced sleep time
+  sleep(0.1)
+  
+  # [11] Retract - Max speed, high acceleration, blend enabled
+  movel(p[0.450000, 0.200000, 0.350000, 0.0000, 3.1416, 0.0000], a=ACCEL_TRANSIT, v=TCP_SPEED_CAP, r=BLEND_RADIUS)
+  
+  # [12] Return home - Increased joint velocity and acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=2.0, v=1.5)
+  
+end
+
+# Entry point
+task_T013()

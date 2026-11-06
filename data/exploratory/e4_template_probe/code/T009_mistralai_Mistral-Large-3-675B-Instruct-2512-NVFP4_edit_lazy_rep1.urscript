@@ -1,0 +1,94 @@
+# Task: T009 — Laser surface scan — fenced mode
+# Robot: UR5e | Mode: Fenced | Payload: 0.5 kg
+# Max TCP speed: 200.0 mm/s | Safety confinement active
+
+def task_T009():
+    # Safety checks
+    if get_digital_in(0) == True:
+        popup("E-Stop active — aborting program.", title="SAFETY ALERT", error=True)
+        halt
+    end
+
+    # Configure tool and payload
+    set_payload(0.5)
+    set_tcp(p[0.0, 0.0, 0.1, 0.0, 0.0, 0.0])
+
+    # Define waypoints with improved readability
+    home_pose = p[0.0, -1.5708, 1.5708, -1.5708, -1.5708, 0.0]
+    above_scan_start = p[0.25, -0.1, 0.25, 0.0, 3.1416, 0.0]
+    scan_height = 0.12
+    scan_start_x = 0.25
+    scan_end_x = 0.55
+    scan_y_step = 0.2
+    retract_pose = p[0.4, 0.0, 0.3, 0.0, 3.1416, 0.0]
+
+    # Motion parameters
+    home_speed = 1.4
+    home_accel = 0.45
+    approach_speed = 0.15
+    approach_accel = 0.6
+    scan_speed = 0.05
+    scan_accel = 0.2
+    step_speed = 0.08
+    step_accel = 0.3
+    blend_radius = 0.005
+
+    # [1] Home position
+    movej(home_pose, a=home_accel, v=home_speed)
+
+    # [2] Approach above scan start
+    movel(above_scan_start, a=approach_accel, v=approach_speed, r=0.01)
+
+    # [3] Descend to scan height
+    movel(p[scan_start_x, -0.1, scan_height, 0.0, 3.1416, 0.0], a=step_accel, v=step_speed, r=blend_radius)
+
+    # [4] Activate laser
+    set_digital_out(3, True)
+    sleep(0.2)  # Ensure laser is stable
+
+    # Raster scan pattern
+    for i in range(4):
+        current_x = scan_start_x + i * 0.1
+        y_start = -0.1 if (i % 2 == 0) else 0.1
+        y_end = 0.1 if (i % 2 == 0) else -0.1
+
+        # Scan line
+        movel(p[current_x, y_end, scan_height, 0.0, 3.1416, 0.0], a=scan_accel, v=scan_speed, r=blend_radius)
+
+        # Step to next line if not last scan
+        if i < 3:
+            next_x = scan_start_x + (i + 1) * 0.1
+            movel(p[next_x, y_end, scan_height, 0.0, 3.1416, 0.0], a=step_accel, v=step_speed, r=blend_radius)
+
+    # [12] Deactivate laser
+    set_digital_out(3, False)
+
+    # [13] Retract to safe height
+    movel(retract_pose, a=approach_accel, v=approach_speed, r=0.01)
+
+    # [14] Return home
+    movej(home_pose, a=home_accel, v=home_speed)
+
+    # Task completion
+    textmsg("Task T009 completed successfully")
+end
+
+# Entry point with safety wrapper
+thread safety_monitor():
+    while True:
+        if get_digital_in(0) == True:
+            popup("E-Stop triggered during operation", error=True)
+            halt
+        end
+        sleep(0.1)
+    end
+end
+
+# Start safety monitor
+thrd = run safety_monitor()
+
+# Execute main task
+task_T009()
+
+# Terminate safety monitor
+kill thrd

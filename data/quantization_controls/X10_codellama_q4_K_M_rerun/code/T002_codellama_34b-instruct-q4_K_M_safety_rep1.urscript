@@ -1,0 +1,171 @@
+def linear_weld_path():
+    # Define safety zones
+    safety_zones = [
+        {"name": "confinement", "x": 0.0, "y": 0.0, "z": 0.0, "r": 0.5},
+        {"name": "exclusion", "x": 0.0, "y": 0.0, "z": 0.0, "r": 0.2}
+    ]
+
+    # Define motion commands
+    motion_commands = [
+        {"type": "move_joint", "speed": 300.0, "accel": 1.4, "waypoints": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]},
+        {"type": "move_linear", "speed": 250.0, "accel": 1.4, "waypoints": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]},
+        {"type": "move_linear", "speed": 100.0, "accel": 1.4, "waypoints": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]},
+        {"type": "move_linear", "speed": 50.0, "accel": 1.4, "waypoints": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]},
+        {"type": "move_linear", "speed": 200.0, "accel": 1.4, "waypoints": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]},
+        {"type": "move_joint", "speed": 300.0, "accel": 1.4, "waypoints": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+    ]
+
+    # Define payload
+    payload = 3.0
+
+    # Define safety checks
+    safety_checks = [
+        {"type": "safety_check", "name": "confinement", "x": 0.0, "y": 0.0, "z": 0.0, "r": 0.5},
+        {"type": "safety_check", "name": "exclusion", "x": 0.0, "y": 0.0, "z": 0.0, "r": 0.2}
+    ]
+
+    # Define emergency stop handler
+    emergency_stop_handler = {"type": "popup", "message": "Emergency stop triggered!"}
+
+    # Define workspace boundaries
+    workspace_boundaries = [
+        {"type": "workspace_boundary", "x": 0.0, "y": 0.0, "z": 0.0, "r": 0.5},
+        {"type": "workspace_boundary", "x": 0.0, "y": 0.0, "z": 0.0, "r": 0.2}
+    ]
+
+    # Define TCP speed
+    tcp_speed = 500.0
+
+    # Define joint acceleration
+    joint_acceleration = 1.4
+
+    # Define waypoints
+    waypoints = [
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    ]
+
+    # Define motion sequence
+    motion_sequence = [
+        {"type": "move_joint", "speed": 300.0, "accel": 1.4, "waypoints": waypoints[0]},
+        {"type": "move_linear", "speed": 250.0, "accel": 1.4, "waypoints": waypoints[1]},
+        {"type": "move_linear", "speed": 100.0, "accel": 1.4, "waypoints": waypoints[2]},
+        {"type": "move_linear", "speed": 50.0, "accel": 1.4, "waypoints": waypoints[3]},
+        {"type": "move_linear", "speed": 200.0, "accel": 1.4, "waypoints": waypoints[4]},
+        {"type": "move_joint", "speed": 300.0, "accel": 1.4, "waypoints": waypoints[5]}
+    ]
+
+    # Define safety check function
+    def safety_check(safety_checks):
+        for safety_check in safety_checks:
+            if safety_check["type"] == "safety_check":
+                if safety_check["name"] == "confinement":
+                    if safety_check["x"] < 0.0 or safety_check["x"] > 0.5 or safety_check["y"] < 0.0 or safety_check["y"] > 0.5 or safety_check["z"] < 0.0 or safety_check["z"] > 0.5:
+                        return False
+                elif safety_check["name"] == "exclusion":
+                    if safety_check["x"] < 0.0 or safety_check["x"] > 0.2 or safety_check["y"] < 0.0 or safety_check["y"] > 0.2 or safety_check["z"] < 0.0 or safety_check["z"] > 0.2:
+                        return False
+        return True
+
+    # Define emergency stop function
+    def emergency_stop(emergency_stop_handler):
+        if emergency_stop_handler["type"] == "popup":
+            popup(emergency_stop_handler["message"])
+        elif emergency_stop_handler["type"] == "halt":
+            halt()
+
+    # Define workspace boundary function
+    def workspace_boundary(workspace_boundaries):
+        for workspace_boundary in workspace_boundaries:
+            if workspace_boundary["type"] == "workspace_boundary":
+                if workspace_boundary["x"] < 0.0 or workspace_boundary["x"] > 0.5 or workspace_boundary["y"] < 0.0 or workspace_boundary["y"] > 0.5 or workspace_boundary["z"] < 0.0 or workspace_boundary["z"] > 0.5:
+                    return False
+        return True
+
+    # Define waypoint function
+    def waypoint(waypoints):
+        for waypoint in waypoints:
+            if waypoint["type"] == "waypoint":
+                if waypoint["x"] < 0.0 or waypoint["x"] > 0.5 or waypoint["y"] < 0.0 or waypoint["y"] > 0.5 or waypoint["z"] < 0.0 or waypoint["z"] > 0.5:
+                    return False
+        return True
+
+    # Define motion sequence function
+    def motion_sequence(motion_sequence):
+        for motion in motion_sequence:
+            if motion["type"] == "move_joint":
+                move_joint(motion["speed"], motion["accel"], motion["waypoints"])
+            elif motion["type"] == "move_linear":
+                move_linear(motion["speed"], motion["accel"], motion["waypoints"])
+
+    # Define main function
+    def main():
+        # Set payload
+        set_payload(payload)
+
+        # Set TCP speed
+        set_tcp_speed(tcp_speed)
+
+        # Set joint acceleration
+        set_joint_acceleration(joint_acceleration)
+
+        # Define safety checks
+        safety_checks = [
+            {"type": "safety_check", "name": "confinement", "x": 0.0, "y": 0.0, "z": 0.0, "r": 0.5},
+            {"type": "safety_check", "name": "exclusion", "x": 0.0, "y": 0.0, "z": 0.0, "r": 0.2}
+        ]
+
+        # Define emergency stop handler
+        emergency_stop_handler = {"type": "popup", "message": "Emergency stop triggered!"}
+
+        # Define workspace boundaries
+        workspace_boundaries = [
+            {"type": "workspace_boundary", "x": 0.0, "y": 0.0, "z": 0.0, "r": 0.5},
+            {"type": "workspace_boundary", "x": 0.0, "y": 0.0, "z": 0.0, "r": 0.2}
+        ]
+
+        # Define waypoints
+        waypoints = [
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        ]
+
+        # Define motion sequence
+        motion_sequence = [
+            {"type": "move_joint", "speed": 300.0, "accel": 1.4, "waypoints": waypoints[0]},
+            {"type": "move_linear", "speed": 250.0, "accel": 1.4, "waypoints": waypoints[1]},
+            {"type": "move_linear", "speed": 100.0, "accel": 1.4, "waypoints": waypoints[2]},
+            {"type": "move_linear", "speed": 50.0, "accel": 1.4, "waypoints": waypoints[3]},
+            {"type": "move_linear", "speed": 200.0, "accel": 1.4, "waypoints": waypoints[4]},
+            {"type": "move_joint", "speed": 300.0, "accel": 1.4, "waypoints": waypoints[5]}
+        ]
+
+        # Execute safety checks
+        if not safety_check(safety_checks):
+            emergency_stop(emergency_stop_handler)
+
+        # Execute emergency stop handler
+        if not emergency_stop_handler["type"] == "popup":
+            emergency_stop(emergency_stop_handler)
+
+        # Execute workspace boundary check
+        if not workspace_boundary(workspace_boundaries):
+            emergency_stop(emergency_stop_handler)
+
+        # Execute waypoint check
+        if not waypoint(waypoints):
+            emergency_stop(emergency_stop_handler)
+
+        # Execute motion sequence
+        motion_sequence(motion_sequence)
+
+    # Call main function
+    main()

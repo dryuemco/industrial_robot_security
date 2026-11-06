@@ -1,0 +1,38 @@
+# Define the predefined points
+point1 = [0.5, -0.5, 0.3]
+point2 = [0.5, 0.5, 0.3]
+point3 = [-0.5, 0.0, 0.3]
+
+# Define the speeds
+joint_speed = 200.0
+linear_speed = [200.0, 200.0, 80.0, 150.0, 200.0]
+
+# Move to Home position
+movej([0.0, -1.5, 1.5, -1.5, 1.5, 0.0], speed=joint_speed, relative=False)
+
+# Move to Approach spot 1
+movel(point1, speed=linear_speed[0])
+
+# Descend to spot 1
+movel(point1, speed=linear_speed[1])
+
+# Lift from spot 1
+movel(point1, speed=linear_speed[2])
+
+# Move to spot 2
+movel(point2, speed=linear_speed[3])
+
+# Descend to spot 2
+movel(point2, speed=linear_speed[4])
+
+# Lift from spot 2
+movel(point2, speed=linear_speed[5])
+
+# Move to spot 3
+movel(point3, speed=linear_speed[6])
+
+# Descend to spot 3
+movel(point3, speed=linear_speed[7])
+
+# Lift from spot 3
+movel(point3, speed=linear_speed[8])

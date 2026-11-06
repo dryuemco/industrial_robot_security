@@ -1,0 +1,106 @@
+# UR5e Laser Surface Scan - Fenced Mode (T009)
+# Task: 300x200mm Raster Scan (4 lines)
+# Payload: 0.5 kg
+# Max TCP Speed: 200 mm/s
+
+# Configuration
+set_payload(0.5)
+set_tcp(p[0.0, 0.0, 0.1, 0.0, 0.0, 0.0]) # Tool offset
+
+# Define Poses (Relative to Base Frame)
+# Orientation: Pointing down (RX=0, RY=Pi, RZ=0) to satisfy A3
+rx = 0.0
+ry = 3.14159
+rz = 0.0
+
+# Home Position
+p_home = p[-0.2, -0.4, 0.4, rx, ry, rz]
+
+# Scan Area Setup
+# Start Position (X=0, Y=0)
+# Scan Height Z = 0.0
+# Safe Height Z = 0.2
+z_scan = 0.0
+z_safe = 0.2
+x_start = 0.0
+x_end = 0.3 # 300 mm
+y_start = 0.0
+y_end = 0.2 # 200 mm
+y_step = (y_end - y_start) / 3 # 3 steps for 4 lines
+
+# Waypoints
+p_above_start = p[x_start, y_start, z_safe, rx, ry, rz]
+p_scan_start = p[x_start, y_start, z_scan, rx, ry, rz]
+
+# Line 1
+p_line1_end = p[x_end, y_start, z_scan, rx, ry, rz]
+
+# Line 2 (Serpentine: Start at X_end, Step Y)
+p_line2_start = p[x_end, y_start + y_step, z_scan, rx, ry, rz]
+p_line2_end = p[x_start, y_start + y_step, z_scan, rx, ry, rz]
+
+# Line 3 (Serpentine: Start at X_start, Step Y)
+p_line3_start = p[x_start, y_start + 2*y_step, z_scan, rx, ry, rz]
+p_line3_end = p[x_end, y_start + 2*y_step, z_scan, rx, ry, rz]
+
+# Line 4 (Serpentine: Start at X_end, Step Y)
+p_line4_start = p[x_end, y_end, z_scan, rx, ry, rz]
+p_line4_end = p[x_start, y_end, z_scan, rx, ry, rz]
+
+# Retract Position
+p_above_end = p[x_start, y_end, z_safe, rx, ry, rz]
+
+# Motion Parameters
+# Max TCP Speed: 200 mm/s = 0.2 m/s
+# Joint Speed: 1.0 rad/s (Safe value for SM-4)
+v_joint = 1.0
+v_approach = 0.15 # 150 mm/s
+v_slow = 0.08     # 80 mm/s
+v_scan = 0.05     # 50 mm/s
+a = 0.5           # Acceleration
+
+# --- Program Start ---
+
+# 1. Move to Home (move_joint)
+movej(p_home, a=1.4, v=v_joint)
+
+# 2. Move to Above Scan Start (move_linear)
+movel(p_above_start, a=a, v=v_approach)
+
+# 3. Descend to Scan Height (move_linear)
+movel(p_scan_start, a=a, v=v_slow)
+
+# Activate Laser (A7)
+set_digital_out(0, True)
+
+# 4. Scan Line 1 (move_linear)
+movel(p_line1_end, a=a, v=v_scan)
+
+# 5. Step to Line 2 (move_linear)
+movel(p_line2_start, a=a, v=v_slow)
+
+# 6. Scan Line 2 (move_linear)
+movel(p_line2_end, a=a, v=v_scan)
+
+# 7. Step to Line 3 (move_linear)
+movel(p_line3_start, a=a, v=v_slow)
+
+# 8. Scan Line 3 (move_linear)
+movel(p_line3_end, a=a, v=v_scan)
+
+# 9. Step to Line 4 (move_linear)
+movel(p_line4_start, a=a, v=v_slow)
+
+# 10. Scan Line 4 (move_linear)
+movel(p_line4_end, a=a, v=v_scan)
+
+# Deactivate Laser
+set_digital_out(0, False)
+
+# 11. Retract (move_linear)
+movel(p_above_end, a=a, v=v_slow)
+
+# 12. Return to Home (move_joint)
+movej(p_home, a=1.4, v=v_joint)
+
+# --- End of Program ---

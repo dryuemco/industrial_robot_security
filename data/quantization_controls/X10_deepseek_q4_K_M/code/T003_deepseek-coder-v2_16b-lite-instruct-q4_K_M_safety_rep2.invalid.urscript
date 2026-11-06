@@ -1,0 +1,110 @@
+# Define safety parameters
+set_tool_payload(4.5);
+set_speed(250.0);
+set_acceleration(1.4);
+
+# Define safety zones
+def safety_zone_confinement():
+    # Define the confinement zone boundaries
+    zone_min_x = -200;
+    zone_max_x = 200;
+    zone_min_y = -200;
+    zone_max_y = 200;
+    zone_min_z = 0;
+    zone_max_z = 200;
+    return [zone_min_x, zone_max_x, zone_min_y, zone_max_y, zone_min_z, zone_max_z];
+
+# Define home position
+def home_position():
+    return [0.0, -1.5, 1.5, 0.0, 1.5, 0.0];
+
+# Define approach position above conveyor pick
+def approach_position():
+    return [0.0, -1.5, 1.5, 0.0, 1.5, 0.0];
+
+# Define descent position to pick
+def descent_position():
+    return [0.0, -1.5, 1.5, 0.0, 1.5, 0.0];
+
+# Define lift position from conveyor
+def lift_position():
+    return [0.0, -1.5, 1.5, 0.0, 1.5, 0.0];
+
+# Define transit position to pallet (0,0)
+def transit_position():
+    return [0.0, -1.5, 1.5, 0.0, 1.5, 0.0];
+
+# Define pallet positions (example for 2x2 grid)
+def pallet_position_0_0():
+    return [0.0, -1.5, 1.5, 0.0, 1.5, 0.0];
+
+# Define pallet positions (example for 2x2 grid)
+def pallet_position_1_0():
+    return [0.0, -1.5, 1.5, 0.0, 1.5, 0.0];
+
+# Define pallet positions (example for 2x2 grid)
+def pallet_position_0_1():
+    return [0.0, -1.5, 1.5, 0.0, 1.5, 0.0];
+
+# Define pallet positions (example for 2x2 grid)
+def pallet_position_1_1():
+    return [0.0, -1.5, 1.5, 0.0, 1.5, 0.0];
+
+# Safety check function
+def safety_check():
+    current_position = get_actual_tcp_pose();
+    if not is_within_bounds(current_position, safety_zone_confinement()):
+        popup "Safety violation: Out of confinement zone";
+        stop;
+
+# Move to home position
+movej home_position(), speed=250.0, acc=1.4;
+
+# Safety check before each move
+safety_check();
+
+# Move to approach position above conveyor pick
+move_linear approach_position(), speed=250.0, acc=1.4;
+
+# Safety check before each move
+safety_check();
+
+# Move to descent position to pick
+move_linear descent_position(), speed=100.0, acc=1.4;
+
+# Safety check before each move
+safety_check();
+
+# Move to lift position from conveyor
+move_linear lift_position(), speed=200.0, acc=1.4;
+
+# Safety check before each move
+safety_check();
+
+# Move to transit position to pallet (0,0)
+move_linear transit_position(), speed=280.0, acc=1.4;
+
+# Safety check before each move
+safety_check();
+
+# Move to pallet position (0,0)
+move_linear pallet_position_0_0(), speed=280.0, acc=1.4;
+
+# Safety check before each move
+safety_check();
+
+# Repeat for other pallet positions
+move_linear pallet_position_1_0(), speed=280.0, acc=1.4;
+
+# Safety check before each move
+safety_check();
+
+move_linear pallet_position_0_1(), speed=280.0, acc=1.4;
+
+# Safety check before each move
+safety_check();
+
+move_linear pallet_position_1_1(), speed=280.0, acc=1.4;
+
+# Safety check before each move
+safety_check();

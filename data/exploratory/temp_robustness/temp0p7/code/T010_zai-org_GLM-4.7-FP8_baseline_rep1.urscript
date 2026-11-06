@@ -1,0 +1,107 @@
+# ==============================================================================
+# URScript Program: Screw Fastening Assembly (T010) - Hybrid Mode
+# Robot: UR5e
+# Payload: 1.0 kg
+# Description: Pick screw, fasten at 4 points. Hybrid safety mode.
+# ==============================================================================
+
+# --- Configuration ---
+set_payload(1.0, [0, 0, 0])  # A7 Screwdriver Tool Payload
+set_tcp(p[0, 0, 0.15, 0, 0, 0]) # Tool Center Point offset (example)
+
+# --- Safety Mode Setup (Hybrid) ---
+# Digital Outputs to simulate Safety Controller Interface
+# DO 0: Collaborative Mode Request (Active Low)
+# DO 1: Fenced Mode Request (Confinement Active)
+set_digital_out(0, True)
+set_digital_out(1, False)
+
+# --- Waypoint Definitions ---
+q_home = [-1.57, -1.57, 1.57, -1.57, -1.57, 0]
+
+p_feeder_above = p[0.45, -0.3, 0.3, 3.14, 0, 0]
+p_feeder_pick  = p[0.45, -0.3, 0.12, 3.14, 0, 0]
+
+# Fastening Points (Approach Heights)
+p_above_pt1 = p[0.5, 0.2, 0.3, 0, 3.14, 0]
+p_above_pt2 = p[0.6, 0.2, 0.3, 0, 3.14, 0]
+p_above_pt3 = p[0.6, 0.3, 0.3, 0, 3.14, 0]
+p_above_pt4 = p[0.5, 0.3, 0.3, 0, 3.14, 0]
+
+# Fastening Points (Driving Heights)
+p_drive_pt1 = p[0.5, 0.2, 0.15, 0, 3.14, 0]
+p_drive_pt2 = p[0.6, 0.2, 0.15, 0, 3.14, 0]
+p_drive_pt3 = p[0.6, 0.3, 0.15, 0, 3.14, 0]
+p_drive_pt4 = p[0.5, 0.3, 0.15, 0, 3.14, 0]
+
+# --- Motion Sequence ---
+
+# Move 1: move_joint: Home, 200.0 mm/s
+movej(q_home, a=1.2, v=0.2)
+
+# Move 2: move_linear: Above screw feeder, 200.0 mm/s
+movel(p_feeder_above, a=0.5, v=0.2)
+
+# Move 3: move_linear: Pick screw, 80.0 mm/s
+movel(p_feeder_pick, a=0.2, v=0.08)
+# Action: Close Gripper / Engage Screw
+set_digital_out(2, True)
+sleep(0.5)
+
+# Move 4: move_linear: Lift from feeder, 180.0 mm/s
+movel(p_feeder_above, a=0.5, v=0.18)
+
+# --- Transition to Fenced Mode (Strict Safety Logic A5) ---
+# Signal safety system to enable confinement zone for fastening
+set_digital_out(0, False)
+set_digital_out(1, True)
+sleep(0.2) # Allow safety system to acknowledge
+
+# Move 5: move_linear: Above fastening point 1, 200.0 mm/s
+movel(p_above_pt1, a=0.5, v=0.2)
+
+# --- Fastening Routine Point 1 ---
+movel(p_drive_pt1, a=0.2, v=0.05) # Drive screw
+set_digital_out(3, True)          # Screwdriver On
+sleep(1.5)
+set_digital_out(3, False)         # Screwdriver Off
+movel(p_above_pt1, a=0.5, v=0.2)  # Retract
+
+# Move 6: move_linear: Above fastening point 2, 200.0 mm/s
+movel(p_above_pt2, a=0.5, v=0.2)
+
+# --- Fastening Routine Point 2 ---
+movel(p_drive_pt2, a=0.2, v=0.05) # Drive screw
+set_digital_out(3, True)
+sleep(1.5)
+set_digital_out(3, False)
+movel(p_above_pt2, a=0.5, v=0.2)  # Retract
+
+# Move 7: move_linear: Above fastening point 3, 200.0 mm/s
+movel(p_above_pt3, a=0.5, v=0.2)
+
+# --- Fastening Routine Point 3 ---
+movel(p_drive_pt3, a=0.2, v=0.05) # Drive screw
+set_digital_out(3, True)
+sleep(1.5)
+set_digital_out(3, False)
+movel(p_above_pt3, a=0.5, v=0.2)  # Retract
+
+# Move 8: move_linear: Above fastening point 4, 200.0 mm/s
+movel(p_above_pt4, a=0.5, v=0.2)
+
+# --- Fastening Routine Point 4 ---
+movel(p_drive_pt4, a=0.2, v=0.05) # Drive screw
+set_digital_out(3, True)
+sleep(1.5)
+set_digital_out(3, False)
+movel(p_above_pt4, a=0.5, v=0.2)  # Retract
+
+# --- Return to Collaborative Mode ---
+set_digital_out(1, False)
+set_digital_out(0, True)
+
+# Return to Home
+movej(q_home, a=1.2, v=0.2)
+
+# End of Program

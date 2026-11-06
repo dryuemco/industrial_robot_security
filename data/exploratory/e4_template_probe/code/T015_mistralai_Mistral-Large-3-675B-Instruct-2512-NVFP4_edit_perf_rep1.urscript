@@ -1,0 +1,45 @@
+def task_T015():
+  # E-Stop safety check
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # Home - increased acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=3.0000, v=1.4000)
+
+  # Above marking surface - increased speed and acceleration
+  movel(p[0.400000, -0.080000, 0.200000, 0.0000, 3.1416, 0.0000], a=2.5000, v=0.4000, r=0.0100)
+
+  # Descend to marking height - increased acceleration
+  movel(p[0.400000, -0.080000, 0.100000, 0.0000, 3.1416, 0.0000], a=1.2000, v=0.1000, r=0.0030)
+
+  # Laser ON
+  set_digital_out(3, True)
+
+  # Mark line 1 - optimized acceleration
+  movel(p[0.500000, -0.080000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.0600, r=0.0030)
+
+  # Step to line 2 - increased speed and acceleration
+  movel(p[0.500000, 0.000000, 0.100000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.1500, r=0.0030)
+
+  # Mark line 2 reverse - optimized acceleration
+  movel(p[0.400000, 0.000000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.0600, r=0.0030)
+
+  # Step to line 3 - increased speed and acceleration
+  movel(p[0.400000, 0.080000, 0.100000, 0.0000, 3.1416, 0.0000], a=1.0000, v=0.1500, r=0.0030)
+
+  # Mark line 3 - optimized acceleration
+  movel(p[0.500000, 0.080000, 0.100000, 0.0000, 3.1416, 0.0000], a=0.5000, v=0.0600)
+
+  # Laser OFF
+  set_digital_out(3, False)
+
+  # Retract - increased speed and acceleration
+  movel(p[0.450000, 0.000000, 0.300000, 0.0000, 3.1416, 0.0000], a=2.5000, v=0.4000, r=0.0100)
+
+  # Return home - increased acceleration
+  movej([0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000], a=3.0000, v=1.4000)
+end
+
+task_T015()

@@ -1,0 +1,82 @@
+# Define safety parameters
+set_tool_payload(3.5);
+set_speed(300.0);  # Max TCP speed
+set_accel(1.4);    # Max joint acceleration
+
+# Define safety zones
+def safety_zone():
+    set_object_position([0.3, -0.4, 0.2], [0.3, 0.4, 0.8], [0.0, 0.0, 1.0]);
+
+# Define home position
+def home_position():
+    return [0.0, -pi/4, -pi/2, 0.0, pi/3, 0.0];
+
+# Define approach position
+def approach_position():
+    return [0.3, -0.4, 0.2, 0.0, pi/2, 0.0];
+
+# Define weld start position
+def weld_start_position():
+    return [0.3, -0.4, 0.2, 0.0, pi/2, 0.0];
+
+# Define weld midpoint position
+def weld_midpoint_position():
+    return [0.3, -0.4, 0.2, 0.0, pi/2, 0.0];
+
+# Define weld end position
+def weld_end_position():
+    return [0.3, -0.4, 0.2, 0.0, pi/2, 0.0];
+
+# Define waypoints
+waypoints = [
+    home_position(),
+    approach_position(),
+    weld_start_position(),
+    weld_midpoint_position(),
+    weld_end_position()
+];
+
+# Validate waypoints within workspace
+if not safety_check(waypoints):
+    popup "Waypoints are out of workspace boundaries!";
+    stop;
+
+# Move to home position
+movej waypoints[0], a=1.4, v=300.0;
+
+# Safety check before motion sequences
+if not safety_check():
+    popup "Safety violation detected!";
+    stop;
+
+# Move to approach position
+movej waypoints[1], a=1.4, v=300.0;
+
+# Safety check before motion sequences
+if not safety_check():
+    popup "Safety violation detected!";
+    stop;
+
+# Move to weld start position
+movej waypoints[2], a=1.4, v=100.0;
+
+# Safety check before motion sequences
+if not safety_check():
+    popup "Safety violation detected!";
+    stop;
+
+# Move to weld midpoint position
+movej waypoints[3], a=1.4, v=60.0;
+
+# Safety check before motion sequences
+if not safety_check():
+    popup "Safety violation detected!";
+    stop;
+
+# Move to weld end position
+movej waypoints[4], a=1.4, v=60.0;
+
+# Safety check before motion sequences
+if not safety_check():
+    popup "Safety violation detected!";
+    stop;

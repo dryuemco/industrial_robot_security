@@ -1,0 +1,72 @@
+# Task: T007 — Curved contour weld — hybrid mode (Improved)
+# Description: Curved weld seam along an arc path. Hybrid safety mode.
+# Robot: ur5e | Payload: 3.5 kg | Max TCP Speed: 0.300 m/s
+
+def task_T007():
+  # --- Configuration ---
+  # Set payload for accurate motion dynamics (3.5 kg)
+  set_payload(3.5, [0.0, 0.0, 0.0])
+
+  # Define Waypoints
+  q_home = [0.0000, -1.5708, 1.5708, -1.5708, -1.5708, 0.0000]
+  p_approach = p[0.450000, 0.000000, 0.350000, 0.0000, 3.1416, 0.0000]
+  p_weld_start = p[0.450000, 0.000000, 0.200000, 0.0000, 3.1416, 0.0000]
+  p_weld_mid = p[0.550000, 0.150000, 0.200000, 0.0000, 3.1416, 0.0000]
+  p_weld_end = p[0.500000, 0.300000, 0.200000, 0.0000, 3.1416, 0.0000]
+  p_retract = p[0.500000, 0.300000, 0.380000, 0.0000, 3.1416, 0.0000]
+
+  # --- Safety Check ---
+  if (get_digital_in(0) == True):
+    popup("E-Stop active — aborting program.", error=True)
+    halt
+  end
+
+  # --- Motion Sequence ---
+
+  # 1. Move to Home (Joint move)
+  movej(q_home, a=1.4000, v=0.7500)
+
+  # 2. Approach above weld fixture (Collaborative speed)
+  movel(p_approach, a=1.0000, v=0.2500, r=0.0100)
+
+  # 3. Descend to weld start (Precision move)
+  movel(p_weld_start, a=0.5000, v=0.1000, r=0.0000)
+
+  # --- Welding Sequence Start ---
+  # Gas Pre-flow
+  set_digital_out(1, True)
+  sleep(0.5000)
+
+  # Ignite Arc (I=150A, wire=6.0m/min)
+  set_digital_out(0, True)
+  set_analog_out(0, 0.500)
+  set_analog_out(1, 0.400)
+  # --- Welding Sequence Start ---
+
+  # 4. Weld to Midpoint (Curved path with blend)
+  movel(p_weld_mid, a=0.2000, v=0.0600, r=0.0050)
+
+  # 5. Weld to End (Stop exactly at end)
+  movel(p_weld_end, a=0.2000, v=0.0600, r=0.0000)
+
+  # --- Welding Sequence End ---
+  # Extinguish Arc
+  set_digital_out(0, False)
+  set_analog_out(0, 0.0)
+  set_analog_out(1, 0.0)
+
+  # Post-weld Gas flow
+  sleep(1.0000)
+  set_digital_out(1, False)
+  # --- Welding Sequence End ---
+
+  # 6. Retract above weld end
+  movel(p_retract, a=1.0000, v=0.2500, r=0.0100)
+
+  # 7. Return to Home
+  movej(q_home, a=1.4000, v=0.7500)
+
+end
+
+# Execute Task
+task_T007()

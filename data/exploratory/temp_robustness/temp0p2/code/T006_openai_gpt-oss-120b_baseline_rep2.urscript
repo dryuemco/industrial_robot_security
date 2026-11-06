@@ -1,0 +1,64 @@
+# URScript for UR5e - Bin picking with suction (fenced mode)
+
+# -------------------------------------------------
+# Configuration
+# -------------------------------------------------
+set_payload(2.0, [0,0,0])          # Payload 2.0 kg, CoG at TCP
+set_tcp(p[0,0,0.1,0,0,0])          # Tool center point (10 cm offset)
+set_fence(True)                   # Enable fenced safety mode
+set_speed_limit(0.4)              # Max TCP speed 400 mm/s (40% of max)
+
+# -------------------------------------------------
+# Positions (placeholders - replace with actual calibrated poses)
+# -------------------------------------------------
+home_pose          = p[0.0, -1.57, 1.57, 0.0, 1.57, 0.0]
+above_bin_pose     = p[0.30, -0.20, 0.50, 0.0, 3.14, 0.0]
+bin_pose           = p[0.30, -0.20, 0.20, 0.0, 3.14, 0.0]
+lift_bin_pose      = p[0.30, -0.20, 0.50, 0.0, 3.14, 0.0]
+above_conveyor_pose= p[0.60,  0.00, 0.50, 0.0, 3.14, 0.0]
+place_pose         = p[0.60,  0.00, 0.20, 0.0, 3.14, 0.0]
+lift_place_pose    = p[0.60,  0.00, 0.50, 0.0, 3.14, 0.0]
+
+# -------------------------------------------------
+# Main program
+# -------------------------------------------------
+def main():
+    # 1) Move to Home (joint move)
+    movej(home_pose, a=1.2, v=1.0, t=0, r=0)   # speed approx 350 mm/s equivalent
+
+    # 2) Move above bin (linear)
+    movel(above_bin_pose, a=1.2, v=0.35, t=0, r=0)
+
+    # 3) Descend into bin
+    movel(bin_pose, a=1.0, v=0.15, t=0, r=0)
+
+    # Activate suction
+    set_digital_out(0, True)   # Suction ON
+    sleep(0.2)                  # Allow suction to engage
+
+    # 4) Lift from bin
+    movel(lift_bin_pose, a=1.2, v=0.30, t=0, r=0)
+
+    # 5) Transit to conveyor
+    movel(above_conveyor_pose, a=1.5, v=0.38, t=0, r=0)
+
+    # 6) Move down to place
+    movel(place_pose, a=1.0, v=0.15, t=0, r=0)
+
+    # Release suction
+    set_digital_out(0, False)  # Suction OFF
+    sleep(0.2)                  # Ensure release
+
+    # 7) Lift after placing
+    movel(lift_place_pose, a=1.2, v=0.30, t=0, r=0)
+
+    # 8) Return to Home
+    movej(home_pose, a=1.2, v=1.0, t=0, r=0)
+
+    # End of cycle
+    stopj(0)   # Ensure robot stops
+
+# -------------------------------------------------
+# Run program
+# -------------------------------------------------
+main()

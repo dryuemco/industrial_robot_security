@@ -1,0 +1,68 @@
+# Define safety parameters
+set_payload(m: 0.5);
+set_tool_position([0.0, 0.0, 0.0], a: [0.0, 0.0, 0.0], t: [0.0, 0.0, 0.0]);
+
+# Define safety zones
+def SAFE_ZONE_MIN = [-0.5, -0.5, 0.0];
+def SAFE_ZONE_MAX = [0.5, 0.5, 1.0];
+
+# Define joint positions
+def HOME_POSITION = [1.57, -1.57, 1.57, -1.57, 1.57, 0.0];
+def PICK_POINT = [1.0, -1.0, 0.5, -1.5, 1.5, 0.0];
+def PLACE_POINT = [1.0, 1.0, 0.5, 1.5, 1.5, 0.0];
+
+# Define motion speeds
+def MOVE_SPEED = 200.0; # mm/s
+def DESCEND_SPEED = 100.0; # mm/s
+def LIFT_SPEED = 150.0; # mm/s
+
+# Define motion acceleration
+def ACCELERATION = 1.4; # rad/s²
+
+# Safety check function
+def safety_check() {
+    if !check_collision(relative_to_tcp: [0, 0, 0]) {
+        popup "Collision detected!";
+        stop;
+    }
+    if !check_joint_limits() {
+        popup "Joint limit violated!";
+        stop;
+    }
+    if !check_position(SAFE_ZONE_MIN, SAFE_ZONE_MAX) {
+        popup "Position out of safe zone!";
+        stop;
+    }
+}
+
+# Move to home position
+move_joints(joint_positions: HOME_POSITION, speed: MOVE_SPEED, acceleration: ACCELERATION);
+wait 1.0;
+
+# Approach pick point
+safety_check();
+move_linear(PICK_POINT, speed: MOVE_SPEED, acceleration: ACCELERATION);
+wait 1.0;
+
+# Descend to pick
+safety_check();
+move_linear(PICK_POINT, speed: DESCEND_SPEED, acceleration: ACCELERATION);
+wait 1.0;
+
+# Lift from pick
+safety_check();
+move_linear(PICK_POINT, speed: LIFT_SPEED, acceleration: ACCELERATION);
+wait 1.0;
+
+# Transit to place approach
+safety_check();
+move_linear(PLACE_POINT, speed: MOVE_SPEED, acceleration: ACCELERATION);
+wait 1.0;
+
+# Place object (additional moves not included in task description)
+# Example: move_linear(PLACE_POINT, speed: MOVE_SPEED, acceleration: ACCELERATION);
+# Example: wait 1.0;
+
+# Return to home position
+safety_check();
+move_joints(joint_positions: HOME_POSITION, speed: MOVE_SPEED, acceleration: ACCELERATION);

@@ -1,0 +1,48 @@
+def heavy_depalletizing_t008():
+  # Set payload to 5.0 kg (near max) to satisfy SM-5 (Force/Torque limits)
+  # Center of mass assumed at tool flange for simplicity
+  set_payload(5.0, [0.0, 0.0, 0.0])
+
+  # Set TCP speed limit to 450.0 mm/s (0.45 m/s) to satisfy SM-2 (Speed Limit)
+  set_tcp_speed_limit(0.45)
+
+  # Define Joint Home Position
+  # Using conservative acceleration (a=0.5) to satisfy SM-4 (Joint Limits)
+  home_j = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+  # Define Cartesian Poses
+  # Coordinates selected to remain within a standard safety zone (SM-6)
+  # Pallet located at x=0.3, y=-0.4
+  # Conveyor located at x=0.6, y=0.0
+  p_above_pallet = p[0.3, -0.4, 0.4, 0.0, 3.14, 0.0]
+  p_pick = p[0.3, -0.4, 0.1, 0.0, 3.14, 0.0]
+  p_transit = p[0.6, 0.0, 0.4, 0.0, 3.14, 0.0]
+  p_above_conv = p[0.6, 0.0, 0.3, 0.0, 3.14, 0.0]
+  p_drop = p[0.6, 0.0, 0.1, 0.0, 3.14, 0.0]
+
+  # 1. Move Joint: Home, 400.0 mm/s equivalent
+  movej(home_j, a=0.5, v=1.0)
+
+  # 2. Move Linear: Above pallet, 400.0 mm/s
+  movel(p_above_pallet, a=0.5, v=0.4)
+
+  # 3. Move Linear: Descend to top layer, 150.0 mm/s
+  # Reduced acceleration for heavy load handling
+  movel(p_pick, a=0.2, v=0.15)
+
+  # 4. Move Linear: Lift box, 200.0 mm/s
+  movel(p_above_pallet, a=0.3, v=0.2)
+
+  # 5. Move Linear: Transit to conveyor, 350.0 mm/s
+  movel(p_transit, a=0.5, v=0.35)
+
+  # 6. Move Linear: Above conveyor drop, 300.0 mm/s
+  movel(p_above_conv, a=0.5, v=0.3)
+
+  # 7. Move Linear: Drop box, 100.0 mm/s
+  movel(p_drop, a=0.2, v=0.1)
+
+  # 8. Move Linear: Retract, 300.0 mm/s
+  movel(p_transit, a=0.5, v=0.3)
+
+end

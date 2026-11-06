@@ -1,0 +1,66 @@
+# URScript for UR5e hybrid mode screw fastening task
+# -------------------------------------------------
+# Payload and tool configuration
+set_payload(1.0, {0,0,0})          # 1.0 kg payload, CoG at TCP
+set_tcp(p[0,0,0.1,0,0,0])         # Example TCP offset (adjust as needed)
+
+# Safety zone definition (confinement)
+# Note: The zone name and type are illustrative; adjust parameters as required.
+set_safety_zone("confinement_zone", "confinement", 
+                p[0.0,0.0,0.0],          # zone origin
+                0.0, 0.0, 0.0,           # orientation (r,p,y)
+                0.5, 0.5, 0.5)           # size (x,y,z) in meters
+
+# -----------------------------------------------------------------
+# Helper function to perform a linear move with speed and acceleration
+def safe_move_linear(target_pose, speed, accel):
+    # speed and accel are scalar values (mm/s, mm/s^2)
+    movel(target_pose, a=accel, v=speed)
+end
+
+# -----------------------------------------------------------------
+# 1. Move to Home position (collaborative mode)
+set_safety_mode("collaborative")
+home_joint = [-1.57, -1.57, 1.57, -1.57, -1.57, 0.0]   # example joint values
+movej(home_joint, a=1.2, v=0.2)   # 200 mm/s -> 0.2 m/s, acceleration 1.2 rad/s^2
+
+# 2. Approach above screw feeder (collaborative)
+set_safety_mode("collaborative")
+above_feeder = p[0.5, -0.3, 0.3, 0, 3.14, 0]   # adjust to actual location
+safe_move_linear(above_feeder, 0.2, 1.0)      # 200 mm/s, 1.0 m/s^2
+
+# 3. Move down to pick screw (collaborative)
+pick_screw = p[0.5, -0.3, 0.1, 0, 3.14, 0]    # adjust Z for picking
+safe_move_linear(pick_screw, 0.08, 0.8)      # 80 mm/s, 0.8 m/s^2
+
+# 4. Lift screw from feeder (collaborative)
+lift_pose = p[0.5, -0.3, 0.3, 0, 3.14, 0]    # same as above_feeder
+safe_move_linear(lift_pose, 0.18, 0.9)      # 180 mm/s, 0.9 m/s^2
+
+# -----------------------------------------------------------------
+# 5-8. Fastening points (restricted/fenced mode)
+# Switch to restricted mode for each fastening operation
+set_safety_mode("restricted")
+# Point 1
+point1 = p[0.6, 0.0, 0.15, 0, 3.14, 0]      # adjust to actual point
+safe_move_linear(point1, 0.2, 1.0)          # 200 mm/s
+# (Insert screwdriver activation / torque control here if needed)
+
+# Point 2
+point2 = p[0.6, 0.1, 0.15, 0, 3.14, 0]
+safe_move_linear(point2, 0.2, 1.0)
+
+# Point 3
+point3 = p[0.6, -0.1, 0.15, 0, 3.14, 0]
+safe_move_linear(point3, 0.2, 1.0)
+
+# Point 4
+point4 = p[0.6, 0.2, 0.15, 0, 3.14, 0]
+safe_move_linear(point4, 0.2, 1.0)
+
+# -----------------------------------------------------------------
+# Return to Home (collaborative)
+set_safety_mode("collaborative")
+movej(home_joint, a=1.2, v=0.2)
+
+# End of program

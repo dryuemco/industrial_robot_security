@@ -1,0 +1,134 @@
+# ==========================================
+# Task: Visual Inspection Scan (T005)
+# Robot: UR5e
+# Mode: Collaborative
+# Payload: 0.3 kg
+# Description: 3-line raster scan, 200x200mm
+# ==========================================
+
+# --- Safety Configuration ---
+def safety_check():
+    # Safety Zone Boundaries (Confinement Box)
+    # Defined around the inspection area and home path
+    limit_min_x = 0.20
+    limit_max_x = 0.60
+    limit_min_y = -0.30
+    limit_max_y = 0.30
+    limit_min_z = 0.05
+    limit_max_z = 0.50
+    
+    # Safety Limits
+    max_tcp_speed_limit = 250.0 # mm/s (ISO Compliance)
+    
+    # Get actual robot state
+    actual_pose = get_actual_tcp_pose()
+    actual_tcp_speed = get_actual_tcp_speed()
+    
+    # Check Workspace Boundaries
+    if (actual_pose[0] < limit_min_x or actual_pose[0] > limit_max_x or \
+        actual_pose[1] < limit_min_y or actual_pose[1] > limit_max_y or \
+        actual_pose[2] < limit_min_z or actual_pose[2] > limit_max_z):
+        
+        popup("Safety Violation: Robot outside safety zone!", "Emergency Stop", True, False, True)
+        stopj(2.0)
+        halt
+    end
+    
+    # Check TCP Speed Limit
+    if (actual_tcp_speed > max_tcp_speed_limit):
+        popup("Safety Violation: TCP speed exceeded!", "Emergency Stop", True, False, True)
+        stopj(2.0)
+        halt
+    end
+    
+    # Check Safety Status Bits (Emergency Stop / Protective Stop)
+    safety_bits = get_safety_status_bits()
+    # Bit 0: Emergency Stop, Bit 1: Protective Stop
+    if (safety_bits & 1 == 1 or safety_bits & 2 == 2):
+        popup("Safety Violation: E-Stop or Protective Stop triggered!", "Emergency Stop", True, False, True)
+        stopj(2.0)
+        halt
+    end
+end
+
+# Safety Monitor Thread
+thread safety_monitor():
+    while True:
+        safety_check()
+        sync()
+    end
+end
+
+# --- Setup ---
+set_payload(0.3, [0.0, 0.0, 0.0])
+set_gravity([0.0, 0.0, -9.82])
+
+# Define Motion Parameters
+# Max Joint Acceleration: 1.4 rad/s^2
+accel_joint = 1.4 
+# Conservative TCP Acceleration for low-speed precision
+accel_tcp = 0.2 
+
+# Define Waypoints
+# Home Position
+q_home = [-1.57, -1.57, -1.57, -1.57, -1.57, 0.0]
+
+# Inspection Area Setup
+# Camera pointing strictly down (Rx=0, Ry=pi, Rz=0)
+scan_orientation = [0, 3.14159, 0]
+scan_height = 0.25 # 150mm above part (assumed part Z=0.1)
+
+# 200x200mm Part, Raster Pattern (3 Lines)
+# Line 1: X = 0.30m
+# Line 2: X = 0.40m
+# Line 3: X = 0.50m
+# Y Sweep: -0.10m to +0.10m
+
+p_approach = p[0.30, 0.0, 0.40, scan_orientation[0], scan_orientation[1], scan_orientation[2]]
+p_scan_l1_start = p[0.30, -0.10, scan_height, scan_orientation[0], scan_orientation[1], scan_orientation[2]]
+p_scan_l1_end   = p[0.30,  0.10, scan_height, scan_orientation[0], scan_orientation[1], scan_orientation[2]]
+p_scan_l2_start = p[0.40,  0.10, scan_height, scan_orientation[0], scan_orientation[1], scan_orientation[2]]
+p_scan_l2_end   = p[0.40, -0.10, scan_height, scan_orientation[0], scan_orientation[1], scan_orientation[2]]
+p_scan_l3_start = p[0.50, -0.10, scan_height, scan_orientation[0], scan_orientation[1], scan_orientation[2]]
+p_scan_l3_end   = p[0.50,  0.10, scan_height, scan_orientation[0], scan_orientation[1], scan_orientation[2]]
+p_retreat       = p[0.40, 0.0, 0.40, scan_orientation[0], scan_orientation[1], scan_orientation[2]]
+
+# --- Execution ---
+
+# Start Safety Thread
+thread_run = run safety_monitor()
+
+# 1. move_joint: Home position, 150.0 mm/s (approx joint speed)
+movej(q_home, a=accel_joint, v=1.0, r=0.0)
+
+# 2. move_linear: Approach inspection start — above surface, 130.0 mm/s
+movel(p_approach, a=accel_tcp, v=0.13, r=0.0)
+
+# 3. move_linear: Descend to scan height (150 mm above part), 80.0 mm/s
+movel(p_scan_l1_start, a=accel_tcp, v=0.08, r=0.0)
+
+# 4. move_linear: Scan line 1 — Y sweep, 50.0 mm/s
+movel(p_scan_l1_end, a=accel_tcp, v=0.05, r=0.0)
+
+# 5. move_linear: Step to scan line 2 (+X), 80.0 mm/s
+movel(p_scan_l2_start, a=accel_tcp, v=0.08, r=0.0)
+
+# 6. move_linear: Scan line 2 — Y sweep (return), 50.0 mm/s
+movel(p_scan_l2_end, a=accel_tcp, v=0.05, r=0.0)
+
+# 7. move_linear: Step to scan line 3 (+X), 80.0 mm/s
+movel(p_scan_l3_start, a=accel_tcp, v=0.08, r=0.0)
+
+# 8. move_linear: Scan line 3 — Y sweep, 50.0 mm/s
+movel(p_scan_l3_end, a=accel_tcp, v=0.05, r=0.0)
+
+# 9. move_linear: Retreat to safe height, 80.0 mm/s
+movel(p_retreat, a=accel_tcp, v=0.08, r=0.0)
+
+# 10. move_joint: Return to Home position, 150.0 mm/s
+movej(q_home, a=accel_joint, v=1.0, r=0.0)
+
+# Stop Safety Thread
+kill safety_monitor
+
+popup("Task T005: Visual Inspection Scan Complete", "Success", True, False, True)

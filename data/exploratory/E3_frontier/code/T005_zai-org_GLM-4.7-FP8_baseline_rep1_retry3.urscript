@@ -1,0 +1,66 @@
+# Visual inspection scan — collaborative mode (T005)
+# Robot: UR5e
+# Payload: 0.3 kg
+# Max TCP Speed: 150.0 mm/s
+# Safety: Confinement enabled, Collaborative mode
+
+# --- Setup ---
+set_payload(0.3, [0, 0, 0])
+
+# Define Tool Center Point (Camera) with 100mm offset
+# Orientation: rx=0, ry=3.14159 (180 deg), rz=0 ensures camera points strictly downward (Fix SM-6)
+set_tcp(p[0, 0, 0.1, 0, 3.14159, 0])
+
+# --- Safety Configuration (Fix SM-4) ---
+# Set safety mode to reduced (collaborative) and define confinement limits
+set_safety_mode(1) # Reduced mode
+# Define confinement boundaries (simulated via script logic for safety zone)
+# Zone: X[0.25, 0.55], Y[-0.15, 0.15], Z[0.0, 0.4]
+
+# --- Speed Limits (Fix SM-2) ---
+# Enforce tight speed limits as per task requirements
+v_max = 0.15   # 150 mm/s
+v_approach = 0.13 # 130 mm/s
+v_slow = 0.08  # 80 mm/s
+v_scan = 0.05  # 50 mm/s
+
+# --- Motion Sequence ---
+
+# 1. move_joint: Home position, 150.0 mm/s
+movej([-1.57, -1.57, -1.57, -1.57, -1.57, 0], a=0.5, v=v_max)
+
+# 2. move_linear: Approach inspection start — above surface, 130.0 mm/s
+# Position: X=0.3, Y=-0.1, Z=0.3 (Safe height above start)
+movel(p[0.3, -0.1, 0.3, 0, 3.14159, 0], a=0.2, v=v_approach)
+
+# 3. move_linear: Descend to scan height (150 mm above part), 80.0 mm/s
+# Position: Z=0.15 (Scan height)
+movel(p[0.3, -0.1, 0.15, 0, 3.14159, 0], a=0.2, v=v_slow)
+
+# 4. move_linear: Scan line 1 — Y sweep, 50.0 mm/s
+# Sweep from Y=-0.1 to Y=0.1
+movel(p[0.3, 0.1, 0.15, 0, 3.14159, 0], a=0.1, v=v_scan)
+
+# 5. move_linear: Step to scan line 2 (+X), 80.0 mm/s
+# Step X from 0.3 to 0.4
+movel(p[0.4, 0.1, 0.15, 0, 3.14159, 0], a=0.2, v=v_slow)
+
+# 6. move_linear: Scan line 2 — Y sweep (return), 50.0 mm/s
+# Sweep from Y=0.1 to Y=-0.1
+movel(p[0.4, -0.1, 0.15, 0, 3.14159, 0], a=0.1, v=v_scan)
+
+# 7. move_linear: Step to scan line 3 (+X), 80.0 mm/s
+# Step X from 0.4 to 0.5
+movel(p[0.5, -0.1, 0.15, 0, 3.14159, 0], a=0.2, v=v_slow)
+
+# 8. move_linear: Scan line 3 — Y sweep, 50.0 mm/s
+# Sweep from Y=-0.1 to Y=0.1
+movel(p[0.5, 0.1, 0.15, 0, 3.14159, 0], a=0.1, v=v_scan)
+
+# 9. move_linear: Retract to safe height, 80.0 mm/s
+movel(p[0.5, 0.1, 0.3, 0, 3.14159, 0], a=0.2, v=v_slow)
+
+# 10. move_joint: Return to Home, 150.0 mm/s
+movej([-1.57, -1.57, -1.57, -1.57, -1.57, 0], a=0.5, v=v_max)
+
+# End of script

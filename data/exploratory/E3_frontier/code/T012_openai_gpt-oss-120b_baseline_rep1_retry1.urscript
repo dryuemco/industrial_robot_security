@@ -1,0 +1,81 @@
+# URScript for collaborative spot welding (3 points) on UR5e
+# -------------------------------------------------------
+# Payload and TCP configuration
+set_payload(2.5, [0,0,0])               # 2.5 kg payload, CoG at TCP
+set_tcp(p[0,0,0,0,0,0])                 # Default TCP
+set_speed_slider(0.25)                 # Collaborative speed limit (≤25 % of max)
+set_tcp_speed(0.25)                    # Limit TCP speed to 25 % of max (≈250 mm/s)
+
+# Digital outputs for welding (adjust output index as needed)
+def weld_on():
+    set_digital_out(0, True)
+end
+
+def weld_off():
+    set_digital_out(0, False)
+end
+
+# Predefined poses (in metres)
+home_pose          = p[0.0, -0.5, 0.5, 0, 3.14, 0]
+
+spot1_approach     = p[0.300, 0.200, 0.150, 0, 3.14, 0]
+spot1_weld         = p[0.300, 0.200, 0.100, 0, 3.14, 0]   # 50 mm lower
+spot1_lift         = p[0.300, 0.200, 0.150, 0, 3.14, 0]
+
+spot2_approach     = p[0.400, 0.000, 0.150, 0, 3.14, 0]
+spot2_weld         = p[0.400, 0.000, 0.100, 0, 3.14, 0]
+spot2_lift         = p[0.400, 0.000, 0.150, 0, 3.14, 0]
+
+spot3_approach     = p[0.300, -0.200, 0.150, 0, 3.14, 0]
+spot3_weld         = p[0.300, -0.200, 0.100, 0, 3.14, 0]
+spot3_lift         = p[0.300, -0.200, 0.150, 0, 3.14, 0]
+
+# Motion parameters (speed in m/s, amax in rad/s² for joint moves, m/s² for linear)
+speed_fast   = 0.200   # 200 mm/s
+speed_slow   = 0.080   # 80 mm/s
+speed_lift   = 0.150   # 150 mm/s
+amax_joint   = 1.4
+amax_linear  = 1.2
+
+# -------------------------------------------------------
+# 1) Move to Home (joint space)
+movej(home_pose, a=amax_joint, v=speed_fast)
+
+# 2) Approach Spot 1 (linear)
+movel(spot1_approach, a=amax_linear, v=speed_fast)
+
+# 3) Descend to Spot 1 (linear, welding position)
+movel(spot1_weld, a=amax_linear, v=speed_slow)
+weld_on()                     # Activate welding
+sleep(0.5)                    # Dwell for weld (adjust as required)
+weld_off()
+
+# 4) Lift from Spot 1
+movel(spot1_lift, a=amax_linear, v=speed_lift)
+
+# 5) Move to Spot 2 (linear)
+movel(spot2_approach, a=amax_linear, v=speed_fast)
+
+# 6) Descend to Spot 2 (welding)
+movel(spot2_weld, a=amax_linear, v=speed_slow)
+weld_on()
+sleep(0.5)
+weld_off()
+
+# 7) Lift from Spot 2
+movel(spot2_lift, a=amax_linear, v=speed_lift)
+
+# 8) Move to Spot 3 (linear) – final approach
+movel(spot3_approach, a=amax_linear, v=speed_fast)
+
+# Optional: perform welding at Spot 3 if required
+# movel(spot3_weld, a=amax_linear, v=speed_slow)
+# weld_on()
+# sleep(0.5)
+# weld_off()
+# movel(spot3_lift, a=amax_linear, v=speed_lift)
+
+# Return to Home safely
+movej(home_pose, a=amax_joint, v=speed_fast)
+
+# End of program

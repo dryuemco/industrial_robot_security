@@ -1,0 +1,61 @@
+def main():
+    # -------------------------------------------------
+    # Safety configuration for fenced mode
+    # -------------------------------------------------
+    set_fence_mode(True)                # Enable fenced mode
+    set_payload(0.6, [0,0,0])            # Payload 0.6 kg, CoG at TCP
+    set_tcp(p[0,0,0,0,0,0])              # Default TCP
+    set_speed_limit(0.4)                 # Max TCP speed 400 mm/s (0.4 m/s)
+    set_watchdog(0.1)                    # Watchdog timeout 0.1 s
+
+    # Safety zones (conceptual placeholders)
+    # Confinement zone: defined by the fenced workspace
+    # Exclusion zone:   defined by external safety system (not entered)
+
+    # -------------------------------------------------
+    # Motion sequence (10 moves)
+    # -------------------------------------------------
+    # Joint target: Home position
+    q_home = [-0.0, -1.57, 1.57, -1.57, -1.57, 0.0]
+    movej(q_home, a=1.2, v=0.35)         # 350 mm/s = 0.35 m/s
+
+    # Linear target: Above marking surface
+    p_above = p[0.5, -0.2, 0.3, 0, 3.14, 0]   # example pose
+    movel(p_above, a=1.2, v=0.30)       # 300 mm/s
+
+    # Linear target: Descend to marking height
+    p_mark_height = p[0.5, -0.2, 0.1, 0, 3.14, 0]
+    movel(p_mark_height, a=1.2, v=0.10) # 100 mm/s
+
+    # Linear target: Mark line 1
+    p_line1_start = p[0.5, -0.2, 0.1, 0, 3.14, 0]
+    p_line1_end   = p[0.6, -0.2, 0.1, 0, 3.14, 0]
+    movel(p_line1_start, a=1.2, v=0.06) # 60 mm/s
+    movel(p_line1_end,   a=1.2, v=0.06) # 60 mm/s
+
+    # Linear target: Step to line 2
+    p_line2_start = p[0.5, -0.15, 0.1, 0, 3.14, 0]
+    p_line2_end   = p[0.6, -0.15, 0.1, 0, 3.14, 0]
+    movel(p_line2_start, a=1.2, v=0.08) # 80 mm/s
+    movel(p_line2_end,   a=1.2, v=0.08) # 80 mm/s
+
+    # Linear target: Step to line 3
+    p_line3_start = p[0.5, -0.10, 0.1, 0, 3.14, 0]
+    p_line3_end   = p[0.6, -0.10, 0.1, 0, 3.14, 0]
+    movel(p_line3_start, a=1.2, v=0.07) # 70 mm/s
+    movel(p_line3_end,   a=1.2, v=0.07) # 70 mm/s
+
+    # Retract to safe height
+    p_retract = p[0.5, -0.2, 0.3, 0, 3.14, 0]
+    movel(p_retract, a=1.2, v=0.30)     # 300 mm/s
+
+    # Return to Home
+    movej(q_home, a=1.2, v=0.35)         # 350 mm/s
+
+    # -------------------------------------------------
+    # End of program
+    # -------------------------------------------------
+end
+
+# Start execution
+main()
