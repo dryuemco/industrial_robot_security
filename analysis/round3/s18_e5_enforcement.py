@@ -26,7 +26,7 @@ that halts or stops when the speed exceeds TCP_SPEED_CAP, or that passes min(v, 
 its speed argument is a call to a helper that returns min(v, TCP_SPEED_CAP) or returns
 TCP_SPEED_CAP on the greater branch; or the speed argument is min(..., TCP_SPEED_CAP) or a variable
 assigned once from one of these. The name of the helper does not matter. A speed argument that is
-TCP_SPEED_CAP itself, or any other name, sets the speed and bounds nothing, so it does not count.
+TCP_SPEED_CAP itself, or any other name, is not counted as retention of a clamp or guard.
 
 Commanded speed, for all 238 valid outputs: the Cartesian speed of every move is resolved from a
 literal, a name with one assignment, or a keyword or positional argument of a helper call (by the

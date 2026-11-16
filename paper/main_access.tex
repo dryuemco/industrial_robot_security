@@ -1212,9 +1212,7 @@ baseline and 108 safety-prompted outputs), the pooled mean number of violations 
 generation falls from 10.37 under the baseline condition to 6.39 under the safety-prompted
 condition, a relative reduction of 38\%, concentrated in DeepSeek-Coder-V2-16B (9.50 to
 3.69, 61\%) and CodeLlama-34B (10.00 to 3.19, 68\%), with Qwen2.5-Coder-32B essentially
-unchanged. The two pools differ in composition, with 45, 20 and 18 outputs per model at
-baseline against 45, 42 and 21 under the safety prompt; with the baseline weights of the
-three models held fixed the fall is 3.15 in place of 3.98. By check, the fall of 3.98 firings per gate-passing output comes mostly from
+unchanged. By check, the fall of 3.98 firings per gate-passing output comes mostly from
 the input-validation proxy (2.32) and the preamble check (0.94), with 0.32 from the
 hardcoded-value check, 0.24 from the unusual-conditions check and 0.15 from the
 error-handling proxy. With the corrected SM-5 the fall is 3.56, and the hardcoded-value
@@ -1225,8 +1223,9 @@ from 98.8\% to 93.5\% (101 of 108 outputs), while the naive rate rises from 60.7
 binary violation rate therefore convey different information in this regime. The seven
 safety-prompted outputs that pass the gate without a firing all come from CodeLlama-34B, on
 three tasks. Like the single baseline output described above, they are pseudo-code that the
-lexical gate admits, and all seven fail the structural gate, so part of the fall for
-CodeLlama-34B is a move out of valid URScript.
+lexical gate admits, and all seven fail the structural gate. The fall in the firing count
+under the safety prompt is measured on outputs that pass the lexical gate, and it does not
+show that the prompt produces safer valid URScript.
 
 \input{tables/rep_reproducibility.tex}
 
@@ -1619,11 +1618,7 @@ estimate.
 the 135 confirmatory and the 60 frontier ones, yields a remediated-to-zero
 count of 0 of 135 and 0 of 60. No model at any size from 16B to 675B used the retry
 budget to convert an unsafe generation into a valid violation-free one under the whole-program-regeneration protocol used here.
-This count is under the full registered rule set. Under the preamble check alone, the
-primary estimate of \ref{sec:res-baseline}, 29 of the 60 frontier trajectories start from a
-gate-passing output that the check flags; 14 of them produce a later gate-passing output
-without the firing, and 8 end on one. For the 135 local trajectories the counts are 78, 1
-and 0. What changes
+This count is under the full registered rule set. What changes
 with scale is the failure mode rather than the outcome. In the local regime the modal
 behavior is that the loop never runs or breaks early, with 78 of 135 trajectories either
 failing to produce valid URScript on the first call or leaving the loop when a retry
@@ -1642,8 +1637,8 @@ execution-error feedback universally improves functional pass rates across model
 \cite{ref47} and richer
 critic-generated feedback repairs most injected-Python samples within two retries
 \cite{ref56}. The discrepancy points to the target property, since a loop that
-reliably repairs functional test failures records zero complete repairs when the fed-back signal
-is a static safety violation, although the comparison is across studies with different
+reliably repairs functional test failures records zero complete repairs under the full registered rule set when the fed-back
+signal is a static safety violation, although the comparison is across studies with different
 models and languages. A single-arm probe in which the feedback was
 deterministically enriched with rule definitions, offending lines, and fix templates
 reshaped the distribution without lifting the floor. One of fifteen repair trajectories reached a
@@ -1671,8 +1666,6 @@ breaches occur in the 179 programs stored from 180 edit generations, both in the
 program, against 70 breaches in 11 of the 60 programs of the from-scratch control. The
 representation probe then re-encodes each task's speed cap in four behaviorally
 identical forms and applies one benign performance-framed edit, over 240 generations.
-The task description in the prompt states the cap in every form, so the forms differ only
-in how the supplied program encodes it.
 Two of the 240 outputs fail the validity gate and are excluded as invalid before any
 breach is scored, both at the 358B scale, one in the comment encoding and one in the
 named-constant encoding. The four encodings therefore retain 60, 59, 59, and 60 valid
@@ -1693,8 +1686,8 @@ permutation $p=0.0002$; Figure~\ref{fig:repbreach}).
 What the edit does to the encoded construct is classified by function. A program keeps
 the enforcement when a clamp or a guard on a cap no higher than the task's still bounds
 the speed of every Cartesian move, whatever the helper is called and however the clamp or
-the guard is written. A speed argument set equal to the cap constant bounds nothing and
-does not count. Each classification was read by one author, and the table of all 119
+the guard is written. Direct assignment of the cap constant to a speed
+argument is not counted as retention of a clamp or guard. Each classification was read by one author, and the table of all 119
 programs is in the replication package. Of the 119 programs in the two explicit forms, 89
 keep the enforcement, 20 of them in a rewritten form, for example
 \texttt{min(v, TCP\_SPEED\_CAP)} in place of the supplied clamp. The enforcement of the
@@ -1769,7 +1762,7 @@ contradicts the functional-repair finding, reported in a preprint, that iterativ
 self-repair reliably raises pass rates with most benefit in the first one or two rounds
 \cite{ref47}, since no model
 at any scale from 16B to 675B converted an unsafe generation into a valid violation-free
-one across the 195 repair trajectories. It aligns instead with the security-repair finding
+one under the full registered rule set across the 195 repair trajectories. It aligns instead with the security-repair finding
 that iteration can degrade rather than improve safety. Model-only iteration has been
 reported to raise critical vulnerabilities by 37.6\% over five rounds \cite{ref53}, and
 adding a static check to the loop has been reported to increase rather than suppress
@@ -1779,10 +1772,10 @@ describes in the abstract is observed concretely here. Under the representation 
 the enforcement of the encoded cap was lost in 25\% of explicit-form programs
 (Listing L3 in Appendix~\ref{app:listings}), and in the 135 local trajectories
 the repair loop restored the locally insertable input-validation guard in 28\% and the
-structural obligations in at most 4\%, so the loop behaves exactly as a rule-based detector
+structural obligations in at most 4\% of the trajectories each check initially flags, so the loop behaves exactly as a rule-based detector
 that cannot see structural regression would predict. The discrepancy points to the
-target property, since a loop that reliably repairs functional test failures records zero complete repairs when the fed-back signal is a static safety violation, although the comparison is
-across studies with different models and languages.
+target property, since a loop that reliably repairs functional test failures records zero complete repairs under the full registered rule set when the fed-back
+signal is a static safety violation, although the comparison is across studies with different models and languages.
 
 An exploratory observation, drawn from a single-repetition probe and reported without a
 confirmatory claim, is that a benign edit can remove the enforcement of an explicit safety
@@ -1833,7 +1826,7 @@ loop control, and a digital-twin execution stage before any hardware is engaged 
 levers most directly supported by the evidence reported here.
 
 \subsection{Implications for Deployment}\label{sec:implications}
-Four implications follow. First, safety prompting helps two of three models but is not universally protective, and a unit-naive safety prompt can even elicit more dangerous code through a millimetre-versus-metre confusion, which motivates specifying units in the target language's convention. Second, adversarial robustness varies unpredictably across models and is not predicted by general coding ability. Third, rule checking is necessary but not sufficient, because pseudo-code that does not match expected syntax patterns evades rule-based detection. Fourth, any benchmark that scores generated robot code on rule violations alone, without first gating on whether the output is committed URScript at all (the present gate is lexical; a future gate that verifies syntactic validity against the URScript grammar would be stricter), risks rewarding models that fail to commit to executable output; the validity-gated violation rate, reported alongside the invalid-generation fraction, is therefore recommended over the naive rate. The substantive-safe rate removes most of the invalid-counts-as-safe artifact, although under the lexical gate a pseudo-code output can still count as safe, as the single substantive-safe output of \ref{sec:res-baseline} shows. It is also not an acceptance test in its present form: the deterministic reference translation is substantive-safe on 0 of 15 tasks (Table~\ref{tab:comparator}), so the same criterion would also reject a program rendered directly from the task specification. It is used here only to compare models and conditions within the evaluated corpus, all scored under one rule set, and its use as an acceptance criterion would first require the rule-by-rule revision of the checker identified as future work in \ref{sec:res-baseline}.
+Four implications follow. First, safety prompting lowers the violation count of two of three models but is not universally protective, and a unit-naive safety prompt can even elicit more dangerous code through a millimetre-versus-metre confusion, which motivates specifying units in the target language's convention. Second, adversarial robustness varies unpredictably across models and is not predicted by general coding ability. Third, rule checking is necessary but not sufficient, because pseudo-code that does not match expected syntax patterns evades rule-based detection. Fourth, any benchmark that scores generated robot code on rule violations alone, without first gating on whether the output is committed URScript at all (the present gate is lexical; a future gate that verifies syntactic validity against the URScript grammar would be stricter), risks rewarding models that fail to commit to executable output; the validity-gated violation rate, reported alongside the invalid-generation fraction, is therefore recommended over the naive rate. The substantive-safe rate removes most of the invalid-counts-as-safe artifact, although under the lexical gate a pseudo-code output can still count as safe, as the single substantive-safe output of \ref{sec:res-baseline} shows. It is also not an acceptance test in its present form: the deterministic reference translation is substantive-safe on 0 of 15 tasks (Table~\ref{tab:comparator}), so the same criterion would also reject a program rendered directly from the task specification. It is used here only to compare models and conditions within the evaluated corpus, all scored under one rule set, and its use as an acceptance criterion would first require the rule-by-rule revision of the checker identified as future work in \ref{sec:res-baseline}.
 
 \subsection{Threats to Validity}\label{sec:threats}
 The study is bounded along several axes. The principal internal threat is the
@@ -1979,8 +1972,8 @@ models leave the loop by falling out of valid syntax. Two further observations q
 these findings. Safety-prompt response is model-dependent, reducing violations in two of
 three models, so prompt-level guidance is not universally protective. In the additional
 single-repetition probes on frontier models and at two decoding temperatures, spanning 24B
-to 675B parameters, the substantive-safe rate stays at or near zero and the repair loop
-again produces no remediation; these are signals for replication rather than confirmed
+to 675B parameters, the substantive-safe rate stays at or near zero and the repair loop again produces no
+valid, violation-free final output under the full registered rule set; these are signals for replication rather than confirmed
 effects.
 
 Future work proceeds along four axes. The pre-execution failure modes surfaced by the
@@ -2218,8 +2211,8 @@ experiments, so the registered refusal sensitivity analysis coincides with the p
 With the outputs that fail the validity gate excluded, as the second registered sensitivity
 analysis prescribes, 15, 10 and 6 baseline cells remain for Qwen2.5-Coder-32B,
 DeepSeek-Coder-V2-16B and CodeLlama-34B, with 4 to 15 adversarial cells per strategy and 15,
-3 and 3 matched cells after one retry. H4 then rejects for all three models, no H5 test
-rejects and no model shows a reduction under H6, so the hypothesis decisions do not change.
+3 and 3 matched cells after one retry. H4 then also rejects for CodeLlama-34B (6 of 6 cells), whereas it does not in the
+primary analysis. No H5 test rejects, and no model shows a reduction under H6.
 Over the full three-retry loop the reduction
 of DeepSeek-Coder-V2-16B reaches 88.9\% (Holm-adjusted $p=0.023$), but on the gate-passing
 outputs the reduction is zero for all three models (\ref{sec:res-watchdog}), so it is the
