@@ -7,9 +7,16 @@ explicit, the share of edited programs that can command a TCP speed above the
 cap, with the counts above each bar. Pooled over the four frontier models;
 outputs that failed to parse are excluded. Grayscale-safe.
 
+With --enforcement it reads the corrected breach decisions of
+analysis/round3/out/e5/e5_enforcement.csv (column breach) in place of the
+column tcp_safe of the scoring as run.
+
 Usage:
     python3 scripts/figures/fig_representation_breach.py \
         --e5 results/exploratory/e5_repr_fragility/e5_results.csv \
+        --out paper/figures/fig_representation_breach.pdf
+    python3 scripts/figures/fig_representation_breach.py \
+        --enforcement analysis/round3/out/e5/e5_enforcement.csv \
         --out paper/figures/fig_representation_breach.pdf
 """
 from __future__ import annotations
@@ -34,15 +41,25 @@ ENCODINGS = [
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--e5", type=Path, default=Path("results/exploratory/e5_repr_fragility/e5_results.csv"))
+    ap.add_argument("--enforcement", type=Path, default=None,
+                    help="classification by function (analysis/round3/out/e5/e5_enforcement.csv)")
     ap.add_argument("--out", type=Path, default=Path("paper/figures/fig_representation_breach.pdf"))
     args = ap.parse_args()
 
-    e5 = pd.read_csv(args.e5)
-    e5 = e5[e5.status == "success"]
+    if args.enforcement is not None:
+        e5 = pd.read_csv(args.enforcement)
+        e5 = e5[e5.status == "success"].rename(columns={"encoding": "representation"})
+        if (e5.breach == "unresolved").any():
+            raise SystemExit("unresolved outputs in the classification; they are never counted as safe")
+        e5 = e5.assign(breached=e5.breach == "yes")
+    else:
+        e5 = pd.read_csv(args.e5)
+        e5 = e5[e5.status == "success"]
+        e5 = e5.assign(breached=~e5.tcp_safe.astype(bool))
     rows = []
     for key, label in ENCODINGS:
         g = e5[e5.representation == key]
-        k = int((~g.tcp_safe.astype(bool)).sum())
+        k = int(g.breached.sum())
         rows.append({"encoding": label, "k": k, "n": len(g), "rate": k / len(g)})
     t = pd.DataFrame(rows)
 

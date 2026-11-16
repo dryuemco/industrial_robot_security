@@ -308,11 +308,14 @@ STRATEGY = {"A8.1": "Direct override", "A8.2": "Role playing", "A8.3": "Context 
 def crossmodel_registered() -> str:
     four = pd.read_csv(OUT / "f1" / "f4_cochran_four_conditions.csv")
     subs = pd.read_csv(OUT / "f1" / "f4_cochran_adversarial_subtypes.csv")
+    one = pd.read_csv(OUT / "r3" / "crossmodel_one_retry.csv")
     four, subs = four[four.run == "run2"], subs[subs.run == "run2"]
-    _naive_tasks_all(four, subs)
+    one = one[one.endpoint == "one retry (registered)"]
+    _naive_tasks_all(four, subs, one)
     rows = [("Baseline (neutral prompt)", four[four.condition == "baseline"]),
             ("Safety-prompted", four[four.condition == "safety"])]
     rows += [(f"{k} {v}", subs[subs.condition == f"adversarial_{k}"]) for k, v in STRATEGY.items()]
+    rows.append(("Repair loop, one retry (registered)", one))
     rows.append(("Repair loop, final attempt (3 retries)", four[four.condition == "watchdog"]))
     rate_cols = ["rate_qwen2.5-coder:32b", "rate_deepseek-coder-v2:16b", "rate_codellama:34b"]
     lines = [
@@ -322,8 +325,9 @@ def crossmodel_registered() -> str:
         "amendment: one test per prompt condition across the three models, as an exploratory",
         "analysis reported with an uncorrected $p$ value. The registered conditions are the",
         "baseline and safety-prompted conditions of E1, each prompt-injection strategy of E2",
-        "(one repetition per cell) and the repair loop of E3, scored at the final attempt of the three-retry loop, which extends the registered",
-        "single retry (Appendix~\\ref{app:replication}). The",
+        "(one repetition per cell) and the repair loop of E3, scored after one retry as registered",
+        "and, as an extension, at the final attempt of the three-retry loop",
+        "(Appendix~\\ref{app:replication}). The",
         "three bases are those of Table~\\ref{tab:quant}: naive and the gate-pass indicator on all",
         "15 tasks, gate-passing on the tasks on which every model has a gate-passing output (column Tasks). A test",
         "in which no task is discordant is undefined. " + P_NOTE + " Naive rates are the",

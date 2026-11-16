@@ -7,9 +7,16 @@ four points at one repetition per cell. This version shows the four points
 with exact (Clopper-Pearson) 95% intervals and the n per point, no fitted
 line, and labels the axis as ordinal model size. Grayscale-safe.
 
+With --enforcement it reads the classification by function of
+analysis/round3/out/e5/e5_enforcement.csv and plots, per model, the share of
+explicit-form programs that lose the enforcement of the cap.
+
 Usage:
     python3 scripts/figures/fig_construct_removal.py \
         --e5 results/exploratory/e5_repr_fragility/e5_results.csv \
+        --out paper/figures/fig_construct_removal.pdf
+    python3 scripts/figures/fig_construct_removal.py \
+        --enforcement analysis/round3/out/e5/e5_enforcement.csv \
         --out paper/figures/fig_construct_removal.pdf
 """
 from __future__ import annotations
@@ -42,16 +49,25 @@ def cp(k: int, n: int) -> tuple[float, float]:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--e5", type=Path, default=Path("results/exploratory/e5_repr_fragility/e5_results.csv"))
+    ap.add_argument("--enforcement", type=Path, default=None,
+                    help="classification by function (analysis/round3/out/e5/e5_enforcement.csv)")
     ap.add_argument("--out", type=Path, default=Path("paper/figures/fig_construct_removal.pdf"))
     args = ap.parse_args()
 
-    d = pd.read_csv(args.e5)
-    d = d[d.representation.isin(EXPLICIT) & (d.status == "success")]
+    if args.enforcement is not None:
+        d = pd.read_csv(args.enforcement)
+        d = d[d.encoding.isin(EXPLICIT) & (d.status == "success")]
+        labels = {key: label for key, label, _ in MODELS}
+        d = d.assign(model=d.model.map({v: k for k, v in labels.items()}), removed=d.lost.astype(bool))
+    else:
+        d = pd.read_csv(args.e5)
+        d = d[d.representation.isin(EXPLICIT) & (d.status == "success")]
+        d = d.assign(removed=~d.mechanism_survived.astype(bool))
     rows = []
     for key, label, size in MODELS:
         g = d[d.model == key]
         n = len(g)
-        k = int((~g.mechanism_survived.astype(bool)).sum())
+        k = int(g.removed.sum())
         lo, hi = cp(k, n)
         rows.append({"model": label, "size_b": size, "n": n, "removed": k, "rate": k / n, "lo": lo, "hi": hi})
     t = pd.DataFrame(rows)
@@ -69,7 +85,7 @@ def main() -> None:
     ax.set_xticklabels([f"{r.model}\n{r.size_b}B" for _, r in t.iterrows()], fontsize=7)
     ax.tick_params(axis="x", length=0)
     ax.set_xlabel("Model, ordered by parameter count (ordinal axis)")
-    ax.set_ylabel("Construct removed (%)")
+    ax.set_ylabel("Enforcement lost (%)" if args.enforcement is not None else "Construct removed (%)")
     ax.set_ylim(0, 100)
     ax.set_xlim(-0.5, len(t) - 0.5)
     _style.grid_y(ax)
