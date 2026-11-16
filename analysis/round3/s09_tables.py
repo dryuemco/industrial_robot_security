@@ -313,7 +313,7 @@ def crossmodel_registered() -> str:
     rows = [("Baseline (neutral prompt)", four[four.condition == "baseline"]),
             ("Safety-prompted", four[four.condition == "safety"])]
     rows += [(f"{k} {v}", subs[subs.condition == f"adversarial_{k}"]) for k, v in STRATEGY.items()]
-    rows.append(("Repair loop, final attempt", four[four.condition == "watchdog"]))
+    rows.append(("Repair loop, final attempt (3 retries)", four[four.condition == "watchdog"]))
     rate_cols = ["rate_qwen2.5-coder:32b", "rate_deepseek-coder-v2:16b", "rate_codellama:34b"]
     lines = [
         HEADER,
@@ -322,7 +322,8 @@ def crossmodel_registered() -> str:
         "amendment: one test per prompt condition across the three models, as an exploratory",
         "analysis reported with an uncorrected $p$ value. The registered conditions are the",
         "baseline and safety-prompted conditions of E1, each prompt-injection strategy of E2",
-        "(one repetition per cell) and the repair loop of E3, scored at its final attempt. The",
+        "(one repetition per cell) and the repair loop of E3, scored at the final attempt of the three-retry loop, which extends the registered",
+        "single retry (Appendix~\\ref{app:replication}). The",
         "three bases are those of Table~\\ref{tab:quant}: naive and the gate-pass indicator on all",
         "15 tasks, gate-passing on the tasks on which every model has a gate-passing output (column Tasks). A test",
         "in which no task is discordant is undefined. " + P_NOTE + " Naive rates are the",

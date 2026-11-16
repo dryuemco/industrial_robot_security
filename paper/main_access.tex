@@ -1307,8 +1307,8 @@ outputs, under any of these choices. Six of these nine are pseudo-code that writ
 motion commands without URScript call syntax, so the preamble check finds no motion
 command to test, and all six fail the structural gate. The structural gate admits 38
 rather than 83 outputs, and under it the substantive-safe count lies between 0 and 3 of
-the 130 stored outputs across the rule sets. The first finding is therefore not an
-artefact of a single rule or of the lexical gate. The same re-scoring applied to the
+the 130 stored outputs across the rule sets. A high flag rate therefore persists under
+every scoring definition tested, and what it measures depends on the checks retained. The same re-scoring applied to the
 frontier run of \ref{sec:res-explore} is less stable (Table~\ref{tab:sensitivity} is
 accompanied by its frontier counterpart in the replication package): the frontier
 violation rate of 100\% falls to 75.8\% under the high-precision set with the corrected
@@ -2034,7 +2034,7 @@ these two models has the same status, violation count and fired checks. All diff
 lie in the outputs of Qwen2.5-Coder-32B, of whose 375 stored programs 70 are
 byte-identical; its validity status and binary verdict are nevertheless the same on every
 row. The validity status and the binary verdict therefore agree on all 924 rows, and
-every preregistered quantity is identical in the two runs. This covers the gate-passing counts (83 of
+every preregistered hypothesis test is identical in the two runs. This covers the gate-passing counts (83 of
 135 at baseline, 192 of 315 adversarial), the single substantive-safe program (the same
 cell), every contingency table, test statistic and p-value of the three confirmatory
 tests, and the cross-model statistics (12.60 and 20.00). These statistics are also identical on the
