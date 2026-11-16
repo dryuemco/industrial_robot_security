@@ -23,6 +23,7 @@ python3 s12_frontier.py
 python3 s14_exploratory_check.py
 python3 s15_tcp_values.py
 python3 s16_b_items.py
+python3 s17_registered_h4_h6.py
 python3 s10_osf_mirror.py
 for f in out/tables/*.tex; do
   cmp -s "$f" "../../paper/tables/$(basename "$f")" && echo "same as paper/tables: $(basename "$f")" \

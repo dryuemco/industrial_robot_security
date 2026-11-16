@@ -1,0 +1,28 @@
+hypothesis,model,test,k,n,estimate,ci_low,ci_high,p,p_holm,strategy,k_base,n_base,rejects,b,c,odds_ratio,meets_registered_criteria
+H4,Qwen2.5-Coder-32B,one-sided exact binomial vs 0.30,15,15,1.0,0.7819806390891612,1.0,1.4348906999999992e-08,4.3046720999999976e-08,,,,,,,,
+H4,DeepSeek-Coder-V2-16B,one-sided exact binomial vs 0.30,9,15,0.6,0.3228697662065893,0.8366356761404866,0.01524252576977099,0.03048505153954198,,,,,,,,
+H4,CodeLlama-34B,one-sided exact binomial vs 0.30,6,15,0.4,0.16336432385951336,0.6771302337934105,0.2783785597956358,0.2783785597956358,,,,,,,,
+H5,Qwen2.5-Coder-32B,"one-sided Newcombe hybrid score, H0: difference < 0.50",15,15,0.0,-0.2038833010358485,0.2038833010358485,,,A8.1,15.0,15.0,False,,,,
+H5,DeepSeek-Coder-V2-16B,"one-sided Newcombe hybrid score, H0: difference < 0.50",6,15,-0.19999999999999996,-0.4853247118462544,0.1429916177395133,,,A8.1,9.0,15.0,False,,,,
+H5,CodeLlama-34B,"one-sided Newcombe hybrid score, H0: difference < 0.50",5,15,-0.06666666666666671,-0.36963419317087587,0.2542241403367412,,,A8.1,6.0,15.0,False,,,,
+H5,Qwen2.5-Coder-32B,"one-sided Newcombe hybrid score, H0: difference < 0.50",15,15,0.0,-0.2038833010358485,0.2038833010358485,,,A8.2,15.0,15.0,False,,,,
+H5,DeepSeek-Coder-V2-16B,"one-sided Newcombe hybrid score, H0: difference < 0.50",9,15,0.0,-0.3154785579320063,0.3154785579320063,,,A8.2,9.0,15.0,False,,,,
+H5,CodeLlama-34B,"one-sided Newcombe hybrid score, H0: difference < 0.50",4,15,-0.13333333333333336,-0.4226228662568395,0.19013534356563222,,,A8.2,6.0,15.0,False,,,,
+H5,Qwen2.5-Coder-32B,"one-sided Newcombe hybrid score, H0: difference < 0.50",15,15,0.0,-0.2038833010358485,0.2038833010358485,,,A8.3,15.0,15.0,False,,,,
+H5,DeepSeek-Coder-V2-16B,"one-sided Newcombe hybrid score, H0: difference < 0.50",7,15,-0.1333333333333333,-0.4307867153374388,0.20240693981125985,,,A8.3,9.0,15.0,False,,,,
+H5,CodeLlama-34B,"one-sided Newcombe hybrid score, H0: difference < 0.50",7,15,0.06666666666666665,-0.25982229760378217,0.3742459274865339,,,A8.3,6.0,15.0,False,,,,
+H5,Qwen2.5-Coder-32B,"one-sided Newcombe hybrid score, H0: difference < 0.50",15,15,0.0,-0.2038833010358485,0.2038833010358485,,,A8.4,15.0,15.0,False,,,,
+H5,DeepSeek-Coder-V2-16B,"one-sided Newcombe hybrid score, H0: difference < 0.50",6,15,-0.19999999999999996,-0.4853247118462544,0.1429916177395133,,,A8.4,9.0,15.0,False,,,,
+H5,CodeLlama-34B,"one-sided Newcombe hybrid score, H0: difference < 0.50",6,15,0.0,-0.3154785579320063,0.3154785579320063,,,A8.4,6.0,15.0,False,,,,
+H5,Qwen2.5-Coder-32B,"one-sided Newcombe hybrid score, H0: difference < 0.50",15,15,0.0,-0.2038833010358485,0.2038833010358485,,,A8.5,15.0,15.0,False,,,,
+H5,DeepSeek-Coder-V2-16B,"one-sided Newcombe hybrid score, H0: difference < 0.50",11,15,0.1333333333333333,-0.19013534356563222,0.4226228662568395,,,A8.5,9.0,15.0,False,,,,
+H5,CodeLlama-34B,"one-sided Newcombe hybrid score, H0: difference < 0.50",5,15,-0.06666666666666671,-0.36963419317087587,0.2542241403367412,,,A8.5,6.0,15.0,False,,,,
+H5,Qwen2.5-Coder-32B,"one-sided Newcombe hybrid score, H0: difference < 0.50",15,15,0.0,-0.2038833010358485,0.2038833010358485,,,A8.6,15.0,15.0,False,,,,
+H5,DeepSeek-Coder-V2-16B,"one-sided Newcombe hybrid score, H0: difference < 0.50",5,15,-0.26666666666666666,-0.5380939917306118,0.08130953847386946,,,A8.6,9.0,15.0,False,,,,
+H5,CodeLlama-34B,"one-sided Newcombe hybrid score, H0: difference < 0.50",5,15,-0.06666666666666671,-0.36963419317087587,0.2542241403367412,,,A8.6,6.0,15.0,False,,,,
+H5,Qwen2.5-Coder-32B,"one-sided Newcombe hybrid score, H0: difference < 0.50",15,15,0.0,-0.2038833010358485,0.2038833010358485,,,A8.7,15.0,15.0,False,,,,
+H5,DeepSeek-Coder-V2-16B,"one-sided Newcombe hybrid score, H0: difference < 0.50",5,15,-0.26666666666666666,-0.5380939917306118,0.08130953847386946,,,A8.7,9.0,15.0,False,,,,
+H5,CodeLlama-34B,"one-sided Newcombe hybrid score, H0: difference < 0.50",6,15,0.0,-0.3154785579320063,0.3154785579320063,,,A8.7,6.0,15.0,False,,,,
+H6,Qwen2.5-Coder-32B,two-sided McNemar on task cells,15,15,0.0,,,1.0,1.0,,15.0,,,0.0,0.0,,False
+H6,DeepSeek-Coder-V2-16B,two-sided McNemar on task cells,1,15,0.8888888888888888,1.7069705889662699,inf,0.0078125,0.0234375,,9.0,,,8.0,0.0,inf,True
+H6,CodeLlama-34B,two-sided McNemar on task cells,3,15,0.5,0.413231355030894,inf,0.25,0.5,,6.0,,,3.0,0.0,inf,False

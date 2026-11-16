@@ -1177,8 +1177,9 @@ the adjudicated labels, the sensitivity analysis, the error-handling proxy and t
 check reach 90\%. Restricting the flag to those two leaves the rate at 82 of 83, or
 98.8\%, with 1 of the 130 stored outputs violation-free, the same as the registered
 rule set (Table~\ref{tab:sensitivity}, SM2+SM6). The finding that almost no generated
-program is both valid and free of a genuine weakness therefore survives under both
-readings, but its margin ranges from 89.2\% to 98.8\% across defensible check sets. The
+program is both valid and clean under the checks the audits rate as precise therefore
+survives under both readings, but its margin ranges from 89.2\% to 98.8\% across defensible
+check sets, and under rater B's labels it rests on the preamble check alone. The
 substantive-safe rate of 1 of the 135 baseline generations must be read as a rate under the full registered
 rule set rather than under a set of verified high-precision checks. A rule-by-rule
 revision of the checker against the four wording defects above, with a full-population
@@ -1219,9 +1220,8 @@ invalid pseudo-code as safe, which motivates the validity-aware substantive-safe
 \item Almost no generation is both valid and rule-clean: the substantive-safe rate is 1
 of the 135 baseline generations (0.7\%), since of the 83 gate-passing outputs only one
 triggers no check.
-\item The signal is cybersecurity, not motion safety: the motion-safety checks fire on
-zero of all 585 generations and the combined signal is carried entirely by the security
-checks, with no refusals in any condition (0 of 585).
+\item The whole signal comes from the security checks: the motion-safety checks fire on
+zero of all 585 generations, and no model refused in any condition (0 of 585).
 \end{itemize}
 
 \textbf{Non-LLM comparator.} A violation rate near 99\% is interpretable only against
@@ -1252,8 +1252,8 @@ error-handling proxies (SM-1 and SM-2, rater B precision 45\% and 50\%) contribu
 the three checks the first audit rated at or above 90\% (SM-4, SM-5 and SM-6) the two differ
 by 0.15 firings per program (5.88 against 5.73). With the corrected SM-5 the excess is 6.84
 (9.84 against 3.00). SM-1 and SM-2 again contribute 4.49, and the remaining 2.35 comes from
-speed literals above the task's limit (2.99 corrected SM-5 firings per program against none
-for the reference), less the 0.35 and 0.29 by which the reference exceeds generated code on
+literals above the task's limits, most of them TCP speeds (211 of the 248 corrected SM-5
+firings, 2.99 per program against none for the reference), less the 0.35 and 0.29 by which the reference exceeds generated code on
 SM-4 and SM-6. Generated code fires the input-validation and error-handling proxies on 52
 and 82 of its 83 programs, while the minimal reference translation fires neither. The
 translation with the preamble fires the error-handling proxy on all fifteen programs,
@@ -1351,8 +1351,8 @@ the increase under incremental escalation comes from the hardcoded-value check (
 firings per gate-passing output, 7.35 with the corrected SM-5), partly offset by 2.01 fewer
 input-validation firings. The pooled increase of 1.24 comes likewise from the
 hardcoded-value check (2.04, or 1.89 corrected), with 0.95 fewer input-validation firings.
-The adversarial count uplift is therefore carried by speed literals above the task limit and
-remains under the corrected SM-5 (5.45 for incremental escalation and 1.08 pooled). These
+The adversarial count uplift is therefore carried by speed and acceleration literals above
+the task's limits and remains under the corrected SM-5 (5.45 for incremental escalation and 1.08 pooled). These
 count and severity contrasts are taken as the primary adversarial analysis.
 
 \input{tables/adversarial_table.tex}
@@ -1762,16 +1762,17 @@ language and motion \cite{ref8, ref9, ref10, ref35, ref36}.
 
 \subsection{Alternative Interpretations}\label{sec:alternatives}
 Several competing explanations for the pervasive failure were examined and found
-insufficient. The saturation is not an artifact of low-precision quantization or
-near-deterministic decoding, since it persists for full-precision frontier models served
-through a hosted gateway and at sampling temperatures of 0.2 and 0.7. It is not confined
+insufficient. The saturation is not an artifact of one quantization level or of
+near-deterministic decoding, since it persists for frontier models served at other
+precisions through a hosted gateway (Section~\ref{sec:models}) and at sampling temperatures
+of 0.2 and 0.7. It is not confined
 to small models, holding from 16B to 675B parameters. It is not an artifact of refusal,
 since no model declined to generate code in any condition. Two interpretations remain
 genuinely open and bound the claims accordingly. First, because the task specification is
 held invariant across conditions by design, the motion-safety pass is not exercised on
 generated code and the reported signal is carried by the cybersecurity pass, so the result
-establishes pervasive insecure code generation rather than demonstrated physical-motion
-hazards; a protocol that mutates the specification would exercise the motion rules
+concerns code-level findings of the security checks, as qualified by the comparator and the
+audits of \ref{sec:res-baseline}, rather than demonstrated physical-motion hazards; a protocol that mutates the specification would exercise the motion rules
 directly and is the natural next study. Second, whether targeted fine-tuning,
 constraint-aware decoding, or retrieval of standard text can lift the floor is untested
 here, although the safety-prompt paradox observed at baseline and the shallow-alignment
@@ -1784,7 +1785,7 @@ loop control, and a digital-twin execution stage before any hardware is engaged 
 levers most directly supported by the evidence reported here.
 
 \subsection{Implications for Deployment}\label{sec:implications}
-Four implications follow. First, safety prompting helps two of three models but is not universally protective, and a unit-naive safety prompt can even elicit more dangerous code through a millimetre-versus-metre confusion, which motivates specifying units in the target language's convention. Second, adversarial robustness varies unpredictably across models and is not predicted by general coding ability. Third, rule checking is necessary but not sufficient, because pseudo-code that does not match expected syntax patterns evades rule-based detection. Fourth, any benchmark that scores generated robot code on rule violations alone, without first gating on whether the output is committed URScript at all (the present gate is lexical; a future gate that verifies syntactic validity against the URScript grammar would be stricter), risks rewarding models that fail to commit to executable output; the validity-gated violation rate is therefore recommended as the primary metric, reported alongside the invalid-generation fraction. The substantive-safe rate is immune to the invalid-counts-as-safe artifact but is not an acceptance test in its present form: the deterministic reference translation is substantive-safe on 0 of 15 tasks (Table~\ref{tab:comparator}), so the same criterion would also reject a program rendered directly from the task specification. It is used here only to compare models and conditions within the evaluated corpus, all scored under one rule set, and its use as an acceptance criterion would first require the rule-by-rule revision of the checker identified as future work in \ref{sec:res-baseline}.
+Four implications follow. First, safety prompting helps two of three models but is not universally protective, and a unit-naive safety prompt can even elicit more dangerous code through a millimetre-versus-metre confusion, which motivates specifying units in the target language's convention. Second, adversarial robustness varies unpredictably across models and is not predicted by general coding ability. Third, rule checking is necessary but not sufficient, because pseudo-code that does not match expected syntax patterns evades rule-based detection. Fourth, any benchmark that scores generated robot code on rule violations alone, without first gating on whether the output is committed URScript at all (the present gate is lexical; a future gate that verifies syntactic validity against the URScript grammar would be stricter), risks rewarding models that fail to commit to executable output; the validity-gated violation rate, reported alongside the invalid-generation fraction, is therefore recommended over the naive rate. The substantive-safe rate removes most of the invalid-counts-as-safe artifact, although under the lexical gate a pseudo-code output can still count as safe, as the single substantive-safe output of \ref{sec:res-baseline} shows. It is also not an acceptance test in its present form: the deterministic reference translation is substantive-safe on 0 of 15 tasks (Table~\ref{tab:comparator}), so the same criterion would also reject a program rendered directly from the task specification. It is used here only to compare models and conditions within the evaluated corpus, all scored under one rule set, and its use as an acceptance criterion would first require the rule-by-rule revision of the checker identified as future work in \ref{sec:res-baseline}.
 
 \subsection{Threats to Validity}\label{sec:threats}
 The study is bounded along several axes. The principal internal threat is the
@@ -1814,7 +1815,13 @@ specification is held invariant across conditions by design, so the motion-safet
 is not exercised on generated code and the reported violations concern
 cybersecurity-relevant properties rather than demonstrated physical-motion hazards;
 mutation of the task specification is a separate attack surface that is not addressed
-here.
+here. The task prompt (Appendix~\ref{app:prompts}) also gives a model less than the task
+representation holds: it lists the operating mode, the payload, the speed limit and the
+first five motion commands with their speeds, but no target poses, and it names each safety
+zone by its type without its geometry. A model therefore cannot reproduce the specified
+trajectory or the task's own boundary checks from the prompt, whereas the reference
+translation renders the full representation. The workspace-handling check and the
+reachability failure of the live-execution pilot are read with this in mind.
 
 Two threats concern the instrument itself. First, the rule checker's detection
 performance (Appendix~\ref{app:detection}) is established only on author-constructed
@@ -2132,6 +2139,31 @@ registry; the submitted version of this article labelled them H7 and H8, labels 
 third amendment uses for two other analyses (see below), and the labels are dropped here.
 A separate watchdog-validation family (H1 through H3), evaluating the rule checker in
 isolation on synthetic adversarial variants, is reported in Appendix~\ref{app:detection}.
+
+\textbf{Confirmatory tests in their registered form.} The analysis plan registers H4 to H6
+on aggregated task cells, a cell counting as violating when any of its three repetitions
+violates, with invalid outputs kept in the primary analysis as non-violating. For each
+model it specifies a one-sided exact binomial test of the baseline cell rate against 0.30
+(H4), a one-sided Newcombe hybrid score test of an increase of at least 0.50 for each
+strategy over the aggregated baseline cells (H5), and a two-sided McNemar test on the
+matched task cells, baseline against the repair loop at its final attempt (H6). Each
+carries a Holm correction within its own hypothesis, over three, 21 and three tests.
+Sections~\ref{sec:stats} and~\ref{sec:results} report these hypotheses on individual calls,
+with Wilson intervals, McNemar tests for H5 and H6 and a correction across the confirmatory
+family. In the registered form, H4 rejects for Qwen2.5-Coder-32B (15 of 15 cells,
+Clopper-Pearson 95\% interval [78.2\%, 100\%], Holm-adjusted $p<0.001$) and
+DeepSeek-Coder-V2-16B (9 of 15, [32.3\%, 83.7\%], $p=0.030$), and not for CodeLlama-34B
+(6 of 15, [16.3\%, 67.7\%], $p=0.278$), so H4 is supported, as in \ref{sec:res-baseline}.
+No H5 test rejects: the largest increase is $+0.13$ (DeepSeek-Coder-V2-16B under the
+authority claim, Newcombe 95\% interval [$-0.19$, 0.42]), far below the registered 0.50.
+For H6 the relative reductions are 0\%, 88.9\% and 50.0\% (exact McNemar $p=1.000$, 0.008
+and 0.250; Holm-adjusted 1.000, 0.023 and 0.500), so DeepSeek-Coder-V2-16B meets both
+registered criteria and CodeLlama-34B only the effect criterion. On the gate-passing
+outputs the reduction is zero for all three models (\ref{sec:res-watchdog}), so the
+reduction of DeepSeek-Coder-V2-16B is the dropout into invalid pseudo-code that
+\ref{sec:res-watchdog} describes. The reading of the three hypotheses is therefore the same
+under either form: H4 is supported, H5 is not, and the H6 reduction rests on output
+invalidation.
 
 \textbf{Preregistration and amendments.} The hypotheses, analysis plan, and amendment
 history are deposited in the preregistration referenced in the Acknowledgment. Three

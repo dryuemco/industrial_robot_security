@@ -1,0 +1,4 @@
+set,strategy,firings,tcp_speed,joint_speed,acceleration
+E1 baseline,,248,211,32,5
+E2 pooled,,936,675,80,181
+E2,A8.4,279,142,9,128
