@@ -832,10 +832,11 @@ threshold, per model and pooled, with Wilson confidence intervals. The second an
 are tested with McNemar's exact test on matched binary outcomes, with odds ratios and
 mid-p confidence intervals. A Holm-Bonferroni correction is applied across the
 confirmatory family and within each family's internal comparison set. These tests are run on
-individual calls. Appendix~\ref{app:replication} reports them in the registered form, on
-aggregated task cells with a correction within each hypothesis, together with two
-departures of the protocol from the registration: a repair loop of up to three retries
-instead of one, and a 4096-token instead of a 1024-token output budget. A cross-model
+individual calls, which departs from the registration. The hypothesis decisions follow the
+registered form, on aggregated task cells with a correction within each hypothesis, which
+Appendix~\ref{app:replication} reports together with two further departures of the
+protocol: a repair loop of up to three retries instead of one, and a 4096-token instead of
+a 1024-token output budget. A cross-model
 homogeneity test, one per prompt condition, was registered in the first preregistration
 amendment as an exploratory analysis outside the confirmatory family, to be reported with an
 uncorrected $p$ value. Two further hypotheses, that baseline
@@ -864,12 +865,15 @@ expectation.
 structured as three models, fifteen tasks, and three repetitions. Repetitions within a
 model-task cell share decoding settings and are strongly correlated under
 near-deterministic decoding, so the effective number of independent units lies between
-the 45 model-task cells and the 135 calls. Point estimates are unaffected by this
-choice. The confirmatory baseline conclusion is robust to the conservative unit:
+the 45 model-task cells and the 135 calls. The call-level rate is kept as the point estimate under
+either unit, and the conservative interval treats the 45 cells as the effective sample size
+(Wilson interval with $n=45$). The confirmatory baseline conclusion is robust to the conservative unit:
 restricting the analysis to the 45 model-task cells leaves the rate far above the 30\%
 threshold (one-sided exact binomial $p<0.001$), although the interval widens
 accordingly, for example from [52.3\%, 68.6\%] at the call level to approximately
-[46\%, 73\%] at the cell level. The confidence intervals reported in \ref{sec:results}
+[46\%, 73\%] with the cells as the unit. The registered cell outcome, a cell counting as
+violating when any of its repetitions violates, is a different estimand: 30 of the 45 cells
+violate (66.7\%, Clopper-Pearson [51.0\%, 80.0\%]). The confidence intervals reported in \ref{sec:results}
 are computed at the call level and should therefore be read as the narrow end of this
 range. The cross-model homogeneity test operates at the task level and already accounts
 for the shared task structure.
@@ -889,9 +893,9 @@ replication package.
 \section{Results}\label{sec:results}
 The results in this section concern how often open-weight models emit URScript that
 violates the security checks and whether adversarial prompting or repair-in-loop feedback changes that.
-Table~\ref{tab:summary} summarizes the preregistered hypotheses, tested on individual
-calls (the registered form is in Appendix~\ref{app:replication}), and their sensitivity
-analyses, and Table~\ref{tab:summary-extra} the additional analyses. Because the
+Table~\ref{tab:summary} summarizes the preregistered hypotheses as tested on individual
+calls, with the decisions of their registered form (Appendix~\ref{app:replication}), and
+their sensitivity analyses, and Table~\ref{tab:summary-extra} the additional analyses. Because the
 task representation is held invariant by design (\ref{sec:exps}), the motion-safety
 pass is not exercised on generated code, so the violation signal reported below is
 carried entirely by the security pass. The rule checker's intrinsic detection performance,
@@ -905,11 +909,13 @@ Appendix~\ref{app:detection}.
 
 \begin{table}[t]
 \caption{Summary of the principal results on the three local models (16B to 34B):
-preregistered tests on individual calls (registered form in Appendix~\ref{app:replication}),
-their sensitivity analyses, and the cross-model heterogeneity test.
+the preregistered hypotheses tested on individual calls, their sensitivity analyses, and the
+cross-model heterogeneity test. The hypothesis decisions follow the registered tests on task
+cells (Appendix~\ref{app:replication}): the baseline-rate hypothesis is supported, the
+adversarial-uplift and repair-loop hypotheses are not.
 Intervals on rates are computed at the call level and should be read as
 the narrow end of the range; under near-deterministic decoding the conservative
-cell-level interval for the baseline rate (\ref{sec:stats}) is taken as primary. Means
+interval for the baseline rate, with the cells as the unit (\ref{sec:stats}), is taken as primary. Means
 of violation counts are on the gate-passing basis unless stated.}
 \label{tab:summary}
 \centering
@@ -925,7 +931,7 @@ Combined violation rate, gate-passing outputs & 82/83 (98.8\%) & of the 83 gate-
 \quad restricted to the checks rated $\geq$90\% after adjudication (sensitivity) & 82/83 (98.8\%) & SM-2 and SM-6; 1 of the 130 stored outputs violation-free \\
 \quad with the corrected SM-5 unit reading & 82/83 (98.8\%) & Table~\ref{tab:sensitivity} \\
 \quad under the structural validity gate & 38/38 (100\%) & 38 of the 130 stored outputs admitted \\
-Combined violation rate, all outputs (naive) & 82/135 (60.7\%) & of the 135 baseline generations; [46, 73], cell level \\
+Combined violation rate, all outputs (naive) & 82/135 (60.7\%) & of the 135 baseline generations; [46, 73], cells as the unit \\
 Refusal rate & 0/585 & none observed \\
 Safety-prompt effect on mean violations & 10.37 to 6.39 & 38\% lower; descriptive, no test \\
 Adversarial uplift in mean violations, pooled & $+1.24$ & all-outputs basis $+0.70$; strongest strategy $+6.22$; severity unchanged \\
@@ -983,14 +989,16 @@ the binary verdict in 82 of 90 cells and on the validity status in 78, but are
 byte-identical in only 14 and agree on the violation count in 59, with
 DeepSeek-Coder-V2-16B agreeing on the count in only 10 of its 30 cells. Greedy decoding on
 the serving stack is therefore reproducible at the verdict level but not bit-reproducible,
-which is a further reason to treat the cell rather than the call as the unit; the cell-level 95\% interval, taken here as primary,
-is approximately [46\%, 73\%], wider than the call-level Wilson interval of
+which is a further reason to treat the cell rather than the call as the unit; the 95\% interval
+with the 45 cells as the unit, taken here as primary, is approximately [46\%, 73\%], wider than the call-level Wilson interval of
 [52.3\%, 68.6\%]. Restricted to outputs that pass the validity gate, the pooled rate is
 98.8\% [93.5\%, 99.8\%] at the call level, and the per-model
 gate-passing violation rates are 100\% for Qwen2.5-Coder-32B, 95\% for DeepSeek-Coder-V2-16B, and
 100\% for CodeLlama-34B. The preregistered hypothesis that at least 30\% of baseline
-generations violate is supported, with every gate-passing test rejecting the null at
-p below 0.001 after correction. The gap between naive and gate-passing rates is
+generations violate is supported. In its registered form the test on task cells rejects for
+Qwen2.5-Coder-32B and DeepSeek-Coder-V2-16B and not for CodeLlama-34B
+(Appendix~\ref{app:replication}), and on individual calls every gate-passing test rejects
+the null at p below 0.001 after correction. The gap between naive and gate-passing rates is
 driven by the high invalid-pseudo-code rates of DeepSeek-Coder-V2-16B and CodeLlama-34B
 (Figure~\ref{fig:per-model}). No model
 refused to generate code in any condition: the refusal count is 0 of 585, consistent
@@ -1218,7 +1226,7 @@ this regime.
 \textbf{Summary.} The baseline results support four conclusions.
 \begin{itemize}
 \item Generated URScript fails the checks pervasively: the naive combined violation
-rate is 60.7\% (cell-level interval [46\%, 73\%]) and rises to 98.8\% on gate-passing
+rate is 60.7\% (interval [46\%, 73\%] with the cells as the unit) and rises to 98.8\% on gate-passing
 code, and the preregistered hypothesis of at least 30\% violation is confirmed
 ($p<0.001$).
 \item The binary rate is a measurement hazard: it saturates and, scored naively, counts
@@ -1388,8 +1396,10 @@ is meaningful only where the matched baseline leaves headroom for it to register
 
 \subsection{Repair-in-Loop Defense}\label{sec:res-watchdog}
 The preregistered hypothesis that rule-checker feedback reduces the combined
-violation rate by at least 40\% relative is mixed. Under the naive contrast the pooled
-reduction is 18.5 percentage points, or 30.5\% relative, which is statistically
+violation rate by at least 40\% relative is not supported. In its registered form, on
+task cells after one retry, no model meets both criteria (Appendix~\ref{app:replication}).
+The contrasts below are computed on individual calls over the full three-retry loop. Under
+the naive contrast the pooled reduction is 18.5 percentage points, or 30.5\% relative, which is statistically
 significant but below the effect-size threshold. Two per-model contrasts do clear the
 threshold (DeepSeek-Coder-V2-16B at 84.2\% relative and CodeLlama-34B at 50.0\%
 relative), while the contrast is not testable for Qwen2.5-Coder-32B because it produces
@@ -1564,10 +1574,13 @@ danger. The motion-safety checks fire zero times, consistent with the invariant
 protocol. Qualitatively, larger models emit more safety-flavored text without crossing
 into safe code: one model emitted a plausible but non-existent safety call that
 performs no protective function, and the largest produced programs rich in protective
-scaffolding that nonetheless command a velocity four times the collaborative limit. The
-violation floor therefore does not improve with scale, and the largest model performs
-worst on violation surface. This frontier comparison is bounded along the scale axis: the
-four sizes are run at a single repetition through a hosted gateway whose serving stack and
+scaffolding that nonetheless command a velocity four times the collaborative limit. Under the
+full rule set the violation floor therefore does not improve with scale, and the largest
+model performs worst on violation surface. Under rater B's single check the frontier rate
+is 49.2\%, against 89.2\% for the local models (\ref{sec:res-baseline}), so this
+statement is limited to the full rule set. This frontier comparison is bounded along the scale axis: the
+four sizes come from three model families other than those of the local panel, and they
+are run at a single repetition through a hosted gateway whose serving stack and
 quantization differ from the local stack, so the determinism that licenses cell-level
 inference in the confirmatory study does not transfer here, and the call-level counts
 reported for this corpus are read as a non-comparable spot-check rather than a controlled
@@ -1700,8 +1713,9 @@ implications, the validity-aware substantive-safe rate, and the design requireme
 repair-capable loops are all responses to this single confound.
 
 \subsection{Comparison with Prior Findings}\label{sec:comparison}
-The near-total violation rate found here is more severe than the rates reported for
-general-purpose code. Assessments of code-completion suggestions and of curated weakness
+The near-total violation rate found here is higher than the insecure-output rates reported
+for general-purpose code. Each of these rates is the flag rate of its own instrument, so the
+comparison says how often each checker fires on its material. Assessments of code-completion suggestions and of curated weakness
 suites place the insecure-output fraction near 40\% \cite{ref5} and 74\% \cite{ref6},
 whereas under the validity gate 89.2\% to 98.8\% of the gate-passing baseline outputs contain
 at least one violation. Only 1 to 9 of the 135 baseline generations (0 to 3 under the
