@@ -253,7 +253,7 @@ Outputs:
 
 To run a single hypothesis in isolation: `--experiment E1` (H4), `--experiment E2` (H5), `--experiment E3` (H6). A `--demo` flag exercises the analysis on synthetic data without requiring an experiment results directory.
 
-Cochran's Q across the three models is reported in the same output as exploratory only; it is not part of the confirmatory H4–H6 family.
+Cochran's Q across the three models is reported in the same output as exploratory only; it is not part of the confirmatory H4–H6 family. The article reports this test as registered, one test per prompt condition with an uncorrected p value, so the Holm correction that this output applies across conditions is not used there. The ten registered tests on the three scoring bases of the article (its Table 21) are recomputed by `bash analysis/round3/run_all.sh`, in `analysis/round3/out/a2/cochran_all.csv` and `analysis/round3/out/f1/f4_cochran_*.csv`.
 
 ---
 
