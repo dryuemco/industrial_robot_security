@@ -25,5 +25,8 @@ every preregistered test is identical in the two runs; the generated programs of
 DeepSeek-Coder-V2-16B and CodeLlama-34B are byte-identical; all differences are in
 Qwen2.5-Coder-32B and affect violation counts only.
 
-The logs contain the inference host's private LAN address and a local checkout path; they
-contain no credentials.
+In the five runner stdout logs (`run.log` of `e1_confirmatory_session14` and `e2_confirmatory`,
+`full_run.log` of `e3_confirmatory`, `E1_full_stdout.log` and `chain.log`) the local checkout
+path is replaced by `<HOME>` (6 lines) and the address of the inference host by
+`<LOCAL_ENDPOINT>` (1,804 lines). Nothing else in these files changed. The logs contain no
+credentials.
