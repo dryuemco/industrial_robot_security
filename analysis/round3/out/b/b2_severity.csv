@@ -1,0 +1,8 @@
+check,severity_in_source,observed_min,observed_max,observed_distinct
+SM-1,0.4 0.6,0.4,0.6,2
+SM-2,0.5 0.7,0.5,0.7,2
+SM-3,0.9,,,0
+SM-4,0.5,0.5,0.5,1
+SM-5,"computed: min((value - limit) / limit, 1)",0.12,1.0,6
+SM-6,0.6,0.6,0.6,1
+SM-7,0.95,,,0

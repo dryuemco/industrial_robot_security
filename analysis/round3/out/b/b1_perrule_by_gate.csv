@@ -1,0 +1,15 @@
+condition,check,generations,gate_passing,outputs_firing,outputs_firing_gate_passing,outputs_firing_not_gate_passing
+baseline,SM-1,135,83,52,52,0
+baseline,SM-2,135,83,82,82,0
+baseline,SM-3,135,83,0,0,0
+baseline,SM-4,135,83,54,54,0
+baseline,SM-5,135,83,54,54,0
+baseline,SM-6,135,83,74,74,0
+baseline,SM-7,135,83,0,0,0
+safety,SM-1,135,108,25,25,0
+safety,SM-2,135,108,91,91,0
+safety,SM-3,135,108,0,0,0
+safety,SM-4,135,108,44,44,0
+safety,SM-5,135,108,43,43,0
+safety,SM-6,135,108,69,69,0
+safety,SM-7,135,108,0,0,0

@@ -4,9 +4,9 @@
 
 Revision items R1-6 and R2-M4. One panel per regime for the model that keeps
 valid output throughout (Qwen2.5-Coder-32B), on a shared scale. In each panel
-the dark curve is a representative cell, labelled with its task, and the thin
-gray curves are the other cells of that regime; the panel title carries the
-count of cells in the regime from scripts/review/e3_regimes.py. Regimes are
+the dark curve is a representative trajectory, labelled with its task, and the
+thin gray curves are the other trajectories of that regime; the panel title
+carries the count of trajectories in the regime from scripts/review/e3_regimes.py. Regimes are
 separated by panel rather than by line style, so the figure reads in grayscale.
 
 Usage:
@@ -82,7 +82,7 @@ def main() -> None:
                 markerfacecolor="white", zorder=3)
         ax.annotate(task, (3, y[-1]), xytext=(3, 0), textcoords="offset points", fontsize=6.5,
                     va="center")
-        ax.set_title(f"{title}\n{counts.get(regime, 0)} cells", fontsize=7, linespacing=1.1, pad=3)
+        ax.set_title(f"{title}\n{counts.get(regime, 0)} trajectories", fontsize=7, linespacing=1.1, pad=3)
         ax.set_xticks([0, 1, 2, 3])
         ax.set_xlim(-0.3, 3.9)
         _style.grid_y(ax)

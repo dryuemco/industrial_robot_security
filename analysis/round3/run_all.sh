@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Copyright 2026 Yunus Emre Cogurcu - Apache-2.0
-# Reruns every round-3 analysis (Access-2026-55984, Reviewer 1 A1-A4, the authors' additional checks) from committed inputs.
+# Reruns every round-3 analysis (Access-2026-55984, Reviewer 1 A1-A4 and B1-B9, the authors' additional checks) from committed inputs.
 # Writes only under analysis/round3/out/. OSF responses are read from out/osf/ when cached;
 # pass --refresh-osf to re-read api.osf.io (read-only, no login).
 set -euo pipefail
@@ -22,6 +22,7 @@ python3 s13_import_runs.py --check
 python3 s12_frontier.py
 python3 s14_exploratory_check.py
 python3 s15_tcp_values.py
+python3 s16_b_items.py
 python3 s10_osf_mirror.py
 for f in out/tables/*.tex; do
   cmp -s "$f" "../../paper/tables/$(basename "$f")" && echo "same as paper/tables: $(basename "$f")" \
