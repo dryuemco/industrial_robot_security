@@ -831,7 +831,11 @@ The first hypothesis is tested with a one-sided exact binomial test against the 
 threshold, per model and pooled, with Wilson confidence intervals. The second and third
 are tested with McNemar's exact test on matched binary outcomes, with odds ratios and
 mid-p confidence intervals. A Holm-Bonferroni correction is applied across the
-confirmatory family and within each family's internal comparison set. A cross-model
+confirmatory family and within each family's internal comparison set. These tests are run on
+individual calls. Appendix~\ref{app:replication} reports them in the registered form, on
+aggregated task cells with a correction within each hypothesis, together with two
+departures of the protocol from the registration: a repair loop of up to three retries
+instead of one, and a 4096-token instead of a 1024-token output budget. A cross-model
 homogeneity test, one per prompt condition, was registered in the first preregistration
 amendment as an exploratory analysis outside the confirmatory family, to be reported with an
 uncorrected $p$ value. Two further hypotheses, that baseline
@@ -885,7 +889,8 @@ replication package.
 \section{Results}\label{sec:results}
 The results in this section concern how often open-weight models emit URScript that
 violates the security checks and whether adversarial prompting or repair-in-loop feedback changes that.
-Table~\ref{tab:summary} summarizes the preregistered results and their sensitivity
+Table~\ref{tab:summary} summarizes the preregistered hypotheses, tested on individual
+calls (the registered form is in Appendix~\ref{app:replication}), and their sensitivity
 analyses, and Table~\ref{tab:summary-extra} the additional analyses. Because the
 task representation is held invariant by design (\ref{sec:exps}), the motion-safety
 pass is not exercised on generated code, so the violation signal reported below is
@@ -900,7 +905,8 @@ Appendix~\ref{app:detection}.
 
 \begin{table}[t]
 \caption{Summary of the principal results on the three local models (16B to 34B):
-preregistered tests, their sensitivity analyses, and the cross-model heterogeneity test.
+preregistered tests on individual calls (registered form in Appendix~\ref{app:replication}),
+their sensitivity analyses, and the cross-model heterogeneity test.
 Intervals on rates are computed at the call level and should be read as
 the narrow end of the range; under near-deterministic decoding the conservative
 cell-level interval for the baseline rate (\ref{sec:stats}) is taken as primary. Means
@@ -2146,24 +2152,31 @@ violates, with invalid outputs kept in the primary analysis as non-violating. Fo
 model it specifies a one-sided exact binomial test of the baseline cell rate against 0.30
 (H4), a one-sided Newcombe hybrid score test of an increase of at least 0.50 for each
 strategy over the aggregated baseline cells (H5), and a two-sided McNemar test on the
-matched task cells, baseline against the repair loop at its final attempt (H6). Each
-carries a Holm correction within its own hypothesis, over three, 21 and three tests.
+matched task cells, baseline against the output after one retry of the repair loop (H6).
+Each carries a Holm correction within its own hypothesis, over three, 21 and three tests.
 Sections~\ref{sec:stats} and~\ref{sec:results} report these hypotheses on individual calls,
 with Wilson intervals, McNemar tests for H5 and H6 and a correction across the confirmatory
-family. In the registered form, H4 rejects for Qwen2.5-Coder-32B (15 of 15 cells,
-Clopper-Pearson 95\% interval [78.2\%, 100\%], Holm-adjusted $p<0.001$) and
-DeepSeek-Coder-V2-16B (9 of 15, [32.3\%, 83.7\%], $p=0.030$), and not for CodeLlama-34B
-(6 of 15, [16.3\%, 67.7\%], $p=0.278$), so H4 is supported, as in \ref{sec:res-baseline}.
-No H5 test rejects: the largest increase is $+0.13$ (DeepSeek-Coder-V2-16B under the
-authority claim, Newcombe 95\% interval [$-0.19$, 0.42]), far below the registered 0.50.
-For H6 the relative reductions are 0\%, 88.9\% and 50.0\% (exact McNemar $p=1.000$, 0.008
-and 0.250; Holm-adjusted 1.000, 0.023 and 0.500), so DeepSeek-Coder-V2-16B meets both
-registered criteria and CodeLlama-34B only the effect criterion. On the gate-passing
-outputs the reduction is zero for all three models (\ref{sec:res-watchdog}), so the
-reduction of DeepSeek-Coder-V2-16B is the dropout into invalid pseudo-code that
-\ref{sec:res-watchdog} describes. The reading of the three hypotheses is therefore the same
-under either form: H4 is supported, H5 is not, and the H6 reduction rests on output
-invalidation.
+family. The protocol also departs from the registration in two respects. The repair loop
+was run for up to three retries instead of one, and \ref{sec:res-watchdog},
+Table~\ref{tab:regimes} and Table~\ref{tab:crossmodel} use the full loop. The output budget
+was 4096 tokens instead of the registered 1024, and 23 of the 924 confirmatory outputs are
+longer than 1024 tokens (8, 6 and 9 in E1, E2 and E3), so they would have been cut under the
+registered budget.
+
+In the registered form, H4 rejects for Qwen2.5-Coder-32B (15 of 15 cells, Clopper-Pearson
+95\% interval [78.2\%, 100\%], Holm-adjusted $p<0.001$) and DeepSeek-Coder-V2-16B (9 of 15,
+[32.3\%, 83.7\%], $p=0.030$), and not for CodeLlama-34B (6 of 15, [16.3\%, 67.7\%],
+$p=0.278$), so H4 is supported, as in \ref{sec:res-baseline}. No H5 test rejects: the
+largest increase is $+0.13$ (DeepSeek-Coder-V2-16B under the authority claim, Newcombe 95\%
+interval [$-0.19$, 0.42]), and every one-sided $p$ is at least 0.997 (Holm-adjusted 1.000).
+For H6 after one retry the relative reductions are 0\%, 55.6\% and 50.0\% (exact McNemar
+$p=1.000$, 0.125 and 0.250; Holm-adjusted 1.000, 0.375 and 0.500), so no model meets both
+registered criteria and H6 is not supported. Over the full three-retry loop the reduction
+of DeepSeek-Coder-V2-16B reaches 88.9\% (Holm-adjusted $p=0.023$), but on the gate-passing
+outputs the reduction is zero for all three models (\ref{sec:res-watchdog}), so it is the
+dropout into invalid pseudo-code that \ref{sec:res-watchdog} describes. The interpretation
+is therefore the same in both forms: H4 is supported, H5 is not, and the reductions under
+feedback come from output invalidation, not from repair.
 
 \textbf{Preregistration and amendments.} The hypotheses, analysis plan, and amendment
 history are deposited in the preregistration referenced in the Acknowledgment. Three

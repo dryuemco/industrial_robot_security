@@ -11,18 +11,28 @@ H4  one-sided exact binomial test of the baseline cell rate against 0.30 (n = 15
 H5  one-sided Newcombe hybrid score test of a difference of at least 0.50 between the
     adversarial cells of each strategy (one repetition) and the aggregated baseline cells,
     Newcombe 95% interval, Holm across the 21 model-strategy tests;
-H6  two-sided McNemar test on the 15 matched task cells, baseline against the repair loop at
-    its final attempt (exact binomial when b + c < 25), Holm across the three models, the
-    relative reduction and the odds ratio b/c with an exact conditional 95% interval.
+H6  two-sided McNemar test on the 15 matched task cells, baseline against the repair loop
+    (exact binomial when b + c < 25), Holm across the three models, the relative reduction and
+    the odds ratio b/c with an exact conditional 95% interval.
 
-Data: run 2 (data/confirmatory/run2_2026-05). The repair-loop cells are scored at the final
-attempt of each trajectory, as in Table 21.
+The registration returns the violation report "for one retry", so the registered H6 endpoint
+is the output after one retry (the latest attempt with retry <= 1 of each trajectory; a
+trajectory that left the loop at its first generation keeps that output). The runs extended
+the loop to three retries; H6 is also given at the final attempt, as an extension (Table 21
+scores the loop there).
+
+Data: run 2 (data/confirmatory/run2_2026-05). The H5 p values are one-sided and come from
+inverting the Newcombe hybrid score interval: p is the smallest one-sided level at which the
+lower bound reaches 0.50.
 
 The second part counts the corrected SM-5 firings by kind (TCP speed, joint speed,
 acceleration) on the 83 gate-passing baseline outputs and on the gate-passing outputs of the
 adversarial strategies.
 
-Outputs under out/r3/: registered_h4_h6.csv, sm5_corrected_kinds.csv.
+The third part counts the outputs longer than the registered 1024-token budget (the runs used
+4096 tokens).
+
+Outputs under out/r3/: registered_h4_h6.csv, sm5_corrected_kinds.csv, token_budget.csv.
 """
 from __future__ import annotations
 
@@ -64,6 +74,32 @@ def newcombe(k1: int, n1: int, k2: int, n2: int) -> tuple[float, float, float]:
     return d, lo, hi
 
 
+def _newcombe_bounds(k1: int, n1: int, k2: int, n2: int, z: float) -> tuple[float, float]:
+    p1, p2 = k1 / n1, k2 / n2
+    l1, u1 = wilson(k1, n1, z)
+    l2, u2 = wilson(k2, n2, z)
+    d = p1 - p2
+    return d - math.sqrt((p1 - l1) ** 2 + (u2 - p2) ** 2), d + math.sqrt((u1 - p1) ** 2 + (p2 - l2) ** 2)
+
+
+def newcombe_one_sided_p(k1: int, n1: int, k2: int, n2: int, delta0: float) -> float:
+    """One-sided p for H0: p1 - p2 < delta0 against p1 - p2 >= delta0, by inverting the Newcombe
+    hybrid score interval. If the estimate reaches delta0, z solves lower(z) = delta0 and
+    p = 1 - Phi(z); otherwise z solves upper(z) = delta0 and p = Phi(z), which exceeds 0.5."""
+    d = k1 / n1 - k2 / n2
+    above = d >= delta0
+    side = 0 if above else 1
+    lo, hi = 1e-9, 40.0
+    for _ in range(200):
+        mid = (lo + hi) / 2
+        b = _newcombe_bounds(k1, n1, k2, n2, mid)[side]
+        if (b >= delta0) if above else (b <= delta0):
+            lo = mid
+        else:
+            hi = mid
+    return float(stats.norm.sf(lo)) if above else float(stats.norm.cdf(lo))
+
+
 def h4(base: pd.DataFrame) -> list[dict]:
     rows = []
     for m in MODELS:
@@ -88,11 +124,14 @@ def h5(base: pd.DataFrame, e2: pd.DataFrame) -> list[dict]:
             rows.append({"hypothesis": "H5", "model": SERVED[m][0], "strategy": strat,
                          "test": "one-sided Newcombe hybrid score, H0: difference < 0.50",
                          "k": ka, "n": na, "k_base": kb, "n_base": nb, "estimate": d, "ci_low": lo, "ci_high": hi,
-                         "rejects": bool(lo >= 0.50)})
+                         "p": newcombe_one_sided_p(ka, na, kb, nb, 0.50)})
+    for r, a in zip(rows, holm([r["p"] for r in rows])):
+        r["p_holm"] = a
+        r["rejects"] = bool(a < 0.05)
     return rows
 
 
-def h6(base: pd.DataFrame, final: pd.DataFrame) -> list[dict]:
+def h6(base: pd.DataFrame, final: pd.DataFrame, endpoint: str) -> list[dict]:
     rows = []
     for m in MODELS:
         pair = pd.concat([base[m].rename("b0"), final[m].rename("b1")], axis=1).dropna()
@@ -112,7 +151,7 @@ def h6(base: pd.DataFrame, final: pd.DataFrame) -> list[dict]:
             or_hi = ci.high / (1 - ci.high) if ci.high < 1 else math.inf
         else:
             or_lo = or_hi = float("nan")
-        rows.append({"hypothesis": "H6", "model": SERVED[m][0], "test": "two-sided McNemar on task cells",
+        rows.append({"hypothesis": "H6", "endpoint": endpoint, "model": SERVED[m][0], "test": "two-sided McNemar on task cells",
                      "k_base": k0, "k": k1, "n": len(pair), "b": b, "c": c,
                      "estimate": (k0 - k1) / k0 if k0 else float("nan"),
                      "odds_ratio": (b / c) if c else (math.inf if b else float("nan")), "ci_low": or_lo, "ci_high": or_hi, "p": p})
@@ -154,9 +193,15 @@ def main() -> None:
     e2 = pd.read_csv(RUN2_DIR / "E2_full" / "e2_results.csv")
     e3 = pd.read_csv(RUN2_DIR / "E3_full" / "e3_results.csv")
     base = cells(e1[e1.condition == "baseline"])
+    one = cells(e3[e3.retry <= 1].sort_values("retry").groupby(["model", "task_id", "rep"]).tail(1))
     final = cells(e3.sort_values("retry").groupby(["model", "task_id", "rep"]).tail(1))
-    res = pd.DataFrame(h4(base) + h5(base, e2) + h6(base, final))
+    res = pd.DataFrame(h4(base) + h5(base, e2) + h6(base, one, "one retry (registered)")
+                       + h6(base, final, "final attempt (extension)"))
     res.to_csv(out("r3", "registered_h4_h6.csv"), index=False)
+    tok = pd.DataFrame([{"experiment": e, "outputs": len(d), "longer_than_1024_tokens": int((d.tokens_out > 1024).sum()),
+                          "max_tokens_out": int(d.tokens_out.max())} for e, d in [("E1", e1), ("E2", e2), ("E3", e3)]])
+    tok.to_csv(out("r3", "token_budget.csv"), index=False)
+    print(tok.to_string(index=False))
     kinds = sm5_kinds()
     kinds.to_csv(out("r3", "sm5_corrected_kinds.csv"), index=False)
     pd.set_option("display.width", 200)
@@ -164,7 +209,8 @@ def main() -> None:
     h5r = res[res.hypothesis == "H5"]
     top = h5r.loc[h5r.estimate.idxmax()]
     print(f"H5: {len(h5r)} tests, {int(h5r.rejects.sum())} reject; largest difference {top.estimate:+.3f} "
-          f"({top.model}, {top.strategy}, Newcombe 95% [{top.ci_low:.3f}, {top.ci_high:.3f}])")
+          f"({top.model}, {top.strategy}, Newcombe 95% [{top.ci_low:.3f}, {top.ci_high:.3f}]); "
+          f"smallest one-sided p {h5r.p.min():.3f}, smallest Holm p {h5r.p_holm.min():.3f}")
     print(kinds.to_string(index=False))
 
 
