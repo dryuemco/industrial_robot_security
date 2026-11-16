@@ -17,6 +17,8 @@ python3 s03_a3.py
 python3 s04_a4.py
 python3 s07_sm6_and_crossmodel.py
 python3 s08_paper_numbers.py
+python3 s18_e5_enforcement.py
+python3 s19_safety_and_repair.py
 python3 s09_tables.py --out-dir out/tables
 python3 s13_import_runs.py --check
 python3 s12_frontier.py

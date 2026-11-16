@@ -1,0 +1,7 @@
+endpoint,basis,tasks_in_test,n_discordant,Q,p_asymptotic,p_exact,rate_codellama:34b,rate_deepseek-coder-v2:16b,rate_qwen2.5-coder:32b
+one retry (registered),naive,15,15,17.733333333333334,0.0001410118446271136,4.18150316257538e-05,0.2,0.26666666666666666,1.0
+one retry (registered),gate-passing,0,0,,,,,,
+one retry (registered),gate-pass,15,15,17.733333333333334,0.0001410118446271136,4.18150316257538e-05,0.2,0.26666666666666666,1.0
+final attempt (extension),naive,15,15,22.933333333333334,1.0473454271059438e-05,2.09075158128769e-06,0.2,0.06666666666666667,1.0
+final attempt (extension),gate-passing,0,0,,,,,,
+final attempt (extension),gate-pass,15,15,22.933333333333334,1.0473454271059438e-05,2.09075158128769e-06,0.2,0.06666666666666667,1.0

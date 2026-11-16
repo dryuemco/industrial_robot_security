@@ -24,3 +24,12 @@ response was altered. Every other file is byte-identical to its source
 (`T014_mistralai_Mistral-Large-3-675B-Instruct-2512-NVFP4_baseline_rep1.urscript`, in
 `E1_frontier/`, `E3_frontier/` and `e4_template_probe/`) contains the address 192.168.1.100,
 which the model wrote into its own program; it is part of the model response and is kept.
+
+In `e5_repr_fragility/`, the columns `mechanism_survived` and `tcp_safe` of `e5_results.csv` are
+the scoring as it was run, which recognised the clamp and the guard only in the spelling of the
+supplied program. The article reports the classification by function in
+`analysis/round3/out/e5/` (`analysis/round3/s18_e5_enforcement.py`), which reads this directory
+and changes nothing in it. `code/` holds 60 files, not 240, because the four encodings of a task
+and model were written under one file name, so each file holds the program of the last
+encoding, the runtime guard. All 240 responses are in `logs/idun_log.jsonl`, whose line i
+belongs to row i of `e5_results.csv`.

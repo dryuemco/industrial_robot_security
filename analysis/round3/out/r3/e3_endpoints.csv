@@ -1,0 +1,3 @@
+endpoint,trajectories,gate_passing,gate_passing_violating
+one retry (registered),135,63,63
+final attempt (extension),135,57,57

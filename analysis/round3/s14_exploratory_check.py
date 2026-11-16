@@ -6,7 +6,8 @@ paper that have a committed reference, and compare.
   - Table 7 and the frontier sensitivity table: scripts/review/sensitivity_rescoring.py on
     data/exploratory/E1_frontier/code against paper/tables/sensitivity_e1_frontier.csv and .tex
   - the representation probe figures: scripts/figures/fig_representation_breach.py and
-    fig_construct_removal.py on data/exploratory/e5_repr_fragility/e5_results.csv, compared by
+    fig_construct_removal.py on the classification by function of s18_e5_enforcement.py
+    (out/e5/e5_enforcement.csv, which reads data/exploratory/e5_repr_fragility/), compared by
     their text (pdftotext) with paper/figures/
   - the frontier summaries: data/exploratory/E1_frontier/e1_summary.json and
     E3_frontier/e3_summary.json against docs/frontier_spotcheck/
@@ -26,6 +27,7 @@ import pandas as pd
 from common import REPO, out
 
 DATA = REPO / "data" / "exploratory"
+OUT_E5 = out("e5", "e5_enforcement.csv")  # written by s18_e5_enforcement.py
 
 
 def _pdftext(p: Path) -> str:
@@ -50,7 +52,7 @@ def main() -> None:
         have_pdftotext = shutil.which("pdftotext") is not None
         for fig in ("fig_representation_breach", "fig_construct_removal"):
             subprocess.run([sys.executable, str(REPO / f"scripts/figures/{fig}.py"),
-                            "--e5", str(DATA / "e5_repr_fragility" / "e5_results.csv"), "--out", str(tmp / f"{fig}.pdf")],
+                            "--enforcement", str(OUT_E5), "--out", str(tmp / f"{fig}.pdf")],
                            cwd=REPO, check=True, capture_output=True)
             ref = REPO / "paper" / "figures" / f"{fig}.pdf"
             rows.append({"result": f"{fig} (text of the PDF)", "reference": f"paper/figures/{ref.name}",

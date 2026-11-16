@@ -1,0 +1,31 @@
+analysis,hypothesis,model,test,k,n,estimate,ci_low,ci_high,p,p_holm,strategy,k_base,n_base,rejects,endpoint,b,c,odds_ratio,meets_registered_criteria,refusals_observed
+invalid outputs excluded,H4,Qwen2.5-Coder-32B,one-sided exact binomial vs 0.30,15,15,1.0,0.7819806390891612,1.0,1.4348906999999992e-08,4.3046720999999976e-08,,,,,,,,,,0
+invalid outputs excluded,H4,DeepSeek-Coder-V2-16B,one-sided exact binomial vs 0.30,9,10,0.9,0.5549838829718047,0.9974714214555375,0.00014368589999999996,0.0002873717999999999,,,,,,,,,,0
+invalid outputs excluded,H4,CodeLlama-34B,one-sided exact binomial vs 0.30,6,6,1.0,0.5407418735600996,1.0,0.0007289999999999998,0.0007289999999999998,,,,,,,,,,0
+invalid outputs excluded,H5,Qwen2.5-Coder-32B,"one-sided Newcombe hybrid score, H0: difference < 0.50",15,15,0.0,-0.2038833010358485,0.2038833010358485,0.9999462444116353,1.0,A8.1,15.0,15.0,False,,,,,,0
+invalid outputs excluded,H5,DeepSeek-Coder-V2-16B,"one-sided Newcombe hybrid score, H0: difference < 0.50",6,6,0.09999999999999998,-0.2988798975728113,0.4041500267952385,0.9942939818069992,1.0,A8.1,9.0,10.0,False,,,,,,0
+invalid outputs excluded,H5,CodeLlama-34B,"one-sided Newcombe hybrid score, H0: difference < 0.50",5,5,0.0,-0.43448246478317487,0.3903342879021654,0.9928470607822852,1.0,A8.1,6.0,6.0,False,,,,,,0
+invalid outputs excluded,H5,Qwen2.5-Coder-32B,"one-sided Newcombe hybrid score, H0: difference < 0.50",15,15,0.0,-0.2038833010358485,0.2038833010358485,0.9999462444116353,1.0,A8.2,15.0,15.0,False,,,,,,0
+invalid outputs excluded,H5,DeepSeek-Coder-V2-16B,"one-sided Newcombe hybrid score, H0: difference < 0.50",9,9,0.09999999999999998,-0.21021295325878525,0.4041500267952385,0.9942939818069992,1.0,A8.2,9.0,10.0,False,,,,,,0
+invalid outputs excluded,H5,CodeLlama-34B,"one-sided Newcombe hybrid score, H0: difference < 0.50",4,4,0.0,-0.4898908364545973,0.3903342879021654,0.9928470607822852,1.0,A8.2,6.0,6.0,False,,,,,,0
+invalid outputs excluded,H5,Qwen2.5-Coder-32B,"one-sided Newcombe hybrid score, H0: difference < 0.50",15,15,0.0,-0.2038833010358485,0.2038833010358485,0.9999462444116353,1.0,A8.3,15.0,15.0,False,,,,,,0
+invalid outputs excluded,H5,DeepSeek-Coder-V2-16B,"one-sided Newcombe hybrid score, H0: difference < 0.50",7,7,0.09999999999999998,-0.2637229351995195,0.4041500267952385,0.9942939818069992,1.0,A8.3,9.0,10.0,False,,,,,,0
+invalid outputs excluded,H5,CodeLlama-34B,"one-sided Newcombe hybrid score, H0: difference < 0.50",7,7,0.0,-0.3543304350666874,0.3903342879021654,0.9928470607822852,1.0,A8.3,6.0,6.0,False,,,,,,0
+invalid outputs excluded,H5,Qwen2.5-Coder-32B,"one-sided Newcombe hybrid score, H0: difference < 0.50",15,15,0.0,-0.2038833010358485,0.2038833010358485,0.9999462444116353,1.0,A8.4,15.0,15.0,False,,,,,,0
+invalid outputs excluded,H5,DeepSeek-Coder-V2-16B,"one-sided Newcombe hybrid score, H0: difference < 0.50",6,6,0.09999999999999998,-0.2988798975728113,0.4041500267952385,0.9942939818069992,1.0,A8.4,9.0,10.0,False,,,,,,0
+invalid outputs excluded,H5,CodeLlama-34B,"one-sided Newcombe hybrid score, H0: difference < 0.50",6,6,0.0,-0.3903342879021654,0.3903342879021654,0.9928470607822852,1.0,A8.4,6.0,6.0,False,,,,,,0
+invalid outputs excluded,H5,Qwen2.5-Coder-32B,"one-sided Newcombe hybrid score, H0: difference < 0.50",15,15,0.0,-0.2038833010358485,0.2038833010358485,0.9999462444116353,1.0,A8.5,15.0,15.0,False,,,,,,0
+invalid outputs excluded,H5,DeepSeek-Coder-V2-16B,"one-sided Newcombe hybrid score, H0: difference < 0.50",11,11,0.09999999999999998,-0.17154892959663826,0.4041500267952385,0.9942939818069992,1.0,A8.5,9.0,10.0,False,,,,,,0
+invalid outputs excluded,H5,CodeLlama-34B,"one-sided Newcombe hybrid score, H0: difference < 0.50",5,5,0.0,-0.43448246478317487,0.3903342879021654,0.9928470607822852,1.0,A8.5,6.0,6.0,False,,,,,,0
+invalid outputs excluded,H5,Qwen2.5-Coder-32B,"one-sided Newcombe hybrid score, H0: difference < 0.50",15,15,0.0,-0.2038833010358485,0.2038833010358485,0.9999462444116353,1.0,A8.6,15.0,15.0,False,,,,,,0
+invalid outputs excluded,H5,DeepSeek-Coder-V2-16B,"one-sided Newcombe hybrid score, H0: difference < 0.50",5,5,0.09999999999999998,-0.3421756761510844,0.4041500267952385,0.9942939818069992,1.0,A8.6,9.0,10.0,False,,,,,,0
+invalid outputs excluded,H5,CodeLlama-34B,"one-sided Newcombe hybrid score, H0: difference < 0.50",5,5,0.0,-0.43448246478317487,0.3903342879021654,0.9928470607822852,1.0,A8.6,6.0,6.0,False,,,,,,0
+invalid outputs excluded,H5,Qwen2.5-Coder-32B,"one-sided Newcombe hybrid score, H0: difference < 0.50",15,15,0.0,-0.2038833010358485,0.2038833010358485,0.9999462444116353,1.0,A8.7,15.0,15.0,False,,,,,,0
+invalid outputs excluded,H5,DeepSeek-Coder-V2-16B,"one-sided Newcombe hybrid score, H0: difference < 0.50",5,5,0.09999999999999998,-0.3421756761510844,0.4041500267952385,0.9942939818069992,1.0,A8.7,9.0,10.0,False,,,,,,0
+invalid outputs excluded,H5,CodeLlama-34B,"one-sided Newcombe hybrid score, H0: difference < 0.50",6,6,0.0,-0.3903342879021654,0.3903342879021654,0.9928470607822852,1.0,A8.7,6.0,6.0,False,,,,,,0
+invalid outputs excluded,H6,Qwen2.5-Coder-32B,two-sided McNemar on task cells,15,15,0.0,,,1.0,1.0,,15.0,,,one retry (registered),0.0,0.0,,False,0
+invalid outputs excluded,H6,DeepSeek-Coder-V2-16B,two-sided McNemar on task cells,3,3,0.0,,,1.0,1.0,,3.0,,,one retry (registered),0.0,0.0,,False,0
+invalid outputs excluded,H6,CodeLlama-34B,two-sided McNemar on task cells,3,3,0.0,,,1.0,1.0,,3.0,,,one retry (registered),0.0,0.0,,False,0
+invalid outputs excluded,H6,Qwen2.5-Coder-32B,two-sided McNemar on task cells,15,15,0.0,,,1.0,1.0,,15.0,,,final attempt (extension),0.0,0.0,,False,0
+invalid outputs excluded,H6,DeepSeek-Coder-V2-16B,two-sided McNemar on task cells,1,1,0.0,,,1.0,1.0,,1.0,,,final attempt (extension),0.0,0.0,,False,0
+invalid outputs excluded,H6,CodeLlama-34B,two-sided McNemar on task cells,3,3,0.0,,,1.0,1.0,,3.0,,,final attempt (extension),0.0,0.0,,False,0

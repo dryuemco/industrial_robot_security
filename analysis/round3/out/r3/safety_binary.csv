@@ -1,0 +1,3 @@
+condition,generations,gate_passing,violating,gate_passing_rate,naive_rate,gate_passing_without_firing
+baseline,135,83,82,0.9879518072289156,0.6074074074074074,1
+safety,135,108,101,0.9351851851851852,0.7481481481481481,7

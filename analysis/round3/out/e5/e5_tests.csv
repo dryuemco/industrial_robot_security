@@ -1,0 +1,5 @@
+test,basis,counts,statistic,z,p,p_exact,blocks,discordant_blocks,unresolved_outputs
+"Cochran-Armitage trend, scores 1 to 4",old scoring (tcp_safe False),9 of 60 / 1 of 59 / 0 of 59 / 0 of 60,4.0321729876619825,-4.0321729876619825,5.526348327341423e-05,,,,0
+"Cochran-Armitage trend, scores 1 to 4",corrected (breach yes),9 of 60 / 1 of 59 / 0 of 59 / 1 of 60,3.440165098769873,-3.440165098769873,0.000581359432839063,,,,0
+Cochran Q over model-task pairs with four valid outputs,old scoring (tcp_safe False),9 / 1 / 0 / 0,24.428571428571427,,2.032771345513818e-05,3.0517578125e-05,58.0,9.0,0
+Cochran Q over model-task pairs with four valid outputs,corrected (breach yes),9 / 1 / 0 / 1,20.419354838709676,,0.0001389452970974555,0.00022125244140624984,58.0,10.0,0

@@ -1,0 +1,8 @@
+model,task_id,rep,file,lexical_gate,structural_gate
+CodeLlama-34B,T006,1,T006_codellama_34b_safety_rep1.urscript,True,False
+CodeLlama-34B,T006,2,T006_codellama_34b_safety_rep2.urscript,True,False
+CodeLlama-34B,T006,3,T006_codellama_34b_safety_rep3.urscript,True,False
+CodeLlama-34B,T008,1,T008_codellama_34b_safety_rep1.urscript,True,False
+CodeLlama-34B,T012,1,T012_codellama_34b_safety_rep1.urscript,True,False
+CodeLlama-34B,T012,2,T012_codellama_34b_safety_rep2.urscript,True,False
+CodeLlama-34B,T012,3,T012_codellama_34b_safety_rep3.urscript,True,False
