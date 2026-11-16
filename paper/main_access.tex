@@ -54,7 +54,7 @@ checks under seven prompt-injection strategies. The preregistered confirmatory s
 (Appendix A) covers three open-weight code models (16B to 34B) and 585 generations,
 reported from the second of two runs that agree on every preregistered test. First, the
 checks flag 89.2\% to 98.8\% of valid outputs, but a non-LLM comparator shows that this rate
-largely reflects the rule set and the prompt: the lower bound reduces to a missing
+largely reflects the rule set and the prompt. The lower bound reduces to a missing
 tool-centre-point declaration that the task prompt never specified and that the reference
 translation also omits. Second, this saturation is a measurement hazard: naive scoring,
 and to a lesser degree the registered validity gate, lets invalid pseudo-code pass as
@@ -62,7 +62,7 @@ safe, and the preregistered adversarial-uplift test has no power against it. Thi
 rule-checker feedback under whole-program regeneration does not remediate: no trajectory
 reaches zero violations. Exploratory single-repetition probes on frontier models (24B to
 675B) show no remediation, and a benign edit removes the encoding of the speed cap in 0\% to
-70\% of cells; these are signals for replication, not confirmed effects. Obtained in simulation
+70\% of cells. These are signals for replication, not confirmed effects. Obtained in simulation
 and specific to URScript, the findings caution how generated control code is measured
 and patched.
 \end{abstract}
@@ -154,12 +154,12 @@ semantics actually reside.
 This article evaluates whether open-weight, code-specialized models generate
 URScript that meets code-level security expectations derived from ISO 10218-1:2025,
 using a lexical rule checker and a watchdog-in-loop repair setting. Three empirical
-findings organize the study: generated code fails the static checks almost
-universally, although a non-LLM comparator shows that much of this rate reflects the rule
-set and the prompt, and its lower bound rests on a tool-centre-point declaration that the
-prompt never specified (\ref{sec:res-baseline}); the naive way of counting these failures is itself unreliable,
-because syntactically invalid output can be scored as safe; and an iterative repair
-loop does not reliably fix the flagged code. The first finding motivates the main
+findings organize the study. First, generated code fails the static checks almost
+universally. A non-LLM comparator shows, however, that much of this rate reflects the rule
+set and the prompt, and that its lower bound rests on a tool-centre-point declaration that
+the prompt never specified (\ref{sec:res-baseline}). Second, the naive way of counting
+these failures is itself unreliable, because syntactically invalid output can be scored as
+safe. Third, an iterative repair loop does not reliably fix the flagged code. The first finding motivates the main
 methodological contribution, an outcome measure conditioned on code validity, under
 which almost no baseline generation is both valid and free of rule violations. The
 preregistered confirmatory tests are reported as a secondary and deliberately
@@ -174,8 +174,8 @@ rates approach saturation across three open-weight models and are driven by the
 security checks rather than the motion-safety checks (\ref{sec:res-baseline}).
 \item \textbf{A validity-aware outcome measure.} The substantive-safe rate, which
 counts only generations that are both valid and violation-free, is 1 of the 135 baseline
-generations under the full registered rule set and is used to compare models and conditions within the evaluated corpus;
-the preregistered binary analysis is retained alongside it for fidelity
+generations under the full registered rule set and is used to compare models and conditions within the evaluated corpus.
+The preregistered binary analysis is retained alongside it for fidelity
 (\ref{sec:res-baseline}).
 \item \textbf{A non-LLM comparator and a sensitivity analysis of the instrument.}
 The same checker applied to a deterministic reference translation and to vendor example
@@ -183,8 +183,8 @@ programs shows which checks are properties of the rule set rather than of the mo
 and re-scoring under alternative rule sets and a stricter validity gate bounds how far
 the headline rates can move (\ref{sec:res-baseline}).
 \item \textbf{A cautionary account of watchdog-in-loop repair.} The repair loop
-does not reliably reduce unsafe code: no local-model repair trajectory reaches zero violations,
-and its failure mode shifts with model scale, in two models trading code validity
+does not reliably reduce unsafe code, and no local-model repair trajectory reaches zero
+violations. Its failure mode shifts with model scale, and two models trade code validity
 for apparent compliance (\ref{sec:res-watchdog}).
 \item \textbf{Exploratory evidence that an explicit safety constraint is fragile
 under a benign edit.} In a single-repetition frontier probe the constraint is silently
@@ -674,12 +674,12 @@ Idun computing cluster of the Norwegian University of Science and Technology. In
 size they are
 \nolinkurl{mistralai/Devstral-Small-2-24B-Instruct-2512} (24B),
 \nolinkurl{openai/gpt-oss-120b} (120B), \nolinkurl{zai-org/GLM-4.7-FP8} (358B) and
-\nolinkurl{mistralai/Mistral-Large-3-675B-Instruct-2512-NVFP4} (675B), given as the
+\nolinkurl{mistralai/Mistral-Large-3-675B-Instruct-2512-NVFP4} (675B). These are the
 identifiers under which the gateway served them, so the names carry the version or release
-and, for the last two, the weight format. The serving software and the weight digests were not
-recorded. Unlike the local models of the second run (Appendix~\ref{app:replication}), this
-panel is therefore identified by name only, and the generation logs in the replication
-package keep the model identifier and the request identifier of every call.
+and, for the last two, the weight format. The serving software and the weight digests were
+not recorded, so unlike the local models of the second run (Appendix~\ref{app:replication})
+this panel is identified by name only. The generation logs in the replication package keep
+the model identifier and the request identifier of every call.
 
 \subsection{Infrastructure}\label{sec:infra}
 Inference runs on a dedicated workstation with a 32 GB consumer GPU hosting the local
@@ -697,7 +697,7 @@ insecure code and whether an explicit safety prompt changes that. It generates c
 for the fifteen tasks under a task-only baseline condition and a safety-prompted
 condition that adds the fixed list of safety requirements of \ref{sec:conditions}, with
 three repetitions per cell, for 270 generations. Throughout the article a cell is one model
-on one task under one condition, and its repetitions are the calls made for it; the one
+on one task under one condition, and its repetitions are the calls made for it. The one
 exception is the registered adversarial hypothesis below, whose model-and-strategy cells
 pool the fifteen tasks.
 
@@ -724,9 +724,9 @@ Table~\ref{tab:budget} gives the exact per-experiment generation budget.
 
 \begin{table}[h]
 \caption{Generation budget by experiment family. Rows are the model calls actually
-written to the result logs; cells are the distinct model, task and condition
+written to the result logs. Cells are the distinct model, task and condition
 combinations, repeated three times in the baseline and repair-in-loop families and once
-in the adversarial family; gate-pass is the count of outputs that pass the validity gate.
+in the adversarial family. Gate-pass is the count of outputs that pass the validity gate.
 For the repair-in-loop family the loop terminates early in many trajectories, so the
 executed total is below the nominal budget.}
 \label{tab:budget}
@@ -777,7 +777,7 @@ under the adversarial condition, together with the rule checker detection rate a
 \textbf{Severity.} Each firing of a security check carries a severity between 0 and 1,
 set by the rule catalogue before the confirmatory runs. The
 input-validation proxy assigns 0.6 to a missing velocity argument and 0.4 to a missing
-acceleration argument, and the error-handling proxy assigns 0.7 to a program with no error
+acceleration argument. The error-handling proxy assigns 0.7 to a program with no error
 handling and 0.5 to a critical call without handling nearby. The protection-mechanism,
 unusual-conditions, safety-preamble and prompt-injection-marker checks assign 0.9, 0.5, 0.6
 and 0.95. The hardcoded-value check computes its severity from the size of the violation,
@@ -1007,13 +1007,13 @@ therefore introduced. Each generation is classified as invalid (fails the validi
 gate), valid-unsafe (passes the gate but triggers at least one check), or
 substantive-safe (passes the gate and triggers no check). The headline quantity is the
 substantive-safe rate, the fraction of all generations that are substantive-safe. Of
-the 135 baseline generations, 83 pass the validity gate and 52 do not; of the 83
-gate-passing outputs, 82 are valid-unsafe and exactly one is substantive-safe, giving a
+the 135 baseline generations, 83 pass the validity gate and 52 do not. Of the 83
+gate-passing outputs, 82 are valid-unsafe and exactly one is substantive-safe, which gives a
 substantive-safe rate of 1 of the 135 baseline generations, or 0.7\% (Clopper-Pearson 95\%
 confidence interval [0.02\%, 4.06\%]). This registered value is kept, but the single
 substantive-safe output passes the lexical gate only through a \texttt{stopl()} call that
-sits inside a comment, writes its motion commands without URScript call syntax (for
-example \texttt{movej home\_position, 180.0;}), and fails the structural gate. The
+sits inside a comment. It writes its motion commands without URScript call syntax (for
+example \texttt{movej home\_position, 180.0;}) and fails the structural gate. The
 motion-command flag recorded for every output does not detect this, because it is a
 substring search for command names such as \texttt{movej} in the program text. The contrast with the 98.8\% gate-passing violation rate is the point:
 the binary metric simultaneously reports near-total violation and, scored naively, lets
@@ -1022,7 +1022,7 @@ essentially none of the baseline corpus is both real URScript and rule-clean. Th
 rate does not saturate and is defined over the full denominator, so it is used
 as the primary outcome of this study; the preregistered binary analysis is
 retained for fidelity. Among valid-unsafe outputs the graded picture is a per-rule
-decomposition: the violations are carried entirely by the security family, the
+decomposition. The violations are carried entirely by the security family, the
 motion-safety checks fire on zero of all 585 generations, and the unchecked-return and
 missing-preamble checks flag the most outputs,
 while the protection-mechanism and prompt-injection-marker checks never fire
@@ -1126,10 +1126,10 @@ agreement on the error-handling proxy ($\kappa=0.20$) and the hardcoded-value ch
 labelling all twenty firings genuine, which leaves no variance for the statistic. Rater B
 is systematically less favourable to the instrument than rater A: pooled precision 64\%
 [54, 73] against 77\% [68, 85]. Every disagreement resolved to
-rater A's label because each of rater B's departures applied the rule's own wording
-where the guide's criterion differs from it, so the adjudicated labels equal rater A's on
-all 100 items. Because the adjudication was performed by the authors who formed rater A,
-rater B, the non-author rater, is taken as the primary estimate in this article, and the
+rater A's label, because each of rater B's departures applied the rule's own wording
+where the guide's criterion differs from it. The adjudicated labels therefore equal rater
+A's on all 100 items. The adjudication was performed by the authors who formed rater A, so the labels of
+rater B, the non-author rater, are taken as the primary estimate in this article, and the
 adjudicated labels are reported as a sensitivity analysis (Table~\ref{tab:precision2}).
 The disagreements fall into four groups, and
 each exposes a defect in the rule's wording rather than in the labelling. Eight
@@ -1137,7 +1137,7 @@ error-handling firings name a \texttt{set\_tcp} or \texttt{set\_payload} call as
 ``critical operation''; the guide's program-level criterion (no handling anywhere in the
 program) makes them genuine, but the location claim is misleading. The audit unit and the
 count unit therefore differ for this check. The guide judges an error-handling firing at
-program level, whereas the checker emits one firing for a program with no handling
+program level. The checker emits one firing for a program with no handling
 anywhere and one more for each \texttt{set\_tcp}, \texttt{set\_payload} or similar
 configuration or communication call with no handling within three lines. On the 83
 gate-passing baseline outputs this gives 111 firings on 82 programs, 1.34 per program,
@@ -1163,23 +1163,23 @@ mechanisms the comparator exposes: the input-validation proxy misses positional 
 nested-call arguments (the check the two raters rate lowest, at 30\% and 45\%), the
 hardcoded-value check reads \texttt{movej} joint speeds as Cartesian speeds, and the
 unusual-conditions check does not credit a minimal bounds test. The second audit places
-the hardcoded-value and unusual-conditions checks at 55\% and 80\% under rater B, the
+the hardcoded-value and unusual-conditions checks at 55\% and 80\% under rater B's labels, the
 primary estimate (85\% and 80\% after adjudication), against 90\% and 100\% in the first
-audit; its larger sample
+audit. Its larger sample
 and its second, non-author rater make it the estimate this article relies on.
 
-The consequence for the saturation finding is stated plainly, and it depends on which
+The consequence for the saturation finding depends on which
 rater's threshold is applied. Under rater B's labels, the primary estimate, only the
-preamble check reaches 90\% precision, and restricting the violation flag to that one check
+preamble check reaches 90\% precision. Restricting the violation flag to that one check
 leaves the gate-passing violation rate at 74 of 83, or 89.2\%, with 9 rather than 1 of the
 130 stored baseline outputs violation-free (Table~\ref{tab:sensitivity}, SM6-only). Under
 the adjudicated labels, the sensitivity analysis, the error-handling proxy and the preamble
-check reach 90\%, and restricting the flag to those two leaves the rate at 82 of 83, or
+check reach 90\%. Restricting the flag to those two leaves the rate at 82 of 83, or
 98.8\%, with 1 of the 130 stored outputs violation-free, the same as the registered
 rule set (Table~\ref{tab:sensitivity}, SM2+SM6). The finding that almost no generated
 program is both valid and free of a genuine weakness therefore survives under both
-readings, but its margin ranges from 89.2\% to 98.8\% across defensible check sets, and
-the substantive-safe rate of 1 of the 135 baseline generations must be read as a rate under the full registered
+readings, but its margin ranges from 89.2\% to 98.8\% across defensible check sets. The
+substantive-safe rate of 1 of the 135 baseline generations must be read as a rate under the full registered
 rule set rather than under a set of verified high-precision checks. A rule-by-rule
 revision of the checker against the four wording defects above, with a full-population
 re-audit, is identified as the first item of future work; the corrected hardcoded-value
@@ -1200,7 +1200,7 @@ condition, a relative reduction of 38\%, concentrated in DeepSeek-Coder-V2-16B (
 unchanged. By check, the fall of 3.98 firings per gate-passing output comes mostly from
 the input-validation proxy (2.32) and the preamble check (0.94), with 0.32 from the
 hardcoded-value check, 0.24 from the unusual-conditions check and 0.15 from the
-error-handling proxy; with the corrected SM-5 the fall is 3.56, and the hardcoded-value
+error-handling proxy. With the corrected SM-5 the fall is 3.56, and the hardcoded-value
 check then rises by 0.11. On the all-outputs basis the same means are 6.38 and 5.11 (135 generations each). This
 reduction in surface without any change in the binary outcome is the first sign that
 the count of violations and the binary violation rate convey different information in
@@ -1247,15 +1247,15 @@ substantive-safe rate is reported with its rule composition rather than alone. S
 excess of generated code over the reference in rule firings lies mostly in the two checks
 that rater B of the second audit rates lowest. Under the preregistered rule set gate-passing
 generated code produces 10.37 firings per program against 5.73 for the reference translation
-(Table~\ref{tab:comparator}, lower block); of the excess of 4.64, the input-validation and
+(Table~\ref{tab:comparator}, lower block). Of the excess of 4.64, the input-validation and
 error-handling proxies (SM-1 and SM-2, rater B precision 45\% and 50\%) contribute 4.49. On
 the three checks the first audit rated at or above 90\% (SM-4, SM-5 and SM-6) the two differ
 by 0.15 firings per program (5.88 against 5.73). With the corrected SM-5 the excess is 6.84
-(9.84 against 3.00): SM-1 and SM-2 again contribute 4.49, and the remaining 2.35 comes from
+(9.84 against 3.00). SM-1 and SM-2 again contribute 4.49, and the remaining 2.35 comes from
 speed literals above the task's limit (2.99 corrected SM-5 firings per program against none
 for the reference), less the 0.35 and 0.29 by which the reference exceeds generated code on
 SM-4 and SM-6. Generated code fires the input-validation and error-handling proxies on 52
-and 82 of its 83 programs, on which the minimal reference translation never fires; the
+and 82 of its 83 programs, while the minimal reference translation fires neither. The
 translation with the preamble fires the error-handling proxy on all fifteen programs,
 through its two preamble calls (Figure~\ref{fig:heatmap}). Third, correcting the SM-5
 unit reading (Table~\ref{tab:comparator}, corrected SM-5) removes every SM-5 firing from the
@@ -1316,12 +1316,12 @@ a motion command the check can evaluate: 18 of 18 at baseline and 10 of 10 under
 prompt. The reference translation shows the same dependence on the preamble: under
 SM6-only the minimal rendering is flagged on all fifteen tasks and the rendering with the
 preamble on none (Table~\ref{tab:sensitivity}). SM-6 checks only whether a tool-centre-point
-and a payload declaration precede the first motion command, not the values declared, and
-because the prompt gives no tool-centre-point offset the rule can be met only by writing a
-value that was not given: 3 of the 83 local gate-passing outputs and 45 of the 120 outputs of
-the frontier run of \ref{sec:res-explore} declare one before the first motion command, and of
-the declarations written as a literal pose none of the 3 local ones and 3 of the 28 frontier
-ones match the offset in the task representation. SM-6 is
+and a payload declaration precede the first motion command, not the values declared.
+Because the prompt gives no tool-centre-point offset, the rule can be met only by writing a
+value that was not given. Before the first motion command, 3 of the 83 local gate-passing
+outputs and 45 of the 120 outputs of the frontier run of \ref{sec:res-explore} declare one.
+Of the declarations written as a literal pose, none of the 3 local ones and 3 of the 28
+frontier ones match the offset in the task representation. SM-6 is
 anchored to clauses 5.1.14 and 5.1.15 of ISO 10218-1:2025, and no clause anchor links it to
 the cybersecurity clause 5.1.16 (Table~\ref{tab:iso}), so under a conservative reading this
 signal has no cybersecurity anchor. Its precision under rater B is 18 of 20 (90.0\%, Wilson
@@ -1349,7 +1349,7 @@ basis (0.54 to 0.55 on all outputs; 0.88 to 0.91 on gate-passing outputs), so th
 strategies add lower-severity firings without raising the worst-case hazard. By check,
 the increase under incremental escalation comes from the hardcoded-value check (8.11 more
 firings per gate-passing output, 7.35 with the corrected SM-5), partly offset by 2.01 fewer
-input-validation firings, and the pooled increase of 1.24 comes likewise from the
+input-validation firings. The pooled increase of 1.24 comes likewise from the
 hardcoded-value check (2.04, or 1.89 corrected), with 0.95 fewer input-validation firings.
 The adversarial count uplift is therefore carried by speed literals above the task limit and
 remains under the corrected SM-5 (5.45 for incremental escalation and 1.08 pooled). These
@@ -1359,9 +1359,9 @@ count and severity contrasts are taken as the primary adversarial analysis.
 
 The preregistered binary uplift test is reported only as a demonstration of the ceiling.
 The hypothesis that the strategies raise the combined violation rate by at least 50
-percentage points is not supported: no model-and-strategy contrast, naive or gate-passing,
+percentage points is not supported. No model-and-strategy contrast, naive or gate-passing,
 crosses the threshold, and every per-model and pooled test returns a Holm-adjusted
-p of 1.000, with a largest pooled increase of 6.67 percentage points under the naive
+p of 1.000. The largest pooled increase is 6.67 percentage points under the naive
 contrast and 4.76 percentage points under the gate-passing contrast, the latter being a
 single discordant pair among the 21 matched gate-passing cells of one strategy. This is a
 mechanical consequence of the saturated baseline: the gate-passing baseline rate is 98.8\%
@@ -1393,8 +1393,8 @@ reduction is zero for all three models.
 
 The per-model reductions are an artifact of output invalidation rather than repair. The
 gate-passing rate for DeepSeek-Coder-V2-16B falls from 44\% at baseline to 7\% under
-feedback (3 of 45 trajectories), and for CodeLlama-34B from 40\% to 20\% (9 of 45): the feedback does not make these
-models write cleaner URScript, it makes them fall off the URScript syntax into prose
+feedback (3 of 45 trajectories), and for CodeLlama-34B from 40\% to 20\% (9 of 45). The feedback does not make these
+models write cleaner URScript. It makes them fall off the URScript syntax into prose
 pseudo-code that the validity gate then rejects, so the binary violation flag drops
 because the security checks have no syntactic foothold, not because the code is safe.
 Repair-in-loop as operationalized here therefore reduces, for these two models, to
@@ -1414,18 +1414,18 @@ transient improvement followed by regression, and an invariant trajectory
   does not reach zero, net reduction with one reversal, two-state oscillation in which each retry undoes the previous fix,
   transient improvement followed by regression, monotone increase, and an invariant trajectory. In each panel
   the dark curve is a representative trajectory, labelled with its task, and the gray curves are the other
-  Qwen2.5-Coder-32B trajectories of that regime (the three repetitions of a task often coincide); the trajectory count in
-  each panel title is that model's column of the table.}\label{fig:retry}
+  Qwen2.5-Coder-32B trajectories of that regime (the three repetitions of a task often coincide). The count in
+  each panel title is taken from that model's column of the table.}\label{fig:retry}
 \end{figure}
 
 The regimes are counted rather than only illustrated. Table~\ref{tab:regimes}
 classifies every one of the 135 local-model trajectories by the shape of its violation-count
 sequence. Of the 135 trajectories, 78 leave the loop by dropping out of valid syntax, 52 of them
 already at the first generation so that no feedback is ever issued, and 57 remain valid
-through all three retries; none of the 57 reaches zero violations. Among the valid trajectories
+through all three retries. None of the 57 reaches zero violations. Among the valid trajectories
 the count falls monotonically in 11, falls with one reversal in 6, rises monotonically in
 12, oscillates in 14, shows a transient improvement that is undone in 12, and is invariant
-in 2; the mean
+in 2. The mean
 count is 10.4 at the first generation and 13.2 at the last retry. At the rule level, each
 valid retry step clears 0.26 checks and introduces 0.29 on average, so feedback
 redistributes firings across rules roughly as often as it removes them. The regimes are
@@ -1439,8 +1439,8 @@ The three models differ on matched per-task outcomes, and the difference is a
 heterogeneity in syntactic commitment, that is, in how often each model produces URScript
 at all. A cross-model homogeneity test (Cochran's $Q$ over the fifteen task cells, a cell
 counted as violating when any repetition violates) was registered in the first
-preregistration amendment as an exploratory analysis outside the confirmatory family, one
-test per prompt condition, to be reported with an uncorrected $p$ value. It rejects
+preregistration amendment as an exploratory analysis outside the confirmatory family. It is
+one test per prompt condition, to be reported with an uncorrected $p$ value. It rejects
 homogeneity under both single-shot conditions: $Q$ is 12.60 at baseline and 20.00 under
 the safety prompt ($p = 0.002$ and below 0.001, uncorrected; exact permutation $p$ of 0.001
 and below 0.001). The registered test is reported with the asymptotic $p$ of its statistic
@@ -1452,12 +1452,12 @@ compares validity as much as violation. On the gate-passing outputs alone the te
 be computed at baseline: only 5 tasks have a gate-passing output from all three models,
 and all three models violate on every one of them. Under the safety prompt 8 tasks enter,
 3 of them discordant, and the test gives $Q = 6.00$ (exact $p = 0.111$; asymptotic
-$p = 0.050$): it does not reject homogeneity, and it rests on three discordant tasks. The
+$p = 0.050$), which does not reject homogeneity. The
 gate-pass indicator alone, a cell set to 1 when any repetition passes the validity gate,
 gives $Q = 12.20$ at baseline and $14.00$ under the safety prompt (exact $p = 0.001$ for
-both; asymptotic $p = 0.002$ and below 0.001) and agrees with the registered cell on 44 of
+both; asymptotic $p = 0.002$ and below 0.001). It agrees with the registered cell on 44 of
 the 45 baseline task-model cells. The registered heterogeneity therefore reflects how often
-each model commits to valid URScript; restricted to the tasks on which all three models
+each model commits to valid URScript. Restricted to the tasks on which all three models
 produce valid code, the test cannot be computed at baseline and does not reject homogeneity
 under the safety prompt.
 Table~\ref{tab:crossmodel} in Appendix~\ref{app:crossmodel} lists every cross-model test
@@ -1496,23 +1496,23 @@ not differ significantly ($p = 0.10$ and $0.81$). Thirty of the 90 CodeLlama-34B
 Q4\_K\_M, 24 of them under the safety prompt, run to the 4096-token budget and are
 truncated; 17 fail the gate and 13 pass it. Recomputing the cross-model test with all
 three models at Q4\_K\_M gives Cochran $Q = 8.67$ at baseline and $7.82$ under the safety
-prompt ($p = 0.013$ and $0.020$, uncorrected; exact $p = 0.014$ and $0.019$); with all three
+prompt ($p = 0.013$ and $0.020$, uncorrected; exact $p = 0.014$ and $0.019$). With all three
 at Q4\_0 the as-served
 values are unchanged, because the only model served at Q4\_K\_M keeps every verdict at
 Q4\_0. On the gate-passing outputs at Q4\_K\_M the test is again undefined at baseline (6
 tasks, none discordant) and gives $Q = 4.00$ under the safety prompt (6 tasks, exact
-$p = 0.333$; asymptotic $p = 0.135$); the gate-pass indicator gives $Q = 8.67$ and $6.22$
+$p = 0.333$; asymptotic $p = 0.135$). The gate-pass indicator gives $Q = 8.67$ and $6.22$
 (exact $p = 0.014$ and $0.059$; asymptotic $p = 0.013$ and $0.045$). The registered test therefore rejects homogeneity at either uniform
 quantization, with a narrower margin at Q4\_K\_M, where CodeLlama-34B's per-task violation
-rate rises from 40\% to 53\% at baseline and from 33\% to 53\% under the safety prompt;
-the gate-pass indicator does so in every case except under the safety prompt at Q4\_K\_M
-(exact $p = 0.059$); and on the gate-passing outputs the safety-prompted test does not reject
+rate rises from 40\% to 53\% at baseline and from 33\% to 53\% under the safety prompt.
+The gate-pass indicator rejects it in every case except under the safety prompt at Q4\_K\_M
+(exact $p = 0.059$). On the gate-passing outputs the safety-prompted test does not reject
 homogeneity at either level (exact $p = 0.111$ at the served levels and $0.333$ at
-Q4\_K\_M), resting on three and two discordant tasks (Table~\ref{tab:quant}). At the count level quantization shifts the mean of a
+Q4\_K\_M), and it rests on three and two discordant tasks (Table~\ref{tab:quant}). At the count level quantization shifts the mean of a
 single model by between one and twelve violations per generation, which is of the same
 order as the differences between models, so no count-level comparison is made across
 models and all count-level contrasts in this article are within-model. These re-runs are
-not preregistered and are reported as controls, not confirmatory results; the token
+not preregistered and are reported as controls, not confirmatory results. The token
 budget and request timeout of the local host, and the calls that were regenerated because
 of them, are documented in Appendix~\ref{app:replication}.
 
@@ -1583,17 +1583,17 @@ estimate.
 
 \textbf{Repair across scale.} Classifying every repair trajectory,
 the 135 confirmatory and the 60 frontier ones, yields a remediated-to-zero
-count of 0 of 135 and 0 of 60: no model at any size from 16B to 675B used the retry
+count of 0 of 135 and 0 of 60. No model at any size from 16B to 675B used the retry
 budget to convert an unsafe generation into a valid violation-free one under the whole-program-regeneration protocol used here. What changes
 with scale is the failure mode rather than the outcome. In the local regime the modal
 behavior is that the loop never runs or breaks early, with 78 of 135 trajectories either
 failing to produce valid URScript on the first call or leaving the loop when a retry
-ceases to be valid; in the frontier regime the larger models keep emitting valid
+ceases to be valid. In the frontier regime the larger models keep emitting valid
 URScript and stay inside the loop, oscillating in 47\% of trajectories or growing strictly
 worse under feedback in 20\%. A rule-level dissection shows that the only check with
 non-trivial genuine repair is the locally insertable input-validation guard, repaired
-in 28\% of trajectories, while the structural obligations are repaired in 0 to 4\% of trajectories:
-under feedback these models insert guards but do not restructure programs. The
+in 28\% of trajectories, while the structural obligations are repaired in 0 to 4\% of trajectories.
+Under feedback these models insert guards but do not restructure programs. The
 iatrogenic class is the sharpest cautionary observation, since each round of feedback
 raises the violation count, the largest model responding to feedback by emitting more
 protective scaffolding that re-arms the unchecked-return check on every added call. This
@@ -1601,11 +1601,11 @@ null contrasts with general-purpose code, where, according to a preprint, simple
 execution-error feedback universally improves functional pass rates across model scales
 \cite{ref47} and richer
 critic-generated feedback repairs most injected-Python samples within two retries
-\cite{ref56}; the discrepancy isolates to the target property, since a loop that
+\cite{ref56}. The discrepancy isolates to the target property, since a loop that
 reliably repairs functional test failures records zero repairs when the fed-back signal
 is a static safety violation. A single-arm probe in which the feedback was
 deterministically enriched with rule definitions, offending lines, and fix templates
-reshaped the distribution without lifting the floor: one of fifteen repair trajectories reached a
+reshaped the distribution without lifting the floor. One of fifteen repair trajectories reached a
 mechanically clean program, and inspection showed that it satisfied the checker through
 non-existent language constructs rather than through valid URScript.
 
@@ -1625,7 +1625,7 @@ path act as complementary rather than substitutable detection layers.
 
 \textbf{Constraint representation.} Two final probes hold the editing stimulus fixed and
 vary only how a safety constraint is written. A control probe first establishes that
-editing an already-safe template rarely introduces a breach: only 2 genuine speed-cap
+editing an already-safe template rarely introduces a breach. Only 2 genuine speed-cap
 breaches occur in the 179 programs stored from 180 edit generations, both in the same
 program, against 70 breaches in 11 of the 60 programs of the from-scratch control. The
 representation probe then re-encodes each task's speed cap in four behaviorally
@@ -1649,7 +1649,7 @@ strongly scale-dependent: the smallest model preserved the construct in every on
 explicit-form cells, whereas the largest removed it in 70\% of cases. Removal of the
 encoded construct rose from 0\% for the smallest model (0 of 30 cells) through 50\% (15
 of 30) and 44.8\% (13 of 29, this count reduced by the named-constant output excluded at the 358B scale) to 70\%
-for the largest (21 of 30), the four counts summing to the 49 of 119 removals noted above.
+for the largest (21 of 30). The four counts sum to the 49 of 119 removals noted above.
 The increase is not strictly monotone (the 120B model removes the construct slightly
 more often than the 358B model, 50.0\% against 44.8\%, with overlapping exact intervals),
 and because only four distinct model sizes anchor it under a single repetition per cell,
@@ -1665,7 +1665,7 @@ signal and a target for replication rather than an established scaling law
   explicit. Breach falls monotonically with legibility (Cochran-Armitage trend statistic
   4.03, p below $10^{-4}$); counts are shown above each bar. The two zero-breach forms are
   qualified by construct survival in the text: in the two explicit forms the encoding was
-  deleted in 41\% of programs yet stayed within the cap only because the residual literal
+  deleted in 41\% of programs, and these programs stayed within the cap only because the residual literal
   speeds happened to be safe.}\label{fig:repbreach}
 \end{figure}
 
@@ -1686,10 +1686,10 @@ A single mechanism threads through the results: invalidation acts as a measureme
 confound. Whenever a generation or a retry ceases to pass the validity gate, binary
 violation outcomes improve without the code becoming safer. The repair-in-loop
 intervention lowers violation flags primarily by driving models into invalid
-pseudo-code rather than remediation, the trajectory taxonomy shows that most local
+pseudo-code rather than remediation. The trajectory taxonomy shows that most local
 repair trajectories avoid or leave the loop by failing to be analyzable rather than by
-becoming safe, and the validity gate that contains the effect introduces its own
-selection, handled as a pre-specified sensitivity analysis. The deployment
+becoming safe. The validity gate that contains the effect introduces its own
+selection, which is handled as a pre-specified sensitivity analysis. The deployment
 implications, the validity-aware substantive-safe rate, and the design requirements for
 repair-capable loops are all responses to this single confound.
 
@@ -1698,9 +1698,9 @@ The near-total violation rate found here is more severe than the rates reported 
 general-purpose code. Assessments of code-completion suggestions and of curated weakness
 suites place the insecure-output fraction near 40\% \cite{ref5} and 74\% \cite{ref6},
 whereas under the validity gate 89.2\% to 98.8\% of the gate-passing baseline outputs contain
-at least one violation and only 1 to 9 of the 135 baseline generations (0 to 3 under the
-structural gate) are both valid and rule-clean, the five generations without a stored
-output being counted as invalid. The non-LLM
+at least one violation. Only 1 to 9 of the 135 baseline generations (0 to 3 under the
+structural gate) are both valid and rule-clean, with the five generations that have no
+stored output counted as invalid. The non-LLM
 comparator of \ref{sec:res-baseline} qualifies this comparison: the rate largely reflects
 the rule set and the prompt, and a reference translation that no model wrote is flagged as
 well. Three factors
@@ -1722,7 +1722,7 @@ self-repair reliably raises pass rates with most benefit in the first one or two
 \cite{ref47}, since no model
 at any scale from 16B to 675B converted an unsafe generation into a valid violation-free
 one across the 195 repair trajectories. It aligns instead with the security-repair finding
-that iteration can degrade rather than improve safety: model-only iteration has been
+that iteration can degrade rather than improve safety. Model-only iteration has been
 reported to raise critical vulnerabilities by 37.6\% over five rounds \cite{ref53}, and
 adding a static check to the loop has been reported to increase rather than suppress
 latent degradation because rule-based detectors miss structural regressions such as the
@@ -1825,11 +1825,11 @@ substitute for an independent validation set, for example URScript programs with
 documented incidents or vendor safety-bulletin cases, which remains future work. Second, the
 three models were served at different quantization levels, one at Q4\_K\_M and two at
 Q4\_0 (Table~\ref{tab:models}), so the cross-model heterogeneity test of
-\ref{sec:res-sens} cannot separate model identity from quantization level; re-runs of
+\ref{sec:res-sens} cannot separate model identity from quantization level. Re-runs of
 all three models at the other level, reported in \ref{sec:res-sens}, show that the
 registered test still rejects homogeneity at either uniform level, a heterogeneity in
-syntactic commitment, while on the gate-passing outputs the test does not reject
-homogeneity (exact $p$) and rests on two or three discordant tasks; the count-level
+syntactic commitment. On the gate-passing outputs the test does not reject
+homogeneity (exact $p$) and rests on two or three discordant tasks. The count-level
 outcomes of
 DeepSeek-Coder-V2-16B and CodeLlama-34B move with quantization, which is why no count-level contrast in
 this article crosses models. The seven-strategy adversarial family also
@@ -1842,7 +1842,7 @@ cybersecurity at the level of the robot as a system and refers to the IEC 62443 
 for the corresponding controls, such as security levels, network segmentation,
 authenticated and integrity-protected remote access, secure boot, and protected storage
 of the safety configuration. These are architectural and operational properties of a
-deployed robot cell that a code-generation evaluation cannot observe, since nothing in a
+deployed robot cell that a code-generation evaluation cannot observe. Nothing in a
 generated URScript program determines whether the controller network is segmented or
 whether remote access is authenticated. The checks anchored to 5.1.16 therefore capture
 only the code-expressible facet of the clause, such as hardcoded configuration, missing
@@ -1900,17 +1900,17 @@ task specification is held invariant, the motion-safety checks do not fire, and 
 reported violation is a code-security finding rather than a demonstrated motion hazard.
 The preregistered confirmatory hypothesis tests are reported as a secondary check whose
 conservative effective unit is the model-task cell rather than the individual generation,
-consistent with the methodological emphasis of this work, and the reported data are the
+consistent with the methodological emphasis of this work. The reported data are the
 second of two generation runs that agree on every preregistered test
 (Appendix~\ref{app:replication}).
 
 Three findings emerge. First, the checks flag 89.2\% to 98.8\% of gate-passing baseline
-outputs, and 1 to 9 of the 135 baseline generations are valid and violation-free under the
-registered lexical gate, 0 to 3 under the structural gate, with the five generations that
+outputs. Of the 135 baseline generations, 1 to 9 are valid and violation-free under the
+registered lexical gate and 0 to 3 under the structural gate, with the five generations that
 have no stored output counted as invalid. The
-non-LLM comparator shows that this rate largely reflects the rule set and the prompt: the
+non-LLM comparator shows that this rate largely reflects the rule set and the prompt. The
 lower bound reduces to a missing tool-centre-point declaration that the task prompt never
-specified and that the minimal reference translation also omits, and most of the excess of
+specified and that the minimal reference translation also omits. Most of the excess of
 generated code over the reference in rule firings comes from the input-validation and
 error-handling proxies, the two checks with the lowest precision under the non-author
 rater. Second, the saturated binary rate is a measurement hazard. Scored
@@ -2007,22 +2007,22 @@ these two models has the same status, violation count and fired checks. All diff
 lie in the outputs of Qwen2.5-Coder-32B, of whose 375 stored programs 70 are
 byte-identical; its validity status and binary verdict are nevertheless the same on every
 row. The validity status and the binary verdict therefore agree on all 924 rows, and
-every preregistered quantity is identical in the two runs: the gate-passing counts (83 of
+every preregistered quantity is identical in the two runs. This covers the gate-passing counts (83 of
 135 at baseline, 192 of 315 adversarial), the single substantive-safe program (the same
 cell), every contingency table, test statistic and p-value of the three confirmatory
-tests, and the cross-model statistics (12.60 and 20.00), which are also identical on the
+tests, and the cross-model statistics (12.60 and 20.00). These statistics are also identical on the
 gate-passing and gate-pass bases and for every test of Table~\ref{tab:crossmodel}. The
 count-level values differ
 through Qwen2.5-Coder-32B. Giving the first run first, the gate-passing baseline mean is
-10.07 against 10.37 and the safety-prompted mean 6.38 against 6.39; the pooled adversarial
+10.07 against 10.37 and the safety-prompted mean 6.38 against 6.39. The pooled adversarial
 uplift is $+1.64$ against $+1.24$ on gate-passing outputs and $+0.95$ against $+0.70$ on
 all outputs, the strongest strategy is the same at $+5.74$ against $+6.22$, and no
-per-strategy mean differs by more than 0.93; the baseline counts of flagged outputs per
+per-strategy mean differs by more than 0.93. The baseline counts of flagged outputs per
 check in Table~\ref{tab:perrule} differ by at most five (47 against 52, 58 against 54 and 55
 against 54 for the three checks that differ). In the repair loop the dropout counts (52
-and 26) and the absence of any remediated trajectory are identical, the counts of the invariant,
+and 26) and the absence of any remediated trajectory are identical. The counts of the invariant,
 monotone, one-reversal and oscillating regimes are 5, 9, 7 and 12 against 2, 11, 6 and
-14, the other regimes are unchanged, and the mean at the last retry is 11.18 against
+14, and the other regimes are unchanged. The mean at the last retry is 11.18 against
 13.21 from a first-generation mean of 10.4 in both. In Table~\ref{tab:reps}, 12 against
 14 of 90 cells are byte-identical across repetitions and 53 against 59 agree on the
 count. The findings of this article are the same under either run; descriptive
@@ -2041,7 +2041,7 @@ at Q4\_K\_M occasionally produced runaway generations that the budget should hav
 stopped and that instead hit the 300~s request timeout (5 and 35 of 90 calls). After the
 client was corrected, the affected tasks were regenerated with the budget enforced and
 only the affected calls were replaced (6 and 35 calls; the extra DeepSeek call had exceeded
-the budget without timing out); the replacement is recorded per row in the archived
+the budget without timing out). The replacement is recorded per row in the archived
 results, and the regenerated DeepSeek calls did not reproduce the runaway, which is
 consistent with the repetition analysis of Table~\ref{tab:reps}.
 
@@ -2220,15 +2220,15 @@ vendor safety-bulletin cases, is identified as future work in \ref{sec:threats}.
 The first preregistration amendment registered the cross-model homogeneity test of
 \ref{sec:res-sens} for every prompt condition, as an exploratory analysis reported with an
 uncorrected $p$ value. Table~\ref{tab:crossmodel}
-reports all ten tests on the three bases of Table~\ref{tab:quant}: on the naive basis, the
-registered test, with the asymptotic $p$ of its statistic and the exact permutation $p$
-beside it, and on the two post hoc bases with the exact $p$ first, because they rest on few
+reports all ten tests on the three bases of Table~\ref{tab:quant}. On the naive basis, the
+registered test, it gives the asymptotic $p$ of its statistic with the exact permutation $p$
+beside it. On the two post hoc bases the exact $p$ comes first, because they rest on few
 discordant tasks. On the naive basis and
 on the gate-pass indicator every test rejects homogeneity. In the adversarial and repair-loop
 conditions the two bases agree on every task cell, because every gate-passing output in
 these conditions violates at least one check (192 of 192 in E2 and 57 of 57 at the final
-attempt of E3). On the gate-passing basis only the safety-prompted test can be computed:
-each strategy test has two or three tasks with a gate-passing output from all three
+attempt of E3). On the gate-passing basis only the safety-prompted test can be computed.
+Each strategy test has two or three tasks with a gate-passing output from all three
 models, all of them concordant, and at the final repair attempt no task has one. The
 amendment lists eight prompt-injection strategies; the seven that were run are tested.
 

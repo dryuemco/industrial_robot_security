@@ -59,8 +59,8 @@ def table13() -> str:
         "of outputs admitted by the gate, Viol.\\ the violation rate among them, Safe the number of",
         "substantive-safe outputs over the 130 stored outputs, Mean the mean firings per admitted output.",
         "The last two columns score the 15 reference translations of \\ref{sec:task-ir} without",
-        "(min.) and with (pre.) the \\texttt{set\\_tcp}/\\texttt{set\\_payload} preamble; all 15 pass",
-        "both gates, Flagged is the number of the 15 with at least one firing and Mean the mean",
+        "(min.) and with (pre.) the \\texttt{set\\_tcp}/\\texttt{set\\_payload} preamble. All 15 pass",
+        "both gates. Flagged is the number of the 15 with at least one firing, and Mean is the mean",
         "firings per program.}",
         "\\label{tab:sensitivity}",
         "\\centering",
@@ -104,7 +104,7 @@ def table10() -> str:
         "(E1 and E2): 100 firings, 20 per firing check, drawn with a fixed seed and labelled",
         "independently by two raters blind to each other's labels (A: a consensus label of two",
         "authors; B: not an author, had not seen the manuscript, the rule code or the first",
-        "audit). Rater B is the primary estimate. The adjudicated label, assigned by the two",
+        "audit). Rater B's labels are the primary estimate. The adjudicated label, assigned by the two",
         "rater A authors in a recorded resolution of every disagreement under the written rater",
         "guide, equals rater A's label on all 100 items and is reported as a sensitivity analysis.",
         "Precision is the share of audited firings judged genuine, with Clopper-Pearson 95\\%",
@@ -209,9 +209,9 @@ def table12() -> str:
 # ----------------------------------------------------------------------------- Cochran p (A2)
 
 P_NOTE = ("All $p$ values are uncorrected. On the naive basis, the registered test, $p$ is the asymptotic "
-          "chi-square $p$ of the statistic with two degrees of freedom and exact $p$ the permutation $p$ beside "
+          "chi-square $p$ of the statistic with two degrees of freedom, and exact $p$ is the permutation $p$ beside "
           "it. The gate-passing and gate-pass bases are post hoc and rest on few discordant tasks, where the "
-          "chi-square approximation is poor, so on them the exact permutation $p$ comes first and the "
+          "chi-square approximation is poor, so on them the exact permutation $p$ comes first, with the "
           "asymptotic $p$ (asym.) beside it.")
 
 
@@ -324,7 +324,7 @@ def crossmodel_registered() -> str:
         "baseline and safety-prompted conditions of E1, each prompt-injection strategy of E2",
         "(one repetition per cell) and the repair loop of E3, scored at its final attempt. The",
         "three bases are those of Table~\\ref{tab:quant}: naive and the gate-pass indicator on all",
-        "15 tasks, gate-passing on the Tasks on which every model has a gate-passing output. A test",
+        "15 tasks, gate-passing on the tasks on which every model has a gate-passing output (column Tasks). A test",
         "in which no task is discordant is undefined. " + P_NOTE + " Naive rates are the",
         "per-task violation rates of Qwen2.5-Coder-32B, DeepSeek-Coder-V2-16B and CodeLlama-34B in",
         "percent. Run 1 gives the same values on every line.}",
