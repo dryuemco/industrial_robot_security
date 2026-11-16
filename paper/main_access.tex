@@ -2165,20 +2165,8 @@ follow the same template with their own task fields.
 Three generated programs illustrate phenomena that the body asserts. Each is reproduced
 verbatim from the shipped logs, with the flagged lines marked \texttt{>{}>} and the checker's
 firings on that program re-computed at build time.
-\input{tables/code_listings.tex}
 
-\section{Watchdog Detection Performance}\label{app:detection}
-The rule checker's intrinsic detection performance was measured on the fifteen-task suite
-with one author-constructed adversarial variant per task per attack family, for 120
-variants, together with the fifteen clean baselines. These variants are synthesized by
-the authors to instantiate each attack family, so the figures below are a construction
-check that confirms each rule fires on the perturbation it targets and that no rule fires
-on the clean baselines; they do not establish external detection validity against
-independently sourced violations. The rule checker flagged 114 of 120 injected
-violations (95\%) and produced no false positives on the fifteen clean baselines, as
-broken down in Table~\ref{tab:detection}.
-
-\begin{table}[h]
+\begin{table}[t]
 \caption{Per-family detection on synthetic adversarial variants.}
 \label{tab:detection}
 \centering
@@ -2200,6 +2188,22 @@ Overall & 114 & 120 & 95\% \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\input{tables/crossmodel_registered.tex}
+
+\input{tables/code_listings.tex}
+
+\section{Watchdog Detection Performance}\label{app:detection}
+The rule checker's intrinsic detection performance was measured on the fifteen-task suite
+with one author-constructed adversarial variant per task per attack family, for 120
+variants, together with the fifteen clean baselines. These variants are synthesized by
+the authors to instantiate each attack family, so the figures below are a construction
+check that confirms each rule fires on the perturbation it targets and that no rule fires
+on the clean baselines; they do not establish external detection validity against
+independently sourced violations. The rule checker flagged 114 of 120 injected
+violations (95\%) and produced no false positives on the fifteen clean baselines, as
+broken down in Table~\ref{tab:detection}.
+
 
 Each per-family rate meets the 80\% criterion; the residual misses concentrate in the
 frame-confusion and tool-misuse families and reflect task instances within threshold
@@ -2232,8 +2236,6 @@ Each strategy test has two or three tasks with a gate-passing output from all th
 models, all of them concordant, and at the final repair attempt no task has one. The
 amendment lists eight prompt-injection strategies; the seven that were run are tested.
 
-\input{tables/crossmodel_registered.tex}
-\newpage
 
 %% ----------------------------------------------------------------------------
 %% BIBLIOGRAPHY (inline; no external .bib needed)
