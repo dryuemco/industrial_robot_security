@@ -508,7 +508,7 @@ above to eight subtypes or 360 calls are superseded."
 Checked against the OSF API on 2026-09-21: the five quotations in the note occur verbatim
 in Amendment 3 (`6a02e67cf944b975e74bbdbd`) and Amendment 2 (`6a076690b12b31eaddaaca6d`)
 as filed, and the note as filed is identical to the text below apart from the link. An
-earlier version of this section (commit `9afd1c2`) quoted the repository draft of
+earlier version of this section (commit `010ba82`) quoted the repository draft of
 Amendment 3 (`docs/OSF_AMENDMENT_3_DRAFT.md` at `5147bca`), whose wording differs from
 the filed text; it is superseded.
 
