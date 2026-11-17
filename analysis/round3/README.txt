@@ -84,8 +84,7 @@ s17_registered_h4_h6.py
 
 s18_e5_enforcement.py
     the representation probe read by function: class of every explicit-form output, commanded
-    speed and breach of all 238 valid outputs, trend and paired tests; reads
-    e5_review_overrides.csv last
+    speed and breach of all 238 valid outputs, trend and paired tests
     out/e5/
 
 s19_safety_and_repair.py

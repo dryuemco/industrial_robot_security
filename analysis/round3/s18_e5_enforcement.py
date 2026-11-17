@@ -36,14 +36,11 @@ URScript default of 0.25 m/s. A breach is a resolved Cartesian speed above the t
 program does not stop. When no move breaches and the speed of any move cannot be resolved, the
 output is "unresolved"; it is listed and never counted as safe.
 
-The author's reading is applied last, from analysis/round3/e5_review_overrides.csv (log_line,
-class, note).
-
 Outputs under out/e5/: e5_enforcement.csv (one row per stored output), e5_summary.csv (counts by
 class, model and encoding, breaches by encoding, old against new), e5_tests.csv (Cochran-Armitage
 trend statistic for the breach counts by encoding, old and corrected, and the Cochran Q test over
 the model-task pairs with a valid output under all four encodings). With --review PATH it also
-writes a reading aid for the author: the header and the cap, helper and move lines of every
+writes a listing for reading by eye: the header and the cap, helper and move lines of every
 explicit-form output that is not kept_original and of every unresolved output.
 """
 from __future__ import annotations
@@ -65,7 +62,6 @@ sys.path.insert(0, str(REPO / "enfield_llm"))
 from enfield_llm.code_parser import CodeParser  # noqa: E402
 
 E5 = REPO / "data" / "exploratory" / "e5_repr_fragility"
-OVERRIDES = Path(__file__).resolve().parent / "e5_review_overrides.csv"
 
 MODELS = [  # ordered by parameter count
     ("mistralai/Devstral-Small-2-24B-Instruct-2512", "Devstral-Small-2", 24),
@@ -582,7 +578,7 @@ def load() -> pd.DataFrame:
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--review", type=Path, help="write the reading aid for the author to this path")
+    ap.add_argument("--review", type=Path, help="write the listing for reading by eye to this path")
     args = ap.parse_args()
 
     d = load()
@@ -602,26 +598,12 @@ def main() -> None:
         recs.append({**base, "old_mechanism_survived": r.mechanism_survived, "old_tcp_safe": r.tcp_safe, **a})
     e = pd.DataFrame(recs)
 
-    ov = pd.read_csv(OVERRIDES, dtype={"log_line": int, "class": str, "note": str}) if OVERRIDES.is_file() else \
-        pd.DataFrame(columns=["log_line", "class", "note"])
-    e["class_computed"] = e["class"]
-    e["override_applied"] = False
-    e["override_note"] = ""
-    for _, o in ov.iterrows():
-        if o["class"] not in CLASSES:
-            sys.exit(f"override for log line {o.log_line}: unknown class {o['class']!r}")
-        m = e.log_line == int(o.log_line)
-        if not m.any() or e.loc[m, "encoding"].iloc[0] not in EXPLICIT:
-            sys.exit(f"override for log line {o.log_line}: not an explicit-form output")
-        e.loc[m, "class"] = o["class"]
-        e.loc[m, "override_applied"] = True
-        e.loc[m, "override_note"] = "" if pd.isna(o.note) else str(o.note)
     e["lost"] = e["class"].isin(LOST)
 
     cols = ["log_line", "model", "size_b", "task_id", "encoding", "task_cap", "status", "old_mechanism_survived",
-            "old_tcp_safe", "cap_constants", "class", "class_computed", "lost", "enforcement_form", "cartesian_moves",
+            "old_tcp_safe", "cap_constants", "class", "lost", "enforcement_form", "cartesian_moves",
             "moves_through_cap", "largest_resolved_speed", "unresolved_moves", "breach", "breach_moves",
-            "override_applied", "override_note", "blocks_balanced", "evidence"]
+            "blocks_balanced", "evidence"]
     e[cols].to_csv(out("e5", "e5_enforcement.csv"), index=False)
 
     v = e[e.status == "success"]
@@ -723,7 +705,7 @@ def main() -> None:
 def write_review(path: Path, e: pd.DataFrame, progs: dict) -> None:
     sel = e[(e.status == "success") & (((e.encoding.isin(EXPLICIT)) & (e["class"] != "kept_original"))
                                         | (e.breach == "unresolved"))]
-    lines = ["# E5 reading aid (not committed)", "",
+    lines = ["# E5 outputs for reading by eye", "",
              "Every explicit-form output whose class is not kept_original, and every unresolved output.",
              "Program lines shown: those that mention the cap, define a helper, or issue a Cartesian move "
              "(statements spanning several lines are joined). Line numbers refer to the extracted program.", ""]
@@ -754,7 +736,7 @@ def write_review(path: Path, e: pd.DataFrame, progs: dict) -> None:
                     lines.append(f"{s['line']:4d}  {_short(t, 160)}")
             lines += ["```", ""]
     path.write_text("\n".join(lines))
-    print(f"wrote reading aid {path} ({len(sel)} outputs)")
+    print(f"wrote the listing {path} ({len(sel)} outputs)")
 
 
 if __name__ == "__main__":

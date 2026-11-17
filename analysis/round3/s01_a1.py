@@ -5,7 +5,8 @@ model and the translator are given about TCP and payload.
 
 Outputs under out/a1/:
   translator/{minimal,preamble}/*.urscript, translator_hashes.csv
-  translator_check.csv          regenerated per-rule counts vs paper/tables/comparator_programs.csv
+  translator_check.csv          the per-rule counts that differ from paper/tables/comparator_programs.csv
+                                (written only when some differ)
   table13_llm_check.csv         Table 13 LLM rows re-run vs paper/tables/sensitivity_e1_baseline.csv
   table13_with_translator.csv   every Table 13 row for LLM, Translator, Translator + preamble
   sm6_split.csv                 SM-6 firings by missing set_tcp / set_payload
@@ -65,7 +66,11 @@ def check_translator(progs) -> bool:
                     rows.append({"variant": SET_NAME[k], "program": stem, "column": c,
                                  "paper_csv": int(r[c]), "regenerated": int(mine[c])})
     df = pd.DataFrame(rows, columns=["variant", "program", "column", "paper_csv", "regenerated"])
-    df.to_csv(out("a1", "translator_check.csv"), index=False)
+    chk = out("a1", "translator_check.csv")
+    if len(df):
+        df.to_csv(chk, index=False)
+    else:
+        chk.unlink(missing_ok=True)
     print(f"translator per-rule counts identical to comparator_programs.csv: {ok} ({len(df)} differing cells)")
     return ok
 
