@@ -1124,7 +1124,7 @@ the hardcoded-speed and missing-preamble checks, whose precision the audit suppo
 Two limits qualify this first audit. It rests on a stratified sample of fifty firings, so
 each per-check estimate is supported by only eight to twelve cases with correspondingly
 wide intervals, and it was performed by one author on the author's own instrument. A
-second audit was therefore conducted after the review (Table~\ref{tab:precision2}): 100
+second audit was therefore conducted (Table~\ref{tab:precision2}): 100
 firings, twenty per firing check, drawn with a fixed seed from the gate-passing outputs of
 the baseline and adversarial experiments and labelled independently by two raters, blind
 to each other's labels, following a written guide released with the replication package.
@@ -1497,7 +1497,7 @@ that the amendment registered, one per prompt condition, on the same three bases
 Because the three models were served at two different quantization levels, one at
 Q4\_K\_M and two at Q4\_0 (Table~\ref{tab:models}), this heterogeneity test cannot by
 itself separate model identity from quantization. To bound the quantization effect, each
-model was re-run after the review at the level it was \emph{not} served at,
+model was re-run at the level it was \emph{not} served at,
 Qwen2.5-Coder-32B at Q4\_0 and the other two at Q4\_K\_M, on the same fifteen tasks, two
 conditions and three repetitions, with the same prompts, decoding settings and task
 representations as the confirmatory run, on a local RTX~5090 (270 generations;
@@ -2187,8 +2187,7 @@ adversarial experiment as E2, and the repair-in-loop experiment as E3. The confi
 hypotheses are the baseline-rate hypothesis (H4), the adversarial-uplift hypothesis
 (H5), and the repair-loop hypothesis (H6). The two post-hoc hypotheses, that saturation
 explains the adversarial null and that refusal is near zero, carry no label in the
-registry; the submitted version of this article labelled them H7 and H8, labels that the
-third amendment uses for two other analyses (see below), and the labels are dropped here.
+registry, where H7 and H8 name two other analyses of the third amendment (see below).
 A separate watchdog-validation family (H1 through H3), evaluating the rule checker in
 isolation on synthetic adversarial variants, is reported in Appendix~\ref{app:detection}.
 
