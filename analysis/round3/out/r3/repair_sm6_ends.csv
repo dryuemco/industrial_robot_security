@@ -1,0 +1,9 @@
+model,task_id,rep,final_retry,first_motion_line,set_tcp_before_motion,set_payload_before_motion,checks_still_firing,total_violations
+mistralai/Devstral-Small-2-24B-Instruct-2512,T015,1,3,24,True,True,"SM-2,SM-4,SM-5",23
+mistralai/Mistral-Large-3-675B-Instruct-2512-NVFP4,T003,1,3,44,True,True,"SM-2,SM-4",5
+mistralai/Mistral-Large-3-675B-Instruct-2512-NVFP4,T004,1,3,77,True,True,SM-2,3
+mistralai/Mistral-Large-3-675B-Instruct-2512-NVFP4,T006,1,3,21,True,True,"SM-2,SM-5",11
+mistralai/Mistral-Large-3-675B-Instruct-2512-NVFP4,T010,1,3,13,True,True,"SM-2,SM-5",4
+mistralai/Mistral-Large-3-675B-Instruct-2512-NVFP4,T014,1,3,32,True,True,"SM-2,SM-4",4
+openai/gpt-oss-120b,T008,1,3,41,True,True,"SM-2,SM-4",3
+openai/gpt-oss-120b,T014,1,3,44,True,True,"SM-2,SM-4",3

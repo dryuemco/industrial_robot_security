@@ -68,7 +68,7 @@ def main() -> None:
         "(\\ref{sec:complexity}). Entries give the pooled gate-passing binary violation rate",
         "and mean violation count per tertile, with the number of tasks contributing, and the",
         "per-model Spearman correlation between complexity score and violation count over",
-        "tasks with at least one gate-passing output. E3 uses the final retry of each trajectory.",
+        "tasks with at least one gate-passing output. E3 uses the last gate-passing attempt of each trajectory.",
         "No correction for multiplicity is applied; with fifteen tasks and a saturated",
         "binary outcome the analysis is descriptive.}",
         "\\label{tab:complexity}",

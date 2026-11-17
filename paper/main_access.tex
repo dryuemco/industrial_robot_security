@@ -58,11 +58,11 @@ tool-centre-point declaration that the task prompt never specified and that the 
 translation also omits. Second, this saturation is a measurement hazard: naive scoring,
 and to a lesser degree the registered validity gate, lets invalid pseudo-code pass as
 safe, and the preregistered adversarial-uplift test has little power against it. Third,
-rule-checker feedback under whole-program regeneration does not remediate: no trajectory
+minimal rule-checker feedback under whole-program regeneration does not remediate: no trajectory
 reaches zero violations under the full rule set. Single-repetition probes on frontier models (24B to
 675B) agree, and a benign edit removes the enforcement of the speed cap in 0\% to
 50\% of cells. These are signals for replication, not confirmed effects. Obtained in simulation
-and specific to URScript, the findings caution how generated control code is measured
+and specific to URScript, the findings caution how generated code is measured
 and patched.
 \end{abstract}
 
@@ -109,8 +109,8 @@ that it is not mistaken for a result. The study measures \emph{code security}, n
 seven specification-level motion-safety checks establish that the intended task is safe by
 construction and, by design, never fire on any generation (0 of 585); every violation
 reported on generated code is carried by the seven code-level security checks. The
-findings therefore characterize the cybersecurity-relevant properties of the generated
-control code, in the sense of ISO 10218-1:2025 clause 5.1.16, and not demonstrated
+findings therefore characterize code-level security properties of the generated
+control code, as the security checks measure them, and not demonstrated
 physical-motion hazards. Evaluation under mutated task specifications, where the
 motion-safety checks would carry signal, is identified as the natural next study.
 
@@ -713,8 +713,9 @@ cell is the mean over its three baseline repetitions.
 
 The repair-in-loop experiment tests whether the rule checker is useful as a
 corrective signal and not only as a measurement. It runs the fifteen tasks under
-rule-checker feedback, in which detected violations are returned to the model as a
-repair prompt, with three repetitions per cell, for up to 540 generations. Each repetition
+minimal rule-checker feedback, with three repetitions per cell, for up to 540 generations.
+The feedback returns the number of violations and the identifiers of the checks that fired,
+with a request to regenerate the code. Each repetition
 of a cell is one repair trajectory of up to four attempts, and because the loop
 terminates early in many trajectories the executed total is lower. The goal is to measure
 whether feedback reduces the violation rate relative to single-shot generation.
@@ -1624,11 +1625,23 @@ behavior is that the loop never runs or breaks early, with 78 of 135 trajectorie
 failing to produce valid URScript on the first call or leaving the loop when a retry
 ceases to be valid. In the frontier regime the larger models keep emitting valid
 URScript and stay inside the loop, oscillating in 47\% of trajectories or growing strictly
-worse under feedback in 20\%. A rule-level dissection of the 135 local trajectories shows
-that the only check with non-trivial genuine repair is the locally insertable
-input-validation guard, repaired in 28\% of the trajectories it flags, while the structural
-obligations are repaired in 0 to 4\%.
-Under feedback these models insert guards but do not restructure programs. The
+worse under feedback in 20\%. A rule-level dissection of the 135 local trajectories, read at the last gate-passing
+attempt, shows that the input-validation proxy clears in 15 of the 54 trajectories whose
+first output passes the gate and is flagged by it (28\%), the hardcoded-value check in 2 of
+54, and the error-handling, unusual-conditions and preamble checks in none. The 15
+input-validation clearances all come from Qwen2.5-Coder-32B. Every motion command that the
+proxy flags in their first output already carries explicit speed and acceleration
+arguments after a nested call, and the proxy stops reading at the first closing
+parenthesis, so it misses them (\ref{sec:res-baseline}). The last gate-passing output
+writes these commands without the nested call, and neither the first nor the last
+gate-passing output contains an \texttt{if}, \texttt{while} or \texttt{assert} statement, so none of the 15 clearances adds input
+validation. Under the preamble check alone, the
+primary estimate of \ref{sec:res-baseline}, 8 of the 29 frontier trajectories whose first
+output passes the gate and is flagged by that check end on a gate-passing output without
+the firing, against none of the 78 local ones. Each of the 8 final programs calls
+\texttt{set\_tcp} and \texttt{set\_payload} before its first motion command, which is all
+the check requires. The check does not read the values, the task prompt gives no
+tool-centre-point offset, and all 8 programs still fire other registered checks. The
 iatrogenic class is the sharpest cautionary observation, since each round of feedback
 raises the violation count, the largest model responding to feedback by emitting more
 protective scaffolding that re-arms the unchecked-return check on every added call. This
@@ -1770,10 +1783,7 @@ latent degradation because rule-based detectors miss structural regressions such
 silent removal of a defensive check \cite{ref54}. The mechanism that \cite{ref54}
 describes in the abstract is observed concretely here. Under the representation analysis
 the enforcement of the encoded cap was lost in 25\% of explicit-form programs
-(Listing L3 in Appendix~\ref{app:listings}), and in the 135 local trajectories
-the repair loop restored the locally insertable input-validation guard in 28\% and the
-structural obligations in at most 4\% of the trajectories each check initially flags, so the loop behaves exactly as a rule-based detector
-that cannot see structural regression would predict. The discrepancy points to the
+(Listing L3 in Appendix~\ref{app:listings}). The discrepancy points to the
 target property, since a loop that reliably repairs functional test failures records zero complete repairs under the full registered rule set when the fed-back
 signal is a static safety violation, although the comparison is across studies with different models and languages.
 
@@ -1854,7 +1864,7 @@ the last repair retry (Appendix~\ref{app:replication}); both runs are released. 
 the task
 specification is held invariant across conditions by design, so the motion-safety pass
 is not exercised on generated code and the reported violations concern
-cybersecurity-relevant properties rather than demonstrated physical-motion hazards;
+code-level security properties and not demonstrated physical-motion hazards;
 mutation of the task specification is a separate attack surface that is not addressed
 here. The task prompt (Appendix~\ref{app:prompts}) also gives a model less than the task
 representation holds: it lists the operating mode, the payload, the speed limit and the
@@ -1966,13 +1976,14 @@ naively, and to a lesser degree under the registered validity gate, it lets inva
 pseudo-code pass as safe, which motivates the validity-aware
 substantive-safe rate as the primary outcome, and it leaves the preregistered
 fifty-percentage-point adversarial-uplift test without power for two of the three models, so
-that null reflects a ceiling rather than robust alignment. Third, rule-checker feedback under whole-program
+that null reflects a ceiling rather than robust alignment. Third, minimal rule-checker feedback under whole-program
 regeneration does not remediate: under the full registered rule set no repair trajectory reaches zero violations, and two of the three
 models leave the loop by falling out of valid syntax. Two further observations qualify
-these findings. Safety-prompt response is model-dependent, reducing violations in two of
+these findings. Safety-prompt response is model-dependent, lowering the violation count of two of
 three models, so prompt-level guidance is not universally protective. In the additional
 single-repetition probes on frontier models and at two decoding temperatures, spanning 24B
-to 675B parameters, the substantive-safe rate stays at or near zero and the repair loop again produces no
+to 675B parameters, the substantive-safe rate stays at or near zero and the repair loop with minimal feedback
+again produces no
 valid, violation-free final output under the full registered rule set; these are signals for replication rather than confirmed
 effects.
 
