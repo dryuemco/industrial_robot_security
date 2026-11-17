@@ -19,8 +19,9 @@ Classes, for the stored outputs of the two explicit encodings (R3_named, R4_guar
                     Cartesian move takes its speed through it
   weakened_raised   a TCP_SPEED_CAP assignment above the task cap
   weakened_partial  some Cartesian moves go through the cap and others do not
-  constant_only     the constant is present and no clamp or guard applies it
-  absent            no cap constant and no clamp or guard on a cap
+  constant_only     the supplied constant TCP_SPEED_CAP is present and no clamp or guard applies it
+  absent            no TCP_SPEED_CAP constant and no clamp or guard on a cap; a cap constant under
+                    another name (MAX_SPEED, for example) without a clamp or guard is counted here
 "Through the cap" means that a clamp or a guard bounds the speed: the move is issued inside a helper
 that halts or stops when the speed exceeds TCP_SPEED_CAP, or that passes min(v, TCP_SPEED_CAP); or
 its speed argument is a call to a helper that returns min(v, TCP_SPEED_CAP) or returns

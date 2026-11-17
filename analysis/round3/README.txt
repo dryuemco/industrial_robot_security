@@ -302,8 +302,8 @@ VI-E, control probe (B7)
 
 Abstract; I-C; Table 7; VI-E; VII-A; Figures 6 and 7 (B6)
     enforcement of the cap kept in 89 of 119 explicit-form programs (20 rewritten) and lost in
-    30 (26 absent, 2 constant without a clamp or guard, 1 partial, 1 raised); 29 of the 30
-    within the cap; lost by model 0/30, 15/30, 13/29, 2/30; breaches 9/60, 1/59, 0/59, 1/60;
+    30 (26 without the construct, 2 with the supplied constant but no clamp or guard, 1
+    partial, 1 raised); 29 of the 30 within the cap; lost by model 0/30, 15/30, 13/29, 2/30; breaches 9/60, 1/59, 0/59, 1/60;
     Cochran-Armitage 3.44 (p = 0.0006); Cochran Q 20.42 over 58 pairs (exact p = 0.0002)
     s18_e5_enforcement.py
     out/e5/e5_enforcement.csv, out/e5/e5_summary.csv, out/e5/e5_tests.csv
