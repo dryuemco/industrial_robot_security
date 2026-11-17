@@ -1,4 +1,4 @@
-# A2.4 Cross-model test in the OSF preregistration
+# Cross-model test in the OSF preregistration
 
 Read-only from https://api.osf.io/v2/registrations/ve5m2/ and https://api.osf.io/v2/schema_responses/<id>/; raw JSON cached in `analysis/round3/out/osf`.
 

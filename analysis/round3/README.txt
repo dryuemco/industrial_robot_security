@@ -22,23 +22,24 @@ s00_provenance.py
     out/provenance_*.csv, out/gate_equivalence.csv
 
 s01_a1.py
-    A1.1 to A1.5
+    A1: the reference translation as a column of Table 13, the SM-6 split, the prompt fields
+    on TCP and payload
     out/a1/
 
 s02_a2.py
-    A2.0 to A2.3, run 1
+    A2: the cross-model Cochran Q of VI-D and Table 16 on three bases, run 1
     out/a2/cochran_all.csv, verify_counts.csv, table16_check.csv
 
 s06_osf.py
-    A2.4
+    A2: the cross-model test in the OSF preregistration
     out/osf/*.json, out/a2/osf_search.txt
 
 s03_a3.py
-    A3.1 to A3.5
+    A3: per-rule decomposition of the mean firings per program
     out/a3/
 
 s04_a4.py
-    A4.1 to A4.3
+    A4: precision per rater, rater B as the primary estimate, the unit of SM-2
     out/a4/
 
 s07_sm6_and_crossmodel.py

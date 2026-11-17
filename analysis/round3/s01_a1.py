@@ -397,7 +397,7 @@ def main() -> None:
     prompt_quotes()
     clause_map()
     if not ok:
-        print("STOP A1.1/A1.2 (and A3): regenerated translator counts differ from comparator_programs.csv")
+        print("STOP A1 (and A3): regenerated translator counts differ from comparator_programs.csv")
         return
     a1_table13(progs)
     print(sm6_split(progs).to_string(index=False))

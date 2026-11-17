@@ -15,8 +15,9 @@ Runs copied (results/<src> -> data/<dst>):
   exploratory/e5_repr_fragility    the representation probe
   X10_*                            the quantization controls of VI-D (code and logs)
 
-Masking replaces only the matched substring: a home directory with <HOME>, a user name with
-<USER>, the inference endpoint with <IDUN_ENDPOINT>. A match inside a prompt sent to a model
+Masking replaces only the matched substring: a home directory (/Users/<name> or /home/<name>)
+with <HOME>, the same user name elsewhere in the text with <USER>, the inference endpoint with
+<IDUN_ENDPOINT>. A match inside a prompt sent to a model
 or inside a model response (the system_prompt, user_prompt and response fields of the JSONL
 logs, and the stored .urscript programs) is never masked; the script stops instead. A key or
 token pattern anywhere also stops it. The model-written address 192.168.1.100 in one frontier
@@ -55,10 +56,16 @@ RUNS = [("smoke_test", "exploratory/smoke_test"),
         ("X10_deepseek_q4_K_M_rerun", "quantization_controls/X10_deepseek_q4_K_M_rerun"),
         ("X10_qwen_q4_0", "quantization_controls/X10_qwen_q4_0")]
 
-# Order matters: the home directory is masked before the bare user name.
-MASKS = [("HOME", re.compile(r"/Users/yuemco|/home/yunus"), "<HOME>"),
-         ("USER", re.compile(r"\b(?:yuemco|yunus)\b"), "<USER>"),
-         ("IDUN_ENDPOINT", re.compile(r"https?://llm\.hpc\.ntnu\.no(?:/v1)?"), "<IDUN_ENDPOINT>")]
+# Order matters: the home directory is masked before the bare user name, which is taken from it.
+HOME_RX = re.compile(r"/(?:Users|home)/([A-Za-z0-9._-]+)")
+IDUN_RX = re.compile(r"https?://llm\.hpc\.ntnu\.no(?:/v1)?")
+MASK_NAMES = ["HOME", "USER", "IDUN_ENDPOINT"]
+
+
+def _masks(text: str) -> list:
+    names = sorted(set(HOME_RX.findall(text)))
+    user = re.compile(r"\b(?:%s)\b" % "|".join(map(re.escape, names))) if names else None
+    return [("HOME", HOME_RX, "<HOME>"), ("USER", user, "<USER>"), ("IDUN_ENDPOINT", IDUN_RX, "<IDUN_ENDPOINT>")]
 STOP = re.compile(r"(?i)\b(sk-[A-Za-z0-9_-]{16,}|hf_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{20,}|"
                   r"xox[bp]-[A-Za-z0-9-]+)|\"?(api[_-]?key|access[_-]?token|auth[_-]?token|password|"
                   r"authorization|bearer)\"?\s*[:=]")
@@ -72,7 +79,9 @@ class Stop(Exception):
 
 def _mask_text(text: str, where: str) -> tuple[str, dict]:
     counts = {}
-    for name, rx, repl in MASKS:
+    for name, rx, repl in _masks(text):
+        if rx is None:
+            continue
         text, n = rx.subn(repl, text)
         if n:
             counts[name] = counts.get(name, 0) + n
@@ -80,7 +89,7 @@ def _mask_text(text: str, where: str) -> tuple[str, dict]:
 
 
 def _any_mask(text: str) -> bool:
-    return any(rx.search(text) for _, rx, _ in MASKS)
+    return bool(HOME_RX.search(text) or IDUN_RX.search(text))
 
 
 def masked(path: Path, rel: str) -> tuple[bytes, dict]:
@@ -162,8 +171,8 @@ def main() -> None:
         t.parent.mkdir(parents=True, exist_ok=True)
         t.write_bytes(d)
     pd.DataFrame(manifest).to_csv(out("r3", "import_manifest.csv"), index=False)
-    cols = ["target"] + [n for n, _, _ in MASKS]
-    pd.DataFrame(masking).reindex(columns=cols).fillna(0).astype({n: int for n, _, _ in MASKS}).to_csv(
+    cols = ["target"] + MASK_NAMES
+    pd.DataFrame(masking).reindex(columns=cols).fillna(0).astype({n: int for n in MASK_NAMES}).to_csv(
         out("r3", "import_masking.csv"), index=False)
     print(f"copied {len(plan)} files into data/; {len(masking)} masked")
 

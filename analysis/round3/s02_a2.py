@@ -92,7 +92,7 @@ def run_tests(data, variants: dict, run: str) -> pd.DataFrame:
 
 
 def verify_counts(conf: pd.DataFrame, run: str) -> pd.DataFrame:
-    """A2.0: gate counts, naive cell rates, gate-passing per-generation rates (Table 14)."""
+    """Gate counts, naive cell rates, gate-passing per-generation rates (Table 14)."""
     adv = pd.read_csv(TABLES / "adversarial_table.csv")
     rows = []
     for mid, (disp, _) in SERVED.items():
@@ -142,7 +142,7 @@ def main() -> None:
     tests = pd.concat([t2, t1], ignore_index=True)
     tests.to_csv(out("a2", "cochran_all.csv"), index=False)
 
-    # A2.1 check: naive basis, run 2 vs paper/tables/quantization_cochran.csv
+    # Check: naive basis, run 2 vs paper/tables/quantization_cochran.csv
     ref = pd.read_csv(TABLES / "quantization_cochran.csv")
     chk = []
     for _, r in ref.iterrows():

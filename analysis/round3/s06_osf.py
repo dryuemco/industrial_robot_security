@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Copyright 2026 Yunus Emre Cogurcu - Apache-2.0
-"""A2.4: is the cross-model test in the OSF preregistration?
+"""A2: is the cross-model test in the OSF preregistration?
 
 Reads the registration ve5m2 and every schema response (original registration, the
 three amendments, the record note) from api.osf.io, read-only, without login or token,
@@ -140,7 +140,7 @@ def main() -> None:
     first = next(((vid, d, s) for vid, d, s in versions if any("cochran" in t.lower() for _, t in s)), None)
     latest = versions[-1]
 
-    md = ["# A2.4 Cross-model test in the OSF preregistration", "",
+    md = ["# Cross-model test in the OSF preregistration", "",
           f"Read-only from {API}/registrations/{REG}/ and {API}/schema_responses/<id>/; raw JSON cached in "
           f"`{rel(OUT / 'osf')}`.", "", "## Schema responses (registration versions)", "",
           md_table(meta), "", "## Verdict", ""]
