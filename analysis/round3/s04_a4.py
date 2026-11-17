@@ -13,7 +13,7 @@ Outputs under out/a4/:
   safe_programs.csv        the programs that are violation-free under each such rule set
   sm2_units.csv            SM-2 firings per call site vs per program (LLM, translators, audit population)
   audit_population.csv     the audit population re-enumerated from the committed code
-  rater_guide_quotes.md    the audit unit and the SM-2 criterion, verbatim
+  rater_guide_quotes.txt   the audit unit and the SM-2 criterion, verbatim
 """
 from __future__ import annotations
 
@@ -187,7 +187,7 @@ def guide_quotes() -> None:
     s = next(i for i, l in enumerate(lines) if l.startswith("**SM-2"))
     e = next(i for i in range(s + 1, len(lines)) if lines[i].startswith("**SM-3"))
     md += ["### SM-2 criterion", "```"] + [f"{i + 1}: {lines[i]}" for i in range(s, e)] + ["```"]
-    out("a4", "rater_guide_quotes.md").write_text("\n".join(md) + "\n")
+    out("a4", "rater_guide_quotes.txt").write_text("\n".join(md) + "\n")
 
 
 def main() -> None:

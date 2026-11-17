@@ -10,7 +10,7 @@ Outputs under out/a3/:
   reviewer_check.csv      the values derived by the reviewer and by the authors against direct means
   differences.csv         LLM minus translator, per rule, both SM-5 definitions
   ratios.csv              candidate pairs for "about twice as many rule firings"
-  never_fires.md          the "on which the reference never fires" sentence against the counts
+  never_fires.txt         the "on which the reference never fires" sentence against the counts
 """
 from __future__ import annotations
 
@@ -158,7 +158,7 @@ def never_fires(m: pd.DataFrame, progs: pd.DataFrame) -> None:
             p = p[p.gate_lexical == 1]
         md.append(f"| {s} | {int(r.n_programs)} | {int(r['SM-1_programs_firing'])} | {int(r['SM-2_programs_firing'])} | "
                   f"{p.sm2_global.mean():.2f} | {p.sm2_line.mean():.2f} |")
-    out("a3", "never_fires.md").write_text("\n".join(md) + "\n")
+    out("a3", "never_fires.txt").write_text("\n".join(md) + "\n")
 
 
 def main() -> None:

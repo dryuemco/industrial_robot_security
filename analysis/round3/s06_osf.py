@@ -8,7 +8,7 @@ and caches the raw JSON under out/osf/. Later runs use the cache unless --refres
 given. Searches every registered text field, the local mirror docs/OSF_PREREGISTRATION.md
 and the three paper statements.
 
-Outputs: out/osf/*.json, out/a2/osf_search.csv, out/a2/osf_search.md
+Outputs: out/osf/*.json, out/a2/osf_search.csv, out/a2/osf_search.txt
 """
 from __future__ import annotations
 
@@ -88,7 +88,7 @@ def main() -> None:
     try:
         docs = fetch(args.refresh)
     except Exception as exc:  # network down: report MISSING, keep the rest of the run going
-        out("a2", "osf_search.md").write_text(f"MISSING: api.osf.io not reachable and no cache ({exc})\n")
+        out("a2", "osf_search.txt").write_text(f"MISSING: api.osf.io not reachable and no cache ({exc})\n")
         print(f"MISSING: {exc}")
         return
     meta = []
@@ -175,7 +175,7 @@ def main() -> None:
     md += [f"- {r.field} [{r.pattern}]: \"{r.context}\"" for r in loc.itertuples()]
     md += ["", "## Paper statements on the status of the test (paper/main_access.tex)", ""]
     md += [f"- line {ln}: \"{ctx}\"" for _, ln, ctx in stmts]
-    out("a2", "osf_search.md").write_text("\n".join(md) + "\n")
+    out("a2", "osf_search.txt").write_text("\n".join(md) + "\n")
     print("\n".join(md))
 
 

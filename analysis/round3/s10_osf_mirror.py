@@ -3,7 +3,7 @@
 """Verbatim excerpts of OSF Amendment 1 for the local mirror docs/OSF_PREREGISTRATION.md.
 
 Reads the cached schema responses in out/osf/ (no network) and writes
-out/r3/osf_amendment1_excerpt.md: the Amendment 1 text that defines the cross-model test,
+out/r3/osf_amendment1_excerpt.txt: the Amendment 1 text that defines the cross-model test,
 the prompt conditions, the cell-level aggregation rule and the treatment of invalid
 pseudo-code, copied verbatim (HTML entities unescaped). Each excerpt is also checked
 against the three later versions of the registration.
@@ -54,8 +54,8 @@ def main() -> None:
         same = all(q in html.unescape(v["revision_responses"][field]) for v in later)
         assert same, (field, start)
         md += [f"Field `{field}`:", "", "```text", q, "```", ""]
-    out("r3", "osf_amendment1_excerpt.md").write_text("\n".join(md))
-    print(f"wrote {out('r3', 'osf_amendment1_excerpt.md')} ({len(EXCERPTS)} excerpts, all unchanged in the later versions)")
+    out("r3", "osf_amendment1_excerpt.txt").write_text("\n".join(md))
+    print(f"wrote {out('r3', 'osf_amendment1_excerpt.txt')} ({len(EXCERPTS)} excerpts, all unchanged in the later versions)")
 
 
 if __name__ == "__main__":

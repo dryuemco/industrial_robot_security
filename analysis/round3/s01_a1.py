@@ -11,8 +11,8 @@ Outputs under out/a1/:
   sm6_split.csv                 SM-6 firings by missing set_tcp / set_payload
   ir_tcp_payload.csv            per task: IR fields and the preamble the translator writes
   prompt_fields.csv             IR field -> read by the prompt builder? rendered? sent (log)?
-  prompt_quotes.md              source lines mentioning payload / TCP in the prompts
-  sm6_clause_map.md             SM-6 clause and CWE: code vs Table 18 vs traceability CSV
+  prompt_quotes.txt             source lines mentioning payload / TCP in the prompts
+  sm6_clause_map.txt            SM-6 clause and CWE: code vs Table 18 vs traceability CSV
 """
 from __future__ import annotations
 
@@ -329,7 +329,7 @@ def prompt_quotes() -> None:
         md += [f"{n}: {l}" for n, l in hits]
         md.append("```")
         md.append("")
-    out("a1", "prompt_quotes.md").write_text("\n".join(md))
+    out("a1", "prompt_quotes.txt").write_text("\n".join(md))
 
 
 # ----------------------------------------------------------------------------- 5
@@ -377,7 +377,7 @@ def clause_map() -> None:
         if l.startswith("SM-"):
             tf = l.split(",")[-1]
             md.append(f"- {l.split(',')[0]}: `{tf}` exists: {(REPO / tf).is_file() or (REPO / 'enfield_watchdog_static' / tf).is_file()}")
-    out("a1", "sm6_clause_map.md").write_text("\n".join(md))
+    out("a1", "sm6_clause_map.txt").write_text("\n".join(md))
 
 
 def main() -> None:
